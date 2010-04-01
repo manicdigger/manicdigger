@@ -483,7 +483,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ; z++)
                     {
-                        map.Map[x, y, z] = data.TileIdEmpty();
+                        map.Map[x, y, z] = data.TileIdEmpty;
                     }
                 }
             }
@@ -493,9 +493,9 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ / 2 - 1; z++)
                     {
-                        map.Map[x, y, z] = data.TileIdDirt();
+                        map.Map[x, y, z] = data.TileIdDirt;
                     }
-                    map.Map[x, y, map.MapSizeZ / 2 - 1] = data.TileIdGrass();
+                    map.Map[x, y, map.MapSizeZ / 2 - 1] = data.TileIdGrass;
                 }
             }
             for (int x = 0; x < 100; x++)
@@ -508,13 +508,13 @@ namespace ManicDigger
                 int x = rnd.Next(map.MapSizeX);
                 int y = rnd.Next(map.MapSizeY);
                 int z = rnd.Next(map.MapSizeZ);
-                if (map.Map[x, y, z] == data.TileIdDirt())
+                if (map.Map[x, y, z] == data.TileIdDirt)
                 {
-                    map.Map[x, y, z] = data.GoldTileId();
+                    map.Map[x, y, z] = data.GoldTileId;
                 }
             }
             //debug
-            map.Map[10, 10, map.MapSizeZ / 2] = data.GoldTileId();
+            map.Map[10, 10, map.MapSizeZ / 2] = data.GoldTileId;
         }
     }
     public interface IMapStorage
@@ -793,14 +793,14 @@ namespace ManicDigger
     public interface IGameData
     {
         int GetTileTextureId(int tileType, TileSide side);
-        byte TileIdEmpty();
-        byte TileIdGrass();
-        byte TileIdDirt();
+        byte TileIdEmpty { get; }
+        byte TileIdGrass { get; }
+        byte TileIdDirt { get; }
         int[] DefaultMaterialSlots { get; }
-        byte GoldTileId();
-        int TileIdStone();
-        int TileIdWater();
-        int TileIdSand();
+        byte GoldTileId { get; }
+        int TileIdStone { get; }
+        int TileIdWater { get; }
+        int TileIdSand { get; }
     }
     public class GameDataTilesManicDigger : IGameData
     {
@@ -819,9 +819,9 @@ namespace ManicDigger
             //if ((int)tt < 3) { return (int)tt - 1; }
             return 255;
         }
-        public byte TileIdEmpty() { return (int)TileTypesManicDigger.Empty; }
-        public byte TileIdGrass() { return (int)TileTypesManicDigger.Grass; }
-        public byte TileIdDirt() { return (int)TileTypesManicDigger.Dirt; }
+        public byte TileIdEmpty { get{return (int)TileTypesManicDigger.Empty; }}
+        public byte TileIdGrass { get{return (int)TileTypesManicDigger.Grass; }}
+        public byte TileIdDirt { get{return (int)TileTypesManicDigger.Dirt; }}
         public int[] DefaultMaterialSlots
         {
             get
@@ -834,19 +834,19 @@ namespace ManicDigger
                 return m;
             }
         }
-        public byte GoldTileId() { return (int)TileTypesManicDigger.Gold; }
+        public byte GoldTileId { get { return (int)TileTypesManicDigger.Gold; } }
         #region IGameData Members
-        public int TileIdStone()
+        public int TileIdStone
         {
-            return TileIdDirt();//todo
+            get{return TileIdDirt;}//todo
         }
-        public int TileIdWater()
+        public int TileIdWater
         {
-            return TileIdDirt();//todo
+            get{return TileIdDirt;}//todo
         }
-        public int TileIdSand()
+        public int TileIdSand
         {
-            return TileIdDirt();//todo
+           get{ return TileIdDirt;}//todo
         }
         #endregion
     }
@@ -868,17 +868,17 @@ namespace ManicDigger
         public GameDataTilesMinecraft()
         {
         }
-        public byte TileIdEmpty()
+        public byte TileIdEmpty
         {
-            return (byte)TileTypeMinecraft.Empty;
+            get { return (byte)TileTypeMinecraft.Empty; }
         }
-        public byte TileIdGrass()
+        public byte TileIdGrass
         {
-            return (byte)TileTypeMinecraft.Grass;
+            get { return (byte)TileTypeMinecraft.Grass; }
         }
-        public byte TileIdDirt()
+        public byte TileIdDirt
         {
-            return (byte)TileTypeMinecraft.Dirt;
+            get { return (byte)TileTypeMinecraft.Dirt; }
         }
         public int GetTileTextureId(int tileType, TileSide side)
         {
@@ -937,22 +937,22 @@ namespace ManicDigger
                 return slots.ToArray();
             }
         }
-        public byte GoldTileId()
+        public byte GoldTileId
         {
-            return (int)TileTypeMinecraft.GoldOre;
+            get { return (int)TileTypeMinecraft.GoldOre; }
         }
         #region IGameData Members
-        public int TileIdStone()
+        public int TileIdStone
         {
-            return (int)TileTypeMinecraft.Stone;
+            get { return (int)TileTypeMinecraft.Stone; }
         }
-        public int TileIdWater()
+        public int TileIdWater
         {
-            return (int)TileTypeMinecraft.Water;
+            get { return (int)TileTypeMinecraft.Water; }
         }
-        public int TileIdSand()
+        public int TileIdSand
         {
-            return (int)TileTypeMinecraft.Sand;
+            get { return (int)TileTypeMinecraft.Sand; }
         }
         #endregion
     }
@@ -1890,9 +1890,9 @@ namespace ManicDigger
             {
                 return true;
             }
-            return clientgame.Map[x, y, z] == data.TileIdEmpty()
-                || (clientgame.Map[x, y, z] == data.TileIdWater()
-                 && !(adjacenttiletype == data.TileIdWater()))
+            return clientgame.Map[x, y, z] == data.TileIdEmpty
+                || (clientgame.Map[x, y, z] == data.TileIdWater
+                 && !(adjacenttiletype == data.TileIdWater))
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Glass
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
@@ -1920,7 +1920,7 @@ namespace ManicDigger
                         bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
                         if (x == 0)
                         {
-                            if (tt == data.TileIdWater()) { Console.WriteLine(new Vector3(x, y, z)); }
+                            if (tt == data.TileIdWater) { Console.WriteLine(new Vector3(x, y, z)); }
                         }
                         if (DONOTDRAWEDGES)
                         {
@@ -2042,7 +2042,7 @@ namespace ManicDigger
             }
             if (myvertices.Count > ushort.MaxValue)
             {
-                throw new Exception();//aaa
+                //throw new Exception();//aaa
             }
             var a = myelements.ToArray();
             var b = myvertices.ToArray();
@@ -3378,9 +3378,9 @@ namespace ManicDigger
                         {
                             for (int k = 1; k < map.MapSizeZ / 2 - 1; k++)
                             {
-                                if (!hollow) map.SetBlock(i, j, k, data.TileIdDirt());
+                                if (!hollow) map.SetBlock(i, j, k, data.TileIdDirt);
                             }
-                            map.SetBlock(i, j, map.MapSizeZ / 2 - 1, data.TileIdGrass());
+                            map.SetBlock(i, j, map.MapSizeZ / 2 - 1, data.TileIdGrass);
                         }
                         if (i > map.MapSizeX / 2 && !reportedProgress)
                         {
@@ -4527,6 +4527,21 @@ class MyFCraftMap : fCraft.IFMap
     {
         return true;
     }
+    [Inject]
+    public IGameData data { get; set; }
+    public void ClearMap()
+    {
+        for (int x = 0; x < MapSizeX; x++)
+        {
+            for (int y = 0; y < MapSizeY; y++)
+            {
+                for (int z = 0; z < MapSizeZ; z++)
+                {
+                    map.SetBlock(x, y, z, data.TileIdEmpty);
+                }
+            }
+        }
+    }
     public void SetBlock(int x, int y, int z, int tileType)
     {
         map.Map[x, y, z] = (byte)tileType;
@@ -4565,6 +4580,7 @@ namespace fCraft
         void LoadMapArray(byte[] data, int offset);
         bool ValidateBlockTypes();
         void SetBlock(int x, int y, int z, int tileType);
+        void ClearMap();
     }
     public enum FLogType
     {
@@ -4762,26 +4778,34 @@ namespace fCraft
             this.parameters = parameters;
             double[,] heightmap = GenerateHeightmap(map.MapSizeX, map.MapSizeY);
             Feedback("Filling...");
+            map.ClearMap();
+            double minheight = double.MaxValue;
             for (int x = 0; x < map.MapSizeX; x++)
             {
                 for (int y = 0; y < map.MapSizeY; y++)
                 {
                     double level = heightmap[x, y];
+                    int levelQuantized = (int)(level * map.MapSizeZ);
+                    int waterQuantized = (int)(parameters.water * map.MapSizeZ);
+                    if (levelQuantized < minheight)
+                    {
+                        minheight = levelQuantized;
+                    }
                     if (level > parameters.water)
                     {
                         level = (level - parameters.water) * parameters.smoothingOver + parameters.water;
-                        map.SetBlock(x, y, (int)(level * map.MapSizeZ), data.TileIdGrass());
+                        map.SetBlock(x, y, levelQuantized, data.TileIdGrass);
                         if (!parameters.hollow)
                         {
-                            for (int i = (int)(level * map.MapSizeZ) - 1; i > 0; i--)
+                            for (int i = levelQuantized - 1; i > 0; i--)
                             {
-                                if ((int)(level * map.MapSizeZ) - i < 5)
+                                if (levelQuantized - i < 5)
                                 {
-                                    map.SetBlock(x, y, i, data.TileIdDirt());
+                                    map.SetBlock(x, y, i, data.TileIdDirt);
                                 }
                                 else
                                 {
-                                    map.SetBlock(x, y, i, data.TileIdStone());
+                                    map.SetBlock(x, y, i, data.TileIdStone);
                                 }
                             }
                         }
@@ -4789,20 +4813,21 @@ namespace fCraft
                     else
                     {
                         level = (level - parameters.water) * parameters.smoothingUnder + parameters.water;
-                        map.SetBlock(x, y, (int)(parameters.water * map.MapSizeZ), data.TileIdWater());
+                        
+                        map.SetBlock(x, y, waterQuantized, data.TileIdWater);
                         if (!parameters.hollow)
                         {
-                            for (int i = (int)(parameters.water * map.MapSizeZ) - 1; i >= (int)(level * map.MapSizeZ); i--)
+                            for (int i = waterQuantized - 1; i >= levelQuantized; i--)
                             {
-                                map.SetBlock(x, y, i, data.TileIdWater());
+                                map.SetBlock(x, y, i, data.TileIdWater);
                             }
                         }
-                        map.SetBlock(x, y, (int)(level * map.MapSizeZ), data.TileIdSand());
+                        map.SetBlock(x, y, levelQuantized, data.TileIdSand);
                         if (!parameters.hollow)
                         {
-                            for (int i = (int)(level * map.MapSizeZ) - 1; i > 0; i--)
+                            for (int i = levelQuantized - 1; i > 0; i--)
                             {
-                                map.SetBlock(x, y, i, data.TileIdStone());
+                                map.SetBlock(x, y, i, data.TileIdStone);
                             }
                         }
                     }
