@@ -3645,6 +3645,10 @@ namespace ManicDigger
         {
             byte[] b = Encoding.ASCII.GetBytes(s);
             byte[] bb = new byte[64];
+            for (int i = 0; i < bb.Length; i++)
+            {
+                bb[i] = 32; //' '
+            }
             for (int i = 0; i < b.Length; i++)
             {
                 bb[i] = b[i];
