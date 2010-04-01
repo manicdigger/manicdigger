@@ -1371,7 +1371,7 @@ namespace ManicDigger
                     Vector3 p = pp.Value;
                     //lock (clientgame.mapupdate)//does not work, clientgame can get replaced
                     {
-                        try
+                        //try
                         {
                             VerticesIndicesToLoad q = MakeChunk((int)p.X * buffersize, (int)p.Y * buffersize, (int)p.Z * buffersize, buffersize);
 
@@ -1383,7 +1383,8 @@ namespace ManicDigger
                                 }
                             }
                         }
-                        catch { }
+                        //catch
+                        //{ }
                     }
                 }
                 Thread.Sleep(0);
@@ -1418,7 +1419,7 @@ namespace ManicDigger
                                 toupdate.Enqueue(new Vector3(x, y, z));
                             }
         }
-        int buffersize = 32;//32,45
+        int buffersize = 32; //32,45
         public void UpdateTileSet(Vector3 pos, byte type)
         {
             //            frametickmainthreadtodo.Add(() =>
@@ -1879,7 +1880,7 @@ namespace ManicDigger
             }
             return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
         }
-        bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z)
+        bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z, int adjacenttiletype)
         {
             if (!ENABLE_TRANSPARENCY)
             {
@@ -1889,8 +1890,9 @@ namespace ManicDigger
             {
                 return true;
             }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
-                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Water
+            return clientgame.Map[x, y, z] == data.TileIdEmpty()
+                || (clientgame.Map[x, y, z] == data.TileIdWater()
+                 && !(adjacenttiletype == data.TileIdWater()))
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Glass
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
                 || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
@@ -1905,13 +1907,21 @@ namespace ManicDigger
                 for (int y = starty; y < starty + size; y++)
                     for (int z = startz; z < startz + size; z++)//bbb startz+size
                     {
+                        //if (x == 0 && z == 31 & y == 128)
+                        {
+                        }
                         if (IsTileEmptyForDrawing(x, y, z)) { continue; }
-                        bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1);
-                        bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1);
-                        bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z);
-                        bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z);
-                        bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z);
-                        bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z);
+                        var tt = clientgame.Map[x, y, z];
+                        bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
+                        bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
+                        bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
+                        bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
+                        bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
+                        bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
+                        if (x == 0)
+                        {
+                            if (tt == data.TileIdWater()) { Console.WriteLine(new Vector3(x, y, z)); }
+                        }
                         if (DONOTDRAWEDGES)
                         {
                             //if the game is fillrate limited, then this makes it much faster.
@@ -2032,7 +2042,7 @@ namespace ManicDigger
             }
             if (myvertices.Count > ushort.MaxValue)
             {
-                //throw new Exception();//aaa
+                throw new Exception();//aaa
             }
             var a = myelements.ToArray();
             var b = myvertices.ToArray();
@@ -2401,9 +2411,9 @@ namespace ManicDigger
                         TilePosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : From3dPos(tile);
-                        Console.WriteLine(". newtile:" + newtile);
                         if (IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
+                            Console.WriteLine(". newtile:" + newtile + " type: " + clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
                             if (pick0.pos != new Vector3(-1, -1, -1))
                             {
                                 audio.Play(left ? sounddestruct : soundbuild);
@@ -3409,13 +3419,13 @@ namespace ManicDigger
                 case "hills":
                     playerMessage("Generating terrain...");
                     gen.GenerateMap(new fCraft.MapGeneratorParameters(
-                                                                              1, 1, 0.5, 0.45, 0, 0.5, hollow));
+                                                                              5, 1, 0.5, 0.45, 0, 0.5, hollow));
                     break;
 
                 case "mountains":
                     playerMessage("Generating terrain...");
                     gen.GenerateMap(new fCraft.MapGeneratorParameters(
-                                                                              4, 1, 0.5, 0.45, 0.1, 0.5, hollow));
+                                                                              8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
                     break;
 
                 case "lake":
