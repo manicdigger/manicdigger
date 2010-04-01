@@ -1081,7 +1081,7 @@ namespace ManicDigger
         {
             if (!File.Exists(sFileName))
             {
-                throw new ArgumentException();
+                Console.WriteLine("Music file not found: " + sFileName);
             }
             try
             {
