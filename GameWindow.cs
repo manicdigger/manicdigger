@@ -487,6 +487,8 @@ namespace ManicDigger
                     //?
                     //if (GuiTyping == TypingState.Ready)
                     {
+                        typinglog.Add(GuiTypingBuffer);
+                        typinglogpos = typinglog.Count;
                         ClientCommand(GuiTypingBuffer);
                         GuiTypingBuffer = "";
                         GuiTyping = TypingState.None;
@@ -588,6 +590,28 @@ namespace ManicDigger
                     if (c == "=") { c = "+"; }
                 }
                 GuiTypingBuffer += c;
+                if (key == OpenTK.Input.Key.Up)
+                {
+                    typinglogpos--;
+                    if (typinglogpos < 0) { typinglogpos = 0; }
+                    if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
+                    {
+                        GuiTypingBuffer = typinglog[typinglogpos];
+                    }
+                }
+                if (key == OpenTK.Input.Key.Down)
+                {
+                    typinglogpos++;
+                    if (typinglogpos > typinglog.Count) { typinglogpos = typinglog.Count; }
+                    if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
+                    {
+                        GuiTypingBuffer = typinglog[typinglogpos];
+                    }
+                    if (typinglogpos == typinglog.Count)
+                    {
+                        GuiTypingBuffer = "";
+                    }
+                }
                 return;
             }
             if (e.Key == OpenTK.Input.Key.F1)
@@ -647,6 +671,8 @@ namespace ManicDigger
             if (e.Key == OpenTK.Input.Key.Number9) { activematerial = 8; }
             if (e.Key == OpenTK.Input.Key.Number0) { activematerial = 9; }
         }
+        List<string> typinglog = new List<string>();
+        int typinglogpos = 0;
         private void GuiActionGoToEscapeMenu()
         {
             guistate = GuiState.EscapeMenu;
