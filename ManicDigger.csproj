@@ -48,8 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Audio.cs" />
+    <Compile Include="ClientNetwork.cs" />
+    <Compile Include="Collisions.cs" />
     <Compile Include="DependencyInjection.cs" />
+    <Compile Include="FCraft.cs" />
+    <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />
+    <Compile Include="Misc.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
