@@ -523,6 +523,7 @@ namespace ManicDigger
         int MapSizeX { get; set; }
         int MapSizeY { get; set; }
         int MapSizeZ { get; set; }
+        void LoadMapArray(Stream ms);
     }
     //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
     public class ClientGame : IMapStorage
@@ -550,12 +551,19 @@ namespace ManicDigger
         {
             mapgenerator.GenerateMap();
         }
-        public const string xmlsaveextension = ".mdxs.gz";
+        public const string XmlSaveExtension = ".mdxs.gz";
+        public const string MinecraftMapSaveExtension = ".dat";
         public void LoadMap(string filename)
         {
             if (!File.Exists(filename))
             {
                 Console.WriteLine(filename + " not found.");
+            }
+            if (filename.EndsWith(MinecraftMapSaveExtension))
+            {
+                //minecraft map
+                LoadMapMinecraft(filename);
+                return;
             }
             using (Stream s = new MemoryStream(GzipCompression.Decompress(File.ReadAllBytes(filename))))
             //using (FileStream s = File.OpenRead(filename))
@@ -575,7 +583,7 @@ namespace ManicDigger
                 this.MapSizeY = int.Parse(save.Element("MapSize").Element("Y").Value);
                 this.MapSizeZ = int.Parse(save.Element("MapSize").Element("Z").Value);
                 byte[] mapdata = Convert.FromBase64String(save.Element("MapData").Value);
-                LoadMapFromStream(new MemoryStream(mapdata));
+                LoadMapArray(new MemoryStream(mapdata));
             }
         }
         public class XmlTool
@@ -600,7 +608,7 @@ namespace ManicDigger
                 }
             }
         }
-        public void LoadMapFromStream(Stream s)
+        public void LoadMapArray(Stream s)
         {
             BinaryReader br = new BinaryReader(s);
             for (int z = 0; z < MapSizeZ; z++)
@@ -616,7 +624,7 @@ namespace ManicDigger
             gui.DrawMap();
             Console.WriteLine("Game loaded successfully.");
         }
-        public string defaultminesave = "default" + xmlsaveextension;
+        public string defaultminesave = "default" + XmlSaveExtension;
         public void SaveMap(string filename)
         {
             //using (FileStream s = File.OpenWrite("default.minesave"))
@@ -711,40 +719,93 @@ namespace ManicDigger
         }
         [Inject]
         public IGetFilePath getfile { get; set; }
-        public void LoadMapMinecraft()
+        class MyMap:fCraft.IFMap
         {
-            byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile("server_level.dat")));
-            int i = 0;
-            int mapstart;
-            for (; ; )
+            [Inject]
+            public IMapStorage map { get; set; }
+            #region IFMap Members
+            public int MapSizeX
             {
-                if (IsText(serialized, i, Encoding.ASCII.GetBytes("BlockMap$Slot")))
+                get
                 {
-                    //i += "width".Length + 0;
-                    //int width=BitConverter.ToInt32(new byte[] { serialized[i], serialized[i+1], serialized[i+2], serialized[i+3] }, 0);
-                    mapstart = i + "BlockMap$Slot".Length;
-                    break;
+                    return map.MapSizeX;
                 }
-                i++;
-            }
-            //todo fix offset
-            //mapstart += 16500;
-            int width = 256;
-            int depth = 256;
-            int height = 64;
-            i = 0;
-            for (int z = 0; z < height; z++)
-            {
-                for (int y = 0; y < depth; y++)
+                set
                 {
-                    for (int x = 0; x < width; x++)
-                    {
-                        map[x, y, z] = serialized[mapstart + i];
-                        i++;
-                    }
+                    map.MapSizeX = value;
                 }
             }
-            //byte[] deserializedmap;
+            public int MapSizeY
+            {
+                get
+                {
+                    return map.MapSizeY;
+                }
+                set
+                {
+                    map.MapSizeY = value;
+                }
+            }
+            public int MapSizeZ
+            {
+                get
+                {
+                    return map.MapSizeZ;
+                }
+                set
+                {
+                    map.MapSizeZ = value;
+                }
+            }
+            public int SpawnX
+            {
+                get
+                {
+                    return 0;
+                }
+                set
+                {
+                }
+            }
+            public int SpawnY
+            {
+                get
+                {
+                    return 0;
+                }
+                set
+                {
+                }
+            }
+            public int SpawnZ
+            {
+                get
+                {
+                    return 0;
+                }
+                set
+                {
+                }
+            }
+            public void LoadMapArray(byte[] data, int offset)
+            {
+                var ms=new MemoryStream(data);
+                ms.Seek(offset,SeekOrigin.Begin);
+                map.LoadMapArray(ms);
+            }
+            public bool ValidateBlockTypes()
+            {
+                return true;
+            }
+            #endregion
+        }
+        public void LoadMapMinecraft(string filename)
+        {
+            byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile(filename)));
+            fCraft.MapLoaderDAT maploaderdat = new fCraft.MapLoaderDAT();
+            var mymap = new MyMap() { map = this };
+            maploaderdat.log = new fCraft.FLogDummy();
+            maploaderdat.Load(filename, mymap);
         }
         private bool IsText(byte[] serialized, int start, byte[] bytes)
         {
@@ -1295,7 +1356,7 @@ namespace ManicDigger
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
             //clientgame.GeneratePlainMap();
             //clientgame.LoadMapMinecraft();
-            clientgame.LoadMap("menu" + ClientGame.xmlsaveextension);
+            clientgame.LoadMap("menu" + ClientGame.XmlSaveExtension);
             ENABLE_FREEMOVE = true;
             player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
             player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
@@ -1482,7 +1543,13 @@ namespace ManicDigger
                     }
                     try
                     {
-                        clientgame.LoadMap(arguments + ClientGame.xmlsaveextension);
+                        string filename = arguments;
+                        //if no extension given, then add default
+                        if (filename.IndexOf(".") != 0)
+                        {
+                            filename += ClientGame.XmlSaveExtension;
+                        }
+                        clientgame.LoadMap(arguments );
                     }
                     catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
                 }
@@ -1495,7 +1562,7 @@ namespace ManicDigger
                     }
                     try
                     {
-                        clientgame.SaveMap(arguments + ClientGame.xmlsaveextension);
+                        clientgame.SaveMap(arguments + ClientGame.XmlSaveExtension);
                     }
                     catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
                 }
@@ -1667,6 +1734,18 @@ namespace ManicDigger
                 if (Keyboard[OpenTK.Input.Key.ShiftLeft] || Keyboard[OpenTK.Input.Key.ShiftRight])
                 {
                     c = c.ToUpper();
+                    if (c == "1") { c = "!"; }
+                    if (c == "2") { c = "@"; }
+                    if (c == "3") { c = "#"; }
+                    if (c == "4") { c = "$"; }
+                    if (c == "5") { c = "%"; }
+                    if (c == "6") { c = "^"; }
+                    if (c == "7") { c = "&"; }
+                    if (c == "8") { c = "*"; }
+                    if (c == "9") { c = "("; }
+                    if (c == "0") { c = ")"; }
+                    if (c == "-") { c = "_"; }
+                    if (c == "=") { c = "+"; }
                 }
                 GuiTypingBuffer += c;
                 return;
@@ -1678,10 +1757,6 @@ namespace ManicDigger
             if (e.Key == OpenTK.Input.Key.F2)
             {
                 movespeed = basemovespeed * 10;
-            }
-            if (e.Key == OpenTK.Input.Key.K)
-            {
-                clientgame.LoadMapMinecraft();
             }
             if (e.Key == OpenTK.Input.Key.F7)
             {
@@ -4290,6 +4365,189 @@ namespace ManicDigger.Collisions
             float y = a.Y + (b.Y - a.Y) * f;
             float z = a.Z + (b.Z - a.Z) * f;
             return new Vector3(x, y, z);
+        }
+    }
+}
+//http://fcraft.svn.sourceforge.net/viewvc/fcraft/fCraft/fCraft/World/MapLoaderDat.cs?revision=99
+//author: Fragmer, license: MIT
+namespace fCraft
+{
+    public interface IFLogger
+    {
+        void Log(string s);
+        void Log(string s, FLogType type);
+        void Log(string message, FLogType type, params object[] values);
+    }
+    public interface IFMap
+    {
+        int MapSizeX { get; set; }
+        int MapSizeY { get; set; }
+        int MapSizeZ { get; set; }
+        int SpawnX { get; set; }
+        int SpawnY { get; set; }
+        int SpawnZ { get; set; }
+        void LoadMapArray(byte[] data, int offset);
+        bool ValidateBlockTypes();
+    }
+    public enum FLogType
+    {
+        SystemActivity,
+        Error,
+        Debug,
+    }
+    public class FLogDummy : IFLogger
+    {
+        public void Log(string message, FLogType type, params object[] values)
+        {
+            Log(String.Format(message, values), type);
+        }
+        #region IFLogger Members
+        public void Log(string s)
+        {
+        }
+        public void Log(string s, FLogType type)
+        {
+        }
+        #endregion
+    }
+    public class MapLoaderDAT
+    {
+        [Inject]
+        public IFLogger log { get; set; }
+        public void Load(string fileName, IFMap map)
+        {
+            log.Log("Converting {0}...", FLogType.SystemActivity, fileName);
+            byte[] temp = new byte[8];
+            //Map map = new Map(world);
+            byte[] data;
+            int length;
+            try
+            {
+                using (FileStream stream = File.OpenRead(fileName))
+                {
+                    stream.Seek(-4, SeekOrigin.End);
+                    stream.Read(temp, 0, sizeof(int));
+                    stream.Seek(0, SeekOrigin.Begin);
+                    length = BitConverter.ToInt32(temp, 0);
+                    data = new byte[length];
+                    using (GZipStream reader = new GZipStream(stream, CompressionMode.Decompress))
+                    {
+                        reader.Read(data, 0, length);
+                    }
+                }
+
+                //if( data[0] == 0xBE && data[1] == 0xEE && data[2] == 0xEF ) {
+                for (int i = 0; i < length - 1; i++)
+                {
+                    if (data[i] == 0xAC && data[i + 1] == 0xED)
+                    {
+
+                        // bypassing the header crap
+                        int pointer = i + 6;
+                        Array.Copy(data, pointer, temp, 0, sizeof(short));
+                        pointer += IPAddress.HostToNetworkOrder(BitConverter.ToInt16(temp, 0));
+                        pointer += 13;
+
+                        int headerEnd = 0;
+                        // find the end of serialization listing
+                        for (headerEnd = pointer; headerEnd < data.Length - 1; headerEnd++)
+                        {
+                            if (data[headerEnd] == 0x78 && data[headerEnd + 1] == 0x70)
+                            {
+                                headerEnd += 2;
+                                break;
+                            }
+                        }
+
+                        // start parsing serialization listing
+                        int offset = 0;
+                        while (pointer < headerEnd)
+                        {
+                            if (data[pointer] == 'Z') offset++;
+                            else if (data[pointer] == 'I' || data[pointer] == 'F') offset += 4;
+                            else if (data[pointer] == 'J') offset += 8;
+
+                            pointer += 1;
+                            Array.Copy(data, pointer, temp, 0, sizeof(short));
+                            short skip = IPAddress.HostToNetworkOrder(BitConverter.ToInt16(temp, 0));
+                            pointer += 2;
+
+                            // look for relevant variables
+                            Array.Copy(data, headerEnd + offset - 4, temp, 0, sizeof(int));
+                            if (MemCmp(data, pointer, "width"))
+                            {
+                                map.MapSizeX = (ushort)IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0));
+                            }
+                            else if (MemCmp(data, pointer, "depth"))
+                            {
+                                map.MapSizeZ = (ushort)IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0));
+                            }
+                            else if (MemCmp(data, pointer, "height"))
+                            {
+                                map.MapSizeY = (ushort)IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0));
+                            }
+                            else if (MemCmp(data, pointer, "xSpawn"))
+                            {
+                                map.SpawnX = (short)(IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0)) * 32 + 16);
+                            }
+                            else if (MemCmp(data, pointer, "ySpawn"))
+                            {
+                                map.SpawnZ = (short)(IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0)) * 32 + 16);
+                            }
+                            else if (MemCmp(data, pointer, "zSpawn"))
+                            {
+                                map.SpawnY = (short)(IPAddress.HostToNetworkOrder(BitConverter.ToInt32(temp, 0)) * 32 + 16);
+                            }
+
+                            pointer += skip;
+                        }
+
+                        // find the start of the block array
+                        bool foundBlockArray = false;
+                        offset = Array.IndexOf<byte>(data, 0x00, headerEnd);
+                        while (offset != -1 && offset < data.Length - 2)
+                        {
+                            if (data[offset] == 0x00 && data[offset + 1] == 0x78 && data[offset + 2] == 0x70)
+                            {
+                                foundBlockArray = true;
+                                pointer = offset + 7;
+                            }
+                            offset = Array.IndexOf<byte>(data, 0x00, offset + 1);
+                        }
+
+                        // copy the block array... or fail
+                        if (foundBlockArray)
+                        {
+                            map.LoadMapArray(data, pointer);
+                            if (!map.ValidateBlockTypes())
+                            {
+                                throw new Exception("Map validation failed: unknown block types found. Either parsing has done wrong, or this is an incompatible format.");
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception("Could not locate block array.");
+                        }
+                        break;
+                    }
+                    //}
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Log("Conversion failed: {0}", FLogType.Error, ex.Message);
+                log.Log(ex.StackTrace, FLogType.Debug);
+            }
+            log.Log("Conversion completed succesfully succesful.", FLogType.SystemActivity, fileName);
+        }
+
+        static bool MemCmp(byte[] data, int offset, string value)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (offset + i >= data.Length || data[offset + i] != value[i]) return false;
+            }
+            return true;
         }
     }
 }
