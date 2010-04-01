@@ -358,7 +358,7 @@ namespace ManicDigger
         string GetFile(string p);
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
-    public enum TileType : byte
+    public enum TileTypeMinecraft : byte
     {
         Empty = 0,
         Stone,
@@ -483,7 +483,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ; z++)
                     {
-                        map.Map[x, y, z] = data.EmptyTileId();
+                        map.Map[x, y, z] = data.TileIdEmpty();
                     }
                 }
             }
@@ -493,9 +493,9 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ / 2 - 1; z++)
                     {
-                        map.Map[x, y, z] = data.DirtTileId();
+                        map.Map[x, y, z] = data.TileIdDirt();
                     }
-                    map.Map[x, y, map.MapSizeZ / 2 - 1] = data.GrassTileId();
+                    map.Map[x, y, map.MapSizeZ / 2 - 1] = data.TileIdGrass();
                 }
             }
             for (int x = 0; x < 100; x++)
@@ -508,7 +508,7 @@ namespace ManicDigger
                 int x = rnd.Next(map.MapSizeX);
                 int y = rnd.Next(map.MapSizeY);
                 int z = rnd.Next(map.MapSizeZ);
-                if (map.Map[x, y, z] == data.DirtTileId())
+                if (map.Map[x, y, z] == data.TileIdDirt())
                 {
                     map.Map[x, y, z] = data.GoldTileId();
                 }
@@ -524,6 +524,7 @@ namespace ManicDigger
         int MapSizeY { get; set; }
         int MapSizeZ { get; set; }
         void LoadMapArray(Stream ms);
+        void SetBlock(int x, int y, int z, byte tileType);
     }
     //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
     public class ClientGame : IMapStorage
@@ -719,91 +720,11 @@ namespace ManicDigger
         }
         [Inject]
         public IGetFilePath getfile { get; set; }
-        class MyMap:fCraft.IFMap
-        {
-            [Inject]
-            public IMapStorage map { get; set; }
-            #region IFMap Members
-            public int MapSizeX
-            {
-                get
-                {
-                    return map.MapSizeX;
-                }
-                set
-                {
-                    map.MapSizeX = value;
-                }
-            }
-            public int MapSizeY
-            {
-                get
-                {
-                    return map.MapSizeY;
-                }
-                set
-                {
-                    map.MapSizeY = value;
-                }
-            }
-            public int MapSizeZ
-            {
-                get
-                {
-                    return map.MapSizeZ;
-                }
-                set
-                {
-                    map.MapSizeZ = value;
-                }
-            }
-            public int SpawnX
-            {
-                get
-                {
-                    return 0;
-                }
-                set
-                {
-                }
-            }
-            public int SpawnY
-            {
-                get
-                {
-                    return 0;
-                }
-                set
-                {
-                }
-            }
-            public int SpawnZ
-            {
-                get
-                {
-                    return 0;
-                }
-                set
-                {
-                }
-            }
-            public void LoadMapArray(byte[] data, int offset)
-            {
-                var ms=new MemoryStream(data);
-                ms.Seek(offset,SeekOrigin.Begin);
-                map.LoadMapArray(ms);
-            }
-            public bool ValidateBlockTypes()
-            {
-                return true;
-            }
-            #endregion
-        }
         public void LoadMapMinecraft(string filename)
         {
             byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile(filename)));
             fCraft.MapLoaderDAT maploaderdat = new fCraft.MapLoaderDAT();
-            var mymap = new MyMap() { map = this };
+            fCraft.IFMap mymap = new MyFCraftMap() { map = this };
             maploaderdat.log = new fCraft.FLogDummy();
             maploaderdat.Load(filename, mymap);
         }
@@ -862,15 +783,24 @@ namespace ManicDigger
         public void Dispose()
         {
         }
+        #region IMapStorage Members
+        public void SetBlock(int x, int y, int z, byte tileType)
+        {
+            map[x, y, z] = tileType;
+        }
+        #endregion
     }
     public interface IGameData
     {
         int GetTileTextureId(int tileType, TileSide side);
-        byte EmptyTileId();
-        byte GrassTileId();
-        byte DirtTileId();
-        TileType[] DefaultMaterialSlots { get; }
+        byte TileIdEmpty();
+        byte TileIdGrass();
+        byte TileIdDirt();
+        int[] DefaultMaterialSlots { get; }
         byte GoldTileId();
+        int TileIdStone();
+        int TileIdWater();
+        int TileIdSand();
     }
     public class GameDataTilesManicDigger : IGameData
     {
@@ -889,22 +819,36 @@ namespace ManicDigger
             //if ((int)tt < 3) { return (int)tt - 1; }
             return 255;
         }
-        public byte EmptyTileId() { return (int)TileTypesManicDigger.Empty; }
-        public byte GrassTileId() { return (int)TileTypesManicDigger.Grass; }
-        public byte DirtTileId() { return (int)TileTypesManicDigger.Dirt; }
-        public TileType[] DefaultMaterialSlots
+        public byte TileIdEmpty() { return (int)TileTypesManicDigger.Empty; }
+        public byte TileIdGrass() { return (int)TileTypesManicDigger.Grass; }
+        public byte TileIdDirt() { return (int)TileTypesManicDigger.Dirt; }
+        public int[] DefaultMaterialSlots
         {
             get
             {
-                TileType[] m = new TileType[10];
+                int[] m = new int[10];
                 for (int i = 0; i < 10; i++)
                 {
-                    m[i] = (TileType)(i + 1);
+                    m[i] = (i + 1);
                 }
                 return m;
             }
         }
         public byte GoldTileId() { return (int)TileTypesManicDigger.Gold; }
+        #region IGameData Members
+        public int TileIdStone()
+        {
+            return TileIdDirt();//todo
+        }
+        public int TileIdWater()
+        {
+            return TileIdDirt();//todo
+        }
+        public int TileIdSand()
+        {
+            return TileIdDirt();//todo
+        }
+        #endregion
     }
     public enum TileTypesManicDigger
     {
@@ -924,79 +868,93 @@ namespace ManicDigger
         public GameDataTilesMinecraft()
         {
         }
-        public byte EmptyTileId()
+        public byte TileIdEmpty()
         {
-            return (byte)TileType.Empty;
+            return (byte)TileTypeMinecraft.Empty;
         }
-        public byte GrassTileId()
+        public byte TileIdGrass()
         {
-            return (byte)TileType.Grass;
+            return (byte)TileTypeMinecraft.Grass;
         }
-        public byte DirtTileId()
+        public byte TileIdDirt()
         {
-            return (byte)TileType.Dirt;
+            return (byte)TileTypeMinecraft.Dirt;
         }
         public int GetTileTextureId(int tileType, TileSide side)
         {
-            TileType tt = (TileType)tileType;
-            if (tt == TileType.Stone) { return 1; }
-            if (tt == TileType.Grass)
+            TileTypeMinecraft tt = (TileTypeMinecraft)tileType;
+            if (tt == TileTypeMinecraft.Stone) { return 1; }
+            if (tt == TileTypeMinecraft.Grass)
             {
                 if (side == TileSide.Top) { return 0; }
                 if (side == TileSide.Bottom) { return 2; }
                 return 3;
             }
-            if (tt == TileType.Cobblestone) { return (1 * 16) + 0; }
-            if (tt == TileType.Sapling) { return 15; }//special
-            if (tt == TileType.Adminium) { return (1 * 16) + 1; }
-            if (tt == TileType.Water) { return 14; }
-            if (tt == TileType.StationaryWater) { return 14; }
-            if (tt == TileType.Lava) { return (1 * 16) + 15; }
-            if (tt == TileType.StationaryLava) { return (1 * 16) + 15; }
-            if (tt == TileType.Sand) { return (1 * 16) + 2; }
-            if (tt == TileType.Gravel) { return (1 * 16) + 3; }
-            if (tt == TileType.GoldOre) { return (2 * 16) + 0; }
-            if (tt == TileType.IronOre) { return (2 * 16) + 1; }
-            if (tt == TileType.CoalOre) { return (2 * 16) + 2; }
-            if (tt == TileType.TreeTrunk)
+            if (tt == TileTypeMinecraft.Cobblestone) { return (1 * 16) + 0; }
+            if (tt == TileTypeMinecraft.Sapling) { return 15; }//special
+            if (tt == TileTypeMinecraft.Adminium) { return (1 * 16) + 1; }
+            if (tt == TileTypeMinecraft.Water) { return 14; }
+            if (tt == TileTypeMinecraft.StationaryWater) { return 14; }
+            if (tt == TileTypeMinecraft.Lava) { return (1 * 16) + 15; }
+            if (tt == TileTypeMinecraft.StationaryLava) { return (1 * 16) + 15; }
+            if (tt == TileTypeMinecraft.Sand) { return (1 * 16) + 2; }
+            if (tt == TileTypeMinecraft.Gravel) { return (1 * 16) + 3; }
+            if (tt == TileTypeMinecraft.GoldOre) { return (2 * 16) + 0; }
+            if (tt == TileTypeMinecraft.IronOre) { return (2 * 16) + 1; }
+            if (tt == TileTypeMinecraft.CoalOre) { return (2 * 16) + 2; }
+            if (tt == TileTypeMinecraft.TreeTrunk)
             {
                 if (side == TileSide.Top || side == TileSide.Bottom) { return (1 * 16) + 5; }
                 return (1 * 16) + 4;
             }
-            if (tt == TileType.Leaves) { return (1 * 16) + 6; }
-            if (tt == TileType.Sponge) { return (3 * 16) + 0; }
-            if (tt == TileType.Glass) { return (3 * 16) + 1; }
+            if (tt == TileTypeMinecraft.Leaves) { return (1 * 16) + 6; }
+            if (tt == TileTypeMinecraft.Sponge) { return (3 * 16) + 0; }
+            if (tt == TileTypeMinecraft.Glass) { return (3 * 16) + 1; }
             //...
             //43
-            if (tt == TileType.DoubleStair) { return (0 * 16) + 5; }
-            if (tt == TileType.Brick) { return (6 * 16) + 7; }
-            if (tt == TileType.Wood) { return 4; }
-            if (tt == TileType.Dirt) { return 2; }
-            if (tt == TileType.Stair) { return 5; }
+            if (tt == TileTypeMinecraft.DoubleStair) { return (0 * 16) + 5; }
+            if (tt == TileTypeMinecraft.Brick) { return (6 * 16) + 7; }
+            if (tt == TileTypeMinecraft.Wood) { return 4; }
+            if (tt == TileTypeMinecraft.Dirt) { return 2; }
+            if (tt == TileTypeMinecraft.Stair) { return 5; }
             return (int)tt;
         }
-        public TileType[] DefaultMaterialSlots
+        public int[] DefaultMaterialSlots
         {
             get
             {
-                var slots = new List<TileType>();
-                slots.Add(TileType.Dirt);
-                slots.Add(TileType.Stone);
-                slots.Add(TileType.Cobblestone);
-                slots.Add(TileType.Wood);
-                slots.Add(TileType.Sand);
-                slots.Add(TileType.Gravel);
-                slots.Add(TileType.Leaves);
-                slots.Add(TileType.Stair);
-                slots.Add(TileType.Glass);
-                slots.Add(TileType.Sponge);
+                var slots = new List<int>();
+                slots.Add((int)TileTypeMinecraft.Dirt);
+                slots.Add((int)TileTypeMinecraft.Stone);
+                slots.Add((int)TileTypeMinecraft.Cobblestone);
+                slots.Add((int)TileTypeMinecraft.Wood);
+                slots.Add((int)TileTypeMinecraft.Sand);
+                slots.Add((int)TileTypeMinecraft.Gravel);
+                slots.Add((int)TileTypeMinecraft.Leaves);
+                slots.Add((int)TileTypeMinecraft.Stair);
+                slots.Add((int)TileTypeMinecraft.Glass);
+                slots.Add((int)TileTypeMinecraft.Sponge);
                 return slots.ToArray();
             }
         }
         public byte GoldTileId()
         {
-            return (int)TileType.GoldOre;
+            return (int)TileTypeMinecraft.GoldOre;
         }
+        #region IGameData Members
+        public int TileIdStone()
+        {
+            return (int)TileTypeMinecraft.Stone;
+        }
+        public int TileIdWater()
+        {
+            return (int)TileTypeMinecraft.Water;
+        }
+        public int TileIdSand()
+        {
+            return (int)TileTypeMinecraft.Sand;
+        }
+        #endregion
     }
     public class CharacterPhysics
     {
@@ -1020,7 +978,7 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == (byte)TileType.Empty;
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
         }
         float walldistance = 0.2f;
         public const float characterheight = 1.5f;
@@ -1570,6 +1528,10 @@ namespace ManicDigger
                 {
                     ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
                 }
+                else
+                {
+                    network.SendChat(GuiTypingBuffer);
+                }
             }
             else
             {
@@ -1897,7 +1859,7 @@ namespace ManicDigger
         void maploaded()
         {
         }
-        TileType[] MaterialSlots;
+        int[] MaterialSlots;
         //warning! buffer zone!
         RectangleF TextureCoords(int textureId, int texturesPacked)
         {
@@ -1915,7 +1877,7 @@ namespace ManicDigger
             {
                 return true;
             }
-            return clientgame.Map[x, y, z] == (byte)TileType.Empty;
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
         }
         bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z)
         {
@@ -1927,11 +1889,11 @@ namespace ManicDigger
             {
                 return true;
             }
-            return clientgame.Map[x, y, z] == (byte)TileType.Empty
-                || clientgame.Map[x, y, z] == (byte)TileType.Water
-                || clientgame.Map[x, y, z] == (byte)TileType.Glass
-                || clientgame.Map[x, y, z] == (byte)TileType.InfiniteWaterSource
-                || clientgame.Map[x, y, z] == (byte)TileType.Leaves;
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
+                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Water
+                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Glass
+                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
+                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
         }
         int texturesPacked = 16;//16x16
         bool DONOTDRAWEDGES = true;
@@ -2350,7 +2312,7 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == (byte)TileType.Empty;
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
         }
         float PICK_DISTANCE = 3.5f;
         private void UpdatePicking()
@@ -2420,7 +2382,7 @@ namespace ManicDigger
                         if (IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
-                            clonesource = (int)PlayerBuildableMaterialType((TileType)clonesource);
+                            clonesource = (int)PlayerBuildableMaterialType((TileTypeMinecraft)clonesource);
                             for (int i = 0; i < MaterialSlots.Length; i++)
                             {
                                 if ((int)MaterialSlots[i] == clonesource)
@@ -2429,7 +2391,7 @@ namespace ManicDigger
                                     goto done;
                                 }
                             }
-                            MaterialSlots[activematerial] = (TileType)clonesource;
+                            MaterialSlots[activematerial] = clonesource;
                         done:
                             audio.Play(soundclone);
                         }
@@ -2463,15 +2425,15 @@ namespace ManicDigger
                 fastclicking = true;
             }
         }
-        private TileType PlayerBuildableMaterialType(TileType t)
+        private TileTypeMinecraft PlayerBuildableMaterialType(TileTypeMinecraft t)
         {
-            if (t == TileType.Grass)
+            if (t == TileTypeMinecraft.Grass)
             {
-                return TileType.Dirt;
+                return TileTypeMinecraft.Dirt;
             }
-            if (t == TileType.Water || t == TileType.Lava) //...
+            if (t == TileTypeMinecraft.Water || t == TileTypeMinecraft.Lava) //...
             {
-                return TileType.Dirt;
+                return TileTypeMinecraft.Dirt;
             }
             return t;
         }
@@ -3229,7 +3191,7 @@ namespace ManicDigger
             clientgame.p = p;
             p.clientgame = clientgame;
             network.gui = w;
-            network.map = w;
+            network.map1 = w;
             var mapgenerator = new MapGeneratorPlain();
             mapgenerator.data = data;
             mapgenerator.map = clientgame;
@@ -3351,21 +3313,130 @@ namespace ManicDigger
         {
         }
         [Inject]
-        public IMap map { get; set; }
+        public IMap map1 { get; set; }
         public void SendSetBlock(Vector3 position, BlockSetMode mode, byte type)
         {
             if (mode == BlockSetMode.Destroy)
             {
-                type = (byte)TileType.Empty;
+                type = (byte)TileTypeMinecraft.Empty;
             }
-            map.UpdateTileSet(position, type);
+            map1.UpdateTileSet(position, type);
         }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         [Inject]
         public IGui gui { get; set; }
         public void SendChat(string s)
         {
+            if (s == "")
+            {
+                return;
+            }
+            string[] ss = s.Split(new char[] { ' ' });
+            if (s.StartsWith("/"))
+            {
+                string cmd = ss[0].Substring(1);
+                string arguments;
+                if (s.IndexOf(" ") == -1)
+                { arguments = ""; }
+                else
+                { arguments = s.Substring(s.IndexOf(" ")); }
+                arguments = arguments.Trim();
+                if (cmd == "generate")
+                {
+                    DoGenerate(arguments, false);
+                    gui.DrawMap();
+                }
+            }
             gui.AddChatline(s);
+        }
+        [Inject]
+        public IMapStorage map { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
+        [Inject]
+        public fCraft.MapGenerator gen { get; set; }
+        void DoGenerate(string mode, bool hollow)
+        {
+            switch (mode)
+            {
+                case "flatgrass":
+                    bool reportedProgress = false;
+                    playerMessage("Generating flatgrass map...");
+                    for (int i = 0; i < map.MapSizeX; i++)
+                    {
+                        for (int j = 0; j < map.MapSizeY; j++)
+                        {
+                            for (int k = 1; k < map.MapSizeZ / 2 - 1; k++)
+                            {
+                                if (!hollow) map.SetBlock(i, j, k, data.TileIdDirt());
+                            }
+                            map.SetBlock(i, j, map.MapSizeZ / 2 - 1, data.TileIdGrass());
+                        }
+                        if (i > map.MapSizeX / 2 && !reportedProgress)
+                        {
+                            reportedProgress = true;
+                            playerMessage("Map generation: 50%");
+                        }
+                    }
+
+                    //map.MakeFloodBarrier();
+
+                    //if (map.Save(filename))
+                    //{
+                    //    player.Message("Map generation: Done.");
+                    //}
+                    //else
+                    //{
+                    //    player.Message(Color.Red, "An error occured while generating the map.");
+                    //}
+                    break;
+
+                case "empty":
+                    playerMessage("Generating empty map...");
+                    //map.MakeFloodBarrier();
+
+                    //if (map.Save(filename))
+                    //{
+                    //    player.Message("Map generation: Done.");
+                    //}
+                    //else
+                    //{
+                    //    player.Message(Color.Red, "An error occured while generating the map.");
+                    //}
+
+                    break;
+
+                case "hills":
+                    playerMessage("Generating terrain...");
+                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                                                                              1, 1, 0.5, 0.45, 0, 0.5, hollow));
+                    break;
+
+                case "mountains":
+                    playerMessage("Generating terrain...");
+                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                                                                              4, 1, 0.5, 0.45, 0.1, 0.5, hollow));
+                    break;
+
+                case "lake":
+                    playerMessage("Generating terrain...");
+                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                                                                              1, 0.6, 0.9, 0.45, -0.35, 0.55, hollow));
+                    break;
+
+                case "island":
+                    playerMessage("Generating terrain...");
+                    gen.GenerateMap(new fCraft.MapGeneratorParameters(1, 0.6, 1, 0.45, 0.3, 0.35, hollow));
+                    break;
+
+                default:
+                    playerMessage("Unknown map generation mode: " + mode);
+                    break;
+            }
+        }
+        private void playerMessage(string p)
+        {
+            gui.AddChatline(p);
         }
         public IEnumerable<string> ConnectedPlayers()
         {
@@ -4368,7 +4439,102 @@ namespace ManicDigger.Collisions
         }
     }
 }
+class MyFCraftMap : fCraft.IFMap
+{
+    [Inject]
+    public IMapStorage map { get; set; }
+    #region IFMap Members
+    public int MapSizeX
+    {
+        get
+        {
+            return map.MapSizeX;
+        }
+        set
+        {
+            map.MapSizeX = value;
+        }
+    }
+    public int MapSizeY
+    {
+        get
+        {
+            return map.MapSizeY;
+        }
+        set
+        {
+            map.MapSizeY = value;
+        }
+    }
+    public int MapSizeZ
+    {
+        get
+        {
+            return map.MapSizeZ;
+        }
+        set
+        {
+            map.MapSizeZ = value;
+        }
+    }
+    public int SpawnX
+    {
+        get
+        {
+            return 0;
+        }
+        set
+        {
+        }
+    }
+    public int SpawnY
+    {
+        get
+        {
+            return 0;
+        }
+        set
+        {
+        }
+    }
+    public int SpawnZ
+    {
+        get
+        {
+            return 0;
+        }
+        set
+        {
+        }
+    }
+    public void LoadMapArray(byte[] data, int offset)
+    {
+        var ms = new MemoryStream(data);
+        ms.Seek(offset, SeekOrigin.Begin);
+        map.LoadMapArray(ms);
+    }
+    public bool ValidateBlockTypes()
+    {
+        return true;
+    }
+    public void SetBlock(int x, int y, int z, int tileType)
+    {
+        map.Map[x, y, z] = (byte)tileType;
+    }
+    #endregion
+}
+public class GetRandomDummy : fCraft.IGetRandom
+{
+    #region IGetRandom Members
+    Random rnd1 = new Random();
+    public Random rnd
+    {
+        get { return rnd1; }
+    }
+    #endregion
+}
 //http://fcraft.svn.sourceforge.net/viewvc/fcraft/fCraft/fCraft/World/MapLoaderDat.cs?revision=99
+//http://fcraft.svn.sourceforge.net/viewvc/fcraft/fCraft/fCraft/World/MapGenerator.cs?revision=85
 //author: Fragmer, license: MIT
 namespace fCraft
 {
@@ -4388,6 +4554,7 @@ namespace fCraft
         int SpawnZ { get; set; }
         void LoadMapArray(byte[] data, int offset);
         bool ValidateBlockTypes();
+        void SetBlock(int x, int y, int z, int tileType);
     }
     public enum FLogType
     {
@@ -4548,6 +4715,185 @@ namespace fCraft
                 if (offset + i >= data.Length || data[offset + i] != value[i]) return false;
             }
             return true;
+        }
+    }
+    public interface IGetRandom
+    {
+        Random rnd { get; }
+    }
+    public class MapGeneratorParameters
+    {
+        public MapGeneratorParameters(double _roughness, double _smoothingOver, double _smoothingUnder, double _water, double _midpoint, double _sides, bool _hollow)
+        {
+            roughness = _roughness;
+            smoothingOver = _smoothingOver;
+            smoothingUnder = _smoothingUnder;
+            midpoint = _midpoint;
+            sides = _sides;
+            water = _water;
+            hollow = _hollow;
+        }
+        public double roughness, gBigSize, smoothingOver, smoothingUnder, water, midpoint, sides;
+        public bool hollow;
+    }
+    public class MapGenerator
+    {
+        [Inject]
+        public IGetRandom rand { get; set; }
+        [Inject]
+        public IFMap map { get; set; }
+        [Inject]
+        public IFLogger log { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
+        MapGeneratorParameters parameters;
+        public void GenerateMap(MapGeneratorParameters parameters)
+        {
+            this.parameters = parameters;
+            double[,] heightmap = GenerateHeightmap(map.MapSizeX, map.MapSizeY);
+            Feedback("Filling...");
+            for (int x = 0; x < map.MapSizeX; x++)
+            {
+                for (int y = 0; y < map.MapSizeY; y++)
+                {
+                    double level = heightmap[x, y];
+                    if (level > parameters.water)
+                    {
+                        level = (level - parameters.water) * parameters.smoothingOver + parameters.water;
+                        map.SetBlock(x, y, (int)(level * map.MapSizeZ), data.TileIdGrass());
+                        if (!parameters.hollow)
+                        {
+                            for (int i = (int)(level * map.MapSizeZ) - 1; i > 0; i--)
+                            {
+                                if ((int)(level * map.MapSizeZ) - i < 5)
+                                {
+                                    map.SetBlock(x, y, i, data.TileIdDirt());
+                                }
+                                else
+                                {
+                                    map.SetBlock(x, y, i, data.TileIdStone());
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        level = (level - parameters.water) * parameters.smoothingUnder + parameters.water;
+                        map.SetBlock(x, y, (int)(parameters.water * map.MapSizeZ), data.TileIdWater());
+                        if (!parameters.hollow)
+                        {
+                            for (int i = (int)(parameters.water * map.MapSizeZ) - 1; i >= (int)(level * map.MapSizeZ); i--)
+                            {
+                                map.SetBlock(x, y, i, data.TileIdWater());
+                            }
+                        }
+                        map.SetBlock(x, y, (int)(level * map.MapSizeZ), data.TileIdSand());
+                        if (!parameters.hollow)
+                        {
+                            for (int i = (int)(level * map.MapSizeZ) - 1; i > 0; i--)
+                            {
+                                map.SetBlock(x, y, i, data.TileIdStone());
+                            }
+                        }
+                    }
+                }
+            }
+            //map.MakeFloodBarrier();
+            //map.Save(filename);
+            Feedback("Done.");
+        }
+        void Feedback(string message)
+        {
+            //player.Message("Map generation: " + message);
+            log.Log("Map generation: " + message, FLogType.SystemActivity);
+        }
+        double[,] GenerateHeightmap(int iWidth, int iHeight)
+        {
+            double c1, c2, c3, c4;
+            double[,] points = new double[iWidth + 1, iHeight + 1];
+
+            //Assign the four corners of the intial grid random color values
+            //These will end up being the colors of the four corners
+            c1 = parameters.sides + (rand.rnd.NextDouble() - 0.5) * 0.05;
+            c2 = parameters.sides + (rand.rnd.NextDouble() - 0.5) * 0.05;
+            c3 = parameters.sides + (rand.rnd.NextDouble() - 0.5) * 0.05;
+            c4 = parameters.sides + (rand.rnd.NextDouble() - 0.5) * 0.05;
+            parameters.gBigSize = iWidth + iHeight;
+            DivideGrid(ref points, 0, 0, iWidth, iHeight, c1, c2, c3, c4, true);
+            return points;
+        }
+        public void DivideGrid(ref double[,] points, double x, double y, int width, int height, double c1, double c2, double c3, double c4, bool isTop)
+        {
+            double Edge1, Edge2, Edge3, Edge4, Middle;
+
+            int newWidth = width / 2;
+            int newHeight = height / 2;
+
+            if (width > 1 || height > 1)
+            {
+                if (isTop)
+                {
+                    Middle = ((c1 + c2 + c3 + c4) / 4) + parameters.midpoint;	//Randomly displace the midpoint!
+                }
+                else
+                {
+                    Middle = ((c1 + c2 + c3 + c4) / 4) + Displace(newWidth + newHeight);	//Randomly displace the midpoint!
+                }
+                Edge1 = ((c1 + c2) / 2);	//Calculate the edges by averaging the two corners of each edge.
+                Edge2 = ((c2 + c3) / 2);
+                Edge3 = ((c3 + c4) / 2);
+                Edge4 = ((c4 + c1) / 2);//
+                //Make sure that the midpoint doesn't accidentally "randomly displaced" past the boundaries!
+                Middle = Rectify(Middle);
+                Edge1 = Rectify(Edge1);
+                Edge2 = Rectify(Edge2);
+                Edge3 = Rectify(Edge3);
+                Edge4 = Rectify(Edge4);
+                //Do the operation over again for each of the four new grids.
+                DivideGrid(ref points, x, y, newWidth, newHeight, c1, Edge1, Middle, Edge4, false);
+                DivideGrid(ref points, x + newWidth, y, width - newWidth, newHeight, Edge1, c2, Edge2, Middle, false);
+                if (isTop) Feedback("Heightmap: 50%");
+                DivideGrid(ref points, x + newWidth, y + newHeight, width - newWidth, height - newHeight, Middle, Edge2, c3, Edge3, false);
+                DivideGrid(ref points, x, y + newHeight, newWidth, height - newHeight, Edge4, Middle, Edge3, c4, false);
+                if (isTop) Feedback("Heightmap: 100%");
+            }
+            else
+            {
+                //This is the "base case," where each grid piece is less than the size of a pixel.
+                //The four corners of the grid piece will be averaged and drawn as a single pixel.
+                double c = (c1 + c2 + c3 + c4) / 4;
+
+                points[(int)(x), (int)(y)] = c;
+                if (width == 2)
+                {
+                    points[(int)(x + 1), (int)(y)] = c;
+                }
+                if (height == 2)
+                {
+                    points[(int)(x), (int)(y + 1)] = c;
+                }
+                if ((width == 2) && (height == 2))
+                {
+                    points[(int)(x + 1), (int)(y + 1)] = c;
+                }
+            }
+        }
+        double Rectify(double iNum)
+        {
+            if (iNum < 0)
+            {
+                iNum = 0;
+            }
+            else if (iNum > 1.0)
+            {
+                iNum = 1.0;
+            }
+            return iNum;
+        }
+        double Displace(double SmallSize)
+        {
+            double Max = SmallSize / parameters.gBigSize * parameters.roughness;
+            return (rand.rnd.NextDouble() - 0.5) * Max;
         }
     }
 }
