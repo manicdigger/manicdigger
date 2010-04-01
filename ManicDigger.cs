@@ -1419,7 +1419,7 @@ namespace ManicDigger
                                 toupdate.Enqueue(new Vector3(x, y, z));
                             }
         }
-        int buffersize = 32; //32,45
+        int buffersize = 30; //32,45
         public void UpdateTileSet(Vector3 pos, byte type)
         {
             //            frametickmainthreadtodo.Add(() =>
@@ -2042,7 +2042,7 @@ namespace ManicDigger
             }
             if (myvertices.Count > ushort.MaxValue)
             {
-                //throw new Exception();//aaa
+                throw new Exception();//aaa
             }
             var a = myelements.ToArray();
             var b = myvertices.ToArray();
@@ -2051,7 +2051,7 @@ namespace ManicDigger
             {
                 position = new Vector3(startx / size, starty / size, startz / size),
                 indices = a,
-                vertices = b
+                vertices = b,
             };
         }
         int terrainTexture;
