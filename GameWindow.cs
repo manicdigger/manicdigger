@@ -45,7 +45,7 @@ namespace ManicDigger
             public Box3D box;
         }
         //List<Vbo> vbo = new List<Vbo>();
-        Dictionary<Vector3, Vbo> vbo = new Dictionary<Vector3, Vbo>();
+        Dictionary<Vector3, ICollection<Vbo>> vbo = new Dictionary<Vector3, ICollection<Vbo>>();
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct VertexPositionTexture
@@ -191,7 +191,6 @@ namespace ManicDigger
             player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
             player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
             DrawMap();
-            Console.WriteLine("Hardware buffers: " + toupdate.Count);
             GL.Enable(EnableCap.Texture2D);
             terrainTexture = LoadTexture(getfile.GetFile("terrain.png"));
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
@@ -245,13 +244,16 @@ namespace ManicDigger
                     {
                         //try
                         {
-                            VerticesIndicesToLoad q = MakeChunk((int)p.X * buffersize, (int)p.Y * buffersize, (int)p.Z * buffersize, buffersize);
-
+                            IEnumerable<VerticesIndicesToLoad> q = MakeChunk((int)p.X * buffersize, (int)p.Y * buffersize, (int)p.Z * buffersize, buffersize);
+                            List<Vector3> toremove = new List<Vector3>();
                             if (q != null)
                             {
                                 lock (vbotoload)
                                 {
-                                    vbotoload.Enqueue(q);
+                                    //foreach (var qq in q)
+                                    {
+                                        vbotoload.Enqueue(new List<VerticesIndicesToLoad>(q.ToArray()));
+                                    }
                                 }
                             }
                         }
@@ -275,10 +277,13 @@ namespace ManicDigger
             }
             foreach (var v in vbo)
             {
-                var a = v.Value.VboID;
-                var b = v.Value.EboID;
-                GL.DeleteBuffers(1, ref a);
-                GL.DeleteBuffers(1, ref b);
+                foreach (var vv in v.Value)
+                {
+                    var a = vv.VboID;
+                    var b = vv.EboID;
+                    GL.DeleteBuffers(1, ref a);
+                    GL.DeleteBuffers(1, ref b);
+                }
             }
             vbo.Clear();
             for (int i = 0; i < 1; i++)
@@ -291,7 +296,7 @@ namespace ManicDigger
                                 toupdate.Enqueue(new Vector3(x, y, z));
                             }
         }
-        int buffersize = 30; //32,45
+        int buffersize = 32; //32,45
         public void UpdateTileSet(Vector3 pos, byte type)
         {
             //            frametickmainthreadtodo.Add(() =>
@@ -771,8 +776,9 @@ namespace ManicDigger
         }
         int texturesPacked = 16;//16x16
         bool DONOTDRAWEDGES = true;
-        VerticesIndicesToLoad MakeChunk(int startx, int starty, int startz, int size)
+        List<VerticesIndicesToLoad> MakeChunk(int startx, int starty, int startz, int size)
         {
+            List<VerticesIndicesToLoad> list = new List<VerticesIndicesToLoad>();
             List<ushort> myelements = new List<ushort>();
             List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
             for (int x = startx; x < startx + size; x++)
@@ -906,25 +912,32 @@ namespace ManicDigger
                             myelements.Add((ushort)(lastelement + 1));
                             myelements.Add((ushort)(lastelement + 2));
                         }
+                        if (myvertices.Count > ushort.MaxValue)
+                        {
+                            var aa = myelements.ToArray();
+                            var bb = myvertices.ToArray();
+                            list.Add(new VerticesIndicesToLoad()
+                            {
+                                position = new Vector3(startx / size, starty / size, startz / size),
+                                indices = aa,
+                                vertices = bb,
+                            });
+                            myelements = new List<ushort>();
+                            myvertices = new List<VertexPositionTexture>();
+                        }
                     }
-            if (myelements.Count == 0)
+            if (myelements.Count != 0)
             {
-                //yield break;
-                return null;
+                var a = myelements.ToArray();
+                var b = myvertices.ToArray();
+                list.Add(new VerticesIndicesToLoad()
+                {
+                    position = new Vector3(startx / size, starty / size, startz / size),
+                    indices = a,
+                    vertices = b,
+                });
             }
-            if (myvertices.Count > ushort.MaxValue)
-            {
-                throw new Exception();//aaa
-            }
-            var a = myelements.ToArray();
-            var b = myvertices.ToArray();
-            //return LoadVBO(b, a);
-            return new VerticesIndicesToLoad()
-            {
-                position = new Vector3(startx / size, starty / size, startz / size),
-                indices = a,
-                vertices = b,
-            };
+            return list;
         }
         int terrainTexture;
         bool ENABLE_ZFAR = false;
@@ -1011,7 +1024,7 @@ namespace ManicDigger
             public ushort[] indices;
             public Vector3 position;
         }
-        Queue<VerticesIndicesToLoad> vbotoload = new Queue<VerticesIndicesToLoad>();
+        Queue<List<VerticesIndicesToLoad>> vbotoload = new Queue<List<VerticesIndicesToLoad>>();
         public bool exit { get; set; }
         float walksoundtimer = 0;
         int lastwalksound = 0;
@@ -1367,7 +1380,7 @@ namespace ManicDigger
             while (chunkupdateframecounter >= 1)
             {
                 chunkupdateframecounter -= 1;
-                VerticesIndicesToLoad v = null;
+                IEnumerable<VerticesIndicesToLoad> v = null;
                 lock (vbotoload)
                 {
                     if (vbotoload.Count > 0)
@@ -1375,19 +1388,34 @@ namespace ManicDigger
                         v = vbotoload.Dequeue();
                     }
                 }
-                if (v != null)
+                if (v != null && v.Any())
                 {
-                    Vbo vbo1 = LoadVBO(v.vertices, v.indices);
-                    foreach (var vv in v.vertices)
+                    List<Vbo> vbolist = new List<Vbo>();
+                    foreach (var vv in v)
                     {
-                        vbo1.box.AddPoint(vv.Position.X, vv.Position.Y, vv.Position.Z);
+                        var vbo1 = LoadVBO(vv.vertices, vv.indices);
+                        foreach (var vvv in vv.vertices)
+                        {
+                            vbo1.box.AddPoint(vvv.Position.X, vvv.Position.Y, vvv.Position.Z);
+                        }
+                        vbolist.Add(vbo1);
                     }
-                    vbo[v.position] = vbo1;
+                    if (!vbo.ContainsKey(v.First().position))
+                    {
+                        vbo[v.First().position] = new List<Vbo>();
+                    }
+                    //delete old vbo
+                    vbo[v.First().position] = vbolist;
                     //DrawUpdateChunk(((int)v.X), ((int)v.Y), ((int)v.Z));
                 }
             }
             GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
             var z = new List<Vbo>(VisibleVbo());
+            if (z.Count != lastvisiblevbo && vbotoload.Count == 0)
+            {
+                Console.WriteLine("Hardware buffers: " + z.Count);
+                lastvisiblevbo = z.Count;
+            }
             z.Sort(f);
             foreach (var k in z)
             {
@@ -1403,6 +1431,10 @@ namespace ManicDigger
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        private void DeleteVbo(Vbo pp)
+        {
+        }
+        int lastvisiblevbo = 0;
         class Chatline
         {
             public string text;
@@ -1978,9 +2010,12 @@ namespace ManicDigger
         {
             foreach (var k in vbo)
             {
-                if (!ENABLE_VISIBILITY_CULLING || (k.Value.box.Center() - player.playerposition).Length < viewdistance)
+                foreach (var kk in k.Value)
                 {
-                    yield return k.Value;
+                    if (!ENABLE_VISIBILITY_CULLING || (kk.box.Center() - player.playerposition).Length < viewdistance)
+                    {
+                        yield return kk;
+                    }
                 }
             }
         }
