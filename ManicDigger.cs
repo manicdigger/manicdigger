@@ -1545,11 +1545,11 @@ namespace ManicDigger
                     {
                         string filename = arguments;
                         //if no extension given, then add default
-                        if (filename.IndexOf(".") != 0)
+                        if (filename.IndexOf(".") == -1)
                         {
                             filename += ClientGame.XmlSaveExtension;
                         }
-                        clientgame.LoadMap(arguments );
+                        clientgame.LoadMap(filename );
                     }
                     catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
                 }
