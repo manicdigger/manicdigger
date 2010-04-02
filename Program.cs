@@ -8,6 +8,7 @@ using System.IO;
 
 namespace ManicDigger
 {
+    /*
     public class ManicDiggerProgram2
     {
         public void Start()
@@ -39,6 +40,7 @@ namespace ManicDigger
             w.Run();
         }
     }
+    */
     public class ManicDiggerProgram : IInternetGameFactory
     {
         static KernelAndBinder b;
@@ -53,50 +55,8 @@ namespace ManicDigger
             k.Bind<IClientNetwork, ClientNetworkDummy>();
             k.BindInstance<IInternetGameFactory>(this);
         }
-        public void MinecraftModule(KernelAndBinder k)
+        void GameModule(KernelAndBinder b)
         {
-            k.BindInstance<IGetFilePath>(new GetFilePath() { DataPath = "minecraft" });
-            k.Bind<IGameData, GameDataTilesMinecraft>();
-        }
-        public void ManicDiggerModule(KernelAndBinder k)
-        {
-            k.BindInstance<IGetFilePath>(new GetFilePath() { DataPath = "manicdigger" });
-            k.Bind<IGameData, GameDataTilesManicDigger>();
-        }
-        #region IInternetGameFactory Members
-        public void NewInternetGame()
-        {
-            KernelAndBinder b = new KernelAndBinder();
-            MainModule(b);
-            b.BindInstance<IGui>(window);
-            b.BindInstance<ManicDiggerGameWindow>(window);
-            b.Bind<IClientNetwork, ClientNetworkMinecraft>();
-            clientgame = b.Get<ClientGame>();
-            network = b.Get<IClientNetwork>();
-        }
-        ManicDiggerGameWindow window;
-        ClientGame clientgame;
-        IClientNetwork network;
-        public IClientNetwork GetNetwork()
-        {
-            return network;
-        }
-        public ClientGame GetClientGame()
-        {
-            return clientgame;
-        }
-        #endregion
-        [STAThread]
-        public static void Main(string[] args)
-        {
-            //new ManicDiggerProgram2().Start();
-            new ManicDiggerProgram().Start(args);
-        }
-        private void Start(string[] args)
-        {
-            b = new KernelAndBinder();
-            bool digger = args.Length < 1; if (Debugger.IsAttached) digger = false;
-            MainModule(b);
             if (!digger)
             {
                 MinecraftModule(b);
@@ -105,6 +65,60 @@ namespace ManicDigger
             {
                 ManicDiggerModule(b);
             }
+        }
+        public void MinecraftModule(KernelAndBinder k)
+        {
+            k.BindInstance<IGetFilePath>(new GetFilePath(new[] { "mine", "minecraft" }));
+            k.Bind<IGameData, GameDataTilesMinecraft>();
+        }
+        public void ManicDiggerModule(KernelAndBinder k)
+        {
+            k.BindInstance<IGetFilePath>(new GetFilePath(new[] { "manicdigger" }));
+            k.Bind<IGameData, GameDataTilesManicDigger>();
+        }
+        #region IInternetGameFactory Members
+        public void NewInternetGame()
+        {
+            KernelAndBinder b = new KernelAndBinder();
+            MainModule(b);
+            GameModule(b);
+            b.BindInstance<IGui>(window);
+            b.BindInstance<ManicDiggerGameWindow>(window);
+            b.Bind<IClientNetwork, ClientNetworkMinecraft>();
+            clientgame = b.Get<ClientGame>();
+            network = b.Get<IClientNetwork>();
+            terrain = b.Get<ITerrainDrawer>();
+        }
+        ManicDiggerGameWindow window;
+        ClientGame clientgame;
+        IClientNetwork network;
+        ITerrainDrawer terrain;
+        public IClientNetwork GetNetwork()
+        {
+            return network;
+        }
+        public ClientGame GetClientGame()
+        {
+            return clientgame;
+        }
+        public ITerrainDrawer GetTerrain()
+        {
+            return terrain;
+        }
+        #endregion
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            //new ManicDiggerProgram2().Start();
+            new ManicDiggerProgram().Start(args);
+        }
+        bool digger;
+        private void Start(string[] args)
+        {
+            b = new KernelAndBinder();
+            digger = args.Length < 1; if (Debugger.IsAttached) digger = false;
+            MainModule(b);
+            GameModule(b);
             using (var w = b.Get<ManicDiggerGameWindow>())
             {
                 this.window = w;
@@ -127,30 +141,38 @@ namespace ManicDigger
     }
     public class GetFilePath : IGetFilePath
     {
-        public GetFilePath()
+        public GetFilePath(IEnumerable<string> datapath)
         {
+            this.DataPath = new List<string>(datapath);
         }
-        public string DataPath;
+        List<string> DataPath;
         public string GetFile(string filename)
         {
             if (!Directory.Exists("data"))
             {
                 throw new Exception("data not found");
             }
-            string a = Path.Combine(Path.Combine("data", DataPath), filename);
-            string b = Path.Combine("data", filename);
-            string c = filename;
-            if (File.Exists(a))
+            List<string> paths = new List<string>();
+            foreach (string s in DataPath)
             {
-                return a;
+                paths.Add(Path.Combine("data", s));
             }
-            if (File.Exists(b))
+            paths.Add("data");
+            paths.Add("");
+            foreach (string path in paths)
             {
-                return b;
-            }
-            if (File.Exists(c))
-            {
-                return c;
+                string filename2 = filename;
+            tryagain:
+                string a = Path.Combine(path, filename2);
+                if (File.Exists(a))
+                {
+                    return a;
+                }
+                if (filename2.EndsWith(".png"))
+                {
+                    filename2 = filename2.Replace(".png", ".jpg");
+                    goto tryagain;
+                }
             }
             throw new Exception(filename + " not found.");
         }

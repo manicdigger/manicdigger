@@ -530,7 +530,9 @@ namespace ManicDigger
                 if (side == TileSide.Bottom) { return 2; }
                 return 3;
             }
+            if (tt == TileTypeMinecraft.Dirt) { return 2; }
             if (tt == TileTypeMinecraft.Cobblestone) { return (1 * 16) + 0; }
+            if (tt == TileTypeMinecraft.Wood) { return 4; }
             if (tt == TileTypeMinecraft.Sapling) { return 15; }//special
             if (tt == TileTypeMinecraft.Adminium) { return (1 * 16) + 1; }
             if (tt == TileTypeMinecraft.Water) { return 14; }
@@ -550,13 +552,49 @@ namespace ManicDigger
             if (tt == TileTypeMinecraft.Leaves) { return (1 * 16) + 6; }
             if (tt == TileTypeMinecraft.Sponge) { return (3 * 16) + 0; }
             if (tt == TileTypeMinecraft.Glass) { return (3 * 16) + 1; }
-            //...
-            //43
-            if (tt == TileTypeMinecraft.DoubleStair) { return (0 * 16) + 5; }
-            if (tt == TileTypeMinecraft.Brick) { return (6 * 16) + 7; }
-            if (tt == TileTypeMinecraft.Wood) { return 4; }
-            if (tt == TileTypeMinecraft.Dirt) { return 2; }
-            if (tt == TileTypeMinecraft.Stair) { return 5; }
+            if (tt == TileTypeMinecraft.RedCloth) { return 64; }
+            if (tt == TileTypeMinecraft.RedCloth + 1) { return 65; }
+            if (tt == TileTypeMinecraft.RedCloth + 2) { return 66; }
+            if (tt == TileTypeMinecraft.RedCloth + 3) { return 67; }
+            if (tt == TileTypeMinecraft.RedCloth + 4) { return 68; }
+            if (tt == TileTypeMinecraft.RedCloth + 5) { return 69; }
+            if (tt == TileTypeMinecraft.RedCloth + 6) { return 70; }
+            if (tt == TileTypeMinecraft.RedCloth + 7) { return 71; }
+            if (tt == TileTypeMinecraft.RedCloth + 8) { return 72; }
+            if (tt == TileTypeMinecraft.RedCloth + 9) { return 73; }
+            if (tt == TileTypeMinecraft.RedCloth + 10) { return 74; }
+            if (tt == TileTypeMinecraft.RedCloth + 11) { return 75; }
+            if (tt == TileTypeMinecraft.RedCloth + 12) { return 76; }
+            if (tt == TileTypeMinecraft.RedCloth + 13) { return 77; }
+            if (tt == TileTypeMinecraft.RedCloth + 14) { return 78; }
+            if (tt == TileTypeMinecraft.RedCloth + 15) { return 79; }//36
+            if (tt == TileTypeMinecraft.YellowFlowerDecorations) { return 13; }
+            if (tt == TileTypeMinecraft.RedRoseDecorations) { return 12; }
+            if (tt == TileTypeMinecraft.RedMushroom) { return 28; }
+            if (tt == TileTypeMinecraft.BrownMushroom) { return 29; }
+            if (tt == TileTypeMinecraft.Lava) { return 30; }
+            if (tt == TileTypeMinecraft.GoldBlock) { return 24; }
+            if (tt == TileTypeMinecraft.IronBlock) { return 23; }
+            if (tt == TileTypeMinecraft.DoubleStair) { return (0 * 16) + 5; }//43 todo
+            if (tt == TileTypeMinecraft.Stair) { return 6; }//44
+            if (tt == TileTypeMinecraft.TNT) { return (0 * 16) + 8; }//45
+            if (tt == TileTypeMinecraft.Brick) { return (6 * 16) + 7; }//46
+            if (tt == TileTypeMinecraft.Bookcase) { return (2 * 16) + 3; }//47
+            if (tt == TileTypeMinecraft.MossyCobblestone) { return (2 * 16) + 4; }//48
+            if (tt == TileTypeMinecraft.Obsidian) { return (2 * 16) + 5; }//49
+            //torch todo
+            //fire todo
+            if (tt == TileTypeMinecraft.InfiniteWaterSource) { return 14; }//52
+            if (tt == TileTypeMinecraft.InfiniteLavaSource) { return 30; }//53
+            if (tt == TileTypeMinecraft.Chest) { return 4; }//54
+            //gear todo
+            //diamond todo
+            //diamond block todo
+            //crafting table todo
+            //crops todo
+            //soil todo
+            //furnace todo
+            //burning furnace todo
             return (int)tt;
         }
         public int[] DefaultMaterialSlots
@@ -709,6 +747,7 @@ namespace ManicDigger
         void NewInternetGame();
         IClientNetwork GetNetwork();
         ClientGame GetClientGame();
+        ITerrainDrawer GetTerrain();
     }
     public class CharacterPhysicsState
     {

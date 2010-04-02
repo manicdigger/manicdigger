@@ -61,6 +61,11 @@ namespace ManicDigger
         [Inject]
         public IClientNetwork network { get; set; }
         [Inject]
+        public ITerrainDrawer terrain { get; set; }
+        [Inject]
+        public IInternetGameFactory internetgamefactory { get; set; }
+
+        [Inject]
         public IAudio audio { get; set; }
         [Inject]
         public IGetFilePath getfile { get; set; }
@@ -70,8 +75,6 @@ namespace ManicDigger
         public LoginClientMinecraft login { get; set; }
         [Inject]
         public Config3d config3d { get; set; }
-        [Inject]
-        public ITerrainDrawer terrain { get; set; }
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
@@ -581,6 +584,7 @@ namespace ManicDigger
         TypingState GuiTyping = TypingState.None;
         string GuiTypingBuffer = "";
         IClientNetwork newnetwork;
+        ITerrainDrawer newterrain;
         ClientGame newclientgame;
 
         string username = "gamer1";
@@ -592,8 +596,7 @@ namespace ManicDigger
                 return File.ReadAllText("defaultserver.cfg");
             }
         }
-        [Inject]
-        public IInternetGameFactory internetgamefactory { get; set; }
+
         private void DownloadInternetGame(string qusername, string qpass, string qgameurl)
         {
             var oldclientgame = clientgame;
@@ -601,6 +604,8 @@ namespace ManicDigger
             internetgamefactory.NewInternetGame();
             newclientgame = internetgamefactory.GetClientGame();
             newnetwork = internetgamefactory.GetNetwork();
+            newterrain = internetgamefactory.GetTerrain();
+            newterrain.Start();
 
             oldclientgame.Dispose();
             newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
@@ -626,7 +631,8 @@ namespace ManicDigger
             {
                 this.network = newnetwork;
                 this.clientgame = newclientgame;
-                newnetwork = null; newclientgame = null;
+                this.terrain = newterrain;
+                newnetwork = null; newclientgame = null; newterrain = null;
                 var ee = (MapLoadedEventArgs)e;
                 lock (clientgame.mapupdate)
                 {
