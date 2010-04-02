@@ -16,7 +16,45 @@ using System.IO;
 
 namespace ManicDigger
 {
-    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IGui, IMap
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct VertexPositionTexture
+    {
+        public Vector3 Position;
+        public float u;
+        public float v;
+
+        public VertexPositionTexture(float x, float y, float z, float u, float v)
+        {
+            Position = new Vector3(x, y, z);
+            this.u = u;
+            this.v = v;
+        }
+
+        static uint ToRgba(Color color)
+        {
+            return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
+        }
+    }
+    public class VerticesIndicesToLoad
+    {
+        public VertexPositionTexture[] vertices;
+        public ushort[] indices;
+        public Vector3 position;
+    }
+    public class Config3d
+    {
+        public bool ENABLE_BACKFACECULLING = true;
+        public bool ENABLE_TRANSPARENCY = true;
+        public bool ENABLE_MIPMAPS = true;
+        public bool ENABLE_VSYNC = false;
+        public bool ENABLE_VISIBILITY_CULLING = false;
+        public float viewdistance = 256;
+    }
+    public interface IThe3d
+    {
+        int LoadTexture(string filename);
+    }
+    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
         [Inject]
         public ClientGame clientgame { get; set; }
@@ -30,71 +68,40 @@ namespace ManicDigger
         public IGameData data { get; set; }
         [Inject]
         public LoginClientMinecraft login { get; set; }
-
-        bool ENABLE_BACKFACECULLING = true;
-        bool ENABLE_TRANSPARENCY = true;
-        bool ENABLE_MIPMAPS = true;
-        bool ENABLE_VSYNC = false;
+        [Inject]
+        public Config3d config3d { get; set; }
+        [Inject]
+        public ITerrainDrawer terrain { get; set; }
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
 
-        struct Vbo
+        public void DrawMap()
         {
-            public int VboID, EboID, NumElements;
-            public Box3D box;
+            terrain.UpdateAllTiles();
         }
-        //List<Vbo> vbo = new List<Vbo>();
-        Dictionary<Vector3, ICollection<Vbo>> vbo = new Dictionary<Vector3, ICollection<Vbo>>();
-
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        struct VertexPositionTexture
+        public void UpdateTileSet(Vector3 pos, byte type)
         {
-            public Vector3 Position;
-            public float u;
-            public float v;
-
-            public VertexPositionTexture(float x, float y, float z, float u, float v)
-            {
-                Position = new Vector3(x, y, z);
-                this.u = u;
-                this.v = v;
-            }
-
-            static uint ToRgba(Color color)
-            {
-                return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
-            }
+            //            frametickmainthreadtodo.Add(() =>
+            //        {
+            int x = (int)pos.X;
+            int y = (int)pos.Y;
+            int z = (int)pos.Z;
+            clientgame.Map[x, y, z] = type;
+            terrain.UpdateTile(x, y, z);
+            //          });
         }
-
-        VertexPositionTexture[] CubeVertices = new VertexPositionTexture[]
-        {
-            new VertexPositionTexture( 0.0f,  1.0f,  0.0f, 0, 0),
-            new VertexPositionTexture( 0.0f,  1.0f,  1.0f, 0, 1),
-            new VertexPositionTexture( 1.0f,  1.0f,  0.0f, 1, 0),
-            new VertexPositionTexture( 1.0f,  1.0f,  1.0f, 1, 1),
-        };
-
-        short[] CubeElements = new short[]
-        {
-            0, 1, 2, 2, 3, 0, // front face
-            3, 2, 6, 6, 7, 3, // top face
-            7, 6, 5, 5, 4, 7, // back face
-            4, 0, 3, 3, 7, 4, // left face
-            0, 1, 5, 5, 4, 0, // bottom face
-            1, 5, 6, 6, 2, 1, // right face
-        };
         const bool ENABLE_FULLSCREEN = false;
         public ManicDiggerGameWindow()
             : base(800, 600, GraphicsMode.Default, "",
                 ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { }
-        int LoadTexture(string filename)
+        public int LoadTexture(string filename)
         {
             Bitmap bmp = new Bitmap(filename);
             return LoadTexture(bmp);
         }
         //http://www.opentk.com/doc/graphics/textures/loading
-        int LoadTexture(Bitmap bmp)
+        public int LoadTexture(Bitmap bmp)
         {
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
@@ -102,7 +109,7 @@ namespace ManicDigger
             // We haven't uploaded mipmaps, so disable mipmapping (otherwise the texture will not appear).
             // On newer video cards, we can use GL.GenerateMipmaps() or GL.Ext.GenerateMipmaps() to create
             // mipmaps automatically. In that case, use TextureMinFilter.LinearMipmapLinear to enable them.
-            if (!ENABLE_MIPMAPS)
+            if (!config3d.ENABLE_MIPMAPS)
             {
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
@@ -129,7 +136,7 @@ namespace ManicDigger
             bmp.UnlockBits(bmp_data);
 
             GL.Enable(EnableCap.DepthTest);
-            if (ENABLE_TRANSPARENCY)
+            if (config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.AlphaTest);
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
@@ -172,7 +179,7 @@ namespace ManicDigger
                 //System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
                 this.Exit();
             }
-            if (!ENABLE_VSYNC)
+            if (!config3d.ENABLE_VSYNC)
             {
                 TargetRenderFrequency = 0;
             }
@@ -191,10 +198,8 @@ namespace ManicDigger
             player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
             player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
             DrawMap();
-            GL.Enable(EnableCap.Texture2D);
-            terrainTexture = LoadTexture(getfile.GetFile("terrain.png"));
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
-            if (ENABLE_BACKFACECULLING)
+            if (config3d.ENABLE_BACKFACECULLING)
             {
                 GL.DepthMask(true);
                 GL.Enable(EnableCap.DepthTest);
@@ -204,7 +209,7 @@ namespace ManicDigger
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
             MaterialSlots = data.DefaultMaterialSlots;
-            new Thread(bgworker).Start();
+            terrain.Start();
         }
         protected override void OnClosed(EventArgs e)
         {
@@ -215,132 +220,7 @@ namespace ManicDigger
         string soundbuild = "build.wav";
         string sounddestruct = "destruct.wav";
         string soundclone = "clone.wav";
-        bool exitbgworker = false;
         //ISoundPlayer soundplayer = new SoundPlayerDummy();
-        /// <summary>
-        /// Background thread generating vertices and indices.
-        /// Actual vbo loading must be done in the main thread (it is fast).
-        /// </summary>
-        void bgworker()
-        {
-            for (; ; )
-            {
-                if (exit || exitbgworker)
-                {
-                    return;
-                }
-                Vector3? pp = null;
-                lock (toupdate)
-                {
-                    if (toupdate.Count > 0)
-                    {
-                        pp = toupdate.Dequeue();
-                    }
-                }
-                if (pp != null)
-                {
-                    Vector3 p = pp.Value;
-                    //lock (clientgame.mapupdate)//does not work, clientgame can get replaced
-                    {
-                        //try
-                        {
-                            IEnumerable<VerticesIndicesToLoad> q = MakeChunk((int)p.X * buffersize, (int)p.Y * buffersize, (int)p.Z * buffersize, buffersize);
-                            List<Vector3> toremove = new List<Vector3>();
-                            if (q != null)
-                            {
-                                lock (vbotoload)
-                                {
-                                    //foreach (var qq in q)
-                                    {
-                                        vbotoload.Enqueue(new List<VerticesIndicesToLoad>(q.ToArray()));
-                                    }
-                                }
-                            }
-                        }
-                        //catch
-                        //{ }
-                    }
-                }
-                Thread.Sleep(0);
-            }
-        }
-        Queue<Vector3> toupdate = new Queue<Vector3>();
-        public void DrawMap()
-        {
-            lock (toupdate)
-            {
-                toupdate.Clear();
-            }
-            lock (vbotoload)
-            {
-                vbotoload.Clear();
-            }
-            foreach (var v in vbo)
-            {
-                foreach (var vv in v.Value)
-                {
-                    var a = vv.VboID;
-                    var b = vv.EboID;
-                    GL.DeleteBuffers(1, ref a);
-                    GL.DeleteBuffers(1, ref b);
-                }
-            }
-            vbo.Clear();
-            for (int i = 0; i < 1; i++)
-                for (int x = 0; x < clientgame.MapSizeX / buffersize; x++)
-                    for (int y = 0; y < clientgame.MapSizeY / buffersize; y++)
-                        for (int z = 0; z < clientgame.MapSizeZ / buffersize; z++)//bbb mapsizez / buffersize
-                            //DrawUpdateChunk(x, y, z);
-                            lock (toupdate)
-                            {
-                                toupdate.Enqueue(new Vector3(x, y, z));
-                            }
-        }
-        int buffersize = 32; //32,45
-        public void UpdateTileSet(Vector3 pos, byte type)
-        {
-            //            frametickmainthreadtodo.Add(() =>
-            //        {
-            int x = (int)pos.X;
-            int y = (int)pos.Y;
-            int z = (int)pos.Z;
-            clientgame.Map[x, y, z] = type;
-            UpdateTile(x, y, z);
-            //          });
-        }
-        private void UpdateTile(int x, int y, int z)
-        {
-            Vector3 bufferpos = new Vector3(x / buffersize, y / buffersize, z / buffersize);
-            lock (toupdate)
-            {
-                //if we are on a chunk boundary, then update near chunks too.
-                if (x % buffersize == 0)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(-1, 0, 0));
-                }
-                if (x % buffersize == buffersize - 1)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(1, 0, 0));
-                }
-                if (y % buffersize == 0)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(0, -1, 0));
-                }
-                if (y % buffersize == buffersize - 1)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(0, 1, 0));
-                }
-                if (z % buffersize == 0)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(0, 0, -1));
-                }
-                if (z % buffersize == buffersize - 1)
-                {
-                    toupdate.Enqueue(bufferpos + new Vector3(0, 0, 1));
-                }
-                toupdate.Enqueue(bufferpos);///bbb z / buffersize
-            }
-        }
         void ClientCommand(string s)
         {
             if (s == "")
@@ -764,208 +644,6 @@ namespace ManicDigger
         {
         }
         int[] MaterialSlots;
-        //warning! buffer zone!
-        RectangleF TextureCoords(int textureId, int texturesPacked)
-        {
-            float bufferRatio = 0.0f;//0.1
-            RectangleF r = new RectangleF();
-            r.Y = (1.0f / texturesPacked * (int)(textureId / texturesPacked)) + ((bufferRatio) * (1.0f / texturesPacked));
-            r.X = (1.0f / texturesPacked * (textureId % texturesPacked)) + ((bufferRatio) * (1.0f / texturesPacked));
-            r.Width = (1f - 2f * bufferRatio) * 1.0f / texturesPacked;
-            r.Height = (1f - 2f * bufferRatio) * 1.0f / texturesPacked;
-            return r;
-        }
-        bool IsTileEmptyForDrawing(int x, int y, int z)
-        {
-            if (!IsValidPos(x, y, z))
-            {
-                return true;
-            }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
-        }
-        bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z, int adjacenttiletype)
-        {
-            if (!ENABLE_TRANSPARENCY)
-            {
-                return IsTileEmptyForDrawing(x, y, z);
-            }
-            if (!IsValidPos(x, y, z))
-            {
-                return true;
-            }
-            return clientgame.Map[x, y, z] == data.TileIdEmpty
-                || (clientgame.Map[x, y, z] == data.TileIdWater
-                 && !(adjacenttiletype == data.TileIdWater))
-                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Glass
-                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
-                || clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
-        }
-        int texturesPacked = 16;//16x16
-        bool DONOTDRAWEDGES = true;
-        List<VerticesIndicesToLoad> MakeChunk(int startx, int starty, int startz, int size)
-        {
-            List<VerticesIndicesToLoad> list = new List<VerticesIndicesToLoad>();
-            List<ushort> myelements = new List<ushort>();
-            List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
-            for (int x = startx; x < startx + size; x++)
-                for (int y = starty; y < starty + size; y++)
-                    for (int z = startz; z < startz + size; z++)//bbb startz+size
-                    {
-                        //if (x == 0 && z == 31 & y == 128)
-                        {
-                        }
-                        if (IsTileEmptyForDrawing(x, y, z)) { continue; }
-                        var tt = clientgame.Map[x, y, z];
-                        bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
-                        bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
-                        bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
-                        bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
-                        bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
-                        bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
-                        if (x == 0)
-                        {
-                            if (tt == data.TileIdWater) { Console.WriteLine(new Vector3(x, y, z)); }
-                        }
-                        if (DONOTDRAWEDGES)
-                        {
-                            //if the game is fillrate limited, then this makes it much faster.
-                            //(39fps vs vsync 75fps)
-                            //bbb.
-                            if (z == 0) { drawbottom = false; }
-                            if (x == 0) { drawfront = false; }
-                            if (x == 256 - 1) { drawback = false; }
-                            if (y == 0) { drawleft = false; }
-                            if (y == 256 - 1) { drawright = false; }
-                        }
-                        //top
-                        if (drawtop)
-                        {
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Top);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 0.0f, texrec.Right, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 1.0f, texrec.Right, texrec.Bottom));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //bottom - same as top, but z is 1 less.
-                        if (drawbottom)
-                        {
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Bottom);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //front
-                        if (drawfront)
-                        {
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Front);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //back - same as front, but x is 1 greater.
-                        if (drawback)
-                        {//todo fix tcoords
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Back);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        if (drawleft)
-                        {
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Left);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //right - same as left, but y is 1 greater.
-                        if (drawright)
-                        {//todo fix tcoords
-                            int sidetexture = data.GetTileTextureId(clientgame.Map[x, y, z], TileSide.Right);
-                            RectangleF texrec = TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        if (myvertices.Count > ushort.MaxValue)
-                        {
-                            var aa = myelements.ToArray();
-                            var bb = myvertices.ToArray();
-                            list.Add(new VerticesIndicesToLoad()
-                            {
-                                position = new Vector3(startx / size, starty / size, startz / size),
-                                indices = aa,
-                                vertices = bb,
-                            });
-                            myelements = new List<ushort>();
-                            myvertices = new List<VertexPositionTexture>();
-                        }
-                    }
-            if (myelements.Count != 0)
-            {
-                var a = myelements.ToArray();
-                var b = myvertices.ToArray();
-                list.Add(new VerticesIndicesToLoad()
-                {
-                    position = new Vector3(startx / size, starty / size, startz / size),
-                    indices = a,
-                    vertices = b,
-                });
-            }
-            return list;
-        }
-        int terrainTexture;
         bool ENABLE_ZFAR = false;
         protected override void OnResize(EventArgs e)
         {
@@ -983,7 +661,7 @@ namespace ManicDigger
             GL.LoadMatrix(ref perpective);
         }
         float znear = 0.01f;
-        float zfar { get { return ENABLE_ZFAR ? viewdistance * 3f / 4 : 99999; } }
+        float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
         //int z = 0;
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
@@ -1044,13 +722,6 @@ namespace ManicDigger
         float fallspeed { get { return movespeed / 10; } }
         const float basemovespeed = 5f;
         DateTime lastbuild = new DateTime();
-        class VerticesIndicesToLoad
-        {
-            public VertexPositionTexture[] vertices;
-            public ushort[] indices;
-            public Vector3 position;
-        }
-        Queue<List<VerticesIndicesToLoad>> vbotoload = new Queue<List<VerticesIndicesToLoad>>();
         public bool exit { get; set; }
         float walksoundtimer = 0;
         int lastwalksound = 0;
@@ -1346,6 +1017,18 @@ namespace ManicDigger
                 fastclicking = true;
             }
         }
+        private bool IsValidPos(int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0)
+            {
+                return false;
+            }
+            if (x >= clientgame.MapSizeX || y >= clientgame.MapSizeY || z >= clientgame.MapSizeZ)
+            {
+                return false;
+            }
+            return true;
+        }
         private TileTypeMinecraft PlayerBuildableMaterialType(TileTypeMinecraft t)
         {
             if (t == TileTypeMinecraft.Grass)
@@ -1365,7 +1048,6 @@ namespace ManicDigger
         }
         bool fastclicking = false;
         Vector3 pickcubepos;
-        float viewdistance = 256;
         //double currentTime = 0;
         double accumulator = 0;
         double t = 0;
@@ -1395,58 +1077,14 @@ namespace ManicDigger
             UpdateTitleFps(e);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
 
             GL.MatrixMode(MatrixMode.Modelview);
             Vector3 forward = toVectorInFixedSystem1(0, 0, 1);
             Matrix4 camera = Matrix4.LookAt(player.playerposition + new Vector3(0, characterheight, 0),
                 player.playerposition + new Vector3(0, characterheight, 0) + forward, up);
             GL.LoadMatrix(ref camera);
-            chunkupdateframecounter += vboupdatesperframe;
-            while (chunkupdateframecounter >= 1)
-            {
-                chunkupdateframecounter -= 1;
-                IEnumerable<VerticesIndicesToLoad> v = null;
-                lock (vbotoload)
-                {
-                    if (vbotoload.Count > 0)
-                    {
-                        v = vbotoload.Dequeue();
-                    }
-                }
-                if (v != null && v.Any())
-                {
-                    List<Vbo> vbolist = new List<Vbo>();
-                    foreach (var vv in v)
-                    {
-                        var vbo1 = LoadVBO(vv.vertices, vv.indices);
-                        foreach (var vvv in vv.vertices)
-                        {
-                            vbo1.box.AddPoint(vvv.Position.X, vvv.Position.Y, vvv.Position.Z);
-                        }
-                        vbolist.Add(vbo1);
-                    }
-                    if (!vbo.ContainsKey(v.First().position))
-                    {
-                        vbo[v.First().position] = new List<Vbo>();
-                    }
-                    //delete old vbo
-                    vbo[v.First().position] = vbolist;
-                    //DrawUpdateChunk(((int)v.X), ((int)v.Y), ((int)v.Z));
-                }
-            }
-            GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
-            var z = new List<Vbo>(VisibleVbo());
-            if (z.Count != lastvisiblevbo && vbotoload.Count == 0)
-            {
-                Console.WriteLine("Hardware buffers: " + z.Count);
-                lastvisiblevbo = z.Count;
-            }
-            z.Sort(f);
-            foreach (var k in z)
-            {
-                Draw(k);
-            }
+            terrain.Draw();
             DrawImmediateParticleEffects(e.Time);
             DrawCubeLines(pickcubepos);
 
@@ -1457,10 +1095,6 @@ namespace ManicDigger
             //OnResize(new EventArgs());
             SwapBuffers();
         }
-        private void DeleteVbo(Vbo pp)
-        {
-        }
-        int lastvisiblevbo = 0;
         class Chatline
         {
             public string text;
@@ -1513,12 +1147,6 @@ namespace ManicDigger
         {
             if (v0 != null)
                 DrawCube(v0.pos3d);
-        }
-        int f(Vbo a, Vbo b)
-        {
-            var aa = (a.box.Center() - player.playerposition).Length;
-            var bb = (b.box.Center() - player.playerposition).Length;
-            return aa.CompareTo(bb);
         }
         void EscapeMenuAction()
         {
@@ -1664,7 +1292,7 @@ namespace ManicDigger
             int singlesize = 40;
             for (int i = 0; i < 10; i++)
             {
-                Draw2dTexture(terrainTexture, xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize,
+                Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize,
                     data.GetTileTextureId((int)MaterialSlots[i], TileSide.Top));
                 if (i == activematerial)
                 {
@@ -1747,7 +1375,7 @@ namespace ManicDigger
             }
             else
             {
-                rect = TextureCoords(inAtlasId.Value, texturesPacked);
+                rect = TextureAtlas.TextureCoords(inAtlasId.Value, terrain.texturesPacked);
             }
             GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
@@ -1806,17 +1434,15 @@ namespace ManicDigger
                 yield return TileSide.Bottom;
             }
         }
-        float chunkupdateframecounter = 0;
-        float vboupdatesperframe = 0.5f;
         private void DrawImmediateParticleEffects(double deltaTime)
         {
-            GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
             foreach (ParticleEffect p in new List<ParticleEffect>(particleEffects))
             {
                 foreach (Particle pp in p.particles)
                 {
                     GL.Begin(BeginMode.Triangles);
-                    RectangleF texrec = TextureCoords(p.textureid, texturesPacked);
+                    RectangleF texrec = TextureAtlas.TextureCoords(p.textureid, terrain.texturesPacked);
                     GL.TexCoord2(texrec.Left, texrec.Top);
                     GL.Vertex3(pp.position);
                     GL.TexCoord2(texrec.Right, texrec.Top);
@@ -1875,18 +1501,6 @@ namespace ManicDigger
                 p.particles.Add(pp);
             }
             particleEffects.Add(p);
-        }
-        private bool IsValidPos(int x, int y, int z)
-        {
-            if (x < 0 || y < 0 || z < 0)
-            {
-                return false;
-            }
-            if (x >= clientgame.MapSizeX || y >= clientgame.MapSizeY || z >= clientgame.MapSizeZ)
-            {
-                return false;
-            }
-            return true;
         }
         private Vector3 From3dPos(TilePosSide v)
         {
@@ -2019,11 +1633,7 @@ namespace ManicDigger
                 title += "FPS: " + (int)((float)fpscount / elapsed.TotalSeconds);
                 //z = 100;
                 fpscount = 0;
-                int totaltriangles = 0;
-                foreach (var k in VisibleVbo())
-                {
-                    totaltriangles += k.NumElements / 3;
-                }
+                int totaltriangles = terrain.TrianglesCount();
                 title += ", triangles: " + totaltriangles;
                 //Title = title;
                 Title = applicationname;
@@ -2031,81 +1641,6 @@ namespace ManicDigger
             }
         }
         string applicationname = "Manic Digger";
-        bool ENABLE_VISIBILITY_CULLING = false;
-        private IEnumerable<Vbo> VisibleVbo()
-        {
-            foreach (var k in vbo)
-            {
-                foreach (var kk in k.Value)
-                {
-                    if (!ENABLE_VISIBILITY_CULLING || (kk.box.Center() - player.playerposition).Length < viewdistance)
-                    {
-                        yield return kk;
-                    }
-                }
-            }
-        }
-        int strideofvertices = -1;
-        int StrideOfVertices
-        {
-            get
-            {
-                if (strideofvertices == -1) strideofvertices = BlittableValueType.StrideOf(CubeVertices);
-                return strideofvertices;
-            }
-        }
-        Vbo LoadVBO<TVertex>(TVertex[] vertices, ushort[] elements) where TVertex : struct
-        {
-            Vbo handle = new Vbo();
-            int size;
-
-            // To create a VBO:
-            // 1) Generate the buffer handles for the vertex and element buffers.
-            // 2) Bind the vertex buffer handle and upload your vertex data. Check that the buffer was uploaded correctly.
-            // 3) Bind the element buffer handle and upload your element data. Check that the buffer was uploaded correctly.
-
-            GL.GenBuffers(1, out handle.VboID);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, handle.VboID);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vertices.Length * StrideOfVertices), vertices,
-                          BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out size);
-            if (vertices.Length * StrideOfVertices != size)
-                throw new ApplicationException("Vertex data not uploaded correctly");
-
-            GL.GenBuffers(1, out handle.EboID);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, handle.EboID);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(elements.Length * sizeof(ushort)), elements,//aaa sizeof(short)
-                          BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize, out size);
-            if (elements.Length * sizeof(ushort) != size)//aaa ushort
-                throw new ApplicationException("Element data not uploaded correctly");
-
-            handle.NumElements = elements.Length;
-            return handle;
-        }
-
-        void Draw(Vbo handle)
-        {
-            // To draw a VBO:
-            // 1) Ensure that the VertexArray client state is enabled.
-            // 2) Bind the vertex and element buffer handles.
-            // 3) Set up the data pointers (vertex, normal, color) according to your vertex format.
-            // 4) Call DrawElements. (Note: the last parameter is an offset into the element buffer
-            //    and will usually be IntPtr.Zero).
-
-            //GL.EnableClientState(EnableCap.ColorArray);
-            GL.EnableClientState(EnableCap.TextureCoordArray);
-            GL.EnableClientState(EnableCap.VertexArray);
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, handle.VboID);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, handle.EboID);
-
-            GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, new IntPtr(0));
-            //GL.ColorPointer(4, ColorPointerType.UnsignedByte, BlittableValueType.StrideOf(CubeVertices), new IntPtr(12));
-            GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, new IntPtr(12));
-
-            GL.DrawElements(BeginMode.Triangles, handle.NumElements, DrawElementsType.UnsignedShort, IntPtr.Zero);//aaa
-        }
         #region ILocalPlayerPosition Members
         public Vector3 LocalPlayerPosition { get { return player.playerposition; } set { player.playerposition = value; } }
         public Vector3 LocalPlayerOrientation { get { return player.playerorientation; } set { player.playerorientation = value; } }
