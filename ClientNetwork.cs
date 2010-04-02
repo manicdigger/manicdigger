@@ -306,7 +306,13 @@ namespace ManicDigger
             }
             var packetId = (ServerPacketId)br.ReadByte();
             int totalread = 1;
-            Console.WriteLine(Enum.GetName(typeof(ServerPacketId), packetId));
+            if (packetId != ServerPacketId.PositionandOrientationUpdate
+                 && packetId != ServerPacketId.PositionUpdate
+                && packetId != ServerPacketId.OrientationUpdate
+                && packetId != ServerPacketId.PlayerTeleport)
+            {
+                Console.WriteLine(Enum.GetName(typeof(ServerPacketId), packetId));
+            }
             if (packetId == ServerPacketId.ServerIdentification)
             {
                 totalread += 1 + 64 + 64 + 1; if (received.Count < totalread) { return 0; }

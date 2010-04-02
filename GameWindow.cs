@@ -54,6 +54,104 @@ namespace ManicDigger
     {
         int LoadTexture(string filename);
     }
+    public class CameraMove
+    {
+        public bool TurnLeft;
+        public bool TurnRight;
+        public bool DistanceUp;
+        public bool DistanceDown;
+        public bool AngleUp;
+        public bool AngleDown;
+        public int MoveX;
+        public int MoveY;
+        public float Distance;
+    }
+    public interface IKamera
+    {
+        void Move(CameraMove move, float p);
+        Vector3 Position { get; }
+    }
+    public class Kamera : IKamera
+    {
+        public Vector3 Position
+        {
+            get
+            {
+                float cx = (float)(Math.Cos(tt * .5) * FlatDistance + Center.X);
+                float cy = (float)(Math.Sin(tt * .5) * FlatDistance + Center.Z);
+                return new Vector3(cx, Center.Y + CameraHeightFromCenter, cy);
+            }
+        }
+        float distance = 5;
+        public float Distance
+        {
+            get { return distance; }
+            set
+            {
+                distance = value;
+                if (distance < MinimumDistance)
+                {
+                    distance = MinimumDistance;
+                }
+            }
+        }
+        public float Angle = 45;
+        public float MinimumDistance = 2f;
+        float CameraHeightFromCenter
+        {
+            //get { return (float)Math.Tan(Angle * Math.PI/180) * Distance; }
+            get { return (float)Math.Sin(Angle * Math.PI / 180) * Distance; }
+        }
+        float FlatDistance
+        {
+            get { return (float)Math.Cos(Angle * Math.PI / 180) * Distance; }
+        }
+        public Vector3 Center { get; set; }
+        float tt = 0;
+        public void TurnLeft(float p)
+        {
+            tt += p;
+        }
+        public void TurnRight(float p)
+        {
+            tt -= p;
+        }
+        public void Move(CameraMove camera_move, float p)
+        {
+            p *= 2;
+            p *= 2;
+            if (camera_move.TurnLeft)
+            {
+                TurnLeft(p);
+            }
+            if (camera_move.TurnRight)
+            {
+                TurnRight(p);
+            }
+            if (camera_move.DistanceUp)
+            {
+                Distance += p;
+            }
+            if (camera_move.DistanceDown)
+            {
+                Distance -= p;
+            }
+            if (camera_move.AngleUp)
+            {
+                Angle += p * 10;
+            }
+            if (camera_move.AngleDown)
+            {
+                Angle -= p * 10;
+            }
+            Distance = camera_move.Distance;
+            if (MaximumAngle < MinimumAngle) { throw new Exception(); }
+            if (Angle > MaximumAngle) { Angle = MaximumAngle; }
+            if (Angle < MinimumAngle) { Angle = MinimumAngle; }
+        }
+        public int MaximumAngle = 89;
+        public int MinimumAngle = 0;
+    }
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
         [Inject]
@@ -672,7 +770,8 @@ namespace ManicDigger
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
         Point mouse_delta;
-        bool FreeMouse = false;
+        bool freemouse;
+        bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
         void UpdateMousePosition()
         {
             mouse_current = System.Windows.Forms.Cursor.Position;
@@ -788,16 +887,38 @@ namespace ManicDigger
                 newnetwork.Process();
             }
             UpdateMousePosition();
+
             int movedx = 0;
             int movedy = 0;
             if (guistate == GuiState.Normal)
             {
                 if (GuiTyping == TypingState.None)
                 {
-                    if (Keyboard[OpenTK.Input.Key.W]) { movedy += 1; }
-                    if (Keyboard[OpenTK.Input.Key.S]) { movedy += -1; }
-                    if (Keyboard[OpenTK.Input.Key.A]) { movedx += -1; }
-                    if (Keyboard[OpenTK.Input.Key.D]) { movedx += 1; }
+                    if (overheadcamera)
+                    {
+                        CameraMove m = new CameraMove();
+                        if (Keyboard[OpenTK.Input.Key.Q]) { overheadcameraK.TurnRight((float)e.Time * 5); }
+                        if (Keyboard[OpenTK.Input.Key.E]) { overheadcameraK.TurnLeft((float)e.Time * 5); }
+                        overheadcameraK.Center = player.playerposition;
+                        m.Distance = -Mouse.WheelPrecise;
+                        overheadcameraK.Move(m, (float)e.Time);
+                        if ((player.playerposition - playerdestination).Length >= 0.5f)
+                        {
+                            movedy += 1;
+                            //player orientation
+                            //player.playerorientation.Y=
+                            Vector3 q=playerdestination - player.playerposition;
+                            q.Y = player.playerposition.Y;
+                            player.playerorientation.Y = (float)Math.PI + Vector3.CalculateAngle(new Vector3(1, 0, 0), q);
+                        }
+                    }
+                    else
+                    {
+                        if (Keyboard[OpenTK.Input.Key.W]) { movedy += 1; }
+                        if (Keyboard[OpenTK.Input.Key.S]) { movedy += -1; }
+                        if (Keyboard[OpenTK.Input.Key.A]) { movedx += -1; }
+                        if (Keyboard[OpenTK.Input.Key.D]) { movedx += 1; }
+                    }
                 }
                 if (ENABLE_FREEMOVE)
                 {
@@ -883,6 +1004,7 @@ namespace ManicDigger
                 UpdateMouseViewportControl(e);
             }
         }
+        Vector3 playerdestination;
         class MenuState
         {
             public int selected = 0;
@@ -890,9 +1012,12 @@ namespace ManicDigger
         MenuState menustate = new MenuState();
         private void UpdateMouseViewportControl(FrameEventArgs e)
         {
-            player.playerorientation.Y += (float)mouse_delta.X * rotationspeed * (float)e.Time;
-            player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
-            player.playerorientation.X = Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.001f, (float)(Math.PI / 2 + Math.PI - 0.001f));
+            if (!overheadcamera)
+            {
+                player.playerorientation.Y += (float)mouse_delta.X * rotationspeed * (float)e.Time;
+                player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
+                player.playerorientation.X = Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.001f, (float)(Math.PI / 2 + Math.PI - 0.001f));
+            }
             if (iii++ % 2 == 0) UpdatePicking();
         }
         int iii = 0;
@@ -961,6 +1086,14 @@ namespace ManicDigger
                 pick0.pos = new Vector3(-1, -1, -1);
                 pick0.side = TileSide.Front;
             }
+            if (FreeMouse)
+            {
+                if (pick2.Count > 0)
+                {
+                    OnPick(pick0);
+                }
+                return;
+            }
             if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
             {
                 if (left && !fastclicking)
@@ -1022,6 +1155,10 @@ namespace ManicDigger
                 lastbuild = new DateTime();
                 fastclicking = true;
             }
+        }
+        private void OnPick(TilePosSide pick0)
+        {
+            playerdestination = pick0.pos;
         }
         private bool IsValidPos(int x, int y, int z)
         {
@@ -1086,9 +1223,14 @@ namespace ManicDigger
             GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
 
             GL.MatrixMode(MatrixMode.Modelview);
-            Vector3 forward = toVectorInFixedSystem1(0, 0, 1);
-            Matrix4 camera = Matrix4.LookAt(player.playerposition + new Vector3(0, characterheight, 0),
-                player.playerposition + new Vector3(0, characterheight, 0) + forward, up);
+            
+            Matrix4 camera;
+            if (overheadcamera)
+            {
+                camera = OverheadCamera();
+            }
+            else
+                camera = FppCamera();
             GL.LoadMatrix(ref camera);
             terrain.Draw();
             DrawImmediateParticleEffects(e.Time);
@@ -1100,6 +1242,21 @@ namespace ManicDigger
 
             //OnResize(new EventArgs());
             SwapBuffers();
+        }
+        bool overheadcamera = false;
+        Kamera overheadcameraK = new Kamera();
+        Matrix4 FppCamera()
+        {
+            Vector3 forward = toVectorInFixedSystem1(0, 0, 1);
+            return Matrix4.LookAt(player.playerposition + new Vector3(0, characterheight, 0),
+                player.playerposition + new Vector3(0, characterheight, 0) + forward, up);
+        }
+        //Vector3 overheadCameraPosition = new Vector3(5, 32 + 20, 5);
+        //Vector3 overheadCameraDestination = new Vector3(5, 32, 0);
+        Matrix4 OverheadCamera()
+        {
+            //return Matrix4.LookAt(overheadCameraPosition, overheadCameraDestination, up);
+            return Matrix4.LookAt(overheadcameraK.Position, overheadcameraK.Center, up);
         }
         class Chatline
         {
@@ -1217,7 +1374,7 @@ namespace ManicDigger
                 Draw2dText(newgame, xcenter(TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
                 Draw2dText(save, xcenter(TextSize(save, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
                 Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
-                DrawMouseCursor();
+                //DrawMouseCursor();
             }
         }
         bool SaveGameExists()
@@ -1243,7 +1400,7 @@ namespace ManicDigger
                     (menustate.selected == 1 ? Color.Red : Color.White)
                     : (menustate.selected == 1 ? Color.Red : Color.Gray));
                 Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
-                DrawMouseCursor();
+                //DrawMouseCursor();
             }
         }
         GuiState guistate;
@@ -1290,6 +1447,10 @@ namespace ManicDigger
             if (ENABLE_DRAWFPS)
             {
                 Draw2dText(fpstext, 20f, 20f, 14, Color.White);
+            }
+            if (FreeMouse)
+            {
+                DrawMouseCursor();
             }
             PerspectiveMode();
         }
