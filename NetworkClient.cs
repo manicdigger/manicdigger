@@ -7,6 +7,7 @@ using OpenTK;
 using DependencyInjection;
 using System.Net.Sockets;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace ManicDigger
 {
@@ -206,6 +207,7 @@ namespace ManicDigger
         }
         public void Disconnect()
         {
+            ChatLog("---Disconnected---");
             main.Disconnect(false);
         }
         [Inject]
@@ -299,6 +301,7 @@ namespace ManicDigger
             }
         }
         bool spawned = false;
+        string ServerName;
         private int TryReadPacket()
         {
             BinaryReader br = new BinaryReader(new MemoryStream(received.ToArray()));
@@ -328,6 +331,8 @@ namespace ManicDigger
                 p.ServerMotd = ReadString64(br);
                 p.UserType = br.ReadByte();
                 //connected = true;
+                this.ServerName = p.ServerName;
+                ChatLog("---Connected---");
             }
             else if (packetId == ServerPacketId.Ping)
             {
@@ -357,19 +362,8 @@ namespace ManicDigger
                 mapreceivedsizex = ReadInt16(br);
                 mapreceivedsizez = ReadInt16(br);
                 mapreceivedsizey = ReadInt16(br);
-                //ReceivedMapEventArgs a = new ReceivedMapEventArgs();
-                //a.data = receivedMap.ToArray();
-                //a.sizex = mapreceivedsizex;
-                //a.sizey = mapreceivedsizey;
-                //a.sizez = mapreceivedsizez;
-                //if (MapReceived != null)
-                //{
-                //MapReceived.Invoke(this, a);
-                //}
-                //mapreceived = true;
                 receivedMapStream.Seek(0, SeekOrigin.Begin);
                 MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
-                //File.WriteAllBytes("c:\\map.dat", decompressed.ToArray());
                 if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
                     (decompressed.Length % 1024))
                 {
@@ -379,7 +373,7 @@ namespace ManicDigger
                 byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
                 {
                     BinaryReader br2 = new BinaryReader(decompressed);
-                    int wtf = br2.ReadByte();
+                    int wtf1 = br2.ReadByte();
                     int wtf2 = br2.ReadByte();
                     int wtf3 = br2.ReadByte();
                     int wtf4 = br2.ReadByte();
@@ -389,14 +383,11 @@ namespace ManicDigger
                         {
                             for (int x = 0; x < mapreceivedsizex; x++)
                             {
-                                //receivedmap[(x + mapreceivedsizex - 4) % mapreceivedsizex, y, z] = br2.ReadByte();
                                 receivedmap[x, y, z] = br2.ReadByte();
-                                //todo fix wtf, map is broken, x rotation=4.
                             }
                         }
                     }
                 }
-                //map.LoadMap(receivedmap);
                 if (MapLoaded != null)
                 {
                     MapLoaded.Invoke(this, new MapLoadedEventArgs() { map = receivedmap });
@@ -467,6 +458,7 @@ namespace ManicDigger
                         connectedplayers.RemoveAt(i);
                     }
                 }
+                players.Players.Remove(playerid);
             }
             else if (packetId == ServerPacketId.Message)
             {
@@ -474,6 +466,7 @@ namespace ManicDigger
                 byte unused = br.ReadByte();
                 string message = ReadString64(br);
                 chatlines.AddChatline(message);
+                ChatLog(message);
             }
             else if (packetId == ServerPacketId.DisconnectPlayer)
             {
@@ -487,6 +480,34 @@ namespace ManicDigger
             }
             return totalread;
         }
+        public bool ENABLE_CHATLOG = true;
+        private void ChatLog(string p)
+        {
+            if (!ENABLE_CHATLOG)
+            {
+                return;
+            }
+            string logsdir = "logs";
+            if (!Directory.Exists(logsdir))
+            {
+                Directory.CreateDirectory(logsdir);
+            }
+            string filename=Path.Combine(logsdir, MakeValidFileName(ServerName) + ".txt");
+            try
+            {
+                File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            }
+            catch
+            {
+                Console.WriteLine("Cannot write to chat log file {0}.", filename);
+            }
+        }
+        private static string MakeValidFileName(string name)
+        {
+            string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
+            string invalidReStr = string.Format(@"[{0}]", invalidChars);
+            return Regex.Replace(name, invalidReStr, "_");
+        }
         private void UpdatePositionDiff(byte playerid, Vector3 v)
         {
             if (playerid == 255)
@@ -498,8 +519,9 @@ namespace ManicDigger
             {
                 if (!players.Players.ContainsKey(playerid))
                 {
-                    //players.Players[playerid] = new Player();
-                    throw new Exception();
+                    players.Players[playerid] = new Player();
+                    //throw new Exception();
+                    Console.WriteLine("Position update of nonexistent player {0}." + playerid);
                 }
                 players.Players[playerid].Position += v;
             }
