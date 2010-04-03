@@ -181,7 +181,7 @@ namespace ManicDigger
         {
             terrain.UpdateAllTiles();
         }
-        public void UpdateTileSet(Vector3 pos, byte type)
+        public void SetTileAndUpdate(Vector3 pos, byte type)
         {
             //            frametickmainthreadtodo.Add(() =>
             //        {
@@ -694,7 +694,6 @@ namespace ManicDigger
                 return File.ReadAllText("defaultserver.cfg");
             }
         }
-
         private void DownloadInternetGame(string qusername, string qpass, string qgameurl)
         {
             var oldclientgame = clientgame;
@@ -712,6 +711,13 @@ namespace ManicDigger
 
             new MethodInvoker(() =>
             {
+                //game url can be
+                //a) minecraft.net url
+                //if (qgameurl.Contains("minecraft.net"))
+                //{
+                //}
+                //b) just hash
+                //c) ip:port (server must have disabled authorization checking).
                 LoginData logindata = login.Login(qusername, qpass, qgameurl);
                 frametickmainthreadtodo.Add(
                     () =>

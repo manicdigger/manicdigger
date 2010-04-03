@@ -39,7 +39,7 @@ namespace ManicDigger
             {
                 type = (byte)TileTypeMinecraft.Empty;
             }
-            map1.UpdateTileSet(position, type);
+            map1.SetTileAndUpdate(position, type);
         }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         [Inject]
@@ -409,7 +409,7 @@ namespace ManicDigger
                 int z = ReadInt16(br);
                 int y = ReadInt16(br);
                 byte type = br.ReadByte();
-                map.UpdateTileSet(new Vector3(x, y, z), type);
+                map.SetTileAndUpdate(new Vector3(x, y, z), type);
             }
             else if (packetId == ServerPacketId.SpawnPlayer)
             {

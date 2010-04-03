@@ -832,7 +832,7 @@ namespace ManicDigger
     public interface IMap
     {
         //void LoadMap(byte[, ,] map);
-        void UpdateTileSet(Vector3 pos, byte type);
+        void SetTileAndUpdate(Vector3 pos, byte type);
     }
     public interface ILocalPlayerPosition
     {
