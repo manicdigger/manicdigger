@@ -166,8 +166,12 @@ namespace ManicDigger
         void LoadMapArray(Stream ms);
         void SetBlock(int x, int y, int z, byte tileType);
     }
+    public class Player
+    {
+        public Vector3 Position;
+    }
     //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
-    public class ClientGame : IMapStorage
+    public class ClientGame : IMapStorage, IPlayers
     {
         [Inject]
         public IGui gui { get; set; }
@@ -181,6 +185,8 @@ namespace ManicDigger
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
+        IDictionary<int, Player> players = new Dictionary<int, Player>();
+        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
         public ClientGame()
         {
             map = new byte[256, 256, 64];
@@ -832,6 +838,10 @@ namespace ManicDigger
     {
         Vector3 LocalPlayerPosition { get; set; }
         Vector3 LocalPlayerOrientation { get; set; }
+    }
+    public interface IPlayers
+    {
+        IDictionary<int, Player> Players { get; set; }
     }
     public enum BlockSetMode
     {

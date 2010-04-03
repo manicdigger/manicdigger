@@ -1237,11 +1237,40 @@ namespace ManicDigger
             DrawCubeLines(pickcubepos);
 
             DrawVehicles();
-
+            DrawPlayers((float)e.Time);
             Draw2d();
 
             //OnResize(new EventArgs());
             SwapBuffers();
+        }
+        public class PlayerInterpolated
+        {
+            public Vector3 LastRealPosition;
+            public DateTime LastRealPositionTime;
+            public Vector3 InterpolatedPosition;
+            public Vector3 Direction;
+        }
+        public Dictionary<int, PlayerInterpolated> PlayerPositionsInterpolated = new Dictionary<int, PlayerInterpolated>();
+        private void DrawPlayers(float dt)
+        {
+            foreach (var k in clientgame.Players)
+            {
+                if (!PlayerPositionsInterpolated.ContainsKey(k.Key))
+                {
+                    PlayerPositionsInterpolated[k.Key] = new PlayerInterpolated();
+                }
+                var realposition = k.Value.Position;
+                var pi = PlayerPositionsInterpolated[k.Key];
+                if (realposition != pi.LastRealPosition)
+                {
+                    pi.Direction = Vector3.Multiply(k.Value.Position - pi.LastRealPosition,
+                        (float)(DateTime.Now - pi.LastRealPositionTime).TotalSeconds);
+                    pi.LastRealPosition = realposition;
+                    pi.LastRealPositionTime = DateTime.Now;
+                }
+                var curpos = pi.LastRealPosition + pi.Direction * (float)(DateTime.Now - pi.LastRealPositionTime).TotalSeconds;
+                DrawCube(realposition);//curpos
+            }
         }
         bool overheadcamera = false;
         Kamera overheadcameraK = new Kamera();

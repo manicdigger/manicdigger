@@ -170,6 +170,8 @@ namespace ManicDigger
     {
         [Inject]
         public IMap map { get; set; }
+        [Inject]
+        public IPlayers players { get; set; }
         //public void Connect(LoginData login, string username)
         public void Connect(string serverAddress, int port, string username, string auth)
         {
@@ -414,31 +416,41 @@ namespace ManicDigger
                 totalread += 1 + 64 + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
                 string playername = ReadString64(br);
-                float x = ReadInt16(br) / 32;// +4; //gfd1
-                float y = ReadInt16(br) / 32;
-                float z = ReadInt16(br) / 32;
-                //SendSetBlock(new Vector3(x, y - 1, z), BlockSetMode.Destroy, 0);
-                byte heading = br.ReadByte();
-                byte pitch = br.ReadByte();
-                if (playerid == 255)
-                {
-                    position.LocalPlayerPosition = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
-                }
-                //chatlines.AddChatline(string.Format("{0} joins.", playername));
                 connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                spawned = true;
+                if (players.Players.ContainsKey(playerid))
+                {
+                    //throw new Exception();
+                }
+                players.Players[playerid] = new Player();
+                ReadAndUpdatePlayerPosition(br, playerid);
             }
             else if (packetId == ServerPacketId.PlayerTeleport)
             {
                 totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
+                byte playerid = br.ReadByte();
+                ReadAndUpdatePlayerPosition(br, playerid);
             }
             else if (packetId == ServerPacketId.PositionandOrientationUpdate)
             {
-                totalread += 1 + (2 + 2 + 2) + 1 + 1 + ((-3)); if (received.Count < totalread) { return 0; }
+                totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
+                byte playerid = br.ReadByte();
+                float x = (float)br.ReadByte() / 32;
+                float y = (float)br.ReadByte() / 32;
+                float z = (float)br.ReadByte() / 32;
+                byte heading = br.ReadByte();
+                byte pitch = br.ReadByte();
+                Vector3 v = new Vector3(x, y, z);
+                UpdatePositionDiff(playerid, v);
             }
             else if (packetId == ServerPacketId.PositionUpdate)
             {
                 totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
+                byte playerid = br.ReadByte();
+                float x = (float)br.ReadByte() / 32;
+                float y = (float)br.ReadByte() / 32;
+                float z = (float)br.ReadByte() / 32;
+                Vector3 v = new Vector3(x, y, z);
+                UpdatePositionDiff(playerid, v);
             }
             else if (packetId == ServerPacketId.OrientationUpdate)
             {
@@ -474,6 +486,45 @@ namespace ManicDigger
                 throw new Exception();
             }
             return totalread;
+        }
+        private void UpdatePositionDiff(byte playerid, Vector3 v)
+        {
+            if (playerid == 255)
+            {
+                position.LocalPlayerPosition += v;
+                spawned = true;
+            }
+            else
+            {
+                if (!players.Players.ContainsKey(playerid))
+                {
+                    //players.Players[playerid] = new Player();
+                    throw new Exception();
+                }
+                players.Players[playerid].Position += v;
+            }
+        }
+        private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
+        {
+            float x = (float)ReadInt16(br) / 32;
+            float y = (float)ReadInt16(br) / 32;
+            float z = (float)ReadInt16(br) / 32;
+            byte heading = br.ReadByte();
+            byte pitch = br.ReadByte();
+            Vector3 realpos = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
+            if (playerid == 255)
+            {
+                position.LocalPlayerPosition = realpos;
+                spawned = true;
+            }
+            else
+            {
+                if (!players.Players.ContainsKey(playerid))
+                {
+                    players.Players[playerid] = new Player();
+                }
+                players.Players[playerid].Position = realpos;
+            }
         }
         [Inject]
         public IGui chatlines { get; set; }
