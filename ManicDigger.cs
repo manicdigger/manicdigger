@@ -675,6 +675,8 @@ namespace ManicDigger
     {
         [Inject]
         public IMapStorage clientgame { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
         void Update()
         {
         }
@@ -693,7 +695,11 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
+            //this test is so the player does not walk on water.
+            if (data.IsWaterTile(clientgame.Map[x, y, z]) &&
+                !data.IsWaterTile(clientgame.Map[x, y, z + 1])) { return true; }
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
+                || (data.IsWaterTile(clientgame.Map[x,y,z]) && (!swimmingtop));
         }
         float walldistance = 0.2f;
         public const float characterheight = 1.5f;
@@ -778,6 +784,7 @@ namespace ManicDigger
             }
             return playerposition;
         }
+        internal bool swimmingtop;
     }
     public interface IInternetGameFactory
     {

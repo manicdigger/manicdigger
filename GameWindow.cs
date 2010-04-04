@@ -926,7 +926,7 @@ namespace ManicDigger
                         if (Keyboard[OpenTK.Input.Key.D]) { movedx += 1; }
                     }
                 }
-                if (ENABLE_FREEMOVE)
+                if (ENABLE_FREEMOVE || Swimming)
                 {
                     if (GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space])
                     {
@@ -942,7 +942,7 @@ namespace ManicDigger
             }
             else throw new Exception();
 
-            if (!ENABLE_FREEMOVE)
+            if (!(ENABLE_FREEMOVE || Swimming))
             {
                 player.movedz += -gravity;//gravity
             }
@@ -950,9 +950,12 @@ namespace ManicDigger
                 (movedx * movespeed * (float)e.Time,
                 0,
                 movedy * movespeed * (float)e.Time);
-            if (!ENABLE_FREEMOVE)
+            if (!(ENABLE_FREEMOVE))
             {
-                newposition.Y = player.playerposition.Y;
+                if (!Swimming)
+                {
+                    newposition.Y = player.playerposition.Y;
+                }
                 //fast move when looking at the ground.
                 var diff = newposition - player.playerposition;
                 if (diff.Length > 0)
@@ -965,6 +968,7 @@ namespace ManicDigger
             Vector3 previousposition = player.playerposition;
             if (!ENABLE_NOCLIP)
             {
+                clientgame.p.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
                 player.playerposition = clientgame.p.WallSlide(player.playerposition, newposition);
             }
             else
@@ -972,7 +976,7 @@ namespace ManicDigger
                 player.playerposition = newposition;
             }
             bool isplayeronground;
-            if (!ENABLE_FREEMOVE)
+            if (!(ENABLE_FREEMOVE || Swimming))
             {
                 isplayeronground = player.playerposition.Y == previousposition.Y;
                 {
@@ -991,15 +995,15 @@ namespace ManicDigger
                         jumpacceleration -= (float)e.Time * 2.5f;
                     }
                     player.movedz += jumpacceleration * 2;
-                    if (isplayeronground)
-                    {
-                        player.movedz = Math.Max(0, player.movedz);
-                    }
                 }
             }
             else
             {
                 isplayeronground = true;
+            }
+            if (isplayeronground)
+            {
+                player.movedz = Math.Max(0, player.movedz);
             }
             if (isplayeronground && movedx != 0 || movedy != 0)
             {
