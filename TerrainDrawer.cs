@@ -8,6 +8,7 @@ using ManicDigger.Collisions;
 using System.Drawing;
 using System.Threading;
 using OpenTK.Graphics.OpenGL;
+using System.IO;
 
 namespace ManicDigger
 {
@@ -439,14 +440,24 @@ namespace ManicDigger
             {
                 DrawWater();
             }
+            DrawMapEdges();
         }
         public bool ENABLE_WATER = true;
         int? watertexture;
+        int? rocktexture;
+        bool waternotfoundwritten = false;
+        bool rocknotfoundwritten = false;
         private void DrawWater()
         {
+            if (waternotfoundwritten) { return; }
             if (watertexture == null)
             {
-                watertexture = the3d.LoadTexture(getfile.GetFile("water.jpg"));
+                try
+                { watertexture = the3d.LoadTexture(getfile.GetFile("water.png")); }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("water.png not found."); waternotfoundwritten = true; return;
+                }
             }
             GL.BindTexture(TextureTarget.Texture2D, watertexture.Value);
             GL.Enable(EnableCap.Texture2D);
@@ -455,9 +466,53 @@ namespace ManicDigger
             foreach (Rectangle r in AroundMap())
             {
                 DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
-                    data.GetTileTextureId(data.TileIdWater, TileSide.Top));
+                    mapstorage.WaterLevel);
             }
             GL.End();
+        }
+        private void DrawMapEdges()
+        {
+            if (rocknotfoundwritten) { return; }
+            if (rocktexture == null)
+            {
+                try
+                { rocktexture = the3d.LoadTexture(getfile.GetFile("rock.png")); }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("rock.png not found."); rocknotfoundwritten = true; return;
+                }
+            }
+            GL.BindTexture(TextureTarget.Texture2D, rocktexture.Value);
+            GL.Enable(EnableCap.Texture2D);
+            GL.Color3(Color.White);
+            GL.Begin(BeginMode.Quads);
+            foreach (IEnumerable<Point> r in MapEdges())
+            {
+                DrawRockQuad(r.ElementAt(0).X, r.ElementAt(0).Y, r.ElementAt(1).X, r.ElementAt(1).Y,
+                    mapstorage.WaterLevel - 2);
+            }
+            foreach (Rectangle r in AroundMap())
+            {
+                DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
+                    mapstorage.WaterLevel - 2);
+            }
+            DrawWaterQuad(0, 0, mapstorage.MapSizeX, mapstorage.MapSizeY, 0);
+            GL.End();
+        }
+        private IEnumerable<IEnumerable<Point>> MapEdges()
+        {
+            yield return new Point[] { new Point(0, 0), new Point(mapstorage.MapSizeX, 0) };
+            yield return new Point[] { new Point(mapstorage.MapSizeX, 0), new Point(mapstorage.MapSizeX, mapstorage.MapSizeY) };
+            yield return new Point[] { new Point(mapstorage.MapSizeX, mapstorage.MapSizeY), new Point(0, mapstorage.MapSizeY) };
+            yield return new Point[] { new Point(0, mapstorage.MapSizeY), new Point(0, 0) };
+        }
+        private void DrawRockQuad(int x1, int y1, int x2, int y2, float height)
+        {
+            RectangleF rect = new RectangleF(0, 0, Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1)), height);
+            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, 0, y2);
+            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, height, y2);
+            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, height, y1);
+            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, 0, y1);
         }
         int watersizex = 10 * 1000;
         int watersizey = 10 * 1000;
@@ -468,15 +523,15 @@ namespace ManicDigger
             yield return new Rectangle(-watersizex, 0, watersizex, mapstorage.MapSizeY);
             yield return new Rectangle(mapstorage.MapSizeX, 0, watersizex, mapstorage.MapSizeY);
         }
-        void DrawWaterQuad(float x1, float y1, float width, float height, int? inAtlasId)
+        void DrawWaterQuad(float x1, float y1, float width, float height, float z1)
         {
             RectangleF rect = new RectangleF(0, 0, 1 * width, 1 * height);
             float x2 = x1 + width;
             float y2 = y1 + height;
-            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, mapstorage.WaterLevel, y2);
-            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, mapstorage.WaterLevel, y1);
-            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, mapstorage.WaterLevel, y1);
-            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, mapstorage.WaterLevel, y2);
+            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, z1, y2);
+            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, z1, y1);
+            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, z1, y1);
+            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, z1, y2);
         }
         int lastvisiblevbo = 0;
         private void DeleteVbo(Vbo pp)
