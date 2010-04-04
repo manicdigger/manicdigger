@@ -161,6 +161,7 @@ namespace ManicDigger
             paths.Add("");
             foreach (string path in paths)
             {
+                bool again = false;
                 string filename2 = filename;
             tryagain:
                 string a = Path.Combine(path, filename2);
@@ -168,9 +169,16 @@ namespace ManicDigger
                 {
                     return a;
                 }
-                if (filename2.EndsWith(".png"))
+                if (!again && filename2.EndsWith(".png"))
                 {
                     filename2 = filename2.Replace(".png", ".jpg");
+                    again = true;
+                    goto tryagain;
+                }
+                if (!again && filename2.EndsWith(".jpg"))
+                {
+                    filename2 = filename2.Replace(".jpg", ".png");
+                    again = true;
                     goto tryagain;
                 }
             }

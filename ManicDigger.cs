@@ -165,6 +165,7 @@ namespace ManicDigger
         int MapSizeZ { get; set; }
         void LoadMapArray(Stream ms);
         void SetBlock(int x, int y, int z, byte tileType);
+        float WaterLevel { get; set; }
     }
     public class Player
     {
@@ -434,6 +435,11 @@ namespace ManicDigger
         {
             map[x, y, z] = tileType;
         }
+        #endregion
+        //float waterlevel = 32;
+        #region IMapStorage Members
+        //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
+        public float WaterLevel { get { return MapSizeZ / 2; } set { } }
         #endregion
     }
     public interface IGameData

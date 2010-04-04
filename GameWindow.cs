@@ -691,7 +691,7 @@ namespace ManicDigger
         {
             get
             {
-                return File.ReadAllText("defaultserver.cfg");
+                return File.ReadAllText("defaultserver.txt");
             }
         }
         private void DownloadInternetGame(string qusername, string qpass, string qgameurl)

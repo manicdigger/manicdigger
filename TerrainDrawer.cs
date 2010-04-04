@@ -435,6 +435,48 @@ namespace ManicDigger
             {
                 Draw(k);
             }
+            if (ENABLE_WATER)
+            {
+                DrawWater();
+            }
+        }
+        public bool ENABLE_WATER = true;
+        int? watertexture;
+        private void DrawWater()
+        {
+            if (watertexture == null)
+            {
+                watertexture = the3d.LoadTexture(getfile.GetFile("water.jpg"));
+            }
+            GL.BindTexture(TextureTarget.Texture2D, watertexture.Value);
+            GL.Enable(EnableCap.Texture2D);
+            GL.Color3(Color.White);
+            GL.Begin(BeginMode.Quads);
+            foreach (Rectangle r in AroundMap())
+            {
+                DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
+                    data.GetTileTextureId(data.TileIdWater, TileSide.Top));
+            }
+            GL.End();
+        }
+        int watersizex = 10 * 1000;
+        int watersizey = 10 * 1000;
+        IEnumerable<Rectangle> AroundMap()
+        {
+            yield return new Rectangle(-watersizex, -watersizey, mapstorage.MapSizeX + watersizex * 2, watersizey);
+            yield return new Rectangle(-watersizex, mapstorage.MapSizeY, mapstorage.MapSizeX + watersizex * 2, watersizey);
+            yield return new Rectangle(-watersizex, 0, watersizex, mapstorage.MapSizeY);
+            yield return new Rectangle(mapstorage.MapSizeX, 0, watersizex, mapstorage.MapSizeY);
+        }
+        void DrawWaterQuad(float x1, float y1, float width, float height, int? inAtlasId)
+        {
+            RectangleF rect = new RectangleF(0, 0, 1 * width, 1 * height);
+            float x2 = x1 + width;
+            float y2 = y1 + height;
+            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, mapstorage.WaterLevel, y2);
+            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, mapstorage.WaterLevel, y1);
+            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, mapstorage.WaterLevel, y1);
+            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, mapstorage.WaterLevel, y2);
         }
         int lastvisiblevbo = 0;
         private void DeleteVbo(Vbo pp)
