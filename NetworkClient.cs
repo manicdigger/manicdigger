@@ -294,11 +294,16 @@ namespace ManicDigger
                 WriteInt16(bw, (short)((position.LocalPlayerPosition.X) * 32));//gfd1
                 WriteInt16(bw, (short)((position.LocalPlayerPosition.Y + CharacterPhysics.characterheight) * 32));
                 WriteInt16(bw, (short)(position.LocalPlayerPosition.Z * 32));
-                bw.Write((byte)(((position.LocalPlayerOrientation.Y % 2 * Math.PI) / (2 * Math.PI)) * 256));//heading todo
-                bw.Write((byte)(position.LocalPlayerOrientation.X / 256));//pitch todo
-                //Console.WriteLine("sent " + position.LocalPlayerPosition);
+                bw.Write((byte)((((position.LocalPlayerOrientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
+                bw.Write(PitchByte());
                 SendPacket(ms.ToArray());
             }
+        }
+        private byte PitchByte()
+        {
+            double xx = (position.LocalPlayerOrientation.X + Math.PI) % (2 * Math.PI);
+            xx = xx / (2 * Math.PI);
+            return (byte)(xx * 256);
         }
         bool spawned = false;
         string ServerName;
