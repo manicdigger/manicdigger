@@ -1070,7 +1070,7 @@ namespace ManicDigger
             pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
             pick.End = ray + raydir;
             var s = new TileOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, 256);
+            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(clientgame.MapSizeX, Math.Max(clientgame.MapSizeY, clientgame.MapSizeZ))));
             List<TilePosSide> pick2 = new List<TilePosSide>(s.LineIntersection(IsTileEmptyForPhysics, pick));
             pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
 
@@ -1161,6 +1161,17 @@ namespace ManicDigger
                 lastbuild = new DateTime();
                 fastclicking = true;
             }
+        }
+        private uint NextPowerOfTwo(uint x)
+        {
+            x--;
+            x |= x >> 1;  // handle  2 bit numbers
+            x |= x >> 2;  // handle  4 bit numbers
+            x |= x >> 4;  // handle  8 bit numbers
+            x |= x >> 8;  // handle 16 bit numbers
+            x |= x >> 16; // handle 32 bit numbers
+            x++;
+            return x;
         }
         private void OnPick(TilePosSide pick0)
         {
