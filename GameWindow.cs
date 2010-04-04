@@ -1045,7 +1045,8 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
+            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
+                || data.IsWaterTile(clientgame.Map[x, y, z]);
         }
         float PICK_DISTANCE = 3.5f;
         private void UpdatePicking()
