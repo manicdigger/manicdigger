@@ -677,12 +677,12 @@ namespace ManicDigger
         }
         public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
         {
-            //Vector3 oldposition = playerposition;
+            //Math.Floor() is needed because casting negative values to integer is not floor.
             Vector3 playerposition = newposition;
             //left
             {
                 var qnewposition = newposition + new Vector3(0, 0, walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.Z - oldposition.Z > 0)
                 {
                     if (!newempty)
@@ -694,7 +694,7 @@ namespace ManicDigger
             //front
             {
                 var qnewposition = newposition + new Vector3(walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.X - oldposition.X > 0)
                 {
                     if (!newempty)
@@ -706,7 +706,7 @@ namespace ManicDigger
             //top
             {
                 var qnewposition = newposition + new Vector3(0, -walldistance, 0);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.Y - oldposition.Y < 0)
                 {
                     if (!newempty)
@@ -718,7 +718,7 @@ namespace ManicDigger
             //right
             {
                 var qnewposition = newposition + new Vector3(0, 0, -walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.Z - oldposition.Z < 0)
                 {
                     if (!newempty)
@@ -730,7 +730,7 @@ namespace ManicDigger
             //back
             {
                 var qnewposition = newposition + new Vector3(-walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.X - oldposition.X < 0)
                 {
                     if (!newempty)
@@ -742,7 +742,7 @@ namespace ManicDigger
             //bottom
             {
                 var qnewposition = newposition + new Vector3(0, +walldistance + characterheight, 0);
-                bool newempty = IsTileEmptyForPhysics((int)qnewposition.X, (int)qnewposition.Z, (int)qnewposition.Y);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.Y - oldposition.Y > 0)
                 {
                     if (!newempty)
