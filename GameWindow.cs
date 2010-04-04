@@ -913,7 +913,7 @@ namespace ManicDigger
                             movedy += 1;
                             //player orientation
                             //player.playerorientation.Y=
-                            Vector3 q=playerdestination - player.playerposition;
+                            Vector3 q = playerdestination - player.playerposition;
                             q.Y = player.playerposition.Y;
                             player.playerorientation.Y = (float)Math.PI + Vector3.CalculateAngle(new Vector3(1, 0, 0), q);
                         }
@@ -1116,7 +1116,7 @@ namespace ManicDigger
                     if (middle)
                     {
                         var newtile = From3dPos(pick0);
-                        if (IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(clientgame, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
                             clonesource = (int)PlayerBuildableMaterialType((TileTypeMinecraft)clonesource);
@@ -1138,7 +1138,7 @@ namespace ManicDigger
                         TilePosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : From3dPos(tile);
-                        if (IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(clientgame, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             Console.WriteLine(". newtile:" + newtile + " type: " + clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
                             if (pick0.pos != new Vector3(-1, -1, -1))
@@ -1176,18 +1176,6 @@ namespace ManicDigger
         private void OnPick(TilePosSide pick0)
         {
             playerdestination = pick0.pos;
-        }
-        private bool IsValidPos(int x, int y, int z)
-        {
-            if (x < 0 || y < 0 || z < 0)
-            {
-                return false;
-            }
-            if (x >= clientgame.MapSizeX || y >= clientgame.MapSizeY || z >= clientgame.MapSizeZ)
-            {
-                return false;
-            }
-            return true;
         }
         private TileTypeMinecraft PlayerBuildableMaterialType(TileTypeMinecraft t)
         {
@@ -1240,7 +1228,7 @@ namespace ManicDigger
             GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
 
             GL.MatrixMode(MatrixMode.Modelview);
-            
+
             Matrix4 camera;
             if (overheadcamera)
             {
@@ -1862,5 +1850,20 @@ namespace ManicDigger
         {
             chatlines.Add(new Chatline() { text = s, time = DateTime.Now });
         }
+        #region ILocalPlayerPosition Members
+        public bool Swimming
+        {
+            get
+            {
+                var p = LocalPlayerPosition;
+                p += new Vector3(0, CharacterPhysics.characterheight, 0);
+                if (!MapUtil.IsValidPos(clientgame, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                {
+                    return p.Y < clientgame.WaterLevel;
+                }
+                return data.IsWaterTile(clientgame.Map[(int)p.X, (int)p.Z, (int)p.Y]);
+            }
+        }
+        #endregion
     }
 }

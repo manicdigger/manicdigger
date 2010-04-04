@@ -237,10 +237,6 @@ namespace ManicDigger
                         bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
                         bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
                         bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
-                        if (x == 0)
-                        {
-                            if (tt == data.TileIdWater) { Console.WriteLine(new Vector3(x, y, z)); }
-                        }
                         if (DONOTDRAWEDGES)
                         {
                             //if the game is fillrate limited, then this makes it much faster.
@@ -425,6 +421,7 @@ namespace ManicDigger
                 }
             }
             GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
+            GL.Color3(terraincolor);
             var z = new List<Vbo>(VisibleVbo());
             if (z.Count != lastvisiblevbo && vbotoload.Count == 0)
             {
@@ -447,6 +444,7 @@ namespace ManicDigger
         int? rocktexture;
         bool waternotfoundwritten = false;
         bool rocknotfoundwritten = false;
+        Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
         private void DrawWater()
         {
             if (waternotfoundwritten) { return; }
@@ -461,7 +459,7 @@ namespace ManicDigger
             }
             GL.BindTexture(TextureTarget.Texture2D, watertexture.Value);
             GL.Enable(EnableCap.Texture2D);
-            GL.Color3(Color.White);
+            GL.Color3(terraincolor);
             GL.Begin(BeginMode.Quads);
             foreach (Rectangle r in AroundMap())
             {
@@ -484,7 +482,7 @@ namespace ManicDigger
             }
             GL.BindTexture(TextureTarget.Texture2D, rocktexture.Value);
             GL.Enable(EnableCap.Texture2D);
-            GL.Color3(Color.White);
+            GL.Color3(terraincolor);
             GL.Begin(BeginMode.Quads);
             foreach (IEnumerable<Point> r in MapEdges())
             {

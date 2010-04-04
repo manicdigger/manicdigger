@@ -171,6 +171,21 @@ namespace ManicDigger
     {
         public Vector3 Position;
     }
+    public static class MapUtil
+    {
+        public static bool IsValidPos(IMapStorage map, int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0)
+            {
+                return false;
+            }
+            if (x >= map.MapSizeX || y >= map.MapSizeY || z >= map.MapSizeZ)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
     //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
     public class ClientGame : IMapStorage, IPlayers
     {
@@ -453,6 +468,7 @@ namespace ManicDigger
         int TileIdStone { get; }
         int TileIdWater { get; }
         int TileIdSand { get; }
+        bool IsWaterTile(byte tiletype);
     }
     public class GameDataTilesManicDigger : IGameData
     {
@@ -499,6 +515,10 @@ namespace ManicDigger
         public int TileIdSand
         {
            get{ return TileIdDirt;}//todo
+        }
+        public bool IsWaterTile(byte tiletype)
+        {
+            return tiletype == TileIdWater;
         }
         #endregion
     }
@@ -643,6 +663,11 @@ namespace ManicDigger
         public int TileIdSand
         {
             get { return (int)TileTypeMinecraft.Sand; }
+        }
+        public bool IsWaterTile(byte tiletype)
+        {
+            return tiletype == (int)TileTypeMinecraft.Water
+                || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource;
         }
         #endregion
     }
@@ -844,6 +869,7 @@ namespace ManicDigger
     {
         Vector3 LocalPlayerPosition { get; set; }
         Vector3 LocalPlayerOrientation { get; set; }
+        bool Swimming { get; }
     }
     public interface IPlayers
     {
