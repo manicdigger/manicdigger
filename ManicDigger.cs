@@ -184,7 +184,7 @@ namespace ManicDigger
             return true;
         }
     }
-    public class MapStorage
+    public class MapStorage : IMapStorage
     {
         byte[, ,] map;
         public object mapupdate = new object();
@@ -192,6 +192,26 @@ namespace ManicDigger
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
+        #region IMapStorage Members
+        public void SetBlock(int x, int y, int z, byte tileType)
+        {
+            throw new NotImplementedException();
+        }
+        public float WaterLevel
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+        public void Dispose()
+        {
+        }
+        #endregion
     }
     public interface ICurrentMap
     {
@@ -260,6 +280,7 @@ namespace ManicDigger
         public void LoadMapArray(IMapStorage map, Stream s)
         {
             BinaryReader br = new BinaryReader(s);
+            map.Map = new byte[map.MapSizeX, map.MapSizeY, map.MapSizeZ];
             for (int z = 0; z < map.MapSizeZ; z++)
             {
                 for (int y = 0; y < map.MapSizeY; y++)

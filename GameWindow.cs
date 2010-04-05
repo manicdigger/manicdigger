@@ -333,35 +333,35 @@ namespace ManicDigger
             string[] ss = s.Split(new char[] { ' ' });
             if (s.StartsWith("."))
             {
-                string cmd = ss[0].Substring(1);
-                string arguments;
-                if (s.IndexOf(" ") == -1)
-                { arguments = ""; }
-                else
-                { arguments = s.Substring(s.IndexOf(" ")); }
-                arguments = arguments.Trim();
-                if (cmd == "server" || cmd == "connect")
+                try
                 {
-                    string server = arguments;
-                    DownloadInternetGame(username, pass, server);
-                    return;
-                }
-                else if (cmd == "nick" || cmd == "user" || cmd == "username")
-                {
-                    username = arguments;
-                }
-                else if (cmd == "pass" || cmd == "password")
-                {
-                    pass = arguments;
-                }
-                else if (cmd == "load")
-                {
-                    if (arguments == "")
+                    string cmd = ss[0].Substring(1);
+                    string arguments;
+                    if (s.IndexOf(" ") == -1)
+                    { arguments = ""; }
+                    else
+                    { arguments = s.Substring(s.IndexOf(" ")); }
+                    arguments = arguments.Trim();
+                    if (cmd == "server" || cmd == "connect")
                     {
-                        AddChatline("error: missing arg1 - savename");
+                        string server = arguments;
+                        DownloadInternetGame(username, pass, server);
+                        return;
                     }
-                    try
+                    else if (cmd == "nick" || cmd == "user" || cmd == "username")
                     {
+                        username = arguments;
+                    }
+                    else if (cmd == "pass" || cmd == "password")
+                    {
+                        pass = arguments;
+                    }
+                    else if (cmd == "load")
+                    {
+                        if (arguments == "")
+                        {
+                            AddChatline("error: missing arg1 - savename");
+                        }
                         string filename = arguments;
                         //if no extension given, then add default
                         if (filename.IndexOf(".") == -1)
@@ -370,41 +370,77 @@ namespace ManicDigger
                         }
                         mapManipulator.LoadMap(clientgame, filename);
                     }
-                    catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
-                }
-                else if (cmd == "save")
-                {
-                    if (arguments == "")
+                    else if (cmd == "save")
                     {
-                        AddChatline("error: missing arg1 - savename");
-                        return;
-                    }
-                    try
-                    {
+                        if (arguments == "")
+                        {
+                            AddChatline("error: missing arg1 - savename");
+                            return;
+                        }
                         mapManipulator.SaveMap(clientgame, arguments + MapManipulator.XmlSaveExtension);
+
                     }
-                    catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
+                    else if (cmd == "fps")
+                    {
+                        ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
+                    }
+                    else if (cmd == "uploadmap")
+                    {
+                        //load map from disk
+                        MapStorage m = new MapStorage();
+                        mapManipulator.LoadMap(m, arguments);
+                        //add build commands to queue
+                        for (int z = m.MapSizeZ - 1; z >= 0; z--)
+                        {
+                            for (int x = 0; x < m.MapSizeX; x++)
+                            {
+                                for (int y = 0; y < m.MapSizeY; y++)
+                                {
+                                    if (!MapUtil.IsValidPos(clientgame, x, y, z))
+                                    {
+                                        continue;
+                                    }
+                                    byte oldtile = clientgame.Map[x, y, z];
+                                    byte newtile = m.Map[x, y, z];
+                                    if (data.IsWaterTile(newtile) || data.IsWaterTile(newtile))
+                                    {
+                                        continue;
+                                    }
+                                    if (oldtile != newtile)
+                                    {
+                                        int xx = x;
+                                        int yy = y;
+                                        int zz = z;
+                                        todo.Enqueue(() =>
+                                            {
+                                                player.playerposition = new Vector3(xx, zz + 1, yy);
+                                                if (oldtile == data.TileIdEmpty)
+                                                {
+                                                    network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, newtile);
+                                                }
+                                                if (newtile != data.TileIdEmpty)
+                                                {
+                                                    network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
+                                                }
+                                            });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        network.SendChat(GuiTypingBuffer);
+                    }
                 }
-                else if (cmd == "fps")
-                {
-                    ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
-                }
-                else if (cmd == "uploadmap")
-                {
-                    //load map from disk
-                    //add build commands to queue
-                }
-                else
-                {
-                    network.SendChat(GuiTypingBuffer);
-                }
+                catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
             }
             else
             {
                 network.SendChat(GuiTypingBuffer);
             }
         }
-        List<MethodInvoker> todo = new List<MethodInvoker>();
+        Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
             if (guistate == GuiState.Normal)
@@ -884,8 +920,15 @@ namespace ManicDigger
             False,
         }
         CharacterPhysicsState player = new CharacterPhysicsState();
+        DateTime lasttodo;
         void FrameTick(FrameEventArgs e)
         {
+            if ((DateTime.Now - lasttodo).TotalSeconds > 0.1 && todo.Count > 0)
+            {
+                lasttodo = DateTime.Now;
+                var task = todo.Dequeue();
+                task();
+            }
             lock (frametickmainthreadtodo)
             {
                 for (int i = 0; i < frametickmainthreadtodo.Count; i++)
