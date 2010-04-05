@@ -369,6 +369,7 @@ namespace ManicDigger
                             filename += MapManipulator.XmlSaveExtension;
                         }
                         mapManipulator.LoadMap(clientgame, filename);
+                        terrain.UpdateAllTiles();
                     }
                     else if (cmd == "save")
                     {
@@ -1101,7 +1102,7 @@ namespace ManicDigger
         }
         float PICK_DISTANCE = 3.5f;
         private void UpdatePicking()
-        {throw new Exception();
+        {
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;

@@ -24,7 +24,6 @@ using DependencyInjection;
 using ManicDigger;
 using System.Net;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using System.Xml.XPath;
 using System.Xml;
 
@@ -235,23 +234,15 @@ namespace ManicDigger
                 return;
             }
             using (Stream s = new MemoryStream(GzipCompression.Decompress(File.ReadAllBytes(filename))))
-            //using (FileStream s = File.OpenRead(filename))
             {
-                /*
-                BinaryReader br = new BinaryReader(s);
-                int formatversion = br.ReadInt32();
-                MapSizeZ = br.ReadInt32();
-                MapSizeX = br.ReadInt32();
-                MapSizeY = br.ReadInt32();
-                */
                 StreamReader sr = new StreamReader(s);
-                XDocument d = XDocument.Load(sr);
-                XElement save = d.Element("ManicDiggerSave");
-                int format = int.Parse(save.Element("FormatVersion").Value);
-                map.MapSizeX = int.Parse(save.Element("MapSize").Element("X").Value);
-                map.MapSizeY = int.Parse(save.Element("MapSize").Element("Y").Value);
-                map.MapSizeZ = int.Parse(save.Element("MapSize").Element("Z").Value);
-                byte[] mapdata = Convert.FromBase64String(save.Element("MapData").Value);
+                XmlDocument d = new XmlDocument();
+                d.Load(sr);
+                int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/FormatVersion"));
+                map.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/X"));
+                map.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Y"));
+                map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
+                byte[] mapdata = Convert.FromBase64String(XmlTool.XmlVal(d, "/ManicDiggerSave/MapData"));
                 LoadMapArray(map, new MemoryStream(mapdata));
             }
         }
