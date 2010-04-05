@@ -14,6 +14,8 @@ namespace ManicDigger
     {
         [Inject]
         public IMapStorage map { get; set; }
+        [Inject]
+        public MapManipulator mapManipulator { get; set; }
         #region IFMap Members
         public int MapSizeX
         {
@@ -82,7 +84,7 @@ namespace ManicDigger
         {
             var ms = new MemoryStream(data);
             ms.Seek(offset, SeekOrigin.Begin);
-            map.LoadMapArray(ms);
+            mapManipulator.LoadMapArray(map, ms);
         }
         public bool ValidateBlockTypes()
         {

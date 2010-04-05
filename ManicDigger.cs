@@ -112,10 +112,8 @@ namespace ManicDigger
     public class MapGeneratorPlain : IMapGenerator
     {
         [Inject]
-        public IMapStorage map { get; set; }
-        [Inject]
         public IGameData data { get; set; }
-        public void GenerateMap()
+        public void GenerateMap(IMapStorage map)
         {
             for (int x = 0; x < map.MapSizeX; x++)
             {
@@ -163,9 +161,9 @@ namespace ManicDigger
         int MapSizeX { get; set; }
         int MapSizeY { get; set; }
         int MapSizeZ { get; set; }
-        void LoadMapArray(Stream ms);
         void SetBlock(int x, int y, int z, byte tileType);
         float WaterLevel { get; set; }
+        void Dispose();
     }
     public class Player
     {
@@ -186,37 +184,25 @@ namespace ManicDigger
             return true;
         }
     }
-    //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
-    public class ClientGame : IMapStorage, IPlayers
+    public class MapStorage
     {
-        [Inject]
-        public IGui gui { get; set; }
-        [Inject]
-        public IMapGenerator mapgenerator { get; set; }
-        [Inject]
-        public CharacterPhysics p { get; set; }
         byte[, ,] map;
         public object mapupdate = new object();
         public byte[, ,] Map { get { return map; } set { map = value; } }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
-        IDictionary<int, Player> players = new Dictionary<int, Player>();
-        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
-        public ClientGame()
-        {
-            map = new byte[256, 256, 64];
-            MapSizeX = 256;
-            MapSizeY = 256;
-            MapSizeZ = 64;
-        }
-        public void GeneratePlainMap()
-        {
-            mapgenerator.GenerateMap();
-        }
+    }
+    public interface ICurrentMap
+    {
+        MapStorage map { get; set; }
+    }
+    public class MapManipulator
+    {
+        //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
         public const string MinecraftMapSaveExtension = ".dat";
-        public void LoadMap(string filename)
+        public void LoadMap(IMapStorage map, string filename)
         {
             if (!File.Exists(filename))
             {
@@ -225,7 +211,7 @@ namespace ManicDigger
             if (filename.EndsWith(MinecraftMapSaveExtension))
             {
                 //minecraft map
-                LoadMapMinecraft(filename);
+                LoadMapMinecraft(map, filename);
                 return;
             }
             using (Stream s = new MemoryStream(GzipCompression.Decompress(File.ReadAllBytes(filename))))
@@ -242,11 +228,11 @@ namespace ManicDigger
                 XDocument d = XDocument.Load(sr);
                 XElement save = d.Element("ManicDiggerSave");
                 int format = int.Parse(save.Element("FormatVersion").Value);
-                this.MapSizeX = int.Parse(save.Element("MapSize").Element("X").Value);
-                this.MapSizeY = int.Parse(save.Element("MapSize").Element("Y").Value);
-                this.MapSizeZ = int.Parse(save.Element("MapSize").Element("Z").Value);
+                map.MapSizeX = int.Parse(save.Element("MapSize").Element("X").Value);
+                map.MapSizeY = int.Parse(save.Element("MapSize").Element("Y").Value);
+                map.MapSizeZ = int.Parse(save.Element("MapSize").Element("Z").Value);
                 byte[] mapdata = Convert.FromBase64String(save.Element("MapData").Value);
-                LoadMapArray(new MemoryStream(mapdata));
+                LoadMapArray(map, new MemoryStream(mapdata));
             }
         }
         public class XmlTool
@@ -271,24 +257,24 @@ namespace ManicDigger
                 }
             }
         }
-        public void LoadMapArray(Stream s)
+        public void LoadMapArray(IMapStorage map, Stream s)
         {
             BinaryReader br = new BinaryReader(s);
-            for (int z = 0; z < MapSizeZ; z++)
+            for (int z = 0; z < map.MapSizeZ; z++)
             {
-                for (int y = 0; y < MapSizeY; y++)
+                for (int y = 0; y < map.MapSizeY; y++)
                 {
-                    for (int x = 0; x < MapSizeX; x++)
+                    for (int x = 0; x < map.MapSizeX; x++)
                     {
-                        map[x, y, z] = br.ReadByte();
+                        map.Map[x, y, z] = br.ReadByte();
                     }
                 }
             }
-            gui.DrawMap();
+            //.gui.DrawMap();
             Console.WriteLine("Game loaded successfully.");
         }
         public string defaultminesave = "default" + XmlSaveExtension;
-        public void SaveMap(string filename)
+        public void SaveMap(IMapStorage map, string filename)
         {
             //using (FileStream s = File.OpenWrite("default.minesave"))
             /*
@@ -312,7 +298,7 @@ namespace ManicDigger
             }
             File.WriteAllBytes("default.minesave", GzipCompression.Compress(s.ToArray()));
             */
-            File.WriteAllBytes(filename, GzipCompression.Compress(SaveXml()));
+            File.WriteAllBytes(filename, GzipCompression.Compress(SaveXml(map)));
             Console.WriteLine("Game saved successfully.");
         }
         static public string Base64Encode(string toEncode)
@@ -327,26 +313,26 @@ namespace ManicDigger
             string returnValue = Encoding.UTF8.GetString(encodedDataAsBytes);
             return returnValue;
         }
-        byte[] SaveXml()
+        byte[] SaveXml(IMapStorage map)
         {
             StringBuilder b = new StringBuilder();
             b.AppendLine(@"<?xml version=""1.0"" encoding=""UTF-8""?>");
             b.AppendLine("<ManicDiggerSave>");
             b.AppendLine(X("FormatVersion", "1"));
             b.AppendLine("<MapSize>");
-            b.AppendLine(X("X", "" + MapSizeX));
-            b.AppendLine(X("Y", "" + MapSizeY));
-            b.AppendLine(X("Z", "" + MapSizeZ));
+            b.AppendLine(X("X", "" + map.MapSizeX));
+            b.AppendLine(X("Y", "" + map.MapSizeY));
+            b.AppendLine(X("Z", "" + map.MapSizeZ));
             b.AppendLine("</MapSize>");
             MemoryStream mapdata = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(mapdata);
-            for (int z = 0; z < MapSizeZ; z++)
+            for (int z = 0; z < map.MapSizeZ; z++)
             {
-                for (int y = 0; y < MapSizeY; y++)
+                for (int y = 0; y < map.MapSizeY; y++)
                 {
-                    for (int x = 0; x < MapSizeX; x++)
+                    for (int x = 0; x < map.MapSizeX; x++)
                     {
-                        bw.Write((byte)map[x, y, z]);
+                        bw.Write((byte)map.Map[x, y, z]);
                     }
                 }
             }
@@ -382,11 +368,11 @@ namespace ManicDigger
         }
         [Inject]
         public IGetFilePath getfile { get; set; }
-        public void LoadMapMinecraft(string filename)
+        public void LoadMapMinecraft(IMapStorage map, string filename)
         {
             byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile(filename)));
             fCraft.MapLoaderDAT maploaderdat = new fCraft.MapLoaderDAT();
-            fCraft.IFMap mymap = new MyFCraftMap() { map = this };
+            fCraft.IFMap mymap = new MyFCraftMap() { map = map };
             maploaderdat.log = new fCraft.FLogDummy();
             maploaderdat.Load(filename, mymap);
         }
@@ -401,13 +387,13 @@ namespace ManicDigger
             }
             return true;
         }
-        void ResizeMap(int newsizex, int newsizey, int newsizez)
+        void ResizeMap(IMapStorage map, int newsizex, int newsizey, int newsizez)
         {
             byte[, ,] newmap = new byte[newsizex, newsizey, newsizez];
 
-            int oldsizex = MapSizeX;
-            int oldsizey = MapSizeY;
-            int oldsizez = MapSizeZ;
+            int oldsizex = map.MapSizeX;
+            int oldsizey = map.MapSizeY;
+            int oldsizez = map.MapSizeZ;
 
             /*
             int movex = newsizex / 2 - (oldsizex) / 2;
@@ -421,15 +407,15 @@ namespace ManicDigger
                         newmap[x + movex, y + movey, z + movez] = map[x, y, z];
                     }
             */
-            CloneMap(map, newmap, new Vector3(0, 0, 0), new Vector3(256, 256, 64));
-            CloneMap(map, newmap, new Vector3(256, 256, 0), new Vector3(256, 256, 64));
-            CloneMap(map, newmap, new Vector3(0, 256, 0), new Vector3(256, 256, 64));
-            CloneMap(map, newmap, new Vector3(256, 0, 0), new Vector3(256, 256, 64));
-            map = newmap;
+            CloneMap(map.Map, newmap, new Vector3(0, 0, 0), new Vector3(256, 256, 64));
+            CloneMap(map.Map, newmap, new Vector3(256, 256, 0), new Vector3(256, 256, 64));
+            CloneMap(map.Map, newmap, new Vector3(0, 256, 0), new Vector3(256, 256, 64));
+            CloneMap(map.Map, newmap, new Vector3(256, 0, 0), new Vector3(256, 256, 64));
+            map.Map = newmap;
 
-            MapSizeX = newsizex;
-            MapSizeY = newsizey;
-            MapSizeZ = newsizez;
+            map.MapSizeX = newsizex;
+            map.MapSizeY = newsizey;
+            map.MapSizeZ = newsizez;
 
             //DrawMap();
         }
@@ -442,19 +428,51 @@ namespace ManicDigger
                         b[x + (int)newpos.X, y + (int)newpos.Y, z + (int)newpos.Z] = a[x, y, z];
                     }
         }
-        public void Dispose()
+        [Inject]
+        public IMapGenerator mapgenerator { get; set; }
+        public void GeneratePlainMap(IMapStorage map)
         {
+            mapgenerator.GenerateMap(map);
+        }
+    }
+    //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
+    public class ClientGame : IMapStorage, IPlayers
+    {
+        [Inject]
+        public IGui gui { get; set; }
+        [Inject]
+        public CharacterPhysics p { get; set; }
+        public MapStorage map = new MapStorage();
+        IDictionary<int, Player> players = new Dictionary<int, Player>();
+        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
+        public ClientGame()
+        {
+            map.Map = new byte[256, 256, 64];
+            map.MapSizeX = 256;
+            map.MapSizeY = 256;
+            map.MapSizeZ = 64;
         }
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, byte tileType)
         {
-            map[x, y, z] = tileType;
+            map.Map[x, y, z] = tileType;
         }
         #endregion
         //float waterlevel = 32;
         #region IMapStorage Members
         //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
         public float WaterLevel { get { return MapSizeZ / 2; } set { } }
+        #endregion
+        #region IMapStorage Members
+        public byte[, ,] Map { get { return map.Map; } set { map.Map = value; } }
+        public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
+        public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
+        public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
+        #endregion
+        #region IMapStorage Members
+        public void Dispose()
+        {
+        }
         #endregion
     }
     public interface IGameData
@@ -533,7 +551,7 @@ namespace ManicDigger
     }
     public interface IMapGenerator
     {
-        void GenerateMap();
+        void GenerateMap(IMapStorage map);
     }
     public class GameDataTilesMinecraft : IGameData
     {

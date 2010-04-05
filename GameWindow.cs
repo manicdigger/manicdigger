@@ -263,6 +263,8 @@ namespace ManicDigger
             else { throw new Exception(); }
             base.OnFocusedChanged(e);
         }
+        [Inject]
+        public MapManipulator mapManipulator { get; set; }
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -294,7 +296,7 @@ namespace ManicDigger
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
             //clientgame.GeneratePlainMap();
             //clientgame.LoadMapMinecraft();
-            clientgame.LoadMap("menu" + ClientGame.XmlSaveExtension);
+            mapManipulator.LoadMap(clientgame,"menu" + MapManipulator.XmlSaveExtension);
             ENABLE_FREEMOVE = true;
             player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
             player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
@@ -364,9 +366,9 @@ namespace ManicDigger
                         //if no extension given, then add default
                         if (filename.IndexOf(".") == -1)
                         {
-                            filename += ClientGame.XmlSaveExtension;
+                            filename += MapManipulator.XmlSaveExtension;
                         }
-                        clientgame.LoadMap(filename);
+                        mapManipulator.LoadMap(clientgame, filename);
                     }
                     catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
                 }
@@ -379,13 +381,18 @@ namespace ManicDigger
                     }
                     try
                     {
-                        clientgame.SaveMap(arguments + ClientGame.XmlSaveExtension);
+                        mapManipulator.SaveMap(clientgame, arguments + MapManipulator.XmlSaveExtension);
                     }
                     catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
                 }
                 else if (cmd == "fps")
                 {
                     ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
+                }
+                else if (cmd == "uploadmap")
+                {
+                    //load map from disk
+                    //add build commands to queue
                 }
                 else
                 {
@@ -397,6 +404,7 @@ namespace ManicDigger
                 network.SendChat(GuiTypingBuffer);
             }
         }
+        List<MethodInvoker> todo = new List<MethodInvoker>();
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
             if (guistate == GuiState.Normal)
@@ -609,7 +617,7 @@ namespace ManicDigger
             }
             if (e.Key == OpenTK.Input.Key.F5)
             {
-                clientgame.SaveMap(clientgame.defaultminesave);
+                mapManipulator.SaveMap(clientgame, mapManipulator.defaultminesave);
             }
             if (e.Key == OpenTK.Input.Key.F8)
             {
@@ -662,7 +670,7 @@ namespace ManicDigger
         }
         private void GuiActionLoadGame()
         {
-            clientgame.LoadMap(clientgame.defaultminesave);
+            mapManipulator.LoadMap(clientgame, mapManipulator.defaultminesave);
         }
         private void EscapeMenuBackToGame()
         {
@@ -673,7 +681,7 @@ namespace ManicDigger
         }
         private void GuiActionGenerateNewMap()
         {
-            clientgame.GeneratePlainMap();
+            mapManipulator.GeneratePlainMap(clientgame);
             player.playerposition = playerpositionspawn;
             DrawMap();
         }
@@ -738,7 +746,7 @@ namespace ManicDigger
                 this.terrain = newterrain;
                 newnetwork = null; newclientgame = null; newterrain = null;
                 var ee = (MapLoadedEventArgs)e;
-                lock (clientgame.mapupdate)
+                //lock (clientgame.mapupdate)
                 {
                     clientgame.Map = ee.map;
                     clientgame.MapSizeX = ee.map.GetUpperBound(0) + 1;
@@ -1371,7 +1379,7 @@ namespace ManicDigger
         }
         private void GuiActionSaveGame()
         {
-            clientgame.SaveMap(clientgame.defaultminesave);
+            mapManipulator.SaveMap(clientgame, mapManipulator.defaultminesave);
         }
         void MainMenuAction()
         {
@@ -1418,7 +1426,7 @@ namespace ManicDigger
         }
         bool SaveGameExists()
         {
-            return File.Exists(clientgame.defaultminesave);
+            return File.Exists(mapManipulator.defaultminesave);
         }
         bool? savegameexists;
         void DrawMainMenu()
