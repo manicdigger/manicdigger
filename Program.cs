@@ -196,7 +196,7 @@ namespace ManicDigger
                     goto tryagain;
                 }
             }
-            throw new Exception(filename + " not found.");
+            throw new FileNotFoundException(filename + " not found.");
         }
     }
 }
