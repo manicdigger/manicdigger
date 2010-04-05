@@ -444,8 +444,8 @@ namespace ManicDigger
             if (ENABLE_WATER)
             {
                 DrawWater();
+                DrawMapEdges();
             }
-            DrawMapEdges();
         }
         public bool ENABLE_WATER = true;
         int? watertexture;
@@ -521,8 +521,8 @@ namespace ManicDigger
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, height, y1);
             GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, 0, y1);
         }
-        int watersizex = 10 * 1000;
-        int watersizey = 10 * 1000;
+        int watersizex = 1 * 1000;
+        int watersizey = 1 * 1000;
         IEnumerable<Rectangle> AroundMap()
         {
             yield return new Rectangle(-watersizex, -watersizey, mapstorage.MapSizeX + watersizex * 2, watersizey);

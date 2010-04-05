@@ -223,6 +223,14 @@ namespace ManicDigger
         public const string MinecraftMapSaveExtension = ".dat";
         public void LoadMap(IMapStorage map, string filename)
         {
+            if ((!File.Exists(filename)) && File.Exists(filename + MinecraftMapSaveExtension))
+            {
+                filename += MinecraftMapSaveExtension;
+            }
+            if ((!File.Exists(filename)) && File.Exists(filename + XmlSaveExtension))
+            {
+                filename += XmlSaveExtension;
+            }
             if (!File.Exists(filename))
             {
                 Console.WriteLine(filename + " not found.");
@@ -499,6 +507,7 @@ namespace ManicDigger
         int TileIdWater { get; }
         int TileIdSand { get; }
         bool IsWaterTile(byte tiletype);
+        bool IsBuildableTile(byte tiletype);
     }
     public class GameDataTilesManicDigger : IGameData
     {
@@ -549,6 +558,12 @@ namespace ManicDigger
         public bool IsWaterTile(byte tiletype)
         {
             return tiletype == TileIdWater;
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsBuildableTile(byte tiletype)
+        {
+            return tiletype != TileIdWater;
         }
         #endregion
     }
@@ -698,6 +713,19 @@ namespace ManicDigger
         {
             return tiletype == (int)TileTypeMinecraft.Water
                 || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource;
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsBuildableTile(byte tiletype)
+        {
+            if (tiletype == (int)TileTypeMinecraft.Water) { return false; }
+            if (tiletype == (int)TileTypeMinecraft.InfiniteWaterSource) { return false; }
+            if (tiletype == (int)TileTypeMinecraft.Lava) { return false; }
+            if (tiletype == (int)TileTypeMinecraft.InfiniteLavaSource) { return false; }
+            if (tiletype == (int)TileTypeMinecraft.Adminium) { return false; }
+            if (tiletype == 41) { return false; }
+            if (tiletype == 29) { return false; }
+            return true;
         }
         #endregion
     }

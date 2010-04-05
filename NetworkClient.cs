@@ -19,6 +19,7 @@ namespace ManicDigger
         event EventHandler<MapLoadedEventArgs> MapLoaded;
         void SendChat(string s);
         IEnumerable<string> ConnectedPlayers();
+        void SendPosition(Vector3 position, Vector3 orientation);
     }
     public class ClientNetworkDummy : IClientNetwork
     {
@@ -40,7 +41,11 @@ namespace ManicDigger
                 type = (byte)TileTypeMinecraft.Empty;
             }
             map1.SetTileAndUpdate(position, type);
+            //Console.WriteLine("build:" + position);
+            Console.WriteLine("player:" + player.LocalPlayerPosition + ", build:" + position);
         }
+        [Inject]
+        public ILocalPlayerPosition player { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         [Inject]
         public IGui gui { get; set; }
@@ -161,6 +166,11 @@ namespace ManicDigger
         {
             yield return "[local player]";
         }
+        #region IClientNetwork Members
+        public void SendPosition(Vector3 position, Vector3 orientation)
+        {
+        }
+        #endregion
     }
     public class MapLoadedEventArgs : EventArgs
     {
@@ -223,6 +233,11 @@ namespace ManicDigger
             bw.Write((byte)(mode == BlockSetMode.Create ? 1 : 0));
             bw.Write((byte)type);
             SendPacket(ms.ToArray());
+            //tosend.Add(ms.ToArray());
+            //Console.WriteLine(this.position.LocalPlayerPosition);
+            //Console.WriteLine("p" + position);
+            Console.WriteLine("player:" + lastsentposition + ", build:" + position
+                + ", block:" + type + ", mode:" + Enum.GetName(typeof(BlockSetMode), mode));
         }
         public void SendChat(string s)
         {
@@ -232,7 +247,9 @@ namespace ManicDigger
             bw.Write((byte)255);//unused
             WriteString64(bw, s);
             SendPacket(ms.ToArray());
+            //tosend.Add(ms.ToArray());
         }
+        //List<byte[]> tosend = new List<byte[]>();
         public void Process()
         {
             if (main == null)
@@ -286,17 +303,29 @@ namespace ManicDigger
             if (spawned && ((DateTime.Now - lastpositionsent).TotalSeconds > 0.1))
             {
                 lastpositionsent = DateTime.Now;
-                MemoryStream ms = new MemoryStream();
-                BinaryWriter bw = new BinaryWriter(ms);
-                bw.Write((byte)ClientPacketId.PositionandOrientation);
-                bw.Write((byte)255);//player id, self
-                WriteInt16(bw, (short)((position.LocalPlayerPosition.X) * 32));//gfd1
-                WriteInt16(bw, (short)((position.LocalPlayerPosition.Y + CharacterPhysics.characterheight) * 32));
-                WriteInt16(bw, (short)(position.LocalPlayerPosition.Z * 32));
-                bw.Write((byte)((((position.LocalPlayerOrientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
-                bw.Write(PitchByte());
-                SendPacket(ms.ToArray());
+                SendPosition(position.LocalPlayerPosition, position.LocalPlayerOrientation);
+                //foreach (byte[] b in tosend)
+                //{
+                //    Console.WriteLine("qp" + position.LocalPlayerPosition);
+                //    SendPacket(b);
+                //}
+                //tosend.Clear();
             }
+        }
+        Vector3 lastsentposition;
+        public void SendPosition(Vector3 position, Vector3 orientation)
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write((byte)ClientPacketId.PositionandOrientation);
+            bw.Write((byte)255);//player id, self
+            WriteInt16(bw, (short)((position.X) * 32));//gfd1
+            WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
+            WriteInt16(bw, (short)(position.Z * 32));
+            bw.Write((byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
+            bw.Write(PitchByte());
+            SendPacket(ms.ToArray());
+            lastsentposition = position;
         }
         private byte PitchByte()
         {

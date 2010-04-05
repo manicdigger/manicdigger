@@ -42,6 +42,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio.cs" />
+    <Compile Include="ConsoleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ConsoleForm.Designer.cs">
+      <DependentUpon>ConsoleForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
     <Compile Include="DependencyInjection.cs" />
@@ -55,6 +61,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ConsoleForm.resx">
+      <DependentUpon>ConsoleForm.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

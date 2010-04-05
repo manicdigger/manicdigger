@@ -384,49 +384,46 @@ namespace ManicDigger
                     {
                         ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
                     }
-                    else if (cmd == "uploadmap")
+                    else if (cmd == "uploadmap" || cmd == "uploadfeature")
                     {
                         //load map from disk
                         MapStorage m = new MapStorage();
                         mapManipulator.LoadMap(m, arguments);
                         //add build commands to queue
-                        for (int z = m.MapSizeZ - 1; z >= 0; z--)
+                        new Thread(() => { UploadMap(cmd == "uploadfeature", m); }).Start();
+                    }
+                    else if (cmd == "savefeature")
+                    {
+                        string[] ss1 = arguments.Split(new[] { ' ' });
+                        int size = int.Parse(ss1[0]);
+                        string filename = ss1[1];
+                        MapStorage m = new MapStorage();
+                        m.Map = new byte[size, size, size];
+                        m.MapSizeX = size;
+                        m.MapSizeY = size;
+                        m.MapSizeZ = size;
+                        for (int x = 0; x < size; x++)
                         {
-                            for (int x = 0; x < m.MapSizeX; x++)
+                            for (int y = 0; y < size; y++)
                             {
-                                for (int y = 0; y < m.MapSizeY; y++)
+                                for (int z = 0; z < size; z++)
                                 {
-                                    if (!MapUtil.IsValidPos(clientgame, x, y, z))
+                                    int xx = (int)player.playerposition.X + 1 + x;
+                                    int yy = (int)player.playerposition.Z + 1 + y;
+                                    int zz = (int)player.playerposition.Y + z;
+                                    if (MapUtil.IsValidPos(clientgame, xx, yy, zz)
+                                        && MapUtil.IsValidPos(m, x, y, z))
                                     {
-                                        continue;
-                                    }
-                                    byte oldtile = clientgame.Map[x, y, z];
-                                    byte newtile = m.Map[x, y, z];
-                                    if (data.IsWaterTile(newtile) || data.IsWaterTile(newtile))
-                                    {
-                                        continue;
-                                    }
-                                    if (oldtile != newtile)
-                                    {
-                                        int xx = x;
-                                        int yy = y;
-                                        int zz = z;
-                                        todo.Enqueue(() =>
-                                            {
-                                                player.playerposition = new Vector3(xx, zz + 1, yy);
-                                                if (oldtile == data.TileIdEmpty)
-                                                {
-                                                    network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, newtile);
-                                                }
-                                                if (newtile != data.TileIdEmpty)
-                                                {
-                                                    network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
-                                                }
-                                            });
+                                        m.Map[x, y, z] = clientgame.Map[xx, yy, zz];
                                     }
                                 }
                             }
                         }
+                        if (!filename.Contains("."))
+                        {
+                            filename += MapManipulator.XmlSaveExtension;
+                        }
+                        mapManipulator.SaveMap(m, filename);
                     }
                     else
                     {
@@ -439,6 +436,75 @@ namespace ManicDigger
             {
                 network.SendChat(GuiTypingBuffer);
             }
+        }
+        private void UploadMap(bool uploadfeature, MapStorage m)
+        {
+            ENABLE_NOCLIP = true;
+            ENABLE_FREEMOVE = true;
+            Vector3 playerpos = player.playerposition;
+            for (int z = m.MapSizeZ - 1; z >= 0; z--)
+            {
+                for (int x = 0; x < m.MapSizeX; x++)
+                {
+                    for (int y = 0; y < m.MapSizeY; y++)
+                    {
+                        if (exit)
+                        {
+                            return;
+                        }
+                        int destx = x;
+                        int desty = y;
+                        int destz = z;
+                        if (uploadfeature)
+                        {
+                            destx += (int)playerpos.X;
+                            desty += (int)playerpos.Z;
+                            destz += (int)playerpos.Y;
+                        }
+                        if (!MapUtil.IsValidPos(clientgame, destx, desty, destz))
+                        {
+                            continue;
+                        }
+                        byte oldtile = clientgame.Map[destx, desty, destz];
+                        byte newtile = m.Map[x, y, z];
+                        if (!(data.IsBuildableTile(oldtile) && data.IsBuildableTile(newtile)))
+                        {
+                            continue;
+                        }
+                        if (oldtile != newtile)
+                        {
+                            int xx = destx;
+                            int yy = desty;
+                            int zz = destz;
+                            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
+                            Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
+                            todo.Enqueue(() => { network.SendPosition(newposition, player.playerorientation); });
+                            player.playerposition = newposition;
+                            if (oldtile != data.TileIdEmpty)
+                            {
+                                Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
+                                todo.Enqueue(() => ChangeTile(oldtile, newtile, xx, yy, zz));
+                            }
+                            if (newtile != data.TileIdEmpty)
+                            {
+                                Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
+                                todo.Enqueue(() => ChangeTile2(oldtile, newtile, xx, yy, zz));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void ChangeTile(byte oldtile, byte newtile, int xx, int yy, int zz)
+        {
+            Console.WriteLine(clientgame.map.Map[xx, yy, zz]);
+            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
+            network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
+        }
+        private void ChangeTile2(byte oldtile, byte newtile, int xx, int yy, int zz)
+        {
+            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
+            network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
         }
         Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -923,7 +989,8 @@ namespace ManicDigger
         DateTime lasttodo;
         void FrameTick(FrameEventArgs e)
         {
-            if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
+            //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
+            while (todo.Count > 0)
             {
                 lasttodo = DateTime.Now;
                 var task = todo.Dequeue();
@@ -1204,6 +1271,10 @@ namespace ManicDigger
                             if (!right)
                             {
                                 StartParticleEffect(newtile);//must be before deletion - gets ground type.
+                            }
+                            if (!MapUtil.IsValidPos(clientgame,(int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                            {
+                                throw new Exception();
                             }
                             network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                                 right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
