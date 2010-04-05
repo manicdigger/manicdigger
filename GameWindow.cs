@@ -329,7 +329,7 @@ namespace ManicDigger
                 return;
             }
             string[] ss = s.Split(new char[] { ' ' });
-            if (s.StartsWith("/"))
+            if (s.StartsWith("."))
             {
                 string cmd = ss[0].Substring(1);
                 string arguments;
