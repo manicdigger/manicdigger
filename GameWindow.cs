@@ -923,7 +923,7 @@ namespace ManicDigger
         DateTime lasttodo;
         void FrameTick(FrameEventArgs e)
         {
-            if ((DateTime.Now - lasttodo).TotalSeconds > 0.1 && todo.Count > 0)
+            if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
             {
                 lasttodo = DateTime.Now;
                 var task = todo.Dequeue();
@@ -1101,7 +1101,7 @@ namespace ManicDigger
         }
         float PICK_DISTANCE = 3.5f;
         private void UpdatePicking()
-        {
+        {throw new Exception();
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;

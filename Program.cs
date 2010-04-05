@@ -110,7 +110,22 @@ namespace ManicDigger
         public static void Main(string[] args)
         {
             //new ManicDiggerProgram2().Start();
-            new ManicDiggerProgram().Start(args);
+            if (!Debugger.IsAttached)
+            {
+                try
+                {
+                    new ManicDiggerProgram().Start(args);
+                }
+                catch (Exception e)
+                {
+                    File.WriteAllText("crash.txt", e.ToString());
+                    File.AppendAllText("crash.txt", e.StackTrace);
+                }
+            }
+            else
+            {
+                new ManicDiggerProgram().Start(args);
+            }
         }
         bool digger;
         private void Start(string[] args)
