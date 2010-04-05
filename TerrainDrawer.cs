@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using DependencyInjection;
 using OpenTK;
@@ -100,7 +99,7 @@ namespace ManicDigger
                                 {
                                     //foreach (var qq in q)
                                     {
-                                        vbotoload.Enqueue(new List<VerticesIndicesToLoad>(q.ToArray()));
+                                        vbotoload.Enqueue(ToList(q));
                                     }
                                 }
                             }
@@ -111,6 +110,15 @@ namespace ManicDigger
                 }
                 Thread.Sleep(0);
             }
+        }
+        List<T> ToList<T>(IEnumerable<T> v)
+        {
+            List<T> l = new List<T>();
+            foreach (T vv in v)
+            {
+                l.Add(vv);
+            }
+            return l;
         }
         Queue<Vector3> toupdate = new Queue<Vector3>();
         int buffersize = 32; //32,45
@@ -391,7 +399,7 @@ namespace ManicDigger
             while (chunkupdateframecounter >= 1)
             {
                 chunkupdateframecounter -= 1;
-                IEnumerable<VerticesIndicesToLoad> v = null;
+                List<VerticesIndicesToLoad> v = null;
                 lock (vbotoload)
                 {
                     if (vbotoload.Count > 0)
@@ -399,7 +407,7 @@ namespace ManicDigger
                         v = vbotoload.Dequeue();
                     }
                 }
-                if (v != null && v.Any())
+                if (v != null && v.Count > 0)
                 {
                     List<Vbo> vbolist = new List<Vbo>();
                     foreach (var vv in v)
@@ -411,12 +419,12 @@ namespace ManicDigger
                         }
                         vbolist.Add(vbo1);
                     }
-                    if (!vbo.ContainsKey(v.First().position))
+                    if (!vbo.ContainsKey(v[0].position))
                     {
-                        vbo[v.First().position] = new List<Vbo>();
+                        vbo[v[0].position] = new List<Vbo>();
                     }
                     //delete old vbo
-                    vbo[v.First().position] = vbolist;
+                    vbo[v[0].position] = vbolist;
                     //DrawUpdateChunk(((int)v.X), ((int)v.Y), ((int)v.Z));
                 }
             }
@@ -486,7 +494,8 @@ namespace ManicDigger
             GL.Begin(BeginMode.Quads);
             foreach (IEnumerable<Point> r in MapEdges())
             {
-                DrawRockQuad(r.ElementAt(0).X, r.ElementAt(0).Y, r.ElementAt(1).X, r.ElementAt(1).Y,
+                List<Point> rr = new List<Point>(r);
+                DrawRockQuad(rr[0].X, rr[0].Y, rr[1].X, rr[1].Y,
                     mapstorage.WaterLevel - 2);
             }
             foreach (Rectangle r in AroundMap())
