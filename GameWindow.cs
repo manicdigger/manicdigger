@@ -170,6 +170,85 @@ namespace ManicDigger
         public int MaximumAngle = 89;
         public int MinimumAngle = 0;
     }
+    public interface IInterpolation
+    {
+        object Interpolate(object a, object b, float progress);
+    }
+    public interface INetworkInterpolation
+    {
+        void AddNetworkPacket(object c, double time);
+        object InterpolatedState(double time);
+    }
+    class NetworkInterpolation : INetworkInterpolation
+    {
+        struct Packet
+        {
+            public double timestamp;
+            public object content;
+        }
+        public IInterpolation req { get; set; }
+        public float DELAY = 0.2f;
+        public float FRAMESIZE = 0.1f;
+        List<Packet> received = new List<Packet>();
+        public void AddNetworkPacket(object c, double time)
+        {
+            Packet p = new Packet();
+            p.content = c;
+            p.timestamp = time;
+            received.Add(p);
+        }
+        public object InterpolatedState(double time)
+        {
+            double curtime = time;
+            double interpolationtime = curtime - DELAY;
+            int p1;
+            int p2;
+            object result;
+            if (received.Count >= 0 && interpolationtime < received[0].timestamp)
+            {
+                p1 = 0;
+                p2 = 0;
+            }
+            //extrapolate
+            else if ((received.Count >= 2)
+                && time > received[received.Count - 1].timestamp)
+            {
+                p1 = received.Count - 2;
+                p2 = received.Count - 1;
+            }
+            else
+            {
+                //interpolate between packets with time a) time-delay, b) curtime-delay+framesize
+                p1 = 0;
+                for (int i = 0; i < received.Count; i++)
+                {
+                    if (received[i].timestamp <= interpolationtime)
+                    {
+                        p1 = i;
+                    }
+                }
+                p2 = p1;
+                for (int i = p1; i < received.Count; i++)
+                {
+                    if (received[i].timestamp <= interpolationtime + FRAMESIZE)
+                    {
+                        p2 = i;
+                    }
+                }
+            }
+            if (p1 == p2)
+            {
+                result = received[p1].content;
+            }
+            else
+            {
+                result = req.Interpolate(received[p1].content, received[p2].content,
+                    (float)((interpolationtime - received[p1].timestamp)
+                    / (received[p2].timestamp - received[p1].timestamp)));
+            }
+            return result;
+        }
+    }
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
         [Inject]
@@ -334,7 +413,7 @@ namespace ManicDigger
         }
         protected override void OnClosed(EventArgs e)
         {
-            Exit = true;
+            exit = true;
             base.OnClosed(e);
         }
         string[] soundwalk = { "walk1.wav", "walk2.wav", "walk3.wav", "walk4.wav" };
@@ -467,7 +546,7 @@ namespace ManicDigger
                 {
                     for (int y = 0; y < m.MapSizeY; y++)
                     {
-                        if (Exit)
+                        if (exit)
                         {
                             return;
                         }
@@ -563,7 +642,7 @@ namespace ManicDigger
                 int menuelements = 3;
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    Exit = true;
+                    exit = true;
                     Exit();
                 }
                 if (e.Key == OpenTK.Input.Key.Up)
@@ -962,7 +1041,7 @@ namespace ManicDigger
         float fallspeed { get { return movespeed / 10; } }
         const float basemovespeed = 5f;
         DateTime lastbuild = new DateTime();
-        public bool Exit { get; set; }
+        public bool exit { get; set; }
         float walksoundtimer = 0;
         int lastwalksound = 0;
         float stepsoundduration = 0.4f;
@@ -1505,7 +1584,7 @@ namespace ManicDigger
             }
             else if (menustate.selected == 2)
             {
-                Exit = true;
+                exit = true;
                 this.Exit();
             }
             else throw new Exception();
@@ -1536,7 +1615,7 @@ namespace ManicDigger
             }
             else if (menustate.selected == 2)
             {
-                Exit = true;
+                exit = true;
                 this.Exit();
             }
             else throw new Exception();
