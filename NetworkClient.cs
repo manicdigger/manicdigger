@@ -176,7 +176,7 @@ namespace ManicDigger
     {
         public byte[, ,] map;
     }
-    class MapDummy : ManicDigger.IMap
+    public class MapDummy : ManicDigger.IMap
     {
         #region IMap Members
         public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
