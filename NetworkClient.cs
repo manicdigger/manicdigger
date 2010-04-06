@@ -27,15 +27,15 @@ namespace ManicDigger
         public ILocalPlayerPosition player { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         [Inject]
-        public IGui gui { get; set; }
+        public IGui Gui { get; set; }
         [Inject]
-        public IMap map1 { get; set; }
+        public IMap Map1 { get; set; }
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage Map { get; set; }
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData Data { get; set; }
         [Inject]
-        public fCraft.MapGenerator gen { get; set; }
+        public fCraft.MapGenerator Gen { get; set; }
         public void Dispose()
         {
         }
@@ -51,7 +51,7 @@ namespace ManicDigger
             {
                 type = (byte)TileTypeMinecraft.Empty;
             }
-            map1.SetTileAndUpdate(position, type);
+            Map1.SetTileAndUpdate(position, type);
             //Console.WriteLine("build:" + position);
             Console.WriteLine("player:" + player.LocalPlayerPosition + ", build:" + position);
         }
@@ -74,10 +74,10 @@ namespace ManicDigger
                 if (cmd == "generate")
                 {
                     DoGenerate(arguments, false);
-                    gui.DrawMap();
+                    Gui.DrawMap();
                 }
             }
-            gui.AddChatline(s);
+            Gui.AddChatline(s);
         }
         void DoGenerate(string mode, bool hollow)
         {
@@ -86,17 +86,17 @@ namespace ManicDigger
                 case "flatgrass":
                     bool reportedProgress = false;
                     playerMessage("Generating flatgrass map...");
-                    for (int i = 0; i < map.MapSizeX; i++)
+                    for (int i = 0; i < Map.MapSizeX; i++)
                     {
-                        for (int j = 0; j < map.MapSizeY; j++)
+                        for (int j = 0; j < Map.MapSizeY; j++)
                         {
-                            for (int k = 1; k < map.MapSizeZ / 2 - 1; k++)
+                            for (int k = 1; k < Map.MapSizeZ / 2 - 1; k++)
                             {
-                                if (!hollow) map.SetBlock(i, j, k, data.TileIdDirt);
+                                if (!hollow) Map.SetBlock(i, j, k, Data.TileIdDirt);
                             }
-                            map.SetBlock(i, j, map.MapSizeZ / 2 - 1, data.TileIdGrass);
+                            Map.SetBlock(i, j, Map.MapSizeZ / 2 - 1, Data.TileIdGrass);
                         }
-                        if (i > map.MapSizeX / 2 && !reportedProgress)
+                        if (i > Map.MapSizeX / 2 && !reportedProgress)
                         {
                             reportedProgress = true;
                             playerMessage("Map generation: 50%");
@@ -132,25 +132,25 @@ namespace ManicDigger
 
                 case "hills":
                     playerMessage("Generating terrain...");
-                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(
                                                                               5, 1, 0.5, 0.45, 0, 0.5, hollow));
                     break;
 
                 case "mountains":
                     playerMessage("Generating terrain...");
-                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(
                                                                               8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
                     break;
 
                 case "lake":
                     playerMessage("Generating terrain...");
-                    gen.GenerateMap(new fCraft.MapGeneratorParameters(
+                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(
                                                                               1, 0.6, 0.9, 0.45, -0.35, 0.55, hollow));
                     break;
 
                 case "island":
                     playerMessage("Generating terrain...");
-                    gen.GenerateMap(new fCraft.MapGeneratorParameters(1, 0.6, 1, 0.45, 0.3, 0.35, hollow));
+                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(1, 0.6, 1, 0.45, 0.3, 0.35, hollow));
                     break;
 
                 default:
@@ -160,7 +160,7 @@ namespace ManicDigger
         }
         private void playerMessage(string p)
         {
-            gui.AddChatline(p);
+            Gui.AddChatline(p);
         }
         public IEnumerable<string> ConnectedPlayers()
         {
@@ -179,13 +179,13 @@ namespace ManicDigger
     public class ClientNetworkMinecraft : IClientNetwork
     {
         [Inject]
-        public IMap map { get; set; }
+        public IMap Map { get; set; }
         [Inject]
-        public IPlayers players { get; set; }
+        public IPlayers Players { get; set; }
         [Inject]
-        public IGui chatlines { get; set; }
+        public IGui Chatlines { get; set; }
         [Inject]
-        public ILocalPlayerPosition position { get; set; }
+        public ILocalPlayerPosition Position { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
 
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -310,7 +310,7 @@ namespace ManicDigger
             if (spawned && ((DateTime.Now - lastpositionsent).TotalSeconds > 0.1))
             {
                 lastpositionsent = DateTime.Now;
-                SendPosition(position.LocalPlayerPosition, position.LocalPlayerOrientation);
+                SendPosition(Position.LocalPlayerPosition, Position.LocalPlayerOrientation);
                 //foreach (byte[] b in tosend)
                 //{
                 //    Console.WriteLine("qp" + position.LocalPlayerPosition);
@@ -336,7 +336,7 @@ namespace ManicDigger
         }
         private byte PitchByte()
         {
-            double xx = (position.LocalPlayerOrientation.X + Math.PI) % (2 * Math.PI);
+            double xx = (Position.LocalPlayerOrientation.X + Math.PI) % (2 * Math.PI);
             xx = xx / (2 * Math.PI);
             return (byte)(xx * 256);
         }
@@ -440,7 +440,7 @@ namespace ManicDigger
                 int z = ReadInt16(br);
                 int y = ReadInt16(br);
                 byte type = br.ReadByte();
-                map.SetTileAndUpdate(new Vector3(x, y, z), type);
+                Map.SetTileAndUpdate(new Vector3(x, y, z), type);
             }
             else if (packetId == ServerPacketId.SpawnPlayer)
             {
@@ -448,11 +448,11 @@ namespace ManicDigger
                 byte playerid = br.ReadByte();
                 string playername = ReadString64(br);
                 connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                if (players.Players.ContainsKey(playerid))
+                if (Players.Players.ContainsKey(playerid))
                 {
                     //throw new Exception();
                 }
-                players.Players[playerid] = new Player();
+                Players.Players[playerid] = new Player();
                 ReadAndUpdatePlayerPosition(br, playerid);
             }
             else if (packetId == ServerPacketId.PlayerTeleport)
@@ -498,14 +498,14 @@ namespace ManicDigger
                         connectedplayers.RemoveAt(i);
                     }
                 }
-                players.Players.Remove(playerid);
+                Players.Players.Remove(playerid);
             }
             else if (packetId == ServerPacketId.Message)
             {
                 totalread += 1 + 64; if (received.Count < totalread) { return 0; }
                 byte unused = br.ReadByte();
                 string message = ReadString64(br);
-                chatlines.AddChatline(message);
+                Chatlines.AddChatline(message);
                 ChatLog(message);
             }
             else if (packetId == ServerPacketId.DisconnectPlayer)
@@ -552,18 +552,18 @@ namespace ManicDigger
         {
             if (playerid == 255)
             {
-                position.LocalPlayerPosition += v;
+                Position.LocalPlayerPosition += v;
                 spawned = true;
             }
             else
             {
-                if (!players.Players.ContainsKey(playerid))
+                if (!Players.Players.ContainsKey(playerid))
                 {
-                    players.Players[playerid] = new Player();
+                    Players.Players[playerid] = new Player();
                     //throw new Exception();
                     Console.WriteLine("Position update of nonexistent player {0}." + playerid);
                 }
-                players.Players[playerid].Position += v;
+                Players.Players[playerid].Position += v;
             }
         }
         private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
@@ -576,16 +576,16 @@ namespace ManicDigger
             Vector3 realpos = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
             if (playerid == 255)
             {
-                position.LocalPlayerPosition = realpos;
+                Position.LocalPlayerPosition = realpos;
                 spawned = true;
             }
             else
             {
-                if (!players.Players.ContainsKey(playerid))
+                if (!Players.Players.ContainsKey(playerid))
                 {
-                    players.Players[playerid] = new Player();
+                    Players.Players[playerid] = new Player();
                 }
-                players.Players[playerid].Position = realpos;
+                Players.Players[playerid].Position = realpos;
             }
         }
         List<byte> received = new List<byte>();
