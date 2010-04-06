@@ -59,6 +59,7 @@ namespace ManicDigger
             k.Bind<fCraft.IFMap, MyFCraftMap>();
             k.Bind<fCraft.IFLogger, fCraft.FLogDummy>();
             k.Bind<IPlayers, ClientGame>();
+            k.Bind<ILoginClient, LoginClientMinecraft>();
             k.BindInstance<IInternetGameFactory>(this);
         }
         void GameModule(KernelAndBinder b)

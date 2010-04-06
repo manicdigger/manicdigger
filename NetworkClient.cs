@@ -700,7 +700,11 @@ namespace ManicDigger
         public int port;
         public string mppass;
     }
-    public class LoginClientMinecraft
+    public interface ILoginClient
+    {
+        LoginData Login(string username, string password, string gameurl);
+    }
+    public class LoginClientMinecraft : ILoginClient
     {
         public LoginData Login(string username, string password, string gameurl)
         {

@@ -249,6 +249,11 @@ namespace ManicDigger
             return result;
         }
     }
+    /// <summary>
+    /// </summary>
+    /// <remarks>
+    /// Requires OpenTK.
+    /// </remarks>
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
         [Inject]
@@ -267,7 +272,7 @@ namespace ManicDigger
         [Inject]
         public IGameData data { get; set; }
         [Inject]
-        public LoginClientMinecraft login { get; set; }
+        public ILoginClient login { get; set; }
         [Inject]
         public Config3d config3d { get; set; }
 

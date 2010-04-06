@@ -63,6 +63,11 @@ namespace ManicDigger
             return r;
         }
     }
+    /// <summary>
+    /// </summary>
+    /// <remarks>
+    /// Requires OpenTK.
+    /// </remarks>
     public class TerrainDrawer3d : ITerrainDrawer
     {
         [Inject]
@@ -95,7 +100,7 @@ namespace ManicDigger
         {
             for (; ; )
             {
-                if (exit.Exit)
+                if (exit.exit)
                 {
                     return;
                 }
