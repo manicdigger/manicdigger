@@ -176,13 +176,52 @@ namespace ManicDigger
     {
         public byte[, ,] map;
     }
+    class MapDummy : ManicDigger.IMap
+    {
+        #region IMap Members
+        public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
+        {
+        }
+        #endregion
+    }
+    public class GuiDummy : ManicDigger.IGui
+    {
+        #region IGui Members
+        public void AddChatline(string s)
+        {
+        }
+        public void DrawMap()
+        {
+        }
+        #endregion
+    }
+    public class PlayersDummy : IPlayers
+    {
+        IDictionary<int, Player> players = new Dictionary<int, Player>();
+        #region IPlayers Members
+        public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
+        #endregion
+    }
+    public class LocalPlayerPositionDummy : ILocalPlayerPosition
+    {
+        #region ILocalPlayerPosition Members
+        public OpenTK.Vector3 LocalPlayerOrientation { get; set; }
+        public OpenTK.Vector3 LocalPlayerPosition { get; set; }
+        public bool Swimming { get { return false; } }
+        #endregion
+    }
     public class ClientNetworkMinecraft : IClientNetwork
     {
         [Inject]
         public IMap map { get; set; }
         [Inject]
         public IPlayers players { get; set; }
-        //public void Connect(LoginData login, string username)
+        [Inject]
+        public IGui chatlines { get; set; }
+        [Inject]
+        public ILocalPlayerPosition position { get; set; }
+        public event EventHandler<MapLoadedEventArgs> MapLoaded;
+
         public void Connect(string serverAddress, int port, string username, string auth)
         {
             main = new Socket(AddressFamily.InterNetwork,
@@ -219,8 +258,6 @@ namespace ManicDigger
             ChatLog("---Disconnected---");
             main.Disconnect(false);
         }
-        [Inject]
-        public ILocalPlayerPosition position { get; set; }
         DateTime lastpositionsent;
         public void SendSetBlock(Vector3 position, BlockSetMode mode, byte type)
         {
@@ -581,8 +618,6 @@ namespace ManicDigger
                 players.Players[playerid].Position = realpos;
             }
         }
-        [Inject]
-        public IGui chatlines { get; set; }
         List<byte> received = new List<byte>();
         public void Dispose()
         {
@@ -675,7 +710,6 @@ namespace ManicDigger
             public string ServerMotd;
             public byte UserType;
         }
-        public event EventHandler<MapLoadedEventArgs> MapLoaded;
         class ConnectedPlayer
         {
             public int id;
