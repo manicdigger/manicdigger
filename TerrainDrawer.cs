@@ -63,6 +63,141 @@ namespace ManicDigger
             return r;
         }
     }
+    public class TileDrawer
+    {
+    }
+    class TerrainUpdater
+    {
+        Rectangle currentRect = nullRect;
+        static Rectangle nullRect = new Rectangle(int.MinValue, int.MinValue, 1, 1);
+        public void Draw(Point playerpos, int rsize)
+        {
+            if (rsize % 2 != 1)
+            {
+                throw new Exception();
+            }
+            var newrect = PlayerRectangle(playerpos, rsize);
+            int z = (rsize - 1) / 2;
+            //if teleport then draw starting from center.
+            if (!currentRect.IntersectsWith(newrect))
+            {
+                if (currentRect != nullRect)
+                {
+                    foreach (Point p in Points(currentRect))
+                    {
+                        Todo.Add(new TodoItem() { action = TodoAction.Delete, position = p });
+                    }
+                }
+                for (int v = 0; v <= z; v++)
+                {
+                    Point center = new Point((newrect.Right + newrect.Left) / 2, (newrect.Bottom + newrect.Top) / 2);
+                    foreach (Point p in SquareEdgesPoints(v))
+                    {
+                        Point pp = new Point(center.X + p.X, center.Y + p.Y);
+                        Todo.Add(new TodoItem() { action = TodoAction.Add, position = pp });
+                    }
+                }
+            }
+            else
+            {
+                if (currentRect == nullRect)
+                {
+                    throw new Exception();
+                }
+                foreach (Rectangle r in OldTiles(currentRect, newrect))
+                {
+                    foreach (Point p in Points(r))
+                    {
+                        Todo.Add(new TodoItem() { action = TodoAction.Delete, position = p });
+                    }
+                }
+                foreach (Rectangle r in NewTiles(currentRect, newrect))
+                {
+                    foreach (Point p in Points(r))
+                    {
+                        Todo.Add(new TodoItem() { action = TodoAction.Add, position = p });
+                    }
+                }
+            }
+            currentRect = newrect;
+        }
+        private IEnumerable<Point> SquareEdgesPoints(int v)
+        {
+            if (v < 0)
+            {
+                throw new ArgumentException();
+            }
+            if (v == 0)
+            {
+                yield return new Point(0, 0);
+                yield break;
+            }
+            Rectangle r = new Rectangle(-v, -v, 2 * v + 1, 2 * v + 1);
+            //up
+            for (int x = r.Left + 1; x < r.Right - 1; x++)
+            {
+                yield return new Point(x, r.Top);
+            }
+            //bottom
+            for (int x = r.Left + 1; x < r.Right - 1; x++)
+            {
+                yield return new Point(x, r.Bottom - 1);
+            }
+            //left
+            for (int y = r.Top; y < r.Bottom; y++)
+            {
+                yield return new Point(r.Left, y);
+            }
+            //right
+            for (int y = r.Top; y < r.Bottom; y++)
+            {
+                yield return new Point(r.Right - 1, y);
+            }
+        }
+        IEnumerable<Point> Points(Rectangle r)
+        {
+            for (int x = r.X; x < r.Right; x++)
+            {
+                for (int y = r.Y; y < r.Bottom; y++)
+                {
+                    yield return new Point(x, y);
+                }
+            }
+        }
+        public enum TodoAction
+        {
+            Add,
+            Delete,
+        }
+        public struct TodoItem
+        {
+            public TodoAction action;
+            public Point position;
+        }
+        public List<TodoItem> Todo = new List<TodoItem>();
+        public IEnumerable<Rectangle> OldTiles(Rectangle a, Rectangle b)
+        {
+            Region r = new Region(b);
+            r.Complement(a);
+            foreach (RectangleF rr in r.GetRegionScans(new System.Drawing.Drawing2D.Matrix()))
+            {
+                yield return new Rectangle((int)rr.X, (int)rr.Y, (int)rr.Width, (int)rr.Height);
+            }
+        }
+        public IEnumerable<Rectangle> NewTiles(Rectangle a, Rectangle b)
+        {
+            Region r = new Region(a);
+            r.Complement(b);
+            foreach (RectangleF rr in r.GetRegionScans(new System.Drawing.Drawing2D.Matrix()))
+            {
+                yield return new Rectangle((int)rr.X, (int)rr.Y, (int)rr.Width, (int)rr.Height);
+            }
+        }
+        public Rectangle PlayerRectangle(Point p, int rsize)
+        {
+            return new Rectangle(p.X - (rsize - 1) / 2, p.Y - (rsize - 1) / 2, rsize, rsize);
+        }
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
@@ -149,7 +284,7 @@ namespace ManicDigger
             return l;
         }
         Queue<Vector3> toupdate = new Queue<Vector3>();
-        int buffersize = 32; //32,45
+        int buffersize = 64; //32,45
         public void UpdateTile(int x, int y, int z)
         {
             Vector3 bufferpos = new Vector3(x / buffersize, y / buffersize, z / buffersize);
@@ -262,129 +397,8 @@ namespace ManicDigger
                 for (int y = starty; y < starty + size; y++)
                     for (int z = startz; z < startz + size; z++)//bbb startz+size
                     {
-                        //if (x == 0 && z == 31 & y == 128)
-                        {
-                        }
                         if (IsTileEmptyForDrawing(x, y, z)) { continue; }
-                        var tt = mapstorage.Map[x, y, z];
-                        bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
-                        bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
-                        bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
-                        bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
-                        bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
-                        bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
-                        if (DONOTDRAWEDGES)
-                        {
-                            //if the game is fillrate limited, then this makes it much faster.
-                            //(39fps vs vsync 75fps)
-                            //bbb.
-                            if (z == 0) { drawbottom = false; }
-                            if (x == 0) { drawfront = false; }
-                            if (x == 256 - 1) { drawback = false; }
-                            if (y == 0) { drawleft = false; }
-                            if (y == 256 - 1) { drawright = false; }
-                        }
-                        //top
-                        if (drawtop)
-                        {
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Top);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 0.0f, texrec.Right, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 1.0f, texrec.Right, texrec.Bottom));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //bottom - same as top, but z is 1 less.
-                        if (drawbottom)
-                        {
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Bottom);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //front
-                        if (drawfront)
-                        {
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Front);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //back - same as front, but x is 1 greater.
-                        if (drawback)
-                        {//todo fix tcoords
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Back);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        if (drawleft)
-                        {
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Left);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
-                        //right - same as left, but y is 1 greater.
-                        if (drawright)
-                        {//todo fix tcoords
-                            int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Right);
-                            RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                            short lastelement = (short)myvertices.Count;
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
-                            myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 0));
-                            myelements.Add((ushort)(lastelement + 2));
-                            myelements.Add((ushort)(lastelement + 3));
-                            myelements.Add((ushort)(lastelement + 1));
-                            myelements.Add((ushort)(lastelement + 2));
-                        }
+                        TileElements(myelements, myvertices, x, y, z);
                         if (myvertices.Count > ushort.MaxValue)
                         {
                             var aa = myelements.ToArray();
@@ -411,6 +425,128 @@ namespace ManicDigger
                 });
             }
             return list;
+        }
+        private void TileElements(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
+        {
+            var tt = mapstorage.Map[x, y, z];
+            bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
+            bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
+            bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
+            bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
+            bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
+            bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
+            if (DONOTDRAWEDGES)
+            {
+                //if the game is fillrate limited, then this makes it much faster.
+                //(39fps vs vsync 75fps)
+                //bbb.
+                if (z == 0) { drawbottom = false; }
+                if (x == 0) { drawfront = false; }
+                if (x == 256 - 1) { drawback = false; }
+                if (y == 0) { drawleft = false; }
+                if (y == 256 - 1) { drawright = false; }
+            }
+            //top
+            if (drawtop)
+            {
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Top);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 0.0f, texrec.Right, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 1.0f, texrec.Right, texrec.Bottom));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //bottom - same as top, but z is 1 less.
+            if (drawbottom)
+            {
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Bottom);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //front
+            if (drawfront)
+            {
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Front);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //back - same as front, but x is 1 greater.
+            if (drawback)
+            {//todo fix tcoords
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Back);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            if (drawleft)
+            {
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Left);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //right - same as left, but y is 1 greater.
+            if (drawright)
+            {//todo fix tcoords
+                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Right);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
         }
         public void Start()
         {
