@@ -23,6 +23,19 @@ namespace ManicDigger
     }
     public class ClientNetworkDummy : IClientNetwork
     {
+        [Inject]
+        public ILocalPlayerPosition player { get; set; }
+        public event EventHandler<MapLoadedEventArgs> MapLoaded;
+        [Inject]
+        public IGui gui { get; set; }
+        [Inject]
+        public IMap map1 { get; set; }
+        [Inject]
+        public IMapStorage map { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
+        [Inject]
+        public fCraft.MapGenerator gen { get; set; }
         public void Dispose()
         {
         }
@@ -32,8 +45,6 @@ namespace ManicDigger
         public void Process()
         {
         }
-        [Inject]
-        public IMap map1 { get; set; }
         public void SendSetBlock(Vector3 position, BlockSetMode mode, byte type)
         {
             if (mode == BlockSetMode.Destroy)
@@ -44,11 +55,6 @@ namespace ManicDigger
             //Console.WriteLine("build:" + position);
             Console.WriteLine("player:" + player.LocalPlayerPosition + ", build:" + position);
         }
-        [Inject]
-        public ILocalPlayerPosition player { get; set; }
-        public event EventHandler<MapLoadedEventArgs> MapLoaded;
-        [Inject]
-        public IGui gui { get; set; }
         public void SendChat(string s)
         {
             if (s == "")
@@ -73,12 +79,6 @@ namespace ManicDigger
             }
             gui.AddChatline(s);
         }
-        [Inject]
-        public IMapStorage map { get; set; }
-        [Inject]
-        public IGameData data { get; set; }
-        [Inject]
-        public fCraft.MapGenerator gen { get; set; }
         void DoGenerate(string mode, bool hollow)
         {
             switch (mode)
@@ -176,40 +176,6 @@ namespace ManicDigger
     {
         public byte[, ,] map;
     }
-    public class MapDummy : ManicDigger.IMap
-    {
-        #region IMap Members
-        public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
-        {
-        }
-        #endregion
-    }
-    public class GuiDummy : ManicDigger.IGui
-    {
-        #region IGui Members
-        public void AddChatline(string s)
-        {
-        }
-        public void DrawMap()
-        {
-        }
-        #endregion
-    }
-    public class PlayersDummy : IPlayers
-    {
-        IDictionary<int, Player> players = new Dictionary<int, Player>();
-        #region IPlayers Members
-        public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
-        #endregion
-    }
-    public class LocalPlayerPositionDummy : ILocalPlayerPosition
-    {
-        #region ILocalPlayerPosition Members
-        public OpenTK.Vector3 LocalPlayerOrientation { get; set; }
-        public OpenTK.Vector3 LocalPlayerPosition { get; set; }
-        public bool Swimming { get { return false; } }
-        #endregion
-    }
     public class ClientNetworkMinecraft : IClientNetwork
     {
         [Inject]
@@ -287,6 +253,10 @@ namespace ManicDigger
             //tosend.Add(ms.ToArray());
         }
         //List<byte[]> tosend = new List<byte[]>();
+        /// <summary>
+        /// This function should be called in program main loop.
+        /// It exits immediately.
+        /// </summary>
         public void Process()
         {
             if (main == null)

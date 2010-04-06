@@ -26,6 +26,29 @@ namespace ManicDigger
         int texturesPacked { get; }
         int terrainTexture { get; }
     }
+    public class TerrainDrawerDummy : ITerrainDrawer
+    {
+        #region ITerrainDrawer Members
+        public void Start()
+        {
+        }
+        public void Draw()
+        {
+        }
+        public void UpdateAllTiles()
+        {
+        }
+        public void UpdateTile(int x, int y, int z)
+        {
+        }
+        public int TrianglesCount()
+        {
+            return 0;
+        }
+        public int texturesPacked { get; set; }
+        public int terrainTexture { get; set; }
+        #endregion
+    }
     public class TextureAtlas
     {
         //warning! buffer zone!
@@ -40,7 +63,7 @@ namespace ManicDigger
             return r;
         }
     }
-    public class TerrainDrawer : ITerrainDrawer
+    public class TerrainDrawer3d : ITerrainDrawer
     {
         [Inject]
         public IThe3d the3d { get; set; }
@@ -72,7 +95,7 @@ namespace ManicDigger
         {
             for (; ; )
             {
-                if (exit.exit)
+                if (exit.Exit)
                 {
                     return;
                 }

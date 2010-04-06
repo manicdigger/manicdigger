@@ -53,6 +53,16 @@ namespace ManicDigger
     {
         int LoadTexture(string filename);
     }
+    public class The3dDummy : IThe3d
+    {
+        public int TextureId;
+        #region IThe3d Members
+        public int LoadTexture(string filename)
+        {
+            return TextureId;
+        }
+        #endregion
+    }
     public class CameraMove
     {
         public bool TurnLeft;
@@ -69,6 +79,15 @@ namespace ManicDigger
     {
         void Move(CameraMove move, float p);
         Vector3 Position { get; }
+    }
+    public class KameraDummy :IKamera
+    {
+        #region IKamera Members
+        public void Move(CameraMove move, float p)
+        {
+        }
+        public Vector3 Position { get; set; }
+        #endregion
     }
     public class Kamera : IKamera
     {
@@ -315,7 +334,7 @@ namespace ManicDigger
         }
         protected override void OnClosed(EventArgs e)
         {
-            exit = true;
+            Exit = true;
             base.OnClosed(e);
         }
         string[] soundwalk = { "walk1.wav", "walk2.wav", "walk3.wav", "walk4.wav" };
@@ -448,7 +467,7 @@ namespace ManicDigger
                 {
                     for (int y = 0; y < m.MapSizeY; y++)
                     {
-                        if (exit)
+                        if (Exit)
                         {
                             return;
                         }
@@ -544,7 +563,7 @@ namespace ManicDigger
                 int menuelements = 3;
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    exit = true;
+                    Exit = true;
                     Exit();
                 }
                 if (e.Key == OpenTK.Input.Key.Up)
@@ -943,7 +962,7 @@ namespace ManicDigger
         float fallspeed { get { return movespeed / 10; } }
         const float basemovespeed = 5f;
         DateTime lastbuild = new DateTime();
-        public bool exit { get; set; }
+        public bool Exit { get; set; }
         float walksoundtimer = 0;
         int lastwalksound = 0;
         float stepsoundduration = 0.4f;
@@ -1486,7 +1505,7 @@ namespace ManicDigger
             }
             else if (menustate.selected == 2)
             {
-                exit = true;
+                Exit = true;
                 this.Exit();
             }
             else throw new Exception();
@@ -1517,7 +1536,7 @@ namespace ManicDigger
             }
             else if (menustate.selected == 2)
             {
-                exit = true;
+                Exit = true;
                 this.Exit();
             }
             else throw new Exception();

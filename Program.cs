@@ -47,11 +47,18 @@ namespace ManicDigger
         {
             k.Bind<IGameExit, ManicDiggerGameWindow>();
             k.Bind<IGui, ManicDiggerGameWindow>();
+            k.Bind<ILocalPlayerPosition, ManicDiggerGameWindow>();
+            k.Bind<IThe3d, ManicDiggerGameWindow>();
             k.Bind<IMapGenerator, MapGeneratorPlain>();
             k.Bind<IMapStorage, ClientGame>();
             k.Bind<IMap, ManicDiggerGameWindow>();
             k.Bind<IAudio, AudioOpenAl>();
             k.Bind<IClientNetwork, ClientNetworkDummy>();
+            k.Bind<ITerrainDrawer, TerrainDrawer3d>();
+            k.Bind<fCraft.IGetRandom, GetRandomDummy>();
+            k.Bind<fCraft.IFMap, MyFCraftMap>();
+            k.Bind<fCraft.IFLogger, fCraft.FLogDummy>();
+            k.Bind<IPlayers, ClientGame>();
             k.BindInstance<IInternetGameFactory>(this);
         }
         void GameModule(KernelAndBinder b)

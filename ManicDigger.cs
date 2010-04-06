@@ -35,6 +35,12 @@ namespace ManicDigger
     {
         bool exit { get; }
     }
+    public class GameExitDummy : IGameExit
+    {
+        #region IGameExit Members
+        public bool exit { get; set; }
+        #endregion
+    }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
     {
@@ -107,6 +113,17 @@ namespace ManicDigger
     {
         void DrawMap();
         void AddChatline(string s);
+    }
+    public class GuiDummy : ManicDigger.IGui
+    {
+        #region IGui Members
+        public void AddChatline(string s)
+        {
+        }
+        public void DrawMap()
+        {
+        }
+        #endregion
     }
     public class MapGeneratorPlain : IMapGenerator
     {
@@ -211,10 +228,6 @@ namespace ManicDigger
         {
         }
         #endregion
-    }
-    public interface ICurrentMap
-    {
-        MapStorage map { get; set; }
     }
     public class MapManipulator
     {
@@ -509,6 +522,39 @@ namespace ManicDigger
         bool IsWaterTile(byte tiletype);
         bool IsBuildableTile(byte tiletype);
     }
+    public class GameDataDummy : IGameData
+    {
+        public struct TileTypeSide
+        {
+            public int tiletype;
+            public TileSide side;
+        }
+        public Dictionary<TileTypeSide, int> TileTextureIds { get; set; }
+        #region IGameData Members
+        public int GetTileTextureId(int tileType, TileSide side)
+        {
+            return TileTextureIds[new TileTypeSide() { tiletype = tileType, side = side }];
+        }
+        public byte TileIdEmpty { get; set; }
+        public byte TileIdGrass { get; set; }
+        public byte TileIdDirt { get; set; }
+        public int[] DefaultMaterialSlots { get; set; }
+        public byte GoldTileId { get; set; }
+        public int TileIdStone { get; set; }
+        public int TileIdWater { get; set; }
+        public int TileIdSand { get; set; }
+        public List<byte> watertiles = new List<byte>();
+        public bool IsWaterTile(byte tiletype)
+        {
+            return watertiles.Contains(tiletype);
+        }
+        public List<byte> buildabletiles = new List<byte>();
+        public bool IsBuildableTile(byte tiletype)
+        {
+            return buildabletiles.Contains(tiletype);
+        }
+        #endregion
+    }
     public class GameDataTilesManicDigger : IGameData
     {
         public int GetTileTextureId(int tileType, TileSide side)
@@ -579,6 +625,14 @@ namespace ManicDigger
     public interface IMapGenerator
     {
         void GenerateMap(IMapStorage map);
+    }
+    public class MapGeneratorDummy : IMapGenerator
+    {
+        #region IMapGenerator Members
+        public void GenerateMap(IMapStorage map)
+        {
+        }
+        #endregion
     }
     public class GameDataTilesMinecraft : IGameData
     {
@@ -851,6 +905,29 @@ namespace ManicDigger
         ClientGame GetClientGame();
         ITerrainDrawer GetTerrain();
     }
+    public class InternetGameFactoryDummy : IInternetGameFactory
+    {
+        #region IInternetGameFactory Members
+        public void NewInternetGame()
+        {
+        }
+        public IClientNetwork network = new ClientNetworkDummy();
+        public ClientGame clientgame = new ClientGame();
+        public ITerrainDrawer terraindrawer = new TerrainDrawerDummy();
+        public IClientNetwork GetNetwork()
+        {
+            return network;
+        }
+        public ClientGame GetClientGame()
+        {
+            return clientgame;
+        }
+        public ITerrainDrawer GetTerrain()
+        {
+            return terraindrawer;
+        }
+        #endregion
+    }
     public class CharacterPhysicsState
     {
         public float movedz = 0;
@@ -930,15 +1007,38 @@ namespace ManicDigger
         //void LoadMap(byte[, ,] map);
         void SetTileAndUpdate(Vector3 pos, byte type);
     }
+    public class MapDummy : ManicDigger.IMap
+    {
+        #region IMap Members
+        public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
+        {
+        }
+        #endregion
+    }
     public interface ILocalPlayerPosition
     {
         Vector3 LocalPlayerPosition { get; set; }
         Vector3 LocalPlayerOrientation { get; set; }
         bool Swimming { get; }
     }
+    public class LocalPlayerPositionDummy : ILocalPlayerPosition
+    {
+        #region ILocalPlayerPosition Members
+        public OpenTK.Vector3 LocalPlayerOrientation { get; set; }
+        public OpenTK.Vector3 LocalPlayerPosition { get; set; }
+        public bool Swimming { get { return false; } }
+        #endregion
+    }
     public interface IPlayers
     {
         IDictionary<int, Player> Players { get; set; }
+    }
+    public class PlayersDummy : IPlayers
+    {
+        IDictionary<int, Player> players = new Dictionary<int, Player>();
+        #region IPlayers Members
+        public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
+        #endregion
     }
     public enum BlockSetMode
     {
