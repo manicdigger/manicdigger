@@ -1769,24 +1769,88 @@ namespace ManicDigger
             SizeF size = g.MeasureString(text, font);
             return size;
         }
-        void Draw2dText(string text, float x, float y, float fontsize, Color? color)
+        struct Text
         {
-            if (color == null) { color = Color.White; }
-            var font = new Font("Verdana", fontsize);
+            public string text;
+            public float fontsize;
+            public Color color;
+            public override int GetHashCode()
+            {
+                return ("" + text.GetHashCode() + fontsize.GetHashCode() + color.GetHashCode()).GetHashCode();
+            }
+            public override bool Equals(object obj)
+            {
+                if (obj is Text)
+                {
+                    Text other = (Text)obj;
+                    return other.text.Equals(this.text)
+                        && other.fontsize.Equals(this.fontsize)
+                        && other.color.Equals(this.color);
+                }
+                return base.Equals(obj);
+            }
+        }
+        class CachedTexture
+        {
+            public int textureId;
+            public SizeF size;
+            public DateTime lastuse;
+        }
+        Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
+        CachedTexture MakeTextTexture(Text t)
+        {
+            var font = new Font("Verdana", t.fontsize);
             Bitmap bmp = new Bitmap(1, 1);
             Graphics g = Graphics.FromImage(bmp);
-            SizeF size = g.MeasureString(text, font);
+            SizeF size = g.MeasureString(t.text, font);
             if (size.Width == 0 || size.Height == 0)
             {
-                return;
+                return null;
             }
             bmp = new Bitmap((int)size.Width, (int)size.Height);
             g = Graphics.FromImage(bmp);
             g.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
-            g.DrawString(text, font, new SolidBrush(color.Value), 0, 0);
+            g.DrawString(t.text, font, new SolidBrush(t.color), 0, 0);
             int texture = LoadTexture(bmp);
-            Draw2dTexture(texture, x, y, size.Width, size.Height, null);
-            GL.DeleteTexture(texture);
+            return new CachedTexture() { textureId = texture, size = size };
+        }
+        void DeleteUnusedCachedTextures()
+        {
+            foreach (var k in new List<Text>( cachedTextTextures.Keys))
+            {
+                var ct = cachedTextTextures[k];
+                if ((DateTime.Now - ct.lastuse).TotalSeconds > 1)
+                {
+                    GL.DeleteTexture(ct.textureId);
+                    cachedTextTextures.Remove(k);
+                }
+            }
+        }
+        void Draw2dText(string text, float x, float y, float fontsize, Color? color)
+        {
+            if (text.Trim() == "")
+            {
+                return;
+            }
+            if (color == null) { color = Color.White; }
+            var t = new Text();
+            t.text = text;
+            t.color = color.Value;
+            t.fontsize = fontsize;
+            CachedTexture ct;
+            if (!cachedTextTextures.ContainsKey(t))
+            {
+                ct = MakeTextTexture(t);
+                if (ct == null)
+                {
+                    return;
+                }
+                cachedTextTextures.Add(t, ct);
+            }
+            ct = cachedTextTextures[t];
+            ct.lastuse = DateTime.Now;
+            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
+            DeleteUnusedCachedTextures();
         }
         bool ENABLE_DRAWFPS = false;
         void Draw2dBitmapFile(string filename, float x1, float y1, float width, float height)
