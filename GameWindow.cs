@@ -263,6 +263,8 @@ namespace ManicDigger
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
+        public WorldFeaturesDrawer worldfeatures { get; set; }
+        [Inject]
         public IInternetGameFactory internetgamefactory { get; set; }
 
         [Inject]
@@ -1468,6 +1470,7 @@ namespace ManicDigger
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
             terrain.Draw();
+            worldfeatures.DrawWorldFeatures();
             DrawImmediateParticleEffects(e.Time);
             DrawCubeLines(pickcubepos);
 
