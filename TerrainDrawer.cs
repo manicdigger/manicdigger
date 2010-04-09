@@ -216,12 +216,12 @@ namespace ManicDigger
     public class MeshBatcher
     {
         List<Vbo> vbolist=new List<Vbo>();
-        ushort maxvbosize = 30 * 1000;
+        ushort maxvbosize = 60 * 1000;
         public int Add(ushort[] indices, VertexPositionTexture[] vertices)
         {
             if (indices.Length == 0) { throw new Exception(); }
             int vboid = -1;
-            int wpisid = -1;
+            int entryid = -1;
             //-todo defragment vbo.
             //-if there is free space then try to use it
             if (deleted.ContainsKey(indices.Length))
@@ -229,19 +229,19 @@ namespace ManicDigger
                 //Console.WriteLine("deleted count:" + deleted[indices.Length].Count);
                 foreach (int id in deleted[indices.Length])
                 {
-                    if (indices.Length == wpisy[id].indicesrange.Count
-                        && vertices.Length == wpisy[id].verticesrange.Count)
+                    if (indices.Length == entries[id].indicesrange.Count
+                        && vertices.Length == entries[id].verticesrange.Count)
                     {
-                        vboid = wpisy[id].vboid;
-                        wpisid = id;
+                        vboid = entries[id].vboid;
+                        entryid = id;
                         break;
                     }
                 }
-                if (wpisid != -1)
+                if (entryid != -1)
                 {
                     if (deleted.ContainsKey(indices.Length))
                     {
-                        deleted[indices.Length].Remove(wpisid);
+                        deleted[indices.Length].Remove(entryid);
                     }
                     goto ok;
                 }
@@ -258,8 +258,8 @@ namespace ManicDigger
             Range indicesrange = new Range(vbolist[vboid].realindicescount, indices.Length);
             vbolist[vboid].realverticescount += vertices.Length;
             vbolist[vboid].realindicescount += indices.Length;
-            wpisy.Add(new Wpis() { vboid = vboid, verticesrange = verticesrange, indicesrange = indicesrange });
-            wpisid = wpisy.Count - 1;
+            entries.Add(new Entry() { vboid = vboid, verticesrange = verticesrange, indicesrange = indicesrange });
+            entryid = entries.Count - 1;
         ok: ;
             //vbo = LoadVBO(vertices, indices);
             //for (int i = 0; i < indices.Length; i++)
@@ -267,19 +267,19 @@ namespace ManicDigger
             //    indices[i]
             //}
             //translate indices
-            int translateindices = wpisy[wpisid].verticesrange.Start; //vbolist[vboid].realverticescount - vertices.Length;
+            int translateindices = entries[entryid].verticesrange.Start; //vbolist[vboid].realverticescount - vertices.Length;
             for (int i = 0; i < indices.Length; i++)
             {
                 indices[i] = (ushort)(indices[i] + translateindices);
             }
             //add vertices
-            SetVertices(vbolist[vboid], vertices, wpisy[wpisid].verticesrange.Start); //vbolist[vboid].realverticescount - vertices.Length);
+            SetVertices(vbolist[vboid], vertices, entries[entryid].verticesrange.Start); //vbolist[vboid].realverticescount - vertices.Length);
             GL.UnmapBuffer(BufferTarget.ArrayBuffer);
             //add indices
-            SetIndices(vbolist[vboid], indices, wpisy[wpisid].indicesrange.Start);//vbolist[vboid].realindicescount - indices.Length);
+            SetIndices(vbolist[vboid], indices, entries[entryid].indicesrange.Start);//vbolist[vboid].realindicescount - indices.Length);
             GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
 
-            return wpisid;
+            return entryid;
         }
         private void SetVertices(Vbo vbo, VertexPositionTexture[] vertices, int start)
         {
@@ -323,13 +323,13 @@ namespace ManicDigger
             public int Start;
             public int Count;
         }
-        struct Wpis
+        struct Entry
         {
             public int vboid;
             public Range indicesrange;
             public Range verticesrange;
         }
-        List<Wpis> wpisy = new List<Wpis>();
+        List<Entry> entries = new List<Entry>();
         internal void Draw()
         {
             //if (vbo != null)
@@ -416,17 +416,17 @@ namespace ManicDigger
         };
         public void Remove(int id)
         {
-            var a = wpisy[id].verticesrange;
-            SetVertices(vbolist[wpisy[id].vboid], new VertexPositionTexture[a.Count], a.Start);
-            var b = wpisy[id].indicesrange;
-            SetIndices(vbolist[wpisy[id].vboid], new ushort[b.Count], b.Start);
+            var a = entries[id].verticesrange;
+            SetVertices(vbolist[entries[id].vboid], new VertexPositionTexture[a.Count], a.Start);
+            var b = entries[id].indicesrange;
+            SetIndices(vbolist[entries[id].vboid], new ushort[b.Count], b.Start);
             if (!deleted.ContainsKey(b.Count))
             {
                 deleted[b.Count] = new List<int>();
             }
             deleted[b.Count].Add(id);
         }
-        //indices count-wpis id
+        //indices count-entry id
         Dictionary<int, List<int>> deleted = new Dictionary<int, List<int>>();
         public int TotalTriangleCount
         {
@@ -449,7 +449,7 @@ namespace ManicDigger
             }
             vbolist.Clear();
             deleted.Clear();
-            wpisy.Clear();
+            entries.Clear();
         }
     }
     /// <summary>
@@ -473,6 +473,10 @@ namespace ManicDigger
         public IGameExit exit { get; set; }
         [Inject]
         public ILocalPlayerPosition localplayerposition { get; set; }
+        [Inject]
+        public WorldFeaturesDrawer worldfeatures { get; set; }
+        public float vboupdatesperframe = 500;
+        public int rsize = 256 - 1;
         #region ITerrainDrawer Members
         public void Start()
         {
@@ -480,8 +484,6 @@ namespace ManicDigger
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
         }
         float chunkupdateframecounter = 0;
-        public float vboupdatesperframe = 500;
-        public int rsize = 256 - 1;
         Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
         public void Draw()
         {
@@ -529,6 +531,7 @@ namespace ManicDigger
             }
             GL.Color3(terraincolor);
             batcher.Draw();
+            worldfeatures.DrawWorldFeatures();
         }
         Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
         private void Update()

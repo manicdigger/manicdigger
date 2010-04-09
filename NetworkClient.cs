@@ -440,7 +440,8 @@ namespace ManicDigger
                 int z = ReadInt16(br);
                 int y = ReadInt16(br);
                 byte type = br.ReadByte();
-                Map.SetTileAndUpdate(new Vector3(x, y, z), type);
+                try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
+                catch { Console.WriteLine("Cannot update tile!"); }
             }
             else if (packetId == ServerPacketId.SpawnPlayer)
             {

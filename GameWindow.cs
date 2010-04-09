@@ -263,8 +263,6 @@ namespace ManicDigger
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
-        public WorldFeaturesDrawer worldfeatures { get; set; }
-        [Inject]
         public IInternetGameFactory internetgamefactory { get; set; }
 
         [Inject]
@@ -1470,7 +1468,6 @@ namespace ManicDigger
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
             terrain.Draw();
-            worldfeatures.DrawWorldFeatures();
             DrawImmediateParticleEffects(e.Time);
             DrawCubeLines(pickcubepos);
 
@@ -1676,6 +1673,7 @@ namespace ManicDigger
             Normal,
             EscapeMenu,
             MainMenu,
+            Inventory,
         }
         private void DrawMouseCursor()
         {
@@ -1710,6 +1708,8 @@ namespace ManicDigger
                 DrawEscapeMenu();
             else if (guistate == GuiState.MainMenu)
                 DrawMainMenu();
+            else if (guistate == GuiState.Inventory)
+                DrawInventory();
             else throw new Exception();
             if (ENABLE_DRAWFPS)
             {
@@ -1720,6 +1720,10 @@ namespace ManicDigger
                 DrawMouseCursor();
             }
             PerspectiveMode();
+        }
+        private void DrawInventory()
+        {
+            throw new NotImplementedException();
         }
         private void DrawMaterialSelector()
         {
