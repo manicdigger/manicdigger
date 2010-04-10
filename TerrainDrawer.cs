@@ -510,7 +510,7 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
-        public float vboupdatesperframe = 1000;
+        public float vboupdatesperframe = 500;
         public int rsize = 256 - 1;
         #region ITerrainDrawer Members
         public void Start()
@@ -572,8 +572,11 @@ namespace ManicDigger
         private void Update()
         {
             updater.Draw(new Point((int)localplayerposition.LocalPlayerPosition.X, (int)localplayerposition.LocalPlayerPosition.Z), rsize);
-            foreach (TerrainUpdater.TodoItem p in updater.Todo)
+            int updated2d = 0;
+            int updated3d = 0;
+            for (int i = 0; i < updater.Todo.Count; i++)
             {
+                var p = updater.Todo[i];
                 if (p.action == TerrainUpdater.TodoAction.Clear)
                 {
                     UpdateAllTiles(true);
@@ -586,9 +589,15 @@ namespace ManicDigger
                         type = p.action == TerrainUpdater.TodoAction.Add ? UpdateType.Add : UpdateType.Delete,
                         position = new Vector3(p.position.X, p.position.Y, z)
                     });
+                    updated3d++;
+                }
+                updated2d++;
+                if (updated3d >= vboupdatesperframe)
+                {
+                    break;
                 }
             }
-            updater.Todo.Clear();
+            updater.Todo.RemoveRange(0, updated2d);
         }
         TerrainUpdater updater = new TerrainUpdater();
         MeshBatcher batcher = new MeshBatcher();
@@ -606,21 +615,6 @@ namespace ManicDigger
             batcher.Clear();
             toupdate.Clear();
             return;
-            for (int x = 0; x < 10; x++)
-            {
-                for (int y = 0; y < 10; y++)
-                {
-                    for (int z = 0; z < mapstorage.MapSizeZ; z++)
-                    {
-                        if (IsTileEmptyForDrawing(x, y, z)) { continue; }
-                        toupdate.Enqueue(new ToUpdate()
-                        {
-                            type = UpdateType.Add,
-                            position = new Vector3(x, y, z)
-                        });
-                    }
-                }
-            }
         }
         enum UpdateType
         {
