@@ -569,8 +569,16 @@ namespace ManicDigger
             worldfeatures.DrawWorldFeatures();
         }
         Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
+        Vector3 lastplayerposition;
         private void Update()
         {
+            //detect player teleport
+            if ((lastplayerposition - localplayerposition.LocalPlayerPosition).Length > 20)
+            {
+                UpdateAllTiles();
+            }
+            lastplayerposition = localplayerposition.LocalPlayerPosition;
+            //update
             updater.Draw(new Point((int)localplayerposition.LocalPlayerPosition.X, (int)localplayerposition.LocalPlayerPosition.Z), rsize);
             int updated2d = 0;
             int updated3d = 0;
