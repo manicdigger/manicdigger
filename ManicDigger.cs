@@ -521,6 +521,7 @@ namespace ManicDigger
         int TileIdSand { get; }
         bool IsWaterTile(byte tiletype);
         bool IsBuildableTile(byte tiletype);
+        bool IsValidTile(byte tiletype);
     }
     public class GameDataDummy : IGameData
     {
@@ -552,6 +553,12 @@ namespace ManicDigger
         public bool IsBuildableTile(byte tiletype)
         {
             return buildabletiles.Contains(tiletype);
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsValidTile(byte tiletype)
+        {
+            return true;
         }
         #endregion
     }
@@ -612,6 +619,12 @@ namespace ManicDigger
             return tiletype != TileIdWater;
         }
         #endregion
+        #region IGameData Members
+        public bool IsValidTile(byte tiletype)
+        {
+            return tiletype < (int)TileTypesManicDigger.Count;
+        }
+        #endregion
     }
     public enum TileTypesManicDigger
     {
@@ -621,6 +634,7 @@ namespace ManicDigger
         Wall,
         Dirt,
         Gold,
+        Count,
     }
     public interface IMapGenerator
     {
@@ -638,6 +652,7 @@ namespace ManicDigger
     {
         public GameDataTilesMinecraft()
         {
+            MakeData();
         }
         public byte TileIdEmpty
         {
@@ -653,80 +668,9 @@ namespace ManicDigger
         }
         public int GetTileTextureId(int tileType, TileSide side)
         {
-            TileTypeMinecraft tt = (TileTypeMinecraft)tileType;
-            if (tt == TileTypeMinecraft.Stone) { return 1; }
-            if (tt == TileTypeMinecraft.Grass)
-            {
-                if (side == TileSide.Top) { return 0; }
-                if (side == TileSide.Bottom) { return 2; }
-                return 3;
-            }
-            if (tt == TileTypeMinecraft.Dirt) { return 2; }
-            if (tt == TileTypeMinecraft.Cobblestone) { return (1 * 16) + 0; }
-            if (tt == TileTypeMinecraft.Wood) { return 4; }
-            if (tt == TileTypeMinecraft.Sapling) { return 15; }//special
-            if (tt == TileTypeMinecraft.Adminium) { return (1 * 16) + 1; }
-            if (tt == TileTypeMinecraft.Water) { return 14; }
-            if (tt == TileTypeMinecraft.StationaryWater) { return 14; }
-            if (tt == TileTypeMinecraft.Lava) { return (1 * 16) + 15; }
-            if (tt == TileTypeMinecraft.StationaryLava) { return (1 * 16) + 15; }
-            if (tt == TileTypeMinecraft.Sand) { return (1 * 16) + 2; }
-            if (tt == TileTypeMinecraft.Gravel) { return (1 * 16) + 3; }
-            if (tt == TileTypeMinecraft.GoldOre) { return (2 * 16) + 0; }
-            if (tt == TileTypeMinecraft.IronOre) { return (2 * 16) + 1; }
-            if (tt == TileTypeMinecraft.CoalOre) { return (2 * 16) + 2; }
-            if (tt == TileTypeMinecraft.TreeTrunk)
-            {
-                if (side == TileSide.Top || side == TileSide.Bottom) { return (1 * 16) + 5; }
-                return (1 * 16) + 4;
-            }
-            if (tt == TileTypeMinecraft.Leaves) { return (1 * 16) + 6; }
-            if (tt == TileTypeMinecraft.Sponge) { return (3 * 16) + 0; }
-            if (tt == TileTypeMinecraft.Glass) { return (3 * 16) + 1; }
-            if (tt == TileTypeMinecraft.RedCloth) { return 64; }
-            if (tt == TileTypeMinecraft.RedCloth + 1) { return 65; }
-            if (tt == TileTypeMinecraft.RedCloth + 2) { return 66; }
-            if (tt == TileTypeMinecraft.RedCloth + 3) { return 67; }
-            if (tt == TileTypeMinecraft.RedCloth + 4) { return 68; }
-            if (tt == TileTypeMinecraft.RedCloth + 5) { return 69; }
-            if (tt == TileTypeMinecraft.RedCloth + 6) { return 70; }
-            if (tt == TileTypeMinecraft.RedCloth + 7) { return 71; }
-            if (tt == TileTypeMinecraft.RedCloth + 8) { return 72; }
-            if (tt == TileTypeMinecraft.RedCloth + 9) { return 73; }
-            if (tt == TileTypeMinecraft.RedCloth + 10) { return 74; }
-            if (tt == TileTypeMinecraft.RedCloth + 11) { return 75; }
-            if (tt == TileTypeMinecraft.RedCloth + 12) { return 76; }
-            if (tt == TileTypeMinecraft.RedCloth + 13) { return 77; }
-            if (tt == TileTypeMinecraft.RedCloth + 14) { return 78; }
-            if (tt == TileTypeMinecraft.RedCloth + 15) { return 79; }//36
-            if (tt == TileTypeMinecraft.YellowFlowerDecorations) { return 13; }
-            if (tt == TileTypeMinecraft.RedRoseDecorations) { return 12; }
-            if (tt == TileTypeMinecraft.RedMushroom) { return 28; }
-            if (tt == TileTypeMinecraft.BrownMushroom) { return 29; }
-            if (tt == TileTypeMinecraft.Lava) { return 30; }
-            if (tt == TileTypeMinecraft.GoldBlock) { return 24; }
-            if (tt == TileTypeMinecraft.IronBlock) { return 23; }
-            if (tt == TileTypeMinecraft.DoubleStair) { return (0 * 16) + 5; }//43 todo
-            if (tt == TileTypeMinecraft.Stair) { return 6; }//44
-            if (tt == TileTypeMinecraft.TNT) { return (0 * 16) + 8; }//45
-            if (tt == TileTypeMinecraft.Brick) { return (6 * 16) + 7; }//46
-            if (tt == TileTypeMinecraft.Bookcase) { return (2 * 16) + 3; }//47
-            if (tt == TileTypeMinecraft.MossyCobblestone) { return (2 * 16) + 4; }//48
-            if (tt == TileTypeMinecraft.Obsidian) { return (2 * 16) + 5; }//49
-            //torch todo
-            //fire todo
-            if (tt == TileTypeMinecraft.InfiniteWaterSource) { return 14; }//52
-            if (tt == TileTypeMinecraft.InfiniteLavaSource) { return 30; }//53
-            if (tt == TileTypeMinecraft.Chest) { return 4; }//54
-            //gear todo
-            //diamond todo
-            //diamond block todo
-            //crafting table todo
-            //crops todo
-            //soil todo
-            //furnace todo
-            //burning furnace todo
-            return (int)tt;
+            if (side == TileSide.Top) { return data[tileType].TextureTop; }
+            if (side == TileSide.Bottom) { return data[tileType].TextureBottom; }
+            return data[tileType].TextureSide;
         }
         public int[] DefaultMaterialSlots
         {
@@ -772,16 +716,111 @@ namespace ManicDigger
         #region IGameData Members
         public bool IsBuildableTile(byte tiletype)
         {
-            if (tiletype == (int)TileTypeMinecraft.Water) { return false; }
-            if (tiletype == (int)TileTypeMinecraft.InfiniteWaterSource) { return false; }
-            if (tiletype == (int)TileTypeMinecraft.Lava) { return false; }
-            if (tiletype == (int)TileTypeMinecraft.InfiniteLavaSource) { return false; }
-            if (tiletype == (int)TileTypeMinecraft.Adminium) { return false; }
-            if (tiletype == 41) { return false; }
-            if (tiletype == 29) { return false; }
-            return true;
+            if (!IsValidTile(tiletype)) { throw new ArgumentException(); }
+            //if (tiletype == 41) { return false; }//?
+            //if (tiletype == 29) { return false; }//?
+            return data[tiletype].Buildable;
         }
         #endregion
+        public bool IsValidTile(byte tiletype)
+        {
+            return data[tiletype] != null;
+        }
+        void MakeData()
+        {
+            data[(int)TileTypeMinecraft.Stone] = new TileTypeData() { Buildable = true, AllTextures = 1 };
+            data[(int)TileTypeMinecraft.Grass] = new TileTypeData()
+            {
+                Buildable = false,
+                TextureBottom = 2,
+                TextureSide = 3,
+                TextureTop = 0,
+            };
+            data[(int)TileTypeMinecraft.Dirt] = new TileTypeData() { Buildable = true, AllTextures = 2 };
+            data[(int)TileTypeMinecraft.Cobblestone] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 0 };
+            data[(int)TileTypeMinecraft.Wood] = new TileTypeData() { Buildable = true, AllTextures = 4 };
+            data[(int)TileTypeMinecraft.Sapling] = new TileTypeData() { Buildable = true, AllTextures = 15 }; //special
+            data[(int)TileTypeMinecraft.Adminium] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 1 };
+            data[(int)TileTypeMinecraft.Water] = new TileTypeData() { Buildable = false, AllTextures = 14 };
+            data[(int)TileTypeMinecraft.StationaryWater] = new TileTypeData() { Buildable = false, AllTextures = 14 };
+            data[(int)TileTypeMinecraft.Lava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 15 };
+            data[(int)TileTypeMinecraft.StationaryLava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 15 };
+            data[(int)TileTypeMinecraft.Sand] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 2 };
+            data[(int)TileTypeMinecraft.Gravel] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 3 };
+            data[(int)TileTypeMinecraft.GoldOre] = new TileTypeData() { Buildable = false, AllTextures = (2 * 16) + 0 };
+            data[(int)TileTypeMinecraft.IronOre] = new TileTypeData() { Buildable = false, AllTextures = (2 * 16) + 1 };
+            data[(int)TileTypeMinecraft.CoalOre] = new TileTypeData() { Buildable = false, AllTextures = (2 * 16) + 2 };
+            data[(int)TileTypeMinecraft.TreeTrunk] = new TileTypeData()
+            {
+                Buildable = true,
+                TextureTop = (1 * 16) + 5,
+                TextureBottom = (1 * 16) + 5,
+                TextureSide = (1 * 16) + 4,
+            };
+            data[(int)TileTypeMinecraft.Leaves] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 6 };
+            data[(int)TileTypeMinecraft.Sponge] = new TileTypeData() { Buildable = true, AllTextures = (3 * 16) + 0 };
+            data[(int)TileTypeMinecraft.Glass] = new TileTypeData() { Buildable = true, AllTextures = (3 * 16) + 1 };
+            data[(int)TileTypeMinecraft.RedCloth] = new TileTypeData() { Buildable = true, AllTextures = 64 };
+            data[(int)TileTypeMinecraft.RedCloth + 1] = new TileTypeData() { Buildable = true, AllTextures = 64 + 1 };
+            data[(int)TileTypeMinecraft.RedCloth + 2] = new TileTypeData() { Buildable = true, AllTextures = 64 + 2 };
+            data[(int)TileTypeMinecraft.RedCloth + 3] = new TileTypeData() { Buildable = true, AllTextures = 64 + 3 };
+            data[(int)TileTypeMinecraft.RedCloth + 4] = new TileTypeData() { Buildable = true, AllTextures = 64 + 4 };
+            data[(int)TileTypeMinecraft.RedCloth + 5] = new TileTypeData() { Buildable = true, AllTextures = 64 + 5 };
+            data[(int)TileTypeMinecraft.RedCloth + 6] = new TileTypeData() { Buildable = true, AllTextures = 64 + 6 };
+            data[(int)TileTypeMinecraft.RedCloth + 7] = new TileTypeData() { Buildable = true, AllTextures = 64 + 7 };
+            data[(int)TileTypeMinecraft.RedCloth + 8] = new TileTypeData() { Buildable = true, AllTextures = 64 + 8 };
+            data[(int)TileTypeMinecraft.RedCloth + 9] = new TileTypeData() { Buildable = true, AllTextures = 64 + 9 };
+            data[(int)TileTypeMinecraft.RedCloth + 10] = new TileTypeData() { Buildable = true, AllTextures = 64 + 10 };
+            data[(int)TileTypeMinecraft.RedCloth + 11] = new TileTypeData() { Buildable = true, AllTextures = 64 + 11 };
+            data[(int)TileTypeMinecraft.RedCloth + 12] = new TileTypeData() { Buildable = true, AllTextures = 64 + 12 };
+            data[(int)TileTypeMinecraft.RedCloth + 13] = new TileTypeData() { Buildable = true, AllTextures = 64 + 13 };
+            data[(int)TileTypeMinecraft.RedCloth + 14] = new TileTypeData() { Buildable = true, AllTextures = 64 + 14 };
+            data[(int)TileTypeMinecraft.RedCloth + 15] = new TileTypeData() { Buildable = true, AllTextures = 64 + 15 };//36
+            data[(int)TileTypeMinecraft.YellowFlowerDecorations] = new TileTypeData() { Buildable = false, AllTextures = 13 };
+            data[(int)TileTypeMinecraft.RedRoseDecorations] = new TileTypeData() { Buildable = false, AllTextures = 12 };
+            data[(int)TileTypeMinecraft.RedMushroom] = new TileTypeData() { Buildable = false, AllTextures = 28 };
+            data[(int)TileTypeMinecraft.BrownMushroom] = new TileTypeData() { Buildable = false, AllTextures = 29 };
+            data[(int)TileTypeMinecraft.Lava] = new TileTypeData() { Buildable = false, AllTextures = 30 };
+            data[(int)TileTypeMinecraft.GoldBlock] = new TileTypeData() { Buildable = false, AllTextures = 24 };
+            data[(int)TileTypeMinecraft.IronBlock] = new TileTypeData() { Buildable = false, AllTextures = 23 };
+            data[(int)TileTypeMinecraft.DoubleStair] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 5 };//43 todo
+            data[(int)TileTypeMinecraft.Stair] = new TileTypeData() { Buildable = true, AllTextures = 6 };//44
+            data[(int)TileTypeMinecraft.TNT] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 8 };//45
+            data[(int)TileTypeMinecraft.Brick] = new TileTypeData() { Buildable = true, AllTextures = (6 * 16) + 7 };//46
+            data[(int)TileTypeMinecraft.Bookcase] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 3 };//47
+            data[(int)TileTypeMinecraft.MossyCobblestone] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 4 };//48
+            data[(int)TileTypeMinecraft.Obsidian] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 5 };//49
+            //torch todo
+            //fire todo
+            data[(int)TileTypeMinecraft.InfiniteWaterSource] = new TileTypeData() { Buildable = false, AllTextures = 14 };//52
+            data[(int)TileTypeMinecraft.InfiniteLavaSource] = new TileTypeData() { Buildable = false, AllTextures = 30 };//53
+            data[(int)TileTypeMinecraft.Chest] = new TileTypeData() { Buildable = true, AllTextures = 4 };//54
+            //gear todo
+            //diamond todo
+            //diamond block todo
+            //crafting table todo
+            //crops todo
+            //soil todo
+            //furnace todo
+            //burning furnace todo
+        }
+        TileTypeData[] data = new TileTypeData[256];
+        class TileTypeData
+        {
+            public bool Buildable;
+            public int TextureTop;
+            public int TextureSide;
+            public int TextureBottom;
+            public int AllTextures
+            {
+                set
+                {
+                    TextureTop = value;
+                    TextureSide = value;
+                    TextureBottom = value;
+                }
+            }
+        }
     }
     public class CharacterPhysics
     {

@@ -249,6 +249,13 @@ namespace ManicDigger
             return result;
         }
     }
+    public enum Direction4
+    {
+        Left,
+        Right,
+        Up,
+        Down,
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
@@ -361,6 +368,8 @@ namespace ManicDigger
             if (guistate == GuiState.Normal)
             { GuiActionGoToEscapeMenu(); }
             else if (guistate == GuiState.MainMenu || guistate == GuiState.EscapeMenu)
+            { }
+            else if (guistate == GuiState.Inventory)
             { }
             else { throw new Exception(); }
             base.OnFocusedChanged(e);
@@ -618,6 +627,12 @@ namespace ManicDigger
                 {
                     GuiActionGoToEscapeMenu();
                 }
+                if (e.Key == OpenTK.Input.Key.B)
+                {
+                    guistate = GuiState.Inventory;
+                    menustate = new MenuState();
+                    FreeMouse = true;
+                }
             }
             else if (guistate == GuiState.EscapeMenu)
             {
@@ -664,6 +679,29 @@ namespace ManicDigger
                 {
                     MainMenuAction();
                 }
+                return;
+            }
+            else if (guistate == GuiState.Inventory)
+            {
+                if (e.Key == OpenTK.Input.Key.Escape)
+                {
+                    EscapeMenuBackToGame();
+                }
+                Direction4? dir = null;
+                if (e.Key == OpenTK.Input.Key.Left) { dir = Direction4.Left; }
+                if (e.Key == OpenTK.Input.Key.Right) { dir = Direction4.Right; }
+                if (e.Key == OpenTK.Input.Key.Up) { dir = Direction4.Up; }
+                if (e.Key == OpenTK.Input.Key.Down) { dir = Direction4.Down; }
+                if (dir != null)
+                {
+                    InventorySelectionMove(dir.Value);
+                }
+                if (e.Key == OpenTK.Input.Key.Enter)
+                {
+                    MaterialSlots[activematerial] = InventoryGetSelected();
+                    EscapeMenuBackToGame();
+                }
+                HandleMaterialKeys(e);
                 return;
             }
             else throw new Exception();
@@ -854,6 +892,10 @@ namespace ManicDigger
                 player.playerposition = playerpositionspawn;
                 player.movedz = 0;
             }
+            HandleMaterialKeys(e);
+        }
+        private void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
+        {
             if (e.Key == OpenTK.Input.Key.Number1) { activematerial = 0; }
             if (e.Key == OpenTK.Input.Key.Number2) { activematerial = 1; }
             if (e.Key == OpenTK.Input.Key.Number3) { activematerial = 2; }
@@ -1159,6 +1201,9 @@ namespace ManicDigger
             {
             }
             else if (guistate == GuiState.MainMenu)
+            {
+            }
+            else if (guistate == GuiState.Inventory)
             {
             }
             else throw new Exception();
@@ -1721,9 +1766,63 @@ namespace ManicDigger
             }
             PerspectiveMode();
         }
-        private void DrawInventory()
+        int inventoryselectedx;
+        int inventoryselectedy;
+        void InventorySelectionMove(Direction4 dir)
         {
-            throw new NotImplementedException();
+            if (dir == Direction4.Left) { inventoryselectedx--; }
+            if (dir == Direction4.Right) { inventoryselectedx++; }
+            if (dir == Direction4.Up) { inventoryselectedy--; }
+            if (dir == Direction4.Down) { inventoryselectedy++; }
+            inventoryselectedx = Clamp(inventoryselectedx, 0, inventorysize - 1);
+            inventoryselectedy = Clamp(inventoryselectedy, 0, inventorysize - 1);
+        }
+        int inventorysize;
+        int InventoryGetSelected()
+        {
+            return Buildable[inventoryselectedx + (inventoryselectedy * inventorysize)];
+        }
+        List<int> Buildable
+        {
+            get
+            {
+                List<int> buildable = new List<int>();
+                for (int i = 0; i < 256; i++)
+                {
+                    if (data.IsValidTile((byte)i) && data.IsBuildableTile((byte)i))
+                    {
+                        buildable.Add(i);
+                    }
+                }
+                return buildable;
+            }
+        }
+        void DrawInventory()
+        {
+            List<int> buildable = Buildable;
+            inventorysize = (int)Math.Sqrt(buildable.Count);
+            int singlesize = 40;
+            int x = 0;
+            int y = 0;
+            for (int ii = 0; ii < buildable.Count; ii++)
+            {
+                Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * inventorysize) + x * singlesize,
+                    ycenter(singlesize * inventorysize) + y * singlesize, singlesize, singlesize,
+                    data.GetTileTextureId(buildable[ii], TileSide.Top));
+                if (x == inventoryselectedx && y == inventoryselectedy)
+                {
+                    Draw2dBitmapFile("gui\\activematerial.png",
+                        xcenter(singlesize * inventorysize) + x * singlesize,
+                        ycenter(singlesize * inventorysize) + y * singlesize, singlesize, singlesize);
+                }
+                x++;
+                if (x >= inventorysize)
+                {
+                    x = 0;
+                    y++;
+                }
+            }
+            DrawMaterialSelector();
         }
         private void DrawMaterialSelector()
         {
