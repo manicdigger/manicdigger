@@ -1065,15 +1065,15 @@ namespace ManicDigger
             }
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
-        public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz)
+        public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx,double orientationy)
         {
             //Don't calculate for nothing ...
             if (dx == 0.0f & dy == 0.0f && dz == 0.0f)
                 return new Vector3();
 
             //Convert to Radian : 360° = 2PI
-            double xRot = player.playerorientation.X;//Math.toRadians(orientation.X);
-            double yRot = player.playerorientation.Y;//Math.toRadians(orientation.Y);
+            double xRot = orientationx;//Math.toRadians(orientation.X);
+            double yRot = orientationy;//Math.toRadians(orientation.Y);
 
             //Calculate the formula
             float x = (float)(dx * Math.Cos(yRot) + dy * Math.Sin(xRot) * Math.Sin(yRot) - dz * Math.Cos(xRot) * Math.Sin(yRot));
@@ -1215,7 +1215,7 @@ namespace ManicDigger
             Vector3 newposition = player.playerposition + toVectorInFixedSystem1
                 (movedx * movespeed * (float)e.Time,
                 0,
-                movedy * movespeed * (float)e.Time);
+                movedy * movespeed * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
             if (!(ENABLE_FREEMOVE))
             {
                 if (!Swimming)
@@ -1518,11 +1518,187 @@ namespace ManicDigger
 
             DrawVehicles();
             DrawPlayers((float)e.Time);
+            DrawWeapon();
             Draw2d();
 
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        void DrawWeapon()
+        {
+            List<ushort> myelements = new List<ushort>();
+            List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
+            int x = 0;
+            int y = 0;
+            int z = 0;
+            int tiletype = MaterialSlots[activematerial];
+            //top
+            //if (drawtop)
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 0.0f, texrec.Right, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + 1.0f, y + 1.0f, texrec.Right, texrec.Bottom));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //bottom - same as top, but z is 1 less.
+            //if (drawbottom)
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            ////front
+            //if (drawfront)
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //back - same as front, but x is 1 greater.
+            //if (drawback)
+            {//todo fix tcoords
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //if (drawleft)
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //right - same as left, but y is 1 greater.
+            //if (drawright)
+            {//todo fix tcoords
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terrain.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            for (int i = 0; i < myvertices.Count; i++)
+            {
+                var v = myvertices[i];
+                //v.Position += new Vector3(-0.5f, 0, -0.5f);
+                //v.Position += new Vector3(2, 2, 2);
+                /*
+                Matrix4 m2;
+                Matrix4.CreateRotationY(0.9f, out m2);
+                v.Position = Vector3.TransformVector(v.Position, m2);
+
+                Matrix4 m3;
+                Matrix4.CreateRotationX(0.3f, out m3);
+                v.Position = Vector3.TransformVector(v.Position, m3);
+                */
+
+                //Matrix4 m;
+                //Matrix4.CreateRotationY(-player.playerorientation.Y, out m);
+                //v.Position = Vector3.TransformPosition(v.Position, m);
+
+                ////Matrix4.CreateRotationX(player.playerorientation.X, out m);
+                ////v.Position = Vector3.TransformPosition(v.Position, m);
+                
+                //v.Position += new Vector3(0, -0.2f, 0);
+                //v.Position += player.playerposition;
+                //v.Position += toVectorInFixedSystem1(0.7f, 0, 1, player.playerorientation.X, player.playerorientation.Y);
+                myvertices[i] = v;
+            }
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Translate(0, -1.5f + zzzposx, -1.5f + zzzposy);
+            //GL.Scale(2, 2, 2);
+            GL.Rotate(30 + (zzzx), new Vector3(1, 0, 0));//zzz += 0.01f
+            GL.Rotate(60 +zzzy, new Vector3(0, 1, 0));
+            //GL.Rotate(0-(zzz+=0.05f), new Vector3(0, 1, 0));
+            //GL.Translate(0, -2, 0);
+
+            /*
+            if (Keyboard[OpenTK.Input.Key.Left]) zzzx += -0.1f;
+            if (Keyboard[OpenTK.Input.Key.Right]) zzzx += 0.1f;
+            if (Keyboard[OpenTK.Input.Key.Up]) zzzy += 0.1f;
+            if (Keyboard[OpenTK.Input.Key.Down]) zzzy += -0.1f;
+            if (Keyboard[OpenTK.Input.Key.Keypad4]) zzzposx += -0.1f;
+            if (Keyboard[OpenTK.Input.Key.Keypad6]) zzzposx += 0.1f;
+            if (Keyboard[OpenTK.Input.Key.Keypad8]) zzzposy += 0.1f;
+            if (Keyboard[OpenTK.Input.Key.Keypad2]) zzzposy += -0.1f;
+            */
+            GL.Begin(BeginMode.Triangles);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.Enable(EnableCap.Texture2D);
+            for (int i = 0; i < myelements.Count; i++)
+            {
+                GL.TexCoord2(myvertices[myelements[i]].u, myvertices[myelements[i]].v);
+                GL.Vertex3(myvertices[myelements[i]].Position);
+            }
+            GL.End();
+            GL.PopMatrix();
+            //Console.WriteLine("({0}||{1}):({2}||{3})", zzzx, zzzy, zzzposx, zzzposy);
+            //(-19,00004||-13,70002):(-0,2000001||-1,3)
+        }
+        float zzzx = -19;
+        float zzzy = -13.7f;
+        float zzzposx = -0.2f;
+        float zzzposy = -1.3f;
+        float attackprogress = 0;
         public class PlayerInterpolated
         {
             public Vector3 LastRealPosition;
@@ -1556,7 +1732,7 @@ namespace ManicDigger
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
-            Vector3 forward = toVectorInFixedSystem1(0, 0, 1);
+            Vector3 forward = toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
             return Matrix4.LookAt(player.playerposition + new Vector3(0, characterheight, 0),
                 player.playerposition + new Vector3(0, characterheight, 0) + forward, up);
         }
