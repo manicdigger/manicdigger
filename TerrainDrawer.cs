@@ -272,47 +272,30 @@ namespace ManicDigger
             {
                 indices[i] = (ushort)(indices[i] + translateindices);
             }
-            //add vertices
-            SetVertices(vbolist[vboid], vertices, entries[entryid].verticesrange.Start); //vbolist[vboid].realverticescount - vertices.Length);
-            GL.UnmapBuffer(BufferTarget.ArrayBuffer);
-            //add indices
-            SetIndices(vbolist[vboid], indices, entries[entryid].indicesrange.Start);//vbolist[vboid].realindicescount - indices.Length);
-            GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
+            if (!toadd.ContainsKey(vboid))
+            {
+                toadd.Add(vboid, new List<ToAdd>());
+            }
+            toadd[vboid].Add(new ToAdd()
+            {
+                vertices = vertices,
+                indices = indices,
+                vbo = vbolist[vboid],
+                indicesstart = entries[entryid].indicesrange.Start,
+                verticesstart = entries[entryid].verticesrange.Start,
+            });
 
             return entryid;
         }
-        private void SetVertices(Vbo vbo, VertexPositionTexture[] vertices, int start)
+        struct ToAdd
         {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo.VboID);
-            IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
-            unsafe
-            {
-                fixed (VertexPositionTexture* SystemMemory = &vertices[0])
-                {
-                    VertexPositionTexture* VideoMemory = (VertexPositionTexture*)VideoMemoryIntPtr.ToPointer();
-                    //if (VideoMemory == null) { return; }//wrong
-                    for (int i = 0; i < vertices.Length; i++)
-                        VideoMemory[i + start] = SystemMemory[i]; // simulate what GL.BufferData would do
-                }
-            }
-            GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+            public Vbo vbo;
+            public ushort[] indices;
+            public VertexPositionTexture[] vertices;
+            public int indicesstart;
+            public int verticesstart;
         }
-        void SetIndices(Vbo vbo, ushort[] indices, int start)
-        {
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbo.EboID);
-            IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
-            unsafe
-            {
-                fixed (ushort* SystemMemory = &indices[0])
-                {
-                    ushort* VideoMemory = (ushort*)VideoMemoryIntPtr.ToPointer();
-                    //if (VideoMemory == null) { return; }//wrong
-                    for (int i = 0; i < indices.Length; i++)
-                        VideoMemory[i+start] = (ushort)(SystemMemory[i]); // simulate what GL.BufferData would do
-                }
-            }
-            GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
-        }
+        Dictionary<int, List<ToAdd>> toadd = new Dictionary<int, List<ToAdd>>();
         struct Range
         {
             public Range(int start, int count)
@@ -332,6 +315,47 @@ namespace ManicDigger
         List<Entry> entries = new List<Entry>();
         internal void Draw()
         {
+            foreach (var v in toadd)
+            {
+                //add vertices
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbolist[v.Key].VboID);
+                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
+                foreach (var vv in v.Value)
+                {
+                    unsafe
+                    {
+                        fixed (VertexPositionTexture* SystemMemory = &vv.vertices[0])
+                        {
+                            VertexPositionTexture* VideoMemory = (VertexPositionTexture*)VideoMemoryIntPtr.ToPointer();
+                            //if (VideoMemory == null) { return; }//wrong
+                            for (int i = 0; i < vv.vertices.Length; i++)
+                                VideoMemory[i + vv.verticesstart] = SystemMemory[i]; // simulate what GL.BufferData would do
+                        }
+                    }
+                }
+                GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+            }
+            foreach(var v in toadd)
+            {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbolist[v.Key].EboID);
+                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
+                foreach (var vv in v.Value)
+                {
+                    unsafe
+                    {
+                        fixed (ushort* SystemMemory = &vv.indices[0])
+                        {
+                            ushort* VideoMemory = (ushort*)VideoMemoryIntPtr.ToPointer();
+                            //if (VideoMemory == null) { return; }//wrong
+                            for (int i = 0; i < vv.indices.Length; i++)
+                                VideoMemory[i + vv.indicesstart] = (ushort)(SystemMemory[i]); // simulate what GL.BufferData would do
+                        }
+                    }
+                    
+                }
+                GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
+            }
+            toadd.Clear();
             //if (vbo != null)
             foreach (Vbo vbo in vbolist)
             {
@@ -416,10 +440,21 @@ namespace ManicDigger
         };
         public void Remove(int id)
         {
+            int vboid = entries[id].vboid;
+            if (!toadd.ContainsKey(entries[id].vboid))
+            {
+                toadd[vboid] = new List<ToAdd>();
+            }
             var a = entries[id].verticesrange;
-            SetVertices(vbolist[entries[id].vboid], new VertexPositionTexture[a.Count], a.Start);
             var b = entries[id].indicesrange;
-            SetIndices(vbolist[entries[id].vboid], new ushort[b.Count], b.Start);
+            toadd[vboid].Add(new ToAdd()
+            {
+                verticesstart = a.Start,
+                vertices = new VertexPositionTexture[a.Count],
+                vbo = vbolist[vboid],
+                indicesstart = b.Start,
+                indices = new ushort[b.Count],
+            });
             if (!deleted.ContainsKey(b.Count))
             {
                 deleted[b.Count] = new List<int>();
@@ -475,7 +510,7 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
-        public float vboupdatesperframe = 500;
+        public float vboupdatesperframe = 1000;
         public int rsize = 256 - 1;
         #region ITerrainDrawer Members
         public void Start()
