@@ -551,7 +551,9 @@ namespace ManicDigger
                         int z = (int)v.Z;
                         List<ushort> indices = new List<ushort>();
                         List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
-                        TileElements(indices, vertices, x, y, z);
+                        try
+                        { TileElements(indices, vertices, x, y, z); }
+                        catch { Console.WriteLine("Error while drawing tile."); }
                         if (indices.Count == 0)
                         {
                             continue;
@@ -682,6 +684,11 @@ namespace ManicDigger
             bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
             bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
             bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
+            int tiletype = mapstorage.Map[x, y, z];
+            if (!data.IsValidTileType(tiletype))
+            {
+                return;
+            }
             if (DONOTDRAWEDGES)
             {
                 //if the game is fillrate limited, then this makes it much faster.
@@ -696,7 +703,7 @@ namespace ManicDigger
             //top
             if (drawtop)
             {
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Top);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
@@ -713,7 +720,7 @@ namespace ManicDigger
             //bottom - same as top, but z is 1 less.
             if (drawbottom)
             {
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Bottom);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
@@ -730,7 +737,7 @@ namespace ManicDigger
             //front
             if (drawfront)
             {
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Front);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
@@ -747,7 +754,7 @@ namespace ManicDigger
             //back - same as front, but x is 1 greater.
             if (drawback)
             {//todo fix tcoords
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Back);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
@@ -763,7 +770,7 @@ namespace ManicDigger
             }
             if (drawleft)
             {
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Left);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
@@ -780,7 +787,7 @@ namespace ManicDigger
             //right - same as left, but y is 1 greater.
             if (drawright)
             {//todo fix tcoords
-                int sidetexture = data.GetTileTextureId(mapstorage.Map[x, y, z], TileSide.Right);
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));

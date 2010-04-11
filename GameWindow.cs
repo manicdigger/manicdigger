@@ -1969,7 +1969,7 @@ namespace ManicDigger
                 List<int> buildable = new List<int>();
                 for (int i = 0; i < 256; i++)
                 {
-                    if (data.IsValidTile((byte)i) && data.IsBuildableTile((byte)i))
+                    if (data.IsValidTileType((byte)i) && data.IsBuildableTile((byte)i))
                     {
                         buildable.Add(i);
                     }
@@ -2276,7 +2276,7 @@ namespace ManicDigger
                 return;
             }
             int tiletype = clientgame.Map[(int)v.X, (int)v.Z, (int)v.Y];
-            if (!data.IsValidTile(tiletype))
+            if (!data.IsValidTileType(tiletype))
             {
                 return;
             }

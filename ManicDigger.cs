@@ -521,7 +521,7 @@ namespace ManicDigger
         int TileIdSand { get; }
         bool IsWaterTile(int tiletype);
         bool IsBuildableTile(int tiletype);
-        bool IsValidTile(int tiletype);
+        bool IsValidTileType(int tiletype);
     }
     public class GameDataDummy : IGameData
     {
@@ -556,7 +556,7 @@ namespace ManicDigger
         }
         #endregion
         #region IGameData Members
-        public bool IsValidTile(int tiletype)
+        public bool IsValidTileType(int tiletype)
         {
             return true;
         }
@@ -620,7 +620,7 @@ namespace ManicDigger
         }
         #endregion
         #region IGameData Members
-        public bool IsValidTile(int tiletype)
+        public bool IsValidTileType(int tiletype)
         {
             return tiletype < (int)TileTypesManicDigger.Count;
         }
@@ -716,13 +716,13 @@ namespace ManicDigger
         #region IGameData Members
         public bool IsBuildableTile(int tiletype)
         {
-            if (!IsValidTile(tiletype)) { throw new ArgumentException(); }
+            if (!IsValidTileType(tiletype)) { throw new ArgumentException(); }
             //if (tiletype == 41) { return false; }//?
             //if (tiletype == 29) { return false; }//?
             return data[tiletype].Buildable;
         }
         #endregion
-        public bool IsValidTile(int tiletype)
+        public bool IsValidTileType(int tiletype)
         {
             return data[tiletype] != null;
         }
