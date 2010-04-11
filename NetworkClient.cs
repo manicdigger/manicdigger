@@ -804,6 +804,7 @@ namespace ManicDigger
 
                     sw.Flush();
                     StreamReader sr = new StreamReader(stream);
+                    loggedincookie.Clear();
                     for (; ; )
                     {
                         var s = sr.ReadLine();
