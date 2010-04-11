@@ -2267,7 +2267,16 @@ namespace ManicDigger
             ParticleEffect p = new ParticleEffect();
             p.center = v + new Vector3(0.5f, 0.5f, 0.5f);
             p.start = DateTime.Now;
-            p.textureid = data.GetTileTextureId(clientgame.Map[(int)v.X, (int)v.Z, (int)v.Y], TileSide.Top);
+            if (!MapUtil.IsValidPos(clientgame, (int)v.X, (int)v.Z, (int)v.Y))
+            {
+                return;
+            }
+            int tiletype = clientgame.Map[(int)v.X, (int)v.Z, (int)v.Y];
+            if (!data.IsValidTile(tiletype))
+            {
+                return;
+            }
+            p.textureid = data.GetTileTextureId(tiletype, TileSide.Top);
             for (int i = 0; i < particlecount; i++)
             {
                 Particle pp = new Particle();
