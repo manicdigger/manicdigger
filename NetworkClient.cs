@@ -707,10 +707,63 @@ namespace ManicDigger
     }
     public class LoginClientMinecraft : ILoginClient
     {
+        //Three Steps
         public LoginData Login(string username, string password, string gameurl)
         {
-            //Three Steps
-
+            if (this.username != username || this.password != password || loggedincookie.Count == 0)
+            {
+                this.username = username;
+                this.password = password;
+                //Step 1 and Step 2.
+                LoginCookie();
+            }
+            //Step 3.
+            //---
+            //Go to game url and GET using JSESSIONID cookie and _uid cookie.
+            //Parse the page to find server, port, mpass strings.
+            //---
+            WebRequest step3Request = (HttpWebRequest)HttpWebRequest.Create(gameurl);
+            foreach (string cookie in loggedincookie)
+            {
+                step3Request.Headers.Add(cookie);
+            }
+            using (var s4 = step3Request.GetResponse().GetResponseStream())
+            {
+                var r = step3Request.GetResponse();
+                foreach (string s in r.Headers.AllKeys)
+                {
+                    //update logged in cookie.
+                    bool cleared = false;
+                    if (s.Contains("Set-Cookie"))
+                    {
+                        if (!cleared)
+                        {
+                            loggedincookie.Clear();
+                            cleared = true;
+                        }
+                        loggedincookie.Add("Cookie: " + r.Headers[s]);
+                    }
+                }
+                string html = new StreamReader(s4).ReadToEnd();
+                string serveraddress = ReadValue(html.Substring(html.IndexOf("\"server\""), 40));
+                string port = ReadValue(html.Substring(html.IndexOf("\"port\""), 40));
+                string mppass = ReadValue(html.Substring(html.IndexOf("\"mppass\""), 80));
+                return new LoginData() { serveraddress = serveraddress, port = int.Parse(port), mppass = mppass };
+            }
+        }
+        private static string ReadValue(string s)
+        {
+            string start = "value=\"";
+            string end = "\"";
+            string ss = s.Substring(s.IndexOf(start) + start.Length);
+            ss = ss.Substring(0, ss.IndexOf(end));
+            return ss;
+        }
+        List<string> loggedincookie = new List<string>();
+        string username;
+        string password;
+        void LoginCookie()
+        {
             //Step 1.
             //---
             //Go to http://www.minecraft.net/login.jsp and GET, you will receive JSESSIONID cookie.
@@ -718,12 +771,12 @@ namespace ManicDigger
             string loginurl = "http://www.minecraft.net/login.jsp";
             string data11 = string.Format("username={0}&password={1}", username, password);
             string sessionidcookie;
-            string sessionid;
             {
                 using (WebClient c = new WebClient())
                 {
                     string html = c.DownloadString(loginurl);
                     sessionidcookie = c.ResponseHeaders[HttpResponseHeader.SetCookie];
+                    string sessionid;
                     sessionid = sessionidcookie.Substring(0, sessionidcookie.IndexOf(";"));
                     sessionid = sessionid.Substring(sessionid.IndexOf("=") + 1);
                 }
@@ -735,7 +788,6 @@ namespace ManicDigger
             //Because of multipart http page, HttpWebRequest has some trouble receiving cookies in step 2,
             //so it is easier to just use raw TcpClient for this.
             //---
-            List<string> loggedincookie = new List<string>();
             {
                 using (TcpClient step2Client = new TcpClient("minecraft.net", 80))
                 {
@@ -770,32 +822,6 @@ namespace ManicDigger
             {
                 loggedincookie[i] = loggedincookie[i].Replace("Set-", "");
             }
-            //Step 3.
-            //---
-            //Go to game url and GET using JSESSIONID cookie and _uid cookie.
-            //Parse the page to find server, port, mpass strings.
-            //---
-            WebRequest step3Request = (HttpWebRequest)HttpWebRequest.Create(gameurl);
-            foreach (string cookie in loggedincookie)
-            {
-                step3Request.Headers.Add(cookie);
-            }
-            using (var s4 = step3Request.GetResponse().GetResponseStream())
-            {
-                string html = new StreamReader(s4).ReadToEnd();
-                string serveraddress = ReadValue(html.Substring(html.IndexOf("\"server\""), 40));
-                string port = ReadValue(html.Substring(html.IndexOf("\"port\""), 40));
-                string mppass = ReadValue(html.Substring(html.IndexOf("\"mppass\""), 80));
-                return new LoginData() { serveraddress = serveraddress, port = int.Parse(port), mppass = mppass };
-            }
-        }
-        private static string ReadValue(string s)
-        {
-            string start = "value=\"";
-            string end = "\"";
-            string ss = s.Substring(s.IndexOf(start) + start.Length);
-            ss = ss.Substring(0, ss.IndexOf(end));
-            return ss;
         }
     }
 }
