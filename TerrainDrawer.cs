@@ -208,6 +208,7 @@ namespace ManicDigger
         public Box3D box;
         public int realindicescount = 0;
         public int realverticescount = 0;
+        public bool valid;
     }
     /// <summary>
     /// Memory allocator for adding indices+vertices lists
@@ -215,11 +216,13 @@ namespace ManicDigger
     /// </summary>
     public class MeshBatcher
     {
-        List<Vbo> vbolist=new List<Vbo>();
+        List<Vbo> vbolist = new List<Vbo>();
         ushort maxvbosize = 60 * 1000;
         public int Add(ushort[] indices, VertexPositionTexture[] vertices)
         {
-            if (indices.Length == 0) { throw new Exception(); }
+            if (indices.Length == 0) { throw new Exception("Zero indices."); }
+            if (indices.Length > maxvbosize) { throw new Exception("Too many indices."); }
+            if (vertices.Length > maxvbosize) { throw new Exception("Too many vertices."); }
             int vboid = -1;
             int entryid = -1;
             //-todo defragment vbo.
@@ -251,7 +254,7 @@ namespace ManicDigger
                 (vbolist[vbolist.Count - 1].realindicescount + indices.Length) >= maxvbosize ||
                 (vbolist[vbolist.Count - 1].realverticescount + vertices.Length) >= maxvbosize)
             {
-                vbolist.Add(LoadVBO(new VertexPositionTexture[maxvbosize], new ushort[maxvbosize]));
+                vbolist.Add(new Vbo());
             }
             vboid = vbolist.Count - 1;
             Range verticesrange = new Range(vbolist[vboid].realverticescount, vertices.Length);
@@ -315,47 +318,6 @@ namespace ManicDigger
         List<Entry> entries = new List<Entry>();
         internal void Draw()
         {
-            foreach (var v in toadd)
-            {
-                //add vertices
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbolist[v.Key].VboID);
-                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
-                foreach (var vv in v.Value)
-                {
-                    unsafe
-                    {
-                        fixed (VertexPositionTexture* SystemMemory = &vv.vertices[0])
-                        {
-                            VertexPositionTexture* VideoMemory = (VertexPositionTexture*)VideoMemoryIntPtr.ToPointer();
-                            //if (VideoMemory == null) { return; }//wrong
-                            for (int i = 0; i < vv.vertices.Length; i++)
-                                VideoMemory[i + vv.verticesstart] = SystemMemory[i]; // simulate what GL.BufferData would do
-                        }
-                    }
-                }
-                GL.UnmapBuffer(BufferTarget.ArrayBuffer);
-            }
-            foreach(var v in toadd)
-            {
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbolist[v.Key].EboID);
-                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
-                foreach (var vv in v.Value)
-                {
-                    unsafe
-                    {
-                        fixed (ushort* SystemMemory = &vv.indices[0])
-                        {
-                            ushort* VideoMemory = (ushort*)VideoMemoryIntPtr.ToPointer();
-                            //if (VideoMemory == null) { return; }//wrong
-                            for (int i = 0; i < vv.indices.Length; i++)
-                                VideoMemory[i + vv.indicesstart] = (ushort)(SystemMemory[i]); // simulate what GL.BufferData would do
-                        }
-                    }
-                    
-                }
-                GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
-            }
-            toadd.Clear();
             //if (vbo != null)
             foreach (Vbo vbo in vbolist)
             {
@@ -371,9 +333,9 @@ namespace ManicDigger
                 return strideofvertices;
             }
         }
-        Vbo LoadVBO<TVertex>(TVertex[] vertices, ushort[] elements) where TVertex : struct
+        void LoadVBO<TVertex>(Vbo handle, TVertex[] vertices, ushort[] elements) where TVertex : struct
         {
-            Vbo handle = new Vbo();
+            //Vbo handle = new Vbo();
             int size;
 
             // To create a VBO:
@@ -398,7 +360,7 @@ namespace ManicDigger
                 throw new ApplicationException("Element data not uploaded correctly");
 
             handle.NumElements = elements.Length;
-            return handle;
+            //return handle;
         }
         void Draw(Vbo handle)
         {
@@ -485,6 +447,56 @@ namespace ManicDigger
             vbolist.Clear();
             deleted.Clear();
             entries.Clear();
+            toadd.Clear();
+        }
+        public void Update(int count)
+        {
+            foreach (var v in toadd)
+            {
+                if (!vbolist[v.Key].valid)
+                {
+                    LoadVBO(vbolist[v.Key], new VertexPositionTexture[maxvbosize], new ushort[maxvbosize]);
+                    vbolist[v.Key].valid = true;
+                }
+                //add vertices
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbolist[v.Key].VboID);
+                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
+                foreach (var vv in v.Value)
+                {
+                    unsafe
+                    {
+                        fixed (VertexPositionTexture* SystemMemory = &vv.vertices[0])
+                        {
+                            VertexPositionTexture* VideoMemory = (VertexPositionTexture*)VideoMemoryIntPtr.ToPointer();
+                            //if (VideoMemory == null) { return; }//wrong
+                            for (int i = 0; i < vv.vertices.Length; i++)
+                                VideoMemory[i + vv.verticesstart] = SystemMemory[i]; // simulate what GL.BufferData would do
+                        }
+                    }
+                }
+                GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+            }
+            foreach (var v in toadd)
+            {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbolist[v.Key].EboID);
+                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
+                foreach (var vv in v.Value)
+                {
+                    unsafe
+                    {
+                        fixed (ushort* SystemMemory = &vv.indices[0])
+                        {
+                            ushort* VideoMemory = (ushort*)VideoMemoryIntPtr.ToPointer();
+                            //if (VideoMemory == null) { return; }//wrong
+                            for (int i = 0; i < vv.indices.Length; i++)
+                                VideoMemory[i + vv.indicesstart] = (ushort)(SystemMemory[i]); // simulate what GL.BufferData would do
+                        }
+                    }
+
+                }
+                GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
+            }
+            toadd.Clear();
         }
     }
     /// <summary>
@@ -492,7 +504,7 @@ namespace ManicDigger
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class TerrainDrawer3d : ITerrainDrawer
+    public class TerrainDrawer3d : ITerrainDrawer, IDisposable
     {
         [Inject]
         public IThe3d the3d { get; set; }
@@ -510,105 +522,168 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
-        public float vboupdatesperframe = 500;
-        public int rsize = 256 - 1;
+        public int chunksize = 16;
+        public int rsize { get { return (256 / chunksize) - 1; } }
         #region ITerrainDrawer Members
         public void Start()
         {
             GL.Enable(EnableCap.Texture2D);
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
+            new Thread(updatethread).Start();
         }
-        float chunkupdateframecounter = 0;
         Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
-        public void Draw()
+        bool exit2;
+        void updatethread()
         {
-            Update();
-            chunkupdateframecounter += vboupdatesperframe;
-            while (chunkupdateframecounter >= 1)
+            for (; ; )
             {
-                chunkupdateframecounter -= 1;
-                ToUpdate? tu = null;
-                if (toupdatepriority.Count > 0)
+                Thread.Sleep(1);
+                if (exit.exit || exit2) { return; }
+                CheckRespawn();
+                Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / 16), (int)(localplayerposition.LocalPlayerPosition.Z / 16));
+                updater.Draw(playerpoint, rsize);
+                ProcessAllPriorityTodos();
+                List<TerrainUpdater.TodoItem> l = new List<TerrainUpdater.TodoItem>(updater.Todo);
+                foreach (var ti in updater.Todo)
                 {
-                    tu = toupdatepriority.Dequeue();
+                    if (exit.exit || exit2) { return; }
+                    CheckRespawn();
+                    ProcessAllPriorityTodos();
+                    ProcessUpdaterTodo(ti);
                 }
-                else if (toupdate.Count > 0)
-                {
-                    tu = toupdate.Dequeue();
-                }
-                if (tu != null)
-                {
-                    Vector3 v = tu.Value.position;
-                    if (batchedblocks.ContainsKey(v))
-                    {
-                        batcher.Remove(batchedblocks[v]);
-                        batchedblocks.Remove(v);
-                    }
-                    if (tu.Value.type == UpdateType.Add)
-                    {
-                        int x = (int)v.X;
-                        int y = (int)v.Y;
-                        int z = (int)v.Z;
-                        List<ushort> indices = new List<ushort>();
-                        List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
-                        try
-                        { TileElements(indices, vertices, x, y, z); }
-                        catch { Console.WriteLine("Error while drawing tile."); }
-                        if (indices.Count == 0)
-                        {
-                            continue;
-                        }
-                        int id = batcher.Add(indices.ToArray(), vertices.ToArray());
-                        batchedblocks.Add(v, id);
-                    }
-                    else
-                    {
-                    }
-                }
+                updater.Todo.Clear();
             }
-            GL.Color3(terraincolor);
-            batcher.Draw();
-            worldfeatures.DrawWorldFeatures();
         }
-        Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
-        Vector3 lastplayerposition;
-        private void Update()
+        private void CheckRespawn()
         {
-            //detect player teleport
             if ((lastplayerposition - localplayerposition.LocalPlayerPosition).Length > 20)
             {
                 UpdateAllTiles();
             }
             lastplayerposition = localplayerposition.LocalPlayerPosition;
-            //update
-            updater.Draw(new Point((int)localplayerposition.LocalPlayerPosition.X, (int)localplayerposition.LocalPlayerPosition.Z), rsize);
-            int updated2d = 0;
-            int updated3d = 0;
-            for (int i = 0; i < updater.Todo.Count; i++)
+        }
+        int f(Vector3 a, Vector3 b)
+        {
+            return ((Vector3.Multiply(a, 16) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((Vector3.Multiply(b, 16) - localplayerposition.LocalPlayerPosition).Length);
+        }
+        private void ProcessAllPriorityTodos()
+        {
+            while (prioritytodo.Count > 0)
             {
-                var p = updater.Todo[i];
-                if (p.action == TerrainUpdater.TodoAction.Clear)
+                if (exit.exit || exit2) { return; }
+                Vector3 ti;
+                lock (prioritytodo)
                 {
-                    UpdateAllTiles(true);
+                    prioritytodo.Sort(f);
+                    //todo remove duplicates
+                    ti = prioritytodo[0];//.Dequeue();
+                    prioritytodo.RemoveAt(0);
                 }
-                for (int z = 0; z < mapstorage.MapSizeZ; z++)
+                var p = ti;
+                var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
+                lock (terrainlock)
                 {
-                    if (IsTileEmptyForDrawing(p.position.X, p.position.Y, z)) { continue; }
-                    toupdate.Enqueue(new ToUpdate()
+                    if (batchedblocks.ContainsKey(p))
                     {
-                        type = p.action == TerrainUpdater.TodoAction.Add ? UpdateType.Add : UpdateType.Delete,
-                        position = new Vector3(p.position.X, p.position.Y, z)
-                    });
-                    updated3d++;
-                }
-                updated2d++;
-                if (updated3d >= vboupdatesperframe)
-                {
-                    break;
+                        batcher.Remove(batchedblocks[p]);
+                    }
+                    if (chunk != null && chunk.indices.Length != 0)
+                    {
+                        batchedblocks[p] = batcher.Add(chunk.indices, chunk.vertices);
+                    }
                 }
             }
-            updater.Todo.RemoveRange(0, updated2d);
         }
+        private void ProcessUpdaterTodo(TerrainUpdater.TodoItem ti)
+        {
+            var p = ti.position;
+            if (ti.action == TerrainUpdater.TodoAction.Add)
+            {
+                for (int z = 0; z < mapstorage.MapSizeZ / 16; z++)
+                {
+                    try
+                    {
+                        lock (terrainlock)
+                        {
+                            var chunk = MakeChunk(p.X, p.Y, z);
+                            if (chunk != null && chunk.indices.Length != 0)
+                            {
+                                batchedblocks[new Vector3(p.X, p.Y, z)] = batcher.Add(chunk.indices, chunk.vertices);
+                            }
+                        }
+                    }
+                    catch { Console.WriteLine("Chunk error"); }
+                }
+            }
+            else if (ti.action == TerrainUpdater.TodoAction.Delete)
+            {
+                for (int z = 0; z < mapstorage.MapSizeZ / 16; z++)
+                {
+                    lock (terrainlock)
+                    {
+                        if (batchedblocks.ContainsKey(new Vector3(p.X, p.Y, z)))
+                        {
+                            batcher.Remove(batchedblocks[new Vector3(p.X, p.Y, z)]);
+                            batchedblocks.Remove(new Vector3(p.X, p.Y, z));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                UpdateAllTiles(true);
+            }
+        }
+        /// <summary>
+        /// Contains chunk positions.
+        /// </summary>
+        //Queue<Vector3> prioritytodo = new Queue<Vector3>();
+        List<Vector3> prioritytodo = new List<Vector3>();
+        VerticesIndicesToLoad MakeChunk(int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0) { return null; }
+            if (x >= mapstorage.MapSizeX / chunksize || y >= mapstorage.MapSizeY / chunksize || z >= mapstorage.MapSizeZ / chunksize) { return null; }
+            List<ushort> indices = new List<ushort>();
+            List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        int xxx = x * chunksize + xx;
+                        int yyy = y * chunksize + yy;
+                        int zzz = z * chunksize + zz;
+                        TileElements(indices, vertices, xxx, yyy, zzz);
+                    }
+                }
+            }
+            return new VerticesIndicesToLoad()
+            {
+                indices = indices.ToArray(),
+                vertices = vertices.ToArray(),
+                position =
+                    new Vector3(x * 16, y * 16, z * 16)
+            };
+        }
+        object terrainlock = new object();
+        public void Draw()
+        {
+            Update();
+            GL.Color3(terraincolor);
+            lock (terrainlock)
+            {
+                batcher.Update(500);
+                batcher.Draw();
+            }
+            worldfeatures.DrawWorldFeatures();
+        }
+        private void Update()
+        {
+        }
+        Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
+        Vector3 lastplayerposition;
         TerrainUpdater updater = new TerrainUpdater();
         MeshBatcher batcher = new MeshBatcher();
         public void UpdateAllTiles()
@@ -617,13 +692,15 @@ namespace ManicDigger
         }
         public void UpdateAllTiles(bool updaterInduced)
         {
-            if (!updaterInduced)
+            lock (terrainlock)
             {
-                updater = new TerrainUpdater();
+                if (!updaterInduced)
+                {
+                    updater = new TerrainUpdater();
+                }
+                batchedblocks.Clear();
+                batcher.Clear();
             }
-            batchedblocks.Clear();
-            batcher.Clear();
-            toupdate.Clear();
             return;
         }
         enum UpdateType
@@ -636,8 +713,6 @@ namespace ManicDigger
             public UpdateType type;
             public Vector3 position;
         }
-        Queue<ToUpdate> toupdate = new Queue<ToUpdate>();
-        Queue<ToUpdate> toupdatepriority = new Queue<ToUpdate>();
         IEnumerable<Vector3> TilesAround(Vector3 pos)
         {
             yield return new Vector3(pos + new Vector3(0, 0, 0));
@@ -650,22 +725,21 @@ namespace ManicDigger
         }
         public void UpdateTile(int xx, int yy, int zz)
         {
-            foreach (Vector3 t in TilesAround(new Vector3(xx, yy, zz)))
+            lock (prioritytodo)
             {
-                int x = (int)t.X;
-                int y = (int)t.Y;
-                int z = (int)t.Z;
-                toupdatepriority.Enqueue(new ToUpdate()
+                prioritytodo.Add(new Vector3(xx / chunksize, yy / chunksize, zz / chunksize));
+                foreach (Vector3 t in TilesAround(new Vector3(xx, yy, zz)))
                 {
-                    type = UpdateType.Delete,
-                    position = new Vector3(x, y, z)
-                });
-                if (IsTileEmptyForDrawing(x, y, z)) { continue; }
-                toupdatepriority.Enqueue(new ToUpdate()
-                {
-                    type = UpdateType.Add,
-                    position = new Vector3(x, y, z)
-                });
+                    int x = (int)t.X;
+                    int y = (int)t.Y;
+                    int z = (int)t.Z;
+                    if (x / chunksize != xx / chunksize
+                        || y / chunksize != yy / chunksize
+                        || z / chunksize != zz / chunksize)
+                    {
+                        prioritytodo.Add(new Vector3(x / chunksize, y / chunksize, z / chunksize));
+                    }
+                }
             }
         }
         public int TrianglesCount()
@@ -840,6 +914,12 @@ namespace ManicDigger
                 || mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
                 || mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
         }
+        #region IDisposable Members
+        public void Dispose()
+        {
+            exit2 = true;
+        }
+        #endregion
     }
     /// <summary>
     /// </summary>

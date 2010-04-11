@@ -964,6 +964,7 @@ namespace ManicDigger
             newterrain.Start();
 
             oldclientgame.Dispose();
+            if (terrain is IDisposable) { ((IDisposable)terrain).Dispose(); }
             newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
 
             oldnetwork.Dispose();
@@ -1319,6 +1320,7 @@ namespace ManicDigger
                 || data.IsWaterTile(clientgame.Map[x, y, z]);
         }
         float PICK_DISTANCE = 3.5f;
+        Matrix4 the_modelview;
         private void UpdatePicking()
         {
             float unit_x = 0;
@@ -1329,10 +1331,10 @@ namespace ManicDigger
             float near_height = NEAR * (float)(Math.Tan(FOV * Math.PI / 360.0));
             Vector3 ray = new Vector3(unit_x * near_height * ASPECT, unit_y * near_height, 1);//, 0);
             Vector3 ray_start_point = new Vector3(0.0f, 0.0f, 0.0f);//, 1.0f);
-            Matrix4 the_modelview;
+            //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
-
-            GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
+            //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
+            if (the_modelview.Equals(new Matrix4())) { return; }
             the_modelview.Invert();
             //the_modelview = new Matrix4();
             ray = Vector3.Transform(ray, the_modelview);
@@ -1516,6 +1518,7 @@ namespace ManicDigger
             else
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
+            the_modelview = camera;
             terrain.Draw();
             DrawImmediateParticleEffects(e.Time);
             DrawCubeLines(pickcubepos);
@@ -1523,7 +1526,7 @@ namespace ManicDigger
             DrawVehicles();
             DrawPlayers((float)e.Time);
             DrawWeapon();
-            Draw2d();
+            Draw2d();            
 
             //OnResize(new EventArgs());
             SwapBuffers();
@@ -2426,10 +2429,15 @@ namespace ManicDigger
                 int totaltriangles = terrain.TrianglesCount();
                 title += ", triangles: " + totaltriangles;
                 //Title = title;
-                Title = applicationname;
                 fpstext = title;
             }
+            if (!titleset)
+            {
+                Title = applicationname;
+                titleset = true;
+            }
         }
+        bool titleset = false;
         string applicationname = "Manic Digger";
         #region ILocalPlayerPosition Members
         public Vector3 LocalPlayerPosition { get { return player.playerposition; } set { player.playerposition = value; } }
