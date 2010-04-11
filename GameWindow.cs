@@ -456,6 +456,10 @@ namespace ManicDigger
                     if (cmd == "server" || cmd == "connect")
                     {
                         string server = arguments;
+                        if (server.Length == 32)
+                        {
+                            server = "http://www.minecraft.net/play.jsp?server=" + server;
+                        }
                         DownloadInternetGame(username, pass, server);
                         return;
                     }
