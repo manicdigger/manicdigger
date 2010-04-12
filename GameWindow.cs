@@ -2110,14 +2110,23 @@ namespace ManicDigger
             Draw2dBitmapFile("gui\\mousecursor.png", mouse_current.X, mouse_current.Y, 30, 30);
         }
         int chatfontsize = 12;
+        Size? aimsize;
         private void Draw2d()
         {
             OrthoMode();
             if (guistate == GuiState.Normal)
             {
-                float targetwidth = Width / 20;
-                float targetheight = Height / 20;
-                Draw2dBitmapFile("target.png", Width / 2 - targetwidth / 2, Height / 2 - targetheight / 2, targetwidth, targetheight);
+                if (aimsize == null)
+                {
+                    using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                    {
+                        aimsize = targetbmp.Size;
+                    }
+                }
+                float aimwidth = aimsize.Value.Width;
+                float aimheight = aimsize.Value.Height;
+
+                Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
 
                 DrawMaterialSelector();
                 DrawChatLines();
