@@ -129,227 +129,14 @@ namespace Md2Viewer
             b = pb;
         }
 
-        public void renderFrame(int n, Mesh mdl, bool strips) //render frame
-        {
-            if (!strips)
-            {
-                GL.glFrontFace(GL.GL_CCW);
-                int va, vb, vc;
-                int ta, tb, tc;
-
-                GL.glBegin(GL.GL_TRIANGLES);
-                for (int i = 0; i < mdl.trianglePool.Count; i++)
-                {
-                    for (int j = 0; j < 3; j++)
-                    {
-                        if (j == 0) 
-                        {
-                            va = mdl.trianglePool[i].getA();
-                            ta = mdl.trianglePool[i].getTA();
-
-                            GL.glTexCoord2f(mdl.texcoordPool[ta].getU(), mdl.texcoordPool[ta].getV());
-
-                            GL.glNormal3f(mdl.framePool[n].normalsPool[va].getX(),
-                                          mdl.framePool[n].normalsPool[va].getY(),
-                                          mdl.framePool[n].normalsPool[va].getZ());
-
-                            GL.glVertex3f(mdl.framePool[n].vertexPool[va].getX(),
-                                          mdl.framePool[n].vertexPool[va].getY(),
-                                          mdl.framePool[n].vertexPool[va].getZ());
-                        }
-
-                        if (j == 1)
-                        {
-                            vb = mdl.trianglePool[i].getB();
-                            tb = mdl.trianglePool[i].getTB();
-
-                            GL.glTexCoord2f(mdl.texcoordPool[tb].getU(), mdl.texcoordPool[tb].getV());
-
-                            GL.glNormal3f(mdl.framePool[n].normalsPool[vb].getX(),
-                                          mdl.framePool[n].normalsPool[vb].getY(),
-                                          mdl.framePool[n].normalsPool[vb].getZ());
-
-                            GL.glVertex3f(mdl.framePool[n].vertexPool[vb].getX(),
-                                          mdl.framePool[n].vertexPool[vb].getY(),
-                                          mdl.framePool[n].vertexPool[vb].getZ());
-                        }
-
-                        if (j == 2)
-                        {
-                            vc = mdl.trianglePool[i].getC();
-                            tc = mdl.trianglePool[i].getTC();
-
-                            GL.glTexCoord2f(mdl.texcoordPool[tc].getU(), mdl.texcoordPool[tc].getV());
-
-                            GL.glNormal3f(mdl.framePool[n].normalsPool[vc].getX(),
-                                          mdl.framePool[n].normalsPool[vc].getY(),
-                                          mdl.framePool[n].normalsPool[vc].getZ());
-
-                            GL.glVertex3f(mdl.framePool[n].vertexPool[vc].getX(),
-                                          mdl.framePool[n].vertexPool[vc].getY(),
-                                          mdl.framePool[n].vertexPool[vc].getZ());
-                        }
-                    }
-                }
-                GL.glEnd();
-            }
-            else
-            {
-                GL.glFrontFace(GL.GL_CW);
-                Vertex vrt;
-                Vector vct;
-
-                for (int i = 0; i < mdl.glCommandPool.Count; i++)
-                {
-                    if (mdl.glCommandPool[i].getType() == 1)
-                    {
-                        GL.glBegin(GL.GL_TRIANGLE_STRIP);
-                    }
-                    if (mdl.glCommandPool[i].getType() == 2)
-                    {
-                        GL.glBegin(GL.GL_TRIANGLE_FAN);
-                    }
-
-                    for (int j = 0; j < mdl.glCommandPool[i].packets.Count; j++)
-                    {
-                        vrt = mdl.framePool[n].vertexPool[mdl.glCommandPool[i].packets[j].getVertex()];
-                        vct = mdl.framePool[n].normalsPool[mdl.glCommandPool[i].packets[j].getVertex()];
-
-                        GL.glTexCoord2f(mdl.glCommandPool[i].packets[j].getU(), mdl.glCommandPool[i].packets[j].getV());
-                        GL.glNormal3f(vct.getX(), vct.getY(), vct.getZ());
-                        GL.glVertex3f(vrt.getX(), vrt.getY(), vrt.getZ());
-                    }
-
-                    GL.glEnd();
-                }
-            }
-        }
-
-        public void renderFrameItp(int n, float interp, Mesh mdl, bool strips) //render the frame interpolated with the next to smooth transition
-        {
-            if (n < mdl.framePool.Count - 1)
-            {
-                if (!strips)
-                {
-                    GL.glFrontFace(GL.GL_CCW);
-                    int va, vb, vc;
-                    Vertex final = new Vertex();
-                    Vector finv = new Vector();
-                    int ta, tb, tc;
-
-                    GL.glBegin(GL.GL_TRIANGLES);
-                    for (int i = 0; i < mdl.trianglePool.Count; i++)
-                    {
-                        for (int j = 0; j < 3; j++)
-                        {
-                            if (j == 0)
-                            {
-                                va = mdl.trianglePool[i].getA();
-
-                                final.setXYZ(mdl.framePool[n].vertexPool[va].getX() + interp * (mdl.framePool[n + 1].vertexPool[va].getX() - mdl.framePool[n].vertexPool[va].getX()),
-                                             mdl.framePool[n].vertexPool[va].getY() + interp * (mdl.framePool[n + 1].vertexPool[va].getY() - mdl.framePool[n].vertexPool[va].getY()),
-                                             mdl.framePool[n].vertexPool[va].getZ() + interp * (mdl.framePool[n + 1].vertexPool[va].getZ() - mdl.framePool[n].vertexPool[va].getZ()));
-
-                                finv.setX(mdl.framePool[n].normalsPool[va].getX() + interp * (mdl.framePool[n + 1].normalsPool[va].getX() - mdl.framePool[n].normalsPool[va].getX()));
-                                finv.setY(mdl.framePool[n].normalsPool[va].getY() + interp * (mdl.framePool[n + 1].normalsPool[va].getY() - mdl.framePool[n].normalsPool[va].getY()));
-                                finv.setZ(mdl.framePool[n].normalsPool[va].getZ() + interp * (mdl.framePool[n + 1].normalsPool[va].getZ() - mdl.framePool[n].normalsPool[va].getZ()));
-
-                                GL.glNormal3f(finv.getX(), finv.getY(), finv.getZ());
-
-                                ta = mdl.trianglePool[i].getTA();
-
-                                GL.glTexCoord2f(mdl.texcoordPool[ta].getU(), mdl.texcoordPool[ta].getV());
-                                GL.glVertex3f(final.getX(), final.getY(), final.getZ());
-                            }
-
-                            if (j == 1)
-                            {
-                                vb = mdl.trianglePool[i].getB();
-
-                                final.setXYZ(mdl.framePool[n].vertexPool[vb].getX() + interp * (mdl.framePool[n + 1].vertexPool[vb].getX() - mdl.framePool[n].vertexPool[vb].getX()),
-                                             mdl.framePool[n].vertexPool[vb].getY() + interp * (mdl.framePool[n + 1].vertexPool[vb].getY() - mdl.framePool[n].vertexPool[vb].getY()),
-                                             mdl.framePool[n].vertexPool[vb].getZ() + interp * (mdl.framePool[n + 1].vertexPool[vb].getZ() - mdl.framePool[n].vertexPool[vb].getZ()));
-
-                                finv.setX(mdl.framePool[n].normalsPool[vb].getX() + interp * (mdl.framePool[n + 1].normalsPool[vb].getX() - mdl.framePool[n].normalsPool[vb].getX()));
-                                finv.setY(mdl.framePool[n].normalsPool[vb].getY() + interp * (mdl.framePool[n + 1].normalsPool[vb].getY() - mdl.framePool[n].normalsPool[vb].getY()));
-                                finv.setZ(mdl.framePool[n].normalsPool[vb].getZ() + interp * (mdl.framePool[n + 1].normalsPool[vb].getZ() - mdl.framePool[n].normalsPool[vb].getZ()));
-
-                                GL.glNormal3f(finv.getX(), finv.getY(), finv.getZ());
-
-                                tb = mdl.trianglePool[i].getTB();
-
-                                GL.glTexCoord2f(mdl.texcoordPool[tb].getU(), mdl.texcoordPool[tb].getV());
-                                GL.glVertex3f(final.getX(), final.getY(), final.getZ());
-                            }
-
-                            if (j == 2)
-                            {
-                                vc = mdl.trianglePool[i].getC();
-
-                                final.setXYZ(mdl.framePool[n].vertexPool[vc].getX() + interp * (mdl.framePool[n + 1].vertexPool[vc].getX() - mdl.framePool[n].vertexPool[vc].getX()),
-                                             mdl.framePool[n].vertexPool[vc].getY() + interp * (mdl.framePool[n + 1].vertexPool[vc].getY() - mdl.framePool[n].vertexPool[vc].getY()),
-                                             mdl.framePool[n].vertexPool[vc].getZ() + interp * (mdl.framePool[n + 1].vertexPool[vc].getZ() - mdl.framePool[n].vertexPool[vc].getZ()));
-
-                                finv.setX(mdl.framePool[n].normalsPool[vc].getX() + interp * (mdl.framePool[n + 1].normalsPool[vc].getX() - mdl.framePool[n].normalsPool[vc].getX()));
-                                finv.setY(mdl.framePool[n].normalsPool[vc].getY() + interp * (mdl.framePool[n + 1].normalsPool[vc].getY() - mdl.framePool[n].normalsPool[vc].getY()));
-                                finv.setZ(mdl.framePool[n].normalsPool[vc].getZ() + interp * (mdl.framePool[n + 1].normalsPool[vc].getZ() - mdl.framePool[n].normalsPool[vc].getZ()));
-
-                                GL.glNormal3f(finv.getX(), finv.getY(), finv.getZ());
-
-                                tc = mdl.trianglePool[i].getTC();
-
-                                GL.glTexCoord2f(mdl.texcoordPool[tc].getU(), mdl.texcoordPool[tc].getV());
-                                GL.glVertex3f(final.getX(), final.getY(), final.getZ());
-                            }
-                        }
-                    }
-                    GL.glEnd();
-                }
-                else
-                {
-                    GL.glFrontFace(GL.GL_CW);
-                    Vertex vrt;
-                    Vector vct;
-
-                    for (int i = 0; i < mdl.glCommandPool.Count; i++)
-                    {
-                        if (mdl.glCommandPool[i].getType() == 2)
-                        {
-                            GL.glBegin(GL.GL_TRIANGLE_STRIP);
-                        }
-                        if (mdl.glCommandPool[i].getType() == 1)
-                        {
-                            GL.glBegin(GL.GL_TRIANGLE_FAN);
-                        }
-
-                        for (int j = 0; j < mdl.glCommandPool[i].packets.Count; j++)
-                        {
-                            vrt = mdl.framePool[n].vertexPool[mdl.glCommandPool[i].packets[j].getVertex()];
-                            vct = mdl.framePool[n].normalsPool[mdl.glCommandPool[i].packets[j].getVertex()];
-
-                            GL.glTexCoord2f(mdl.glCommandPool[i].packets[j].getU(), mdl.glCommandPool[i].packets[j].getV());
-                            GL.glNormal3f(vct.getX(), vct.getY(), vct.getZ());
-                            GL.glVertex3f(vrt.getX(), vrt.getY(), vrt.getZ());    
-                        }
-
-                        GL.glEnd();
-                    }
-                }
-            }
-            else
-            {
-                renderFrame(n, mdl, strips); //if at last frame render it uninterpolated
-            }
-        }
-
         public int Animate(int start, int end, int frame)//update the animation parameters
         {
-            frame++;
             interp += 0.01f;
 
             if (interp > 1.0f)
             {
                 interp = 0.0f;
+                frame++;
             }
 
             if ((frame < start) || (frame >= end))
@@ -363,8 +150,10 @@ namespace Md2Viewer
             Range tmp = mdl.animationPool[mdl.findAnim(anim)];
 
             n = Animate(tmp.getStart(), tmp.getEnd(), n);
-            renderFrameItp(n, interp, mdl, true);
+            renderer.renderFrameItp(n, interp, mdl, true);
         }
+
+        GlRenderer renderer = new GlRenderer() { gl = new CsglOpenGl() };
 
         public void drawAxes()
         {
@@ -498,5 +287,60 @@ namespace Md2Viewer
             GL.glMatrixMode(GL.GL_MODELVIEW);
             GL.glLoadIdentity();
         }
+    }
+    public class CsglOpenGl : IOpenGl
+    {
+        #region IOpenGl Members
+        public void GlBegin(BeginMode mode)
+        {
+            if (mode == BeginMode.Triangles)
+            {
+                GL.glBegin(GL.GL_TRIANGLES);
+            }
+            else if (mode == BeginMode.TriangleFan)
+            {
+                GL.glBegin(GL.GL_TRIANGLE_FAN);
+            }
+            else if (mode == BeginMode.TriangleStrip)
+            {
+                GL.glBegin(GL.GL_TRIANGLE_STRIP);
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+        public void GlEnd()
+        {
+            GL.glEnd();
+        }
+        public void GlFrontFace(FrontFace mode)
+        {
+            if (mode == FrontFace.Cw)
+            {
+                GL.glFrontFace(GL.GL_CW);
+            }
+            else if (mode == FrontFace.Ccw)
+            {
+                GL.glFrontFace(GL.GL_CCW);
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+        public void GlNormal3f(float x, float y, float z)
+        {
+            GL.glNormal3f(x, y, z);
+        }
+        public void GlTexCoord2f(float x, float y)
+        {
+            GL.glTexCoord2f(x, y);
+        }
+        public void GlVertex3f(float x, float y, float z)
+        {
+            GL.glVertex3f(x, y, z);
+        }
+        #endregion
     }
 }
