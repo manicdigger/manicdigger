@@ -52,7 +52,7 @@ namespace Md2Engine
         /// <param name="n"></param>
         /// <param name="mdl"></param>
         /// <param name="strips"></param>
-        public void renderFrame(int n, Mesh mdl, bool strips)
+        public void RenderFrameImmediate(int n, Mesh mdl, bool strips)
         {
             if (!strips)
             {
@@ -154,7 +154,7 @@ namespace Md2Engine
         /// <param name="interp"></param>
         /// <param name="mdl"></param>
         /// <param name="strips"></param>
-        public void renderFrameItp(int n, float interp, Mesh mdl, bool strips)
+        public void RenderFrameImmediateInterpolated(int n, float interp, Mesh mdl, bool strips, int startframe, int endframe)
         {
             if (n < mdl.framePool.Count - 1)
             {
@@ -256,9 +256,26 @@ namespace Md2Engine
                             vrt = mdl.framePool[n].vertexPool[mdl.glCommandPool[i].packets[j].getVertex()];
                             vct = mdl.framePool[n].normalsPool[mdl.glCommandPool[i].packets[j].getVertex()];
 
+                            //loop animation
+                            var vrt2 = mdl.framePool[n + 1].vertexPool[mdl.glCommandPool[i].packets[j].getVertex()];
+                            if (n + 1 >= endframe)
+                            {
+                                vrt2 = mdl.framePool[startframe].vertexPool[mdl.glCommandPool[i].packets[j].getVertex()];
+                            }
+                            var vct2 = mdl.framePool[n + 1].normalsPool[mdl.glCommandPool[i].packets[j].getVertex()];
+                            if (n + 1 >= endframe)
+                            {
+                                vct2 = mdl.framePool[startframe].normalsPool[mdl.glCommandPool[i].packets[j].getVertex()];
+                            }
+
                             gl.GlTexCoord2f(mdl.glCommandPool[i].packets[j].getU(), mdl.glCommandPool[i].packets[j].getV());
-                            gl.GlNormal3f(vct.getX(), vct.getY(), vct.getZ());
-                            gl.GlVertex3f(vrt.getX(), vrt.getY(), vrt.getZ());
+
+                            gl.GlNormal3f(vct.getX() + interp * (vct2.getX() - vct.getX()),
+                                vct.getY() + interp * (vct2.getY() - vct.getY()),
+                                vct.getZ() + interp * (vct2.getZ() - vct.getZ()));
+                            gl.GlVertex3f(vrt.getX() + interp * (vrt2.getX() - vrt.getX()),
+                                vrt.getY() + interp * (vrt2.getY() - vrt.getY()),
+                                vrt.getZ() + interp * (vrt2.getZ() - vrt.getZ()));
                         }
 
                         gl.GlEnd();

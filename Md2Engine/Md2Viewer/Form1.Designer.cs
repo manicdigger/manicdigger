@@ -62,7 +62,7 @@
             // 
             // tim
             // 
-            this.tim.Interval = 60;
+            this.tim.Interval = 10;
             this.tim.Tick += new System.EventHandler(this.tim_Tick);
             // 
             // anim

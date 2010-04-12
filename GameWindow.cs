@@ -187,6 +187,7 @@ namespace ManicDigger
             public object content;
         }
         public IInterpolation req { get; set; }
+        public bool EXTRAPOLATE = false;
         public float DELAY = 0.2f;
         public float FRAMESIZE = 0.1f;
         List<Packet> received = new List<Packet>();
@@ -196,6 +197,10 @@ namespace ManicDigger
             p.content = c;
             p.timestamp = time;
             received.Add(p);
+            if (received.Count > 100)
+            {
+                received.RemoveRange(0, received.Count - 100);
+            }
         }
         public object InterpolatedState(double time)
         {
@@ -203,14 +208,18 @@ namespace ManicDigger
             double interpolationtime = curtime - DELAY;
             int p1;
             int p2;
+            if (received.Count == 0)
+            {
+                return null;
+            }
             object result;
-            if (received.Count >= 0 && interpolationtime < received[0].timestamp)
+            if (received.Count > 0 && interpolationtime < received[0].timestamp)
             {
                 p1 = 0;
                 p2 = 0;
             }
             //extrapolate
-            else if ((received.Count >= 2)
+            else if (EXTRAPOLATE && (received.Count >= 2)
                 && time > received[received.Count - 1].timestamp)
             {
                 p1 = received.Count - 2;
@@ -1523,16 +1532,17 @@ namespace ManicDigger
             DrawImmediateParticleEffects(e.Time);
             DrawCubeLines(pickcubepos);
 
-            DrawVehicles();
+            DrawVehicles((float)e.Time);
             DrawPlayers((float)e.Time);
             DrawWeapon();
-            Draw2d();            
+            Draw2d();
 
             //OnResize(new EventArgs());
             SwapBuffers();
         }
         void DrawWeapon()
         {
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
             List<ushort> myelements = new List<ushort>();
             List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
             int x = 0;
@@ -1706,6 +1716,8 @@ namespace ManicDigger
         float zzzposx = -0.2f;
         float zzzposy = -1.3f;
         float attackprogress = 0;
+        NetworkInterpolation interpolation = new NetworkInterpolation();
+        /*
         public class PlayerInterpolated
         {
             public Vector3 LastRealPosition;
@@ -1713,26 +1725,95 @@ namespace ManicDigger
             public Vector3 InterpolatedPosition;
             public Vector3 Direction;
         }
-        public Dictionary<int, PlayerInterpolated> PlayerPositionsInterpolated = new Dictionary<int, PlayerInterpolated>();
+        */
+        Dictionary<int, PlayerDrawInfo> playerdrawinfo = new Dictionary<int, PlayerDrawInfo>();
+        class PlayerDrawInfo
+        {
+            public AnimationState anim = new AnimationState();
+            public NetworkInterpolation interpolation = new NetworkInterpolation();
+            public Vector3 lastrealpos;
+            public Vector3 lastcurpos;
+            public byte lastrealheading;
+            public byte lastrealpitch;
+        }
+        class PlayerInterpolationState
+        {
+            public Vector3 position;
+            public byte heading;
+            public byte pitch;
+        }
+        class PlayerInterpolate : IInterpolation
+        {
+            public object Interpolate(object a, object b, float progress)
+            {
+                PlayerInterpolationState aa = a as PlayerInterpolationState;
+                PlayerInterpolationState bb = b as PlayerInterpolationState;
+                PlayerInterpolationState cc = new PlayerInterpolationState();
+                cc.position = aa.position + (bb.position - aa.position) * progress;
+                cc.heading = (byte)Interpolate360(aa.heading, bb.heading, progress);
+                cc.pitch = (byte)((float)aa.pitch + ((float)bb.pitch - (float)aa.pitch) * progress);
+                return cc;
+            }
+            int Interpolate360(int a, int b, float progress)
+            {
+                if (progress != 0 && b != a)
+                {
+                    int diff = NormalizeAngle(b - a);
+                    if (diff >= CircleHalf)
+                    {
+                        diff -= CircleFull;
+                    }
+                    a += (int)(progress * diff);
+                }
+                return NormalizeAngle(a);
+            }
+            int CircleHalf = 256 / 2;
+            int CircleFull = 256;
+            private int NormalizeAngle(int v)
+            {
+                return v % 256;
+            }
+        }
+        double totaltime;
         private void DrawPlayers(float dt)
         {
+            totaltime += dt;
             foreach (var k in clientgame.Players)
             {
-                if (!PlayerPositionsInterpolated.ContainsKey(k.Key))
+                if (!playerdrawinfo.ContainsKey(k.Key))
                 {
-                    PlayerPositionsInterpolated[k.Key] = new PlayerInterpolated();
+                    playerdrawinfo[k.Key] = new PlayerDrawInfo();
+                    NetworkInterpolation n = new NetworkInterpolation();
+                    n.req = new PlayerInterpolate();
+                    playerdrawinfo[k.Key].interpolation = n;
                 }
-                var realposition = k.Value.Position;
-                var pi = PlayerPositionsInterpolated[k.Key];
-                if (realposition != pi.LastRealPosition)
+                PlayerDrawInfo info = playerdrawinfo[k.Key];
+                Vector3 realpos = k.Value.Position;
+                if (realpos != info.lastrealpos
+                    || k.Value.Heading != info.lastrealheading
+                    || k.Value.Pitch != info.lastrealpitch)
                 {
-                    pi.Direction = Vector3.Multiply(k.Value.Position - pi.LastRealPosition,
-                        (float)(DateTime.Now - pi.LastRealPositionTime).TotalSeconds);
-                    pi.LastRealPosition = realposition;
-                    pi.LastRealPositionTime = DateTime.Now;
+                    info.interpolation.AddNetworkPacket(
+                        new PlayerInterpolationState()
+                        {
+                            position = realpos,
+                            heading = k.Value.Heading,
+                            pitch = k.Value.Pitch,
+                        },
+                        totaltime);
                 }
-                var curpos = pi.LastRealPosition + pi.Direction * (float)(DateTime.Now - pi.LastRealPositionTime).TotalSeconds;
-                DrawCube(realposition);//curpos
+                var curstate = ((PlayerInterpolationState)info.interpolation.InterpolatedState(totaltime));
+                if (curstate == null)
+                {
+                    curstate = new PlayerInterpolationState();
+                }
+                Vector3 curpos = curstate.position;
+                bool moves = curpos != info.lastcurpos;
+                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt);
+                info.lastcurpos = curpos;
+                info.lastrealpos = realpos;
+                info.lastrealheading = k.Value.Heading;
+                info.lastrealpitch = k.Value.Pitch;
             }
         }
         bool overheadcamera = false;
@@ -1763,6 +1844,8 @@ namespace ManicDigger
             public float progress;
             public int currentOrderId = 0;
             public int cargoAmount = 0;
+            public Vector3 dir3d;
+            public bool moves;
         }
         Dictionary<string, int> textures = new Dictionary<string, int>();
         Character v0;
@@ -1780,7 +1863,18 @@ namespace ManicDigger
             dir.Normalize();
             var newpos = v0.pos3d + Vector3.Multiply(dir, dt * basemovespeed);
             //Console.Write(v0.pos3d);
-            v0.pos3d = clientgame.p.WallSlide(v0.pos3d, newpos);
+            newpos = clientgame.p.WallSlide(v0.pos3d, newpos);
+            var delta=newpos-v0.pos3d;
+            if (delta.Length < dt * 0.1 * basemovespeed)
+            {
+                v0.moves = false;
+            }
+            else
+            {
+                v0.moves = true;
+                v0.dir3d = newpos - v0.pos3d;
+            }
+            v0.pos3d = newpos;
             //v0.progress += dt * 0.1f;
             //if (v0.progress >= 1)
             if ((v0.pos3d - v0.orders[v0.currentOrderId]).Length < 0.5f)
@@ -1798,10 +1892,118 @@ namespace ManicDigger
                 //    + Vector3.Multiply(v0.orders[nextorderid] - v0.orders[v0.currentOrderId], v0.progress);
             }
         }
-        void DrawVehicles()
+        class OpentkGl : Md2Engine.IOpenGl
         {
+            #region IOpenGl Members
+            public void GlBegin(Md2Engine.BeginMode mode)
+            {
+                if (mode == Md2Engine.BeginMode.Triangles)
+                {
+                    GL.Begin(BeginMode.Triangles);
+                }
+                else if (mode == Md2Engine.BeginMode.TriangleFan)
+                {
+                    GL.Begin(BeginMode.TriangleFan);
+                }
+                else if (mode == Md2Engine.BeginMode.TriangleStrip)
+                {
+                    GL.Begin(BeginMode.TriangleStrip);
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            public void GlEnd()
+            {
+                GL.End();
+            }
+            public void GlFrontFace(Md2Engine.FrontFace mode)
+            {
+                if (mode == Md2Engine.FrontFace.Cw)
+                {
+                    GL.FrontFace(FrontFaceDirection.Cw);
+                }
+                else if (mode == Md2Engine.FrontFace.Ccw)
+                {
+                    GL.FrontFace(FrontFaceDirection.Ccw);
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            public void GlNormal3f(float x, float y, float z)
+            {
+                GL.Normal3(x, y, z);
+            }
+            public void GlTexCoord2f(float x, float y)
+            {
+                GL.TexCoord2(x, y);
+            }
+            public void GlVertex3f(float x, float y, float z)
+            {
+                GL.Vertex3(x, y, z);
+            }
+            #endregion
+        }
+        Md2Engine.GlRenderer md2renderer = new Md2Engine.GlRenderer() { gl=new OpentkGl()};
+        Md2Engine.Mesh m1;
+        int m1texture;
+        class AnimationState
+        {
+            public float interp;
+            public int frame;
+        }
+        int Animate(AnimationState anim, int start, int end, int frame, float dt)//update the animation parameters
+        {
+            anim.interp += dt * 5;
+
+            if (anim.interp > 1.0f)
+            {
+                anim.interp = 0.0f;
+                frame++;
+            }
+
+            if ((frame < start) || (frame >= end))
+                frame = start;
+
+            return frame;
+        }
+        AnimationState v0anim = new AnimationState();
+        void DrawVehicles(float dt)
+        {
+            if (m1 == null)
+            {
+                m1 = new Md2Engine.Mesh();
+                m1.loadMD2(getfile.GetFile("player.md2"));
+                m1texture = LoadTexture(getfile.GetFile("player.png"));
+            }
             if (v0 != null)
-                DrawCube(v0.pos3d);
+            {
+                DrawCharacter(v0anim, v0.pos3d + new Vector3(0, 0.9f, 0), v0.dir3d, v0.moves, dt);
+                //DrawCube(v0.pos3d);
+            }
+        }
+        private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt)
+        {
+            DrawCharacter(animstate, pos,
+                (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt);
+        }
+        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt)
+        {
+            string anim = moves ? "run" : "stand";
+            Md2Engine.Range tmp = m1.animationPool[m1.findAnim(anim)];
+            animstate.frame = Animate(animstate, tmp.getStart(), tmp.getEnd(), animstate.frame, dt);
+            GL.PushMatrix();
+            GL.Translate(pos);
+            GL.Rotate(-90, 1, 0, 0);
+            GL.Rotate((-((float)heading / 256)) * 360 + 90, 0, 0, 1);
+            GL.Scale(0.05f, 0.05f, 0.05f);
+            GL.BindTexture(TextureTarget.Texture2D, m1texture);
+            md2renderer.RenderFrameImmediateInterpolated(animstate.frame, animstate.interp, m1, true, tmp.getStart(), tmp.getEnd());
+            GL.PopMatrix();
+            GL.FrontFace(FrontFaceDirection.Ccw);
         }
         void EscapeMenuAction()
         {

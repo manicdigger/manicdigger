@@ -131,7 +131,7 @@ namespace Md2Viewer
 
         public int Animate(int start, int end, int frame)//update the animation parameters
         {
-            interp += 0.01f;
+            interp += 0.1f;
 
             if (interp > 1.0f)
             {
@@ -150,7 +150,7 @@ namespace Md2Viewer
             Range tmp = mdl.animationPool[mdl.findAnim(anim)];
 
             n = Animate(tmp.getStart(), tmp.getEnd(), n);
-            renderer.renderFrameItp(n, interp, mdl, true);
+            renderer.RenderFrameImmediateInterpolated(n, interp, mdl, true, tmp.getStart(), tmp.getEnd());
         }
 
         GlRenderer renderer = new GlRenderer() { gl = new CsglOpenGl() };

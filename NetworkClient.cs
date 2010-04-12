@@ -239,8 +239,8 @@ namespace ManicDigger
             //tosend.Add(ms.ToArray());
             //Console.WriteLine(this.position.LocalPlayerPosition);
             //Console.WriteLine("p" + position);
-            Console.WriteLine("player:" + lastsentposition + ", build:" + position
-                + ", block:" + type + ", mode:" + Enum.GetName(typeof(BlockSetMode), mode));
+            //Console.WriteLine("player:" + lastsentposition + ", build:" + position
+            //    + ", block:" + type + ", mode:" + Enum.GetName(typeof(BlockSetMode), mode));
         }
         public void SendChat(string s)
         {
@@ -466,9 +466,9 @@ namespace ManicDigger
             {
                 totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
-                float x = (float)br.ReadByte() / 32;
-                float y = (float)br.ReadByte() / 32;
-                float z = (float)br.ReadByte() / 32;
+                float x = (float)br.ReadSByte() / 32;
+                float y = (float)br.ReadSByte() / 32;
+                float z = (float)br.ReadSByte() / 32;
                 byte heading = br.ReadByte();
                 byte pitch = br.ReadByte();
                 Vector3 v = new Vector3(x, y, z);
@@ -478,15 +478,20 @@ namespace ManicDigger
             {
                 totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
-                float x = (float)br.ReadByte() / 32;
-                float y = (float)br.ReadByte() / 32;
-                float z = (float)br.ReadByte() / 32;
+                float x = (float)br.ReadSByte() / 32;
+                float y = (float)br.ReadSByte() / 32;
+                float z = (float)br.ReadSByte() / 32;
                 Vector3 v = new Vector3(x, y, z);
                 UpdatePositionDiff(playerid, v);
             }
             else if (packetId == ServerPacketId.OrientationUpdate)
             {
                 totalread += 1 + 1 + 1; if (received.Count < totalread) { return 0; }
+                byte playerid = br.ReadByte();
+                byte heading = br.ReadByte();
+                byte pitch = br.ReadByte();
+                Players.Players[playerid].Heading = heading;
+                Players.Players[playerid].Pitch = pitch;
             }
             else if (packetId == ServerPacketId.DespawnPlayer)
             {
@@ -587,6 +592,8 @@ namespace ManicDigger
                     Players.Players[playerid] = new Player();
                 }
                 Players.Players[playerid].Position = realpos;
+                Players.Players[playerid].Heading = heading;
+                Players.Players[playerid].Pitch = pitch;
             }
         }
         List<byte> received = new List<byte>();

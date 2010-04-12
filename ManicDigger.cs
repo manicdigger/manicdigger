@@ -184,6 +184,8 @@ namespace ManicDigger
     public class Player
     {
         public Vector3 Position;
+        public byte Heading;
+        public byte Pitch;
     }
     public static class MapUtil
     {
