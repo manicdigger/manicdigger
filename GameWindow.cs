@@ -51,7 +51,6 @@ namespace ManicDigger
     public interface IThe3d
     {
         int LoadTexture(string filename);
-        int LoadTerrainTexture(string filename);
     }
     public class The3dDummy : IThe3d
     {
@@ -347,8 +346,7 @@ namespace ManicDigger
                 //#else
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearClipmapLinearSgix);
                 //#endif
-
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             }
 
             BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -2640,6 +2638,7 @@ namespace ManicDigger
             pos += new Vector3(0.5f, 0.5f, 0.5f);
             GL.LineWidth(150);
             float size = 0.51f;
+            GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Begin(BeginMode.LineStrip);
             GL.Color3(Color.Red);
             //GL.Color3(Color.Silver);
@@ -2748,73 +2747,6 @@ namespace ManicDigger
                 }
                 return data.IsWaterTile(clientgame.Map[(int)p.X, (int)p.Z, (int)p.Y]);
             }
-        }
-        #endregion
-        #region IThe3d Members
-        public int LoadTerrainTexture(string filename)
-        {
-            if (File.Exists(To4096Filename(filename)))
-            {
-                return LoadTexture(To4096Filename(filename));
-            }
-            Bitmap bmp = new Bitmap(filename);
-            if (bmp.Width == bmp.Height && IsPowerOfTwo(bmp.Width) && IsPowerOfTwo(bmp.Height))
-            {
-                FastBitmap bmpfast = new FastBitmap();
-                bmpfast.bmp = bmp;
-                bmpfast.Lock();
-                int magnification = 4096 / bmp.Width;
-                Console.WriteLine("Converting {0} to 4096 size.", filename);
-                Bitmap bmp2 = new Bitmap(4096, 4096);
-                FastBitmap bmp2fast = new FastBitmap();
-                bmp2fast.bmp = bmp2;
-                bmp2fast.Lock();
-                for (int x = 0; x < bmp.Width; x++)
-                {
-                    for (int y = 0; y < bmp.Height; y++)
-                    {
-                        for (int xx = 0; xx < magnification; xx++)
-                        {
-                            for (int yy = 0; yy < magnification; yy++)
-                            {
-                                bmp2fast.SetPixel(x * magnification + xx, y * magnification + yy, bmpfast.GetPixel(x, y));
-                            }
-                        }
-                    }
-                }
-                bmp2.Save(To4096Filename(filename));
-                //wrong
-                //Graphics g = Graphics.FromImage(bmp2);
-                //g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-                //g.DrawImage(bmp, 0, 0, 4096, 4096);
-                //bmp2.Save(To4096Filename(filename));
-                bmp2fast.Unlock();
-                bmpfast.Unlock();
-                return LoadTexture(bmp2);
-            }
-            return LoadTexture(bmp);
-        }
-        private bool IsPowerOfTwo(int n)
-        {
-            return n == 1 || n == 2 || n == 4 | n == 8 || n == 16 ||
-                n == 32 || n == 64 || n == 128 ||
-                n == 256 || n == 512 || n == 1024 || n == 2048 || n == 4096;
-        }
-        string To4096Filename(string filename)
-        {
-            if (filename.Contains("4096"))
-            {
-                return filename;
-            }
-            if (filename.EndsWith(".png"))
-            {
-                return filename.Replace(".png", ".4096.png");
-            }
-            if (filename.EndsWith(".jpg"))
-            {
-                return filename.Replace(".jpg", ".4096.png");
-            }
-            throw new Exception();
         }
         #endregion
     }

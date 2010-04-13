@@ -406,7 +406,7 @@ namespace ManicDigger
         public void Start()
         {
             GL.Enable(EnableCap.Texture2D);
-            terrainTexture = the3d.LoadTerrainTexture(getfile.GetFile("terrain.png"));
+            terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
             new Thread(updatethread).Start();
         }
         Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
