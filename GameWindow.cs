@@ -51,12 +51,17 @@ namespace ManicDigger
     public interface IThe3d
     {
         int LoadTexture(string filename);
+        int LoadTerrainTexture(string filename);
     }
     public class The3dDummy : IThe3d
     {
         public int TextureId;
         #region IThe3d Members
         public int LoadTexture(string filename)
+        {
+            return TextureId;
+        }
+        public int LoadTerrainTexture(string filename)
         {
             return TextureId;
         }
@@ -1333,7 +1338,8 @@ namespace ManicDigger
                 player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
                 player.playerorientation.X = Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.001f, (float)(Math.PI / 2 + Math.PI - 0.001f));
             }
-            if (iii++ % 2 == 0) UpdatePicking();
+            if (iii++ % 2 == 0)
+                UpdatePicking();
         }
         int iii = 0;
         bool IsTileEmptyForPhysics(int x, int y, int z)
@@ -2607,6 +2613,7 @@ namespace ManicDigger
             pos += new Vector3(0.5f, 0.5f, 0.5f);
             GL.LineWidth(150);
             float size = 0.51f;
+            GL.BindTexture(0, 0);
             GL.Begin(BeginMode.LineStrip);
             GL.Color3(Color.Red);
             //GL.Color3(Color.Silver);
@@ -2713,5 +2720,114 @@ namespace ManicDigger
             }
         }
         #endregion
+        #region IThe3d Members
+        public int LoadTerrainTexture(string filename)
+        {
+            if (File.Exists(To4096Filename(filename)))
+            {
+                return LoadTexture(To4096Filename(filename));
+            }
+            Bitmap bmp = new Bitmap(filename);
+            if (bmp.Width == bmp.Height && IsPowerOfTwo(bmp.Width) && IsPowerOfTwo(bmp.Height))
+            {
+                FastBitmap bmpfast = new FastBitmap();
+                bmpfast.bmp = bmp;
+                bmpfast.Lock();
+                int magnification = 4096 / bmp.Width;
+                Console.WriteLine("Converting {0} to 4096 size.", filename);
+                Bitmap bmp2 = new Bitmap(4096, 4096);
+                FastBitmap bmp2fast = new FastBitmap();
+                bmp2fast.bmp = bmp2;
+                bmp2fast.Lock();
+                for (int x = 0; x < bmp.Width; x++)
+                {
+                    for (int y = 0; y < bmp.Height; y++)
+                    {
+                        for (int xx = 0; xx < magnification; xx++)
+                        {
+                            for (int yy = 0; yy < magnification; yy++)
+                            {
+                                bmp2fast.SetPixel(x * magnification + xx, y * magnification + yy, bmpfast.GetPixel(x, y));
+                            }
+                        }
+                    }
+                }
+                bmp2.Save(To4096Filename(filename));
+                //wrong
+                //Graphics g = Graphics.FromImage(bmp2);
+                //g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                //g.DrawImage(bmp, 0, 0, 4096, 4096);
+                //bmp2.Save(To4096Filename(filename));
+                bmp2fast.Unlock();
+                bmpfast.Unlock();
+                return LoadTexture(bmp2);
+            }
+            return LoadTexture(bmp);
+        }
+        private bool IsPowerOfTwo(int n)
+        {
+            return n == 1 || n == 2 || n == 4 | n == 8 || n == 16 ||
+                n == 32 || n == 64 || n == 128 ||
+                n == 256 || n == 512 || n == 1024 || n == 2048 || n == 4096;
+        }
+        string To4096Filename(string filename)
+        {
+            if (filename.Contains("4096"))
+            {
+                return filename;
+            }
+            if (filename.EndsWith(".png"))
+            {
+                return filename.Replace(".png", ".4096.png");
+            }
+            if (filename.EndsWith(".jpg"))
+            {
+                return filename.Replace(".jpg", ".4096.png");
+            }
+            throw new Exception();
+        }
+        #endregion
+    }
+    class FastBitmap
+    {
+        public Bitmap bmp;
+        BitmapData bmd;
+        public void Lock()
+        {
+            if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+            {
+                throw new Exception();
+            }
+            bmd = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+        }
+        public int GetPixel(int x,int y)
+        {
+            if (bmd == null)
+            {
+                throw new Exception();
+            }
+            unsafe
+            {
+                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
+                return row[x];
+            }
+        }
+        public void SetPixel(int x, int y, int color)
+        {
+            if (bmd == null)
+            {
+                throw new Exception();
+            }
+            unsafe
+            {
+                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
+                row[x] = color;
+            }
+        }
+        public void Unlock()
+        {
+            bmp.UnlockBits(bmd);
+        }
     }
 }
