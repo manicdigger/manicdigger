@@ -2613,7 +2613,6 @@ namespace ManicDigger
             pos += new Vector3(0.5f, 0.5f, 0.5f);
             GL.LineWidth(150);
             float size = 0.51f;
-            GL.BindTexture(0, 0);
             GL.Begin(BeginMode.LineStrip);
             GL.Color3(Color.Red);
             //GL.Color3(Color.Silver);
@@ -2673,15 +2672,19 @@ namespace ManicDigger
         DateTime lasttitleupdate;
         int fpscount = 0;
         string fpstext = "";
+        float longestframedt = 0;
         private void UpdateTitleFps(FrameEventArgs e)
         {
             string title = "";
             fpscount++;
+            longestframedt = (float)Math.Max(longestframedt, e.Time);
             TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
             if (elapsed.TotalSeconds >= 1)
             {
                 lasttitleupdate = DateTime.Now;
                 title += "FPS: " + (int)((float)fpscount / elapsed.TotalSeconds);
+                title += string.Format(" (min: {0})", (int)(1f / longestframedt));
+                longestframedt = 0;
                 //z = 100;
                 fpscount = 0;
                 int totaltriangles = terrain.TrianglesCount();
