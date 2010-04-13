@@ -24,6 +24,7 @@ namespace ManicDigger
         int TrianglesCount();
         int texturesPacked { get; }
         int terrainTexture { get; }
+        int DrawDistance { get; set; }
     }
     public class TerrainDrawerDummy : ITerrainDrawer
     {
@@ -46,6 +47,7 @@ namespace ManicDigger
         }
         public int texturesPacked { get; set; }
         public int terrainTexture { get; set; }
+        public int DrawDistance { get; set; }
         #endregion
     }
     public class TextureAtlas
@@ -384,7 +386,22 @@ namespace ManicDigger
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
         public int chunksize = 16;
-        public int rsize { get { return (512 / chunksize) - 1; } }
+        public int rsize
+        {
+            get
+            {
+                int dd = drawdistance;
+                dd = dd - dd % chunksize;
+                dd = ((dd * 2) / chunksize) - 1;
+                if (dd < 1)
+                {
+                    dd = 1;
+                }
+                return dd;
+            }
+        }
+        int drawdistance = 256;
+        public int DrawDistance { get { return drawdistance; } set { drawdistance = value; } }
         #region ITerrainDrawer Members
         public void Start()
         {

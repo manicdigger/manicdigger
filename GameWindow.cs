@@ -513,7 +513,7 @@ namespace ManicDigger
                     }
                     else if (cmd == "fps")
                     {
-                        ENABLE_DRAWFPS = (arguments == "" || arguments == "1" || arguments == "on");
+                        ENABLE_DRAWFPS = BoolCommandArgument(arguments);
                     }
                     else if (cmd == "uploadmap" || cmd == "uploadfeature")
                     {
@@ -556,6 +556,29 @@ namespace ManicDigger
                         }
                         mapManipulator.SaveMap(m, filename);
                     }
+                    else if (cmd == "fog")
+                    {
+                        int foglevel;
+                        foglevel = int.Parse(arguments);
+                        //if (foglevel <= 16)
+                        //{
+                        //    terrain.DrawDistance = (int)Math.Pow(2, foglevel);
+                        //}
+                        //else
+                        {
+                            int foglevel2 = foglevel;
+                            if (foglevel2 > 1024)
+                            {
+                                foglevel2 = 1024;
+                            }
+                            if (foglevel2 % 2 == 0)
+                            {
+                                foglevel2--;
+                            }
+                            terrain.DrawDistance = foglevel2;
+                            terrain.UpdateAllTiles();
+                        }
+                    }
                     else
                     {
                         network.SendChat(GuiTypingBuffer);
@@ -567,6 +590,10 @@ namespace ManicDigger
             {
                 network.SendChat(GuiTypingBuffer);
             }
+        }
+        private static bool BoolCommandArgument(string arguments)
+        {
+            return (arguments == "" || arguments == "1" || arguments == "on");
         }
         private void UploadMap(bool uploadfeature, MapStorage m)
         {
