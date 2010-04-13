@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
-using DependencyInjection;
 using ManicDigger.Collisions;
 using System.Runtime.InteropServices;
 using System.Drawing;
@@ -375,10 +374,12 @@ namespace ManicDigger
         protected override void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
-            { GuiActionGoToEscapeMenu(); }
+            { GuiStateEscapeMenu(); }
             else if (guistate == GuiState.MainMenu || guistate == GuiState.EscapeMenu)
             { }
             else if (guistate == GuiState.Inventory)
+            { }
+            else if (guistate == GuiState.MapLoading)
             { }
             else { throw new Exception(); }
             base.OnFocusedChanged(e);
@@ -638,7 +639,7 @@ namespace ManicDigger
             {
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    GuiActionGoToEscapeMenu();
+                    GuiStateEscapeMenu();
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
@@ -652,7 +653,7 @@ namespace ManicDigger
                 int menuelements = 3;
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    EscapeMenuBackToGame();
+                    GuiStateBackToGame();
                 }
                 if (e.Key == OpenTK.Input.Key.Up)
                 {
@@ -698,7 +699,7 @@ namespace ManicDigger
             {
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    EscapeMenuBackToGame();
+                    GuiStateBackToGame();
                 }
                 Direction4? dir = null;
                 if (e.Key == OpenTK.Input.Key.Left) { dir = Direction4.Left; }
@@ -712,10 +713,13 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.Enter)
                 {
                     MaterialSlots[activematerial] = InventoryGetSelected();
-                    EscapeMenuBackToGame();
+                    GuiStateBackToGame();
                 }
                 HandleMaterialKeys(e);
                 return;
+            }
+            else if (guistate == GuiState.MapLoading)
+            {
             }
             else throw new Exception();
             if (Keyboard[OpenTK.Input.Key.Escape])
@@ -922,7 +926,7 @@ namespace ManicDigger
         }
         List<string> typinglog = new List<string>();
         int typinglogpos = 0;
-        private void GuiActionGoToEscapeMenu()
+        private void GuiStateEscapeMenu()
         {
             guistate = GuiState.EscapeMenu;
             menustate = new MenuState();
@@ -932,7 +936,7 @@ namespace ManicDigger
         {
             mapManipulator.LoadMap(clientgame, mapManipulator.defaultminesave);
         }
-        private void EscapeMenuBackToGame()
+        private void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
             FreeMouse = false;
@@ -966,15 +970,20 @@ namespace ManicDigger
         {
             var oldclientgame = clientgame;
             var oldnetwork = network;
+            var oldterrain = terrain;
             internetgamefactory.NewInternetGame();
-            newclientgame = internetgamefactory.GetClientGame();
-            newnetwork = internetgamefactory.GetNetwork();
-            newterrain = internetgamefactory.GetTerrain();
+            //.newclientgame = internetgamefactory.GetClientGame();
+            //.newnetwork = internetgamefactory.GetNetwork();
+            //.newterrain = internetgamefactory.GetTerrain();
+            //.newterrain.Start();
+            var newnetwork = network;
+            var newterrain = terrain;
             newterrain.Start();
 
             oldclientgame.Dispose();
-            if (terrain is IDisposable) { ((IDisposable)terrain).Dispose(); }
+            if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
             newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
+            newnetwork.MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
 
             oldnetwork.Dispose();
 
@@ -995,17 +1004,29 @@ namespace ManicDigger
                     }
                 );
             }).BeginInvoke(null, null);
+            GuiStateSetMapLoading();
+        }
+        void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
+        {
+            this.maploadingprogress = e.ProgressPercent;
+        }
+        private void GuiStateSetMapLoading()
+        {
+            guistate = GuiState.MapLoading;
+            freemouse = true;
+            maploadingprogress = 0;
         }
         List<MethodInvoker> frametickmainthreadtodo = new List<MethodInvoker>();
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
+            GuiStateBackToGame();
             //frametickmainthreadtodo.Add(
             //() =>
             {
-                this.network = newnetwork;
-                this.clientgame = newclientgame;
-                this.terrain = newterrain;
-                newnetwork = null; newclientgame = null; newterrain = null;
+                //.this.network = newnetwork;
+                //.this.clientgame = newclientgame;
+                //.this.terrain = newterrain;
+                //.newnetwork = null; newclientgame = null; newterrain = null;
                 var ee = (MapLoadedEventArgs)e;
                 //lock (clientgame.mapupdate)
                 {
@@ -1220,6 +1241,10 @@ namespace ManicDigger
             else if (guistate == GuiState.Inventory)
             {
             }
+            else if (guistate == GuiState.MapLoading)
+            {
+                //todo back to game when escape key pressed.
+            }
             else throw new Exception();
 
             if (!(ENABLE_FREEMOVE || Swimming))
@@ -1248,8 +1273,8 @@ namespace ManicDigger
             Vector3 previousposition = player.playerposition;
             if (!ENABLE_NOCLIP)
             {
-                clientgame.p.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
-                player.playerposition = clientgame.p.WallSlide(player.playerposition, newposition);
+                clientgame.physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
+                player.playerposition = clientgame.physics.WallSlide(player.playerposition, newposition);
             }
             else
             {
@@ -1528,13 +1553,17 @@ namespace ManicDigger
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
             the_modelview = camera;
-            terrain.Draw();
-            DrawImmediateParticleEffects(e.Time);
-            DrawCubeLines(pickcubepos);
+            bool drawgame = guistate != GuiState.MapLoading;
+            if (drawgame)
+            {
+                terrain.Draw();
+                DrawImmediateParticleEffects(e.Time);
+                DrawCubeLines(pickcubepos);
 
-            DrawVehicles((float)e.Time);
-            DrawPlayers((float)e.Time);
-            DrawWeapon();
+                DrawVehicles((float)e.Time);
+                DrawPlayers((float)e.Time);
+                DrawWeapon();
+            }
             Draw2d();
 
             //OnResize(new EventArgs());
@@ -1863,7 +1892,7 @@ namespace ManicDigger
             dir.Normalize();
             var newpos = v0.pos3d + Vector3.Multiply(dir, dt * basemovespeed);
             //Console.Write(v0.pos3d);
-            newpos = clientgame.p.WallSlide(v0.pos3d, newpos);
+            newpos = clientgame.physics.WallSlide(v0.pos3d, newpos);
             var delta=newpos-v0.pos3d;
             if (delta.Length < dt * 0.1 * basemovespeed)
             {
@@ -2010,12 +2039,12 @@ namespace ManicDigger
             if (menustate.selected == 0)
             {
                 //GuiActionGenerateNewMap();
-                EscapeMenuBackToGame();
+                GuiStateBackToGame();
             }
             else if (menustate.selected == 1)
             {
                 GuiActionSaveGame();
-                EscapeMenuBackToGame();
+                GuiStateBackToGame();
             }
             else if (menustate.selected == 2)
             {
@@ -2037,14 +2066,14 @@ namespace ManicDigger
                 mp3 = new PlayMp3();
                 mp3.Open("data\\Atlantean Twilight.mp3");
                 mp3.Play(true);
-                EscapeMenuBackToGame();
+                GuiStateBackToGame();
             }
             else if (menustate.selected == 1)
             {
                 if (SaveGameExists())
                 {
                     GuiActionLoadGame();
-                    EscapeMenuBackToGame();
+                    GuiStateBackToGame();
                     mp3.Close();
                 }
             }
@@ -2104,6 +2133,7 @@ namespace ManicDigger
             EscapeMenu,
             MainMenu,
             Inventory,
+            MapLoading,
         }
         private void DrawMouseCursor()
         {
@@ -2144,11 +2174,13 @@ namespace ManicDigger
                 }
             }
             else if (guistate == GuiState.EscapeMenu)
-                DrawEscapeMenu();
+            { DrawEscapeMenu(); }
             else if (guistate == GuiState.MainMenu)
-                DrawMainMenu();
+            { DrawMainMenu(); }
             else if (guistate == GuiState.Inventory)
-                DrawInventory();
+            { DrawInventory(); }
+            else if (guistate == GuiState.MapLoading)
+            { DrawMapLoading(); }
             else throw new Exception();
             if (ENABLE_DRAWFPS)
             {
@@ -2159,6 +2191,14 @@ namespace ManicDigger
                 DrawMouseCursor();
             }
             PerspectiveMode();
+        }
+        int maploadingprogress;
+        private void DrawMapLoading()
+        {
+            string connecting="Connecting...";
+            string progress = string.Format("{0}%", maploadingprogress);
+            Draw2dText("Connecting...", xcenter(TextSize(connecting, 14).Width), Height / 2 - 50, 14, Color.White);
+            Draw2dText(progress, xcenter(TextSize(progress, 14).Width), Height / 2 - 20, 14, Color.White);
         }
         int inventoryselectedx;
         int inventoryselectedy;

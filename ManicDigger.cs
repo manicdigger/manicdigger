@@ -20,7 +20,6 @@ using OpenTK.Audio.OpenAL;
 using OpenTK.Audio;
 using System.Diagnostics;
 using ManicDigger.Collisions;
-using DependencyInjection;
 using ManicDigger;
 using System.Net;
 using System.Windows.Forms;
@@ -233,6 +232,10 @@ namespace ManicDigger
     }
     public class MapManipulator
     {
+        [Inject]
+        public IGetFilePath getfile { get; set; }
+        [Inject]
+        public IMapGenerator mapgenerator { get; set; }
         //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
         public const string MinecraftMapSaveExtension = ".dat";
@@ -401,8 +404,6 @@ namespace ManicDigger
         {
             return string.Format("<{0}>{1}</{0}>", name, value);
         }
-        [Inject]
-        public IGetFilePath getfile { get; set; }
         public void LoadMapMinecraft(IMapStorage map, string filename)
         {
             byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile(filename)));
@@ -463,8 +464,6 @@ namespace ManicDigger
                         b[x + (int)newpos.X, y + (int)newpos.Y, z + (int)newpos.Z] = a[x, y, z];
                     }
         }
-        [Inject]
-        public IMapGenerator mapgenerator { get; set; }
         public void GeneratePlainMap(IMapStorage map)
         {
             mapgenerator.GenerateMap(map);
@@ -476,7 +475,7 @@ namespace ManicDigger
         [Inject]
         public IGui gui { get; set; }
         [Inject]
-        public CharacterPhysics p { get; set; }
+        public CharacterPhysics physics { get; set; }
         public MapStorage map = new MapStorage();
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int,Player> Players { get { return players; } set { players = value; } }

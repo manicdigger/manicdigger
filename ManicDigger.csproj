@@ -56,7 +56,6 @@
     </Compile>
     <Compile Include="NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
-    <Compile Include="DependencyInjection.cs" />
     <Compile Include="FCraft.cs" />
     <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />

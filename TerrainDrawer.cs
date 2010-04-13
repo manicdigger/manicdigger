@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using DependencyInjection;
 using OpenTK;
 using ManicDigger.Collisions;
 using System.Drawing;

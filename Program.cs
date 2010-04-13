@@ -1,105 +1,115 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using DependencyInjection;
 using System.Diagnostics;
 using System.IO;
 
 namespace ManicDigger
 {
-    /*
-    public class ManicDiggerProgram2
+    public class InjectAttribute : Attribute
     {
+    }
+    public class ManicDiggerProgram2 : IInternetGameFactory
+    {
+        ManicDiggerGameWindow w;
+        AudioOpenAl audio;
         public void Start()
         {
-            var data = new GameDataTilesManicDigger();
-            var audio = new AudioOpenAl();
-            var network = new ClientNetworkDummy();
-            var clientgame = new ClientGame();
-            var w = new ManicDiggerGameWindow();
-            var getfile = new GetFilePath() { DataPath = "mine" };
-            w.clientgame = clientgame;
-            w.network = network;
+            w = new ManicDiggerGameWindow();
+            audio = new AudioOpenAl();
             w.audio = audio;
-            w.data = data;
-            w.getfile = getfile;
-            var p = new CharacterPhysics();
-            clientgame.p = p;
-            p.clientgame = clientgame;
-            network.gui = w;
-            network.map1 = w;
-            var mapgenerator = new MapGeneratorPlain();
-            mapgenerator.data = data;
-            mapgenerator.map = clientgame;
-            clientgame.mapgenerator = mapgenerator;
-            clientgame.gui = w;
-            clientgame.getfile = getfile;
-            audio.getfile = getfile;
-            audio.gameexit = w;
+            MakeGame(true);
             w.Run();
         }
-    }
-    */
-    public class ManicDiggerProgram : IInternetGameFactory
-    {
-        static KernelAndBinder b;
-        public void MainModule(KernelAndBinder k)
+        private void MakeGame(bool singleplayer)
         {
-            k.Bind<IGameExit, ManicDiggerGameWindow>();
-            k.Bind<IGui, ManicDiggerGameWindow>();
-            k.Bind<ILocalPlayerPosition, ManicDiggerGameWindow>();
-            k.Bind<IThe3d, ManicDiggerGameWindow>();
-            k.Bind<IMapGenerator, MapGeneratorPlain>();
-            k.Bind<IMapStorage, ClientGame>();
-            k.Bind<IMap, ManicDiggerGameWindow>();
-            k.Bind<IAudio, AudioOpenAl>();
-            k.Bind<IClientNetwork, ClientNetworkDummy>();
-            k.Bind<ITerrainDrawer, TerrainDrawer3d>();
-            k.Bind<fCraft.IGetRandom, GetRandomDummy>();
-            k.Bind<fCraft.IFMap, MyFCraftMap>();
-            k.Bind<fCraft.IFLogger, fCraft.FLogDummy>();
-            k.Bind<IPlayers, ClientGame>();
-            k.Bind<ILoginClient, LoginClientMinecraft>();
-            k.BindInstance<IInternetGameFactory>(this);
-        }
-        void GameModule(KernelAndBinder b)
-        {
-            if (!digger)
+            var gamedata = new GameDataTilesMinecraft();
+            
+            IClientNetwork network;
+            if (singleplayer)
             {
-                MinecraftModule(b);
+                network = new ClientNetworkDummy();
             }
             else
             {
-                ManicDiggerModule(b);
+                network = new ClientNetworkMinecraft();
             }
-        }
-        public void MinecraftModule(KernelAndBinder k)
-        {
-            k.BindInstance<IGetFilePath>(new GetFilePath(new[] { "mine", "minecraft" }));
-            k.Bind<IGameData, GameDataTilesMinecraft>();
-        }
-        public void ManicDiggerModule(KernelAndBinder k)
-        {
-            k.BindInstance<IGetFilePath>(new GetFilePath(new[] { "manicdigger" }));
-            k.Bind<IGameData, GameDataTilesManicDigger>();
+            var clientgame = new ClientGame();
+            var mapstorage = clientgame;
+            var getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var config3d = new Config3d();
+            var mapManipulator = new MapManipulator();
+            var terrainDrawer = new TerrainDrawer3d();
+            var the3d = w;
+            var exit = w;
+            var localplayerposition = w;
+            var worldfeatures = new WorldFeaturesDrawer();
+            var p = new CharacterPhysics();
+            var mapgenerator = new MapGeneratorPlain();
+            var internetgamefactory = this;
+            if (singleplayer)
+            {
+                var n = (ClientNetworkDummy)network;
+                n.player = localplayerposition;
+                n.Gui = w;
+                n.Map1 = w;
+                n.Map = mapstorage;
+                n.Data = gamedata;
+                n.Gen = new fCraft.MapGenerator();
+                n.Gen.data = gamedata;
+                n.Gen.log = new fCraft.FLogDummy();
+                n.Gen.map = new MyFCraftMap() { data = gamedata, map = mapstorage, mapManipulator = mapManipulator };
+            }
+            else
+            {
+                var n = (ClientNetworkMinecraft)network;
+                n.Map = w;
+                n.Players = clientgame;
+                n.Chatlines = w;
+                n.Position = localplayerposition;
+            }
+            terrainDrawer.the3d = the3d;
+            terrainDrawer.getfile = getfile;
+            terrainDrawer.config3d = config3d;
+            terrainDrawer.mapstorage = mapstorage;
+            terrainDrawer.data = gamedata;
+            terrainDrawer.exit = exit;
+            terrainDrawer.localplayerposition = localplayerposition;
+            terrainDrawer.worldfeatures = worldfeatures;
+            worldfeatures.getfile = getfile;
+            worldfeatures.localplayerposition = localplayerposition;
+            worldfeatures.mapstorage = mapstorage;
+            worldfeatures.the3d = the3d;
+            mapManipulator.getfile = getfile;
+            mapManipulator.mapgenerator = mapgenerator;
+            w.clientgame = clientgame;
+            w.network = network;
+            w.data = gamedata;
+            w.getfile = getfile;
+            w.config3d = config3d;
+            w.mapManipulator = mapManipulator;
+            w.terrain = terrainDrawer;
+            w.login = new LoginClientMinecraft();
+            w.internetgamefactory = internetgamefactory;
+            p.clientgame = clientgame;
+            p.data = gamedata;
+            clientgame.physics = p;
+            clientgame.gui = w;
+            mapgenerator.data = gamedata;
+            audio.getfile = getfile;
+            audio.gameexit = w;
+            this.network = network;
+            this.clientgame = clientgame;
+            this.terraindrawer = terrainDrawer;
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
-            KernelAndBinder b = new KernelAndBinder();
-            MainModule(b);
-            GameModule(b);
-            b.BindInstance<IGui>(window);
-            b.BindInstance<ManicDiggerGameWindow>(window);
-            b.Bind<IClientNetwork, ClientNetworkMinecraft>();
-            clientgame = b.Get<ClientGame>();
-            network = b.Get<IClientNetwork>();
-            terrain = b.Get<ITerrainDrawer>();
+            MakeGame(false);
         }
-        ManicDiggerGameWindow window;
-        ClientGame clientgame;
         IClientNetwork network;
-        ITerrainDrawer terrain;
+        ClientGame clientgame;
+        ITerrainDrawer terraindrawer;
         public IClientNetwork GetNetwork()
         {
             return network;
@@ -110,18 +120,21 @@ namespace ManicDigger
         }
         public ITerrainDrawer GetTerrain()
         {
-            return terrain;
+            return terraindrawer;
         }
         #endregion
+    }
+    public class ManicDiggerProgram
+    {
         [STAThread]
         public static void Main(string[] args)
         {
-            //new ManicDiggerProgram2().Start();
             if (!Debugger.IsAttached)
             {
                 try
                 {
-                    new ManicDiggerProgram().Start(args);
+                    new ManicDiggerProgram2().Start();
+                    //new ManicDiggerProgram().Start(args);
                 }
                 catch (Exception e)
                 {
@@ -131,20 +144,8 @@ namespace ManicDigger
             }
             else
             {
-                new ManicDiggerProgram().Start(args);
-            }
-        }
-        bool digger;
-        private void Start(string[] args)
-        {
-            b = new KernelAndBinder();
-            digger = args.Length < 1; if (Debugger.IsAttached) digger = false;
-            MainModule(b);
-            GameModule(b);
-            using (var w = b.Get<ManicDiggerGameWindow>())
-            {
-                this.window = w;
-                w.Run(0, 0);
+                new ManicDiggerProgram2().Start();
+                //new ManicDiggerProgram().Start(args);
             }
         }
     }

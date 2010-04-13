@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using OpenTK;
-using DependencyInjection;
 using System.Net.Sockets;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -16,10 +15,15 @@ namespace ManicDigger
         void Connect(string serverAddress, int port, string username, string auth);
         void Process();
         void SendSetBlock(Vector3 position, BlockSetMode mode, byte type);
+        event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         event EventHandler<MapLoadedEventArgs> MapLoaded;
         void SendChat(string s);
         IEnumerable<string> ConnectedPlayers();
         void SendPosition(Vector3 position, Vector3 orientation);
+    }
+    public class MapLoadingProgressEventArgs : EventArgs
+    {
+        public int ProgressPercent { get; set; }
     }
     public class ClientNetworkDummy : IClientNetwork
     {
@@ -170,6 +174,9 @@ namespace ManicDigger
         public void SendPosition(Vector3 position, Vector3 orientation)
         {
         }
+        #endregion
+        #region IClientNetwork Members
+        public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion
     }
     public class MapLoadedEventArgs : EventArgs
@@ -380,6 +387,7 @@ namespace ManicDigger
             else if (packetId == ServerPacketId.LevelInitialize)
             {
                 receivedMapStream = new MemoryStream();
+                InvokeMapLoadingProgress(0);
             }
             else if (packetId == ServerPacketId.LevelDataChunk)
             {
@@ -394,7 +402,7 @@ namespace ManicDigger
                 }
                 bw1.Write(chunkDataWithoutPadding);
                 MapLoadingPercentComplete = br.ReadByte();
-                Console.WriteLine(MapLoadingPercentComplete);
+                InvokeMapLoadingProgress(MapLoadingPercentComplete);
             }
             else if (packetId == ServerPacketId.LevelFinalize)
             {
@@ -525,6 +533,16 @@ namespace ManicDigger
                 throw new Exception();
             }
             return totalread;
+        }
+        private void InvokeMapLoadingProgress(int progress)
+        {
+            if (MapLoadingProgress != null)
+            {
+                MapLoadingProgress(this, new MapLoadingProgressEventArgs()
+                {
+                    ProgressPercent = progress
+                });
+            }
         }
         public bool ENABLE_CHATLOG = true;
         private void ChatLog(string p)
@@ -701,6 +719,9 @@ namespace ManicDigger
                 yield return p.name;
             }
         }
+        #region IClientNetwork Members
+        public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
+        #endregion
     }
     public class LoginData
     {
