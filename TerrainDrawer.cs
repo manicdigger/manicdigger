@@ -209,293 +209,155 @@ namespace ManicDigger
         public int realverticescount = 0;
         public bool valid;
     }
-    /// <summary>
-    /// Memory allocator for adding indices+vertices lists
-    /// to OpenTK hardware Vertex Buffer objects.
-    /// </summary>
     public class MeshBatcher
     {
-        List<Vbo> vbolist = new List<Vbo>();
-        ushort maxvbosize = 60 * 1000;
-        public int Add(ushort[] indices, VertexPositionTexture[] vertices)
+        public MeshBatcher()
         {
-            if (indices.Length == 0) { throw new Exception("Zero indices."); }
-            if (indices.Length > maxvbosize) { throw new Exception("Too many indices."); }
-            if (vertices.Length > maxvbosize) { throw new Exception("Too many vertices."); }
-            int vboid = -1;
-            int entryid = -1;
-            //-todo defragment vbo.
-            //-if there is free space then try to use it
-            if (deleted.ContainsKey(indices.Length))
+        }
+        private void genlists()
+        {
+            lists = GL.GenLists(nlists);
+            if (lists == 0)
             {
-                //Console.WriteLine("deleted count:" + deleted[indices.Length].Count);
-                foreach (int id in deleted[indices.Length])
-                {
-                    if (indices.Length == entries[id].indicesrange.Count
-                        && vertices.Length == entries[id].verticesrange.Count)
-                    {
-                        vboid = entries[id].vboid;
-                        entryid = id;
-                        break;
-                    }
-                }
-                if (entryid != -1)
-                {
-                    if (deleted.ContainsKey(indices.Length))
-                    {
-                        deleted[indices.Length].Remove(entryid);
-                    }
-                    goto ok;
-                }
+                throw new Exception();
             }
-            //-if it won't fit in the last vbo, then make a new vbo
-            if (vbolist.Count == 0 ||
-                (vbolist[vbolist.Count - 1].realindicescount + indices.Length) >= maxvbosize ||
-                (vbolist[vbolist.Count - 1].realverticescount + vertices.Length) >= maxvbosize)
-            {
-                vbolist.Add(new Vbo());
-            }
-            vboid = vbolist.Count - 1;
-            Range verticesrange = new Range(vbolist[vboid].realverticescount, vertices.Length);
-            Range indicesrange = new Range(vbolist[vboid].realindicescount, indices.Length);
-            vbolist[vboid].realverticescount += vertices.Length;
-            vbolist[vboid].realindicescount += indices.Length;
-            entries.Add(new Entry() { vboid = vboid, verticesrange = verticesrange, indicesrange = indicesrange });
-            entryid = entries.Count - 1;
-        ok: ;
-            //vbo = LoadVBO(vertices, indices);
-            //for (int i = 0; i < indices.Length; i++)
-            //{
-            //    indices[i]
-            //}
-            //translate indices
-            int translateindices = entries[entryid].verticesrange.Start; //vbolist[vboid].realverticescount - vertices.Length;
-            for (int i = 0; i < indices.Length; i++)
-            {
-                indices[i] = (ushort)(indices[i] + translateindices);
-            }
-            if (!toadd.ContainsKey(vboid))
-            {
-                toadd.Add(vboid, new List<ToAdd>());
-            }
-            toadd[vboid].Add(new ToAdd()
-            {
-                vertices = vertices,
-                indices = indices,
-                vbo = vbolist[vboid],
-                indicesstart = entries[entryid].indicesrange.Start,
-                verticesstart = entries[entryid].verticesrange.Start,
-            });
-
-            return entryid;
+        }
+        public int nlists = 5000;
+        int lists = -1;
+        int count = 0;
+        public void Remove(int p)
+        {
+            empty.Add(p);
         }
         struct ToAdd
         {
-            public Vbo vbo;
             public ushort[] indices;
             public VertexPositionTexture[] vertices;
-            public int indicesstart;
-            public int verticesstart;
+            public int id;
         }
-        Dictionary<int, List<ToAdd>> toadd = new Dictionary<int, List<ToAdd>>();
-        struct Range
+        Queue<ToAdd> toadd = new Queue<ToAdd>();
+        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture)
         {
-            public Range(int start, int count)
+            int id;
+            lock (toadd)
             {
-                this.Start = start;
-                this.Count = count;
+                if (empty.Count > 0)
+                {
+                    id = empty[empty.Count - 1];
+                    empty.RemoveAt(empty.Count - 1);
+                }
+                else
+                {
+                    id = count;
+                    count++;
+                }
+                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id });
             }
-            public int Start;
-            public int Count;
+            return id;
         }
-        struct Entry
+        public void Update(int p)
         {
-            public int vboid;
-            public Range indicesrange;
-            public Range verticesrange;
         }
-        List<Entry> entries = new List<Entry>();
-        internal void Draw()
+        List<int> empty = new List<int>();
+        float addperframe = 0.5f;
+        float addcounter = 0;
+        Vector3 playerpos;
+        public void Draw(Vector3 playerpos)
         {
-            //if (vbo != null)
-            foreach (Vbo vbo in vbolist)
+            this.playerpos = playerpos;
+            if (lists == -1)
             {
-                Draw(vbo);
+                genlists();
             }
-        }
-        int strideofvertices = -1;
-        int StrideOfVertices
-        {
-            get
+            lock (toadd)
             {
-                if (strideofvertices == -1) strideofvertices = BlittableValueType.StrideOf(CubeVertices);
-                return strideofvertices;
+                addcounter += addperframe;
+                while (//addcounter >= 1 &&
+                    toadd.Count > 0)
+                {
+                    addcounter -= 1;
+                    ToAdd t = toadd.Dequeue();
+                    GL.NewList(lists + t.id, ListMode.Compile);
+                    GL.Begin(BeginMode.Triangles);
+                    for (int ii = 0; ii < t.indices.Length; ii++)
+                    {
+                        var v = t.vertices[t.indices[ii]];
+                        GL.TexCoord2(v.u, v.v);
+                        GL.Vertex3(v.Position.X, v.Position.Y, v.Position.Z);
+                    }
+                    GL.End();
+                    GL.EndList();
+                    if (listinfo == null)
+                    {
+                        listinfo = new ListInfo[nlists];
+                    }
+                    listinfo[t.id].indicescount = t.indices.Length;
+                    listinfo[t.id].center = t.vertices[0].Position;//todo
+                    
+                }
+                if (toadd.Count == 0)
+                {
+                    addcounter = 0;
+                }
             }
-        }
-        void LoadVBO<TVertex>(Vbo handle, TVertex[] vertices, ushort[] elements) where TVertex : struct
-        {
-            //Vbo handle = new Vbo();
-            int size;
-
-            // To create a VBO:
-            // 1) Generate the buffer handles for the vertex and element buffers.
-            // 2) Bind the vertex buffer handle and upload your vertex data. Check that the buffer was uploaded correctly.
-            // 3) Bind the element buffer handle and upload your element data. Check that the buffer was uploaded correctly.
-
-            GL.GenBuffers(1, out handle.VboID);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, handle.VboID);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(vertices.Length * StrideOfVertices), vertices,
-                          BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ArrayBuffer, BufferParameterName.BufferSize, out size);
-            if (vertices.Length * StrideOfVertices != size)
-                throw new ApplicationException("Vertex data not uploaded correctly");
-
-            GL.GenBuffers(1, out handle.EboID);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, handle.EboID);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(elements.Length * sizeof(ushort)), elements,//aaa sizeof(short)
-                          BufferUsageHint.StaticDraw);
-            GL.GetBufferParameter(BufferTarget.ElementArrayBuffer, BufferParameterName.BufferSize, out size);
-            if (elements.Length * sizeof(ushort) != size)//aaa ushort
-                throw new ApplicationException("Element data not uploaded correctly");
-
-            handle.NumElements = elements.Length;
-            //return handle;
-        }
-        void Draw(Vbo handle)
-        {
-            // To draw a VBO:
-            // 1) Ensure that the VertexArray client state is enabled.
-            // 2) Bind the vertex and element buffer handles.
-            // 3) Set up the data pointers (vertex, normal, color) according to your vertex format.
-            // 4) Call DrawElements. (Note: the last parameter is an offset into the element buffer
-            //    and will usually be IntPtr.Zero).
-
-            //GL.EnableClientState(EnableCap.ColorArray);
-            GL.EnableClientState(EnableCap.TextureCoordArray);
-            GL.EnableClientState(EnableCap.VertexArray);
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, handle.VboID);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, handle.EboID);
-
-            GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, new IntPtr(0));
-            //GL.ColorPointer(4, ColorPointerType.UnsignedByte, BlittableValueType.StrideOf(CubeVertices), new IntPtr(12));
-            GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, new IntPtr(12));
-
-            GL.DrawElements(BeginMode.Triangles, handle.NumElements, DrawElementsType.UnsignedShort, IntPtr.Zero);//aaa
-        }
-        VertexPositionTexture[] CubeVertices = new VertexPositionTexture[]
-        {
-            new VertexPositionTexture( 0.0f,  1.0f,  0.0f, 0, 0),
-            new VertexPositionTexture( 0.0f,  1.0f,  1.0f, 0, 1),
-            new VertexPositionTexture( 1.0f,  1.0f,  0.0f, 1, 0),
-            new VertexPositionTexture( 1.0f,  1.0f,  1.0f, 1, 1),
-        };
-        short[] CubeElements = new short[]
-        {
-            0, 1, 2, 2, 3, 0, // front face
-            3, 2, 6, 6, 7, 3, // top face
-            7, 6, 5, 5, 4, 7, // back face
-            4, 0, 3, 3, 7, 4, // left face
-            0, 1, 5, 5, 4, 0, // bottom face
-            1, 5, 6, 6, 2, 1, // right face
-        };
-        public void Remove(int id)
-        {
-            int vboid = entries[id].vboid;
-            if (!toadd.ContainsKey(entries[id].vboid))
+            for (int i = 0; i < count; i++)
             {
-                toadd[vboid] = new List<ToAdd>();
+                if (!empty.Contains(i))
+                {
+                    GL.CallList(lists + i);
+                }
             }
-            var a = entries[id].verticesrange;
-            var b = entries[id].indicesrange;
-            toadd[vboid].Add(new ToAdd()
+            //depth sorting. is it needed?
+            /*
+            List<int> alldrawlists = new List<int>();
+            for (int i = 0; i < count; i++)
             {
-                verticesstart = a.Start,
-                vertices = new VertexPositionTexture[a.Count],
-                vbo = vbolist[vboid],
-                indicesstart = b.Start,
-                indices = new ushort[b.Count],
-            });
-            if (!deleted.ContainsKey(b.Count))
-            {
-                deleted[b.Count] = new List<int>();
+                alldrawlists.Add(i);
             }
-            deleted[b.Count].Add(id);
+            alldrawlists.Sort(f);
+            GL.CallLists(count, ListNameType.Int, alldrawlists.ToArray());
+            */
         }
-        //indices count-entry id
-        Dictionary<int, List<int>> deleted = new Dictionary<int, List<int>>();
+        /*
+        int f(int a, int b)
+        {
+        }
+        */
+        struct ListInfo
+        {
+            public int indicescount;
+            public Vector3 center;
+        }
+        /// <summary>
+        /// Indices count in list.
+        /// </summary>
+        ListInfo[] listinfo;
+        public void Clear()
+        {
+            if (lists != -1)
+            {
+                GL.DeleteLists(lists, nlists);
+            }
+            count = 0;
+            empty.Clear();
+            toadd.Clear();
+            listinfo = new ListInfo[nlists];
+        }
         public int TotalTriangleCount
         {
             get
             {
+                if (listinfo == null)
+                {
+                    return 0;
+                }
                 int sum = 0;
-                foreach (Vbo vbo in vbolist)
+                for (int i = 0; i < count; i++)
                 {
-                    sum += vbo.NumElements / 3;
+                    sum += listinfo[i].indicescount;
                 }
-                return sum;
+                return sum / 3;
             }
-        }
-        public void Clear()
-        {
-            foreach(Vbo vbo in vbolist)
-            {
-                GL.DeleteBuffers(1, ref vbo.EboID);
-                GL.DeleteBuffers(1, ref vbo.VboID);
-            }
-            vbolist.Clear();
-            deleted.Clear();
-            entries.Clear();
-            toadd.Clear();
-        }
-        public void Update(int count)
-        {
-            foreach (var v in toadd)
-            {
-                if (!vbolist[v.Key].valid)
-                {
-                    LoadVBO(vbolist[v.Key], new VertexPositionTexture[maxvbosize], new ushort[maxvbosize]);
-                    vbolist[v.Key].valid = true;
-                }
-                //add vertices
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbolist[v.Key].VboID);
-                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
-                foreach (var vv in v.Value)
-                {
-                    unsafe
-                    {
-                        fixed (VertexPositionTexture* SystemMemory = &vv.vertices[0])
-                        {
-                            VertexPositionTexture* VideoMemory = (VertexPositionTexture*)VideoMemoryIntPtr.ToPointer();
-                            //if (VideoMemory == null) { return; }//wrong
-                            for (int i = 0; i < vv.vertices.Length; i++)
-                                VideoMemory[i + vv.verticesstart] = SystemMemory[i]; // simulate what GL.BufferData would do
-                        }
-                    }
-                }
-                GL.UnmapBuffer(BufferTarget.ArrayBuffer);
-            }
-            foreach (var v in toadd)
-            {
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbolist[v.Key].EboID);
-                IntPtr VideoMemoryIntPtr = GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
-                foreach (var vv in v.Value)
-                {
-                    unsafe
-                    {
-                        fixed (ushort* SystemMemory = &vv.indices[0])
-                        {
-                            ushort* VideoMemory = (ushort*)VideoMemoryIntPtr.ToPointer();
-                            //if (VideoMemory == null) { return; }//wrong
-                            for (int i = 0; i < vv.indices.Length; i++)
-                                VideoMemory[i + vv.indicesstart] = (ushort)(SystemMemory[i]); // simulate what GL.BufferData would do
-                        }
-                    }
-
-                }
-                GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
-            }
-            toadd.Clear();
         }
     }
     /// <summary>
@@ -522,7 +384,7 @@ namespace ManicDigger
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
         public int chunksize = 16;
-        public int rsize { get { return (256 / chunksize) - 1; } }
+        public int rsize { get { return (512 / chunksize) - 1; } }
         #region ITerrainDrawer Members
         public void Start()
         {
@@ -542,9 +404,12 @@ namespace ManicDigger
                 Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / 16), (int)(localplayerposition.LocalPlayerPosition.Z / 16));
                 updater.Draw(playerpoint, rsize);
                 ProcessAllPriorityTodos();
-                List<TerrainUpdater.TodoItem> l = new List<TerrainUpdater.TodoItem>(updater.Todo);
-                foreach (var ti in updater.Todo)
+                TerrainUpdater oldupdater = updater;
+                var l = new List<TerrainUpdater.TodoItem>(updater.Todo);
+                for (int i = 0; i < l.Count; i++)
                 {
+                    if (updater != oldupdater) { break; }
+                    var ti = l[i];
                     if (exit.exit || exit2) { return; }
                     CheckRespawn();
                     ProcessAllPriorityTodos();
@@ -561,7 +426,16 @@ namespace ManicDigger
             }
             lastplayerposition = localplayerposition.LocalPlayerPosition;
         }
-        int f(Vector3 a, Vector3 b)
+        int FTodo(TerrainUpdater.TodoItem a, TerrainUpdater.TodoItem b)
+        {
+            return FPoint(a.position, b.position);
+        }
+        int FPoint(Point a, Point b)
+        {
+            return ((new Vector3(a.X * 16, localplayerposition.LocalPlayerPosition.Y, a.Y * 16) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((new Vector3(b.X * 16, localplayerposition.LocalPlayerPosition.Y, b.Y * 16) - localplayerposition.LocalPlayerPosition).Length);
+        }
+        int FVector3(Vector3 a, Vector3 b)
         {
             return ((Vector3.Multiply(a, 16) - localplayerposition.LocalPlayerPosition).Length)
                 .CompareTo((Vector3.Multiply(b, 16) - localplayerposition.LocalPlayerPosition).Length);
@@ -574,7 +448,7 @@ namespace ManicDigger
                 Vector3 ti;
                 lock (prioritytodo)
                 {
-                    prioritytodo.Sort(f);
+                    prioritytodo.Sort(FVector3);
                     //todo remove duplicates
                     ti = prioritytodo[0];//.Dequeue();
                     prioritytodo.RemoveAt(0);
@@ -674,7 +548,7 @@ namespace ManicDigger
             lock (terrainlock)
             {
                 batcher.Update(500);
-                batcher.Draw();
+                batcher.Draw(localplayerposition.LocalPlayerPosition);
             }
             worldfeatures.DrawWorldFeatures();
         }
