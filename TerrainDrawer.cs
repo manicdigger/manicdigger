@@ -477,6 +477,7 @@ namespace ManicDigger
                     if (batchedblocks.ContainsKey(p))
                     {
                         batcher.Remove(batchedblocks[p]);
+                        batchedblocks.Remove(p);
                     }
                     if (chunk != null && chunk.indices.Length != 0)
                     {
