@@ -391,8 +391,6 @@ namespace ManicDigger
             base.OnLoad(e);
             mp3.Open("data\\Tenebrous Brothers Carnival - Act One.mp3");
             mp3.Play(true);
-            guistate = GuiState.MainMenu;
-            FreeMouse = true;
 
             string version = opengl.GetString(StringName.Version);
             int major = (int)version[0];
@@ -417,11 +415,20 @@ namespace ManicDigger
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
             //clientgame.GeneratePlainMap();
             //clientgame.LoadMapMinecraft();
-            mapManipulator.LoadMap(clientgame,"menu" + MapManipulator.XmlSaveExtension);
-            ENABLE_FREEMOVE = true;
-            player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
-            player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
-            DrawMap();
+            if (GameUrl == null)
+            {
+                guistate = GuiState.MainMenu;
+                FreeMouse = true;
+                mapManipulator.LoadMap(clientgame, "menu" + MapManipulator.XmlSaveExtension);
+                ENABLE_FREEMOVE = true;
+                player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
+                player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
+                DrawMap();
+            }
+            else
+            {
+                ClientCommand(".server " + GameUrl);
+            }
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
             if (config3d.ENABLE_BACKFACECULLING)
             {
@@ -470,7 +477,7 @@ namespace ManicDigger
                         {
                             server = "http://www.minecraft.net/play.jsp?server=" + server;
                         }
-                        DownloadInternetGame(username, pass, server);
+                        ConnectToInternetGame(username, pass, server);
                         return;
                     }
                     else if (cmd == "nick" || cmd == "user" || cmd == "username")
@@ -912,7 +919,7 @@ namespace ManicDigger
             }
             if (e.Key == OpenTK.Input.Key.F9)
             {
-                DownloadInternetGame(username, pass, testgameurl);
+                ConnectToInternetGame(username, pass, testgameurl);
             }
             if (e.Key == OpenTK.Input.Key.M)
             {
@@ -993,7 +1000,7 @@ namespace ManicDigger
                 return File.ReadAllText("defaultserver.txt");
             }
         }
-        private void DownloadInternetGame(string qusername, string qpass, string qgameurl)
+        private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
             var oldclientgame = clientgame;
             var oldnetwork = network;
@@ -2691,6 +2698,7 @@ namespace ManicDigger
             }
         }
         #endregion
+        public string GameUrl;
     }
     class FastBitmap
     {

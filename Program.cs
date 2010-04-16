@@ -11,6 +11,7 @@ namespace ManicDigger
     }
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
+        public string GameUrl = null;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
         public void Start()
@@ -20,13 +21,13 @@ namespace ManicDigger
             audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
+            w.GameUrl = GameUrl;
             w.Run();
         }
         IOpenGl opengl = new OpenGlOpenTk();
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesMinecraft();
-            
             IClientNetwork network;
             if (singleplayer)
             {
@@ -141,8 +142,7 @@ namespace ManicDigger
             {
                 try
                 {
-                    new ManicDiggerProgram2().Start();
-                    //new ManicDiggerProgram().Start(args);
+                    Start(args);
                 }
                 catch (Exception e)
                 {
@@ -152,9 +152,17 @@ namespace ManicDigger
             }
             else
             {
-                new ManicDiggerProgram2().Start();
-                //new ManicDiggerProgram().Start(args);
+                Start(args);
             }
+        }
+        private static void Start(string[] args)
+        {
+            if (args.Length > 0 && args[0] == "servers")
+            {
+                System.Windows.Forms.Application.Run(new ServerSelector());
+                return;
+            }
+            new ManicDiggerProgram2().Start();
         }
     }
     public interface IGetFilePath
