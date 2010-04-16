@@ -268,10 +268,13 @@ namespace ManicDigger
         Up,
         Down,
     }
+    /// <summary>
+    /// </summary>
+    /// <remarks>
+    /// Requires OpenTK.
+    /// </remarks>
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
-        [Inject]
-        public IOpenGl opengl { get; set; }
         [Inject]
         public ClientGame clientgame { get; set; }
         [Inject]
@@ -322,42 +325,42 @@ namespace ManicDigger
         //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmp)
         {
-            int id = opengl.GenTexture();
-            opengl.BindTexture(TextureTarget.Texture2D, id);
+            int id = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, id);
 
             // We haven't uploaded mipmaps, so disable mipmapping (otherwise the texture will not appear).
             // On newer video cards, we can use GL.GenerateMipmaps() or GL.Ext.GenerateMipmaps() to create
             // mipmaps automatically. In that case, use TextureMinFilter.LinearMipmapLinear to enable them.
             if (!config3d.ENABLE_MIPMAPS)
             {
-                opengl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                opengl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
             }
             else
             {
                 //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D); //DOES NOT WORK ON ATI GRAPHIC CARDS
-                opengl.TexParameter(TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
                 //GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
                 //#if(DEBUG)
                 //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
                 //#else
-                opengl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearClipmapLinearSgix);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearClipmapLinearSgix);
                 //#endif
-                opengl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             }
 
             BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            opengl.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp_data.Width, bmp_data.Height, 0,
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp_data.Width, bmp_data.Height, 0,
                 OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bmp_data.Scan0);
 
             bmp.UnlockBits(bmp_data);
 
-            opengl.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.DepthTest);
             if (config3d.ENABLE_TRANSPARENCY)
             {
-                opengl.Enable(EnableCap.AlphaTest);
-                opengl.AlphaFunc(AlphaFunction.Greater, 0.5f);
+                GL.Enable(EnableCap.AlphaTest);
+                GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
             /*
             if (ENABLE_TRANSPARENCY)
@@ -392,7 +395,7 @@ namespace ManicDigger
             mp3.Open("data\\Tenebrous Brothers Carnival - Act One.mp3");
             mp3.Play(true);
 
-            string version = opengl.GetString(StringName.Version);
+            string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
             int minor = (int)version[2];
             if (major <= 1 && minor < 5)
@@ -405,7 +408,7 @@ namespace ManicDigger
             {
                 TargetRenderFrequency = 0;
             }
-            opengl.ClearColor(System.Drawing.Color.MidnightBlue);
+            GL.ClearColor(System.Drawing.Color.MidnightBlue);
             /*
             GL.Enable(EnableCap.Fog);
             GL.Fog(FogParameter.FogMode, 1);
@@ -432,10 +435,10 @@ namespace ManicDigger
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
             if (config3d.ENABLE_BACKFACECULLING)
             {
-                opengl.DepthMask(true);
-                opengl.Enable(EnableCap.DepthTest);
-                opengl.CullFace(CullFaceMode.Back);
-                opengl.Enable(EnableCap.CullFace);
+                GL.DepthMask(true);
+                GL.Enable(EnableCap.DepthTest);
+                GL.CullFace(CullFaceMode.Back);
+                GL.Enable(EnableCap.CullFace);
             }
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
@@ -1083,7 +1086,7 @@ namespace ManicDigger
         {
             base.OnResize(e);
 
-            opengl.Viewport(0, 0, Width, Height);
+            GL.Viewport(0, 0, Width, Height);
             Set3dProjection();
         }
         private void Set3dProjection()
@@ -1091,8 +1094,8 @@ namespace ManicDigger
             float aspect_ratio = Width / (float)Height;
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspect_ratio, znear, zfar);
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
-            opengl.MatrixMode(MatrixMode.Projection);
-            opengl.LoadMatrix(ref perpective);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref perpective);
         }
         float znear = 0.01f;
         float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
@@ -1573,11 +1576,11 @@ namespace ManicDigger
             //const float alpha = accumulator / dt;
             //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
             UpdateTitleFps(e);
-            opengl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            opengl.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
 
-            opengl.MatrixMode(MatrixMode.Modelview);
+            GL.MatrixMode(MatrixMode.Modelview);
 
             Matrix4 camera;
             if (overheadcamera)
@@ -1586,7 +1589,7 @@ namespace ManicDigger
             }
             else
                 camera = FppCamera();
-            opengl.LoadMatrix(ref camera);
+            GL.LoadMatrix(ref camera);
             the_modelview = camera;
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
@@ -1606,7 +1609,7 @@ namespace ManicDigger
         }
         void DrawWeapon()
         {
-            opengl.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
             List<ushort> myelements = new List<ushort>();
             List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
             int x = 0;
@@ -1741,14 +1744,14 @@ namespace ManicDigger
                 //v.Position += toVectorInFixedSystem1(0.7f, 0, 1, player.playerorientation.X, player.playerorientation.Y);
                 myvertices[i] = v;
             }
-            opengl.Clear(ClearBufferMask.DepthBufferBit);
-            opengl.MatrixMode(MatrixMode.Modelview);
-            opengl.PushMatrix();
-            opengl.LoadIdentity();
-            opengl.Translate(0, -1.5f + zzzposx, -1.5f + zzzposy);
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Translate(0, -1.5f + zzzposx, -1.5f + zzzposy);
             //GL.Scale(2, 2, 2);
-            opengl.Rotate(30 + (zzzx), new Vector3(1, 0, 0));//zzz += 0.01f
-            opengl.Rotate(60 + zzzy, new Vector3(0, 1, 0));
+            GL.Rotate(30 + (zzzx), new Vector3(1, 0, 0));//zzz += 0.01f
+            GL.Rotate(60 +zzzy, new Vector3(0, 1, 0));
             //GL.Rotate(0-(zzz+=0.05f), new Vector3(0, 1, 0));
             //GL.Translate(0, -2, 0);
 
@@ -1762,16 +1765,16 @@ namespace ManicDigger
             if (Keyboard[OpenTK.Input.Key.Keypad8]) zzzposy += 0.1f;
             if (Keyboard[OpenTK.Input.Key.Keypad2]) zzzposy += -0.1f;
             */
-            opengl.Begin(BeginMode.Triangles);
-            opengl.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
-            opengl.Enable(EnableCap.Texture2D);
+            GL.Begin(BeginMode.Triangles);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.Enable(EnableCap.Texture2D);
             for (int i = 0; i < myelements.Count; i++)
             {
-                opengl.TexCoord2(myvertices[myelements[i]].u, myvertices[myelements[i]].v);
-                opengl.Vertex3(myvertices[myelements[i]].Position);
+                GL.TexCoord2(myvertices[myelements[i]].u, myvertices[myelements[i]].v);
+                GL.Vertex3(myvertices[myelements[i]].Position);
             }
-            opengl.End();
-            opengl.PopMatrix();
+            GL.End();
+            GL.PopMatrix();
             //Console.WriteLine("({0}||{1}):({2}||{3})", zzzx, zzzy, zzzposx, zzzposy);
             //(-19,00004||-13,70002):(-0,2000001||-1,3)
         }
@@ -1956,7 +1959,62 @@ namespace ManicDigger
                 //    + Vector3.Multiply(v0.orders[nextorderid] - v0.orders[v0.currentOrderId], v0.progress);
             }
         }
-        Md2Engine.GlRenderer md2renderer = new Md2Engine.GlRenderer() { gl=new Md2EngineOpentkGl()};
+        class OpentkGl : Md2Engine.IOpenGl
+        {
+            #region IOpenGl Members
+            public void GlBegin(Md2Engine.BeginMode mode)
+            {
+                if (mode == Md2Engine.BeginMode.Triangles)
+                {
+                    GL.Begin(BeginMode.Triangles);
+                }
+                else if (mode == Md2Engine.BeginMode.TriangleFan)
+                {
+                    GL.Begin(BeginMode.TriangleFan);
+                }
+                else if (mode == Md2Engine.BeginMode.TriangleStrip)
+                {
+                    GL.Begin(BeginMode.TriangleStrip);
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            public void GlEnd()
+            {
+                GL.End();
+            }
+            public void GlFrontFace(Md2Engine.FrontFace mode)
+            {
+                if (mode == Md2Engine.FrontFace.Cw)
+                {
+                    GL.FrontFace(FrontFaceDirection.Cw);
+                }
+                else if (mode == Md2Engine.FrontFace.Ccw)
+                {
+                    GL.FrontFace(FrontFaceDirection.Ccw);
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            public void GlNormal3f(float x, float y, float z)
+            {
+                GL.Normal3(x, y, z);
+            }
+            public void GlTexCoord2f(float x, float y)
+            {
+                GL.TexCoord2(x, y);
+            }
+            public void GlVertex3f(float x, float y, float z)
+            {
+                GL.Vertex3(x, y, z);
+            }
+            #endregion
+        }
+        Md2Engine.GlRenderer md2renderer = new Md2Engine.GlRenderer() { gl=new OpentkGl()};
         Md2Engine.Mesh m1;
         int m1texture;
         class AnimationState
@@ -2004,15 +2062,15 @@ namespace ManicDigger
             string anim = moves ? "run" : "stand";
             Md2Engine.Range tmp = m1.animationPool[m1.findAnim(anim)];
             animstate.frame = Animate(animstate, tmp.getStart(), tmp.getEnd(), animstate.frame, dt);
-            opengl.PushMatrix();
-            opengl.Translate(pos);
-            opengl.Rotate(-90, 1, 0, 0);
-            opengl.Rotate((-((float)heading / 256)) * 360 + 90, 0, 0, 1);
-            opengl.Scale(0.05f, 0.05f, 0.05f);
-            opengl.BindTexture(TextureTarget.Texture2D, m1texture);
+            GL.PushMatrix();
+            GL.Translate(pos);
+            GL.Rotate(-90, 1, 0, 0);
+            GL.Rotate((-((float)heading / 256)) * 360 + 90, 0, 0, 1);
+            GL.Scale(0.05f, 0.05f, 0.05f);
+            GL.BindTexture(TextureTarget.Texture2D, m1texture);
             md2renderer.RenderFrameImmediateInterpolated(animstate.frame, animstate.interp, m1, true, tmp.getStart(), tmp.getEnd());
-            opengl.PopMatrix();
-            opengl.FrontFace(FrontFaceDirection.Ccw);
+            GL.PopMatrix();
+            GL.FrontFace(FrontFaceDirection.Ccw);
         }
         void EscapeMenuAction()
         {
@@ -2341,7 +2399,7 @@ namespace ManicDigger
                 var ct = cachedTextTextures[k];
                 if ((DateTime.Now - ct.lastuse).TotalSeconds > 1)
                 {
-                    opengl.DeleteTexture(ct.textureId);
+                    GL.DeleteTexture(ct.textureId);
                     cachedTextTextures.Remove(k);
                 }
             }
@@ -2392,47 +2450,47 @@ namespace ManicDigger
             {
                 rect = TextureAtlas.TextureCoords(inAtlasId.Value, terrain.texturesPacked);
             }
-            opengl.Color3(Color.White);
-            opengl.BindTexture(TextureTarget.Texture2D, textureid);
-            opengl.Enable(EnableCap.Texture2D);
-            opengl.Disable(EnableCap.DepthTest);
-            opengl.Begin(BeginMode.Quads);
+            GL.Color3(Color.White);
+            GL.BindTexture(TextureTarget.Texture2D, textureid);
+            GL.Enable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Begin(BeginMode.Quads);
             float x2 = x1 + width;
             float y2 = y1 + height;
-            opengl.TexCoord2(rect.Right, rect.Bottom); opengl.Vertex2(x2, y2);
-            opengl.TexCoord2(rect.Right, rect.Top); opengl.Vertex2(x2, y1);
-            opengl.TexCoord2(rect.Left, rect.Top); opengl.Vertex2(x1, y1);
-            opengl.TexCoord2(rect.Left, rect.Bottom); opengl.Vertex2(x1, y2);
+            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex2(x2, y2);
+            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex2(x2, y1);
+            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
+            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex2(x1, y2);
             /*
             GL.TexCoord2(1, 1); GL.Vertex2(x2, y2);
             GL.TexCoord2(1, 0); GL.Vertex2(x2, y1);
             GL.TexCoord2(0, 0); GL.Vertex2(x1, y1);
             GL.TexCoord2(0, 1); GL.Vertex2(x1, y2);
             */
-            opengl.End();
-            opengl.Enable(EnableCap.DepthTest);
+            GL.End();
+            GL.Enable(EnableCap.DepthTest);
         }
         void OrthoMode()
         {
             //GL.Disable(EnableCap.DepthTest);
-            opengl.MatrixMode(MatrixMode.Projection);
-            opengl.PushMatrix();
-            opengl.LoadIdentity();
-            opengl.Ortho(0, Width, Height, 0, 0, 1);
-            opengl.MatrixMode(MatrixMode.Modelview);
-            opengl.PushMatrix();
-            opengl.LoadIdentity();
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Ortho(0, Width, Height, 0, 0, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
         }
         // Set Up A Perspective View
         void PerspectiveMode()
         {
             // Enter into our projection matrix mode
-            opengl.MatrixMode(MatrixMode.Projection);
+            GL.MatrixMode(MatrixMode.Projection);
             // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
-            opengl.PopMatrix();
+            GL.PopMatrix();
             // Go back to our model view matrix like normal
-            opengl.MatrixMode(MatrixMode.Modelview);
-            opengl.PopMatrix();
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
             //GL.LoadIdentity();
             //GL.Enable(EnableCap.DepthTest);
         }
@@ -2451,24 +2509,24 @@ namespace ManicDigger
         }
         private void DrawImmediateParticleEffects(double deltaTime)
         {
-            opengl.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
             foreach (ParticleEffect p in new List<ParticleEffect>(particleEffects))
             {
                 foreach (Particle pp in p.particles)
                 {
-                    opengl.Begin(BeginMode.Triangles);
+                    GL.Begin(BeginMode.Triangles);
                     RectangleF texrec = TextureAtlas.TextureCoords(p.textureid, terrain.texturesPacked);
-                    opengl.TexCoord2(texrec.Left, texrec.Top);
-                    opengl.Vertex3(pp.position);
-                    opengl.TexCoord2(texrec.Right, texrec.Top);
-                    opengl.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(0, particlesize, particlesize)));
-                    opengl.TexCoord2(texrec.Right, texrec.Bottom);
-                    opengl.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(particlesize, 0, particlesize)));
+                    GL.TexCoord2(texrec.Left, texrec.Top);
+                    GL.Vertex3(pp.position);
+                    GL.TexCoord2(texrec.Right, texrec.Top);
+                    GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(0, particlesize, particlesize)));
+                    GL.TexCoord2(texrec.Right, texrec.Bottom);
+                    GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(particlesize, 0, particlesize)));
                     Vector3 delta = pp.direction;
                     delta = Vector3.Multiply(delta, (float)deltaTime * particlespeed);
                     pp.direction.Y -= (float)deltaTime * particlegravity;
                     pp.position += delta;
-                    opengl.End();
+                    GL.End();
                 }
                 if ((DateTime.Now - p.start) >= particletime)
                 {
@@ -2537,99 +2595,99 @@ namespace ManicDigger
         void DrawCube(Vector3 pos)
         {
             float size = 0.5f;
-            opengl.Begin(BeginMode.Quads);
-            opengl.Color3(Color.Purple);
+            GL.Begin(BeginMode.Quads);
+            GL.Color3(Color.Purple);
             //GL.Color3(Color.Silver);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.Honeydew);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.Moccasin);
 
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.IndianRed);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.PaleVioletRed);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.ForestGreen);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
 
-            opengl.Color3(Color.Transparent);
+            GL.Color3(Color.Transparent);
 
-            opengl.End();
+            GL.End();
         }
         private void DrawCubeLines(Vector3 posx)
         {
             //Vector3 pos = new Vector3((int)posx.X, (int)posx.Y, (int)posx.Z);
             Vector3 pos = posx;
             pos += new Vector3(0.5f, 0.5f, 0.5f);
-            opengl.LineWidth(150);
+            GL.LineWidth(150);
             float size = 0.51f;
-            opengl.BindTexture(TextureTarget.Texture2D, 0);
-            opengl.Begin(BeginMode.LineStrip);
-            opengl.Color3(Color.Red);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.Begin(BeginMode.LineStrip);
+            GL.Color3(Color.Red);
             //GL.Color3(Color.Silver);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.Honeydew);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.Moccasin);
 
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.IndianRed);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.PaleVioletRed);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.ForestGreen);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            opengl.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
 
-            opengl.Color3(Color.White);//Color.Transparent);
+            GL.Color3(Color.White);//Color.Transparent);
 
-            opengl.End();
+            GL.End();
         }
         public static T Clamp<T>(T value, T min, T max)
              where T : System.IComparable<T>

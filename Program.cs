@@ -17,17 +17,16 @@ namespace ManicDigger
         public void Start()
         {
             w = new ManicDiggerGameWindow();
-            w.opengl = this.opengl;
             audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
             w.GameUrl = GameUrl;
             w.Run();
         }
-        IOpenGl opengl = new OpenGlOpenTk();
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesMinecraft();
+            
             IClientNetwork network;
             if (singleplayer)
             {
@@ -72,8 +71,6 @@ namespace ManicDigger
                 n.Chatlines = w;
                 n.Position = localplayerposition;
             }
-            MeshBatcher meshbatcher = new MeshBatcher();
-            meshbatcher.opengl = opengl;
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
             terrainDrawer.config3d = config3d;
@@ -82,13 +79,10 @@ namespace ManicDigger
             terrainDrawer.exit = exit;
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
-            terrainDrawer.opengl = opengl;
-            terrainDrawer.batcher = meshbatcher;
             worldfeatures.getfile = getfile;
             worldfeatures.localplayerposition = localplayerposition;
             worldfeatures.mapstorage = mapstorage;
             worldfeatures.the3d = the3d;
-            worldfeatures.opengl = opengl;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
             w.clientgame = clientgame;
