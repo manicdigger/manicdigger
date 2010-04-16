@@ -64,9 +64,6 @@ namespace ManicDigger
             return r;
         }
     }
-    public class TileDrawer
-    {
-    }
     class TerrainUpdater
     {
         Rectangle currentRect = nullRect;
@@ -213,12 +210,14 @@ namespace ManicDigger
     }
     public class MeshBatcher
     {
+        [Inject]
+        public IOpenGl opengl { get; set; }
         public MeshBatcher()
         {
         }
         private void genlists()
         {
-            lists = GL.GenLists(nlists);
+            lists = opengl.GenLists(nlists);
             if (lists == 0)
             {
                 throw new Exception();
@@ -279,16 +278,16 @@ namespace ManicDigger
                 {
                     addcounter -= 1;
                     ToAdd t = toadd.Dequeue();
-                    GL.NewList(lists + t.id, ListMode.Compile);
-                    GL.Begin(BeginMode.Triangles);
+                    opengl.NewList(lists + t.id, ListMode.Compile);
+                    opengl.Begin(BeginMode.Triangles);
                     for (int ii = 0; ii < t.indices.Length; ii++)
                     {
                         var v = t.vertices[t.indices[ii]];
-                        GL.TexCoord2(v.u, v.v);
-                        GL.Vertex3(v.Position.X, v.Position.Y, v.Position.Z);
+                        opengl.TexCoord2(v.u, v.v);
+                        opengl.Vertex3(v.Position.X, v.Position.Y, v.Position.Z);
                     }
-                    GL.End();
-                    GL.EndList();
+                    opengl.End();
+                    opengl.EndList();
                     if (listinfo == null)
                     {
                         listinfo = new ListInfo[nlists];
@@ -306,7 +305,7 @@ namespace ManicDigger
             {
                 if (!empty.Contains(i))
                 {
-                    GL.CallList(lists + i);
+                    opengl.CallList(lists + i);
                 }
             }
             //depth sorting. is it needed?
@@ -338,7 +337,7 @@ namespace ManicDigger
         {
             if (lists != -1)
             {
-                GL.DeleteLists(lists, nlists);
+                opengl.DeleteLists(lists, nlists);
             }
             count = 0;
             empty.Clear();
@@ -362,13 +361,10 @@ namespace ManicDigger
             }
         }
     }
-    /// <summary>
-    /// </summary>
-    /// <remarks>
-    /// Requires OpenTK.
-    /// </remarks>
     public class TerrainDrawer3d : ITerrainDrawer, IDisposable
     {
+        [Inject]
+        public IOpenGl opengl { get; set; }
         [Inject]
         public IThe3d the3d { get; set; }
         [Inject]
@@ -385,6 +381,8 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
+        [Inject]
+        public MeshBatcher batcher { get; set; }
         public int chunksize = 16;
         public int rsize
         {
@@ -405,7 +403,7 @@ namespace ManicDigger
         #region ITerrainDrawer Members
         public void Start()
         {
-            GL.Enable(EnableCap.Texture2D);
+            opengl.Enable(EnableCap.Texture2D);
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
             new Thread(updatethread).Start();
         }
@@ -570,7 +568,7 @@ namespace ManicDigger
         public void Draw()
         {
             Update();
-            GL.Color3(terraincolor);
+            opengl.Color3(terraincolor);
             lock (terrainlock)
             {
                 batcher.Update(500);
@@ -584,7 +582,6 @@ namespace ManicDigger
         Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
         Vector3 lastplayerposition;
         TerrainUpdater updater = new TerrainUpdater();
-        MeshBatcher batcher = new MeshBatcher();
         public void UpdateAllTiles()
         {
             UpdateAllTiles(false);
@@ -822,13 +819,10 @@ namespace ManicDigger
         }
         #endregion
     }
-    /// <summary>
-    /// </summary>
-    /// <remarks>
-    /// Requires OpenTK.
-    /// </remarks>
     public class WorldFeaturesDrawer
     {
+        [Inject]
+        public IOpenGl opengl { get; set; }
         [Inject]
         public IThe3d the3d { get; set; }
         [Inject]
@@ -863,16 +857,16 @@ namespace ManicDigger
                     Console.WriteLine("water.png not found."); waternotfoundwritten = true; return;
                 }
             }
-            GL.BindTexture(TextureTarget.Texture2D, watertexture.Value);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Color3(terraincolor);
-            GL.Begin(BeginMode.Quads);
+            opengl.BindTexture(TextureTarget.Texture2D, watertexture.Value);
+            opengl.Enable(EnableCap.Texture2D);
+            opengl.Color3(terraincolor);
+            opengl.Begin(BeginMode.Quads);
             foreach (Rectangle r in AroundMap())
             {
                 DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
                     mapstorage.WaterLevel);
             }
-            GL.End();
+            opengl.End();
         }
         private void DrawMapEdges()
         {
@@ -886,10 +880,10 @@ namespace ManicDigger
                     Console.WriteLine("rock.png not found."); rocknotfoundwritten = true; return;
                 }
             }
-            GL.BindTexture(TextureTarget.Texture2D, rocktexture.Value);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Color3(terraincolor);
-            GL.Begin(BeginMode.Quads);
+            opengl.BindTexture(TextureTarget.Texture2D, rocktexture.Value);
+            opengl.Enable(EnableCap.Texture2D);
+            opengl.Color3(terraincolor);
+            opengl.Begin(BeginMode.Quads);
             foreach (IEnumerable<Point> r in MapEdges())
             {
                 List<Point> rr = new List<Point>(r);
@@ -902,7 +896,7 @@ namespace ManicDigger
                     mapstorage.WaterLevel - 2);
             }
             DrawWaterQuad(0, 0, mapstorage.MapSizeX, mapstorage.MapSizeY, 0);
-            GL.End();
+            opengl.End();
         }
         private IEnumerable<IEnumerable<Point>> MapEdges()
         {
@@ -914,10 +908,10 @@ namespace ManicDigger
         private void DrawRockQuad(int x1, int y1, int x2, int y2, float height)
         {
             RectangleF rect = new RectangleF(0, 0, Math.Max(Math.Abs(x2 - x1), Math.Abs(y2 - y1)), height);
-            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, 0, y2);
-            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, height, y2);
-            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, height, y1);
-            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, 0, y1);
+            opengl.TexCoord2(rect.Right, rect.Bottom); opengl.Vertex3(x2, 0, y2);
+            opengl.TexCoord2(rect.Right, rect.Top); opengl.Vertex3(x2, height, y2);
+            opengl.TexCoord2(rect.Left, rect.Top); opengl.Vertex3(x1, height, y1);
+            opengl.TexCoord2(rect.Left, rect.Bottom); opengl.Vertex3(x1, 0, y1);
         }
         int watersizex = 1 * 1000;
         int watersizey = 1 * 1000;
@@ -933,10 +927,10 @@ namespace ManicDigger
             RectangleF rect = new RectangleF(0, 0, 1 * width, 1 * height);
             float x2 = x1 + width;
             float y2 = y1 + height;
-            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex3(x2, z1, y2);
-            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex3(x2, z1, y1);
-            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, z1, y1);
-            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, z1, y2);
+            opengl.TexCoord2(rect.Right, rect.Bottom); opengl.Vertex3(x2, z1, y2);
+            opengl.TexCoord2(rect.Right, rect.Top); opengl.Vertex3(x2, z1, y1);
+            opengl.TexCoord2(rect.Left, rect.Top); opengl.Vertex3(x1, z1, y1);
+            opengl.TexCoord2(rect.Left, rect.Bottom); opengl.Vertex3(x1, z1, y2);
         }
     }
 }
