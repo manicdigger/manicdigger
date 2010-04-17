@@ -592,12 +592,25 @@ namespace ManicDigger
                     {
                         ENABLE_FREEMOVE = BoolCommandArgument(arguments);
                     }
+                    else if (cmd == "fov")
+                    {
+                        int arg=int.Parse(arguments);
+                        int minfov = 1;
+                        int maxfov = 179;
+                        if (arg < minfov || arg > maxfov)
+                        {
+                            throw new Exception(string.Format("Valid field of view: {0}-{1}", minfov, maxfov));
+                        }
+                        float fov = (float)(2 * Math.PI * ((float)arg / 360));
+                        this.fov = fov;
+                        OnResize(new EventArgs());
+                    }
                     else
                     {
                         network.SendChat(GuiTypingBuffer);
                     }
                 }
-                catch (Exception e) { AddChatline(new StringReader(e.ToString()).ReadLine()); }
+                catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
             }
             else
             {

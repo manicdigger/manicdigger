@@ -407,6 +407,7 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public WorldFeaturesDrawer worldfeatures { get; set; }
+        public event EventHandler<ExceptionEventArgs> OnCrash;
         public int chunksize = 16;
         public int rsize
         {
@@ -429,11 +430,37 @@ namespace ManicDigger
         {
             GL.Enable(EnableCap.Texture2D);
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
-            new Thread(updatethread).Start();
+            new Thread(UpdateThreadStart).Start();
         }
         Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
         bool exit2;
-        void updatethread()
+        void UpdateThreadStart()
+        {
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                UpdateThread();
+            }
+            else
+            {
+                try
+                {
+                    UpdateThread();
+                }
+                catch (Exception e)
+                {
+                    if (OnCrash != null)
+                    {
+                        OnCrash(this, new ExceptionEventArgs() { exception = e });
+                    }
+                    throw;
+                }
+            }
+        }
+        public class ExceptionEventArgs : EventArgs
+        {
+            public Exception exception;
+        }
+        void UpdateThread()
         {
             for (; ; )
             {

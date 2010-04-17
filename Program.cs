@@ -79,6 +79,7 @@ namespace ManicDigger
             terrainDrawer.exit = exit;
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
+            terrainDrawer.OnCrash += (a, b) => { ManicDiggerProgram.Crash(b.exception); };
             worldfeatures.getfile = getfile;
             worldfeatures.localplayerposition = localplayerposition;
             worldfeatures.mapstorage = mapstorage;
@@ -140,8 +141,7 @@ namespace ManicDigger
                 }
                 catch (Exception e)
                 {
-                    File.WriteAllText("crash.txt", e.ToString());
-                    File.AppendAllText("crash.txt", e.StackTrace);
+                    Crash(e);
                 }
             }
             else
@@ -149,14 +149,20 @@ namespace ManicDigger
                 Start(args);
             }
         }
+        public static void Crash(Exception e)
+        {
+            File.WriteAllText("crash.txt", e.ToString());
+            File.AppendAllText("crash.txt", e.StackTrace);
+        }
         private static void Start(string[] args)
         {
             if (args.Length > 0 && args[0] == "servers")
             {
                 var f = new ServerSelector();
                 System.Windows.Forms.Application.Run(f);
+                System.Windows.Forms.Application.Exit();
                 var p = new ManicDiggerProgram2();
-                if (p.GameUrl == null)
+                if (f.SelectedServer == null)
                 {
                     return;
                 }
