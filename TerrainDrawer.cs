@@ -425,11 +425,18 @@ namespace ManicDigger
         }
         int drawdistance = 256;
         public int DrawDistance { get { return drawdistance; } set { drawdistance = value; } }
+        bool started = false;
         #region ITerrainDrawer Members
         public void Start()
         {
+            if (started)
+            {
+                throw new Exception("Started already.");
+            }
+            started = true;
             GL.Enable(EnableCap.Texture2D);
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
+            updateThreadRunning++;
             new Thread(UpdateThreadStart).Start();
         }
         Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
@@ -460,12 +467,17 @@ namespace ManicDigger
         {
             public Exception exception;
         }
+        int updateThreadRunning = 0;
         void UpdateThread()
         {
+            if (updateThreadRunning > 1)
+            {
+                throw new Exception("Update thread is running already.");
+            }
             for (; ; )
             {
                 Thread.Sleep(1);
-                if (exit.exit || exit2) { return; }
+                if (exit.exit || exit2) { break; }
                 CheckRespawn();
                 Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / 16), (int)(localplayerposition.LocalPlayerPosition.Z / 16));
                 updater.Draw(playerpoint, rsize);
@@ -487,6 +499,7 @@ namespace ManicDigger
                 }
                 updater.Todo.Clear();
             }
+            updateThreadRunning--;
         }
         private void CheckRespawn()
         {
@@ -867,6 +880,10 @@ namespace ManicDigger
         public void Dispose()
         {
             exit2 = true;
+            while (updateThreadRunning > 0)
+            {
+                Thread.Sleep(0);
+            }
         }
         #endregion
     }

@@ -427,6 +427,7 @@ namespace ManicDigger
                 player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
                 player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
                 DrawMap();
+                terrain.Start();
             }
             else
             {
@@ -443,7 +444,6 @@ namespace ManicDigger
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
             MaterialSlots = data.DefaultMaterialSlots;
-            terrain.Start();
         }
         protected override void OnClosed(EventArgs e)
         {
@@ -1038,10 +1038,10 @@ namespace ManicDigger
             //.newterrain.Start();
             var newnetwork = network;
             var newterrain = terrain;
+            if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
             newterrain.Start();
 
             oldclientgame.Dispose();
-            if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
             newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
             newnetwork.MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
 
@@ -1876,6 +1876,8 @@ namespace ManicDigger
                     playerdrawinfo[k.Key] = new PlayerDrawInfo();
                     NetworkInterpolation n = new NetworkInterpolation();
                     n.req = new PlayerInterpolate();
+                    n.FRAMESIZE = 0.1f;
+                    n.DELAY = 0.4f;
                     playerdrawinfo[k.Key].interpolation = n;
                 }
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
