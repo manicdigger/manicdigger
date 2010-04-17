@@ -257,9 +257,6 @@ namespace ManicDigger
             }
             return id;
         }
-        public void Update(int p)
-        {
-        }
         List<int> empty = new List<int>();
         float addperframe = 0.5f;
         float addcounter = 0;
@@ -280,6 +277,22 @@ namespace ManicDigger
                     addcounter -= 1;
                     ToAdd t = toadd.Dequeue();
                     GL.NewList(lists + t.id, ListMode.Compile);
+                    
+                    GL.EnableClientState(EnableCap.TextureCoordArray);
+                    GL.EnableClientState(EnableCap.VertexArray);
+                    unsafe
+                    {
+                        fixed (VertexPositionTexture* p = t.vertices)
+                        {
+                            GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, (IntPtr)(0 + (byte*)p));
+                            GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, (IntPtr)(12 + (byte*)p));
+                            GL.DrawElements(BeginMode.Triangles, t.indices.Length, DrawElementsType.UnsignedShort, t.indices);
+                        }
+                    }
+                    GL.DisableClientState(EnableCap.TextureCoordArray);
+                    GL.DisableClientState(EnableCap.VertexArray);
+                    
+                    /*
                     GL.Begin(BeginMode.Triangles);
                     for (int ii = 0; ii < t.indices.Length; ii++)
                     {
@@ -288,6 +301,7 @@ namespace ManicDigger
                         GL.Vertex3(v.Position.X, v.Position.Y, v.Position.Z);
                     }
                     GL.End();
+                    */
                     GL.EndList();
                     if (listinfo == null)
                     {
@@ -295,7 +309,6 @@ namespace ManicDigger
                     }
                     listinfo[t.id].indicescount = t.indices.Length;
                     listinfo[t.id].center = t.vertices[0].Position;//todo
-                    
                 }
                 if (toadd.Count == 0)
                 {
@@ -325,6 +338,15 @@ namespace ManicDigger
         {
         }
         */
+        int strideofvertices = -1;
+        int StrideOfVertices
+        {
+            get
+            {
+                if (strideofvertices == -1) strideofvertices = BlittableValueType.StrideOf(new VertexPositionTexture());
+                return strideofvertices;
+            }
+        }
         struct ListInfo
         {
             public int indicescount;
@@ -422,7 +444,11 @@ namespace ManicDigger
                 updater.Draw(playerpoint, rsize);
                 ProcessAllPriorityTodos();
                 TerrainUpdater oldupdater = updater;
-                var l = new List<TerrainUpdater.TodoItem>(updater.Todo);
+                List<TerrainUpdater.TodoItem> l;
+                lock (terrainlock)
+                {
+                    l = new List<TerrainUpdater.TodoItem>(updater.Todo);
+                }
                 for (int i = 0; i < l.Count; i++)
                 {
                     if (updater != oldupdater) { break; }
@@ -475,9 +501,9 @@ namespace ManicDigger
                     ti = prioritytodo[0];//.Dequeue();
                     prioritytodo.RemoveAt(0);
                 }
-                lock (terrainlock)
+                for (int i = 0; i < ti.Length; i++)
                 {
-                    for (int i = 0; i < ti.Length; i++)
+                    lock (terrainlock)
                     {
                         var p = ti[i];
                         var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
@@ -503,7 +529,7 @@ namespace ManicDigger
                 {
                     try
                     {
-                        lock (terrainlock)
+                        //lock (terrainlock)
                         {
                             var chunk = MakeChunk(p.X, p.Y, z);
                             if (chunk != null && chunk.indices.Length != 0)
@@ -519,7 +545,7 @@ namespace ManicDigger
             {
                 for (int z = 0; z < mapstorage.MapSizeZ / 16; z++)
                 {
-                    lock (terrainlock)
+                    //lock (terrainlock)
                     {
                         if (batchedblocks.ContainsKey(new Vector3(p.X, p.Y, z)))
                         {
@@ -569,17 +595,12 @@ namespace ManicDigger
         object terrainlock = new object();
         public void Draw()
         {
-            Update();
             GL.Color3(terraincolor);
-            lock (terrainlock)
+            //lock (terrainlock)
             {
-                batcher.Update(500);
                 batcher.Draw(localplayerposition.LocalPlayerPosition);
             }
             worldfeatures.DrawWorldFeatures();
-        }
-        private void Update()
-        {
         }
         Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
         Vector3 lastplayerposition;
@@ -640,8 +661,8 @@ namespace ManicDigger
                         l.Add(new Vector3(x / chunksize, y / chunksize, z / chunksize));
                     }
                 }
+                prioritytodo.Add(l.ToArray());
             }
-            prioritytodo.Add(l.ToArray());
         }
         public int TrianglesCount()
         {

@@ -1089,10 +1089,11 @@ namespace ManicDigger
             GL.Viewport(0, 0, Width, Height);
             Set3dProjection();
         }
+        public float fov = MathHelper.PiOver3;
         private void Set3dProjection()
         {
             float aspect_ratio = Width / (float)Height;
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspect_ratio, znear, zfar);
+            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref perpective);

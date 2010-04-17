@@ -1085,4 +1085,8 @@ namespace ManicDigger
         Create,
         Destroy,
     }
+    public interface ILogger
+    {
+        void LogPerformance(string key, string value);
+    }
 }
