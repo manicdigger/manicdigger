@@ -422,7 +422,7 @@ namespace ManicDigger
             {
                 guistate = GuiState.MainMenu;
                 FreeMouse = true;
-                mapManipulator.LoadMap(clientgame, "menu" + MapManipulator.XmlSaveExtension);
+                mapManipulator.LoadMap(clientgame, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
                 ENABLE_FREEMOVE = true;
                 player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
                 player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
