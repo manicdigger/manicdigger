@@ -27,14 +27,14 @@ namespace ManicDigger
         {
             var gamedata = new GameDataTilesMinecraft();
             
-            IClientNetwork network;
+            INetworkClient network;
             if (singleplayer)
             {
-                network = new ClientNetworkDummy();
+                network = new NetworkClientDummy();
             }
             else
             {
-                network = new ClientNetworkMinecraft();
+                network = new NetworkClientMinecraft();
             }
             var clientgame = new ClientGame();
             var mapstorage = clientgame;
@@ -51,7 +51,7 @@ namespace ManicDigger
             var internetgamefactory = this;
             if (singleplayer)
             {
-                var n = (ClientNetworkDummy)network;
+                var n = (NetworkClientDummy)network;
                 n.player = localplayerposition;
                 n.Gui = w;
                 n.Map1 = w;
@@ -65,7 +65,7 @@ namespace ManicDigger
             }
             else
             {
-                var n = (ClientNetworkMinecraft)network;
+                var n = (NetworkClientMinecraft)network;
                 n.Map = w;
                 n.Players = clientgame;
                 n.Chatlines = w;
@@ -110,10 +110,10 @@ namespace ManicDigger
         {
             MakeGame(false);
         }
-        IClientNetwork network;
+        INetworkClient network;
         ClientGame clientgame;
         ITerrainDrawer terraindrawer;
-        public IClientNetwork GetNetwork()
+        public INetworkClient GetNetwork()
         {
             return network;
         }

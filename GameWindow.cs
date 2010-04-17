@@ -278,7 +278,7 @@ namespace ManicDigger
         [Inject]
         public ClientGame clientgame { get; set; }
         [Inject]
-        public IClientNetwork network { get; set; }
+        public INetworkClient network { get; set; }
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
@@ -1000,7 +1000,7 @@ namespace ManicDigger
         enum TypingState { None, Typing, Ready };
         TypingState GuiTyping = TypingState.None;
         string GuiTypingBuffer = "";
-        IClientNetwork newnetwork;
+        INetworkClient newnetwork;
         ITerrainDrawer newterrain;
         ClientGame newclientgame;
 
@@ -2768,47 +2768,5 @@ namespace ManicDigger
         }
         #endregion
         public string GameUrl;
-    }
-    class FastBitmap
-    {
-        public Bitmap bmp;
-        BitmapData bmd;
-        public void Lock()
-        {
-            if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
-            {
-                throw new Exception();
-            }
-            bmd = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-                System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
-        }
-        public int GetPixel(int x,int y)
-        {
-            if (bmd == null)
-            {
-                throw new Exception();
-            }
-            unsafe
-            {
-                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
-                return row[x];
-            }
-        }
-        public void SetPixel(int x, int y, int color)
-        {
-            if (bmd == null)
-            {
-                throw new Exception();
-            }
-            unsafe
-            {
-                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
-                row[x] = color;
-            }
-        }
-        public void Unlock()
-        {
-            bmp.UnlockBits(bmd);
-        }
     }
 }

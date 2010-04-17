@@ -941,7 +941,7 @@ namespace ManicDigger
     public interface IInternetGameFactory
     {
         void NewInternetGame();
-        IClientNetwork GetNetwork();
+        INetworkClient GetNetwork();
         ClientGame GetClientGame();
         ITerrainDrawer GetTerrain();
     }
@@ -951,10 +951,10 @@ namespace ManicDigger
         public void NewInternetGame()
         {
         }
-        public IClientNetwork network = new ClientNetworkDummy();
+        public INetworkClient network = new NetworkClientDummy();
         public ClientGame clientgame = new ClientGame();
         public ITerrainDrawer terraindrawer = new TerrainDrawerDummy();
-        public IClientNetwork GetNetwork()
+        public INetworkClient GetNetwork()
         {
             return network;
         }

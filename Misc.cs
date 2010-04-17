@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.IO.Compression;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace ManicDigger
 {
@@ -80,6 +82,48 @@ namespace ManicDigger
                 }
             }
             return ms.ToArray();
+        }
+    }
+    class FastBitmap
+    {
+        public Bitmap bmp;
+        BitmapData bmd;
+        public void Lock()
+        {
+            if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+            {
+                throw new Exception();
+            }
+            bmd = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
+                System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
+        }
+        public int GetPixel(int x, int y)
+        {
+            if (bmd == null)
+            {
+                throw new Exception();
+            }
+            unsafe
+            {
+                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
+                return row[x];
+            }
+        }
+        public void SetPixel(int x, int y, int color)
+        {
+            if (bmd == null)
+            {
+                throw new Exception();
+            }
+            unsafe
+            {
+                int* row = (int*)((byte*)bmd.Scan0 + (y * bmd.Stride));
+                row[x] = color;
+            }
+        }
+        public void Unlock()
+        {
+            bmp.UnlockBits(bmd);
         }
     }
 }

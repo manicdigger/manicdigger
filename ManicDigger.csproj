@@ -54,6 +54,7 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="LoginClient.cs" />
     <Compile Include="NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
     <Compile Include="FCraft.cs" />
