@@ -26,10 +26,9 @@ namespace ManicDigger
                 e.Cancel = true;
                 return;
             }
+            SelectedServer = e.Url.AbsoluteUri;
             Close();
-            var p = new ManicDiggerProgram2();
-            p.GameUrl = e.Url.AbsoluteUri;
-            p.Start();
         }
+        public string SelectedServer = null;
     }
 }

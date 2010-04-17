@@ -153,7 +153,15 @@ namespace ManicDigger
         {
             if (args.Length > 0 && args[0] == "servers")
             {
-                System.Windows.Forms.Application.Run(new ServerSelector());
+                var f = new ServerSelector();
+                System.Windows.Forms.Application.Run(f);
+                var p = new ManicDiggerProgram2();
+                if (p.GameUrl == null)
+                {
+                    return;
+                }
+                p.GameUrl = f.SelectedServer;
+                p.Start();
                 return;
             }
             new ManicDiggerProgram2().Start();
