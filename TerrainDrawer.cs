@@ -561,7 +561,6 @@ namespace ManicDigger
                 //Update all near chunks at the same time, for flicker-free drawing.
                 lock (terrainlock)
                 {
-                    Console.WriteLine("terrainlock" + nearchunksadd.Count);
                     foreach (Vector3 p in nearchunksremove)
                     {
                         batcher.Remove(batchedblocks[p]);
