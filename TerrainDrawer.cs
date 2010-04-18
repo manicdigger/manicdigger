@@ -541,21 +541,37 @@ namespace ManicDigger
                     ti = prioritytodo[0];//.Dequeue();
                     prioritytodo.RemoveAt(0);
                 }
+                //Prepare list of near chunks to update.
+                //This is the slowest part.
+                Dictionary<Vector3, VerticesIndicesToLoad> nearchunksadd = new Dictionary<Vector3, VerticesIndicesToLoad>();
+                List<Vector3> nearchunksremove = new List<Vector3>();
                 for (int i = 0; i < ti.Length; i++)
                 {
-                    lock (terrainlock)
+                    var p = ti[i];
+                    var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
+                    if (chunk != null && chunk.indices.Length != 0)
                     {
-                        var p = ti[i];
-                        var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
-                        if (batchedblocks.ContainsKey(p))
-                        {
-                            batcher.Remove(batchedblocks[p]);
-                            batchedblocks.Remove(p);
-                        }
-                        if (chunk != null && chunk.indices.Length != 0)
-                        {
-                            batchedblocks[p] = batcher.Add(chunk.indices, chunk.vertices);
-                        }
+                        nearchunksadd.Add(p, chunk);
+                    }
+                    if (batchedblocks.ContainsKey(p))
+                    {
+                        nearchunksremove.Add(p);
+                    }
+                }
+                //Update all near chunks at the same time, for flicker-free drawing.
+                lock (terrainlock)
+                {
+                    Console.WriteLine("terrainlock" + nearchunksadd.Count);
+                    foreach (Vector3 p in nearchunksremove)
+                    {
+                        batcher.Remove(batchedblocks[p]);
+                        batchedblocks.Remove(p);
+                    }
+                    foreach (var k in nearchunksadd)
+                    {
+                        var p = k.Key;
+                        var chunk = k.Value;
+                        batchedblocks[p] = batcher.Add(chunk.indices, chunk.vertices);
                     }
                 }
             }

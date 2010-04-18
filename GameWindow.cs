@@ -272,7 +272,7 @@ namespace ManicDigger
     /// </summary>
     /// <remarks>
     /// Requires OpenTK.
-    /// </remarks>
+    /// </remarks>`
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
         [Inject]
