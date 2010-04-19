@@ -401,7 +401,6 @@ namespace ManicDigger
             mapgenerator.GenerateMap(map);
         }
     }
-    //zawiera wszystko co się niszczy przy wczytaniu z dysku/internetu nowej gry.
     public class ClientGame : IMapStorage, IPlayers
     {
         [Inject]
@@ -455,6 +454,8 @@ namespace ManicDigger
         bool IsWaterTile(int tiletype);
         bool IsBuildableTile(int tiletype);
         bool IsValidTileType(int tiletype);
+        bool IsTransparentTile(byte p);
+        int PlayerBuildableMaterialType(int p);
     }
     public class GameDataDummy : IGameData
     {
@@ -494,6 +495,14 @@ namespace ManicDigger
             return true;
         }
         #endregion
+        public bool IsTransparentTile(byte p)
+        {
+            return false;
+        }
+        public int PlayerBuildableMaterialType(int p)
+        {
+            return p;
+        }
     }
     public interface IMapGenerator
     {
@@ -534,7 +543,7 @@ namespace ManicDigger
             //this test is so the player does not walk on water.
             if (data.IsWaterTile(clientgame.Map[x, y, z]) &&
                 !data.IsWaterTile(clientgame.Map[x, y, z + 1])) { return true; }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
+            return clientgame.Map[x, y, z] == data.TileIdEmpty
                 || (data.IsWaterTile(clientgame.Map[x,y,z]) && (!swimmingtop));
         }
         float walldistance = 0.2f;

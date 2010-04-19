@@ -8,7 +8,7 @@ using System.Net;
 
 namespace ManicDigger
 {
-    class MyFCraftMap : fCraft.IFMap
+    public class MyFCraftMap : fCraft.IFMap
     {
         [Inject]
         public IMapStorage map { get; set; }

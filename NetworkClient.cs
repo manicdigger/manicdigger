@@ -53,7 +53,7 @@ namespace ManicDigger
         {
             if (mode == BlockSetMode.Destroy)
             {
-                type = (byte)TileTypeMinecraft.Empty;
+                type = Data.TileIdEmpty;
             }
             Map1.SetTileAndUpdate(position, type);
             //Console.WriteLine("build:" + position);
@@ -421,10 +421,7 @@ namespace ManicDigger
                 byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
                 {
                     BinaryReader br2 = new BinaryReader(decompressed);
-                    int wtf1 = br2.ReadByte();
-                    int wtf2 = br2.ReadByte();
-                    int wtf3 = br2.ReadByte();
-                    int wtf4 = br2.ReadByte();
+                    int size = ReadInt32(br2);
                     for (int z = 0; z < mapreceivedsizez; z++)
                     {
                         for (int y = 0; y < mapreceivedsizey; y++)
@@ -671,6 +668,15 @@ namespace ManicDigger
         public int mapreceivedsizex;
         public int mapreceivedsizey;
         public int mapreceivedsizez;
+        int ReadInt32(BinaryReader br)
+        {
+            byte[] array = br.ReadBytes(4);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(array);
+            }
+            return BitConverter.ToInt32(array, 0);
+        }
         int ReadInt16(BinaryReader br)
         {
             byte[] array = br.ReadBytes(2);

@@ -178,6 +178,40 @@ namespace ManicDigger
                 }
             }
         }
+        /*
+            if (blockUp == 0 || blockUp == 8 || blockUp == 9 ||
+                blockUp == 10 || blockUp == 11 || blockUp == 18 ||
+                blockUp == 44 || blockUp == 6 || blockUp == 37 ||
+                blockUp == 38 || blockUp == 39 || blockUp == 40 ||
+                blockLeft == 0 || blockLeft == 8 || blockLeft == 9 ||
+                blockLeft == 10 || blockLeft == 11 || blockLeft == 18 ||
+                blockLeft == 44 || blockLeft == 6 || blockLeft == 37 ||
+                blockLeft == 38 || blockLeft == 39 || blockLeft == 40 ||
+                blockRight == 0 || blockRight == 8 || blockRight == 9 ||
+                blockRight == 10 || blockRight == 11 || blockRight == 18 ||
+                blockRight == 44 || blockRight == 6 || blockRight == 37 ||
+                blockRight == 38 || blockRight == 39 || blockRight == 40)
+                Blend(block);
+        */
+        public bool IsTransparentTile(byte tileType)
+        {
+            return tileType == (byte)TileTypeMinecraft.Glass
+               || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource
+               || tileType == (byte)TileTypeMinecraft.Leaves;
+        }
+        public int PlayerBuildableMaterialType(int tt)
+        {
+            TileTypeMinecraft t = (TileTypeMinecraft)tt;
+            if (t == TileTypeMinecraft.Grass)
+            {
+                return (int)TileTypeMinecraft.Dirt;
+            }
+            if (t == TileTypeMinecraft.Water || t == TileTypeMinecraft.Lava) //...
+            {
+                return (int)TileTypeMinecraft.Dirt;
+            }
+            return (int)t;
+        }
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

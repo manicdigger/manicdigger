@@ -5,6 +5,9 @@ using ManicDigger.Collisions;
 
 namespace ManicDigger
 {
+    //IThe3d the3d = new The3d();
+    //1. draw anything 2d.
+    //2. movement and terrain.
     public class GameDataTilesManicDigger : IGameData
     {
         public int GetTileTextureId(int tileType, TileSide side)
@@ -45,7 +48,7 @@ namespace ManicDigger
         }
         public int TileIdWater
         {
-            get { return TileIdDirt; }//todo
+            get { return (int)TileTypesManicDigger.Water; }//todo
         }
         public int TileIdSand
         {
@@ -65,9 +68,18 @@ namespace ManicDigger
         #region IGameData Members
         public bool IsValidTileType(int tiletype)
         {
+            if (tiletype == 0) { return false; }
             return tiletype < (int)TileTypesManicDigger.Count;
         }
         #endregion
+        public bool IsTransparentTile(byte tileType)
+        {
+            return false;
+        }
+        public int PlayerBuildableMaterialType(int p)
+        {
+            return p;
+        }
     }
     public enum TileTypesManicDigger
     {
@@ -77,6 +89,7 @@ namespace ManicDigger
         Wall,
         Dirt,
         Gold,
+        Water,
         Count,
     }
 }

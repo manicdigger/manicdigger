@@ -268,19 +268,33 @@ namespace ManicDigger
         Up,
         Down,
     }
+    public class The3d : IThe3d
+    {
+        public int LoadTexture(string filename)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class Viewport3d
+    {
+        [Inject]
+        public ITerrainDrawer terrain { get; set; }
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
     /// Requires OpenTK.
-    /// </remarks>`
+    /// </remarks>
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
     {
+        [Inject]
+        public ITerrainDrawer terrain { get; set; }
+        [Inject]
+        public Viewport3d viewport { get; set; }
         [Inject]
         public ClientGame clientgame { get; set; }
         [Inject]
         public INetworkClient network { get; set; }
-        [Inject]
-        public ITerrainDrawer terrain { get; set; }
         [Inject]
         public IInternetGameFactory internetgamefactory { get; set; }
 
@@ -1412,7 +1426,7 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == (byte)TileTypeMinecraft.Empty
+            return clientgame.Map[x, y, z] == data.TileIdEmpty
                 || data.IsWaterTile(clientgame.Map[x, y, z]);
         }
         float PICK_DISTANCE = 3.5f;
@@ -1492,7 +1506,7 @@ namespace ManicDigger
                         if (MapUtil.IsValidPos(clientgame, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
-                            clonesource = (int)PlayerBuildableMaterialType((TileTypeMinecraft)clonesource);
+                            clonesource = (int)data.PlayerBuildableMaterialType((int)clonesource);
                             for (int i = 0; i < MaterialSlots.Length; i++)
                             {
                                 if ((int)MaterialSlots[i] == clonesource)
@@ -1553,18 +1567,6 @@ namespace ManicDigger
         private void OnPick(TilePosSide pick0)
         {
             playerdestination = pick0.pos;
-        }
-        private TileTypeMinecraft PlayerBuildableMaterialType(TileTypeMinecraft t)
-        {
-            if (t == TileTypeMinecraft.Grass)
-            {
-                return TileTypeMinecraft.Dirt;
-            }
-            if (t == TileTypeMinecraft.Water || t == TileTypeMinecraft.Lava) //...
-            {
-                return TileTypeMinecraft.Dirt;
-            }
-            return t;
         }
         float BuildDelay = 0.95f * (1 / basemovespeed);
         Vector3 ToMapPos(Vector3 a)

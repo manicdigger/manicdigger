@@ -1,1 +1,1 @@
-ManicDigger servers
+GameModeMine servers

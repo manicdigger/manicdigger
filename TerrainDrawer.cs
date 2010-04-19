@@ -872,7 +872,7 @@ namespace ManicDigger
             {
                 return true;
             }
-            return mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.Empty;
+            return mapstorage.Map[x, y, z] == data.TileIdEmpty;
         }
         bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z, int adjacenttiletype)
         {
@@ -885,11 +885,9 @@ namespace ManicDigger
                 return true;
             }
             return mapstorage.Map[x, y, z] == data.TileIdEmpty
-                || (mapstorage.Map[x, y, z] == data.TileIdWater
-                 && !(adjacenttiletype == data.TileIdWater))
-                || mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.Glass
-                || mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.InfiniteWaterSource
-                || mapstorage.Map[x, y, z] == (byte)TileTypeMinecraft.Leaves;
+                ||(data.IsWaterTile(mapstorage.Map[x, y, z])
+                 && (!data.IsWaterTile(adjacenttiletype)))
+                ||data.IsTransparentTile(mapstorage.Map[x, y, z]);
         }
         #region IDisposable Members
         public void Dispose()
