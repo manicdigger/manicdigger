@@ -1584,6 +1584,8 @@ namespace ManicDigger
         {
             base.OnRenderFrame(e);
             Application.DoEvents();
+            //Sleep is required in Mono for running the terrain background thread.
+            Thread.Sleep(0);
             //Console.WriteLine("pos:" + player.playerposition);
             //Console.WriteLine("orientation:" + player.playerorientation);
 

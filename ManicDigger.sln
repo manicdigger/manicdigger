@@ -1,9 +1,8 @@
-
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C# Express 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeDungeon", "GameModeDungeon\GameModeDungeon.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeFortress", "GameModeFortress\GameModeFortress.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeMine", "GameModeMine\GameModeMine.csproj", "{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}"
 EndProject
