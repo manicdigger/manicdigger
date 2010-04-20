@@ -64,7 +64,7 @@ namespace ManicDigger
             {
                 var n = (NetworkClientMinecraft)network;
                 n.Map = w;
-                n.Players = clientgame;
+                n.Clients = clientgame;
                 n.Chatlines = w;
                 n.Position = localplayerposition;
             }
@@ -90,9 +90,11 @@ namespace ManicDigger
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
-            var viewport = new Viewport3d();
-            viewport.terrain = terrainDrawer;
-            w.viewport = viewport;
+            var game = new GameMinecraft();
+            game.terrain = terrainDrawer;
+            game.network = network;
+            game.viewport = w;
+            w.game = game;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
             p.clientgame = clientgame;

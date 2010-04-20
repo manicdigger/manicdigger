@@ -275,22 +275,36 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
     }
-    public class Viewport3d
+    public interface IViewport3d
     {
-        [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        int[] MaterialSlots { get; set; }
+        int activematerial { get; set; }
+    }
+    public interface IGameMode
+    {
+        void OnPick(Vector3 vector3, bool right);
+        void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int type);
+        void OnNewFrame(double dt);
+        IEnumerable<ICharacterToDraw> Characters { get; }
+        Vector3 PlayerPositionSpawn { get; }
+    }
+    public interface ICharacterToDraw
+    {
+        Vector3 Pos3d { get; }
+        Vector3 Dir3d { get; }
+        bool Moves { get; }
     }
     /// <summary>
     /// </summary>
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui
+    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
-        public Viewport3d viewport { get; set; }
+        public IGameMode game { get; set; }
         [Inject]
         public ClientGame clientgame { get; set; }
         [Inject]
@@ -457,7 +471,7 @@ namespace ManicDigger
             }
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
-            MaterialSlots = data.DefaultMaterialSlots;
+            materialSlots = data.DefaultMaterialSlots;
         }
         protected override void OnClosed(EventArgs e)
         {
@@ -697,12 +711,12 @@ namespace ManicDigger
         {
             Console.WriteLine(clientgame.map.Map[xx, yy, zz]);
             var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
-            network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
+            game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
         }
         private void ChangeTile2(byte oldtile, byte newtile, int xx, int yy, int zz)
         {
             var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
-            network.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
+            game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
         }
         Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -893,7 +907,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.R)
                 {
-                    player.playerposition = playerpositionspawn;
+                    player.playerposition = game.PlayerPositionSpawn;
                     player.movedz = 0;
                 }
                 if (e.Key == OpenTK.Input.Key.B)
@@ -972,7 +986,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.Enter)
                 {
-                    MaterialSlots[activematerial] = InventoryGetSelected();
+                    materialSlots[activematerial] = InventoryGetSelected();
                     GuiStateBackToGame();
                 }
                 HandleMaterialKeys(e);
@@ -1020,7 +1034,7 @@ namespace ManicDigger
         private void GuiActionGenerateNewMap()
         {
             mapManipulator.GeneratePlainMap(clientgame);
-            player.playerposition = playerpositionspawn;
+            player.playerposition = game.PlayerPositionSpawn;
             DrawMap();
         }
         bool freemousejustdisabled;
@@ -1117,7 +1131,8 @@ namespace ManicDigger
         void maploaded()
         {
         }
-        int[] MaterialSlots;
+        int[] materialSlots;
+        public int[] MaterialSlots { get { return materialSlots; } set { materialSlots = value; } }
         bool ENABLE_ZFAR = false;
         protected override void OnResize(EventArgs e)
         {
@@ -1174,7 +1189,6 @@ namespace ManicDigger
                 mouse_previous = new Point(centerx, centery);
             }
         }
-        Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx,double orientationy)
         {
             //Don't calculate for nothing ...
@@ -1196,7 +1210,7 @@ namespace ManicDigger
         float rotationspeed = 0.15f;
         float movespeed = basemovespeed;
         float fallspeed { get { return movespeed / 10; } }
-        const float basemovespeed = 5f;
+        public const float basemovespeed = 5f;
         DateTime lastbuild = new DateTime();
         public bool exit { get; set; }
         float walksoundtimer = 0;
@@ -1245,6 +1259,7 @@ namespace ManicDigger
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
+            game.OnNewFrame(e.Time);
             while (todo.Count > 0)
             {
                 lasttodo = DateTime.Now;
@@ -1259,7 +1274,6 @@ namespace ManicDigger
                 }
                 frametickmainthreadtodo.Clear();
             }
-            UpdateCharacters((float)e.Time);
             network.Process();
             if (newnetwork != null)
             {
@@ -1507,15 +1521,15 @@ namespace ManicDigger
                         {
                             int clonesource = clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
                             clonesource = (int)data.PlayerBuildableMaterialType((int)clonesource);
-                            for (int i = 0; i < MaterialSlots.Length; i++)
+                            for (int i = 0; i < materialSlots.Length; i++)
                             {
-                                if ((int)MaterialSlots[i] == clonesource)
+                                if ((int)materialSlots[i] == clonesource)
                                 {
                                     activematerial = i;
                                     goto done;
                                 }
                             }
-                            MaterialSlots[activematerial] = clonesource;
+                            materialSlots[activematerial] = clonesource;
                         done:
                             audio.Play(soundclone);
                         }
@@ -1540,8 +1554,10 @@ namespace ManicDigger
                             {
                                 throw new Exception();
                             }
-                            network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
-                                right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
+                            game.OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                                right);
+                            //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                            //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
                         }
                     }
                 }
@@ -1643,7 +1659,7 @@ namespace ManicDigger
             int x = 0;
             int y = 0;
             int z = 0;
-            int tiletype = MaterialSlots[activematerial];
+            int tiletype = materialSlots[activematerial];
             //top
             //if (drawtop)
             {
@@ -1934,61 +1950,7 @@ namespace ManicDigger
             public DateTime time;
         }
         List<Chatline> chatlines = new List<Chatline>();
-        class Character
-        {
-            public Vector3 pos3d;
-            public List<Vector3> orders = new List<Vector3>();
-            public float progress;
-            public int currentOrderId = 0;
-            public int cargoAmount = 0;
-            public Vector3 dir3d;
-            public bool moves;
-        }
         Dictionary<string, int> textures = new Dictionary<string, int>();
-        Character v0;
-        void UpdateCharacters(float dt)
-        {
-            if (v0 == null)
-            {
-                v0 = new Character();
-                v0.orders = new List<Vector3>();
-                v0.orders.Add(new Vector3(0, 32, 0));
-                v0.orders.Add(new Vector3(16, 32, 0));
-                v0.pos3d = playerpositionspawn;
-            }
-            var dir = (v0.orders[v0.currentOrderId] - v0.pos3d);
-            dir.Normalize();
-            var newpos = v0.pos3d + Vector3.Multiply(dir, dt * basemovespeed);
-            //Console.Write(v0.pos3d);
-            newpos = clientgame.physics.WallSlide(v0.pos3d, newpos);
-            var delta=newpos-v0.pos3d;
-            if (delta.Length < dt * 0.1 * basemovespeed)
-            {
-                v0.moves = false;
-            }
-            else
-            {
-                v0.moves = true;
-                v0.dir3d = newpos - v0.pos3d;
-            }
-            v0.pos3d = newpos;
-            //v0.progress += dt * 0.1f;
-            //if (v0.progress >= 1)
-            if ((v0.pos3d - v0.orders[v0.currentOrderId]).Length < 0.5f)
-            {
-                v0.progress = 0;
-                v0.currentOrderId++;
-                if (v0.currentOrderId > 1)
-                {
-                    v0.currentOrderId = 0;
-                }
-            }
-            int nextorderid = (v0.currentOrderId + 1) % v0.orders.Count;
-            {
-                //v0.pos3d = v0.orders[v0.currentOrderId]
-                //    + Vector3.Multiply(v0.orders[nextorderid] - v0.orders[v0.currentOrderId], v0.progress);
-            }
-        }
         class OpentkGl : Md2Engine.IOpenGl
         {
             #region IOpenGl Members
@@ -2076,9 +2038,10 @@ namespace ManicDigger
                 m1.loadMD2(getfile.GetFile("player.md2"));
                 m1texture = LoadTexture(getfile.GetFile("player.png"));
             }
-            if (v0 != null)
+            //if (v0 != null)
+            foreach (ICharacterToDraw v0 in game.Characters)
             {
-                DrawCharacter(v0anim, v0.pos3d + new Vector3(0, 0.9f, 0), v0.dir3d, v0.moves, dt);
+                DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt);
                 //DrawCube(v0.pos3d);
             }
         }
@@ -2332,7 +2295,7 @@ namespace ManicDigger
             for (int i = 0; i < 10; i++)
             {
                 Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize,
-                    data.GetTileTextureId((int)MaterialSlots[i], TileSide.Top));
+                    data.GetTileTextureId((int)materialSlots[i], TileSide.Top));
                 if (i == activematerial)
                 {
                     Draw2dBitmapFile("gui\\activematerial.png", xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);
@@ -2621,7 +2584,7 @@ namespace ManicDigger
             if (v.side == TileSide.Top) { return v.pos + new Vector3(0, -1, 0); }
             return v.pos;
         }
-        int activematerial = 0;
+        public int activematerial { get; set; }
         void DrawCube(Vector3 pos)
         {
             float size = 0.5f;

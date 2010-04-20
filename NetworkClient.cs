@@ -14,7 +14,7 @@ namespace ManicDigger
         void Dispose();
         void Connect(string serverAddress, int port, string username, string auth);
         void Process();
-        void SendSetBlock(Vector3 position, BlockSetMode mode, byte type);
+        void SendSetBlock(Vector3 position, BlockSetMode mode, int type);
         event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         event EventHandler<MapLoadedEventArgs> MapLoaded;
         void SendChat(string s);
@@ -49,13 +49,13 @@ namespace ManicDigger
         public void Process()
         {
         }
-        public void SendSetBlock(Vector3 position, BlockSetMode mode, byte type)
+        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type)
         {
             if (mode == BlockSetMode.Destroy)
             {
                 type = Data.TileIdEmpty;
             }
-            Map1.SetTileAndUpdate(position, type);
+            Map1.SetTileAndUpdate(position, (byte)type);
             //Console.WriteLine("build:" + position);
             Console.WriteLine("player:" + player.LocalPlayerPosition + ", build:" + position);
         }
@@ -188,7 +188,7 @@ namespace ManicDigger
         [Inject]
         public IMap Map { get; set; }
         [Inject]
-        public IPlayers Players { get; set; }
+        public IClients Clients { get; set; }
         [Inject]
         public IGui Chatlines { get; set; }
         [Inject]
@@ -232,7 +232,7 @@ namespace ManicDigger
             main.Disconnect(false);
         }
         DateTime lastpositionsent;
-        public void SendSetBlock(Vector3 position, BlockSetMode mode, byte type)
+        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
@@ -454,11 +454,11 @@ namespace ManicDigger
                 byte playerid = br.ReadByte();
                 string playername = ReadString64(br);
                 connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                if (Players.Players.ContainsKey(playerid))
+                if (Clients.Players.ContainsKey(playerid))
                 {
                     //throw new Exception();
                 }
-                Players.Players[playerid] = new Player();
+                Clients.Players[playerid] = new Player();
                 ReadAndUpdatePlayerPosition(br, playerid);
             }
             else if (packetId == ServerPacketId.PlayerTeleport)
@@ -495,8 +495,8 @@ namespace ManicDigger
                 byte playerid = br.ReadByte();
                 byte heading = br.ReadByte();
                 byte pitch = br.ReadByte();
-                Players.Players[playerid].Heading = heading;
-                Players.Players[playerid].Pitch = pitch;
+                Clients.Players[playerid].Heading = heading;
+                Clients.Players[playerid].Pitch = pitch;
             }
             else if (packetId == ServerPacketId.DespawnPlayer)
             {
@@ -509,7 +509,7 @@ namespace ManicDigger
                         connectedplayers.RemoveAt(i);
                     }
                 }
-                Players.Players.Remove(playerid);
+                Clients.Players.Remove(playerid);
             }
             else if (packetId == ServerPacketId.Message)
             {
@@ -578,13 +578,13 @@ namespace ManicDigger
             }
             else
             {
-                if (!Players.Players.ContainsKey(playerid))
+                if (!Clients.Players.ContainsKey(playerid))
                 {
-                    Players.Players[playerid] = new Player();
+                    Clients.Players[playerid] = new Player();
                     //throw new Exception();
                     Console.WriteLine("Position update of nonexistent player {0}." + playerid);
                 }
-                Players.Players[playerid].Position += v;
+                Clients.Players[playerid].Position += v;
             }
         }
         private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
@@ -602,13 +602,13 @@ namespace ManicDigger
             }
             else
             {
-                if (!Players.Players.ContainsKey(playerid))
+                if (!Clients.Players.ContainsKey(playerid))
                 {
-                    Players.Players[playerid] = new Player();
+                    Clients.Players[playerid] = new Player();
                 }
-                Players.Players[playerid].Position = realpos;
-                Players.Players[playerid].Heading = heading;
-                Players.Players[playerid].Pitch = pitch;
+                Clients.Players[playerid].Position = realpos;
+                Clients.Players[playerid].Heading = heading;
+                Clients.Players[playerid].Pitch = pitch;
             }
         }
         List<byte> received = new List<byte>();

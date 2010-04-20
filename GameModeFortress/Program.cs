@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDigger;
 
-namespace GameModeDungeon
+namespace GameModeFortress
 {
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
@@ -42,7 +42,7 @@ namespace GameModeDungeon
             var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawer();
-            var p = new CharacterPhysics();
+            var physics = new CharacterPhysics();
             var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
             if (singleplayer)
@@ -63,7 +63,7 @@ namespace GameModeDungeon
             {
                 var n = (NetworkClientMinecraft)network;
                 n.Map = w;
-                n.Players = clientgame;
+                n.Clients = clientgame;
                 n.Chatlines = w;
                 n.Position = localplayerposition;
             }
@@ -89,14 +89,16 @@ namespace GameModeDungeon
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
-            var viewport = new Viewport3d();
-            viewport.terrain = terrainDrawer;
-            w.viewport = viewport;
+            var game = new GameFortress();
+            game.physics = physics;
+            game.ticks = new TicksDummy() { game = game };
+            game.terrain = terrainDrawer;
+            w.game = game;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
-            p.clientgame = clientgame;
-            p.data = gamedata;
-            clientgame.physics = p;
+            physics.clientgame = clientgame;
+            physics.data = gamedata;
+            clientgame.physics = physics;
             clientgame.gui = w;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;

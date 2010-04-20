@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ManicDigger;
 
-namespace GameModeDungeon
+namespace GameModeFortress
 {
     public interface IGameWorld : IGameWorldRun
     {
@@ -15,5 +16,18 @@ namespace GameModeDungeon
         void Tick();
         void DoCommand(byte[] command, int player_id);
         int GetStateHash();
+    }
+    public interface ITicks
+    {
+        void DoCommand(byte[] command);
+    }
+    public class TicksDummy : ITicks
+    {
+        [Inject]
+        public IGameWorldRun game { get; set; }
+        public void DoCommand(byte[] command)
+        {
+            game.DoCommand(command, 0);
+        }
     }
 }

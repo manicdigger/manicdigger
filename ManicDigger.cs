@@ -401,7 +401,7 @@ namespace ManicDigger
             mapgenerator.GenerateMap(map);
         }
     }
-    public class ClientGame : IMapStorage, IPlayers
+    public class ClientGame : IMapStorage, IClients
     {
         [Inject]
         public IGui gui { get; set; }
@@ -762,11 +762,11 @@ namespace ManicDigger
         public bool Swimming { get { return false; } }
         #endregion
     }
-    public interface IPlayers
+    public interface IClients
     {
         IDictionary<int, Player> Players { get; set; }
     }
-    public class PlayersDummy : IPlayers
+    public class PlayersDummy : IClients
     {
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         #region IPlayers Members

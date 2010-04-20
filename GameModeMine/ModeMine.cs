@@ -2,9 +2,37 @@
 using System.Collections.Generic;
 using System.Text;
 using ManicDigger.Collisions;
+using OpenTK;
 
 namespace ManicDigger
 {
+    public class GameMinecraft : IGameMode
+    {
+        [Inject]
+        public ITerrainDrawer terrain { get; set; }
+        [Inject]
+        public IViewport3d viewport { get; set; }
+        [Inject]
+        public INetworkClient network { get; set; }
+        public void OnPick(OpenTK.Vector3 newtile, bool right)
+        {
+            network.SendSetBlock(newtile,
+                right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)viewport.MaterialSlots[viewport.activematerial]);
+        }
+        public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
+        {
+            network.SendSetBlock(vector3, blockSetMode, p);
+        }
+        public void OnNewFrame(double dt)
+        {
+        }
+        public IEnumerable<ICharacterToDraw> Characters
+        {
+            get { yield break; }
+        }
+        Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
+        public Vector3 PlayerPositionSpawn { get { return playerpositionspawn ; } }
+    }
     public class GameDataTilesMinecraft : IGameData
     {
         public GameDataTilesMinecraft()
