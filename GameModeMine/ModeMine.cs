@@ -253,7 +253,7 @@ namespace ManicDigger
                 blockRight == 38 || blockRight == 39 || blockRight == 40)
                 Blend(block);
         */
-        public bool IsTransparentTile(byte tileType)
+        public bool IsTransparentTile(int tileType)
         {
             return tileType == (byte)TileTypeMinecraft.Glass
                || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource

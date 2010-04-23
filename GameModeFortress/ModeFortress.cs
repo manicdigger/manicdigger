@@ -5,15 +5,18 @@ using ManicDigger.Collisions;
 using ManicDigger;
 using OpenTK;
 using System.IO;
+using System.Drawing;
 
 namespace GameModeFortress
 {
-    public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients
+    public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
         public ITicks ticks { get; set; }
+        [Inject]
+        public IViewport3d viewport { get; set; }
         public GameFortress()
         {
             map.Map = new byte[256, 256, 64];
@@ -32,7 +35,8 @@ namespace GameModeFortress
                 x = (short)vector3.X,
                 y = (short)vector3.Y,
                 z = (short)vector3.Z,
-                mode = right ? BlockSetMode.Create : BlockSetMode.Destroy
+                mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
+                tiletype = (byte)viewport.MaterialSlots[viewport.activematerial],
             };
             ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
         }
@@ -120,7 +124,8 @@ namespace GameModeFortress
         }
 
         //IGameWorld
-        List<BuildOrder> orders = new List<BuildOrder>();
+        //List<BuildOrder> orders = new List<BuildOrder>();
+        Dictionary<Vector3, BuildOrder> orders = new Dictionary<Vector3, BuildOrder>();
         public byte[] SaveState()
         {
             throw new NotImplementedException();
@@ -148,14 +153,15 @@ namespace GameModeFortress
                 case CommandId.Build:
                     var cmd = new CommandBuild();
                     cmd.FromStream(ms);
-                    orders.Add(new BuildOrder()
+                    Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
+                    orders[v] = new BuildOrder()
                     {
                         playerid = player_id,
-                        position = new Vector3(cmd.x, cmd.y, cmd.z),
+                        position = v,
                         mode = cmd.mode,
                         tiletype = cmd.tiletype,
-                    }
-                        );
+                    };
+                    terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                     break;
                 default:
                     throw new Exception();
@@ -201,6 +207,27 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void Dispose()
         {
+        }
+        #endregion
+        #region ITerrainInfo Members
+        public int GetBlock(int x, int y, int z)
+        {
+            var v = new Vector3(x, y, z);
+            if (orders.ContainsKey(v))
+            {
+                return orders[v].tiletype;
+            }
+            return Map[x, y, z];
+        }
+        public System.Drawing.Color GetBlockColor(int x, int y, int z)
+        {
+            var v = new Vector3(x, y, z);
+            if (orders.ContainsKey(v))
+            {
+                //todo transparent
+                return Color.Red;
+            }
+            return Color.White;
         }
         #endregion
     }
@@ -303,7 +330,7 @@ namespace GameModeFortress
             return tiletype < (int)TileTypesManicDigger.Count;
         }
         #endregion
-        public bool IsTransparentTile(byte tileType)
+        public bool IsTransparentTile(int tileType)
         {
             return false;
         }

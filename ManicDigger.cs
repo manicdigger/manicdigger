@@ -416,7 +416,7 @@ namespace ManicDigger
         bool IsWaterTile(int tiletype);
         bool IsBuildableTile(int tiletype);
         bool IsValidTileType(int tiletype);
-        bool IsTransparentTile(byte p);
+        bool IsTransparentTile(int tiletype);
         int PlayerBuildableMaterialType(int p);
     }
     public class GameDataDummy : IGameData
@@ -457,7 +457,7 @@ namespace ManicDigger
             return true;
         }
         #endregion
-        public bool IsTransparentTile(byte p)
+        public bool IsTransparentTile(int p)
         {
             return false;
         }

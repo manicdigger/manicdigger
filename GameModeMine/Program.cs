@@ -71,7 +71,7 @@ namespace ManicDigger
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
             terrainDrawer.config3d = config3d;
-            terrainDrawer.mapstorage = mapstorage;
+            terrainDrawer.mapstorage = new TerrainInfoMapStorage() { mapstorage = mapstorage };
             terrainDrawer.data = gamedata;
             terrainDrawer.exit = exit;
             terrainDrawer.localplayerposition = localplayerposition;

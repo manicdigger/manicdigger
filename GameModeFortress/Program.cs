@@ -70,7 +70,7 @@ namespace GameModeFortress
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
             terrainDrawer.config3d = config3d;
-            terrainDrawer.mapstorage = mapstorage;
+            terrainDrawer.mapstorage = clientgame;
             terrainDrawer.data = gamedata;
             terrainDrawer.exit = exit;
             terrainDrawer.localplayerposition = localplayerposition;
@@ -94,6 +94,7 @@ namespace GameModeFortress
             clientgame.physics = physics;
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;
+            clientgame.viewport = w;
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
