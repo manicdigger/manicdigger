@@ -32,7 +32,7 @@ namespace GameModeFortress
             {
                 network = new NetworkClientMinecraft();
             }
-            var clientgame = new ClientGame();
+            var clientgame = new GameFortress();
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
@@ -82,50 +82,32 @@ namespace GameModeFortress
             worldfeatures.the3d = the3d;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
-            w.clientgame = clientgame;
+            w.map = clientgame;
+            w.physics = physics;
+            w.clients = clientgame;
             w.network = network;
             w.data = gamedata;
             w.getfile = getfile;
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
-            var game = new GameFortress();
-            game.physics = physics;
-            game.ticks = new TicksDummy() { game = game };
-            game.terrain = terrainDrawer;
-            w.game = game;
+            clientgame.physics = physics;
+            clientgame.ticks = new TicksDummy() { game = clientgame };
+            clientgame.terrain = terrainDrawer;
+            w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
-            physics.clientgame = clientgame;
+            physics.map = clientgame;
             physics.data = gamedata;
             clientgame.physics = physics;
-            clientgame.gui = w;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
-            this.network = network;
-            this.clientgame = clientgame;
-            this.terraindrawer = terrainDrawer;
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
             MakeGame(false);
-        }
-        INetworkClient network;
-        ClientGame clientgame;
-        ITerrainDrawer terraindrawer;
-        public INetworkClient GetNetwork()
-        {
-            return network;
-        }
-        public ClientGame GetClientGame()
-        {
-            return clientgame;
-        }
-        public ITerrainDrawer GetTerrain()
-        {
-            return terraindrawer;
         }
         #endregion
     }

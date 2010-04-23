@@ -306,7 +306,11 @@ namespace ManicDigger
         [Inject]
         public IGameMode game { get; set; }
         [Inject]
-        public ClientGame clientgame { get; set; }
+        public IMapStorage map { get; set; }
+        [Inject]
+        public IClients clients { get; set; }
+        [Inject]
+        public CharacterPhysics physics { get; set; } 
         [Inject]
         public INetworkClient network { get; set; }
         [Inject]
@@ -337,7 +341,7 @@ namespace ManicDigger
             int x = (int)pos.X;
             int y = (int)pos.Y;
             int z = (int)pos.Z;
-            clientgame.Map[x, y, z] = type;
+            map.Map[x, y, z] = type;
             terrain.UpdateTile(x, y, z);
             //          });
         }
@@ -450,7 +454,7 @@ namespace ManicDigger
             {
                 guistate = GuiState.MainMenu;
                 FreeMouse = true;
-                mapManipulator.LoadMap(clientgame, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
+                mapManipulator.LoadMap(map, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
                 ENABLE_FREEMOVE = true;
                 player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
                 player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
@@ -531,7 +535,7 @@ namespace ManicDigger
                         {
                             filename += MapManipulator.XmlSaveExtension;
                         }
-                        mapManipulator.LoadMap(clientgame, filename);
+                        mapManipulator.LoadMap(map, filename);
                         terrain.UpdateAllTiles();
                     }
                     else if (cmd == "save")
@@ -541,7 +545,7 @@ namespace ManicDigger
                             AddChatline("error: missing arg1 - savename");
                             return;
                         }
-                        mapManipulator.SaveMap(clientgame, arguments + MapManipulator.XmlSaveExtension);
+                        mapManipulator.SaveMap(map, arguments + MapManipulator.XmlSaveExtension);
 
                     }
                     else if (cmd == "fps")
@@ -575,10 +579,10 @@ namespace ManicDigger
                                     int xx = (int)player.playerposition.X + 1 + x;
                                     int yy = (int)player.playerposition.Z + 1 + y;
                                     int zz = (int)player.playerposition.Y + z;
-                                    if (MapUtil.IsValidPos(clientgame, xx, yy, zz)
+                                    if (MapUtil.IsValidPos(map, xx, yy, zz)
                                         && MapUtil.IsValidPos(m, x, y, z))
                                     {
-                                        m.Map[x, y, z] = clientgame.Map[xx, yy, zz];
+                                        m.Map[x, y, z] = map.Map[xx, yy, zz];
                                     }
                                 }
                             }
@@ -673,11 +677,11 @@ namespace ManicDigger
                             desty += (int)playerpos.Z;
                             destz += (int)playerpos.Y;
                         }
-                        if (!MapUtil.IsValidPos(clientgame, destx, desty, destz))
+                        if (!MapUtil.IsValidPos(map, destx, desty, destz))
                         {
                             continue;
                         }
-                        byte oldtile = clientgame.Map[destx, desty, destz];
+                        byte oldtile = map.Map[destx, desty, destz];
                         byte newtile = m.Map[x, y, z];
                         if (!(data.IsBuildableTile(oldtile) && data.IsBuildableTile(newtile)))
                         {
@@ -709,7 +713,7 @@ namespace ManicDigger
         }
         private void ChangeTile(byte oldtile, byte newtile, int xx, int yy, int zz)
         {
-            Console.WriteLine(clientgame.map.Map[xx, yy, zz]);
+            Console.WriteLine(map.Map[xx, yy, zz]);
             var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
             game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
         }
@@ -878,7 +882,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.F5)
                 {
-                    mapManipulator.SaveMap(clientgame, mapManipulator.defaultminesave);
+                    mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
                 }
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
@@ -1021,7 +1025,7 @@ namespace ManicDigger
         }
         private void GuiActionLoadGame()
         {
-            mapManipulator.LoadMap(clientgame, mapManipulator.defaultminesave);
+            mapManipulator.LoadMap(map, mapManipulator.defaultminesave);
         }
         bool EscapeMenuWasFreemove;
         private void GuiStateBackToGame()
@@ -1033,7 +1037,7 @@ namespace ManicDigger
         }
         private void GuiActionGenerateNewMap()
         {
-            mapManipulator.GeneratePlainMap(clientgame);
+            mapManipulator.GeneratePlainMap(map);
             player.playerposition = game.PlayerPositionSpawn;
             DrawMap();
         }
@@ -1043,7 +1047,6 @@ namespace ManicDigger
         string GuiTypingBuffer = "";
         INetworkClient newnetwork;
         ITerrainDrawer newterrain;
-        ClientGame newclientgame;
 
         string username = "gamer1";
         string pass = "12345";
@@ -1056,7 +1059,7 @@ namespace ManicDigger
         }
         private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
-            var oldclientgame = clientgame;
+            var oldclientgame = map;
             var oldnetwork = network;
             var oldterrain = terrain;
             internetgamefactory.NewInternetGame();
@@ -1118,10 +1121,10 @@ namespace ManicDigger
                 var ee = (MapLoadedEventArgs)e;
                 //lock (clientgame.mapupdate)
                 {
-                    clientgame.Map = ee.map;
-                    clientgame.MapSizeX = ee.map.GetUpperBound(0) + 1;
-                    clientgame.MapSizeY = ee.map.GetUpperBound(1) + 1;
-                    clientgame.MapSizeZ = ee.map.GetUpperBound(2) + 1;
+                    map.Map = ee.map;
+                    map.MapSizeX = ee.map.GetUpperBound(0) + 1;
+                    map.MapSizeY = ee.map.GetUpperBound(1) + 1;
+                    map.MapSizeZ = ee.map.GetUpperBound(2) + 1;
                     Console.WriteLine("Game loaded successfully.");
                     DrawMap();
                 }
@@ -1362,8 +1365,8 @@ namespace ManicDigger
             Vector3 previousposition = player.playerposition;
             if (!ENABLE_NOCLIP)
             {
-                clientgame.physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
-                player.playerposition = clientgame.physics.WallSlide(player.playerposition, newposition);
+                physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
+                player.playerposition = physics.WallSlide(player.playerposition, newposition);
             }
             else
             {
@@ -1428,7 +1431,7 @@ namespace ManicDigger
         int iii = 0;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
-            if (z >= clientgame.MapSizeZ)
+            if (z >= map.MapSizeZ)
             {
                 return true;
             }
@@ -1436,12 +1439,12 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            if (x >= clientgame.MapSizeX || y >= clientgame.MapSizeY)// || z >= mapsizez)
+            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
             {
                 return ENABLE_FREEMOVE;
             }
-            return clientgame.Map[x, y, z] == data.TileIdEmpty
-                || data.IsWaterTile(clientgame.Map[x, y, z]);
+            return map.Map[x, y, z] == data.TileIdEmpty
+                || data.IsWaterTile(map.Map[x, y, z]);
         }
         float PICK_DISTANCE = 3.5f;
         Matrix4 the_modelview;
@@ -1471,7 +1474,7 @@ namespace ManicDigger
             pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
             pick.End = ray + raydir;
             var s = new TileOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(clientgame.MapSizeX, Math.Max(clientgame.MapSizeY, clientgame.MapSizeZ))));
+            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
             List<TilePosSide> pick2 = new List<TilePosSide>(s.LineIntersection(IsTileEmptyForPhysics, pick));
             pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
 
@@ -1517,9 +1520,9 @@ namespace ManicDigger
                     if (middle)
                     {
                         var newtile = From3dPos(pick0);
-                        if (MapUtil.IsValidPos(clientgame, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            int clonesource = clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
+                            int clonesource = map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
                             clonesource = (int)data.PlayerBuildableMaterialType((int)clonesource);
                             for (int i = 0; i < materialSlots.Length; i++)
                             {
@@ -1539,9 +1542,9 @@ namespace ManicDigger
                         TilePosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : From3dPos(tile);
-                        if (MapUtil.IsValidPos(clientgame, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            Console.WriteLine(". newtile:" + newtile + " type: " + clientgame.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
+                            Console.WriteLine(". newtile:" + newtile + " type: " + map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
                             if (pick0.pos != new Vector3(-1, -1, -1))
                             {
                                 audio.Play(left ? sounddestruct : soundbuild);
@@ -1550,7 +1553,7 @@ namespace ManicDigger
                             {
                                 StartParticleEffect(newtile);//must be before deletion - gets ground type.
                             }
-                            if (!MapUtil.IsValidPos(clientgame,(int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                            if (!MapUtil.IsValidPos(map,(int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                             {
                                 throw new Exception();
                             }
@@ -1889,7 +1892,7 @@ namespace ManicDigger
         private void DrawPlayers(float dt)
         {
             totaltime += dt;
-            foreach (var k in clientgame.Players)
+            foreach (var k in clients.Players)
             {
                 if (!playerdrawinfo.ContainsKey(k.Key))
                 {
@@ -2086,7 +2089,7 @@ namespace ManicDigger
         }
         private void GuiActionSaveGame()
         {
-            mapManipulator.SaveMap(clientgame, mapManipulator.defaultminesave);
+            mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
         }
         void MainMenuAction()
         {
@@ -2556,11 +2559,11 @@ namespace ManicDigger
             ParticleEffect p = new ParticleEffect();
             p.center = v + new Vector3(0.5f, 0.5f, 0.5f);
             p.start = DateTime.Now;
-            if (!MapUtil.IsValidPos(clientgame, (int)v.X, (int)v.Z, (int)v.Y))
+            if (!MapUtil.IsValidPos(map, (int)v.X, (int)v.Z, (int)v.Y))
             {
                 return;
             }
-            int tiletype = clientgame.Map[(int)v.X, (int)v.Z, (int)v.Y];
+            int tiletype = map.Map[(int)v.X, (int)v.Z, (int)v.Y];
             if (!data.IsValidTileType(tiletype))
             {
                 return;
@@ -2741,11 +2744,11 @@ namespace ManicDigger
             {
                 var p = LocalPlayerPosition;
                 p += new Vector3(0, CharacterPhysics.characterheight, 0);
-                if (!MapUtil.IsValidPos(clientgame, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                if (!MapUtil.IsValidPos(map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
-                    return p.Y < clientgame.WaterLevel;
+                    return p.Y < map.WaterLevel;
                 }
-                return data.IsWaterTile(clientgame.Map[(int)p.X, (int)p.Z, (int)p.Y]);
+                return data.IsWaterTile(map.Map[(int)p.X, (int)p.Z, (int)p.Y]);
             }
         }
         #endregion

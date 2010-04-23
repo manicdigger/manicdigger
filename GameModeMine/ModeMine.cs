@@ -6,7 +6,7 @@ using OpenTK;
 
 namespace ManicDigger
 {
-    public class GameMinecraft : IGameMode
+    public class GameMinecraft : IGameMode, IMapStorage, IClients
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
@@ -32,6 +32,38 @@ namespace ManicDigger
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn ; } }
+                public MapStorage map = new MapStorage();
+        IDictionary<int, Player> players = new Dictionary<int, Player>();
+        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
+        public GameMinecraft()
+        {
+            map.Map = new byte[256, 256, 64];
+            map.MapSizeX = 256;
+            map.MapSizeY = 256;
+            map.MapSizeZ = 64;
+        }
+        #region IMapStorage Members
+        public void SetBlock(int x, int y, int z, byte tileType)
+        {
+            map.Map[x, y, z] = tileType;
+        }
+        #endregion
+        //float waterlevel = 32;
+        #region IMapStorage Members
+        //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
+        public float WaterLevel { get { return MapSizeZ / 2; } set { } }
+        #endregion
+        #region IMapStorage Members
+        public byte[, ,] Map { get { return map.Map; } set { map.Map = value; } }
+        public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
+        public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
+        public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
+        #endregion
+        #region IMapStorage Members
+        public void Dispose()
+        {
+        }
+        #endregion
     }
     public class GameDataTilesMinecraft : IGameData
     {

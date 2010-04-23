@@ -33,7 +33,7 @@ namespace ManicDigger
             {
                 network = new NetworkClientMinecraft();
             }
-            var clientgame = new ClientGame();
+            var clientgame = new GameMinecraft();
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
@@ -43,7 +43,7 @@ namespace ManicDigger
             var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawer();
-            var p = new CharacterPhysics();
+            var physics = new CharacterPhysics();
             var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
             if (singleplayer)
@@ -83,50 +83,31 @@ namespace ManicDigger
             worldfeatures.the3d = the3d;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
-            w.clientgame = clientgame;
+            w.map = clientgame;
+            w.physics = physics;
+            w.clients = clientgame;
             w.network = network;
             w.data = gamedata;
             w.getfile = getfile;
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
-            var game = new GameMinecraft();
-            game.terrain = terrainDrawer;
-            game.network = network;
-            game.viewport = w;
-            w.game = game;
+            clientgame.terrain = terrainDrawer;
+            clientgame.network = network;
+            clientgame.viewport = w;
+            w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
-            p.clientgame = clientgame;
-            p.data = gamedata;
-            clientgame.physics = p;
-            clientgame.gui = w;
+            physics.map = clientgame;
+            physics.data = gamedata;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
-            this.network = network;
-            this.clientgame = clientgame;
-            this.terraindrawer = terrainDrawer;
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
             MakeGame(false);
-        }
-        INetworkClient network;
-        ClientGame clientgame;
-        ITerrainDrawer terraindrawer;
-        public INetworkClient GetNetwork()
-        {
-            return network;
-        }
-        public ClientGame GetClientGame()
-        {
-            return clientgame;
-        }
-        public ITerrainDrawer GetTerrain()
-        {
-            return terraindrawer;
         }
         #endregion
     }

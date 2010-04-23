@@ -401,45 +401,7 @@ namespace ManicDigger
             mapgenerator.GenerateMap(map);
         }
     }
-    public class ClientGame : IMapStorage, IClients
-    {
-        [Inject]
-        public IGui gui { get; set; }
-        [Inject]
-        public CharacterPhysics physics { get; set; }
-        public MapStorage map = new MapStorage();
-        IDictionary<int, Player> players = new Dictionary<int, Player>();
-        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
-        public ClientGame()
-        {
-            map.Map = new byte[256, 256, 64];
-            map.MapSizeX = 256;
-            map.MapSizeY = 256;
-            map.MapSizeZ = 64;
-        }
-        #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, byte tileType)
-        {
-            map.Map[x, y, z] = tileType;
-        }
-        #endregion
-        //float waterlevel = 32;
-        #region IMapStorage Members
-        //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
-        public float WaterLevel { get { return MapSizeZ / 2; } set { } }
-        #endregion
-        #region IMapStorage Members
-        public byte[, ,] Map { get { return map.Map; } set { map.Map = value; } }
-        public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
-        public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
-        public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
-        #endregion
-        #region IMapStorage Members
-        public void Dispose()
-        {
-        }
-        #endregion
-    }
+    
     public interface IGameData
     {
         int GetTileTextureId(int tileType, TileSide side);
@@ -519,7 +481,7 @@ namespace ManicDigger
     public class CharacterPhysics
     {
         [Inject]
-        public IMapStorage clientgame { get; set; }
+        public IMapStorage map { get; set; }
         [Inject]
         public IGameData data { get; set; }
         void Update()
@@ -527,7 +489,7 @@ namespace ManicDigger
         }
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
-            if (z >= clientgame.MapSizeZ)
+            if (z >= map.MapSizeZ)
             {
                 return true;
             }
@@ -536,15 +498,15 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            if (x >= clientgame.MapSizeX || y >= clientgame.MapSizeY)// || z >= mapsizez)
+            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
             {
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (data.IsWaterTile(clientgame.Map[x, y, z]) &&
-                !data.IsWaterTile(clientgame.Map[x, y, z + 1])) { return true; }
-            return clientgame.Map[x, y, z] == data.TileIdEmpty
-                || (data.IsWaterTile(clientgame.Map[x,y,z]) && (!swimmingtop));
+            if (data.IsWaterTile(map.Map[x, y, z]) &&
+                !data.IsWaterTile(map.Map[x, y, z + 1])) { return true; }
+            return map.Map[x, y, z] == data.TileIdEmpty
+                || (data.IsWaterTile(map.Map[x,y,z]) && (!swimmingtop));
         }
         float walldistance = 0.2f;
         public const float characterheight = 1.5f;
@@ -634,30 +596,12 @@ namespace ManicDigger
     public interface IInternetGameFactory
     {
         void NewInternetGame();
-        INetworkClient GetNetwork();
-        ClientGame GetClientGame();
-        ITerrainDrawer GetTerrain();
     }
     public class InternetGameFactoryDummy : IInternetGameFactory
     {
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
-        }
-        public INetworkClient network = new NetworkClientDummy();
-        public ClientGame clientgame = new ClientGame();
-        public ITerrainDrawer terraindrawer = new TerrainDrawerDummy();
-        public INetworkClient GetNetwork()
-        {
-            return network;
-        }
-        public ClientGame GetClientGame()
-        {
-            return clientgame;
-        }
-        public ITerrainDrawer GetTerrain()
-        {
-            return terraindrawer;
         }
         #endregion
     }
