@@ -224,8 +224,8 @@ namespace GameModeFortress
             var v = new Vector3(x, y, z);
             if (orders.ContainsKey(v))
             {
-                //todo transparent
-                return Color.Red;
+                Color c = orders[v].mode == BlockSetMode.Create ? Color.Blue : Color.Red;
+                return c;
             }
             return Color.White;
         }
