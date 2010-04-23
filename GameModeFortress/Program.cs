@@ -95,6 +95,7 @@ namespace GameModeFortress
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;
             clientgame.viewport = w;
+            clientgame.data = gamedata;
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

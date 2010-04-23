@@ -17,6 +17,8 @@ namespace GameModeFortress
         public ITicks ticks { get; set; }
         [Inject]
         public IViewport3d viewport { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
         public GameFortress()
         {
             map.Map = new byte[256, 256, 64];
@@ -61,8 +63,7 @@ namespace GameModeFortress
         class Character : ICharacterToDraw
         {
             public Vector3 pos3d;
-            public List<Vector3> orders = new List<Vector3>();
-            public float progress;
+            //public List<Vector3> orders = new List<Vector3>();
             public int currentOrderId = 0;
             public int cargoAmount = 0;
             public Vector3 dir3d;
@@ -70,6 +71,14 @@ namespace GameModeFortress
             public Vector3 Pos3d { get { return pos3d; } }
             public Vector3 Dir3d { get { return dir3d; } }
             public bool Moves { get { return moves; } }
+            public Vector3? currentorder;
+            public CharacterState state;
+            public float buildprogress;
+        }
+        enum CharacterState
+        {
+            Walking,
+            Building,
         }
         List<Character> characters = new List<Character>();
         [Inject]
@@ -80,32 +89,65 @@ namespace GameModeFortress
             {
                 var v0 = new Character();
                 characters.Add(v0);
-                v0.orders = new List<Vector3>();
-                v0.orders.Add(new Vector3(0, 32, 0));
-                v0.orders.Add(new Vector3(16, 32, 0));
+                //v0.orders = new List<Vector3>();
+                //v0.orders.Add(new Vector3(0, 32, 0));
+                //v0.orders.Add(new Vector3(16, 32, 0));
+                //v0.currentorder = new Vector3(0, 32, 0);
                 v0.pos3d = PlayerPositionSpawn;
             }
             for (int i = 0; i < characters.Count; i++)
             {
                 var v0 = characters[i];
-                var dir = (v0.orders[v0.currentOrderId] - v0.pos3d);
-                dir.Normalize();
-                var newpos = v0.pos3d + Vector3.Multiply(dir, dt * ManicDiggerGameWindow.basemovespeed);
-                //Console.Write(v0.pos3d);
-                newpos = physics.WallSlide(v0.pos3d, newpos);
-                var delta = newpos - v0.pos3d;
-                if (delta.Length < dt * 0.1 * ManicDiggerGameWindow.basemovespeed)
+                if (v0.currentorder == null)
                 {
-                    v0.moves = false;
+                    Vector3? destination = ClosestBuildOrder(v0.pos3d);
+                    if (destination == null)
+                    {
+                        continue;
+                    }
+                    v0.currentorder = destination;
+                }
+                if (v0.state == CharacterState.Walking)
+                {
+                    Vector3 curorder = To3d(v0.currentorder.Value);//v0.orders[v0.currentOrderId]
+                    var dir = (curorder - v0.pos3d);
+                    dir.Normalize();
+                    var newpos = v0.pos3d + Vector3.Multiply(dir, dt * ManicDiggerGameWindow.basemovespeed);
+                    //newpos = physics.WallSlide(v0.pos3d, newpos);
+                    var delta = newpos - v0.pos3d;
+                    //if (delta.Length < dt * 0.1 * ManicDiggerGameWindow.basemovespeed)
+                    if ((newpos - curorder).Length < 0.2)
+                    {
+                        v0.moves = false;
+                        v0.state = CharacterState.Building;
+                    }
+                    else
+                    {
+                        v0.moves = true;
+                        v0.dir3d = newpos - v0.pos3d;
+                    }
+                    v0.pos3d = newpos;
+                }
+                else if (v0.state == CharacterState.Building)
+                {
+                    v0.buildprogress += dt;
+                    if (v0.buildprogress > 2)
+                    {
+                        var vv = v0.currentorder.Value;
+                        var o = orders[v0.currentorder.Value];
+                        map.Map[(int)vv.X, (int)vv.Y, (int)vv.Z] = o.mode == BlockSetMode.Create ? (byte)o.tiletype : data.TileIdEmpty;
+                        terrain.UpdateTile((int)vv.X, (int)vv.Y, (int)vv.Z);
+                        orders.Remove(v0.currentorder.Value);
+                        v0.currentorder = null;
+                        v0.state = CharacterState.Walking;
+                        v0.buildprogress = 0;
+                    }
                 }
                 else
                 {
-                    v0.moves = true;
-                    v0.dir3d = newpos - v0.pos3d;
+                    throw new Exception();
                 }
-                v0.pos3d = newpos;
-                //v0.progress += dt * 0.1f;
-                //if (v0.progress >= 1)
+                /*
                 if ((v0.pos3d - v0.orders[v0.currentOrderId]).Length < 0.5f)
                 {
                     v0.progress = 0;
@@ -115,14 +157,27 @@ namespace GameModeFortress
                         v0.currentOrderId = 0;
                     }
                 }
-                int nextorderid = (v0.currentOrderId + 1) % v0.orders.Count;
-                {
-                    //v0.pos3d = v0.orders[v0.currentOrderId]
-                    //    + Vector3.Multiply(v0.orders[nextorderid] - v0.orders[v0.currentOrderId], v0.progress);
-                }
+                */
             }
         }
-
+        Vector3 ToMap(Vector3 v)
+        {
+            return new Vector3(v.X,v.Z,v.Y);
+        }
+        Vector3 To3d(Vector3 v)
+        {
+            return new Vector3(v.X, v.Z, v.Y);
+        }
+        private Vector3? ClosestBuildOrder(Vector3 v)
+        {
+            List<BuildOrder> o = new List<BuildOrder>(orders.Values);
+            o.Sort((a, b) => (To3d(a.position) - v).Length.CompareTo((To3d(b.position) - v).Length));
+            if (orders.Count == 0)
+            {
+                return null;
+            }
+            return o[0].position;
+        }
         //IGameWorld
         //List<BuildOrder> orders = new List<BuildOrder>();
         Dictionary<Vector3, BuildOrder> orders = new Dictionary<Vector3, BuildOrder>();
