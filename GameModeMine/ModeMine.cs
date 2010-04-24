@@ -127,6 +127,7 @@ namespace ManicDigger
         public bool IsWaterTile(int tiletype)
         {
             return tiletype == (int)TileTypeMinecraft.Water
+                || tiletype == (int)TileTypeMinecraft.StationaryWater
                 || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource;
         }
         #endregion
@@ -267,9 +268,22 @@ namespace ManicDigger
         */
         public bool IsTransparentTile(int tileType)
         {
-            return tileType == (byte)TileTypeMinecraft.Glass
-               || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource
-               || tileType == (byte)TileTypeMinecraft.Leaves;
+            return
+                tileType == (byte)TileTypeMinecraft.Empty
+                || tileType == (byte)TileTypeMinecraft.Sapling
+                || tileType == (byte)TileTypeMinecraft.Crops
+                //|| tileType == (byte)TileTypeMinecraft.Water
+                //|| tileType == (byte)TileTypeMinecraft.StationaryWater
+                //|| tileType == (byte)TileTypeMinecraft.Lava
+                //|| tileType == (byte)TileTypeMinecraft.StationaryLava
+                || tileType == (byte)TileTypeMinecraft.YellowFlowerDecorations
+                || tileType == (byte)TileTypeMinecraft.RedRoseDecorations
+                || tileType == (byte)TileTypeMinecraft.Leaves
+                || tileType == (byte)TileTypeMinecraft.Glass
+                || tileType == (byte)TileTypeMinecraft.RedMushroom
+                || tileType == (byte)TileTypeMinecraft.BrownMushroom
+                || tileType == (byte)TileTypeMinecraft.Stair // transparent on side
+                || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource;
         }
         public int PlayerBuildableMaterialType(int tt)
         {
