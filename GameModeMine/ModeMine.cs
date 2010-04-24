@@ -202,9 +202,21 @@ namespace ManicDigger
             data[(int)TileTypeMinecraft.IronBlock] = new TileTypeData() { Buildable = false, AllTextures = 23 };
             data[(int)TileTypeMinecraft.DoubleStair] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 5 };//43 todo
             data[(int)TileTypeMinecraft.Stair] = new TileTypeData() { Buildable = true, AllTextures = 6 };//44
-            data[(int)TileTypeMinecraft.TNT] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 8 };//45
+            data[(int)TileTypeMinecraft.TNT] = new TileTypeData()
+            {
+                Buildable = true,
+                TextureSide = (0 * 16) + 8,
+                TextureTop = (0 * 16) + 9,
+                TextureBottom = (0 * 16) + 10,
+            };//45
             data[(int)TileTypeMinecraft.Brick] = new TileTypeData() { Buildable = true, AllTextures = (6 * 16) + 7 };//46
-            data[(int)TileTypeMinecraft.Bookcase] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 3 };//47
+            data[(int)TileTypeMinecraft.Bookcase] = new TileTypeData()
+            {
+                Buildable = true,
+                TextureSide = (2 * 16) + 3,
+                TextureBottom = (0 * 16) + 4,
+                TextureTop = (0 * 16) + 4,
+            };//47
             data[(int)TileTypeMinecraft.MossyCobblestone] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 4 };//48
             data[(int)TileTypeMinecraft.Obsidian] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 5 };//49
             //torch todo
