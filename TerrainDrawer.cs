@@ -675,7 +675,7 @@ namespace ManicDigger
         object terrainlock = new object();
         public void Draw()
         {
-            GL.Color3(terraincolor);
+            //GL.Color3(terraincolor);
             //lock (terrainlock)
             {
                 batcher.Draw(localplayerposition.LocalPlayerPosition);
@@ -972,7 +972,8 @@ namespace ManicDigger
             }
             GL.BindTexture(TextureTarget.Texture2D, watertexture.Value);
             GL.Enable(EnableCap.Texture2D);
-            GL.Color3(terraincolor);
+            //GL.Color3(terraincolor);
+            GL.Color3(Color.White);
             GL.Begin(BeginMode.Quads);
             foreach (Rectangle r in AroundMap())
             {
@@ -995,7 +996,8 @@ namespace ManicDigger
             }
             GL.BindTexture(TextureTarget.Texture2D, rocktexture.Value);
             GL.Enable(EnableCap.Texture2D);
-            GL.Color3(terraincolor);
+            //GL.Color3(terraincolor);
+            GL.Color3(Color.White);
             GL.Begin(BeginMode.Quads);
             foreach (IEnumerable<Point> r in MapEdges())
             {

@@ -492,6 +492,18 @@ namespace ManicDigger
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
             materialSlots = data.DefaultMaterialSlots;
+            GL.Enable(EnableCap.Lighting);
+            SetAmbientLight(terraincolor);
+            GL.Enable(EnableCap.ColorMaterial);
+            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
+            GL.ShadeModel(ShadingModel.Smooth);
+        }
+        private static void SetAmbientLight(Color c)
+        {
+            float mult = 1f;
+            float[] global_ambient = new float[]
+            { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
+            GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
         }
         protected override void OnClosed(EventArgs e)
         {
@@ -1635,7 +1647,7 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
-
+            SetAmbientLight(terraincolor);
             //const float alpha = accumulator / dt;
             //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
             UpdateTitleFps(e);
@@ -1665,6 +1677,7 @@ namespace ManicDigger
                 DrawPlayers((float)e.Time);
                 DrawWeapon();
             }
+            SetAmbientLight(Color.White);
             Draw2d();
 
             //OnResize(new EventArgs());
@@ -2769,5 +2782,6 @@ namespace ManicDigger
         }
         #endregion
         public string GameUrl;
+        Color terraincolor { get { return Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
     }
 }
