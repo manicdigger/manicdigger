@@ -660,7 +660,7 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx;
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
-                        TileElements(indices, vertices, xxx, yyy, zzz);
+                        BlockPolygons(indices, vertices, xxx, yyy, zzz);
                     }
                 }
             }
@@ -752,7 +752,7 @@ namespace ManicDigger
         public int terrainTexture { get; set; }
         public float BlockShadow = 0.6f;
         #endregion
-        private void TileElements(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
+        private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
         {
             var tt = mapstorage.GetBlock(x, y, z);
             bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
@@ -779,6 +779,13 @@ namespace ManicDigger
                 if (x == 256 - 1) { drawback = false; }
                 if (y == 0) { drawleft = false; }
                 if (y == 256 - 1) { drawright = false; }
+            }
+            float flowerfix = 0;
+            if (data.IsBlockFlower(tiletype))
+            {
+                drawtop = false;
+                drawbottom = false;
+                flowerfix = 0.5f;
             }
             //top
             if (drawtop)
@@ -820,10 +827,10 @@ namespace ManicDigger
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom, color));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom, color));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top, color));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Right, texrec.Top, color));
+                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 0, texrec.Left, texrec.Bottom, color));
+                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 1, texrec.Right, texrec.Bottom, color));
+                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 1, y + 0, texrec.Left, texrec.Top, color));
+                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 1, y + 1, texrec.Right, texrec.Top, color));
                 myelements.Add((ushort)(lastelement + 0));
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 2));
@@ -837,10 +844,10 @@ namespace ManicDigger
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom, color));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom, color));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Left, texrec.Top, color));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top, color));
+                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 0, texrec.Left, texrec.Bottom, color));
+                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 1, texrec.Right, texrec.Bottom, color));
+                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 1, y + 0, texrec.Left, texrec.Top, color));
+                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 1, y + 1, texrec.Right, texrec.Top, color));
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 0));
                 myelements.Add((ushort)(lastelement + 2));
@@ -853,10 +860,10 @@ namespace ManicDigger
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Right, texrec.Bottom, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0, texrec.Right, texrec.Top, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0 + flowerfix, texrec.Left, texrec.Bottom, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0 + flowerfix, texrec.Left, texrec.Top, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0 + flowerfix, texrec.Right, texrec.Bottom, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 0 + flowerfix, texrec.Right, texrec.Top, colorShadow));
                 myelements.Add((ushort)(lastelement + 0));
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 2));
@@ -870,10 +877,10 @@ namespace ManicDigger
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom, colorShadow));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1, texrec.Right, texrec.Top, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1 - flowerfix, texrec.Left, texrec.Bottom, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1 - flowerfix, texrec.Left, texrec.Top, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1 - flowerfix, texrec.Right, texrec.Bottom, colorShadow));
+                myvertices.Add(new VertexPositionTexture(x + 1, z + 1, y + 1 - flowerfix, texrec.Right, texrec.Top, colorShadow));
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 0));
                 myelements.Add((ushort)(lastelement + 2));

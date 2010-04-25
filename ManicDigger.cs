@@ -418,6 +418,7 @@ namespace ManicDigger
         bool IsValidTileType(int tiletype);
         bool IsTransparentTile(int tiletype);
         int PlayerBuildableMaterialType(int p);
+        bool IsBlockFlower(int tiletype);
     }
     public class GameDataDummy : IGameData
     {
@@ -465,6 +466,12 @@ namespace ManicDigger
         {
             return p;
         }
+        #region IGameData Members
+        public bool IsBlockFlower(int tiletype)
+        {
+            return false;
+        }
+        #endregion
     }
     public interface IMapGenerator
     {

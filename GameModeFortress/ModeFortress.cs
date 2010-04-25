@@ -393,6 +393,12 @@ namespace GameModeFortress
         {
             return p;
         }
+        #region IGameData Members
+        public bool IsBlockFlower(int tiletype)
+        {
+            return false;
+        }
+        #endregion
     }
     public enum TileTypesManicDigger
     {

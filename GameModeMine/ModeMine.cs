@@ -298,6 +298,16 @@ namespace ManicDigger
             }
             return (int)t;
         }
+        #region IGameData Members
+        public bool IsBlockFlower(int tiletype)
+        {
+            return tiletype == (int)TileTypeMinecraft.YellowFlowerDecorations
+                || tiletype == (int)TileTypeMinecraft.RedRoseDecorations
+                || tiletype == (int)TileTypeMinecraft.Sapling
+                || tiletype == (int)TileTypeMinecraft.RedMushroom
+                || tiletype == (int)TileTypeMinecraft.BrownMushroom;
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
