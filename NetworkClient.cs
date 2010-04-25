@@ -40,11 +40,13 @@ namespace ManicDigger
         public IGameData Data { get; set; }
         [Inject]
         public fCraft.MapGenerator Gen { get; set; }
+        public string DEFAULTMAP = "flatgrass";
         public void Dispose()
         {
         }
         public void Connect(string serverAddress, int port, string username, string auth)
         {
+            SendChat("/generate " + DEFAULTMAP);
         }
         public void Process()
         {
@@ -99,6 +101,10 @@ namespace ManicDigger
                                 if (!hollow) Map.SetBlock(i, j, k, Data.TileIdDirt);
                             }
                             Map.SetBlock(i, j, Map.MapSizeZ / 2 - 1, Data.TileIdGrass);
+                            for (int k = Map.MapSizeZ / 2; k < Map.MapSizeZ; k++)
+                            {
+                                if (!hollow) Map.SetBlock(i, j, k, Data.TileIdEmpty);
+                            }
                         }
                         if (i > Map.MapSizeX / 2 && !reportedProgress)
                         {

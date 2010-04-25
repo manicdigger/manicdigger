@@ -303,6 +303,8 @@ namespace ManicDigger
         void OnNewFrame(double dt);
         IEnumerable<ICharacterToDraw> Characters { get; }
         Vector3 PlayerPositionSpawn { get; }
+        Vector3 PlayerOrientationSpawn { get; }
+        void OnNewMap();
     }
     public interface ICharacterToDraw
     {
@@ -1065,8 +1067,11 @@ namespace ManicDigger
         }
         private void GuiActionGenerateNewMap()
         {
-            mapManipulator.GeneratePlainMap(map);
+            //mapManipulator.GeneratePlainMap(map);
+            network.Connect("", 0, "", "");
+            game.OnNewMap();
             player.playerposition = game.PlayerPositionSpawn;
+            player.playerorientation = game.PlayerOrientationSpawn;
             DrawMap();
         }
         bool freemousejustdisabled;

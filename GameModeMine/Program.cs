@@ -59,6 +59,7 @@ namespace ManicDigger
                 n.Gen.log = new fCraft.FLogDummy();
                 n.Gen.map = new MyFCraftMap() { data = gamedata, map = mapstorage, mapManipulator = mapManipulator };
                 n.Gen.rand = new GetRandomDummy();
+                n.DEFAULTMAP = "mountains";
             }
             else
             {
@@ -95,6 +96,7 @@ namespace ManicDigger
             clientgame.terrain = terrainDrawer;
             clientgame.network = network;
             clientgame.viewport = w;
+            clientgame.data = gamedata;
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

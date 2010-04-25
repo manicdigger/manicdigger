@@ -14,6 +14,8 @@ namespace ManicDigger
         public IViewport3d viewport { get; set; }
         [Inject]
         public INetworkClient network { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
         public void OnPick(OpenTK.Vector3 newtile, bool right)
         {
             network.SendSetBlock(newtile,
@@ -32,7 +34,8 @@ namespace ManicDigger
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn ; } }
-                public MapStorage map = new MapStorage();
+        public MapStorage map = new MapStorage();
+        public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
         public GameMinecraft()
@@ -64,6 +67,25 @@ namespace ManicDigger
         {
         }
         #endregion
+        #region IGameMode Members
+        public void OnNewMap()
+        {
+            int x = map.MapSizeX / 2;
+            int y = map.MapSizeY / 2;
+            playerpositionspawn = new Vector3(x + 0.5f, blockheight(x, y), y + 0.5f);
+        }
+        #endregion
+        int blockheight(int x, int y)
+        {
+            for (int z = MapSizeZ - 1; z >= 0; z--)
+            {
+                if (Map[x, y, z] != data.TileIdEmpty)
+                {
+                    return z + 1;
+                }
+            }
+            return MapSizeZ / 2;
+        }
     }
     public class GameDataTilesMinecraft : IGameData
     {

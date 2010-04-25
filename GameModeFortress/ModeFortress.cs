@@ -285,6 +285,17 @@ namespace GameModeFortress
             return Color.White;
         }
         #endregion
+        #region IGameMode Members
+        public void OnNewMap()
+        {
+        }
+        #endregion
+        #region IGameMode Members
+        public Vector3 PlayerOrientationSpawn
+        {
+            get { return new Vector3((float)Math.PI, 0, 0); }
+        }
+        #endregion
     }
     public enum CommandId
     {
