@@ -86,6 +86,12 @@ namespace ManicDigger
             }
             return MapSizeZ / 2;
         }
+        #region IMapStorage Members
+        public int GetBlock(int x, int y, int z)
+        {
+            return Map[x, y, z];
+        }
+        #endregion
     }
     public class GameDataTilesMinecraft : IGameData
     {

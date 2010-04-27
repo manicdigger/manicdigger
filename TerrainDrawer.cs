@@ -387,8 +387,8 @@ namespace ManicDigger
     }
     public interface ITerrainInfo
     {
-        int GetBlock(int x, int y, int z);
-        Color GetBlockColor(int x, int y, int z);
+        int GetTerrainBlock(int x, int y, int z);
+        Color GetTerrainBlockColor(int x, int y, int z);
         int MapSizeX { get; }
         int MapSizeY { get; }
         int MapSizeZ { get; }
@@ -397,11 +397,11 @@ namespace ManicDigger
     {
         [Inject]
         public IMapStorage mapstorage { get; set; }
-        public int GetBlock(int x, int y, int z)
+        public int GetTerrainBlock(int x, int y, int z)
         {
             return mapstorage.Map[x, y, z];
         }
-        public Color GetBlockColor(int x, int y, int z)
+        public Color GetTerrainBlockColor(int x, int y, int z)
         {
             return Color.White;
         }
@@ -754,7 +754,7 @@ namespace ManicDigger
         #endregion
         private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
         {
-            var tt = mapstorage.GetBlock(x, y, z);
+            var tt = mapstorage.GetTerrainBlock(x, y, z);
             bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
             bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
             bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
@@ -762,7 +762,7 @@ namespace ManicDigger
             bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
             bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
             int tiletype = tt;
-            Color color = mapstorage.GetBlockColor(x, y, z);
+            Color color = mapstorage.GetTerrainBlockColor(x, y, z);
             Color colorShadow = Color.FromArgb(color.A,
                 (int)(color.R * BlockShadow), (int)(color.G * BlockShadow), (int)(color.B * BlockShadow));
             if (!data.IsValidTileType(tiletype))
@@ -908,7 +908,7 @@ namespace ManicDigger
             {
                 return true;
             }
-            return mapstorage.GetBlock(x, y, z) == data.TileIdEmpty;
+            return mapstorage.GetTerrainBlock(x, y, z) == data.TileIdEmpty;
         }
         bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z, int adjacenttiletype)
         {
@@ -920,10 +920,10 @@ namespace ManicDigger
             {
                 return true;
             }
-            return mapstorage.GetBlock(x, y, z) == data.TileIdEmpty
-                ||(data.IsWaterTile(mapstorage.GetBlock(x, y, z))
+            return mapstorage.GetTerrainBlock(x, y, z) == data.TileIdEmpty
+                ||(data.IsWaterTile(mapstorage.GetTerrainBlock(x, y, z))
                  && (!data.IsWaterTile(adjacenttiletype)))
-                ||data.IsTransparentTile(mapstorage.GetBlock(x, y, z));
+                ||data.IsTransparentTile(mapstorage.GetTerrainBlock(x, y, z));
         }
         #region IDisposable Members
         public void Dispose()

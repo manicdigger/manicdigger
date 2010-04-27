@@ -19,12 +19,36 @@ namespace GameModeFortress
         public IViewport3d viewport { get; set; }
         [Inject]
         public IGameData data { get; set; }
+        public IMapStorage mapforphysics;
+        class MapForPhysics : IMapStorage
+        {
+            public GameFortress game;
+            #region IMapStorage Members
+            public byte[, ,] Map { get { return game.Map; } set { game.Map = value; } }
+            public int MapSizeX { get { return game.MapSizeX; } set { game.MapSizeX = value; } }
+            public int MapSizeY { get { return game.MapSizeX; } set { game.MapSizeY = value; } }
+            public int MapSizeZ { get { return game.MapSizeZ; } set { game.MapSizeZ = value; } }
+            public int GetBlock(int x, int y, int z)
+            {
+                return game.GetBlockForPhysics(x,y,z);
+            }
+            public void SetBlock(int x, int y, int z, byte tileType)
+            {
+                game.SetBlock(x, y, z, tileType);
+            }
+            public float WaterLevel { get { return game.WaterLevel; } set { throw new Exception(); } }
+            public void Dispose()
+            {
+            }
+            #endregion
+        }
         public GameFortress()
         {
             map.Map = new byte[256, 256, 64];
             map.MapSizeX = 256;
             map.MapSizeY = 256;
             map.MapSizeZ = 64;
+            mapforphysics = new MapForPhysics() { game = this };
         }
         public void OnNewFrame(double dt)
         {
@@ -83,6 +107,7 @@ namespace GameModeFortress
         List<Character> characters = new List<Character>();
         [Inject]
         public CharacterPhysics physics { get; set; }
+        float basecharactersmovespeed { get { return ManicDiggerGameWindow.basemovespeed / 3; } }
         void UpdateCharacters(float dt)
         {
             if (characters.Count == 0)
@@ -95,9 +120,21 @@ namespace GameModeFortress
                 //v0.currentorder = new Vector3(0, 32, 0);
                 v0.pos3d = PlayerPositionSpawn;
             }
+            //clear wrong orders
             for (int i = 0; i < characters.Count; i++)
             {
                 var v0 = characters[i];
+                if (v0.currentorder != null && !orders.ContainsKey(v0.currentorder.Value))
+                {
+                    v0.currentorder = null;
+                    v0.state = CharacterState.Walking;
+                    v0.buildprogress = 0;
+                }
+            }
+            var lcharacters = new List<Character>(characters);
+            for (int i = 0; i < lcharacters.Count; i++)
+            {
+                var v0 = lcharacters[i];
                 if (v0.currentorder == null)
                 {
                     Vector3? destination = ClosestBuildOrder(v0.pos3d);
@@ -112,7 +149,7 @@ namespace GameModeFortress
                     Vector3 curorder = To3d(v0.currentorder.Value);//v0.orders[v0.currentOrderId]
                     var dir = (curorder - v0.pos3d);
                     dir.Normalize();
-                    var newpos = v0.pos3d + Vector3.Multiply(dir, dt * ManicDiggerGameWindow.basemovespeed);
+                    var newpos = v0.pos3d + Vector3.Multiply(dir, dt * basecharactersmovespeed);
                     //newpos = physics.WallSlide(v0.pos3d, newpos);
                     var delta = newpos - v0.pos3d;
                     //if (delta.Length < dt * 0.1 * ManicDiggerGameWindow.basemovespeed)
@@ -134,13 +171,7 @@ namespace GameModeFortress
                     if (v0.buildprogress > 2)
                     {
                         var vv = v0.currentorder.Value;
-                        var o = orders[v0.currentorder.Value];
-                        map.Map[(int)vv.X, (int)vv.Y, (int)vv.Z] = o.mode == BlockSetMode.Create ? (byte)o.tiletype : data.TileIdEmpty;
-                        terrain.UpdateTile((int)vv.X, (int)vv.Y, (int)vv.Z);
-                        orders.Remove(v0.currentorder.Value);
-                        v0.currentorder = null;
-                        v0.state = CharacterState.Walking;
-                        v0.buildprogress = 0;
+                        DoOrder(vv);
                     }
                 }
                 else
@@ -159,6 +190,19 @@ namespace GameModeFortress
                 }
                 */
             }
+        }
+        private void DoOrder(Vector3 vv)
+        {
+            var o = orders[vv];
+            map.Map[(int)vv.X, (int)vv.Y, (int)vv.Z] = o.mode == BlockSetMode.Create ? (byte)o.tiletype : data.TileIdEmpty;
+            terrain.UpdateTile((int)vv.X, (int)vv.Y, (int)vv.Z);
+            orders.Remove(vv);
+        }
+        private void RemoveOrder(Vector3 vv)
+        {
+            var o = orders[vv];
+            terrain.UpdateTile((int)vv.X, (int)vv.Y, (int)vv.Z);
+            orders.Remove(vv);
         }
         Vector3 ToMap(Vector3 v)
         {
@@ -209,6 +253,19 @@ namespace GameModeFortress
                     var cmd = new CommandBuild();
                     cmd.FromStream(ms);
                     Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
+                    //cancelling orders
+                    if (map.GetBlock(cmd.x, cmd.y, cmd.z) == data.TileIdEmpty
+                        && cmd.mode==BlockSetMode.Destroy)
+                    {
+                        RemoveOrder(v);
+                        break;
+                    }
+                    if (map.GetBlock(cmd.x, cmd.y, cmd.z) == cmd.tiletype
+                         && cmd.mode == BlockSetMode.Create)
+                    {
+                        RemoveOrder(v);
+                        break;
+                    }
                     orders[v] = new BuildOrder()
                     {
                         playerid = player_id,
@@ -265,7 +322,7 @@ namespace GameModeFortress
         }
         #endregion
         #region ITerrainInfo Members
-        public int GetBlock(int x, int y, int z)
+        public int GetTerrainBlock(int x, int y, int z)
         {
             var v = new Vector3(x, y, z);
             if (orders.ContainsKey(v))
@@ -274,12 +331,13 @@ namespace GameModeFortress
             }
             return Map[x, y, z];
         }
-        public System.Drawing.Color GetBlockColor(int x, int y, int z)
+        public System.Drawing.Color GetTerrainBlockColor(int x, int y, int z)
         {
             var v = new Vector3(x, y, z);
             if (orders.ContainsKey(v))
             {
-                Color c = orders[v].mode == BlockSetMode.Create ? Color.Blue : Color.Red;
+                Color c = orders[v].mode == BlockSetMode.Create ?
+                    Color.FromArgb(100, 100, 255) : Color.FromArgb(255, 100, 100);
                 return c;
             }
             return Color.White;
@@ -296,6 +354,22 @@ namespace GameModeFortress
             get { return new Vector3((float)Math.PI, 0, 0); }
         }
         #endregion
+        #region IMapStorage Members
+        public int GetBlock(int x, int y, int z)
+        {
+            return GetTerrainBlock(x, y, z);
+        }
+        #endregion
+        //Needed for walking on and picking the build order blocks.
+        internal int GetBlockForPhysics(int x,int y,int z)
+        {
+            var v = new Vector3(x, y, z);
+            if (orders.ContainsKey(v))
+            {
+                return orders[v].mode == BlockSetMode.Create ? orders[v].tiletype : data.TileIdEmpty;
+            }
+            return map.Map[x,y,z];
+        }
     }
     public enum CommandId
     {

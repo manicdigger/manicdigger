@@ -1476,8 +1476,8 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return map.Map[x, y, z] == data.TileIdEmpty
-                || data.IsWaterTile(map.Map[x, y, z]);
+            return map.GetBlock(x, y, z) == data.TileIdEmpty
+                || data.IsWaterTile(map.GetBlock(x, y, z));
         }
         float PICK_DISTANCE = 3.5f;
         Matrix4 the_modelview;
@@ -2782,7 +2782,7 @@ namespace ManicDigger
                 {
                     return p.Y < map.WaterLevel;
                 }
-                return data.IsWaterTile(map.Map[(int)p.X, (int)p.Z, (int)p.Y]);
+                return data.IsWaterTile(map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
             }
         }
         #endregion

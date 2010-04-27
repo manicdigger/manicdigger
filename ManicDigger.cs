@@ -108,6 +108,7 @@ namespace ManicDigger
         int MapSizeX { get; set; }
         int MapSizeY { get; set; }
         int MapSizeZ { get; set; }
+        int GetBlock(int x, int y, int z);
         void SetBlock(int x, int y, int z, byte tileType);
         float WaterLevel { get; set; }
         void Dispose();
@@ -144,7 +145,7 @@ namespace ManicDigger
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, byte tileType)
         {
-            throw new NotImplementedException();
+            map[x, y, z] = tileType;
         }
         public float WaterLevel
         {
@@ -159,6 +160,12 @@ namespace ManicDigger
         }
         public void Dispose()
         {
+        }
+        #endregion
+        #region IMapStorage Members
+        public int GetBlock(int x, int y, int z)
+        {
+            return map[x, y, z];
         }
         #endregion
     }
@@ -510,9 +517,9 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (data.IsWaterTile(map.Map[x, y, z]) &&
-                !data.IsWaterTile(map.Map[x, y, z + 1])) { return true; }
-            return map.Map[x, y, z] == data.TileIdEmpty
+            if (data.IsWaterTile(map.GetBlock(x, y, z)) &&
+                !data.IsWaterTile(map.GetBlock(x, y, z + 1))) { return true; }
+            return map.GetBlock(x, y, z) == data.TileIdEmpty
                 || (data.IsWaterTile(map.Map[x,y,z]) && (!swimmingtop));
         }
         float walldistance = 0.2f;

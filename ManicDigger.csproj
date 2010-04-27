@@ -63,6 +63,7 @@
     <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />
+    <Compile Include="Pathfinding.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TerrainDrawer.cs" />

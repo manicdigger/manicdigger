@@ -82,7 +82,7 @@ namespace GameModeFortress
             worldfeatures.the3d = the3d;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
-            w.map = clientgame;
+            w.map = clientgame.mapforphysics;
             w.physics = physics;
             w.clients = clientgame;
             w.network = network;
@@ -99,7 +99,7 @@ namespace GameModeFortress
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
-            physics.map = clientgame;
+            physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             clientgame.physics = physics;
             mapgenerator.data = gamedata;
