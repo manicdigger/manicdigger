@@ -98,6 +98,7 @@ namespace GameModeFortress
             public Vector3? currentorder;
             public CharacterState state;
             public float buildprogress;
+            public List<Vector3> path;
         }
         enum CharacterState
         {
@@ -108,6 +109,8 @@ namespace GameModeFortress
         [Inject]
         public CharacterPhysics physics { get; set; }
         float basecharactersmovespeed { get { return ManicDiggerGameWindow.basemovespeed / 3; } }
+        [Inject]
+        public Pathfinder3d pathfinder{get;set;}
         void UpdateCharacters(float dt)
         {
             if (characters.Count == 0)

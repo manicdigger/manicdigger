@@ -4,8 +4,138 @@ using System.Text;
 using Algorithms;
 using System.Runtime.InteropServices;
 using System.Collections;
+using ManicDigger.FastAStar;
+using OpenTK;
+using System.Drawing;
 
 namespace ManicDigger
+{
+    public interface IWalkable
+    {
+        int? BlockWalkCost(int x, int y, int z);
+    }
+    public interface IPathfinder3d
+    {
+        void NewMap();
+        void UpdateBlock(int x, int y, int z);
+        IEnumerable<Vector3> Pathfind(Vector3 start, Vector3 end);
+    }
+    public class Pathfinder3d : IPathfinder3d
+    {
+        [Inject]
+        public IMapStorage map { get; set; }
+        [Inject]
+        public IWalkable walkable { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
+        AStarFastNode[] nodes = new AStarFastNode[100 * 1000];
+        Dictionary<Vector3, int> node_id_at_position = new Dictionary<Vector3, int>();
+        Dictionary<int, Vector3> position_at_node_id = new Dictionary<int, Vector3>();
+        public void NewMap()
+        {
+            for (int x = 0; x < map.MapSizeX; x++)
+            {
+                for (int y = 0; y < map.MapSizeY; y++)
+                {
+                    for (int z = 0; z < map.MapSizeZ; z++)
+                    {
+                        UpdateBlock(x, y, z);
+                    }
+                }
+            }
+        }
+        //update all connections outgoing from this block
+        //does not update connections of blocks around going into this block!
+        public void UpdateBlock(int x, int y, int z)
+        {
+            if (map.GetBlock(x, y, z) == data.TileIdEmpty)
+            {
+                return;
+            }
+            var v = new Vector3(x, y, z);
+            MakeSureThereIsNode(v);
+            int nodeid = node_id_at_position[v];
+            //can: a) jump one tile higher, equal or down b) (todo) jump across hole (1 tile). c) (todo) swim
+            foreach (Point p in PosAround4(new Point(x, y)))
+            {
+                for (int i = z + 1; i >= 0; i--)
+                {
+                    int xx = p.X;
+                    int yy = p.Y;
+                    int zz = i;
+                    var vv = new Vector3(xx, yy, zz);
+                    if (!MapUtil.IsValidPos(map, xx, yy, zz))
+                    {
+                        break;
+                    }
+                    if (map.GetBlock(xx, yy, zz) == data.TileIdEmpty)
+                    {
+                        continue;
+                    }
+                    int? cost = walkable.BlockWalkCost(xx, yy, zz);
+                    if (cost != null)
+                    {
+                        MakeSureThereIsNode(vv);
+                        var c = new AStarFastNodeConnection();
+                        c.DestinationId = (uint)node_id_at_position[vv];
+                        c.Length = (ushort)cost.Value;
+                        nodes[nodeid].AddConnection(c);
+                        break;
+                    }
+                }
+            }
+        }
+        IEnumerable<Point> PosAround4(Point p)
+        {
+            yield return new Point(p.X - 1, p.Y);
+            yield return new Point(p.X + 1, p.Y);
+            yield return new Point(p.X, p.Y - 1);
+            yield return new Point(p.X, p.Y + 1);
+        }
+        int nodescount = 0;
+        private Vector3 MakeSureThereIsNode(Vector3 v)
+        {
+            if (!node_id_at_position.ContainsKey(v))
+            {
+                nodes[nodescount] = new AStarFastNode();
+                nodescount++;
+                node_id_at_position[v] = nodescount - 1;
+                position_at_node_id[nodescount - 1] = v;
+            }
+            return v;
+        }
+        public IEnumerable<Vector3> Pathfind(Vector3 start, Vector3 end)
+        {
+            this.goal = end;
+            if (!node_id_at_position.ContainsKey(start)) { yield break; }
+            if (!node_id_at_position.ContainsKey(end)) { yield break; }
+            var l = astarfast.Search((uint)node_id_at_position[start], isgoal, score, cango);
+            foreach (var v in l)
+            {
+                yield return position_at_node_id[(int)v.Position];
+            }
+        }
+        Vector3 goal;
+        bool isgoal(uint nodeid)
+        {
+            return node_id_at_position[goal] == nodeid;
+        }
+        int score(uint nodeid)
+        {
+            return 1;//todo
+        }
+        bool cango(uint nodeid)
+        {
+            return true;
+        }
+        AStarFast astarfast;
+        public Pathfinder3d()
+        {
+            astarfast = new AStarFast(nodes);
+        }
+    }
+}
+namespace ManicDigger.FastAStar
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct AStarFastNodeConnection
