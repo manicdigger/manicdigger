@@ -2673,11 +2673,11 @@ namespace ManicDigger
             //Vector3 pos = new Vector3((int)posx.X, (int)posx.Y, (int)posx.Z);
             Vector3 pos = posx;
             pos += new Vector3(0.5f, 0.5f, 0.5f);
-            GL.LineWidth(150);
+            GL.LineWidth(2);
             float size = 0.51f;
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Begin(BeginMode.LineStrip);
-            GL.Color3(Color.Red);
+            GL.Color3(Color.White);
             //GL.Color3(Color.Silver);
             GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
             GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
