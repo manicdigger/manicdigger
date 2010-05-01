@@ -58,6 +58,7 @@ namespace GameModeFortress
                 n.Gen.log = new fCraft.FLogDummy();
                 n.Gen.map = new MyFCraftMap() { data = gamedata, map = mapstorage, mapManipulator = mapManipulator };
                 n.Gen.rand = new GetRandomDummy();
+                n.DEFAULTMAP = "mountains";
             }
             else
             {

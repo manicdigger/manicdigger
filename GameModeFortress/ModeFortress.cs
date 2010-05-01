@@ -56,15 +56,22 @@ namespace GameModeFortress
         }
         public void OnPick(OpenTK.Vector3 vector3, bool right)
         {
-            var cmd = new CommandBuild()
+            int x = (short)vector3.X;
+            int y = (short)vector3.Y;
+            int z = (short)vector3.Z;
+            var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
+            //if (ENABLE_BUILD_ORDERS)
             {
-                x = (short)vector3.X,
-                y = (short)vector3.Y,
-                z = (short)vector3.Z,
-                mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
-                tiletype = (byte)viewport.MaterialSlots[viewport.activematerial],
-            };
-            ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
+                var cmd = new CommandBuild()
+                {
+                    x = (short)vector3.X,
+                    y = (short)vector3.Y,
+                    z = (short)vector3.Z,
+                    mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
+                    tiletype = (byte)viewport.MaterialSlots[viewport.activematerial],
+                };
+                ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
+            }
         }
         byte[] MakeCommand(CommandId cmdid, IStreamizable cmd)
         {
@@ -256,26 +263,34 @@ namespace GameModeFortress
                     var cmd = new CommandBuild();
                     cmd.FromStream(ms);
                     Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
-                    //cancelling orders
-                    if (map.GetBlock(cmd.x, cmd.y, cmd.z) == data.TileIdEmpty
-                        && cmd.mode==BlockSetMode.Destroy)
+                    if (ENABLE_BUILD_ORDERS)
                     {
-                        RemoveOrder(v);
-                        break;
+                        //cancelling orders
+                        if (map.GetBlock(cmd.x, cmd.y, cmd.z) == data.TileIdEmpty
+                            && cmd.mode == BlockSetMode.Destroy)
+                        {
+                            RemoveOrder(v);
+                            break;
+                        }
+                        if (map.GetBlock(cmd.x, cmd.y, cmd.z) == cmd.tiletype
+                             && cmd.mode == BlockSetMode.Create)
+                        {
+                            RemoveOrder(v);
+                            break;
+                        }
+                        orders[v] = new BuildOrder()
+                        {
+                            playerid = player_id,
+                            position = v,
+                            mode = cmd.mode,
+                            tiletype = cmd.tiletype,
+                        };
                     }
-                    if (map.GetBlock(cmd.x, cmd.y, cmd.z) == cmd.tiletype
-                         && cmd.mode == BlockSetMode.Create)
+                    else
                     {
-                        RemoveOrder(v);
-                        break;
+                        map.Map[cmd.x, cmd.y, cmd.z] = cmd.mode == BlockSetMode.Create ?
+                            (byte)viewport.MaterialSlots[viewport.activematerial] : data.TileIdEmpty;
                     }
-                    orders[v] = new BuildOrder()
-                    {
-                        playerid = player_id,
-                        position = v,
-                        mode = cmd.mode,
-                        tiletype = cmd.tiletype,
-                    };
                     terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                     break;
                 default:
@@ -324,13 +339,17 @@ namespace GameModeFortress
         {
         }
         #endregion
+        bool ENABLE_BUILD_ORDERS = false;
         #region ITerrainInfo Members
         public int GetTerrainBlock(int x, int y, int z)
         {
-            var v = new Vector3(x, y, z);
-            if (orders.ContainsKey(v))
+            if (ENABLE_BUILD_ORDERS)
             {
-                return orders[v].tiletype;
+                var v = new Vector3(x, y, z);
+                if (orders.ContainsKey(v))
+                {
+                    return orders[v].tiletype;
+                }
             }
             return Map[x, y, z];
         }
@@ -349,6 +368,9 @@ namespace GameModeFortress
         #region IGameMode Members
         public void OnNewMap()
         {
+            int x = map.MapSizeX / 2;
+            int y = map.MapSizeY / 2;
+            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y), y + 0.5f);
         }
         #endregion
         #region IGameMode Members
@@ -366,10 +388,13 @@ namespace GameModeFortress
         //Needed for walking on and picking the build order blocks.
         internal int GetBlockForPhysics(int x,int y,int z)
         {
-            var v = new Vector3(x, y, z);
-            if (orders.ContainsKey(v))
+            if (ENABLE_BUILD_ORDERS)
             {
-                return orders[v].mode == BlockSetMode.Create ? orders[v].tiletype : data.TileIdEmpty;
+                var v = new Vector3(x, y, z);
+                if (orders.ContainsKey(v))
+                {
+                    return orders[v].mode == BlockSetMode.Create ? orders[v].tiletype : data.TileIdEmpty;
+                }
             }
             return map.Map[x,y,z];
         }
@@ -411,92 +436,68 @@ namespace GameModeFortress
     }
     public class GameDataTilesManicDigger : IGameData
     {
+        public GameDataTilesMinecraft data = new GameDataTilesMinecraft();
+        #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
         {
-            TileTypesManicDigger tt = (TileTypesManicDigger)tileType;
-            if (tt == TileTypesManicDigger.Grass)
-            {
-                if (side == TileSide.Top) { return 0; }
-                if (side == TileSide.Bottom) { return 1; }
-                return 2;
-            }
-            if (tt == TileTypesManicDigger.Wall) { return 2; }
-            if (tt == TileTypesManicDigger.Dirt) { return 3; }
-            if (tt == TileTypesManicDigger.Gold) { return 4; }
-            //if ((int)tt < 3) { return (int)tt - 1; }
-            return 255;
+            return data.GetTileTextureId(tileType, side);
         }
-        public byte TileIdEmpty { get { return (int)TileTypesManicDigger.Empty; } }
-        public byte TileIdGrass { get { return (int)TileTypesManicDigger.Grass; } }
-        public byte TileIdDirt { get { return (int)TileTypesManicDigger.Dirt; } }
+        public byte TileIdEmpty
+        {
+            get { return data.TileIdEmpty; }
+        }
+        public byte TileIdGrass
+        {
+            get { return data.TileIdGrass; }
+        }
+        public byte TileIdDirt
+        {
+            get { return data.TileIdDirt; }
+        }
         public int[] DefaultMaterialSlots
         {
-            get
-            {
-                int[] m = new int[10];
-                for (int i = 0; i < 10; i++)
-                {
-                    m[i] = (i + 1);
-                }
-                return m;
-            }
+            get { return data.DefaultMaterialSlots; }
         }
-        public byte GoldTileId { get { return (int)TileTypesManicDigger.Gold; } }
-        #region IGameData Members
+        public byte GoldTileId
+        {
+            get { return data.GoldTileId; }
+        }
         public int TileIdStone
         {
-            get { return TileIdDirt; }//todo
+            get { return data.TileIdStone; }
         }
         public int TileIdWater
         {
-            get { return (int)TileTypesManicDigger.Water; }//todo
+            get { return data.TileIdWater; }
         }
         public int TileIdSand
         {
-            get { return TileIdDirt; }//todo
+            get { return data.TileIdSand; }
         }
         public bool IsWaterTile(int tiletype)
         {
-            return tiletype == TileIdWater;
+            return data.IsWaterTile(tiletype);
         }
-        #endregion
-        #region IGameData Members
         public bool IsBuildableTile(int tiletype)
         {
-            return tiletype != TileIdWater;
+            return data.IsBuildableTile(tiletype);
         }
-        #endregion
-        #region IGameData Members
         public bool IsValidTileType(int tiletype)
         {
-            if (tiletype == 0) { return false; }
-            return tiletype < (int)TileTypesManicDigger.Count;
+            return data.IsValidTileType(tiletype);
         }
-        #endregion
-        public bool IsTransparentTile(int tileType)
+        public bool IsTransparentTile(int tiletype)
         {
-            return false;
+            return data.IsTransparentTile(tiletype);
         }
         public int PlayerBuildableMaterialType(int p)
         {
-            return p;
+            return data.PlayerBuildableMaterialType(p);
         }
-        #region IGameData Members
         public bool IsBlockFlower(int tiletype)
         {
-            return false;
+            return data.IsBlockFlower(tiletype);
         }
         #endregion
-    }
-    public enum TileTypesManicDigger
-    {
-        Empty,
-        Grass,
-        Floor,
-        Wall,
-        Dirt,
-        Gold,
-        Water,
-        Count,
     }
 }

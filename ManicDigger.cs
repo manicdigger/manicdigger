@@ -133,6 +133,17 @@ namespace ManicDigger
             }
             return true;
         }
+        public static int blockheight(IMapStorage map, int tileidempty, int x, int y)
+        {
+            for (int z = map.MapSizeZ - 1; z >= 0; z--)
+            {
+                if (map.Map[x, y, z] != tileidempty)
+                {
+                    return z + 1;
+                }
+            }
+            return map.MapSizeZ / 2;
+        }
     }
     public class MapStorage : IMapStorage
     {

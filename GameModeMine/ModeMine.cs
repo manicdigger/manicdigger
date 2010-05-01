@@ -72,20 +72,9 @@ namespace ManicDigger
         {
             int x = map.MapSizeX / 2;
             int y = map.MapSizeY / 2;
-            playerpositionspawn = new Vector3(x + 0.5f, blockheight(x, y), y + 0.5f);
+            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y), y + 0.5f);
         }
         #endregion
-        int blockheight(int x, int y)
-        {
-            for (int z = MapSizeZ - 1; z >= 0; z--)
-            {
-                if (Map[x, y, z] != data.TileIdEmpty)
-                {
-                    return z + 1;
-                }
-            }
-            return MapSizeZ / 2;
-        }
         #region IMapStorage Members
         public int GetBlock(int x, int y, int z)
         {
