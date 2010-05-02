@@ -54,21 +54,49 @@ namespace GameModeFortress
         {
             Tick();
         }
-        public void OnPick(OpenTK.Vector3 vector3, bool right)
+        RailDirection PickHorizontalVertical(float xfract, float yfract)
         {
-            int x = (short)vector3.X;
-            int y = (short)vector3.Y;
-            int z = (short)vector3.Z;
+            float x = xfract;
+            float y = yfract;
+            if (y >= x && y >= (1 - x))
+            {
+                return RailDirection.Vertical;
+            }
+            if (y < x && y < (1 - x))
+            {
+                return RailDirection.Vertical;
+            }
+            return RailDirection.Horizontal;
+        }
+        public void OnPick(OpenTK.Vector3 blockpos,Vector3 blockposold, OpenTK.Vector3 pos3d, bool right)
+        {
+            float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
+            float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
+            int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
+            int railstart = GameDataTilesManicDigger.railstart;
+            if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical)
+            {
+                RailDirection dirnew = PickHorizontalVertical(xfract, zfract);
+                RailDirectionFlags dir = data.GetRail(GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z));
+                if (dir != RailDirectionFlags.None)
+                {
+                    blockpos = blockposold;
+                }
+                activematerial = railstart + (int)(dir | DirectionUtils.ToRailDirectionFlags(dirnew));
+                //Console.WriteLine(xfract + ":" + zfract + ":" + activematerial + ":" + dirnew);
+            }
+            int x = (short)blockpos.X;
+            int y = (short)blockpos.Y;
+            int z = (short)blockpos.Z;
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
-            //if (ENABLE_BUILD_ORDERS)
             {
                 var cmd = new CommandBuild()
                 {
-                    x = (short)vector3.X,
-                    y = (short)vector3.Y,
-                    z = (short)vector3.Z,
+                    x = (short)blockpos.X,
+                    y = (short)blockpos.Y,
+                    z = (short)blockpos.Z,
                     mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
-                    tiletype = (byte)viewport.MaterialSlots[viewport.activematerial],
+                    tiletype = (byte)activematerial,
                 };
                 ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
             }
@@ -289,7 +317,7 @@ namespace GameModeFortress
                     else
                     {
                         map.Map[cmd.x, cmd.y, cmd.z] = cmd.mode == BlockSetMode.Create ?
-                            (byte)viewport.MaterialSlots[viewport.activematerial] : data.TileIdEmpty;
+                            (byte)cmd.tiletype : data.TileIdEmpty;
                     }
                     terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                     break;
@@ -440,6 +468,18 @@ namespace GameModeFortress
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
         {
+            if (IsRailTile(tileType))
+            {
+                //return 1;
+                if (side == TileSide.Top)
+                {
+                    return tileType;
+                }
+                else
+                {
+                    return data.GetTileTextureId((int)TileTypeMinecraft.Cobblestone, TileSide.Top);
+                }
+            }
             return data.GetTileTextureId(tileType, side);
         }
         public byte TileIdEmpty
@@ -480,14 +520,20 @@ namespace GameModeFortress
         }
         public bool IsBuildableTile(int tiletype)
         {
+            if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
+            if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft|RailDirectionFlags.UpRight|
+                RailDirectionFlags.DownLeft|RailDirectionFlags.DownRight)) { return true; }
+            if (IsRailTile(tiletype)) { return false; }
             return data.IsBuildableTile(tiletype);
         }
         public bool IsValidTileType(int tiletype)
         {
+            if (IsRailTile(tiletype)) { return true; }
             return data.IsValidTileType(tiletype);
         }
         public bool IsTransparentTile(int tiletype)
         {
+            if (IsRailTile(tiletype)) { return true; }
             return data.IsTransparentTile(tiletype);
         }
         public int PlayerBuildableMaterialType(int p)
@@ -499,5 +545,20 @@ namespace GameModeFortress
             return data.IsBlockFlower(tiletype);
         }
         #endregion
+        #region IGameData Members
+        public RailDirectionFlags GetRail(int tiletype)
+        {
+            if (IsRailTile(tiletype))
+            {
+                return (RailDirectionFlags)(tiletype - railstart);
+            }
+            return RailDirectionFlags.None;
+        }
+        public static bool IsRailTile(int tiletype)
+        {
+            return tiletype >= railstart && tiletype < railstart + 64;
+        }
+        #endregion
+        public static int railstart = (11 * 16);
     }
 }

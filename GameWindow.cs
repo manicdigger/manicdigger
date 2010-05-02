@@ -298,7 +298,7 @@ namespace ManicDigger
     }
     public interface IGameMode
     {
-        void OnPick(Vector3 vector3, bool right);
+        void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right);
         void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int type);
         void OnNewFrame(double dt);
         IEnumerable<ICharacterToDraw> Characters { get; }
@@ -1591,6 +1591,7 @@ namespace ManicDigger
                                 throw new Exception();
                             }
                             game.OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                                new Vector3((int)tile.pos.X, (int)tile.pos.Z, (int)tile.pos.Y), tile.pos,
                                 right);
                             //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                             //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
@@ -2302,7 +2303,7 @@ namespace ManicDigger
         void DrawInventory()
         {
             List<int> buildable = Buildable;
-            inventorysize = (int)Math.Sqrt(buildable.Count);
+            inventorysize = (int)Math.Ceiling(Math.Sqrt(buildable.Count));
             int singlesize = 40;
             int x = 0;
             int y = 0;

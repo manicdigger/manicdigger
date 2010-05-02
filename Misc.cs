@@ -84,12 +84,16 @@ namespace ManicDigger
             return ms.ToArray();
         }
     }
-    class FastBitmap
+    public class FastBitmap
     {
         public Bitmap bmp;
         BitmapData bmd;
         public void Lock()
         {
+            if (bmd != null)
+            {
+                throw new Exception("Already locked.");
+            }
             if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
             {
                 throw new Exception();
@@ -123,7 +127,12 @@ namespace ManicDigger
         }
         public void Unlock()
         {
+            if (bmd == null)
+            {
+                throw new Exception("Not locked.");
+            }
             bmp.UnlockBits(bmd);
+            bmd = null;
         }
     }
 }

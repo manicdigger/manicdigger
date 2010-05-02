@@ -16,9 +16,9 @@ namespace ManicDigger
         public INetworkClient network { get; set; }
         [Inject]
         public IGameData data { get; set; }
-        public void OnPick(OpenTK.Vector3 newtile, bool right)
+        public void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right)
         {
-            network.SendSetBlock(newtile,
+            network.SendSetBlock(blockposnew,
                 right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)viewport.MaterialSlots[viewport.activematerial]);
         }
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
@@ -323,6 +323,12 @@ namespace ManicDigger
                 || tiletype == (int)TileTypeMinecraft.Sapling
                 || tiletype == (int)TileTypeMinecraft.RedMushroom
                 || tiletype == (int)TileTypeMinecraft.BrownMushroom;
+        }
+        #endregion
+        #region IGameData Members
+        public RailDirectionFlags GetRail(int tiletype)
+        {
+            return RailDirectionFlags.None;
         }
         #endregion
     }

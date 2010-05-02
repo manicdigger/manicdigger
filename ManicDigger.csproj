@@ -66,6 +66,7 @@
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rail.cs" />
     <Compile Include="TerrainDrawer.cs" />
   </ItemGroup>
   <ItemGroup>

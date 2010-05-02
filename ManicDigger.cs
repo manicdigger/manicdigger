@@ -437,6 +437,7 @@ namespace ManicDigger
         bool IsTransparentTile(int tiletype);
         int PlayerBuildableMaterialType(int p);
         bool IsBlockFlower(int tiletype);
+        RailDirectionFlags GetRail(int tiletype);
     }
     public class GameDataDummy : IGameData
     {
@@ -488,6 +489,12 @@ namespace ManicDigger
         public bool IsBlockFlower(int tiletype)
         {
             return false;
+        }
+        #endregion
+        #region IGameData Members
+        public RailDirectionFlags GetRail(int tiletype)
+        {
+            return RailDirectionFlags.None;
         }
         #endregion
     }
