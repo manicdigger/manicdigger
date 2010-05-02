@@ -1676,6 +1676,7 @@ namespace ManicDigger
             if (drawgame)
             {
                 terrain.Draw();
+                DrawSkybox();
                 DrawImmediateParticleEffects(e.Time);
                 DrawCubeLines(pickcubepos);
 
@@ -1688,6 +1689,105 @@ namespace ManicDigger
 
             //OnResize(new EventArgs());
             SwapBuffers();
+        }
+        int[] _skybox;
+        private void DrawSkybox()
+        {
+            //?
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+            //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            if (_skybox == null)
+            {
+                _skybox = new int[6];
+                _skybox[0] = LoadTexture(getfile.GetFile("skybox_fr.jpg"));
+                _skybox[1] = LoadTexture(getfile.GetFile("skybox_lf.jpg"));
+                _skybox[2] = LoadTexture(getfile.GetFile("skybox_bk.jpg"));
+                _skybox[3] = LoadTexture(getfile.GetFile("skybox_rt.jpg"));
+                _skybox[4] = LoadTexture(getfile.GetFile("skybox_up.jpg"));
+                _skybox[5] = LoadTexture(getfile.GetFile("skybox_dn.jpg"));
+            }
+            int size = 1 * 10000;
+            // Store the current matrix
+            GL.PushMatrix();
+
+            // Reset and transform the matrix.
+            //GL.LoadIdentity();
+            //gluLookAt(
+            //    0, 0, 0,
+            //    camera->x(), camera->y(), camera->z(),
+            //    0, 1, 0);
+
+            // Enable/Disable features
+            GL.PushAttrib(AttribMask.EnableBit);
+            GL.Enable(EnableCap.Texture2D);
+            //GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.Lighting);
+            GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.CullFace);
+
+            // Just in case we set all vertices to white.
+            //GL.Color4(1, 1, 1, 1);
+            GL.Translate(player.playerposition);
+            GL.Scale(size, size, size);
+
+            // Render the front quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[0]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(0.5f, -0.5f, -0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(-0.5f, -0.5f, -0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(-0.5f, 0.5f, -0.5f);
+            GL.TexCoord2(0, 1); GL.Vertex3(0.5f, 0.5f, -0.5f);
+            GL.End();
+
+            // Render the left quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[1]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(0.5f, -0.5f, -0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(0.5f, 0.5f, -0.5f);
+            GL.TexCoord2(0, 1); GL.Vertex3(0.5f, 0.5f, 0.5f);
+            GL.End();
+
+            // Render the back quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[2]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(0.5f, 0.5f, 0.5f);
+            GL.TexCoord2(0, 1); GL.Vertex3(-0.5f, 0.5f, 0.5f);
+
+            GL.End();
+
+            // Render the right quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[3]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-0.5f, -0.5f, -0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(-0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(-0.5f, 0.5f, 0.5f);
+            GL.TexCoord2(0, 1); GL.Vertex3(-0.5f, 0.5f, -0.5f);
+            GL.End();
+
+            // Render the top quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[4]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 1); GL.Vertex3(-0.5f, 0.5f, -0.5f);
+            GL.TexCoord2(0, 0); GL.Vertex3(-0.5f, 0.5f, 0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(0.5f, 0.5f, 0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(0.5f, 0.5f, -0.5f);
+            GL.End();
+
+            // Render the bottom quad
+            GL.BindTexture(TextureTarget.Texture2D, _skybox[5]);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-0.5f, -0.5f, -0.5f);
+            GL.TexCoord2(0, 1); GL.Vertex3(-0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 1); GL.Vertex3(0.5f, -0.5f, 0.5f);
+            GL.TexCoord2(1, 0); GL.Vertex3(0.5f, -0.5f, -0.5f);
+            GL.End();
+
+            // Restore enable bits and matrix
+            GL.PopAttrib();
+            GL.PopMatrix();
         }
         void DrawWeapon()
         {
