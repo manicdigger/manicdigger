@@ -189,6 +189,73 @@ namespace ManicDigger
     {
         public byte[, ,] map;
     }
+    public class NetworkHelper
+    {
+        public static byte[] StringToBytes(string s)
+        {
+            byte[] b = Encoding.ASCII.GetBytes(s);
+            byte[] bb = new byte[64];
+            for (int i = 0; i < bb.Length; i++)
+            {
+                bb[i] = 32; //' '
+            }
+            for (int i = 0; i < b.Length; i++)
+            {
+                bb[i] = b[i];
+            }
+            return bb;
+        }
+        private static string BytesToString(byte[] s)
+        {
+            string b = Encoding.ASCII.GetString(s).Trim();
+            return b;
+        }
+        public static int ReadInt32(BinaryReader br)
+        {
+            byte[] array = br.ReadBytes(4);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(array);
+            }
+            return BitConverter.ToInt32(array, 0);
+        }
+        public static int ReadInt16(BinaryReader br)
+        {
+            byte[] array = br.ReadBytes(2);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(array);
+            }
+            return BitConverter.ToInt16(array, 0);
+        }
+        public static void WriteInt16(BinaryWriter bw, short v)
+        {
+            byte[] array = BitConverter.GetBytes((short)v);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(array);
+            }
+            bw.Write(array);
+        }
+        public static void WriteInt32(BinaryWriter bw, int v)
+        {
+            byte[] array = BitConverter.GetBytes((int)v);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(array);
+            }
+            bw.Write(array);
+        }
+        public static string ReadString64(BinaryReader br)
+        {
+            return BytesToString(br.ReadBytes(64));
+        }
+        public static void WriteString64(BinaryWriter bw, string s)
+        {
+            bw.Write(StringToBytes(s));
+        }
+        public static int StringLength = 64;
+    }
     public class NetworkClientMinecraft : INetworkClient
     {
         [Inject]
@@ -217,8 +284,8 @@ namespace ManicDigger
             BinaryWriter bw = new BinaryWriter(n);
             bw.Write((byte)0);//Packet ID 
             bw.Write((byte)0x07);//Protocol version
-            bw.Write(StringToBytes(username));//Username
-            bw.Write(StringToBytes(verificationKey));//Verification key
+            bw.Write(NetworkHelper.StringToBytes(username));//Username
+            bw.Write(NetworkHelper.StringToBytes(verificationKey));//Verification key
             bw.Write((byte)0);//Unused
             return n.ToArray();
         }
@@ -242,10 +309,10 @@ namespace ManicDigger
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)ClientPacketId.SetBlock);
-            WriteInt16(bw, (short)(position.X));//-4
-            WriteInt16(bw, (short)(position.Z));
-            WriteInt16(bw, (short)position.Y);
+            bw.Write((byte)MinecraftClientPacketId.SetBlock);
+            NetworkHelper.WriteInt16(bw, (short)(position.X));//-4
+            NetworkHelper.WriteInt16(bw, (short)(position.Z));
+            NetworkHelper.WriteInt16(bw, (short)position.Y);
             bw.Write((byte)(mode == BlockSetMode.Create ? 1 : 0));
             bw.Write((byte)type);
             SendPacket(ms.ToArray());
@@ -259,9 +326,9 @@ namespace ManicDigger
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)ClientPacketId.Message);
+            bw.Write((byte)MinecraftClientPacketId.Message);
             bw.Write((byte)255);//unused
-            WriteString64(bw, s);
+            NetworkHelper.WriteString64(bw, s);
             SendPacket(ms.ToArray());
             //tosend.Add(ms.ToArray());
         }
@@ -332,16 +399,19 @@ namespace ManicDigger
                 //tosend.Clear();
             }
         }
+        public int mapreceivedsizex;
+        public int mapreceivedsizey;
+        public int mapreceivedsizez;
         Vector3 lastsentposition;
         public void SendPosition(Vector3 position, Vector3 orientation)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)ClientPacketId.PositionandOrientation);
+            bw.Write((byte)MinecraftClientPacketId.PositionandOrientation);
             bw.Write((byte)255);//player id, self
-            WriteInt16(bw, (short)((position.X) * 32));//gfd1
-            WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
-            WriteInt16(bw, (short)(position.Z * 32));
+            NetworkHelper.WriteInt16(bw, (short)((position.X) * 32));//gfd1
+            NetworkHelper.WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
+            NetworkHelper.WriteInt16(bw, (short)(position.Z * 32));
             bw.Write((byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
             bw.Write(PitchByte());
             SendPacket(ms.ToArray());
@@ -362,43 +432,43 @@ namespace ManicDigger
             {
                 return 0;
             }
-            var packetId = (ServerPacketId)br.ReadByte();
+            var packetId = (MinecraftServerPacketId)br.ReadByte();
             int totalread = 1;
-            if (packetId != ServerPacketId.PositionandOrientationUpdate
-                 && packetId != ServerPacketId.PositionUpdate
-                && packetId != ServerPacketId.OrientationUpdate
-                && packetId != ServerPacketId.PlayerTeleport)
+            if (packetId != MinecraftServerPacketId.PositionandOrientationUpdate
+                 && packetId != MinecraftServerPacketId.PositionUpdate
+                && packetId != MinecraftServerPacketId.OrientationUpdate
+                && packetId != MinecraftServerPacketId.PlayerTeleport)
             {
-                Console.WriteLine(Enum.GetName(typeof(ServerPacketId), packetId));
+                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packetId));
             }
-            if (packetId == ServerPacketId.ServerIdentification)
+            if (packetId == MinecraftServerPacketId.ServerIdentification)
             {
-                totalread += 1 + 64 + 64 + 1; if (received.Count < totalread) { return 0; }
+                totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (received.Count < totalread) { return 0; }
                 ServerPlayerIdentification p = new ServerPlayerIdentification();
                 p.ProtocolVersion = br.ReadByte();
                 if (p.ProtocolVersion != 7)
                 {
                     throw new Exception();
                 }
-                p.ServerName = ReadString64(br);
-                p.ServerMotd = ReadString64(br);
+                p.ServerName = NetworkHelper.ReadString64(br);
+                p.ServerMotd = NetworkHelper.ReadString64(br);
                 p.UserType = br.ReadByte();
                 //connected = true;
                 this.ServerName = p.ServerName;
                 ChatLog("---Connected---");
             }
-            else if (packetId == ServerPacketId.Ping)
+            else if (packetId == MinecraftServerPacketId.Ping)
             {
             }
-            else if (packetId == ServerPacketId.LevelInitialize)
+            else if (packetId == MinecraftServerPacketId.LevelInitialize)
             {
                 receivedMapStream = new MemoryStream();
                 InvokeMapLoadingProgress(0);
             }
-            else if (packetId == ServerPacketId.LevelDataChunk)
+            else if (packetId == MinecraftServerPacketId.LevelDataChunk)
             {
                 totalread += 2 + 1024 + 1; if (received.Count < totalread) { return 0; }
-                int chunkLength = ReadInt16(br);
+                int chunkLength = NetworkHelper.ReadInt16(br);
                 byte[] chunkData = br.ReadBytes(1024);
                 BinaryWriter bw1 = new BinaryWriter(receivedMapStream);
                 byte[] chunkDataWithoutPadding = new byte[chunkLength];
@@ -410,12 +480,12 @@ namespace ManicDigger
                 MapLoadingPercentComplete = br.ReadByte();
                 InvokeMapLoadingProgress(MapLoadingPercentComplete);
             }
-            else if (packetId == ServerPacketId.LevelFinalize)
+            else if (packetId == MinecraftServerPacketId.LevelFinalize)
             {
                 totalread += 2 + 2 + 2; if (received.Count < totalread) { return 0; }
-                mapreceivedsizex = ReadInt16(br);
-                mapreceivedsizez = ReadInt16(br);
-                mapreceivedsizey = ReadInt16(br);
+                mapreceivedsizex = NetworkHelper.ReadInt16(br);
+                mapreceivedsizez = NetworkHelper.ReadInt16(br);
+                mapreceivedsizey = NetworkHelper.ReadInt16(br);
                 receivedMapStream.Seek(0, SeekOrigin.Begin);
                 MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
                 if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
@@ -427,7 +497,7 @@ namespace ManicDigger
                 byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
                 {
                     BinaryReader br2 = new BinaryReader(decompressed);
-                    int size = ReadInt32(br2);
+                    int size = NetworkHelper.ReadInt32(br2);
                     for (int z = 0; z < mapreceivedsizez; z++)
                     {
                         for (int y = 0; y < mapreceivedsizey; y++)
@@ -444,21 +514,21 @@ namespace ManicDigger
                     MapLoaded.Invoke(this, new MapLoadedEventArgs() { map = receivedmap });
                 }
             }
-            else if (packetId == ServerPacketId.SetBlock)
+            else if (packetId == MinecraftServerPacketId.SetBlock)
             {
                 totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
-                int x = ReadInt16(br);
-                int z = ReadInt16(br);
-                int y = ReadInt16(br);
+                int x = NetworkHelper.ReadInt16(br);
+                int z = NetworkHelper.ReadInt16(br);
+                int y = NetworkHelper.ReadInt16(br);
                 byte type = br.ReadByte();
                 try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
                 catch { Console.WriteLine("Cannot update tile!"); }
             }
-            else if (packetId == ServerPacketId.SpawnPlayer)
+            else if (packetId == MinecraftServerPacketId.SpawnPlayer)
             {
-                totalread += 1 + 64 + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
+                totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
-                string playername = ReadString64(br);
+                string playername = NetworkHelper.ReadString64(br);
                 connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
                 if (Clients.Players.ContainsKey(playerid))
                 {
@@ -467,13 +537,13 @@ namespace ManicDigger
                 Clients.Players[playerid] = new Player();
                 ReadAndUpdatePlayerPosition(br, playerid);
             }
-            else if (packetId == ServerPacketId.PlayerTeleport)
+            else if (packetId == MinecraftServerPacketId.PlayerTeleport)
             {
                 totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
                 ReadAndUpdatePlayerPosition(br, playerid);
             }
-            else if (packetId == ServerPacketId.PositionandOrientationUpdate)
+            else if (packetId == MinecraftServerPacketId.PositionandOrientationUpdate)
             {
                 totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
@@ -485,7 +555,7 @@ namespace ManicDigger
                 Vector3 v = new Vector3(x, y, z);
                 UpdatePositionDiff(playerid, v);
             }
-            else if (packetId == ServerPacketId.PositionUpdate)
+            else if (packetId == MinecraftServerPacketId.PositionUpdate)
             {
                 totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
@@ -495,7 +565,7 @@ namespace ManicDigger
                 Vector3 v = new Vector3(x, y, z);
                 UpdatePositionDiff(playerid, v);
             }
-            else if (packetId == ServerPacketId.OrientationUpdate)
+            else if (packetId == MinecraftServerPacketId.OrientationUpdate)
             {
                 totalread += 1 + 1 + 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
@@ -504,7 +574,7 @@ namespace ManicDigger
                 Clients.Players[playerid].Heading = heading;
                 Clients.Players[playerid].Pitch = pitch;
             }
-            else if (packetId == ServerPacketId.DespawnPlayer)
+            else if (packetId == MinecraftServerPacketId.DespawnPlayer)
             {
                 totalread += 1; if (received.Count < totalread) { return 0; }
                 byte playerid = br.ReadByte();
@@ -517,18 +587,18 @@ namespace ManicDigger
                 }
                 Clients.Players.Remove(playerid);
             }
-            else if (packetId == ServerPacketId.Message)
+            else if (packetId == MinecraftServerPacketId.Message)
             {
-                totalread += 1 + 64; if (received.Count < totalread) { return 0; }
+                totalread += 1 + NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
                 byte unused = br.ReadByte();
-                string message = ReadString64(br);
+                string message = NetworkHelper.ReadString64(br);
                 Chatlines.AddChatline(message);
                 ChatLog(message);
             }
-            else if (packetId == ServerPacketId.DisconnectPlayer)
+            else if (packetId == MinecraftServerPacketId.DisconnectPlayer)
             {
-                totalread += 64; if (received.Count < totalread) { return 0; }
-                string disconnectReason = ReadString64(br);
+                totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
+                string disconnectReason = NetworkHelper.ReadString64(br);
                 throw new Exception(disconnectReason);
             }
             else
@@ -595,9 +665,9 @@ namespace ManicDigger
         }
         private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
         {
-            float x = (float)ReadInt16(br) / 32;
-            float y = (float)ReadInt16(br) / 32;
-            float z = (float)ReadInt16(br) / 32;
+            float x = (float)NetworkHelper.ReadInt16(br) / 32;
+            float y = (float)NetworkHelper.ReadInt16(br) / 32;
+            float z = (float)NetworkHelper.ReadInt16(br) / 32;
             byte heading = br.ReadByte();
             byte pitch = br.ReadByte();
             Vector3 realpos = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
@@ -628,89 +698,9 @@ namespace ManicDigger
             }
             //throw new NotImplementedException();
         }
-        enum ClientPacketId
-        {
-            PlayerIdentification = 0,
-            SetBlock = 5,
-            PositionandOrientation = 8,
-            Message = 0x0d,
-        }
-        enum ServerPacketId
-        {
-            ServerIdentification = 0,
-            Ping = 1,
-            LevelInitialize = 2,
-            LevelDataChunk = 3,
-            LevelFinalize = 4,
-            SetBlock = 6,
-            SpawnPlayer = 7,
-            PlayerTeleport = 8,
-            PositionandOrientationUpdate = 9,
-            PositionUpdate = 10,
-            OrientationUpdate = 11,
-            DespawnPlayer = 12,
-            Message = 13,
-            DisconnectPlayer = 14,
-        }
-        private static byte[] StringToBytes(string s)
-        {
-            byte[] b = Encoding.ASCII.GetBytes(s);
-            byte[] bb = new byte[64];
-            for (int i = 0; i < bb.Length; i++)
-            {
-                bb[i] = 32; //' '
-            }
-            for (int i = 0; i < b.Length; i++)
-            {
-                bb[i] = b[i];
-            }
-            return bb;
-        }
-        private static string BytesToString(byte[] s)
-        {
-            string b = Encoding.ASCII.GetString(s).Trim();
-            return b;
-        }
-        public int mapreceivedsizex;
-        public int mapreceivedsizey;
-        public int mapreceivedsizez;
-        int ReadInt32(BinaryReader br)
-        {
-            byte[] array = br.ReadBytes(4);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(array);
-            }
-            return BitConverter.ToInt32(array, 0);
-        }
-        int ReadInt16(BinaryReader br)
-        {
-            byte[] array = br.ReadBytes(2);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(array);
-            }
-            return BitConverter.ToInt16(array, 0);
-        }
-        void WriteInt16(BinaryWriter bw, short v)
-        {
-            byte[] array = BitConverter.GetBytes((short)v);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(array);
-            }
-            bw.Write(array);
-        }
         int MapLoadingPercentComplete;
         public MemoryStream receivedMapStream;
-        static string ReadString64(BinaryReader br)
-        {
-            return BytesToString(br.ReadBytes(64));
-        }
-        static void WriteString64(BinaryWriter bw, string s)
-        {
-            bw.Write(StringToBytes(s));
-        }
+
         struct ServerPlayerIdentification
         {
             public byte ProtocolVersion;
@@ -734,5 +724,35 @@ namespace ManicDigger
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion
+    }
+    /// <summary>
+    /// Client -> Server packet id.
+    /// </summary>
+    public enum MinecraftClientPacketId
+    {
+        PlayerIdentification = 0,
+        SetBlock = 5,
+        PositionandOrientation = 8,
+        Message = 0x0d,
+    }
+    /// <summary>
+    /// Server -> Client packet id.
+    /// </summary>
+    public enum MinecraftServerPacketId
+    {
+        ServerIdentification = 0,
+        Ping = 1,
+        LevelInitialize = 2,
+        LevelDataChunk = 3,
+        LevelFinalize = 4,
+        SetBlock = 6,
+        SpawnPlayer = 7,
+        PlayerTeleport = 8,
+        PositionandOrientationUpdate = 9,
+        PositionUpdate = 10,
+        OrientationUpdate = 11,
+        DespawnPlayer = 12,
+        Message = 13,
+        DisconnectPlayer = 14,
     }
 }

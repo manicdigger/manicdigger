@@ -517,7 +517,7 @@ namespace ManicDigger
                 {
                     if (updater != oldupdater) { break; }
                     var ti = l[i];
-                    if (exit.exit || exit2) { return; }
+                    if (exit.exit || exit2) { break; }
                     CheckRespawn();
                     ProcessAllPriorityTodos();
                     ProcessUpdaterTodo(ti);

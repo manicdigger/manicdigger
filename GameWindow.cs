@@ -1120,7 +1120,18 @@ namespace ManicDigger
                 //}
                 //b) just hash
                 //c) ip:port (server must have disabled authorization checking).
-                LoginData logindata = login.Login(qusername, qpass, qgameurl);
+                LoginData logindata = new LoginData();
+                System.Net.IPAddress server2 = null;
+                if (System.Net.IPAddress.TryParse(qgameurl, out server2))
+                {
+                    logindata.serveraddress = server2.ToString();
+                    logindata.port = 25565;
+                    logindata.mppass = "";
+                }
+                else
+                {
+                    logindata = login.Login(qusername, qpass, qgameurl);
+                }
                 frametickmainthreadtodo.Add(
                     () =>
                     {
