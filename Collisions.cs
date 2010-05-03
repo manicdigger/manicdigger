@@ -106,7 +106,8 @@ namespace ManicDigger.Collisions
             yield return new Box3D(x + size, y + size, z + size, size);
         }
         public delegate bool IsBlockEmpty(int x, int y, int z);
-        public IEnumerable<BlockPosSide> LineIntersection(IsBlockEmpty isEmpty, Line3D line)
+        public delegate float GetBlockHeight(int x, int y, int z);
+        public IEnumerable<BlockPosSide> LineIntersection(IsBlockEmpty isEmpty, GetBlockHeight getBlockHeight, Line3D line)
         {
             Vector3 hit = new Vector3();
             foreach (var node in
@@ -125,10 +126,18 @@ namespace ManicDigger.Collisions
                     }
                 }
                 */
-                if (!isEmpty((int)node.MinEdge.X, (int)node.MinEdge.Z, (int)node.MinEdge.Y))
+                int x = (int)node.MinEdge.X;
+                int y = (int)node.MinEdge.Z;
+                int z = (int)node.MinEdge.Y;
+                if (!isEmpty(x, y, z))
                 {
-                    var hit2 = Intersection.CheckLineBoxExact(line, node);
-                    yield return hit2;
+                    var node2 = node;
+                    node2.MaxEdge.Y = node2.MinEdge.Y + getBlockHeight(x, y, z);
+                    var hit2 = Intersection.CheckLineBoxExact(line, node2);
+                    if (hit2 != null)
+                    {
+                        yield return hit2.Value;
+                    }
                 }
             }
         }
@@ -163,13 +172,17 @@ namespace ManicDigger.Collisions
         }
         public Vector3 Current()
         {
+            //these are block coordinates. 0.1f is used instead of 1f,
+            //because some blocks have height less than 1.
+            //After substracting 0.1f from 0.3f block height and Math.flooring
+            //it will be a correct block coordinate.
             //todo check.
-            if (side == TileSide.Top) { return pos + new Vector3(0, -1, 0); }
+            if (side == TileSide.Top) { return pos + new Vector3(0, -0.1f, 0); }
             if (side == TileSide.Bottom) { return pos + new Vector3(0, 0, 0); }
             if (side == TileSide.Front) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Back) { return pos + new Vector3(-1, 0, 0); }
+            if (side == TileSide.Back) { return pos + new Vector3(-0.1f, 0, 0); }
             if (side == TileSide.Left) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Right) { return pos + new Vector3(0, 0, -1); }
+            if (side == TileSide.Right) { return pos + new Vector3(0, 0, -0.1f); }
             throw new Exception();
         }
     }
@@ -324,7 +337,7 @@ namespace ManicDigger.Collisions
 
             return 1;                      // I is in T
         }
-        public static BlockPosSide CheckLineBoxExact(Line3D line, Box3D box)
+        public static BlockPosSide? CheckLineBoxExact(Line3D line, Box3D box)
         {
             if (PointInBox(line.Start, box)) { return new BlockPosSide() { pos = line.Start }; }
             Vector3 big = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
@@ -342,7 +355,8 @@ namespace ManicDigger.Collisions
                     }
                 }
             }
-            if (closest == big) { throw new Exception(); }
+            //if (closest == big) { throw new Exception(); }
+            if (closest == big) { return null; }
             return new BlockPosSide() { pos = closest, side = side };
             //if (PointInBox(line.End, box)) { return new TilePosSide() { pos = line.End }; }
             throw new Exception();

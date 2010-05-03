@@ -331,6 +331,12 @@ namespace ManicDigger
             return RailDirectionFlags.None;
         }
         #endregion
+        #region IGameData Members
+        public int TileIdSingleStairs
+        {
+            get { return (int)TileTypeMinecraft.Stair; }
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

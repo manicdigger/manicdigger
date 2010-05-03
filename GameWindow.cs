@@ -1508,7 +1508,7 @@ namespace ManicDigger
             pick.End = ray + raydir;
             var s = new BlockOctreeSearcher();
             s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
-            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, pick));
+            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
 
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
@@ -1519,7 +1519,7 @@ namespace ManicDigger
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
                 (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
             {
-                pickcubepos = From3dPos(pick2[0]);
+                pickcubepos = pick2[0].Current();
                 pickcubepos = new Vector3((int)pickcubepos.X, (int)pickcubepos.Y, (int)pickcubepos.Z);
                 pick0 = pick2[0];
             }
@@ -1552,7 +1552,7 @@ namespace ManicDigger
                 {
                     if (middle)
                     {
-                        var newtile = From3dPos(pick0);
+                        var newtile = pick0.Current();
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
@@ -1574,7 +1574,7 @@ namespace ManicDigger
                     {
                         BlockPosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
-                        Vector3 newtile = right ? tile.Translated() : From3dPos(tile);
+                        Vector3 newtile = right ? tile.Translated() : tile.Current();
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             Console.WriteLine(". newtile:" + newtile + " type: " + map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
@@ -1605,6 +1605,19 @@ namespace ManicDigger
                 lastbuild = new DateTime();
                 fastclicking = true;
             }
+        }
+        public const float RailHeight = 0.3f;
+        float getblockheight(int x, int y, int z)
+        {
+            if (data.GetRail(map.GetBlock(x, y, z)) != RailDirectionFlags.None)
+            {
+                return RailHeight;
+            }
+            if (map.GetBlock(x, y, z) == data.TileIdSingleStairs)
+            {
+                return 0.5f;
+            }
+            return 1;
         }
         private uint NextPowerOfTwo(uint x)
         {
@@ -2715,6 +2728,7 @@ namespace ManicDigger
             }
             particleEffects.Add(p);
         }
+        /*
         private Vector3 From3dPos(BlockPosSide v)
         {
             if (v.side == TileSide.Back) { return v.pos + new Vector3(-1, 0, 0); }
@@ -2722,6 +2736,7 @@ namespace ManicDigger
             if (v.side == TileSide.Top) { return v.pos + new Vector3(0, -1, 0); }
             return v.pos;
         }
+        */
         public int activematerial { get; set; }
         void DrawCube(Vector3 pos)
         {

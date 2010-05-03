@@ -586,5 +586,11 @@ namespace GameModeFortress
         }
         #endregion
         public static int railstart = (11 * 16);
+        #region IGameData Members
+        public int TileIdSingleStairs
+        {
+            get { return data.TileIdSingleStairs; }
+        }
+        #endregion
     }
 }

@@ -431,6 +431,7 @@ namespace ManicDigger
         int TileIdStone { get; }
         int TileIdWater { get; }
         int TileIdSand { get; }
+        int TileIdSingleStairs { get; }
         bool IsWaterTile(int tiletype);
         bool IsBuildableTile(int tiletype);
         bool IsValidTileType(int tiletype);
@@ -496,6 +497,9 @@ namespace ManicDigger
         {
             return RailDirectionFlags.None;
         }
+        #endregion
+        #region IGameData Members
+        public int TileIdSingleStairs { get; set; }
         #endregion
     }
     public interface IMapGenerator
