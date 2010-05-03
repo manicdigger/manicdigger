@@ -68,21 +68,47 @@ namespace GameModeFortress
             }
             return RailDirection.Horizontal;
         }
+        private RailDirection PickCorners(float xfract, float zfract)
+        {
+            if (xfract < 0.5f && zfract < 0.5f)
+            {
+                return RailDirection.UpLeft;
+            }
+            if (xfract >= 0.5f && zfract < 0.5f)
+            {
+                return RailDirection.UpRight;
+            }
+            if (xfract < 0.5f && zfract >= 0.5f)
+            {
+                return RailDirection.DownLeft;
+            }
+            return RailDirection.DownRight;
+        }
         public void OnPick(OpenTK.Vector3 blockpos,Vector3 blockposold, OpenTK.Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
             int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
             int railstart = GameDataTilesManicDigger.railstart;
-            if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical)
+            if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
+                || activematerial == railstart + (int)RailDirectionFlags.Corners)
             {
-                RailDirection dirnew = PickHorizontalVertical(xfract, zfract);
+                RailDirection dirnew;
+                if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical)
+                {
+                    dirnew = PickHorizontalVertical(xfract, zfract);
+                }
+                else
+                {
+                    dirnew = PickCorners(xfract, zfract);
+                }
                 RailDirectionFlags dir = data.GetRail(GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z));
                 if (dir != RailDirectionFlags.None)
                 {
                     blockpos = blockposold;
                 }
                 activematerial = railstart + (int)(dir | DirectionUtils.ToRailDirectionFlags(dirnew));
+                //Console.WriteLine(blockposold);
                 //Console.WriteLine(xfract + ":" + zfract + ":" + activematerial + ":" + dirnew);
             }
             int x = (short)blockpos.X;

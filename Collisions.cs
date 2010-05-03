@@ -60,7 +60,7 @@ namespace ManicDigger.Collisions
         void DeleteTriangle(int triangle_id);
         IEnumerable<Vector3> LineIntersection(Line3D line);
     }
-    public class TileOctreeSearcher
+    public class BlockOctreeSearcher
     {
         public Box3D StartBox;
         IEnumerable<Box3D> Search(Predicate<Box3D> query)
@@ -105,8 +105,8 @@ namespace ManicDigger.Collisions
             yield return new Box3D(x, y + size, z + size, size);
             yield return new Box3D(x + size, y + size, z + size, size);
         }
-        public delegate bool IsTileEmpty(int x, int y, int z);
-        public IEnumerable<TilePosSide> LineIntersection(IsTileEmpty isEmpty, Line3D line)
+        public delegate bool IsBlockEmpty(int x, int y, int z);
+        public IEnumerable<BlockPosSide> LineIntersection(IsBlockEmpty isEmpty, Line3D line)
         {
             Vector3 hit = new Vector3();
             foreach (var node in
@@ -142,9 +142,9 @@ namespace ManicDigger.Collisions
         Left,
         Right,
     }
-    public struct TilePosSide
+    public struct BlockPosSide
     {
-        public TilePosSide(int x, int y, int z, TileSide side)
+        public BlockPosSide(int x, int y, int z, TileSide side)
         {
             this.pos = new Vector3(x, y, z);
             this.side = side;
@@ -159,6 +159,17 @@ namespace ManicDigger.Collisions
             if (side == TileSide.Back) { return pos + new Vector3(0, 0, 0); }
             if (side == TileSide.Left) { return pos + new Vector3(0, 0, -1); }
             if (side == TileSide.Right) { return pos + new Vector3(0, 0, 0); }
+            throw new Exception();
+        }
+        public Vector3 Current()
+        {
+            //todo check.
+            if (side == TileSide.Top) { return pos + new Vector3(0, -1, 0); }
+            if (side == TileSide.Bottom) { return pos + new Vector3(0, 0, 0); }
+            if (side == TileSide.Front) { return pos + new Vector3(0, 0, 0); }
+            if (side == TileSide.Back) { return pos + new Vector3(-1, 0, 0); }
+            if (side == TileSide.Left) { return pos + new Vector3(0, 0, 0); }
+            if (side == TileSide.Right) { return pos + new Vector3(0, 0, -1); }
             throw new Exception();
         }
     }
@@ -313,9 +324,9 @@ namespace ManicDigger.Collisions
 
             return 1;                      // I is in T
         }
-        public static TilePosSide CheckLineBoxExact(Line3D line, Box3D box)
+        public static BlockPosSide CheckLineBoxExact(Line3D line, Box3D box)
         {
-            if (PointInBox(line.Start, box)) { return new TilePosSide() { pos = line.Start }; }
+            if (PointInBox(line.Start, box)) { return new BlockPosSide() { pos = line.Start }; }
             Vector3 big = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
             Vector3 closest = big;
             TileSide side = TileSide.Top;
@@ -332,7 +343,7 @@ namespace ManicDigger.Collisions
                 }
             }
             if (closest == big) { throw new Exception(); }
-            return new TilePosSide() { pos = closest, side = side };
+            return new BlockPosSide() { pos = closest, side = side };
             //if (PointInBox(line.End, box)) { return new TilePosSide() { pos = line.End }; }
             throw new Exception();
         }

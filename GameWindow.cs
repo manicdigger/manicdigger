@@ -1506,15 +1506,15 @@ namespace ManicDigger
             raydir = Vector3.Multiply(raydir, 100);
             pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
             pick.End = ray + raydir;
-            var s = new TileOctreeSearcher();
+            var s = new BlockOctreeSearcher();
             s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
-            List<TilePosSide> pick2 = new List<TilePosSide>(s.LineIntersection(IsTileEmptyForPhysics, pick));
+            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, pick));
             pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
 
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
-            TilePosSide pick0;
+            BlockPosSide pick0;
             if (pick2.Count > 0 && (pick2[0].pos - player.playerposition).Length <= PICK_DISTANCE
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
                 (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
@@ -1572,7 +1572,7 @@ namespace ManicDigger
                     }
                     if (left || right)
                     {
-                        TilePosSide tile = pick0;
+                        BlockPosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : From3dPos(tile);
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
@@ -1591,7 +1591,7 @@ namespace ManicDigger
                                 throw new Exception();
                             }
                             game.OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
-                                new Vector3((int)tile.pos.X, (int)tile.pos.Z, (int)tile.pos.Y), tile.pos,
+                                new Vector3((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y), tile.pos,
                                 right);
                             //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                             //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
@@ -1617,7 +1617,7 @@ namespace ManicDigger
             x++;
             return x;
         }
-        private void OnPick(TilePosSide pick0)
+        private void OnPick(BlockPosSide pick0)
         {
             playerdestination = pick0.pos;
         }
@@ -2715,7 +2715,7 @@ namespace ManicDigger
             }
             particleEffects.Add(p);
         }
-        private Vector3 From3dPos(TilePosSide v)
+        private Vector3 From3dPos(BlockPosSide v)
         {
             if (v.side == TileSide.Back) { return v.pos + new Vector3(-1, 0, 0); }
             if (v.side == TileSide.Right) { return v.pos + new Vector3(0, 0, -1); }

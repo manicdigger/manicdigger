@@ -55,6 +55,8 @@ namespace ManicDigger
         ThreeUpLeftUpRightDownLeft = UpLeft | UpRight | DownLeft,
         ThreeUpLeftUpRightDownRight = UpLeft | UpRight | DownRight,
         ThreeUpRightDownLeftDownRight = UpRight | DownLeft | DownRight,
+
+        Corners = UpLeft | UpRight | DownLeft | DownRight,
     }
     public enum RailDirection
     {

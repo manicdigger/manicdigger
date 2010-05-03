@@ -804,33 +804,45 @@ namespace ManicDigger
             if (rail != RailDirectionFlags.None)
             {
                 int blocknear;
-                blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                if (x < mapstorage.MapSizeX - 1)
                 {
-                    blockheight10 += 1;
-                    blockheight11 += 1;
+                    blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
+                    if (rail == RailDirectionFlags.Horizontal &&
+                         blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                    {
+                        blockheight10 += 1;
+                        blockheight11 += 1;
+                    }
                 }
-                blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                if (x > 0)
                 {
-                    blockheight00 += 1;
-                    blockheight01 += 1;
+                    blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
+                    if (rail == RailDirectionFlags.Horizontal &&
+                         blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                    {
+                        blockheight00 += 1;
+                        blockheight01 += 1;
+                    }
                 }
-                blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                if (y > 0)
                 {
-                    blockheight00 += 1;
-                    blockheight10 += 1;
+                    blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
+                    if (rail == RailDirectionFlags.Vertical &&
+                          blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                    {
+                        blockheight00 += 1;
+                        blockheight10 += 1;
+                    }
                 }
-                blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                if (y < mapstorage.MapSizeY - 1)
                 {
-                    blockheight01 += 1;
-                    blockheight11 += 1;
+                    blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
+                    if (rail == RailDirectionFlags.Vertical &&
+                          blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                    {
+                        blockheight01 += 1;
+                        blockheight11 += 1;
+                    }
                 }
             }
             //top
