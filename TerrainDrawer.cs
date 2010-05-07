@@ -332,6 +332,7 @@ namespace ManicDigger
                     }
                 }
             }
+            GL.Disable(EnableCap.CullFace);//for water.
             for (int i = 0; i < count; i++)
             {
                 if (!empty.Contains(i))
@@ -342,6 +343,7 @@ namespace ManicDigger
                     }
                 }
             }
+            GL.Enable(EnableCap.CullFace);
             //depth sorting. is it needed?
             /*
             List<int> alldrawlists = new List<int>();
@@ -484,7 +486,6 @@ namespace ManicDigger
             updateThreadRunning++;
             new Thread(UpdateThreadStart).Start();
         }
-        Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
         bool exit2;
         void UpdateThreadStart()
         {
@@ -1083,8 +1084,8 @@ namespace ManicDigger
         {
             if (ENABLE_WATER)
             {
-                DrawWater();
                 DrawMapEdges();
+                DrawWater();
             }
         }
         public bool ENABLE_WATER = true;
@@ -1092,7 +1093,7 @@ namespace ManicDigger
         int? rocktexture;
         bool waternotfoundwritten = false;
         bool rocknotfoundwritten = false;
-        Color terraincolor { get { return localplayerposition.Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
+        Color terraincolor { get { return Color.White; } }//return localplayerposition.Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         private void DrawWater()
         {
             if (waternotfoundwritten) { return; }

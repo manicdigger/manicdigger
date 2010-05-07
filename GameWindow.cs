@@ -2918,6 +2918,6 @@ namespace ManicDigger
         }
         #endregion
         public string GameUrl;
-        Color terraincolor { get { return Swimming ? Color.FromArgb(255, 100, 100, 255) : Color.White; } }
+        Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
     }
 }
