@@ -54,6 +54,7 @@ namespace ManicDigger
         public VertexPositionTexture[] vertices;
         public ushort[] indices;
         public Vector3 position;
+        public bool transparent;
     }
     public class Config3d
     {
@@ -407,20 +408,22 @@ namespace ManicDigger
             bmp.UnlockBits(bmp_data);
 
             GL.Enable(EnableCap.DepthTest);
+            /*
             if (config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.AlphaTest);
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
-            /*
-            if (ENABLE_TRANSPARENCY)
+            */
+            
+            if (config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-                GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
-                GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
+                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
+                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
             }
-            */
+            
             return id;
         }
         PlayMp3 mp3 = new PlayMp3();
@@ -1699,8 +1702,9 @@ namespace ManicDigger
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
             {
-                terrain.Draw();
                 DrawSkybox();
+                terrain.Draw();
+                
                 DrawImmediateParticleEffects(e.Time);
                 DrawCubeLines(pickcubepos);
 

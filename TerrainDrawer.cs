@@ -235,9 +235,14 @@ namespace ManicDigger
             public ushort[] indices;
             public VertexPositionTexture[] vertices;
             public int id;
+            public bool transparent;
         }
         Queue<ToAdd> toadd = new Queue<ToAdd>();
         public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture)
+        {
+            return Add(p, vertexPositionTexture, false);
+        }
+        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent)
         {
             int id;
             lock (toadd)
@@ -252,7 +257,7 @@ namespace ManicDigger
                     id = count;
                     count++;
                 }
-                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id });
+                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id, transparent = transparent });
             }
             return id;
         }
@@ -310,6 +315,7 @@ namespace ManicDigger
                     }
                     listinfo[t.id].indicescount = t.indices.Length;
                     listinfo[t.id].center = t.vertices[0].Position;//todo
+                    listinfo[t.id].transparent = t.transparent;
                 }
                 if (toadd.Count == 0)
                 {
@@ -320,7 +326,20 @@ namespace ManicDigger
             {
                 if (!empty.Contains(i))
                 {
-                    GL.CallList(lists + i);
+                    if (!listinfo[i].transparent)
+                    {
+                        GL.CallList(lists + i);
+                    }
+                }
+            }
+            for (int i = 0; i < count; i++)
+            {
+                if (!empty.Contains(i))
+                {
+                    if (listinfo[i].transparent)
+                    {
+                        GL.CallList(lists + i);
+                    }
                 }
             }
             //depth sorting. is it needed?
@@ -352,6 +371,7 @@ namespace ManicDigger
         {
             public int indicescount;
             public Vector3 center;
+            public bool transparent;
         }
         /// <summary>
         /// Indices count in list.
@@ -568,15 +588,24 @@ namespace ManicDigger
                 }
                 //Prepare list of near chunks to update.
                 //This is the slowest part.
-                Dictionary<Vector3, VerticesIndicesToLoad> nearchunksadd = new Dictionary<Vector3, VerticesIndicesToLoad>();
+                Dictionary<Vector3, VerticesIndicesToLoad[]> nearchunksadd = new Dictionary<Vector3, VerticesIndicesToLoad[]>();
                 List<Vector3> nearchunksremove = new List<Vector3>();
                 for (int i = 0; i < ti.Length; i++)
                 {
                     var p = ti[i];
                     var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
-                    if (chunk != null && chunk.indices.Length != 0)
+                    var chunkk = new List<VerticesIndicesToLoad>(chunk);
+                    bool hasindices = false;
+                    foreach (var c in chunkk)
                     {
-                        nearchunksadd.Add(p, chunk);
+                        if(c.indices.Length!=0)
+                        {
+                            hasindices = true;
+                        }
+                    }
+                    if (hasindices)
+                    {
+                        nearchunksadd.Add(p, chunkk.ToArray());
                     }
                     if (batchedblocks.ContainsKey(p))
                     {
@@ -588,14 +617,22 @@ namespace ManicDigger
                 {
                     foreach (Vector3 p in nearchunksremove)
                     {
-                        batcher.Remove(batchedblocks[p]);
+                        foreach (int id in batchedblocks[p])
+                        {
+                            batcher.Remove(id);
+                        }
                         batchedblocks.Remove(p);
                     }
                     foreach (var k in nearchunksadd)
                     {
                         var p = k.Key;
                         var chunk = k.Value;
-                        batchedblocks[p] = batcher.Add(chunk.indices, chunk.vertices);
+                        List<int> ids = new List<int>();
+                        foreach (var cc in chunk)
+                        {
+                            ids.Add(batcher.Add(cc.indices, cc.vertices, cc.transparent));
+                        }
+                        batchedblocks[p] = ids.ToArray();
                     }
                 }
             }
@@ -612,9 +649,18 @@ namespace ManicDigger
                         //lock (terrainlock)
                         {
                             var chunk = MakeChunk(p.X, p.Y, z);
-                            if (chunk != null && chunk.indices.Length != 0)
+                            var chunkk = new List<VerticesIndicesToLoad>(chunk);
+                            List<int> ids = new List<int>();
+                            foreach (VerticesIndicesToLoad v in chunkk)
                             {
-                                batchedblocks[new Vector3(p.X, p.Y, z)] = batcher.Add(chunk.indices, chunk.vertices);
+                                if (v.indices.Length != 0)
+                                {
+                                    ids.Add(batcher.Add(v.indices, v.vertices, v.transparent));
+                                }
+                            }
+                            if (ids.Count > 0)
+                            {
+                                batchedblocks[new Vector3(p.X, p.Y, z)] = ids.ToArray();
                             }
                         }
                     }
@@ -629,7 +675,10 @@ namespace ManicDigger
                     {
                         if (batchedblocks.ContainsKey(new Vector3(p.X, p.Y, z)))
                         {
-                            batcher.Remove(batchedblocks[new Vector3(p.X, p.Y, z)]);
+                            foreach (int id in batchedblocks[new Vector3(p.X, p.Y, z)])
+                            {
+                                batcher.Remove(id);
+                            }
                             batchedblocks.Remove(new Vector3(p.X, p.Y, z));
                         }
                     }
@@ -645,12 +694,14 @@ namespace ManicDigger
         /// </summary>
         //Queue<Vector3> prioritytodo = new Queue<Vector3>();
         List<Vector3[]> prioritytodo = new List<Vector3[]>();
-        VerticesIndicesToLoad MakeChunk(int x, int y, int z)
+        IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
-            if (x < 0 || y < 0 || z < 0) { return null; }
-            if (x >= mapstorage.MapSizeX / chunksize || y >= mapstorage.MapSizeY / chunksize || z >= mapstorage.MapSizeZ / chunksize) { return null; }
+            if (x < 0 || y < 0 || z < 0) { yield break; }
+            if (x >= mapstorage.MapSizeX / chunksize || y >= mapstorage.MapSizeY / chunksize || z >= mapstorage.MapSizeZ / chunksize) { yield break; }
             List<ushort> indices = new List<ushort>();
             List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
+            List<ushort> transparentindices = new List<ushort>();
+            List<VertexPositionTexture> transparentvertices = new List<VertexPositionTexture>();
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -660,16 +711,32 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx;
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
-                        BlockPolygons(indices, vertices, xxx, yyy, zzz);
+                        if (!(data.IsTransparentTile(mapstorage.GetTerrainBlock(xxx, yyy, zzz))
+                            || data.IsWaterTile(mapstorage.GetTerrainBlock(xxx,yyy,zzz))))
+                        {
+                            BlockPolygons(indices, vertices, xxx, yyy, zzz);
+                        }
+                        else
+                        {
+                            BlockPolygons(transparentindices, transparentvertices, xxx, yyy, zzz);
+                        }
                     }
                 }
             }
-            return new VerticesIndicesToLoad()
+            yield return new VerticesIndicesToLoad()
             {
                 indices = indices.ToArray(),
                 vertices = vertices.ToArray(),
                 position =
                     new Vector3(x * 16, y * 16, z * 16)
+            };
+            yield return new VerticesIndicesToLoad()
+            {
+                indices = transparentindices.ToArray(),
+                vertices = transparentvertices.ToArray(),
+                position =
+                    new Vector3(x * 16, y * 16, z * 16),
+                transparent = true
             };
         }
         object terrainlock = new object();
@@ -677,12 +744,14 @@ namespace ManicDigger
         {
             //GL.Color3(terraincolor);
             //lock (terrainlock)
+            worldfeatures.DrawWorldFeatures();
             {
+                GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
+                //must be drawn last, for transparent blocks.
                 batcher.Draw(localplayerposition.LocalPlayerPosition);
             }
-            worldfeatures.DrawWorldFeatures();
         }
-        Dictionary<Vector3, int> batchedblocks = new Dictionary<Vector3, int>();
+        Dictionary<Vector3, int[]> batchedblocks = new Dictionary<Vector3, int[]>();
         Vector3 lastplayerposition;
         TerrainUpdater updater = new TerrainUpdater();
         MeshBatcher batcher = new MeshBatcher();
