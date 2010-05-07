@@ -595,15 +595,7 @@ namespace ManicDigger
                     var p = ti[i];
                     var chunk = MakeChunk((int)p.X, (int)p.Y, (int)p.Z);
                     var chunkk = new List<VerticesIndicesToLoad>(chunk);
-                    bool hasindices = false;
-                    foreach (var c in chunkk)
-                    {
-                        if(c.indices.Length!=0)
-                        {
-                            hasindices = true;
-                        }
-                    }
-                    if (hasindices)
+                    if (chunkk.Count > 0)
                     {
                         nearchunksadd.Add(p, chunkk.ToArray());
                     }
@@ -723,21 +715,27 @@ namespace ManicDigger
                     }
                 }
             }
-            yield return new VerticesIndicesToLoad()
+            if (indices.Count > 0)
             {
-                indices = indices.ToArray(),
-                vertices = vertices.ToArray(),
-                position =
-                    new Vector3(x * 16, y * 16, z * 16)
-            };
-            yield return new VerticesIndicesToLoad()
+                yield return new VerticesIndicesToLoad()
+                {
+                    indices = indices.ToArray(),
+                    vertices = vertices.ToArray(),
+                    position =
+                        new Vector3(x * 16, y * 16, z * 16)
+                };
+            }
+            if (transparentindices.Count > 0)
             {
-                indices = transparentindices.ToArray(),
-                vertices = transparentvertices.ToArray(),
-                position =
-                    new Vector3(x * 16, y * 16, z * 16),
-                transparent = true
-            };
+                yield return new VerticesIndicesToLoad()
+                {
+                    indices = transparentindices.ToArray(),
+                    vertices = transparentvertices.ToArray(),
+                    position =
+                        new Vector3(x * 16, y * 16, z * 16),
+                    transparent = true
+                };
+            }
         }
         object terrainlock = new object();
         public void Draw()
