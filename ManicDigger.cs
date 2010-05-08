@@ -180,6 +180,28 @@ namespace ManicDigger
         }
         #endregion
     }
+    public class XmlTool
+    {
+        public static string XmlVal(XmlDocument d, string path)
+        {
+            XPathNavigator navigator = d.CreateNavigator();
+            XPathNodeIterator iterator = navigator.Select(path);
+            foreach (XPathNavigator n in iterator)
+            {
+                return n.Value;
+            }
+            return null;
+        }
+        public static IEnumerable<string> XmlVals(XmlDocument d, string path)
+        {
+            XPathNavigator navigator = d.CreateNavigator();
+            XPathNodeIterator iterator = navigator.Select(path);
+            foreach (XPathNavigator n in iterator)
+            {
+                yield return n.Value;
+            }
+        }
+    }
     public class MapManipulator
     {
         [Inject]
@@ -220,28 +242,6 @@ namespace ManicDigger
                 map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
                 byte[] mapdata = Convert.FromBase64String(XmlTool.XmlVal(d, "/ManicDiggerSave/MapData"));
                 LoadMapArray(map, new MemoryStream(mapdata));
-            }
-        }
-        public class XmlTool
-        {
-            public static string XmlVal(XmlDocument d, string path)
-            {
-                XPathNavigator navigator = d.CreateNavigator();
-                XPathNodeIterator iterator = navigator.Select(path);
-                foreach (XPathNavigator n in iterator)
-                {
-                    return n.Value;
-                }
-                return null;
-            }
-            public static IEnumerable<string> XmlVals(XmlDocument d, string path)
-            {
-                XPathNavigator navigator = d.CreateNavigator();
-                XPathNodeIterator iterator = navigator.Select(path);
-                foreach (XPathNavigator n in iterator)
-                {
-                    yield return n.Value;
-                }
             }
         }
         public void LoadMapArray(IMapStorage map, Stream s)

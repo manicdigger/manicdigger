@@ -8,6 +8,7 @@ using System.Collections;
 using ManicDigger;
 using System.Threading;
 using OpenTK;
+using System.Xml;
 
 namespace ManicDiggerServer
 {
@@ -20,17 +21,36 @@ namespace ManicDiggerServer
             map.MapSizeX = 256;
             map.MapSizeY = 256;
             map.MapSizeZ = 64;
-            var gamedata=new ManicDigger.GameDataTilesMinecraft();
+            var gamedata = new ManicDigger.GameDataTilesMinecraft();
             fCraft.MapGenerator Gen = new fCraft.MapGenerator();
-            var mapManipulator = new MapManipulator() { getfile = new GetFilePathDummy(), mapgenerator = new MapGeneratorPlain() };
+            manipulator = new MapManipulator() { getfile = new GetFilePathDummy(), mapgenerator = new MapGeneratorPlain() };
             Gen.data = gamedata;
             Gen.log = new fCraft.FLogDummy();
-            Gen.map = new MyFCraftMap() { data = gamedata, map = map, mapManipulator = mapManipulator };
+            Gen.map = new MyFCraftMap() { data = gamedata, map = map, mapManipulator = manipulator };
             Gen.rand = new GetRandomDummy();
             //"mountains"
             bool hollow = false;
-            Gen.GenerateMap(new fCraft.MapGeneratorParameters(8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
+            if (File.Exists(manipulator.defaultminesave))
+            {
+                manipulator.LoadMap(map, manipulator.defaultminesave);
+                Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
+            }
+            else
+            {
+                Gen.GenerateMap(new fCraft.MapGeneratorParameters(8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
+            }
         }
+        MapManipulator manipulator;
+        public void Process()
+        {
+            if ((DateTime.Now - lastsave).TotalMinutes > 2)
+            {
+                manipulator.SaveMap(map, manipulator.defaultminesave);
+                Console.WriteLine("Game saved.");
+                lastsave = DateTime.Now;
+            }
+        }
+        DateTime lastsave = DateTime.Now;
     }
     public class Water
     {
@@ -120,6 +140,32 @@ namespace ManicDiggerServer
     }
     public class ServerNetwork
     {
+        public ServerNetwork()
+        {
+            LoadConfig();
+        }
+        void LoadConfig()
+        {
+            string filename = "ServerConfig.xml";
+            if (!File.Exists(filename))
+            {
+                return;
+            }
+            using (Stream s = new MemoryStream(File.ReadAllBytes(filename)))
+            {
+                StreamReader sr = new StreamReader(s);
+                XmlDocument d = new XmlDocument();
+                d.Load(sr);
+                int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/FormatVersion"));
+                cfgname = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
+                cfgmotd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
+                cfgport = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
+            }
+            Console.WriteLine("Server configuration loaded.");
+        }
+        string cfgname = "Manic Digger server";
+        string cfgmotd = "MOTD";
+        public int cfgport = 25565;
         public Server server;
         public IMapStorage map;
         Socket main;
@@ -131,8 +177,8 @@ namespace ManicDiggerServer
             {
                 StringWriter sw = new StringWriter();//&salt={4}
                 string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}"
-                    , System.Web.HttpUtility.UrlEncode("[Non-Minecraft] Manic Digger, Fortress Mode, Test 1."),
-                    32, "true", 25565, "7");
+                    , System.Web.HttpUtility.UrlEncode(cfgname),
+                    32, "true", cfgport, "7");
 
                 List<string> playernames = new List<string>();
                 lock (clients)
@@ -145,7 +191,7 @@ namespace ManicDiggerServer
                 string requestString = staticData +
                                         "&users=" + clients.Count +
                                         "&hash=" + "0123456789abcdef0123456789abcdef" +
-                                        "&motd=" + System.Web.HttpUtility.UrlEncode("MOTD") +
+                                        "&motd=" + System.Web.HttpUtility.UrlEncode(cfgmotd) +
                                         "&server=Manic Digger f" +
                                         "&players=" + string.Join(",", playernames.ToArray());
 
@@ -587,11 +633,12 @@ namespace ManicDiggerServer
             ServerNetwork s = new ServerNetwork();
             s.server = server;
             s.map = server.map;
-            s.Start(25565);
+            s.Start(s.cfgport);
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             for (; ; )
             {
                 s.Process();
+                server.Process();
                 Thread.Sleep(1);
             }
         }
