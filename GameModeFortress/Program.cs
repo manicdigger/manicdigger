@@ -97,6 +97,7 @@ namespace GameModeFortress
             clientgame.terrain = terrainDrawer;
             clientgame.viewport = w;
             clientgame.data = gamedata;
+            clientgame.network = network;
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

@@ -19,6 +19,8 @@ namespace GameModeFortress
         public IViewport3d viewport { get; set; }
         [Inject]
         public IGameData data { get; set; }
+        [Inject]
+        public INetworkClient network { get; set; }
         public IMapStorage mapforphysics;
         class MapForPhysics : IMapStorage
         {
@@ -124,7 +126,8 @@ namespace GameModeFortress
                     mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
                     tiletype = (byte)activematerial,
                 };
-                ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
+                //ticks.DoCommand(MakeCommand(CommandId.Build, cmd)); ???
+                network.SendSetBlock(blockpos, right ? BlockSetMode.Create : BlockSetMode.Destroy, activematerial);
             }
         }
         byte[] MakeCommand(CommandId cmdid, IStreamizable cmd)
