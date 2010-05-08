@@ -135,7 +135,7 @@ namespace ManicDigger
         }
         public int TileIdWater
         {
-            get { return (int)TileTypeMinecraft.Water; }
+            get { return (int)TileTypeMinecraft.StationaryWater; }
         }
         public int TileIdSand
         {

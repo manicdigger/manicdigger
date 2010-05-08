@@ -2334,7 +2334,7 @@ namespace ManicDigger
         }
         private void DrawMouseCursor()
         {
-            Draw2dBitmapFile("gui\\mousecursor.png", mouse_current.X, mouse_current.Y, 30, 30);
+            Draw2dBitmapFile("gui\\mousecursor.png", mouse_current.X, mouse_current.Y, 20, 20);
         }
         int chatfontsize = 12;
         Size? aimsize;
