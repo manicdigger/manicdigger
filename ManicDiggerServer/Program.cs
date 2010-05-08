@@ -65,7 +65,6 @@ namespace ManicDiggerServer
                     Flood(v);
                     toflood.Remove(v);
                 }
-                Console.WriteLine(toflood.Count);
             }
         }
         public IGameData data = new GameDataTilesMinecraft();
@@ -416,7 +415,11 @@ namespace ManicDiggerServer
                     map.Map[x, z, y] = blocktype;
                     foreach (var k in clients)
                     {
-                        SendSetBlock(k.Key, x, z, y, blocktype);
+                        //original player did speculative update already.
+                        if (k.Key != clientid)
+                        {
+                            SendSetBlock(k.Key, x, z, y, blocktype);
+                        }
                     }
                     //water
                     water.BlockChange(map, x, z, y);
