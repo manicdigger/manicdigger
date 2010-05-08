@@ -123,11 +123,18 @@ namespace GameModeFortress
                     x = (short)blockpos.X,
                     y = (short)blockpos.Y,
                     z = (short)blockpos.Z,
-                    mode = right ? BlockSetMode.Create : BlockSetMode.Destroy,
+                    mode = mode,
                     tiletype = (byte)activematerial,
                 };
                 //ticks.DoCommand(MakeCommand(CommandId.Build, cmd)); ???
-                network.SendSetBlock(blockpos, right ? BlockSetMode.Create : BlockSetMode.Destroy, activematerial);
+                network.SendSetBlock(blockpos, mode, activematerial);
+                if (mode == BlockSetMode.Destroy)
+                {
+                    activematerial = data.TileIdEmpty;
+                }
+                //speculative
+                map.Map[x, y, z] = (byte)activematerial;
+                terrain.UpdateTile(x, y, z);
             }
         }
         byte[] MakeCommand(CommandId cmdid, IStreamizable cmd)

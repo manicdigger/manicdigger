@@ -18,8 +18,19 @@ namespace ManicDigger
         public IGameData data { get; set; }
         public void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right)
         {
-            network.SendSetBlock(blockposnew,
-                right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)viewport.MaterialSlots[viewport.activematerial]);
+            var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
+            int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
+            network.SendSetBlock(blockposnew, mode, activematerial);
+            if (mode == BlockSetMode.Destroy)
+            {
+                activematerial = data.TileIdEmpty;
+            }
+            //speculative
+            int x = (int)blockposnew.X;
+            int y = (int)blockposnew.Y;
+            int z = (int)blockposnew.Z;
+            map.Map[x, y, z] = (byte)activematerial;
+            terrain.UpdateTile(x, y, z);
         }
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
         {

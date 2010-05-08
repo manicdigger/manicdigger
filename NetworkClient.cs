@@ -57,8 +57,8 @@ namespace ManicDigger
             {
                 type = Data.TileIdEmpty;
             }
-            Map1.SetTileAndUpdate(position, (byte)type);
-            //Console.WriteLine("build:" + position);
+            //block update not needed - client does speculative block update.
+            //Map1.SetTileAndUpdate(position, (byte)type);
             Console.WriteLine("player:" + player.LocalPlayerPosition + ", build:" + position);
         }
         public void SendChat(string s)
