@@ -441,169 +441,185 @@ namespace ManicDigger
             {
                 Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packetId));
             }
-            if (packetId == MinecraftServerPacketId.ServerIdentification)
+            switch (packetId)
             {
-                totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (received.Count < totalread) { return 0; }
-                ServerPlayerIdentification p = new ServerPlayerIdentification();
-                p.ProtocolVersion = br.ReadByte();
-                if (p.ProtocolVersion != 7)
-                {
-                    throw new Exception();
-                }
-                p.ServerName = NetworkHelper.ReadString64(br);
-                p.ServerMotd = NetworkHelper.ReadString64(br);
-                p.UserType = br.ReadByte();
-                //connected = true;
-                this.ServerName = p.ServerName;
-                ChatLog("---Connected---");
-            }
-            else if (packetId == MinecraftServerPacketId.Ping)
-            {
-            }
-            else if (packetId == MinecraftServerPacketId.LevelInitialize)
-            {
-                receivedMapStream = new MemoryStream();
-                InvokeMapLoadingProgress(0);
-            }
-            else if (packetId == MinecraftServerPacketId.LevelDataChunk)
-            {
-                totalread += 2 + 1024 + 1; if (received.Count < totalread) { return 0; }
-                int chunkLength = NetworkHelper.ReadInt16(br);
-                byte[] chunkData = br.ReadBytes(1024);
-                BinaryWriter bw1 = new BinaryWriter(receivedMapStream);
-                byte[] chunkDataWithoutPadding = new byte[chunkLength];
-                for (int i = 0; i < chunkLength; i++)
-                {
-                    chunkDataWithoutPadding[i] = chunkData[i];
-                }
-                bw1.Write(chunkDataWithoutPadding);
-                MapLoadingPercentComplete = br.ReadByte();
-                InvokeMapLoadingProgress(MapLoadingPercentComplete);
-            }
-            else if (packetId == MinecraftServerPacketId.LevelFinalize)
-            {
-                totalread += 2 + 2 + 2; if (received.Count < totalread) { return 0; }
-                mapreceivedsizex = NetworkHelper.ReadInt16(br);
-                mapreceivedsizez = NetworkHelper.ReadInt16(br);
-                mapreceivedsizey = NetworkHelper.ReadInt16(br);
-                receivedMapStream.Seek(0, SeekOrigin.Begin);
-                MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
-                if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
-                    (decompressed.Length % 1024))
-                {
-                    //throw new Exception();
-                    Console.WriteLine("warning: invalid map data size");
-                }
-                byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
-                {
-                    BinaryReader br2 = new BinaryReader(decompressed);
-                    int size = NetworkHelper.ReadInt32(br2);
-                    for (int z = 0; z < mapreceivedsizez; z++)
+                case MinecraftServerPacketId.ServerIdentification:
                     {
-                        for (int y = 0; y < mapreceivedsizey; y++)
+                        totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (received.Count < totalread) { return 0; }
+                        ServerPlayerIdentification p = new ServerPlayerIdentification();
+                        p.ProtocolVersion = br.ReadByte();
+                        if (p.ProtocolVersion != 7)
                         {
-                            for (int x = 0; x < mapreceivedsizex; x++)
+                            throw new Exception();
+                        }
+                        p.ServerName = NetworkHelper.ReadString64(br);
+                        p.ServerMotd = NetworkHelper.ReadString64(br);
+                        p.UserType = br.ReadByte();
+                        //connected = true;
+                        this.ServerName = p.ServerName;
+                        ChatLog("---Connected---");
+                    }
+                    break;
+                case MinecraftServerPacketId.Ping:
+                    {
+                    }
+                    break;
+                case MinecraftServerPacketId.LevelInitialize:
+                    {
+                        receivedMapStream = new MemoryStream();
+                        InvokeMapLoadingProgress(0);
+                    }
+                    break;
+                case MinecraftServerPacketId.LevelDataChunk:
+                    {
+                        totalread += 2 + 1024 + 1; if (received.Count < totalread) { return 0; }
+                        int chunkLength = NetworkHelper.ReadInt16(br);
+                        byte[] chunkData = br.ReadBytes(1024);
+                        BinaryWriter bw1 = new BinaryWriter(receivedMapStream);
+                        byte[] chunkDataWithoutPadding = new byte[chunkLength];
+                        for (int i = 0; i < chunkLength; i++)
+                        {
+                            chunkDataWithoutPadding[i] = chunkData[i];
+                        }
+                        bw1.Write(chunkDataWithoutPadding);
+                        MapLoadingPercentComplete = br.ReadByte();
+                        InvokeMapLoadingProgress(MapLoadingPercentComplete);
+                    }
+                    break;
+                case MinecraftServerPacketId.LevelFinalize:
+                    {
+                        totalread += 2 + 2 + 2; if (received.Count < totalread) { return 0; }
+                        mapreceivedsizex = NetworkHelper.ReadInt16(br);
+                        mapreceivedsizez = NetworkHelper.ReadInt16(br);
+                        mapreceivedsizey = NetworkHelper.ReadInt16(br);
+                        receivedMapStream.Seek(0, SeekOrigin.Begin);
+                        MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
+                        if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
+                            (decompressed.Length % 1024))
+                        {
+                            //throw new Exception();
+                            Console.WriteLine("warning: invalid map data size");
+                        }
+                        byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
+                        {
+                            BinaryReader br2 = new BinaryReader(decompressed);
+                            int size = NetworkHelper.ReadInt32(br2);
+                            for (int z = 0; z < mapreceivedsizez; z++)
                             {
-                                receivedmap[x, y, z] = br2.ReadByte();
+                                for (int y = 0; y < mapreceivedsizey; y++)
+                                {
+                                    for (int x = 0; x < mapreceivedsizex; x++)
+                                    {
+                                        receivedmap[x, y, z] = br2.ReadByte();
+                                    }
+                                }
                             }
                         }
+                        if (MapLoaded != null)
+                        {
+                            MapLoaded.Invoke(this, new MapLoadedEventArgs() { map = receivedmap });
+                        }
                     }
-                }
-                if (MapLoaded != null)
-                {
-                    MapLoaded.Invoke(this, new MapLoadedEventArgs() { map = receivedmap });
-                }
-            }
-            else if (packetId == MinecraftServerPacketId.SetBlock)
-            {
-                totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
-                int x = NetworkHelper.ReadInt16(br);
-                int z = NetworkHelper.ReadInt16(br);
-                int y = NetworkHelper.ReadInt16(br);
-                byte type = br.ReadByte();
-                try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
-                catch { Console.WriteLine("Cannot update tile!"); }
-            }
-            else if (packetId == MinecraftServerPacketId.SpawnPlayer)
-            {
-                totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                string playername = NetworkHelper.ReadString64(br);
-                connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                if (Clients.Players.ContainsKey(playerid))
-                {
-                    //throw new Exception();
-                }
-                Clients.Players[playerid] = new Player();
-                ReadAndUpdatePlayerPosition(br, playerid);
-            }
-            else if (packetId == MinecraftServerPacketId.PlayerTeleport)
-            {
-                totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                ReadAndUpdatePlayerPosition(br, playerid);
-            }
-            else if (packetId == MinecraftServerPacketId.PositionandOrientationUpdate)
-            {
-                totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                float x = (float)br.ReadSByte() / 32;
-                float y = (float)br.ReadSByte() / 32;
-                float z = (float)br.ReadSByte() / 32;
-                byte heading = br.ReadByte();
-                byte pitch = br.ReadByte();
-                Vector3 v = new Vector3(x, y, z);
-                UpdatePositionDiff(playerid, v);
-            }
-            else if (packetId == MinecraftServerPacketId.PositionUpdate)
-            {
-                totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                float x = (float)br.ReadSByte() / 32;
-                float y = (float)br.ReadSByte() / 32;
-                float z = (float)br.ReadSByte() / 32;
-                Vector3 v = new Vector3(x, y, z);
-                UpdatePositionDiff(playerid, v);
-            }
-            else if (packetId == MinecraftServerPacketId.OrientationUpdate)
-            {
-                totalread += 1 + 1 + 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                byte heading = br.ReadByte();
-                byte pitch = br.ReadByte();
-                Clients.Players[playerid].Heading = heading;
-                Clients.Players[playerid].Pitch = pitch;
-            }
-            else if (packetId == MinecraftServerPacketId.DespawnPlayer)
-            {
-                totalread += 1; if (received.Count < totalread) { return 0; }
-                byte playerid = br.ReadByte();
-                for (int i = 0; i < connectedplayers.Count; i++)
-                {
-                    if (connectedplayers[i].id == playerid)
+                    break;
+                case MinecraftServerPacketId.SetBlock:
                     {
-                        connectedplayers.RemoveAt(i);
+                        totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
+                        int x = NetworkHelper.ReadInt16(br);
+                        int z = NetworkHelper.ReadInt16(br);
+                        int y = NetworkHelper.ReadInt16(br);
+                        byte type = br.ReadByte();
+                        try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
+                        catch { Console.WriteLine("Cannot update tile!"); }
                     }
-                }
-                Clients.Players.Remove(playerid);
-            }
-            else if (packetId == MinecraftServerPacketId.Message)
-            {
-                totalread += 1 + NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
-                byte unused = br.ReadByte();
-                string message = NetworkHelper.ReadString64(br);
-                Chatlines.AddChatline(message);
-                ChatLog(message);
-            }
-            else if (packetId == MinecraftServerPacketId.DisconnectPlayer)
-            {
-                totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
-                string disconnectReason = NetworkHelper.ReadString64(br);
-                throw new Exception(disconnectReason);
-            }
-            else
-            {
-                throw new Exception();
+                    break;
+                case MinecraftServerPacketId.SpawnPlayer:
+                    {
+                        totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        string playername = NetworkHelper.ReadString64(br);
+                        connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
+                        if (Clients.Players.ContainsKey(playerid))
+                        {
+                            //throw new Exception();
+                        }
+                        Clients.Players[playerid] = new Player();
+                        ReadAndUpdatePlayerPosition(br, playerid);
+                    }
+                    break;
+                case MinecraftServerPacketId.PlayerTeleport:
+                    {
+                        totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        ReadAndUpdatePlayerPosition(br, playerid);
+                    }
+                    break;
+                case MinecraftServerPacketId.PositionandOrientationUpdate:
+                    {
+                        totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        float x = (float)br.ReadSByte() / 32;
+                        float y = (float)br.ReadSByte() / 32;
+                        float z = (float)br.ReadSByte() / 32;
+                        byte heading = br.ReadByte();
+                        byte pitch = br.ReadByte();
+                        Vector3 v = new Vector3(x, y, z);
+                        UpdatePositionDiff(playerid, v);
+                    }
+                    break;
+                case MinecraftServerPacketId.PositionUpdate:
+                    {
+                        totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        float x = (float)br.ReadSByte() / 32;
+                        float y = (float)br.ReadSByte() / 32;
+                        float z = (float)br.ReadSByte() / 32;
+                        Vector3 v = new Vector3(x, y, z);
+                        UpdatePositionDiff(playerid, v);
+                    }
+                    break;
+                case MinecraftServerPacketId.OrientationUpdate:
+                    {
+                        totalread += 1 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        byte heading = br.ReadByte();
+                        byte pitch = br.ReadByte();
+                        Clients.Players[playerid].Heading = heading;
+                        Clients.Players[playerid].Pitch = pitch;
+                    }
+                    break;
+                case MinecraftServerPacketId.DespawnPlayer:
+                    {
+                        totalread += 1; if (received.Count < totalread) { return 0; }
+                        byte playerid = br.ReadByte();
+                        for (int i = 0; i < connectedplayers.Count; i++)
+                        {
+                            if (connectedplayers[i].id == playerid)
+                            {
+                                connectedplayers.RemoveAt(i);
+                            }
+                        }
+                        Clients.Players.Remove(playerid);
+                    }
+                    break;
+                case MinecraftServerPacketId.Message:
+                    {
+                        totalread += 1 + NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
+                        byte unused = br.ReadByte();
+                        string message = NetworkHelper.ReadString64(br);
+                        Chatlines.AddChatline(message);
+                        ChatLog(message);
+                    }
+                    break;
+                case MinecraftServerPacketId.DisconnectPlayer:
+                    {
+                        totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
+                        string disconnectReason = NetworkHelper.ReadString64(br);
+                        throw new Exception(disconnectReason);
+                    }
+                default:
+                    {
+                        throw new Exception();
+                    }
             }
             return totalread;
         }
