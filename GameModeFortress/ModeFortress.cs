@@ -52,9 +52,261 @@ namespace GameModeFortress
             map.MapSizeZ = 64;
             mapforphysics = new MapForPhysics() { game = this };
         }
+        float currentvehiclespeed;
+        float xxxx;
+        Vector3 currentrailblock;
+        float currentrailblockprogress = 0;
+        VehicleDirection12 currentdirection;
+        Vector3 CurrentRailPos()
+        {
+            //new Vector3(xxxx += vehiclecurrentspeed * (float)dt, 40, 40);
+            Vector3 a = currentrailblock;
+            float x_correction = 0;
+            float y_correction = 0;
+            switch (currentdirection)
+            {
+                case VehicleDirection12.HorizontalRight:
+                    x_correction += currentrailblockprogress;
+                    y_correction += 0.5f;
+                    break;
+                case VehicleDirection12.HorizontalLeft:
+                    x_correction += 1.0f - currentrailblockprogress;
+                    y_correction += 0.5f;
+                    break;
+                case VehicleDirection12.VerticalDown:
+                    x_correction += 0.5f;
+                    y_correction += currentrailblockprogress;
+                    break;
+                case VehicleDirection12.VerticalUp:
+                    x_correction += 0.5f;
+                    y_correction += 1.0f - currentrailblockprogress;
+                    break;
+                case VehicleDirection12.UpLeftLeft:
+                    x_correction += 0.5f * (1.0f - currentrailblockprogress);
+                    y_correction += 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.UpLeftUp:
+                    x_correction += 0.5f * currentrailblockprogress;
+                    y_correction += 0.5f - 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.UpRightRight:
+                    x_correction += 0.5f + 0.5f * currentrailblockprogress;
+                    y_correction += 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.UpRightUp:
+                    x_correction += 1.0f - 0.5f * currentrailblockprogress;
+                    y_correction += 0.5f - 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.DownLeftLeft:
+                    x_correction += 0.5f * (1 - currentrailblockprogress);
+                    y_correction += 1.0f - 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.DownLeftDown:
+                    x_correction += 0.5f * currentrailblockprogress;
+                    y_correction += 0.5f + 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.DownRightRight:
+                    x_correction += 0.5f + 0.5f * currentrailblockprogress;
+                    y_correction += 1.0f - 0.5f * currentrailblockprogress;
+                    break;
+                case VehicleDirection12.DownRightDown:
+                    x_correction += 1.0f - 0.5f * currentrailblockprogress;
+                    y_correction += 0.5f + 0.5f * currentrailblockprogress;
+                    break;
+            }
+            return new Vector3(a.X + x_correction, a.Z + minecartheight, a.Y + y_correction);
+            //return a + Vector3.Multiply((b - a), (float)currentrailblockprogress);
+        }
+        private static float minecartheight { get { return 0.5f; } }
+        public struct TileEnterData
+        {
+            public Vector3 BlockPosition;
+            public TileEnterDirection EnterDirection;
+        }
+        public VehicleDirection12Flags PossibleRails(TileEnterData enter)
+        {
+            Vector3 new_position = enter.BlockPosition;
+            //List<VehicleDirection12> possible_rails = new List<VehicleDirection12>();
+            VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
+            if (MapUtil.IsValidPos(map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
+            {
+                RailDirectionFlags newpositionrail = data.GetRail(
+                    map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z));
+                List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
+                foreach (var z in DirectionUtils.PossibleNewRails(enter.EnterDirection))
+                {
+                    if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
+                        != RailDirectionFlags.None)
+                    {
+                        all_possible_rails.Add(z);
+                    }
+                }
+                possible_rails = DirectionUtils.ToVehicleDirection12Flags(all_possible_rails);
+            }
+            return possible_rails;
+        }
+        public static Vector3 NextTile(VehicleDirection12 direction, Vector3 currentTile)
+        {
+            return NextTile(DirectionUtils.ResultExit(direction), currentTile);
+        }
+        public static Vector3 NextTile(TileExitDirection direction, Vector3 currentTile)
+        {
+            switch (direction)
+            {
+                case TileExitDirection.Left:
+                    return new Vector3(currentTile.X - 1, currentTile.Y, currentTile.Z);
+                case TileExitDirection.Right:
+                    return new Vector3(currentTile.X + 1, currentTile.Y, currentTile.Z);
+                case TileExitDirection.Up:
+                    return new Vector3(currentTile.X, currentTile.Y - 1, currentTile.Z);
+                case TileExitDirection.Down:
+                    return new Vector3(currentTile.X, currentTile.Y + 1, currentTile.Z);
+                default:
+                    throw new ArgumentException("direction");
+            }
+        }
+        bool railriding = false;
+        bool wasqpressed = false;
+        bool wasvpressed = false;
+        VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
+        {
+            if (turnright)
+            {
+                if ((dir & VehicleDirection12Flags.DownRightRight) != 0)
+                {
+                    return VehicleDirection12.DownRightRight;
+                }
+                if ((dir & VehicleDirection12Flags.UpRightUp) != 0)
+                {
+                    return VehicleDirection12.UpRightUp;
+                }
+                if ((dir & VehicleDirection12Flags.UpLeftLeft) != 0)
+                {
+                    return VehicleDirection12.UpLeftLeft;
+                }
+                if ((dir & VehicleDirection12Flags.DownLeftDown) != 0)
+                {
+                    return VehicleDirection12.DownLeftDown;
+                }
+            }
+            if (turnleft)
+            {
+                if ((dir & VehicleDirection12Flags.DownRightDown) != 0)
+                {
+                    return VehicleDirection12.DownRightDown;
+                }
+                if ((dir & VehicleDirection12Flags.UpRightRight) != 0)
+                {
+                    return VehicleDirection12.UpRightRight;
+                }
+                if ((dir & VehicleDirection12Flags.UpLeftUp) != 0)
+                {
+                    return VehicleDirection12.UpLeftUp;
+                }
+                if ((dir & VehicleDirection12Flags.DownLeftLeft) != 0)
+                {
+                    return VehicleDirection12.DownLeftLeft;
+                }
+            }
+            foreach (var v in DirectionUtils.ToVehicleDirection12s(dir))
+            {
+                return v;
+            }
+            return null;
+        }
         public void OnNewFrame(double dt)
         {
             Tick();
+            bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
+            bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
+            if (railriding)
+            {
+                viewport.LocalPlayerPosition = CurrentRailPos();
+                currentrailblockprogress += currentvehiclespeed * (float)dt;
+                if (currentrailblockprogress >= 1)
+                {
+                    currentrailblockprogress = 0;
+                    var newenter = new TileEnterData();
+                    newenter.BlockPosition = NextTile(currentdirection, currentrailblock);
+                    newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
+                    var newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright);
+                    if (newdir == null)
+                    {
+                        //end of rail
+                        Reverse();
+                    }
+                    else
+                    {
+                        currentdirection = newdir.Value;
+                        currentrailblock = newenter.BlockPosition;
+                    }
+                }
+            }
+            if (viewport.keyboardstate[OpenTK.Input.Key.Number3])
+            {
+                currentvehiclespeed += 2f * (float)dt;
+            }
+            if (viewport.keyboardstate[OpenTK.Input.Key.E])
+            {
+                currentvehiclespeed -= 2f * (float)dt;
+            }
+            /*
+            if (targetspeed < 0)
+            {
+                targetspeed = 0;
+            }
+            if (currentvehiclespeed < targetspeed)
+            {
+                currentvehiclespeed += 10f * (float)dt;
+            }
+            if (currentvehiclespeed > targetspeed)
+            {
+                currentvehiclespeed -= 10f * (float)dt;
+            }
+            */
+            if (currentvehiclespeed < 0)
+            {
+                currentvehiclespeed = 0;
+            }
+            //todo fix
+            //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
+            if(!wasqpressed && viewport.keyboardstate[OpenTK.Input.Key.Q])
+            {
+                Reverse();
+            }
+
+            if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && !railriding)
+            {
+                currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
+                    (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
+                var railunderplayer = data.GetRail(map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
+                railriding = true;
+                if (railunderplayer == RailDirectionFlags.Horizontal)
+                {
+                    currentdirection = VehicleDirection12.HorizontalRight;
+                }
+                else if (railunderplayer == RailDirectionFlags.Vertical)
+                {
+                    currentdirection = VehicleDirection12.VerticalUp;
+                }
+                else
+                {
+                    railriding = false;
+                }
+            }
+            else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
+            {
+                railriding = false;
+            }
+            wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
+            wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+        }
+        float targetspeed = 0;
+        private void Reverse()
+        {
+            currentdirection = DirectionUtils.Reverse(currentdirection);
+            currentrailblockprogress = 1 - currentrailblockprogress;
+            //currentvehiclespeed = 0;
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
         {

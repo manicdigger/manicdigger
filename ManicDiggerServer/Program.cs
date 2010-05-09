@@ -74,7 +74,7 @@ namespace ManicDiggerServer
             this.map = map;
             //water here
             if (MapUtil.IsValidPos(map, x, y, z)
-                && data.IsWaterTile(map.GetBlock(x,y,z)))
+                && data.IsWaterTile(map.GetBlock(x, y, z)))
             {
                 Flood(new Vector3(x, y, z));
                 return;
@@ -250,7 +250,7 @@ namespace ManicDiggerServer
             {
                 Socket client1 = main.Accept();
                 IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
-                
+
                 Client c = new Client();
                 c.socket = client1;
                 lock (clients)
@@ -273,7 +273,7 @@ namespace ManicDiggerServer
             foreach (Socket clientSocket in copyList)
             {
                 int clientid = -1;
-                foreach(var k in new List<KeyValuePair<int,Client>>(clients))
+                foreach (var k in new List<KeyValuePair<int, Client>>(clients))
                 {
                     if (k.Value != null && k.Value.socket == clientSocket)
                     {
@@ -352,7 +352,7 @@ namespace ManicDiggerServer
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
@@ -399,13 +399,14 @@ namespace ManicDiggerServer
                             SendSpawnPlayer(clientid, (byte)k.Key, k.Value.playername, 0, 0, 0, 0, 0);
                         }
                     }
+                    Console.WriteLine("Player {0} connected.", username);
                     break;
                 case (int)MinecraftClientPacketId.SetBlock:
                     totalread += 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
                     int x = NetworkHelper.ReadInt16(br);
                     int y = NetworkHelper.ReadInt16(br);
                     int z = NetworkHelper.ReadInt16(br);
-                    BlockSetMode mode = br.ReadByte()==0?BlockSetMode.Destroy:BlockSetMode.Create;
+                    BlockSetMode mode = br.ReadByte() == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
                     byte blocktype = br.ReadByte();
                     if (mode == BlockSetMode.Destroy)
                     {
@@ -432,7 +433,7 @@ namespace ManicDiggerServer
                     int zz = NetworkHelper.ReadInt16(br);
                     byte heading = br.ReadByte();
                     byte pitch = br.ReadByte();
-                    foreach(var k in clients)
+                    foreach (var k in clients)
                     {
                         if (k.Key != clientid)
                         {

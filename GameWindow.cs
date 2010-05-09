@@ -292,7 +292,12 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
     }
-    public interface IViewport3d
+    public interface IKeyboard
+    {
+        OpenTK.Input.KeyboardDevice keyboardstate { get; }
+        OpenTK.Input.KeyboardKeyEventArgs keypressed { get; }
+    }
+    public interface IViewport3d : ILocalPlayerPosition, IKeyboard
     {
         int[] MaterialSlots { get; set; }
         int activematerial { get; set; }
@@ -756,8 +761,10 @@ namespace ManicDigger
             game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
         }
         Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
+        OpenTK.Input.KeyboardKeyEventArgs keyevent;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            keyevent = e;
             if (guistate == GuiState.Normal)
             {
                 if (Keyboard[OpenTK.Input.Key.Escape])
@@ -1717,6 +1724,7 @@ namespace ManicDigger
 
             //OnResize(new EventArgs());
             SwapBuffers();
+            keyevent = null;
         }
         int[] _skybox;
         private void DrawSkybox()
@@ -2919,5 +2927,17 @@ namespace ManicDigger
         #endregion
         public string GameUrl;
         Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
+        #region IKeyboard Members
+        public OpenTK.Input.KeyboardDevice keyboardstate
+        {
+            get { return Keyboard; }
+        }
+        #endregion
+        #region IKeyboard Members
+        public OpenTK.Input.KeyboardKeyEventArgs keypressed
+        {
+            get { return keyevent; }
+        }
+        #endregion
     }
 }
