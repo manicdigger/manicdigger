@@ -301,6 +301,8 @@ namespace ManicDigger
     {
         int[] MaterialSlots { get; set; }
         int activematerial { get; set; }
+        bool ENABLE_FREEMOVE { get; set; }
+        bool ENABLE_MOVE { get; set; }
     }
     public interface IGameMode
     {
@@ -944,10 +946,14 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.F)
                 {
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
+                    if (ENABLE_FREEMOVE) { Console.WriteLine("Freemove enabled."); }
+                    else { Console.WriteLine("Freemove disabled."); }
                 }
                 if (e.Key == OpenTK.Input.Key.N)
                 {
                     ENABLE_NOCLIP = !ENABLE_NOCLIP;
+                    if (ENABLE_NOCLIP) { Console.WriteLine("Noclip enabled."); }
+                    else { Console.WriteLine("Noclip disabled."); }
                 }
                 if (e.Key == OpenTK.Input.Key.R)
                 {
@@ -1298,7 +1304,9 @@ namespace ManicDigger
         //float fix = 0.5f;
 
         float jumpacceleration = 0;
-        bool ENABLE_FREEMOVE = false;
+        public bool ENABLE_FREEMOVE { get; set; }
+        bool enable_move = true;
+        public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
         bool ENABLE_NOCLIP = false;
         float gravity = 0.3f;
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -1362,7 +1370,7 @@ namespace ManicDigger
                             player.playerorientation.Y = (float)Math.PI + Vector3.CalculateAngle(new Vector3(1, 0, 0), q);
                         }
                     }
-                    else
+                    else if(ENABLE_MOVE)
                     {
                         if (Keyboard[OpenTK.Input.Key.W]) { movedy += 1; }
                         if (Keyboard[OpenTK.Input.Key.S]) { movedy += -1; }
@@ -1536,7 +1544,7 @@ namespace ManicDigger
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
             BlockPosSide pick0;
-            if (pick2.Count > 0 && (pick2[0].pos - player.playerposition).Length <= PICK_DISTANCE
+            if (pick2.Count > 0 && (pick2[0].pos - (player.playerposition + new Vector3(0, CharacterHeight, 0))).Length <= PICK_DISTANCE
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
                 (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
             {
@@ -1666,7 +1674,7 @@ namespace ManicDigger
         double accumulator = 0;
         double t = 0;
         //Vector3 oldplayerposition;
-        float characterheight { get { return CharacterPhysics.characterheight; } }
+        public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
@@ -2108,8 +2116,8 @@ namespace ManicDigger
         Matrix4 FppCamera()
         {
             Vector3 forward = toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
-            return Matrix4.LookAt(player.playerposition + new Vector3(0, characterheight, 0),
-                player.playerposition + new Vector3(0, characterheight, 0) + forward, up);
+            return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0),
+                player.playerposition + new Vector3(0, CharacterHeight, 0) + forward, up);
         }
         //Vector3 overheadCameraPosition = new Vector3(5, 32 + 20, 5);
         //Vector3 overheadCameraDestination = new Vector3(5, 32, 0);

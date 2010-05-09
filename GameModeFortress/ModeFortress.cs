@@ -131,9 +131,11 @@ namespace GameModeFortress
                     y_correction += 0.5f + 0.5f * currentrailblockprogress;
                     break;
             }
-            return new Vector3(a.X + x_correction, a.Z + minecartheight + z_correction, a.Y + y_correction);
+            //+1 because player can't be inside rail block (picking wouldn't work)
+            return new Vector3(a.X + x_correction, a.Z + railheight + 1 + z_correction, a.Y + y_correction);
         }
-        private static float minecartheight { get { return 0.5f; } }
+        float railheight = 0.3f;
+        private float minecartheight { get { return 1.5f - 1; } }
         public struct TileEnterData
         {
             public Vector3 BlockPosition;
@@ -237,6 +239,8 @@ namespace GameModeFortress
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
             if (railriding)
             {
+                viewport.ENABLE_FREEMOVE = true;
+                viewport.ENABLE_MOVE = false;
                 viewport.LocalPlayerPosition = CurrentRailPos();
                 currentrailblockprogress += currentvehiclespeed * (float)dt;
                 if (currentrailblockprogress >= 1)
@@ -288,7 +292,7 @@ namespace GameModeFortress
                     if (newdir == null)
                     {
                         //end of rail
-                        Reverse();
+                        currentdirection = DirectionUtils.Reverse(currentdirection);
                     }
                     else
                     {
@@ -336,6 +340,7 @@ namespace GameModeFortress
                     (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
                 var railunderplayer = data.GetRail(map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
                 railriding = true;
+                viewport.CharacterHeight = minecartheight;
                 currentvehiclespeed = 0;
                 if (railunderplayer == RailDirectionFlags.Horizontal)
                 {
@@ -347,16 +352,23 @@ namespace GameModeFortress
                 }
                 else
                 {
+                    viewport.CharacterHeight = WalkCharacterHeight;
                     railriding = false;
+                    viewport.ENABLE_FREEMOVE = false;
+                    viewport.ENABLE_MOVE = true;
                 }
             }
             else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
             {
+                viewport.CharacterHeight = WalkCharacterHeight;
                 railriding = false;
+                viewport.ENABLE_FREEMOVE = false;
+                viewport.ENABLE_MOVE = true;
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
         }
+        private float WalkCharacterHeight = 1.5f;
         private RailMapUtil RailMapUtil()
         {
             if (railmaputil == null)

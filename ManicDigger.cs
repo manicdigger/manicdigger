@@ -545,7 +545,7 @@ namespace ManicDigger
                 || (data.IsWaterTile(map.Map[x,y,z]) && (!swimmingtop));
         }
         float walldistance = 0.2f;
-        public const float characterheight = 1.5f;
+        public static float characterheight = 1.5f;
         public void Move(CharacterPhysicsState state, double dt)
         {
         }
@@ -733,6 +733,7 @@ namespace ManicDigger
         Vector3 LocalPlayerPosition { get; set; }
         Vector3 LocalPlayerOrientation { get; set; }
         bool Swimming { get; }
+        float CharacterHeight { get; set; }
     }
     public class LocalPlayerPositionDummy : ILocalPlayerPosition
     {
@@ -740,6 +741,9 @@ namespace ManicDigger
         public OpenTK.Vector3 LocalPlayerOrientation { get; set; }
         public OpenTK.Vector3 LocalPlayerPosition { get; set; }
         public bool Swimming { get { return false; } }
+        #endregion
+        #region ILocalPlayerPosition Members
+        public float CharacterHeight { get; set; }
         #endregion
     }
     public interface IClients
