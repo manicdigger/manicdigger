@@ -2819,50 +2819,55 @@ namespace ManicDigger
         }
         private void DrawCubeLines(Vector3 posx)
         {
+            float pickcubeheight = 1;
+            if (posx != new Vector3(-1, -1, -1))
+            {
+                pickcubeheight = getblockheight((int)posx.X, (int)posx.Z, (int)posx.Y);
+            }
             //Vector3 pos = new Vector3((int)posx.X, (int)posx.Y, (int)posx.Z);
             Vector3 pos = posx;
-            pos += new Vector3(0.5f, 0.5f, 0.5f);
+            pos += new Vector3(0.5f, pickcubeheight * 0.5f, 0.5f);
             GL.LineWidth(2);
             float size = 0.51f;
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.Begin(BeginMode.LineStrip);
             GL.Color3(Color.White);
             //GL.Color3(Color.Silver);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.Honeydew);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.Moccasin);
 
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.IndianRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
 
             //GL.Color3(Color.PaleVioletRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
 
             //GL.Color3(Color.ForestGreen);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
+            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
 
             GL.Color3(Color.White);//Color.Transparent);
 
