@@ -304,13 +304,13 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.Number3])
+            if (viewport.keyboardstate[OpenTK.Input.Key.R])
             {
-                currentvehiclespeed += 2f * (float)dt;
+                currentvehiclespeed += 1f * (float)dt;
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.E])
+            if (viewport.keyboardstate[OpenTK.Input.Key.F])
             {
-                currentvehiclespeed -= 2f * (float)dt;
+                currentvehiclespeed -= 1f * (float)dt;
             }
             /*
             if (targetspeed < 0)

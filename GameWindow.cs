@@ -926,10 +926,12 @@ namespace ManicDigger
                 {
                     mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
                 }
+                /*
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
                     GuiActionGenerateNewMap();
                 }
+                */
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
                     ConnectToInternetGame(username, pass, testgameurl);
@@ -943,19 +945,19 @@ namespace ManicDigger
                         freemousejustdisabled = true;
                     }
                 }
-                if (e.Key == OpenTK.Input.Key.F)
+                if (e.Key == OpenTK.Input.Key.F3)
                 {
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
                     if (ENABLE_FREEMOVE) { Console.WriteLine("Freemove enabled."); }
                     else { Console.WriteLine("Freemove disabled."); }
                 }
-                if (e.Key == OpenTK.Input.Key.N)
+                if (e.Key == OpenTK.Input.Key.F4)
                 {
                     ENABLE_NOCLIP = !ENABLE_NOCLIP;
                     if (ENABLE_NOCLIP) { Console.WriteLine("Noclip enabled."); }
                     else { Console.WriteLine("Noclip disabled."); }
                 }
-                if (e.Key == OpenTK.Input.Key.R)
+                if (e.Key == OpenTK.Input.Key.P)
                 {
                     player.playerposition = game.PlayerPositionSpawn;
                     player.movedz = 0;
