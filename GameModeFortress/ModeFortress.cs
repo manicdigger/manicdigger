@@ -53,33 +53,50 @@ namespace GameModeFortress
             mapforphysics = new MapForPhysics() { game = this };
         }
         float currentvehiclespeed;
-        float xxxx;
         Vector3 currentrailblock;
         float currentrailblockprogress = 0;
         VehicleDirection12 currentdirection;
         Vector3 CurrentRailPos()
         {
-            //new Vector3(xxxx += vehiclecurrentspeed * (float)dt, 40, 40);
+            var slope = RailMapUtil().GetRailSlope((int)currentrailblock.X,
+                (int)currentrailblock.Y, (int)currentrailblock.Z);
             Vector3 a = currentrailblock;
             float x_correction = 0;
             float y_correction = 0;
+            float z_correction = 0;
             switch (currentdirection)
             {
                 case VehicleDirection12.HorizontalRight:
                     x_correction += currentrailblockprogress;
                     y_correction += 0.5f;
+                    if (slope == RailSlope.TwoRightRaised)
+                        z_correction += currentrailblockprogress;
+                    if (slope == RailSlope.TwoLeftRaised)
+                        z_correction += 1 - currentrailblockprogress;
                     break;
                 case VehicleDirection12.HorizontalLeft:
                     x_correction += 1.0f - currentrailblockprogress;
                     y_correction += 0.5f;
+                    if (slope == RailSlope.TwoRightRaised)
+                        z_correction += 1 - currentrailblockprogress;
+                    if (slope == RailSlope.TwoLeftRaised)
+                        z_correction += currentrailblockprogress;
                     break;
                 case VehicleDirection12.VerticalDown:
                     x_correction += 0.5f;
                     y_correction += currentrailblockprogress;
+                    if (slope == RailSlope.TwoDownRaised)
+                        z_correction += currentrailblockprogress;
+                    if (slope == RailSlope.TwoUpRaised)
+                        z_correction += 1 - currentrailblockprogress;
                     break;
                 case VehicleDirection12.VerticalUp:
                     x_correction += 0.5f;
                     y_correction += 1.0f - currentrailblockprogress;
+                    if (slope == RailSlope.TwoDownRaised)
+                        z_correction += 1 - currentrailblockprogress;
+                    if (slope == RailSlope.TwoUpRaised)
+                        z_correction += currentrailblockprogress;
                     break;
                 case VehicleDirection12.UpLeftLeft:
                     x_correction += 0.5f * (1.0f - currentrailblockprogress);
@@ -114,8 +131,7 @@ namespace GameModeFortress
                     y_correction += 0.5f + 0.5f * currentrailblockprogress;
                     break;
             }
-            return new Vector3(a.X + x_correction, a.Z + minecartheight, a.Y + y_correction);
-            //return a + Vector3.Multiply((b - a), (float)currentrailblockprogress);
+            return new Vector3(a.X + x_correction, a.Z + minecartheight + z_correction, a.Y + y_correction);
         }
         private static float minecartheight { get { return 0.5f; } }
         public struct TileEnterData
@@ -126,7 +142,6 @@ namespace GameModeFortress
         public VehicleDirection12Flags PossibleRails(TileEnterData enter)
         {
             Vector3 new_position = enter.BlockPosition;
-            //List<VehicleDirection12> possible_rails = new List<VehicleDirection12>();
             VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
             if (MapUtil.IsValidPos(map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
@@ -214,6 +229,7 @@ namespace GameModeFortress
             }
             return null;
         }
+        RailMapUtil railmaputil;
         public void OnNewFrame(double dt)
         {
             Tick();
@@ -228,6 +244,45 @@ namespace GameModeFortress
                     currentrailblockprogress = 0;
                     var newenter = new TileEnterData();
                     newenter.BlockPosition = NextTile(currentdirection, currentrailblock);
+                    //slope
+                    //going up
+                    RailSlope slope = RailMapUtil().GetRailSlope((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z);
+                    if (slope == RailSlope.TwoDownRaised && currentdirection == VehicleDirection12.VerticalDown)
+                    {
+                        newenter.BlockPosition.Z++;
+                    }
+                    if (slope == RailSlope.TwoUpRaised && currentdirection == VehicleDirection12.VerticalUp)
+                    {
+                        newenter.BlockPosition.Z++;
+                    }
+                    if (slope == RailSlope.TwoLeftRaised && currentdirection == VehicleDirection12.HorizontalLeft)
+                    {
+                        newenter.BlockPosition.Z++;
+                    }
+                    if (slope == RailSlope.TwoRightRaised && currentdirection == VehicleDirection12.HorizontalRight)
+                    {
+                        newenter.BlockPosition.Z++;
+                    }
+                    //going down
+                    RailSlope slopebelownew = railmaputil.GetRailSlope(
+                        (int)newenter.BlockPosition.X, (int)newenter.BlockPosition.Y, (int)newenter.BlockPosition.Z - 1);
+                    if (slopebelownew == RailSlope.TwoDownRaised && DirectionUtils.ResultExit(currentdirection)==TileExitDirection.Up)
+                    {
+                        newenter.BlockPosition.Z--;
+                    }
+                    if (slopebelownew == RailSlope.TwoUpRaised && DirectionUtils.ResultExit(currentdirection) == TileExitDirection.Down)
+                    {
+                        newenter.BlockPosition.Z--;
+                    }
+                    if (slopebelownew == RailSlope.TwoLeftRaised && DirectionUtils.ResultExit(currentdirection)==TileExitDirection.Right)
+                    {
+                        newenter.BlockPosition.Z--;
+                    }
+                    if (slopebelownew == RailSlope.TwoRightRaised && DirectionUtils.ResultExit(currentdirection) == TileExitDirection.Left)
+                    {
+                        newenter.BlockPosition.Z--;
+                    }
+
                     newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
                     var newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright);
                     if (newdir == null)
@@ -281,6 +336,7 @@ namespace GameModeFortress
                     (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
                 var railunderplayer = data.GetRail(map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
                 railriding = true;
+                currentvehiclespeed = 0;
                 if (railunderplayer == RailDirectionFlags.Horizontal)
                 {
                     currentdirection = VehicleDirection12.HorizontalRight;
@@ -300,6 +356,14 @@ namespace GameModeFortress
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+        }
+        private RailMapUtil RailMapUtil()
+        {
+            if (railmaputil == null)
+            {
+                railmaputil = new RailMapUtil() { data = data, mapstorage = this };
+            }
+            return railmaputil;
         }
         float targetspeed = 0;
         private void Reverse()

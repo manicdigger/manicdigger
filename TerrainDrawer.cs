@@ -431,6 +431,62 @@ namespace ManicDigger
         public int MapSizeY { get { return mapstorage.MapSizeY; } }
         public int MapSizeZ { get { return mapstorage.MapSizeZ; } }
     }
+    public enum RailSlope
+    {
+        Flat, TwoLeftRaised, TwoRightRaised, TwoUpRaised, TwoDownRaised
+    }
+    public class RailMapUtil
+    {
+        [Inject]
+        public ITerrainInfo mapstorage { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
+
+        public RailSlope GetRailSlope(int x, int y, int z)
+        {
+            int tiletype = mapstorage.GetTerrainBlock(x, y, z);
+            RailDirectionFlags rail = data.GetRail(tiletype);
+            int blocknear;
+            if (x < mapstorage.MapSizeX - 1)
+            {
+                blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
+                if (rail == RailDirectionFlags.Horizontal &&
+                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoRightRaised;
+                }
+            }
+            if (x > 0)
+            {
+                blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
+                if (rail == RailDirectionFlags.Horizontal &&
+                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoLeftRaised;
+
+                }
+            }
+            if (y > 0)
+            {
+                blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
+                if (rail == RailDirectionFlags.Vertical &&
+                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoUpRaised;
+                }
+            }
+            if (y < mapstorage.MapSizeY - 1)
+            {
+                blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
+                if (rail == RailDirectionFlags.Vertical &&
+                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoDownRaised;
+                }
+            }
+            return RailSlope.Flat;
+        }
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
@@ -819,6 +875,7 @@ namespace ManicDigger
         public int texturesPacked { get { return 16; } }//16x16
         public int terrainTexture { get; set; }
         public float BlockShadow = 0.6f;
+        RailMapUtil railmaputil;
         #endregion
         private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
         {
@@ -865,52 +922,37 @@ namespace ManicDigger
                 return;
                 */
             }
+            //slope
             float blockheight00 = blockheight;
             float blockheight01 = blockheight;
             float blockheight10 = blockheight;
             float blockheight11 = blockheight;
             if (rail != RailDirectionFlags.None)
             {
-                int blocknear;
-                if (x < mapstorage.MapSizeX - 1)
+                if (railmaputil == null)
                 {
-                    blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
-                    if (rail == RailDirectionFlags.Horizontal &&
-                         blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
-                    {
-                        blockheight10 += 1;
-                        blockheight11 += 1;
-                    }
+                    railmaputil = new RailMapUtil() { data = data, mapstorage = mapstorage };
                 }
-                if (x > 0)
+                RailSlope slope = railmaputil.GetRailSlope(x, y, z);
+                if (slope == RailSlope.TwoRightRaised)
                 {
-                    blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
-                    if (rail == RailDirectionFlags.Horizontal &&
-                         blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
-                    {
-                        blockheight00 += 1;
-                        blockheight01 += 1;
-                    }
+                    blockheight10 += 1;
+                    blockheight11 += 1;
                 }
-                if (y > 0)
+                if (slope == RailSlope.TwoLeftRaised)
                 {
-                    blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
-                    if (rail == RailDirectionFlags.Vertical &&
-                          blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
-                    {
-                        blockheight00 += 1;
-                        blockheight10 += 1;
-                    }
+                    blockheight00 += 1;
+                    blockheight01 += 1;
                 }
-                if (y < mapstorage.MapSizeY - 1)
+                if (slope == RailSlope.TwoUpRaised)
                 {
-                    blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
-                    if (rail == RailDirectionFlags.Vertical &&
-                          blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
-                    {
-                        blockheight01 += 1;
-                        blockheight11 += 1;
-                    }
+                    blockheight00 += 1;
+                    blockheight10 += 1;
+                }
+                if (slope == RailSlope.TwoDownRaised)
+                {
+                    blockheight01 += 1;
+                    blockheight11 += 1;
                 }
             }
             //top
