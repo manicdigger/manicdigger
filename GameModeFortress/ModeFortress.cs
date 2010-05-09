@@ -234,6 +234,51 @@ namespace GameModeFortress
             return null;
         }
         RailMapUtil railmaputil;
+        enum UpDown
+        {
+            None,
+            Up,
+            Down,
+        }
+        UpDown GetUpDownMove(Vector3 railblock, TileEnterDirection dir)
+        {
+            //going up
+            RailSlope slope = RailMapUtil().GetRailSlope((int)railblock.X, (int)railblock.Y, (int)railblock.Z);
+            if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
+            {
+                return UpDown.Up;
+            }
+            if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Down)
+            {
+                return UpDown.Up;
+            }
+            if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Right)
+            {
+                return UpDown.Up;
+            }
+            if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Left)
+            {
+                return UpDown.Up;
+            }
+            //going down
+            if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Down)
+            {
+                return UpDown.Down;
+            }
+            if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Up)
+            {
+                return UpDown.Down;
+            }
+            if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Left)
+            {
+                return UpDown.Down;
+            }
+            if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Right)
+            {
+                return UpDown.Down;
+            }
+            return UpDown.None;
+        }
         public void OnNewFrame(double dt)
         {
             Tick();
@@ -252,40 +297,13 @@ namespace GameModeFortress
                     var newenter = new TileEnterData();
                     newenter.BlockPosition = NextTile(currentdirection, currentrailblock);
                     //slope
-                    //going up
-                    RailSlope slope = RailMapUtil().GetRailSlope((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z);
-                    if (slope == RailSlope.TwoDownRaised && currentdirection == VehicleDirection12.VerticalDown)
+                    if (GetUpDownMove(currentrailblock,
+                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
                     {
                         newenter.BlockPosition.Z++;
                     }
-                    if (slope == RailSlope.TwoUpRaised && currentdirection == VehicleDirection12.VerticalUp)
-                    {
-                        newenter.BlockPosition.Z++;
-                    }
-                    if (slope == RailSlope.TwoLeftRaised && currentdirection == VehicleDirection12.HorizontalLeft)
-                    {
-                        newenter.BlockPosition.Z++;
-                    }
-                    if (slope == RailSlope.TwoRightRaised && currentdirection == VehicleDirection12.HorizontalRight)
-                    {
-                        newenter.BlockPosition.Z++;
-                    }
-                    //going down
-                    RailSlope slopebelownew = railmaputil.GetRailSlope(
-                        (int)newenter.BlockPosition.X, (int)newenter.BlockPosition.Y, (int)newenter.BlockPosition.Z - 1);
-                    if (slopebelownew == RailSlope.TwoDownRaised && DirectionUtils.ResultExit(currentdirection)==TileExitDirection.Up)
-                    {
-                        newenter.BlockPosition.Z--;
-                    }
-                    if (slopebelownew == RailSlope.TwoUpRaised && DirectionUtils.ResultExit(currentdirection) == TileExitDirection.Down)
-                    {
-                        newenter.BlockPosition.Z--;
-                    }
-                    if (slopebelownew == RailSlope.TwoLeftRaised && DirectionUtils.ResultExit(currentdirection)==TileExitDirection.Right)
-                    {
-                        newenter.BlockPosition.Z--;
-                    }
-                    if (slopebelownew == RailSlope.TwoRightRaised && DirectionUtils.ResultExit(currentdirection) == TileExitDirection.Left)
+                    if (GetUpDownMove(newenter.BlockPosition + new Vector3(0, 0, -1),
+                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
                     {
                         newenter.BlockPosition.Z--;
                     }
@@ -302,6 +320,17 @@ namespace GameModeFortress
                         currentdirection = newdir.Value;
                         currentrailblock = newenter.BlockPosition;
                     }
+                    /*
+                    var updown = GetUpDownMove(newenter.BlockPosition, newenter.EnterDirection);
+                    if (updown == UpDown.Up)
+                    {
+                        currentvehiclespeed -= 0.5f;
+                    }
+                    if (updown == UpDown.Down)
+                    {
+                        currentvehiclespeed += 0.5f;
+                    }
+                    */
                 }
             }
             if (viewport.keyboardstate[OpenTK.Input.Key.R])
