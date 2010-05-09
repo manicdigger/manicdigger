@@ -12,10 +12,14 @@ namespace ManicDigger
     public interface IAudio
     {
         void Play(string filename);
+        void PlayAudioLoop(string filename, bool play);
     }
     public class AudioDummy : IAudio
     {
         public void Play(string filename)
+        {
+        }
+        public void PlayAudioLoop(string filename, bool play)
         {
         }
     }

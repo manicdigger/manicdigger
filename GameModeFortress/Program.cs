@@ -98,6 +98,7 @@ namespace GameModeFortress
             clientgame.viewport = w;
             clientgame.data = gamedata;
             clientgame.network = network;
+            clientgame.audio = audio;
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

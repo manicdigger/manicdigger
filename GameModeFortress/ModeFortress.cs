@@ -21,6 +21,8 @@ namespace GameModeFortress
         public IGameData data { get; set; }
         [Inject]
         public INetworkClient network { get; set; }
+        [Inject]
+        public IAudio audio { get; set; }
         public IMapStorage mapforphysics;
         class MapForPhysics : IMapStorage
         {
@@ -239,6 +241,7 @@ namespace GameModeFortress
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
             if (railriding)
             {
+                RailSound();
                 viewport.ENABLE_FREEMOVE = true;
                 viewport.ENABLE_MOVE = false;
                 viewport.LocalPlayerPosition = CurrentRailPos();
@@ -367,6 +370,27 @@ namespace GameModeFortress
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+        }
+        DateTime lastrailsoundtime;
+        int lastrailsound;
+        private void RailSound()
+        {
+            float railsoundpersecond = currentvehiclespeed;
+            if (railsoundpersecond > 10)
+            {
+                railsoundpersecond = 10;
+            }
+            audio.PlayAudioLoop("railnoise.wav", railsoundpersecond > 0.1f);
+            if ((DateTime.Now - lastrailsoundtime).TotalSeconds > 1 / railsoundpersecond)
+            {
+                audio.Play("rail" + (lastrailsound + 1) + ".wav");
+                lastrailsoundtime = DateTime.Now;
+                lastrailsound++;
+                if (lastrailsound >= 4)
+                {
+                    lastrailsound = 0;
+                }
+            }
         }
         private float WalkCharacterHeight = 1.5f;
         private RailMapUtil RailMapUtil()
