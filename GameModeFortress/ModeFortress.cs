@@ -333,11 +333,11 @@ namespace GameModeFortress
                     */
                 }
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.R])
+            if (viewport.keyboardstate[OpenTK.Input.Key.W])
             {
                 currentvehiclespeed += 1f * (float)dt;
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.F])
+            if (viewport.keyboardstate[OpenTK.Input.Key.S])
             {
                 currentvehiclespeed -= 1f * (float)dt;
             }
