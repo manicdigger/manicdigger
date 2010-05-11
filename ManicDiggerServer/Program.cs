@@ -351,11 +351,7 @@ namespace ManicDiggerServer
                 if (recv == 0)
                 {
                     //client problem. disconnect client.
-                    clients.Remove(clientid);
-                    foreach (var kk in clients)
-                    {
-                        SendDespawnPlayer(kk.Key, (byte)clientid);
-                    }
+                    KillPlayer(clientid);
                 }
                 else
                 {
@@ -386,11 +382,7 @@ namespace ManicDiggerServer
                 catch (ClientException e)
                 {
                     //client problem. disconnect client.
-                    clients.Remove(e.clientid);
-                    foreach (var kk in clients)
-                    {
-                        SendDespawnPlayer(kk.Key, (byte)e.clientid);
-                    }
+                    KillPlayer(e.clientid);
                 }
             }
             water.Update();
@@ -423,6 +415,16 @@ namespace ManicDiggerServer
             }
             water.tosetwater.Clear();
             water.tosetempty.Clear();
+        }
+        private void KillPlayer(int clientid)
+        {
+            string name = clients[clientid].playername;
+            clients.Remove(clientid);
+            foreach (var kk in clients)
+            {
+                SendDespawnPlayer(kk.Key, (byte)clientid);
+            }
+            SendMessageToAll(string.Format("Player {0} disconnected.", name));
         }
         public Water water = new Water();
         //returns bytes read.
@@ -465,7 +467,7 @@ namespace ManicDiggerServer
                             SendSpawnPlayer(clientid, (byte)k.Key, k.Value.playername, 0, 0, 0, 0, 0);
                         }
                     }
-                    Console.WriteLine("Player {0} connected.", username);
+                    SendMessageToAll(string.Format("Player {0} joins.", username));
                     break;
                 case (int)MinecraftClientPacketId.SetBlock:
                     totalread += 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
@@ -511,15 +513,21 @@ namespace ManicDiggerServer
                     totalread += 1 + 64; if (c.received.Count < totalread) { return 0; }
                     byte unused2 = br.ReadByte();
                     string message = NetworkHelper.ReadString64(br);
-                    foreach (var k in clients)
-                    {
-                        SendMessage(k.Key, message);
-                    }
+                    //todo sanitize text
+                    SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, message));
                     break;
                 default:
                     throw new Exception();
             }
             return totalread;
+        }
+        private void SendMessageToAll(string message)
+        {
+            Console.WriteLine(message);
+            foreach (var k in clients)
+            {
+                SendMessage(k.Key, message);
+            }
         }
         private void SendSpawnPlayer(int clientid, byte playerid, string playername, int x, int y, int z, int heading, int pitch)
         {
