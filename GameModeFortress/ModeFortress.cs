@@ -987,5 +987,11 @@ namespace GameModeFortress
             get { return data.TileIdSingleStairs; }
         }
         #endregion
+        #region IGameData Members
+        public int TileIdSponge
+        {
+            get { return data.TileIdSponge; }
+        }
+        #endregion
     }
 }

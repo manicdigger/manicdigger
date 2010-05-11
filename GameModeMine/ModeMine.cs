@@ -348,6 +348,12 @@ namespace ManicDigger
             get { return (int)TileTypeMinecraft.Stair; }
         }
         #endregion
+        #region IGameData Members
+        public int TileIdSponge
+        {
+            get { return (int)TileTypeMinecraft.Sponge; }
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

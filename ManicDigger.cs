@@ -432,6 +432,7 @@ namespace ManicDigger
         int TileIdWater { get; }
         int TileIdSand { get; }
         int TileIdSingleStairs { get; }
+        int TileIdSponge { get; }
         bool IsWaterTile(int tiletype);
         bool IsBuildableTile(int tiletype);
         bool IsValidTileType(int tiletype);
@@ -500,6 +501,9 @@ namespace ManicDigger
         #endregion
         #region IGameData Members
         public int TileIdSingleStairs { get; set; }
+        #endregion
+        #region IGameData Members
+        public int TileIdSponge { get; set; }
         #endregion
     }
     public interface IMapGenerator

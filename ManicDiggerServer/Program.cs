@@ -52,6 +52,7 @@ namespace ManicDiggerServer
         }
         DateTime lastsave = DateTime.Now;
     }
+    //todo water and sponges may not work when map is saved during flooding and then loaded.
     public class Water
     {
         public void Update()
@@ -67,11 +68,66 @@ namespace ManicDiggerServer
                 }
             }
         }
+        int spongerange = 2;
+        bool IsSpongeNear(int x, int y, int z)
+        {
+            for (int xx = x - spongerange; xx <= x + spongerange; xx++)
+            {
+                for (int yy = y - spongerange; yy <= y + spongerange; yy++)
+                {
+                    for (int zz = z - spongerange; zz <= z + spongerange; zz++)
+                    {
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdSponge)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
         public IGameData data = new GameDataTilesMinecraft();
         public void BlockChange(IMapStorage map, int x, int y, int z)
         {
             this.flooded = new Dictionary<Vector3, Vector3>();
             this.map = map;
+            //sponge just built.
+            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == data.TileIdSponge)
+            {
+                for (int xx = x - spongerange; xx <= x + spongerange; xx++)
+                {
+                    for (int yy = y - spongerange; yy <= y + spongerange; yy++)
+                    {
+                        for (int zz = z - spongerange; zz <= z + spongerange; zz++)
+                        {
+                            if (MapUtil.IsValidPos(map, xx, yy, zz) && data.IsWaterTile(map.GetBlock(xx, yy, zz)))
+                            {
+                                tosetempty.Add(new Vector3(xx, yy, zz));
+                            }
+                        }
+                    }
+                }
+            }
+            //maybe sponge destroyed. todo faster test.
+            for (int xx = x - spongerange; xx <= x + spongerange; xx++)
+            {
+                for (int yy = y - spongerange; yy <= y + spongerange; yy++)
+                {
+                    for (int zz = z - spongerange; zz <= z + spongerange; zz++)
+                    {
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdEmpty)
+                        {
+                            BlockChangeFlood(map, xx, yy, zz);
+                        }
+                    }
+                }
+            }
+            BlockChangeFlood(map, x,y,z);    
+            var v = new Vector3(x, y, z);
+            tosetwater.Sort((a, b) => (v - a).Length.CompareTo((v - b).Length));
+        }
+        void BlockChangeFlood(IMapStorage map, int x, int y, int z)
+        {
             //water here
             if (MapUtil.IsValidPos(map, x, y, z)
                 && data.IsWaterTile(map.GetBlock(x, y, z)))
@@ -89,12 +145,11 @@ namespace ManicDiggerServer
                     return;
                 }
             }
-            var v = new Vector3(x, y, z);
-            toset.Sort((a, b) => (v - a).Length.CompareTo((v - b).Length));
         }
         IMapStorage map;
         Dictionary<Vector3, Vector3> flooded = new Dictionary<Vector3, Vector3>();
-        public List<Vector3> toset = new List<Vector3>();
+        public List<Vector3> tosetwater = new List<Vector3>();
+        public List<Vector3> tosetempty = new List<Vector3>();
         Dictionary<Vector3, Vector3> toflood = new Dictionary<Vector3, Vector3>();
         DateTime lastflood;
         private void Flood(Vector3 v)
@@ -111,9 +166,9 @@ namespace ManicDiggerServer
             foreach (Vector3 vv in BlocksAround(v))
             {
                 var type = map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z);
-                if (type == data.TileIdEmpty)
+                if (type == data.TileIdEmpty && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
                 {
-                    toset.Add(vv);
+                    tosetwater.Add(vv);
                     toflood[vv] = vv;
                 }
             }
@@ -341,7 +396,7 @@ namespace ManicDiggerServer
             water.Update();
             try
             {
-                foreach (var v in water.toset)
+                foreach (var v in water.tosetwater)
                 {
                     byte watertype = (byte)TileTypeMinecraft.Water;
                     map.Map[(int)v.X, (int)v.Y, (int)v.Z] = watertype;
@@ -351,12 +406,23 @@ namespace ManicDiggerServer
                         //SendSetBlock(k.Key, x, z, y, watertype);
                     }
                 }
+                foreach (var v in water.tosetempty)
+                {
+                    byte emptytype = (byte)TileTypeMinecraft.Empty;
+                    map.Map[(int)v.X, (int)v.Y, (int)v.Z] = emptytype;
+                    foreach (var k in clients)
+                    {
+                        SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, emptytype);
+                        //SendSetBlock(k.Key, x, z, y, watertype);
+                    }
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-            water.toset.Clear();
+            water.tosetwater.Clear();
+            water.tosetempty.Clear();
         }
         public Water water = new Water();
         //returns bytes read.
