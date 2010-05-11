@@ -1408,23 +1408,38 @@ namespace ManicDigger
             {
                 player.movedz += -gravity;//gravity
             }
-            
-            //Vector3 newposition = player.playerposition +
-            var diff1 = toVectorInFixedSystem1
-            (movedx * movespeed * (float)e.Time,
-            0,
-            movedy * movespeed * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
-            curspeed.X = MakeCloserToZero(curspeed.X, 2f * (float)e.Time);
-            curspeed.Y = MakeCloserToZero(curspeed.Y, 2f * (float)e.Time);
-            curspeed.Z = MakeCloserToZero(curspeed.Z, 2f * (float)e.Time);
-            curspeed += Vector3.Multiply(diff1, 700f * (float)e.Time);
-            if (curspeed.Length > movespeed)
+            bool enable_acceleration = true;
+            float movespeednow = movespeed;
+            if (Keyboard[OpenTK.Input.Key.ShiftLeft])
             {
-                curspeed.Normalize();
-                curspeed *= movespeed;
+                //enable_acceleration = false;
+                movespeednow *= 0.2f;
             }
-            curspeed *= 0.97f;
-
+            var diff1 = toVectorInFixedSystem1
+            (movedx * movespeednow * (float)e.Time,
+            0,
+            movedy * movespeednow * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
+            if (enable_acceleration)
+            {
+                curspeed.X = MakeCloserToZero(curspeed.X, 2f * (float)e.Time);
+                curspeed.Y = MakeCloserToZero(curspeed.Y, 2f * (float)e.Time);
+                curspeed.Z = MakeCloserToZero(curspeed.Z, 2f * (float)e.Time);
+                curspeed += Vector3.Multiply(diff1, 700f * (float)e.Time);
+                if (curspeed.Length > movespeednow)
+                {
+                    curspeed.Normalize();
+                    curspeed *= movespeednow;
+                }
+                curspeed *= 0.97f;
+            }
+            else
+            {
+                if (diff1.Length > 0)
+                {
+                    diff1.Normalize();
+                }
+                curspeed = diff1 * movespeednow;
+            }
             var newposition = player.playerposition + (curspeed) * (float)e.Time;
             if (!(ENABLE_FREEMOVE))
             {
