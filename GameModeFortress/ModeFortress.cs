@@ -339,7 +339,7 @@ namespace GameModeFortress
             }
             if (viewport.keyboardstate[OpenTK.Input.Key.S])
             {
-                currentvehiclespeed -= 1f * (float)dt;
+                currentvehiclespeed -= 5f * (float)dt;
             }
             /*
             if (targetspeed < 0)
