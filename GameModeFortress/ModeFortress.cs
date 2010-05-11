@@ -284,9 +284,9 @@ namespace GameModeFortress
             Tick();
             bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
+            RailSound();
             if (railriding)
             {
-                RailSound();
                 viewport.ENABLE_FREEMOVE = true;
                 viewport.ENABLE_MOVE = false;
                 viewport.LocalPlayerPosition = CurrentRailPos();
@@ -409,7 +409,11 @@ namespace GameModeFortress
             {
                 railsoundpersecond = 10;
             }
-            audio.PlayAudioLoop("railnoise.wav", railsoundpersecond > 0.1f);
+            audio.PlayAudioLoop("railnoise.wav", railriding && railsoundpersecond > 0.1f);
+            if (!railriding)
+            {
+                return;
+            }
             if ((DateTime.Now - lastrailsoundtime).TotalSeconds > 1 / railsoundpersecond)
             {
                 audio.Play("rail" + (lastrailsound + 1) + ".wav");
