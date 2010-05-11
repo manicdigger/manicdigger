@@ -1697,6 +1697,12 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
+            activematerial += Mouse.WheelDelta;
+            activematerial = activematerial % 10;
+            while (activematerial < 0)
+            {
+                activematerial += 10;
+            }
             SetAmbientLight(terraincolor);
             //const float alpha = accumulator / dt;
             //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
