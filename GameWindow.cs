@@ -1697,7 +1697,7 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
-            activematerial += Mouse.WheelDelta;
+            activematerial -= Mouse.WheelDelta;
             activematerial = activematerial % 10;
             while (activematerial < 0)
             {
