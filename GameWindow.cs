@@ -2380,7 +2380,7 @@ namespace ManicDigger
                 Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
 
                 DrawMaterialSelector();
-                DrawChatLines();
+                DrawChatLines(GuiTyping == TypingState.Typing);
                 if (GuiTyping == TypingState.Typing)
                 {
                     Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
@@ -2501,7 +2501,7 @@ namespace ManicDigger
             return (int)(Height / 2 - height / 2);
         }
         int ChatScreenExpireTimeSeconds = 20;
-        private void DrawChatLines()
+        private void DrawChatLines(bool all)
         {
             /*
             if (chatlines.Count>0 && (DateTime.Now - chatlines[0].time).TotalSeconds > 10)
@@ -2510,11 +2510,32 @@ namespace ManicDigger
             }
             */
             List<Chatline> chatlines2 = new List<Chatline>();
-            foreach (Chatline c in chatlines)
+            if (!all)
             {
-                if ((DateTime.Now - c.time).TotalSeconds < ChatScreenExpireTimeSeconds)
+                foreach (Chatline c in chatlines)
                 {
-                    chatlines2.Add(c);
+                    if ((DateTime.Now - c.time).TotalSeconds < ChatScreenExpireTimeSeconds)
+                    {
+                        chatlines2.Add(c);
+                    }
+                }
+            }
+            else
+            {
+                int maxtodraw = 10;
+                int first = chatlines.Count - maxtodraw;
+                if (first < 0)
+                {
+                    first = 0;
+                }
+                int count = chatlines.Count;
+                if (count > maxtodraw)
+                {
+                    count = maxtodraw;
+                }
+                for (int i = first; i < first + count; i++)
+                {
+                    chatlines2.Add(chatlines[i]);
                 }
             }
             for (int i = 0; i < chatlines2.Count; i++)
