@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 using ManicDigger;
+using System.IO;
+using System.Xml;
+using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace GameModeFortress
 {
@@ -17,6 +21,10 @@ namespace GameModeFortress
             w.audio = audio;
             MakeGame(true);
             w.GameUrl = GameUrl;
+            if (User != null)
+            {
+                w.username = User;
+            }
             w.Run();
         }
         private void MakeGame(bool singleplayer)
@@ -115,6 +123,7 @@ namespace GameModeFortress
             MakeGame(false);
         }
         #endregion
+        public string User;
     }
     public class ManicDiggerProgram
     {
@@ -125,7 +134,28 @@ namespace GameModeFortress
         }
         private static void Start(string[] args)
         {
-            new ManicDiggerProgram2().Start();
+            if (!Debugger.IsAttached)
+            {
+                string appPath = Path.GetDirectoryName(Application.ExecutablePath);
+                System.Environment.CurrentDirectory = appPath;
+            }
+            var p = new ManicDiggerProgram2();
+            if (args.Length > 0)
+            {
+                if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    XmlDocument d = new XmlDocument();
+                    d.Load(args[0]);
+                    string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
+                    if (mode != "Fortress")
+                    {
+                        throw new Exception("Invalid game mode: " + mode);
+                    }
+                    p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                }
+            }
+            p.Start();
         }
     }
 }

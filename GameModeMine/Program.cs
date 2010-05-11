@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Forms;
+using System.Xml;
 
 namespace ManicDigger
 {
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
         public string GameUrl = null;
+        public string User = null;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
         public void Start()
@@ -18,6 +21,10 @@ namespace ManicDigger
             w.audio = audio;
             MakeGame(true);
             w.GameUrl = GameUrl;
+            if (User != null)
+            {
+                w.username = User;
+            }
             w.Run();
         }
         private void MakeGame(bool singleplayer)
@@ -122,6 +129,11 @@ namespace ManicDigger
         }
         private static void Start(string[] args)
         {
+            if (!Debugger.IsAttached)
+            {
+                string appPath = Path.GetDirectoryName(Application.ExecutablePath);
+                System.Environment.CurrentDirectory = appPath;
+            }
             if (args.Length > 0 && args[0] == "servers")
             {
                 var f = new ServerSelector();
@@ -135,6 +147,22 @@ namespace ManicDigger
                 p.GameUrl = f.SelectedServer;
                 p.Start();
                 return;
+            }
+            if (args.Length > 0)
+            {
+                if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var p = new ManicDiggerProgram2();
+                    XmlDocument d = new XmlDocument();
+                    d.Load(args[0]);
+                    string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
+                    if (mode != "Mine")
+                    {
+                        throw new Exception("Invalid game mode: " + mode);
+                    }
+                    p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                }
             }
             new ManicDiggerProgram2().Start();
         }

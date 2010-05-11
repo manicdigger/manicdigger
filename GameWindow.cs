@@ -1099,7 +1099,7 @@ namespace ManicDigger
         INetworkClient newnetwork;
         ITerrainDrawer newterrain;
 
-        string username = "gamer1";
+        public string username = "gamer1";
         string pass = "12345";
         string testgameurl
         {
