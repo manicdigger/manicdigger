@@ -586,10 +586,18 @@ namespace ManicDigger
             //top
             {
                 var qnewposition = newposition + new Vector3(0, -walldistance, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                int x = (int)Math.Floor(qnewposition.X);
+                int y = (int)Math.Floor(qnewposition.Z);
+                int z = (int)Math.Floor(qnewposition.Y);
+                float a = 0.4f;
+                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)));
                 if (newposition.Y - oldposition.Y < 0)
                 {
-                    if (!newempty)
+                    if (newfull)
                     {
                         playerposition.Y = oldposition.Y;
                     }
