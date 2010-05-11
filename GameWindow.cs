@@ -1323,6 +1323,7 @@ namespace ManicDigger
         }
         CharacterPhysicsState player = new CharacterPhysicsState();
         DateTime lasttodo;
+        Vector3 curspeed;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -1407,10 +1408,24 @@ namespace ManicDigger
             {
                 player.movedz += -gravity;//gravity
             }
-            Vector3 newposition = player.playerposition + toVectorInFixedSystem1
-                (movedx * movespeed * (float)e.Time,
-                0,
-                movedy * movespeed * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
+            
+            //Vector3 newposition = player.playerposition +
+            var diff1 = toVectorInFixedSystem1
+            (movedx * movespeed * (float)e.Time,
+            0,
+            movedy * movespeed * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
+            curspeed.X = MakeCloserToZero(curspeed.X, 2f * (float)e.Time);
+            curspeed.Y = MakeCloserToZero(curspeed.Y, 2f * (float)e.Time);
+            curspeed.Z = MakeCloserToZero(curspeed.Z, 2f * (float)e.Time);
+            curspeed += Vector3.Multiply(diff1, 700f * (float)e.Time);
+            if (curspeed.Length > movespeed)
+            {
+                curspeed.Normalize();
+                curspeed *= movespeed;
+            }
+            curspeed *= 0.97f;
+
+            var newposition = player.playerposition + (curspeed) * (float)e.Time;
             if (!(ENABLE_FREEMOVE))
             {
                 if (!Swimming)
@@ -1422,8 +1437,9 @@ namespace ManicDigger
                 if (diff.Length > 0)
                 {
                     diff.Normalize();
+                    diff *= 1 * curspeed.Length;
                 }
-                newposition = player.playerposition + diff * (float)e.Time * movespeed;
+                newposition = player.playerposition + diff * (float)e.Time;
             }
             newposition.Y += player.movedz * (float)e.Time;
             Vector3 previousposition = player.playerposition;
@@ -1474,6 +1490,27 @@ namespace ManicDigger
             {
                 UpdateMouseViewportControl(e);
             }
+        }
+        float MakeCloserToZero(float a, float b)
+        {
+            if (a > 0)
+            {
+                float c = a - b;
+                if (c < 0)
+                {
+                    c = 0;
+                }
+                return c;
+            }
+            else
+            {
+                float c = a + b;
+                if (c > 0)
+                {
+                    c = 0;
+                }
+                return c;
+            }            
         }
         Vector3 playerdestination;
         class MenuState
