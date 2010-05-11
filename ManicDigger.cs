@@ -560,7 +560,8 @@ namespace ManicDigger
             //left
             {
                 var qnewposition = newposition + new Vector3(0, 0, walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.Z - oldposition.Z > 0)
                 {
                     if (!newempty)
@@ -572,7 +573,8 @@ namespace ManicDigger
             //front
             {
                 var qnewposition = newposition + new Vector3(walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.X - oldposition.X > 0)
                 {
                     if (!newempty)
@@ -596,7 +598,8 @@ namespace ManicDigger
             //right
             {
                 var qnewposition = newposition + new Vector3(0, 0, -walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.Z - oldposition.Z < 0)
                 {
                     if (!newempty)
@@ -608,7 +611,8 @@ namespace ManicDigger
             //back
             {
                 var qnewposition = newposition + new Vector3(-walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.X - oldposition.X < 0)
                 {
                     if (!newempty)
