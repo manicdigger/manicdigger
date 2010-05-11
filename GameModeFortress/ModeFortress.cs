@@ -917,7 +917,21 @@ namespace GameModeFortress
         }
         public int[] DefaultMaterialSlots
         {
-            get { return data.DefaultMaterialSlots; }
+            get
+            {
+                var slots = new List<int>();
+                slots.Add((int)TileTypeMinecraft.Dirt);
+                slots.Add((int)TileTypeMinecraft.Brick);
+                slots.Add(railstart + (int)RailDirectionFlags.TwoHorizontalVertical);
+                slots.Add(railstart + (int)RailDirectionFlags.Corners);
+                slots.Add((int)TileTypeMinecraft.Gravel);
+                slots.Add((int)TileTypeMinecraft.Cobblestone);
+                slots.Add((int)TileTypeMinecraft.Wood);
+                slots.Add((int)TileTypeMinecraft.Leaves);
+                slots.Add(railstart + (int)RailDirectionFlags.Horizontal);
+                slots.Add(railstart + (int)RailDirectionFlags.Vertical);
+                return slots.ToArray();
+            }
         }
         public byte GoldTileId
         {
