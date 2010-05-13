@@ -480,12 +480,20 @@ namespace ManicDigger
             //clientgame.LoadMapMinecraft();
             if (GameUrl == null)
             {
-                guistate = GuiState.MainMenu;
-                FreeMouse = true;
-                mapManipulator.LoadMap(map, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
-                ENABLE_FREEMOVE = true;
-                player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
-                player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
+                if (ENABLE_MAINMENU)
+                {
+                    guistate = GuiState.MainMenu;
+                    FreeMouse = true;
+                    mapManipulator.LoadMap(map, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
+                    ENABLE_FREEMOVE = true;
+                    player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
+                    player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);                    
+                }
+                else
+                {
+                    GuiActionGenerateNewMap();
+                    GuiStateBackToGame();
+                }
                 DrawMap();
                 terrain.Start();
             }
@@ -510,6 +518,7 @@ namespace ManicDigger
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
         }
+        public bool ENABLE_MAINMENU = false;
         private static void SetAmbientLight(Color c)
         {
             float mult = 1f;

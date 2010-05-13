@@ -582,6 +582,7 @@ namespace GameModeFortress
         public Pathfinder3d pathfinder{get;set;}
         void UpdateCharacters(float dt)
         {
+            return;
             if (characters.Count == 0)
             {
                 var v0 = new Character();
