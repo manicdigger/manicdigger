@@ -1038,8 +1038,12 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.Enter)
                 {
-                    materialSlots[activematerial] = InventoryGetSelected();
-                    GuiStateBackToGame();
+                    var sel = InventoryGetSelected();
+                    if (sel != null)
+                    {
+                        materialSlots[activematerial] = sel.Value;
+                        GuiStateBackToGame();
+                    }
                 }
                 HandleMaterialKeys(e);
                 return;
@@ -1225,6 +1229,13 @@ namespace ManicDigger
         bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
         void UpdateMousePosition()
         {
+            mouseleftclick = (!wasmouseleft) && Mouse[OpenTK.Input.MouseButton.Left];
+            mouserightclick = (!wasmouseright) && Mouse[OpenTK.Input.MouseButton.Right];
+            mouseleftdeclick = wasmouseleft && (!Mouse[OpenTK.Input.MouseButton.Left]);
+            mouserightdeclick = wasmouseright && (!Mouse[OpenTK.Input.MouseButton.Right]);
+            wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
+            wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
+
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (freemousejustdisabled)
             {
@@ -1324,6 +1335,12 @@ namespace ManicDigger
         CharacterPhysicsState player = new CharacterPhysicsState();
         DateTime lasttodo;
         Vector3 curspeed;
+        bool mouseleftclick = false;
+        bool mouseleftdeclick = false;
+        bool wasmouseleft = false;
+        bool mouserightclick = false;
+        bool mouserightdeclick = false;
+        bool wasmouseright = false;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -1501,6 +1518,10 @@ namespace ManicDigger
             {
                 UpdateWalkSound(e.Time);
             }
+            if (guistate == GuiState.Inventory)
+            {
+                InventoryMouse();
+            }
             if (!FreeMouse)
             {
                 UpdateMouseViewportControl(e);
@@ -1541,8 +1562,7 @@ namespace ManicDigger
                 player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
                 player.playerorientation.X = Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.001f, (float)(Math.PI / 2 + Math.PI - 0.001f));
             }
-            if (iii++ % 2 == 0)
-                UpdatePicking();
+            UpdatePicking();
         }
         int iii = 0;
         bool IsTileEmptyForPhysics(int x, int y, int z)
@@ -1564,8 +1584,36 @@ namespace ManicDigger
         }
         float PICK_DISTANCE = 3.5f;
         Matrix4 the_modelview;
+        bool leftpressedpicking = false;
         private void UpdatePicking()
         {
+            bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
+            bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
+            bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
+
+            if (!leftpressedpicking)
+            {
+                if (mouseleftclick)
+                {
+                    leftpressedpicking = true;
+                }
+                else
+                {
+                    left = false;
+                }
+            }
+            else
+            {
+                if (mouseleftdeclick)
+                {
+                    leftpressedpicking = false;
+                    left = false;
+                }
+            }
+            if (iii++ % 2 == 0)
+            {
+                return;
+            }
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
@@ -1594,9 +1642,6 @@ namespace ManicDigger
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
 
-            bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
-            bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
-            bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
             BlockPosSide pick0;
             if (pick2.Count > 0 && (pick2[0].pos - (player.playerposition + new Vector3(0, CharacterHeight, 0))).Length <= PICK_DISTANCE
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
@@ -2485,9 +2530,14 @@ namespace ManicDigger
             inventoryselectedy = Clamp(inventoryselectedy, 0, inventorysize - 1);
         }
         int inventorysize;
-        int InventoryGetSelected()
+        int? InventoryGetSelected()
         {
-            return Buildable[inventoryselectedx + (inventoryselectedy * inventorysize)];
+            int id=inventoryselectedx + (inventoryselectedy * inventorysize);
+            if (id >= Buildable.Count)
+            {
+                return null;
+            }
+            return Buildable[id];
         }
         List<int> Buildable
         {
@@ -2504,23 +2554,24 @@ namespace ManicDigger
                 return buildable;
             }
         }
+        int inventorysinglesize = 40;
         void DrawInventory()
         {
             List<int> buildable = Buildable;
             inventorysize = (int)Math.Ceiling(Math.Sqrt(buildable.Count));
-            int singlesize = 40;
+            
             int x = 0;
             int y = 0;
             for (int ii = 0; ii < buildable.Count; ii++)
             {
-                Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * inventorysize) + x * singlesize,
-                    ycenter(singlesize * inventorysize) + y * singlesize, singlesize, singlesize,
+                Draw2dTexture(terrain.terrainTexture, xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
+                    ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize,
                     data.GetTileTextureId(buildable[ii], TileSide.Front));
                 if (x == inventoryselectedx && y == inventoryselectedy)
                 {
                     Draw2dBitmapFile("gui\\activematerial.png",
-                        xcenter(singlesize * inventorysize) + x * singlesize,
-                        ycenter(singlesize * inventorysize) + y * singlesize, singlesize, singlesize);
+                        xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
+                        ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize);
                 }
                 x++;
                 if (x >= inventorysize)
@@ -2530,6 +2581,29 @@ namespace ManicDigger
                 }
             }
             DrawMaterialSelector();
+        }
+        void InventoryMouse()
+        {
+            int invstartx = xcenter(inventorysinglesize * inventorysize);
+            int invstarty = ycenter(inventorysinglesize * inventorysize);
+            if (mouse_current.X > invstartx && mouse_current.X < invstartx + inventorysinglesize * inventorysize)
+            {
+                if (mouse_current.Y > invstarty && mouse_current.Y < invstarty + inventorysinglesize * inventorysize)
+                {
+                    inventoryselectedx = (mouse_current.X - invstartx) / inventorysinglesize;
+                    inventoryselectedy = (mouse_current.Y - invstarty) / inventorysinglesize;
+                }
+            }
+            if (mouseleftclick)
+            {
+                var sel = InventoryGetSelected();
+                if (sel != null)
+                {
+                    materialSlots[activematerial] = sel.Value;
+                    GuiStateBackToGame();
+                }
+                mouseleftclick = false;
+            }
         }
         private void DrawMaterialSelector()
         {
