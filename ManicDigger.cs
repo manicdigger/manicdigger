@@ -548,7 +548,7 @@ namespace ManicDigger
             return map.GetBlock(x, y, z) == data.TileIdEmpty
                 || (data.IsWaterTile(map.Map[x,y,z]) && (!swimmingtop));
         }
-        float walldistance = 0.2f;
+        float walldistance = 0.3f;
         public static float characterheight = 1.5f;
         public void Move(CharacterPhysicsState state, double dt)
         {
@@ -589,12 +589,12 @@ namespace ManicDigger
                 int x = (int)Math.Floor(qnewposition.X);
                 int y = (int)Math.Floor(qnewposition.Z);
                 int z = (int)Math.Floor(qnewposition.Y);
-                float a = 0.4f;
+                float a = walldistance;
                 bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)));
+                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
                 if (newposition.Y - oldposition.Y < 0)
                 {
                     if (newfull)

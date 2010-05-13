@@ -1484,7 +1484,7 @@ namespace ManicDigger
                     }
                     if (jumpacceleration > 0)
                     {
-                        jumpacceleration -= (float)e.Time * 2.5f;
+                        jumpacceleration -= (float)e.Time * 2.8f;
                     }
                     player.movedz += jumpacceleration * 2;
                 }
