@@ -242,6 +242,10 @@ namespace GameModeFortress
         }
         UpDown GetUpDownMove(Vector3 railblock, TileEnterDirection dir)
         {
+            if (!MapUtil.IsValidPos(map, (int)railblock.X, (int)railblock.Y, (int)railblock.Z))
+            {
+                return UpDown.None;
+            }
             //going up
             RailSlope slope = RailMapUtil().GetRailSlope((int)railblock.X, (int)railblock.Y, (int)railblock.Z);
             if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
@@ -370,35 +374,44 @@ namespace GameModeFortress
             {
                 currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
                     (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
-                var railunderplayer = data.GetRail(map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
-                railriding = true;
-                viewport.CharacterHeight = minecartheight;
-                currentvehiclespeed = 0;
-                if (railunderplayer == RailDirectionFlags.Horizontal)
+                if (!MapUtil.IsValidPos(map, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
                 {
-                    currentdirection = VehicleDirection12.HorizontalRight;
-                }
-                else if (railunderplayer == RailDirectionFlags.Vertical)
-                {
-                    currentdirection = VehicleDirection12.VerticalUp;
+                    ExitVehicle();
                 }
                 else
                 {
-                    viewport.CharacterHeight = WalkCharacterHeight;
-                    railriding = false;
-                    viewport.ENABLE_FREEMOVE = false;
-                    viewport.ENABLE_MOVE = true;
+                    var railunderplayer = data.GetRail(
+                        map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
+                    railriding = true;
+                    viewport.CharacterHeight = minecartheight;
+                    currentvehiclespeed = 0;
+                    if (railunderplayer == RailDirectionFlags.Horizontal)
+                    {
+                        currentdirection = VehicleDirection12.HorizontalRight;
+                    }
+                    else if (railunderplayer == RailDirectionFlags.Vertical)
+                    {
+                        currentdirection = VehicleDirection12.VerticalUp;
+                    }
+                    else
+                    {
+                        ExitVehicle();
+                    }
                 }
             }
             else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
             {
-                viewport.CharacterHeight = WalkCharacterHeight;
-                railriding = false;
-                viewport.ENABLE_FREEMOVE = false;
-                viewport.ENABLE_MOVE = true;
+                ExitVehicle();
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+        }
+        private void ExitVehicle()
+        {
+            viewport.CharacterHeight = WalkCharacterHeight;
+            railriding = false;
+            viewport.ENABLE_FREEMOVE = false;
+            viewport.ENABLE_MOVE = true;
         }
         DateTime lastrailsoundtime;
         int lastrailsound;

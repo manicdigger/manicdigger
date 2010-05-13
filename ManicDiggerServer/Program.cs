@@ -165,6 +165,10 @@ namespace ManicDiggerServer
             flooded.Add(v, v);
             foreach (Vector3 vv in BlocksAround(v))
             {
+                if (!MapUtil.IsValidPos(map, (int)vv.X, (int)vv.Y, (int)vv.Z))
+                {
+                    continue;
+                }
                 var type = map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z);
                 if (type == data.TileIdEmpty && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
                 {
