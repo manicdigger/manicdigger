@@ -9,6 +9,52 @@ using System.Drawing;
 
 namespace GameModeFortress
 {
+    public interface IWorldGenerator
+    {
+        int GetBlock(int x, int y, int z);
+    }
+    public class FlatWorldGenerator : IWorldGenerator
+    {
+        IGameData data = new GameDataTilesMinecraft();
+        #region IWorldGenerator Members
+        public int GetBlock(int x, int y, int z)
+        {
+            if (z < 32)
+            {
+                return data.TileIdDirt;
+            }
+            return data.TileIdEmpty;
+        }
+        #endregion
+    }
+    public class InfiniteMap : IMapStorage
+    {
+        #region IMapStorage Members
+        public byte[, ,] Map { get; set; }
+        public int MapSizeX { get; set; }
+        public int MapSizeY { get; set; }
+        public int MapSizeZ { get; set; }
+        public int GetBlock(int x, int y, int z)
+        {
+            return 0;
+        }
+        float waterlevel = 32;
+        public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
+        public void Dispose()
+        {
+        }
+        #endregion
+        #region IMapStorage Members
+        public void SetBlock(int x, int y, int z, int tileType)
+        {
+            throw new NotImplementedException();
+        }
+        public void UseMap(byte[, ,] map)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
+    }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
@@ -36,13 +82,19 @@ namespace GameModeFortress
             {
                 return game.GetBlockForPhysics(x,y,z);
             }
-            public void SetBlock(int x, int y, int z, byte tileType)
+            public void SetBlock(int x, int y, int z, int tileType)
             {
                 game.SetBlock(x, y, z, tileType);
             }
             public float WaterLevel { get { return game.WaterLevel; } set { throw new Exception(); } }
             public void Dispose()
             {
+            }
+            #endregion
+            #region IMapStorage Members
+            public void UseMap(byte[, ,] map)
+            {
+                this.Map = map;
             }
             #endregion
         }
@@ -781,9 +833,9 @@ namespace GameModeFortress
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
         #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, byte tileType)
+        public void SetBlock(int x, int y, int z, int tileType)
         {
-            map.Map[x, y, z] = tileType;
+            map.Map[x, y, z] = (byte)tileType;
         }
         #endregion
         //float waterlevel = 32;
@@ -861,6 +913,12 @@ namespace GameModeFortress
             }
             return map.Map[x,y,z];
         }
+        #region IMapStorage Members
+        public void UseMap(byte[, ,] map)
+        {
+            this.map.UseMap(map);
+        }
+        #endregion
     }
     public enum CommandId
     {

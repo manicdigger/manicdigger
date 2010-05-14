@@ -421,7 +421,7 @@ namespace ManicDigger
         public IMapStorage mapstorage { get; set; }
         public int GetTerrainBlock(int x, int y, int z)
         {
-            return mapstorage.Map[x, y, z];
+            return mapstorage.GetBlock(x, y, z);
         }
         public Color GetTerrainBlockColor(int x, int y, int z)
         {

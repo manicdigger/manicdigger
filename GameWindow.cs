@@ -367,7 +367,7 @@ namespace ManicDigger
             int x = (int)pos.X;
             int y = (int)pos.Y;
             int z = (int)pos.Z;
-            map.Map[x, y, z] = type;
+            map.SetBlock(x, y, z, type);
             terrain.UpdateTile(x, y, z);
             //          });
         }
@@ -631,7 +631,7 @@ namespace ManicDigger
                                     if (MapUtil.IsValidPos(map, xx, yy, zz)
                                         && MapUtil.IsValidPos(m, x, y, z))
                                     {
-                                        m.Map[x, y, z] = map.Map[xx, yy, zz];
+                                        m.Map[x, y, z] = (byte)map.GetBlock(xx, yy, zz);
                                     }
                                 }
                             }
@@ -730,7 +730,7 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        byte oldtile = map.Map[destx, desty, destz];
+                        byte oldtile = (byte)map.GetBlock(destx, desty, destz);
                         byte newtile = m.Map[x, y, z];
                         if (!(data.IsBuildableTile(oldtile) && data.IsBuildableTile(newtile)))
                         {
@@ -762,7 +762,7 @@ namespace ManicDigger
         }
         private void ChangeTile(byte oldtile, byte newtile, int xx, int yy, int zz)
         {
-            Console.WriteLine(map.Map[xx, yy, zz]);
+            Console.WriteLine(map.GetBlock(xx, yy, zz));
             var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
             game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
         }
@@ -1196,7 +1196,7 @@ namespace ManicDigger
                 var ee = (MapLoadedEventArgs)e;
                 //lock (clientgame.mapupdate)
                 {
-                    map.Map = ee.map;
+                    map.UseMap(ee.map);
                     map.MapSizeX = ee.map.GetUpperBound(0) + 1;
                     map.MapSizeY = ee.map.GetUpperBound(1) + 1;
                     map.MapSizeZ = ee.map.GetUpperBound(2) + 1;
@@ -1692,7 +1692,7 @@ namespace ManicDigger
                         var newtile = pick0.Current();
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            int clonesource = map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y];
+                            int clonesource = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
                             clonesource = (int)data.PlayerBuildableMaterialType((int)clonesource);
                             for (int i = 0; i < materialSlots.Length; i++)
                             {
@@ -1714,7 +1714,7 @@ namespace ManicDigger
                         Vector3 newtile = right ? tile.Translated() : tile.Current();
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            Console.WriteLine(". newtile:" + newtile + " type: " + map.Map[(int)newtile.X, (int)newtile.Z, (int)newtile.Y]);
+                            Console.WriteLine(". newtile:" + newtile + " type: " + map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
                             if (pick0.pos != new Vector3(-1, -1, -1))
                             {
                                 audio.Play(left ? sounddestruct : soundbuild);
@@ -2906,7 +2906,7 @@ namespace ManicDigger
             {
                 return;
             }
-            int tiletype = map.Map[(int)v.X, (int)v.Z, (int)v.Y];
+            int tiletype = map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
             if (!data.IsValidTileType(tiletype))
             {
                 return;

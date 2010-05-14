@@ -14,10 +14,11 @@ namespace ManicDiggerServer
 {
     public class Server
     {
-        public IMapStorage map = new MapStorage();
+        public IMapStorage map;// = new MapStorage();
         public Server()
         {
-            map.Map = new byte[256, 256, 64];
+            map = new MapStorage();
+            ((MapStorage)map).Map = new byte[256, 256, 64];
             map.MapSizeX = 256;
             map.MapSizeY = 256;
             map.MapSizeZ = 64;
@@ -395,7 +396,7 @@ namespace ManicDiggerServer
                 foreach (var v in water.tosetwater)
                 {
                     byte watertype = (byte)TileTypeMinecraft.Water;
-                    map.Map[(int)v.X, (int)v.Y, (int)v.Z] = watertype;
+                    map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, watertype);
                     foreach (var k in clients)
                     {
                         SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, watertype);
@@ -405,7 +406,7 @@ namespace ManicDiggerServer
                 foreach (var v in water.tosetempty)
                 {
                     byte emptytype = (byte)TileTypeMinecraft.Empty;
-                    map.Map[(int)v.X, (int)v.Y, (int)v.Z] = emptytype;
+                    map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, emptytype);
                     foreach (var k in clients)
                     {
                         SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, emptytype);
@@ -485,7 +486,7 @@ namespace ManicDiggerServer
                         blocktype = 0; //data.TileIdEmpty
                     }
                     //todo check block type.
-                    map.Map[x, z, y] = blocktype;
+                    map.SetBlock(x, z, y, blocktype);
                     foreach (var k in clients)
                     {
                         //original player did speculative update already.

@@ -57,9 +57,9 @@ namespace ManicDigger
             map.MapSizeZ = 64;
         }
         #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, byte tileType)
+        public void SetBlock(int x, int y, int z, int tileType)
         {
-            map.Map[x, y, z] = tileType;
+            map.Map[x, y, z] = (byte)tileType;
         }
         #endregion
         //float waterlevel = 32;
@@ -90,6 +90,12 @@ namespace ManicDigger
         public int GetBlock(int x, int y, int z)
         {
             return Map[x, y, z];
+        }
+        #endregion
+        #region IMapStorage Members
+        public void UseMap(byte[, ,] map)
+        {
+            this.map.Map = map;
         }
         #endregion
     }

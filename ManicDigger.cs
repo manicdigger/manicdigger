@@ -68,7 +68,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ; z++)
                     {
-                        map.Map[x, y, z] = data.TileIdEmpty;
+                        map.SetBlock(x, y, z, data.TileIdEmpty);
                     }
                 }
             }
@@ -78,14 +78,14 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ / 2 - 1; z++)
                     {
-                        map.Map[x, y, z] = data.TileIdDirt;
+                        map.SetBlock(x, y, z, data.TileIdDirt);
                     }
-                    map.Map[x, y, map.MapSizeZ / 2 - 1] = data.TileIdGrass;
+                    map.SetBlock(x, y, map.MapSizeZ / 2 - 1, data.TileIdGrass);
                 }
             }
             for (int x = 0; x < 100; x++)
             {
-                map.Map[x, 1, 0] = 1;
+                map.SetBlock(x, 1, 0, 1);
             }
             Random rnd = new Random();
             for (int i = 0; i < map.MapSizeX * map.MapSizeY * map.MapSizeZ * 0.005f; i++)
@@ -93,25 +93,25 @@ namespace ManicDigger
                 int x = rnd.Next(map.MapSizeX);
                 int y = rnd.Next(map.MapSizeY);
                 int z = rnd.Next(map.MapSizeZ);
-                if (map.Map[x, y, z] == data.TileIdDirt)
+                if (map.GetBlock(x, y, z) == data.TileIdDirt)
                 {
-                    map.Map[x, y, z] = data.GoldTileId;
+                    map.SetBlock(x, y, z, data.GoldTileId);
                 }
             }
             //debug
-            map.Map[10, 10, map.MapSizeZ / 2] = data.GoldTileId;
+            map.SetBlock(10, 10, map.MapSizeZ / 2, data.GoldTileId);
         }
     }
     public interface IMapStorage
     {
-        byte[, ,] Map { get; set; }
         int MapSizeX { get; set; }
         int MapSizeY { get; set; }
         int MapSizeZ { get; set; }
         int GetBlock(int x, int y, int z);
-        void SetBlock(int x, int y, int z, byte tileType);
+        void SetBlock(int x, int y, int z, int tileType);
         float WaterLevel { get; set; }
         void Dispose();
+        void UseMap(byte[, ,] map);
     }
     public class Player
     {
@@ -137,7 +137,7 @@ namespace ManicDigger
         {
             for (int z = map.MapSizeZ - 1; z >= 0; z--)
             {
-                if (map.Map[x, y, z] != tileidempty)
+                if (map.GetBlock(x, y, z) != tileidempty)
                 {
                     return z + 1;
                 }
@@ -154,9 +154,9 @@ namespace ManicDigger
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
         #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, byte tileType)
+        public void SetBlock(int x, int y, int z, int tileType)
         {
-            map[x, y, z] = tileType;
+            map[x, y, z] = (byte)tileType;
         }
         public float WaterLevel
         {
@@ -177,6 +177,12 @@ namespace ManicDigger
         public int GetBlock(int x, int y, int z)
         {
             return map[x, y, z];
+        }
+        #endregion
+        #region IMapStorage Members
+        public void UseMap(byte[, ,] map)
+        {
+            this.map = map;
         }
         #endregion
     }
@@ -247,14 +253,14 @@ namespace ManicDigger
         public void LoadMapArray(IMapStorage map, Stream s)
         {
             BinaryReader br = new BinaryReader(s);
-            map.Map = new byte[map.MapSizeX, map.MapSizeY, map.MapSizeZ];
+            map.UseMap(new byte[map.MapSizeX, map.MapSizeY, map.MapSizeZ]);
             for (int z = 0; z < map.MapSizeZ; z++)
             {
                 for (int y = 0; y < map.MapSizeY; y++)
                 {
                     for (int x = 0; x < map.MapSizeX; x++)
                     {
-                        map.Map[x, y, z] = br.ReadByte();
+                        map.SetBlock(x, y, z, br.ReadByte());
                     }
                 }
             }
@@ -320,7 +326,7 @@ namespace ManicDigger
                 {
                     for (int x = 0; x < map.MapSizeX; x++)
                     {
-                        bw.Write((byte)map.Map[x, y, z]);
+                        bw.Write((byte)map.GetBlock(x, y, z));
                     }
                 }
             }
@@ -373,6 +379,7 @@ namespace ManicDigger
             }
             return true;
         }
+        /*
         void ResizeMap(IMapStorage map, int newsizex, int newsizey, int newsizez)
         {
             byte[, ,] newmap = new byte[newsizex, newsizey, newsizez];
@@ -381,18 +388,18 @@ namespace ManicDigger
             int oldsizey = map.MapSizeY;
             int oldsizez = map.MapSizeZ;
 
-            /*
-            int movex = newsizex / 2 - (oldsizex) / 2;
-            int movey = newsizey / 2 - (oldsizey) / 2;
-            int movez = newsizez / 2 - (oldsizez) / 2;
-            for (int x = 0; x < oldsizex; x++)
-                for (int y = 0; y < oldsizey; y++)
-                    for (int z = 0; z < oldsizez; z++)
-                    {
-                        //newmap[x+newsizex/4,y+newsizey/4,z+newsizez/4]
-                        newmap[x + movex, y + movey, z + movez] = map[x, y, z];
-                    }
-            */
+            
+            //int movex = newsizex / 2 - (oldsizex) / 2;
+            //int movey = newsizey / 2 - (oldsizey) / 2;
+            //int movez = newsizez / 2 - (oldsizez) / 2;
+            //for (int x = 0; x < oldsizex; x++)
+            //    for (int y = 0; y < oldsizey; y++)
+            //        for (int z = 0; z < oldsizez; z++)
+            //        {
+            //            //newmap[x+newsizex/4,y+newsizey/4,z+newsizez/4]
+            //            newmap[x + movex, y + movey, z + movez] = map[x, y, z];
+            //        }
+            
             CloneMap(map.Map, newmap, new Vector3(0, 0, 0), new Vector3(256, 256, 64));
             CloneMap(map.Map, newmap, new Vector3(256, 256, 0), new Vector3(256, 256, 64));
             CloneMap(map.Map, newmap, new Vector3(0, 256, 0), new Vector3(256, 256, 64));
@@ -414,6 +421,7 @@ namespace ManicDigger
                         b[x + (int)newpos.X, y + (int)newpos.Y, z + (int)newpos.Z] = a[x, y, z];
                     }
         }
+        */
         public void GeneratePlainMap(IMapStorage map)
         {
             mapgenerator.GenerateMap(map);
@@ -546,7 +554,7 @@ namespace ManicDigger
             if (data.IsWaterTile(map.GetBlock(x, y, z)) &&
                 !data.IsWaterTile(map.GetBlock(x, y, z + 1))) { return true; }
             return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || (data.IsWaterTile(map.Map[x,y,z]) && (!swimmingtop));
+                || (data.IsWaterTile(map.GetBlock(x,y,z)) && (!swimmingtop));
         }
         float walldistance = 0.3f;
         public static float characterheight = 1.5f;

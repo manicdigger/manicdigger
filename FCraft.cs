@@ -105,7 +105,7 @@ namespace ManicDigger
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            map.Map[x, y, z] = (byte)tileType;
+            map.SetBlock(x, y, z, (byte)tileType);
         }
         #endregion
     }
