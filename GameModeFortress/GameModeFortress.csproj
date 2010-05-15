@@ -55,6 +55,10 @@
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
       <Name>ManicDigger</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ManicDiggerServer\ManicDiggerServer.csproj">
+      <Project>{46D2CD51-9603-48B4-87D1-7377B5F1E51E}</Project>
+      <Name>ManicDiggerServer</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
