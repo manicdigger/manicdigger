@@ -509,7 +509,7 @@ namespace ManicDigger
         [Inject]
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
-        public WorldFeaturesDrawer worldfeatures { get; set; }
+        public IWorldFeaturesDrawer worldfeatures { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         public int chunksize = 16;
         public int rsize
@@ -1107,12 +1107,24 @@ namespace ManicDigger
         }
         #endregion
     }
+    public interface IWorldFeaturesDrawer
+    {
+        void DrawWorldFeatures();
+    }
+    public class WorldFeaturesDrawerDummy : IWorldFeaturesDrawer
+    {
+        #region IWorldFeaturesDrawer Members
+        public void DrawWorldFeatures()
+        {
+        }
+        #endregion
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class WorldFeaturesDrawer
+    public class WorldFeaturesDrawer : IWorldFeaturesDrawer
     {
         [Inject]
         public IThe3d the3d { get; set; }

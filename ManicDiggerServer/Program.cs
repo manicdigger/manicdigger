@@ -552,8 +552,6 @@ namespace ManicDiggerServer
             NetworkHelper.WriteInt16(bw, (short)server.map.MapSizeY);
             SendPacket(clientid, ms.ToArray());
         }
-        string servername = "Manic Digger server";
-        string MOTD = "MOTD";
         int CurrentProtocolVersion = 7;
         private void SendServerIdentification(int clientid)
         {
@@ -561,8 +559,8 @@ namespace ManicDiggerServer
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.ServerIdentification);
             bw.Write((byte)CurrentProtocolVersion);
-            NetworkHelper.WriteString64(bw, servername);
-            NetworkHelper.WriteString64(bw, MOTD);
+            NetworkHelper.WriteString64(bw, cfgname);
+            NetworkHelper.WriteString64(bw, cfgmotd);
             bw.Write((byte)0);
             SendPacket(clientid, ms.ToArray());
         }

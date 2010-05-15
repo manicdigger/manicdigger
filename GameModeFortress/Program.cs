@@ -9,6 +9,35 @@ using System.Diagnostics;
 
 namespace GameModeFortress
 {
+    public class NetworkClientDummyInfinite : INetworkClient
+    {
+        #region INetworkClient Members
+        public void Dispose()
+        {
+        }
+        public void Connect(string serverAddress, int port, string username, string auth)
+        {
+        }
+        public void Process()
+        {
+        }
+        public void SendSetBlock(OpenTK.Vector3 position, BlockSetMode mode, int type)
+        {
+        }
+        public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
+        public event EventHandler<MapLoadedEventArgs> MapLoaded;
+        public void SendChat(string s)
+        {
+        }
+        public IEnumerable<string> ConnectedPlayers()
+        {
+            yield return "[Local player]";
+        }
+        public void SendPosition(OpenTK.Vector3 position, OpenTK.Vector3 orientation)
+        {
+        }
+        #endregion
+    }
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
         public string GameUrl = null;
@@ -34,7 +63,7 @@ namespace GameModeFortress
             INetworkClient network;
             if (singleplayer)
             {
-                network = new NetworkClientDummy();
+                network = new NetworkClientDummyInfinite();
             }
             else
             {
@@ -49,13 +78,14 @@ namespace GameModeFortress
             var the3d = w;
             var exit = w;
             var localplayerposition = w;
-            var worldfeatures = new WorldFeaturesDrawer();
+            var worldfeatures = new WorldFeaturesDrawerDummy();
             var physics = new CharacterPhysics();
             var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
             if (singleplayer)
             {
-                var n = (NetworkClientDummy)network;
+                var n = (NetworkClientDummyInfinite)network;
+                /*
                 n.player = localplayerposition;
                 n.Gui = w;
                 n.Map1 = w;
@@ -67,6 +97,7 @@ namespace GameModeFortress
                 n.Gen.map = new MyFCraftMap() { data = gamedata, map = mapstorage, mapManipulator = mapManipulator };
                 n.Gen.rand = new GetRandomDummy();
                 n.DEFAULTMAP = "mountains";
+                */
             }
             else
             {
@@ -85,10 +116,10 @@ namespace GameModeFortress
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
             terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
-            worldfeatures.getfile = getfile;
-            worldfeatures.localplayerposition = localplayerposition;
-            worldfeatures.mapstorage = mapstorage;
-            worldfeatures.the3d = the3d;
+            //worldfeatures.getfile = getfile;
+            //worldfeatures.localplayerposition = localplayerposition;
+            //worldfeatures.mapstorage = mapstorage;
+            //worldfeatures.the3d = the3d;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
             w.map = clientgame.mapforphysics;
@@ -107,6 +138,7 @@ namespace GameModeFortress
             clientgame.data = gamedata;
             clientgame.network = network;
             clientgame.audio = audio;
+            clientgame.map = new InfiniteMap() { gen = new WorldGeneratorFlat() };
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

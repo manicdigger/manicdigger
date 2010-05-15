@@ -13,13 +13,17 @@ namespace GameModeFortress
     {
         int GetBlock(int x, int y, int z);
     }
-    public class FlatWorldGenerator : IWorldGenerator
+    public class WorldGeneratorFlat : IWorldGenerator
     {
         IGameData data = new GameDataTilesMinecraft();
         #region IWorldGenerator Members
         public int GetBlock(int x, int y, int z)
         {
-            if (z < 32)
+            if (z == 32 - 1)
+            {
+                return data.TileIdGrass;
+            }
+            if (z < 32 - 1)
             {
                 return data.TileIdDirt;
             }
@@ -29,14 +33,22 @@ namespace GameModeFortress
     }
     public class InfiniteMap : IMapStorage
     {
+        public IWorldGenerator gen { get; set;}
         #region IMapStorage Members
-        public byte[, ,] Map { get; set; }
-        public int MapSizeX { get; set; }
-        public int MapSizeY { get; set; }
-        public int MapSizeZ { get; set; }
+        public int MapSizeX { get { return 10 * 1000; } set { } }
+        public int MapSizeY { get { return 10 * 1000; } set { } }
+        public int MapSizeZ { get { return 64; } set { } }
+        Dictionary<Vector3i, byte> blocks = new Dictionary<Vector3i, byte>();
         public int GetBlock(int x, int y, int z)
         {
-            return 0;
+            if (blocks.ContainsKey(new Vector3i(x, y, z)))
+            {
+                return blocks[new Vector3i(x, y, z)];
+            }
+            else
+            {
+                return gen.GetBlock(x, y, z);
+            }
         }
         float waterlevel = 32;
         public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
@@ -47,16 +59,17 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            throw new NotImplementedException();
+            blocks[new Vector3i(x, y, z)] = (byte)tileType;
         }
         public void UseMap(byte[, ,] map)
         {
-            throw new NotImplementedException();
         }
         #endregion
     }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
     {
+        [Inject]
+        public IMapStorage map { get; set; }
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
@@ -74,7 +87,6 @@ namespace GameModeFortress
         {
             public GameFortress game;
             #region IMapStorage Members
-            public byte[, ,] Map { get { return game.Map; } set { game.Map = value; } }
             public int MapSizeX { get { return game.MapSizeX; } set { game.MapSizeX = value; } }
             public int MapSizeY { get { return game.MapSizeX; } set { game.MapSizeY = value; } }
             public int MapSizeZ { get { return game.MapSizeZ; } set { game.MapSizeZ = value; } }
@@ -94,16 +106,18 @@ namespace GameModeFortress
             #region IMapStorage Members
             public void UseMap(byte[, ,] map)
             {
-                this.Map = map;
+                //this.Map = map;
             }
             #endregion
         }
         public GameFortress()
         {
+            /*
             map.Map = new byte[256, 256, 64];
             map.MapSizeX = 256;
             map.MapSizeY = 256;
             map.MapSizeZ = 64;
+            */
             mapforphysics = new MapForPhysics() { game = this };
         }
         float currentvehiclespeed;
@@ -583,7 +597,7 @@ namespace GameModeFortress
                     activematerial = data.TileIdEmpty;
                 }
                 //speculative
-                map.Map[x, y, z] = (byte)activematerial;
+                map.SetBlock(x, y, z, (byte)activematerial);
                 terrain.UpdateTile(x, y, z);
             }
         }
@@ -719,7 +733,7 @@ namespace GameModeFortress
         private void DoOrder(Vector3 vv)
         {
             var o = orders[vv];
-            map.Map[(int)vv.X, (int)vv.Y, (int)vv.Z] = o.mode == BlockSetMode.Create ? (byte)o.tiletype : data.TileIdEmpty;
+            map.SetBlock((int)vv.X, (int)vv.Y, (int)vv.Z, o.mode == BlockSetMode.Create ? (byte)o.tiletype : data.TileIdEmpty);
             terrain.UpdateTile((int)vv.X, (int)vv.Y, (int)vv.Z);
             orders.Remove(vv);
         }
@@ -803,8 +817,8 @@ namespace GameModeFortress
                     }
                     else
                     {
-                        map.Map[cmd.x, cmd.y, cmd.z] = cmd.mode == BlockSetMode.Create ?
-                            (byte)cmd.tiletype : data.TileIdEmpty;
+                        map.SetBlock(cmd.x, cmd.y, cmd.z, cmd.mode == BlockSetMode.Create ?
+                            (byte)cmd.tiletype : data.TileIdEmpty);
                     }
                     terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                     break;
@@ -829,13 +843,13 @@ namespace GameModeFortress
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } }
 
-        public MapStorage map = new MapStorage();
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            map.Map[x, y, z] = (byte)tileType;
+            //map.Map[x, y, z] = (byte)tileType;
+            map.SetBlock(x, y, z, tileType);
         }
         #endregion
         //float waterlevel = 32;
@@ -844,7 +858,6 @@ namespace GameModeFortress
         public float WaterLevel { get { return MapSizeZ / 2; } set { } }
         #endregion
         #region IMapStorage Members
-        public byte[, ,] Map { get { return map.Map; } set { map.Map = value; } }
         public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
         public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
         public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
@@ -866,7 +879,7 @@ namespace GameModeFortress
                     return orders[v].tiletype;
                 }
             }
-            return Map[x, y, z];
+            return map.GetBlock(x, y, z);
         }
         public System.Drawing.Color GetTerrainBlockColor(int x, int y, int z)
         {
@@ -911,7 +924,7 @@ namespace GameModeFortress
                     return orders[v].mode == BlockSetMode.Create ? orders[v].tiletype : data.TileIdEmpty;
                 }
             }
-            return map.Map[x,y,z];
+            return map.GetBlock(x,y,z);
         }
         #region IMapStorage Members
         public void UseMap(byte[, ,] map)
