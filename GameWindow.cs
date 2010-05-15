@@ -784,7 +784,7 @@ namespace ManicDigger
                     menustate = new MenuState();
                     FreeMouse = true;
                 }
-                if (e.Key == OpenTK.Input.Key.Enter)
+                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
@@ -875,9 +875,33 @@ namespace ManicDigger
                     if (key == OpenTK.Input.Key.Number9) { c += "9"; }
                     if (key == OpenTK.Input.Key.BackSlash) { c += "\\"; }
                     if (key == OpenTK.Input.Key.Slash) { c += "/"; }
-                    if (key == OpenTK.Input.Key.Plus) { c += "+"; }
+                    if (key == OpenTK.Input.Key.Plus) { c += "="; }
                     if (key == OpenTK.Input.Key.Minus) { c += "-"; }
                     if (key == OpenTK.Input.Key.Space) { c += " "; }
+                    if (key == OpenTK.Input.Key.LBracket) { c += "["; }
+                    if (key == OpenTK.Input.Key.RBracket) { c += "]"; }
+                    if (key == OpenTK.Input.Key.Quote) { c += "'"; }
+                    if (key == OpenTK.Input.Key.Semicolon) { c += ";"; }
+                    if (key == OpenTK.Input.Key.Tilde) { c += "`"; }
+
+                    if (key == OpenTK.Input.Key.KeypadAdd) { c += "+"; }
+                    if (key == OpenTK.Input.Key.KeypadDecimal) { c += "."; }
+                    if (key == OpenTK.Input.Key.KeypadDivide) { c += "/"; }
+                    //if (key == OpenTK.Input.Key.KeypadMinus) { c += "-"; }
+                    if (key == OpenTK.Input.Key.KeypadMultiply) { c += "*"; }
+                    //if (key == OpenTK.Input.Key.KeypadPlus) { c += "+"; }
+                    if (key == OpenTK.Input.Key.KeypadSubtract) { c += "-"; }
+                    if (key == OpenTK.Input.Key.Keypad0) { c += "0"; }
+                    if (key == OpenTK.Input.Key.Keypad1) { c += "1"; }
+                    if (key == OpenTK.Input.Key.Keypad2) { c += "2"; }
+                    if (key == OpenTK.Input.Key.Keypad3) { c += "3"; }
+                    if (key == OpenTK.Input.Key.Keypad4) { c += "4"; }
+                    if (key == OpenTK.Input.Key.Keypad5) { c += "5"; }
+                    if (key == OpenTK.Input.Key.Keypad6) { c += "6"; }
+                    if (key == OpenTK.Input.Key.Keypad7) { c += "7"; }
+                    if (key == OpenTK.Input.Key.Keypad8) { c += "8"; }
+                    if (key == OpenTK.Input.Key.Keypad9) { c += "9"; }
+                    
                     if (Keyboard[OpenTK.Input.Key.ShiftLeft] || Keyboard[OpenTK.Input.Key.ShiftRight])
                     {
                         c = c.ToUpper();
@@ -893,6 +917,15 @@ namespace ManicDigger
                         if (c == "0") { c = ")"; }
                         if (c == "-") { c = "_"; }
                         if (c == "=") { c = "+"; }
+                        if (c == "[") { c = "{"; }
+                        if (c == "]") { c = "}"; }
+                        if (c == "\\") { c = "|"; }
+                        if (c == ";") { c = ":"; }
+                        if (c == "'") { c = "\""; }
+                        if (c == ",") { c = "<"; }
+                        if (c == ".") { c = ">"; }
+                        if (c == "/") { c = "?"; }
+                        if (c == "`") { c = "~"; }
                     }
                     GuiTypingBuffer += c;
                     if (key == OpenTK.Input.Key.Up)
@@ -1000,7 +1033,7 @@ namespace ManicDigger
                     menustate.selected++;
                     menustate.selected = Math.Min(menuelements - 1, menustate.selected);
                 }
-                if (e.Key == OpenTK.Input.Key.Enter)
+                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     EscapeMenuAction();
                 }
@@ -1024,7 +1057,7 @@ namespace ManicDigger
                     menustate.selected++;
                     menustate.selected = Math.Min(menuelements - 1, menustate.selected);
                 }
-                if (e.Key == OpenTK.Input.Key.Enter)
+                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     MainMenuAction();
                 }
@@ -1045,7 +1078,7 @@ namespace ManicDigger
                 {
                     InventorySelectionMove(dir.Value);
                 }
-                if (e.Key == OpenTK.Input.Key.Enter)
+                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     var sel = InventoryGetSelected();
                     if (sel != null)
