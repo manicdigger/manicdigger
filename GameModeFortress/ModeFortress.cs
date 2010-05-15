@@ -1092,5 +1092,15 @@ namespace GameModeFortress
             get { return data.TileIdSponge; }
         }
         #endregion
+        #region IGameData Members
+        public int GetTileTextureIdForInventory(int tileType)
+        {
+            if (IsRailTile(tileType))
+            {
+                return GetTileTextureId(tileType, TileSide.Top);
+            }
+            return data.GetTileTextureIdForInventory(tileType);
+        }
+        #endregion
     }
 }

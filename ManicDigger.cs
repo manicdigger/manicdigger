@@ -431,6 +431,7 @@ namespace ManicDigger
     public interface IGameData
     {
         int GetTileTextureId(int tileType, TileSide side);
+        int GetTileTextureIdForInventory(int tileType);
         byte TileIdEmpty { get; }
         byte TileIdGrass { get; }
         byte TileIdDirt { get; }
@@ -512,6 +513,12 @@ namespace ManicDigger
         #endregion
         #region IGameData Members
         public int TileIdSponge { get; set; }
+        #endregion
+        #region IGameData Members
+        public int GetTileTextureIdForInventory(int tileType)
+        {
+            return GetTileTextureId(tileType, TileSide.Front);
+        }
         #endregion
     }
     public interface IMapGenerator

@@ -2608,7 +2608,7 @@ namespace ManicDigger
             {
                 Draw2dTexture(terrain.terrainTexture, xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
                     ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize,
-                    data.GetTileTextureId(buildable[ii], TileSide.Front));
+                    data.GetTileTextureIdForInventory(buildable[ii]));
                 if (x == inventoryselectedx && y == inventoryselectedy)
                 {
                     Draw2dBitmapFile("gui\\activematerial.png",
@@ -2653,7 +2653,7 @@ namespace ManicDigger
             for (int i = 0; i < 10; i++)
             {
                 Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize,
-                    data.GetTileTextureId((int)materialSlots[i], TileSide.Front));
+                    data.GetTileTextureIdForInventory((int)materialSlots[i]));
                 if (i == activematerial)
                 {
                     Draw2dBitmapFile("gui\\activematerial.png", xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);

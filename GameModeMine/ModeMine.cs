@@ -360,6 +360,12 @@ namespace ManicDigger
             get { return (int)TileTypeMinecraft.Sponge; }
         }
         #endregion
+        #region IGameData Members
+        public int GetTileTextureIdForInventory(int tileType)
+        {
+            return GetTileTextureId(tileType, TileSide.Front);
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
