@@ -207,6 +207,10 @@ namespace ManicDigger
                 yield return n.Value;
             }
         }
+        public static string X(string name, string value)
+        {
+            return string.Format("<{0}>{1}</{0}>", name, value);
+        }
     }
     public class MapManipulator
     {
@@ -237,12 +241,20 @@ namespace ManicDigger
                 LoadMapMinecraft(map, filename);
                 return;
             }
-            using (Stream s = new MemoryStream(GzipCompression.Decompress(File.ReadAllBytes(filename))))
+            LoadMap(map, File.ReadAllBytes(filename));
+        }
+        public void LoadMap(IMapStorage map, byte[] data)
+        {
+            using (Stream s = new MemoryStream(GzipCompression.Decompress(data)))
             {
                 StreamReader sr = new StreamReader(s);
                 XmlDocument d = new XmlDocument();
                 d.Load(sr);
                 int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/FormatVersion"));
+                if (format != 1)
+                {
+                    throw new Exception("Invalid map format");
+                }
                 map.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/X"));
                 map.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Y"));
                 map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
@@ -268,6 +280,10 @@ namespace ManicDigger
             Console.WriteLine("Game loaded successfully.");
         }
         public string defaultminesave = "default" + XmlSaveExtension;
+        public byte[] SaveMap(IMapStorage map)
+        {
+            return GzipCompression.Compress(SaveXml(map));
+        }
         public void SaveMap(IMapStorage map, string filename)
         {
             //using (FileStream s = File.OpenWrite("default.minesave"))
@@ -312,11 +328,11 @@ namespace ManicDigger
             StringBuilder b = new StringBuilder();
             b.AppendLine(@"<?xml version=""1.0"" encoding=""UTF-8""?>");
             b.AppendLine("<ManicDiggerSave>");
-            b.AppendLine(X("FormatVersion", "1"));
+            b.AppendLine(XmlTool.X("FormatVersion", "1"));
             b.AppendLine("<MapSize>");
-            b.AppendLine(X("X", "" + map.MapSizeX));
-            b.AppendLine(X("Y", "" + map.MapSizeY));
-            b.AppendLine(X("Z", "" + map.MapSizeZ));
+            b.AppendLine(XmlTool.X("X", "" + map.MapSizeX));
+            b.AppendLine(XmlTool.X("Y", "" + map.MapSizeY));
+            b.AppendLine(XmlTool.X("Z", "" + map.MapSizeZ));
             b.AppendLine("</MapSize>");
             MemoryStream mapdata = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(mapdata);
@@ -330,7 +346,7 @@ namespace ManicDigger
                     }
                 }
             }
-            b.AppendLine(X("MapData", Convert.ToBase64String(mapdata.ToArray())));
+            b.AppendLine(XmlTool.X("MapData", Convert.ToBase64String(mapdata.ToArray())));
             //b.AppendLine(X("DefaultSpawn", ));
             b.AppendLine("</ManicDiggerSave>");
             /*
@@ -355,10 +371,6 @@ namespace ManicDigger
         </ManicDiggerSave>
         */
             return Encoding.UTF8.GetBytes(b.ToString());
-        }
-        string X(string name, string value)
-        {
-            return string.Format("<{0}>{1}</{0}>", name, value);
         }
         public void LoadMapMinecraft(IMapStorage map, string filename)
         {

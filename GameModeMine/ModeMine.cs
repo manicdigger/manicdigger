@@ -98,6 +98,17 @@ namespace ManicDigger
             this.map.Map = map;
         }
         #endregion
+        MapManipulator mapmanipulator = new MapManipulator();
+        #region IGameMode Members
+        public byte[] SaveState()
+        {
+            return mapmanipulator.SaveMap(map);
+        }
+        public void LoadState(byte[] savegame)
+        {
+            mapmanipulator.LoadMap(map, savegame);
+        }
+        #endregion
     }
     public class GameDataTilesMinecraft : IGameData
     {

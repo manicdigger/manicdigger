@@ -313,6 +313,8 @@ namespace ManicDigger
         Vector3 PlayerPositionSpawn { get; }
         Vector3 PlayerOrientationSpawn { get; }
         void OnNewMap();
+        byte[] SaveState();
+        void LoadState(byte[] savegame);
     }
     public interface ICharacterToDraw
     {
@@ -517,6 +519,7 @@ namespace ManicDigger
             GL.Enable(EnableCap.ColorMaterial);
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
+            System.Windows.Forms.Cursor.Hide();
         }
         public bool ENABLE_MAINMENU = false;
         private static void SetAmbientLight(Color c)
@@ -584,7 +587,8 @@ namespace ManicDigger
                         {
                             filename += MapManipulator.XmlSaveExtension;
                         }
-                        mapManipulator.LoadMap(map, filename);
+                        //mapManipulator.LoadMap(map, filename);
+                        game.LoadState(File.ReadAllBytes(filename));
                         terrain.UpdateAllTiles();
                     }
                     else if (cmd == "save")
@@ -594,7 +598,8 @@ namespace ManicDigger
                             AddChatline("error: missing arg1 - savename");
                             return;
                         }
-                        mapManipulator.SaveMap(map, arguments + MapManipulator.XmlSaveExtension);
+                        File.WriteAllBytes(arguments + MapManipulator.XmlSaveExtension, game.SaveState());
+                        //mapManipulator.SaveMap(map, arguments + MapManipulator.XmlSaveExtension);
 
                     }
                     else if (cmd == "fps")

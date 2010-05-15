@@ -6,6 +6,7 @@ using ManicDigger;
 using OpenTK;
 using System.IO;
 using System.Drawing;
+using System.Xml;
 
 namespace GameModeFortress
 {
@@ -33,7 +34,7 @@ namespace GameModeFortress
     }
     public class InfiniteMap : IMapStorage
     {
-        public IWorldGenerator gen { get; set;}
+        public IWorldGenerator gen { get; set; }
         #region IMapStorage Members
         public int MapSizeX { get { return 10 * 1000; } set { } }
         public int MapSizeY { get { return 10 * 1000; } set { } }
@@ -65,11 +66,40 @@ namespace GameModeFortress
         {
         }
         #endregion
+        public byte[] SaveBlocks()
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            NetworkHelper.WriteInt32(bw, blocks.Count);
+            foreach (var b in blocks)
+            {
+                NetworkHelper.WriteInt32(bw, b.Key.x);
+                NetworkHelper.WriteInt32(bw, b.Key.y);
+                NetworkHelper.WriteInt32(bw, b.Key.z);
+                NetworkHelper.WriteInt16(bw, b.Value);
+            }
+            return ms.ToArray();
+        }
+        public void LoadBlocks(byte[] blocksdata)
+        {
+            MemoryStream ms = new MemoryStream(blocksdata);
+            BinaryReader br = new BinaryReader(ms);
+            int count = NetworkHelper.ReadInt32(br);
+            blocks.Clear();
+            for (int i = 0; i < count; i++)
+            {
+                int x = NetworkHelper.ReadInt32(br);
+                int y = NetworkHelper.ReadInt32(br);
+                int z = NetworkHelper.ReadInt32(br);
+                int type = NetworkHelper.ReadInt16(br);
+                blocks.Add(new Vector3i(x, y, z), (byte)type);
+            }
+        }
     }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public InfiniteMap map { get; set; }
         [Inject]
         public ITerrainDrawer terrain { get; set; }
         [Inject]
@@ -766,11 +796,38 @@ namespace GameModeFortress
         Dictionary<Vector3, BuildOrder> orders = new Dictionary<Vector3, BuildOrder>();
         public byte[] SaveState()
         {
-            throw new NotImplementedException();
+            StringBuilder b = new StringBuilder();
+            b.AppendLine(@"<?xml version=""1.0"" encoding=""UTF-8""?>");
+            b.AppendLine("<ManicDiggerSave>");
+            b.AppendLine(XmlTool.X("FormatVersion", "200"));
+            b.AppendLine("<MapSize>");
+            b.AppendLine(XmlTool.X("X", "" + map.MapSizeX));
+            b.AppendLine(XmlTool.X("Y", "" + map.MapSizeY));
+            b.AppendLine(XmlTool.X("Z", "" + map.MapSizeZ));
+            b.AppendLine("</MapSize>");
+            byte[] mapdata = map.SaveBlocks();
+            b.AppendLine(XmlTool.X("InfiniteMapData", Convert.ToBase64String(mapdata)));
+            b.AppendLine("</ManicDiggerSave>");
+            return GzipCompression.Compress(Encoding.UTF8.GetBytes(b.ToString()));
         }
         public void LoadState(byte[] savegame)
         {
-            throw new NotImplementedException();
+            using (Stream s = new MemoryStream(GzipCompression.Decompress(savegame)))
+            {
+                StreamReader sr = new StreamReader(s);
+                XmlDocument d = new XmlDocument();
+                d.Load(sr);
+                int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/FormatVersion"));
+                if (format != 200)
+                {
+                    throw new Exception("Invalid map format");
+                }
+                map.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/X"));
+                map.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Y"));
+                map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
+                byte[] mapdata = Convert.FromBase64String(XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData"));
+                map.LoadBlocks(mapdata);
+            }
         }
         public string GameInfo
         {
