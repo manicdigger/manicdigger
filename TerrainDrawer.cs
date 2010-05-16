@@ -82,6 +82,19 @@ namespace ManicDigger
         public int realverticescount = 0;
         public bool valid;
     }
+    public class MyLinq
+    {
+        public static bool Any<T>(IEnumerable<T> v)
+        {
+            return v.GetEnumerator().MoveNext();
+        }
+        public static T First<T>(IEnumerable<T> v)
+        {
+            var e = v.GetEnumerator();
+            e.MoveNext();
+            return e.Current;
+        }
+    }
     public class MeshBatcher
     {
         public MeshBatcher()
@@ -100,7 +113,7 @@ namespace ManicDigger
         int count = 0;
         public void Remove(int p)
         {
-            empty.Add(p);
+            empty[p] = 0;
         }
         struct ToAdd
         {
@@ -121,8 +134,8 @@ namespace ManicDigger
             {
                 if (empty.Count > 0)
                 {
-                    id = empty[empty.Count - 1];
-                    empty.RemoveAt(empty.Count - 1);
+                    id = MyLinq.First(empty.Keys);
+                    empty.Remove(id);
                 }
                 else
                 {
@@ -133,7 +146,7 @@ namespace ManicDigger
             }
             return id;
         }
-        List<int> empty = new List<int>();
+        Dictionary<int, int> empty = new Dictionary<int, int>();
         float addperframe = 0.5f;
         float addcounter = 0;
         Vector3 playerpos;
@@ -196,7 +209,7 @@ namespace ManicDigger
             }
             for (int i = 0; i < count; i++)
             {
-                if (!empty.Contains(i))
+                if (!empty.ContainsKey(i))
                 {
                     if (!listinfo[i].transparent)
                     {
@@ -207,7 +220,7 @@ namespace ManicDigger
             GL.Disable(EnableCap.CullFace);//for water.
             for (int i = 0; i < count; i++)
             {
-                if (!empty.Contains(i))
+                if (!empty.ContainsKey(i))
                 {
                     if (listinfo[i].transparent)
                     {
@@ -273,7 +286,10 @@ namespace ManicDigger
                 int sum = 0;
                 for (int i = 0; i < count; i++)
                 {
-                    sum += listinfo[i].indicescount;
+                    if (!empty.ContainsKey(i))
+                    {
+                        sum += listinfo[i].indicescount;
+                    }
                 }
                 return sum / 3;
             }
