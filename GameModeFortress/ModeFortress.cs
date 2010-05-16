@@ -17,23 +17,44 @@ namespace GameModeFortress
     public class WorldGenerator : IWorldGenerator
     {
         IGameData data = new GameDataTilesMinecraft();
-        Dictionary<Vector2i, byte> heightcache = new Dictionary<Vector2i, byte>();
+        byte[,] heightcache = new byte[1000, 1000];
+        public WorldGenerator()
+        {
+            Restart();
+        }
+        private void Restart()
+        {
+            for (int x = 0; x < 1000; x++)
+            {
+                for (int y = 0; y < 1000; y++)
+                {
+                    heightcache[x, y] = byte.MaxValue;
+                }
+            }
+        }
+        int waterlevel = 20;
+        int centerx = 5000;
+        int centery = 5000;
         #region IWorldGenerator Members
         public int GetBlock(int x, int y, int z)
         {
-            if (heightcache.Count > 1 * 1000 * 1000)
+            if (x < 5 && y < 5 && z < 5) { return 0; }
+            //multithreading crash?
+            //solution: provide each thread its own world generator.
+            if (Math.Abs(x - centerx) >= 500 || Math.Abs(y - centery) >= 500)
             {
-                //multithreading crash.
-                //solution: provide each thread its own world generator.
-                heightcache.Clear();
-                Console.WriteLine("clear");
+                Restart();
+                centerx = x;
+                centery = y;
             }
             Vector2i v = new Vector2i(x, y);
             byte color;
-            if (!heightcache.TryGetValue(v, out color))
+            int incachex = v.x - centerx + 500;
+            int incachey = v.y - centery + 500;
+            if (heightcache[incachex, incachey] == byte.MaxValue)
             {
                 //double p = 0.2 + ((findnoise2(x / 100.0, y / 100.0) + 1.0) / 2) * 0.3;
-                double p = 0.4;
+                double p = 0.5;
                 double zoom = 150;
                 double getnoise = 0;
                 int octaves = 6;
@@ -47,22 +68,22 @@ namespace GameModeFortress
                 int color1 = (int)(((getnoise + 1) / 2.0) * (maxheight - 5)) + 3;//(int)((getnoise * 128.0) + 128.0);
                 if (color1 > maxheight - 1) { color1 = (int)maxheight - 1; }
                 if (color1 < 2) { color1 = 2; }
-                heightcache[new Vector2i(x, y)] = (byte)color1;
+                heightcache[incachex, incachey] = (byte)color1;
                 color = (byte)color1;
             }
-            if (z < color) { return data.TileIdDirt; }
-            if (z == color) { return data.TileIdGrass; }
-            if (z > color) { return data.TileIdEmpty; }
-            /*
-            if (z == 32 - 1)
+            color = heightcache[incachex, incachey];
+            if (z > waterlevel)
             {
-                return data.TileIdGrass;
-            }
-            if (z < 32 - 1)
-            {
+                if (z > color) { return data.TileIdEmpty; }
+                if (z == color) { return data.TileIdGrass; }
                 return data.TileIdDirt;
-            }*/
-            return data.TileIdEmpty;
+            }
+            else
+            {
+                if (z > color) { return data.TileIdWater;}
+                if (z == color) { return data.TileIdSand; }
+                return data.TileIdDirt;
+            }
         }
         #endregion
         double findnoise2(double x, double y)
