@@ -2600,7 +2600,9 @@ namespace ManicDigger
             PerspectiveMode();
             foreach (KeyValuePair<int, Player> k in clients.Players)
             {
-                if (k.Value.Name == "")
+                if (k.Key == 255 || k.Value.Name == ""
+                    || (!playerdrawinfo.ContainsKey(k.Key))
+                    || playerdrawinfo[k.Key].interpolation == null)
                 {
                     continue;
                 }
@@ -2609,7 +2611,8 @@ namespace ManicDigger
                     || Keyboard[OpenTK.Input.Key.AltLeft] || Keyboard[OpenTK.Input.Key.AltRight])
                 {
                     GL.PushMatrix();
-                    GL.Translate(k.Value.Position.X, k.Value.Position.Y + 1f, k.Value.Position.Z);
+                    Vector3 pos = ((PlayerInterpolationState)playerdrawinfo[k.Key].interpolation.InterpolatedState(totaltime)).position;
+                    GL.Translate(pos.X, pos.Y + 1f, pos.Z);
                     GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                     GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                     GL.Scale(0.02, 0.02, 0.02);
