@@ -138,7 +138,7 @@ namespace GameModeFortress
             clientgame.data = gamedata;
             clientgame.network = network;
             clientgame.audio = audio;
-            clientgame.map = new InfiniteMap() { gen = new WorldGeneratorFlat() };
+            clientgame.map = new InfiniteMap() { gen = new WorldGenerator() };
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

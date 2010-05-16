@@ -135,6 +135,43 @@ namespace ManicDigger
             bmd = null;
         }
     }
+    public struct Vector2i
+    {
+        public Vector2i(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+        public int x;
+        public int y;
+        public override bool Equals(object obj)
+        {
+            if (obj is Vector2i)
+            {
+                Vector2i other = (Vector2i)obj;
+                return this.x == other.x && this.y == other.y;
+            }
+            return base.Equals(obj);
+        }
+        public static bool operator ==(Vector2i a, Vector2i b)
+        {
+            return a.x == b.x && a.y == b.y;
+        }
+        public static bool operator !=(Vector2i a, Vector2i b)
+        {
+            return !(a.x == b.x && a.y == b.y);
+        }
+        public override int GetHashCode()
+        {
+            int hash = 23;
+            unchecked
+            {
+                hash = hash * 37 + x;
+                hash = hash * 37 + y;
+            }
+            return hash;
+        }
+    }
     public struct Vector3i
     {
         public Vector3i(int x, int y, int z)
