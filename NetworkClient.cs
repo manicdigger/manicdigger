@@ -543,6 +543,7 @@ namespace ManicDigger
                             //throw new Exception();
                         }
                         Clients.Players[playerid] = new Player();
+                        Clients.Players[playerid].Name = playername;
                         ReadAndUpdatePlayerPosition(br, playerid);
                     }
                     break;

@@ -118,6 +118,7 @@ namespace ManicDigger
         public Vector3 Position;
         public byte Heading;
         public byte Pitch;
+        public string Name;
     }
     public static class MapUtil
     {

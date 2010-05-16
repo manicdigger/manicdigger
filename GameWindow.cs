@@ -2598,6 +2598,26 @@ namespace ManicDigger
                 DrawMouseCursor();
             }
             PerspectiveMode();
+            foreach (KeyValuePair<int, Player> k in clients.Players)
+            {
+                if (k.Value.Name == "")
+                {
+                    continue;
+                }
+                //todo if picking
+                if (((LocalPlayerPosition - k.Value.Position).Length < 20)
+                    || Keyboard[OpenTK.Input.Key.AltLeft] || Keyboard[OpenTK.Input.Key.AltRight])
+                {
+                    GL.PushMatrix();
+                    GL.Translate(k.Value.Position.X, k.Value.Position.Y + 1f, k.Value.Position.Z);
+                    GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
+                    GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
+                    GL.Scale(0.02, 0.02, 0.02);
+                    GL.Translate(-TextSize(k.Value.Name, 14).Width / 2, 0, 0);
+                    Draw2dText(k.Value.Name, 0, 0, 14, Color.White);
+                    GL.PopMatrix();
+                }
+            }
         }
         int maploadingprogress;
         private void DrawMapLoading()
