@@ -63,144 +63,16 @@ namespace ManicDigger
             return r;
         }
     }
-    public class TileDrawer
+    public enum TodoAction
     {
+        Add,
+        Delete,
+        Clear,
     }
-    class TerrainUpdater
+    public struct TodoItem
     {
-        Rectangle currentRect = nullRect;
-        static Rectangle nullRect = new Rectangle(int.MinValue, int.MinValue, 1, 1);
-        public void Draw(Point playerpos, int rsize)
-        {
-            if (rsize % 2 != 1)
-            {
-                throw new Exception();
-            }
-            var newrect = PlayerRectangle(playerpos, rsize);
-            int z = (rsize - 1) / 2;
-            //if teleport then draw starting from center.
-            if (!currentRect.IntersectsWith(newrect))
-            {
-                Todo.Add(new TodoItem() { action = TodoAction.Clear });
-                /*
-                if (currentRect != nullRect)
-                {
-                    foreach (Point p in Points(currentRect))
-                    {
-                        Todo.Add(new TodoItem() { action = TodoAction.Delete, position = p });
-                    }
-                }
-                */
-                for (int v = 0; v <= z; v++)
-                {
-                    Point center = new Point((newrect.Right + newrect.Left) / 2, (newrect.Bottom + newrect.Top) / 2);
-                    foreach (Point p in SquareEdgesPoints(v))
-                    {
-                        Point pp = new Point(center.X + p.X, center.Y + p.Y);
-                        Todo.Add(new TodoItem() { action = TodoAction.Add, position = pp });
-                    }
-                }
-            }
-            else
-            {
-                if (currentRect == nullRect)
-                {
-                    throw new Exception();
-                }
-                foreach (Rectangle r in OldTiles(currentRect, newrect))
-                {
-                    foreach (Point p in Points(r))
-                    {
-                        Todo.Add(new TodoItem() { action = TodoAction.Delete, position = p });
-                    }
-                }
-                foreach (Rectangle r in NewTiles(currentRect, newrect))
-                {
-                    foreach (Point p in Points(r))
-                    {
-                        Todo.Add(new TodoItem() { action = TodoAction.Add, position = p });
-                    }
-                }
-            }
-            currentRect = newrect;
-        }
-        private IEnumerable<Point> SquareEdgesPoints(int v)
-        {
-            if (v < 0)
-            {
-                throw new ArgumentException();
-            }
-            if (v == 0)
-            {
-                yield return new Point(0, 0);
-                yield break;
-            }
-            Rectangle r = new Rectangle(-v, -v, 2 * v + 1, 2 * v + 1);
-            //up
-            for (int x = r.Left + 1; x < r.Right - 1; x++)
-            {
-                yield return new Point(x, r.Top);
-            }
-            //bottom
-            for (int x = r.Left + 1; x < r.Right - 1; x++)
-            {
-                yield return new Point(x, r.Bottom - 1);
-            }
-            //left
-            for (int y = r.Top; y < r.Bottom; y++)
-            {
-                yield return new Point(r.Left, y);
-            }
-            //right
-            for (int y = r.Top; y < r.Bottom; y++)
-            {
-                yield return new Point(r.Right - 1, y);
-            }
-        }
-        IEnumerable<Point> Points(Rectangle r)
-        {
-            for (int x = r.X; x < r.Right; x++)
-            {
-                for (int y = r.Y; y < r.Bottom; y++)
-                {
-                    yield return new Point(x, y);
-                }
-            }
-        }
-        public enum TodoAction
-        {
-            Add,
-            Delete,
-            Clear,
-        }
-        public struct TodoItem
-        {
-            public TodoAction action;
-            public Point position;
-        }
-        public List<TodoItem> Todo = new List<TodoItem>();
-        public IEnumerable<Rectangle> OldTiles(Rectangle a, Rectangle b)
-        {
-            Region r = new Region(b);
-            r.Complement(a);
-            foreach (RectangleF rr in r.GetRegionScans(new System.Drawing.Drawing2D.Matrix()))
-            {
-                yield return new Rectangle((int)rr.X, (int)rr.Y, (int)rr.Width, (int)rr.Height);
-            }
-        }
-        public IEnumerable<Rectangle> NewTiles(Rectangle a, Rectangle b)
-        {
-            Region r = new Region(a);
-            r.Complement(b);
-            foreach (RectangleF rr in r.GetRegionScans(new System.Drawing.Drawing2D.Matrix()))
-            {
-                yield return new Rectangle((int)rr.X, (int)rr.Y, (int)rr.Width, (int)rr.Height);
-            }
-        }
-        public Rectangle PlayerRectangle(Point p, int rsize)
-        {
-            return new Rectangle(p.X - (rsize - 1) / 2, p.Y - (rsize - 1) / 2, rsize, rsize);
-        }
+        public TodoAction action;
+        public Point position;
     }
     public class Vbo
     {
@@ -512,13 +384,14 @@ namespace ManicDigger
         public IWorldFeaturesDrawer worldfeatures { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         public int chunksize = 16;
-        public int rsize
+        public int chunkdrawdistance
         {
             get
             {
                 int dd = drawdistance;
                 dd = dd - dd % chunksize;
-                dd = ((dd * 2) / chunksize) - 1;
+                //dd = ((dd * 2) / chunksize) - 1;
+                dd = dd / chunksize;
                 if (dd < 1)
                 {
                     dd = 1;
@@ -581,27 +454,53 @@ namespace ManicDigger
                 Thread.Sleep(1);
                 if (exit.exit || exit2) { break; }
                 CheckRespawn();
-                Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / 16), (int)(localplayerposition.LocalPlayerPosition.Z / 16));
-                updater.Draw(playerpoint, rsize);
+                Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / chunksize), (int)(localplayerposition.LocalPlayerPosition.Z / chunksize));
                 ProcessAllPriorityTodos();
-                TerrainUpdater oldupdater = updater;
-                List<TerrainUpdater.TodoItem> l;
-                lock (terrainlock)
+                List<TodoItem> l = new List<TodoItem>();
+                foreach (var k in batchedblocks)
                 {
-                    l = new List<TerrainUpdater.TodoItem>(updater.Todo);
+                    var v = k.Key;
+                    if ((new Vector3(v.X * chunksize, localplayerposition.LocalPlayerPosition.Y, v.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length > chunkdrawdistance * chunksize)
+                    {
+                        l.Add(new TodoItem() { position = new Point((int)v.X, (int)v.Y), action = TodoAction.Delete });
+                    }
                 }
-                for (int i = 0; i < l.Count; i++)
+                for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
                 {
-                    if (updater != oldupdater) { break; }
+                    for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
+                    {
+                        int xx = (int)localplayerposition.LocalPlayerPosition.X / chunksize + x;
+                        int yy = (int)localplayerposition.LocalPlayerPosition.Z / chunksize + y;
+                        bool add = true;
+                        for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
+                        {
+                            if (batchedblocks.ContainsKey(new Vector3(xx, yy, z)))
+                            {
+                                add = false;
+                            }
+                        }
+                        if (add && (new Vector3(xx * chunksize, localplayerposition.LocalPlayerPosition.Y, yy * chunksize) - localplayerposition.LocalPlayerPosition).Length <= chunkdrawdistance * chunksize
+                            && IsValidChunkPosition(xx, yy))
+                        {
+                            l.Add(new TodoItem() { position = new Point(xx, yy), action = TodoAction.Add });
+                        }
+                    }
+                }
+                l.Sort(FTodo);
+                for (int i = 0; i < Math.Min(5, l.Count); i++)//l.Count; i++)
+                {
                     var ti = l[i];
                     if (exit.exit || exit2) { break; }
                     CheckRespawn();
                     ProcessAllPriorityTodos();
                     ProcessUpdaterTodo(ti);
                 }
-                updater.Todo.Clear();
             }
             updateThreadRunning--;
+        }
+        private bool IsValidChunkPosition(int xx, int yy)
+        {
+            return xx >= 0 && yy >= 0 && xx < mapstorage.MapSizeX / chunksize && yy < mapstorage.MapSizeY / chunksize;
         }
         private void CheckRespawn()
         {
@@ -611,24 +510,37 @@ namespace ManicDigger
             }
             lastplayerposition = localplayerposition.LocalPlayerPosition;
         }
-        int FTodo(TerrainUpdater.TodoItem a, TerrainUpdater.TodoItem b)
+        int FTodo(TodoItem a, TodoItem b)
         {
+            if (a.action == TodoAction.Delete && b.action == TodoAction.Add)
+            {
+                return -1;
+            }
+            if (a.action == TodoAction.Add && b.action == TodoAction.Delete)
+            {
+                return 1;
+            }
             return FPoint(a.position, b.position);
         }
         int FPoint(Point a, Point b)
         {
-            return ((new Vector3(a.X * 16, localplayerposition.LocalPlayerPosition.Y, a.Y * 16) - localplayerposition.LocalPlayerPosition).Length)
-                .CompareTo((new Vector3(b.X * 16, localplayerposition.LocalPlayerPosition.Y, b.Y * 16) - localplayerposition.LocalPlayerPosition).Length);
+            return ((new Vector3(a.X * chunksize, localplayerposition.LocalPlayerPosition.Y, a.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((new Vector3(b.X * chunksize, localplayerposition.LocalPlayerPosition.Y, b.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length);
         }
         int FVector3Arr(Vector3[] a, Vector3[] b)
         {
-            return ((Vector3.Multiply(a[0], 16) - localplayerposition.LocalPlayerPosition).Length)
-                .CompareTo((Vector3.Multiply(b[0], 16) - localplayerposition.LocalPlayerPosition).Length);
+            return ((Vector3.Multiply(a[0], chunksize) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((Vector3.Multiply(b[0], chunksize) - localplayerposition.LocalPlayerPosition).Length);
         }
         int FVector3(Vector3 a, Vector3 b)
         {
-            return ((Vector3.Multiply(a, 16) - localplayerposition.LocalPlayerPosition).Length)
-                .CompareTo((Vector3.Multiply(b, 16) - localplayerposition.LocalPlayerPosition).Length);
+            return ((Vector3.Multiply(a, chunksize) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((Vector3.Multiply(b, chunksize) - localplayerposition.LocalPlayerPosition).Length);
+        }
+        int FVector3Chunk(Vector3 a, Vector3 b)
+        {
+            return ((new Vector3(a.X * chunksize, a.Z * chunksize, a.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length)
+                .CompareTo((new Vector3(b.X * chunksize, b.Z * chunksize, b.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length);
         }
         private void ProcessAllPriorityTodos()
         {
@@ -686,12 +598,12 @@ namespace ManicDigger
                 }
             }
         }
-        private void ProcessUpdaterTodo(TerrainUpdater.TodoItem ti)
+        private void ProcessUpdaterTodo(TodoItem ti)
         {
             var p = ti.position;
-            if (ti.action == TerrainUpdater.TodoAction.Add)
+            if (ti.action == TodoAction.Add)
             {
-                for (int z = 0; z < mapstorage.MapSizeZ / 16; z++)
+                for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
                 {
                     try
                     {
@@ -716,9 +628,9 @@ namespace ManicDigger
                     catch { Console.WriteLine("Chunk error"); }
                 }
             }
-            else if (ti.action == TerrainUpdater.TodoAction.Delete)
+            else if (ti.action == TodoAction.Delete)
             {
-                for (int z = 0; z < mapstorage.MapSizeZ / 16; z++)
+                for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
                 {
                     //lock (terrainlock)
                     {
@@ -735,7 +647,7 @@ namespace ManicDigger
             }
             else
             {
-                UpdateAllTiles(true);
+                UpdateAllTiles();
             }
         }
         /// <summary>
@@ -779,7 +691,7 @@ namespace ManicDigger
                     indices = indices.ToArray(),
                     vertices = vertices.ToArray(),
                     position =
-                        new Vector3(x * 16, y * 16, z * 16)
+                        new Vector3(x * chunksize, y * chunksize, z * chunksize)
                 };
             }
             if (transparentindices.Count > 0)
@@ -789,7 +701,7 @@ namespace ManicDigger
                     indices = transparentindices.ToArray(),
                     vertices = transparentvertices.ToArray(),
                     position =
-                        new Vector3(x * 16, y * 16, z * 16),
+                        new Vector3(x * chunksize, y * chunksize, z * chunksize),
                     transparent = true
                 };
             }
@@ -808,20 +720,11 @@ namespace ManicDigger
         }
         Dictionary<Vector3, int[]> batchedblocks = new Dictionary<Vector3, int[]>();
         Vector3 lastplayerposition;
-        TerrainUpdater updater = new TerrainUpdater();
         MeshBatcher batcher = new MeshBatcher();
         public void UpdateAllTiles()
         {
-            UpdateAllTiles(false);
-        }
-        public void UpdateAllTiles(bool updaterInduced)
-        {
             lock (terrainlock)
             {
-                if (!updaterInduced)
-                {
-                    updater = new TerrainUpdater();
-                }
                 batchedblocks.Clear();
                 batcher.Clear();
             }
