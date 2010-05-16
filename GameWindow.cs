@@ -303,6 +303,7 @@ namespace ManicDigger
         int activematerial { get; set; }
         bool ENABLE_FREEMOVE { get; set; }
         bool ENABLE_MOVE { get; set; }
+        void Log(string s);
     }
     public interface IGameMode
     {
@@ -310,7 +311,7 @@ namespace ManicDigger
         void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int type);
         void OnNewFrame(double dt);
         IEnumerable<ICharacterToDraw> Characters { get; }
-        Vector3 PlayerPositionSpawn { get; }
+        Vector3 PlayerPositionSpawn { get; set; }
         Vector3 PlayerOrientationSpawn { get; }
         void OnNewMap();
         byte[] SaveState();
@@ -471,12 +472,6 @@ namespace ManicDigger
                 TargetRenderFrequency = 0;
             }
             GL.ClearColor(System.Drawing.Color.MidnightBlue);
-            /*
-            GL.Enable(EnableCap.Fog);
-            GL.Fog(FogParameter.FogMode, 1);
-            GL.Fog(FogParameter.FogStart, viewdistance);
-            GL.Fog(FogParameter.FogEnd, 1);
-            */
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
             //clientgame.GeneratePlainMap();
             //clientgame.LoadMapMinecraft();
@@ -667,7 +662,7 @@ namespace ManicDigger
                                 foglevel2--;
                             }
                             terrain.DrawDistance = foglevel2;
-                            terrain.UpdateAllTiles();
+                            //terrain.UpdateAllTiles();
                         }
                     }
                     else if (cmd == "noclip")
@@ -960,11 +955,14 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.F1)
                 {
                     movespeed = basemovespeed * 1;
+                    Log("Move speed: 1x.");
                 }
                 if (e.Key == OpenTK.Input.Key.F2)
                 {
                     movespeed = basemovespeed * 10;
+                    Log("Move speed: 10x.");
                 }
+                /*
                 if (e.Key == OpenTK.Input.Key.F7)
                 {
                     GuiActionLoadGame();
@@ -973,6 +971,7 @@ namespace ManicDigger
                 {
                     mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
                 }
+                */
                 /*
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
@@ -982,7 +981,9 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
                     ConnectToInternetGame(username, pass, testgameurl);
+                    Log("Connected to default server.");
                 }
+                /*
                 if (e.Key == OpenTK.Input.Key.M)
                 {
                     FreeMouse = !FreeMouse;
@@ -992,22 +993,39 @@ namespace ManicDigger
                         freemousejustdisabled = true;
                     }
                 }
+                */
                 if (e.Key == OpenTK.Input.Key.F3)
                 {
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
-                    if (ENABLE_FREEMOVE) { Console.WriteLine("Freemove enabled."); }
-                    else { Console.WriteLine("Freemove disabled."); }
+                    if (ENABLE_FREEMOVE) { Log("Freemove enabled."); }
+                    else { Log("Freemove disabled."); }
                 }
                 if (e.Key == OpenTK.Input.Key.F4)
                 {
                     ENABLE_NOCLIP = !ENABLE_NOCLIP;
-                    if (ENABLE_NOCLIP) { Console.WriteLine("Noclip enabled."); }
-                    else { Console.WriteLine("Noclip disabled."); }
+                    if (ENABLE_NOCLIP) { Log("Noclip enabled."); }
+                    else { Log("Noclip disabled."); }
                 }
-                if (e.Key == OpenTK.Input.Key.P)
+                if (e.Key == OpenTK.Input.Key.R)
                 {
                     player.playerposition = game.PlayerPositionSpawn;
                     player.movedz = 0;
+                    Log("Respawn.");
+                }
+                if (e.Key == OpenTK.Input.Key.P)
+                {
+                    game.PlayerPositionSpawn = player.playerposition;
+                    player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
+                    Log("Spawn position set.");
+                }
+                if (e.Key == OpenTK.Input.Key.F)
+                {
+                    if (terrain.DrawDistance == 64) { terrain.DrawDistance = 128; }
+                    else if (terrain.DrawDistance == 128) { terrain.DrawDistance = 256; }
+                    else if (terrain.DrawDistance == 256) { terrain.DrawDistance = 512; }
+                    else if (terrain.DrawDistance == 512) { terrain.DrawDistance = 64; }
+                    else { terrain.DrawDistance = 64; }
+                    Log("Fog distance: " + terrain.DrawDistance);
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
@@ -1099,6 +1117,10 @@ namespace ManicDigger
             {
             }
             else throw new Exception();
+        }
+        public void Log(string p)
+        {
+            AddChatline(p);
         }
         private void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
         {
@@ -1824,6 +1846,25 @@ namespace ManicDigger
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
+
+            float density = 0.3f;
+            float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
+            if (terrain.DrawDistance < 256)
+            {
+                GL.Enable(EnableCap.Fog);
+                GL.Hint(HintTarget.FogHint, HintMode.Nicest);
+                GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
+                GL.Fog(FogParameter.FogColor, fogColor);
+                GL.Fog(FogParameter.FogDensity, density);
+                float fogstart = terrain.DrawDistance - 40;
+                GL.Fog(FogParameter.FogStart, fogstart);
+                GL.Fog(FogParameter.FogEnd, fogstart + 20);
+            }
+            else
+            {
+                GL.Disable(EnableCap.Fog);
+            }
+
             Application.DoEvents();
             //Sleep is required in Mono for running the terrain background thread.
             Thread.Sleep(0);
@@ -1920,6 +1961,7 @@ namespace ManicDigger
             GL.Disable(EnableCap.Lighting);
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.CullFace);
+            //GL.Disable(EnableCap.Fog);
 
             // Just in case we set all vertices to white.
             //GL.Color4(1, 1, 1, 1);

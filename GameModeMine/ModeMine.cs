@@ -44,7 +44,7 @@ namespace ManicDigger
             get { yield break; }
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
-        public Vector3 PlayerPositionSpawn { get { return playerpositionspawn ; } }
+        public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
         public MapStorage map = new MapStorage();
         public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
         IDictionary<int, Player> players = new Dictionary<int, Player>();

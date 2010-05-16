@@ -979,7 +979,7 @@ namespace GameModeFortress
             }
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
-        public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } }
+        public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
 
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
