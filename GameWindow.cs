@@ -716,14 +716,16 @@ namespace ManicDigger
                     }
                     else
                     {
-                        network.SendChat(GuiTypingBuffer);
+                        string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
+                        network.SendChat(chatline);
                     }
                 }
                 catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
             }
             else
             {
-                network.SendChat(GuiTypingBuffer);
+                string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
+                network.SendChat(chatline);
             }
         }
         private static bool BoolCommandArgument(string arguments)
