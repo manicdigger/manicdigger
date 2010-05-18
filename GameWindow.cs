@@ -464,7 +464,6 @@ namespace ManicDigger
             
             return id;
         }
-        PlayMp3 mp3 = new PlayMp3();
         protected override void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
@@ -483,8 +482,6 @@ namespace ManicDigger
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            mp3.Open("data\\Tenebrous Brothers Carnival - Act One.mp3");
-            mp3.Play(true);
 
             string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
@@ -2502,10 +2499,6 @@ namespace ManicDigger
             if (menustate.selected == 0)
             {
                 GuiActionGenerateNewMap();
-                mp3.Close();
-                mp3 = new PlayMp3();
-                mp3.Open("data\\Atlantean Twilight.mp3");
-                mp3.Play(true);
                 GuiStateBackToGame();
             }
             else if (menustate.selected == 1)
@@ -2514,7 +2507,6 @@ namespace ManicDigger
                 {
                     GuiActionLoadGame();
                     GuiStateBackToGame();
-                    mp3.Close();
                 }
             }
             else if (menustate.selected == 2)
