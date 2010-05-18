@@ -12,78 +12,76 @@ namespace GameModeFortress
 {
     public interface IWorldGenerator
     {
-        int GetBlock(int x, int y, int z);
+        byte[] GetBlocks(int[] pos);
+        byte[, ,] GetChunk(int x, int y, int z, int chunksize);
     }
     public class WorldGenerator : IWorldGenerator
     {
         IGameData data = new GameDataTilesMinecraft();
-        byte[,] heightcache = new byte[1000, 1000];
         public WorldGenerator()
         {
-            Restart();
-        }
-        private void Restart()
-        {
-            for (int x = 0; x < 1000; x++)
-            {
-                for (int y = 0; y < 1000; y++)
-                {
-                    heightcache[x, y] = byte.MaxValue;
-                }
-            }
         }
         int waterlevel = 20;
-        int centerx = 5000;
-        int centery = 5000;
+        byte[,] heightcache;
         #region IWorldGenerator Members
+        public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
+        {
+            heightcache = new byte[chunksize, chunksize];
+            x = x * chunksize;
+            y = y * chunksize;
+            z = z * chunksize;
+            byte[, ,] chunk = new byte[chunksize, chunksize, chunksize];
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    heightcache[xx, yy] = GetHeight(x + xx, y + yy);
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        chunk[xx, yy, zz] = (byte)GetBlockInside(x + xx, y + yy, z + zz, heightcache[xx, yy]);
+                    }
+                }
+            }
+            return chunk;
+        }
         public int GetBlock(int x, int y, int z)
         {
-            if (x < 5 && y < 5 && z < 5) { return 0; }
-            //multithreading crash?
-            //solution: provide each thread its own world generator.
-            if (Math.Abs(x - centerx) >= 500 || Math.Abs(y - centery) >= 500)
-            {
-                Restart();
-                centerx = x;
-                centery = y;
-            }
+            return GetBlockInside(x, y, z, GetHeight(x, y));
+        }
+        int GetBlockInside(int x, int y, int z, int height)
+        {
             Vector2i v = new Vector2i(x, y);
-            byte color;
-            int incachex = v.x - centerx + 500;
-            int incachey = v.y - centery + 500;
-            if (heightcache[incachex, incachey] == byte.MaxValue)
-            {
-                //double p = 0.2 + ((findnoise2(x / 100.0, y / 100.0) + 1.0) / 2) * 0.3;
-                double p = 0.5;
-                double zoom = 150;
-                double getnoise = 0;
-                int octaves = 6;
-                for (int a = 0; a < octaves - 1; a++)//This loops trough the octaves.
-                {
-                    double frequency = Math.Pow(2, a);//This increases the frequency with every loop of the octave.
-                    double amplitude = Math.Pow(p, a);//This decreases the amplitude with every loop of the octave.
-                    getnoise += noise(((double)x) * frequency / zoom, ((double)y) / zoom * frequency) * amplitude;//This uses our perlin noise functions. It calculates all our zoom and frequency and amplitude
-                }
-                double maxheight = 64;
-                int color1 = (int)(((getnoise + 1) / 2.0) * (maxheight - 5)) + 3;//(int)((getnoise * 128.0) + 128.0);
-                if (color1 > maxheight - 1) { color1 = (int)maxheight - 1; }
-                if (color1 < 2) { color1 = 2; }
-                heightcache[incachex, incachey] = (byte)color1;
-                color = (byte)color1;
-            }
-            color = heightcache[incachex, incachey];
             if (z > waterlevel)
             {
-                if (z > color) { return data.TileIdEmpty; }
-                if (z == color) { return data.TileIdGrass; }
+                if (z > height) { return data.TileIdEmpty; }
+                if (z == height) { return data.TileIdGrass; }
                 return data.TileIdDirt;
             }
             else
             {
-                if (z > color) { return data.TileIdWater;}
-                if (z == color) { return data.TileIdSand; }
+                if (z > height) { return data.TileIdWater; }
+                if (z == height) { return data.TileIdSand; }
                 return data.TileIdDirt;
             }
+        }
+        private byte GetHeight(int x, int y)
+        {
+            //double p = 0.2 + ((findnoise2(x / 100.0, y / 100.0) + 1.0) / 2) * 0.3;
+            double p = 0.5;
+            double zoom = 150;
+            double getnoise = 0;
+            int octaves = 6;
+            for (int a = 0; a < octaves - 1; a++)//This loops trough the octaves.
+            {
+                double frequency = Math.Pow(2, a);//This increases the frequency with every loop of the octave.
+                double amplitude = Math.Pow(p, a);//This decreases the amplitude with every loop of the octave.
+                getnoise += noise(((double)x) * frequency / zoom, ((double)y) / zoom * frequency) * amplitude;//This uses our perlin noise functions. It calculates all our zoom and frequency and amplitude
+            }
+            double maxheight = 64;
+            int height = (int)(((getnoise + 1) / 2.0) * (maxheight - 5)) + 3;//(int)((getnoise * 128.0) + 128.0);
+            if (height > maxheight - 1) { height = (int)maxheight - 1; }
+            if (height < 2) { height = 2; }
+            return (byte)height;
         }
         #endregion
         double findnoise2(double x, double y)
@@ -112,6 +110,20 @@ namespace GameModeFortress
             double int2 = interpolate(u, v, x - floorx);//Here we use x-floorx, to get 1st dimension. Don't mind the x-floorx thingie, it's part of the cosine formula.
             return interpolate(int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.
         }
+        #region IWorldGenerator Members
+        public byte[] GetBlocks(int[] pos)
+        {
+            byte[] blocks = new byte[pos.Length / 3];
+            for (int i = 0; i < pos.Length / 3; i += 3)
+            {
+                int x = i;
+                int y = i + 1;
+                int z = i + 2;
+                blocks[i / 3] = (byte)GetBlock(x, y, z);
+            }
+            return blocks;
+        }
+        #endregion
     }
     public class InfiniteMap : IMapStorage
     {
@@ -121,6 +133,26 @@ namespace GameModeFortress
         public int MapSizeY { get { return 10 * 1000; } set { } }
         public int MapSizeZ { get { return 64; } set { } }
         Dictionary<Vector3i, byte> blocks = new Dictionary<Vector3i, byte>();
+        public InfiniteMap()
+        {
+            Restart();
+        }
+        private void Restart()
+        {
+            for (int x = 0; x < gencachesize.x; x++)
+            {
+                for (int y = 0; y < gencachesize.y; y++)
+                {
+                    for (int z = 0; z < gencachesize.z; z++)
+                    {
+                        gencache[x, y, z] = null;
+                    }
+                }
+            }
+        }
+        byte[, ,][, ,] gencache = new byte[64, 64, 4][, ,];
+        Vector3i gencachesize = new Vector3i(64, 64, 4);
+        Vector2i gencachecenter = new Vector2i(32, 32);
         public int GetBlock(int x, int y, int z)
         {
             if (blocks.ContainsKey(new Vector3i(x, y, z)))
@@ -129,7 +161,29 @@ namespace GameModeFortress
             }
             else
             {
-                return gen.GetBlock(x, y, z);
+                if (x < 5 && y < 5 && z < 5) { return 0; }
+                var k = new Vector3i(x / 16, y / 16, z / 16);
+                if (Math.Abs(x / 16 - gencachecenter.x) >= gencachesize.x / 2 || Math.Abs(y / 16 - gencachecenter.y) >= gencachesize.y / 2)
+                {
+                    Restart();
+                    gencachecenter = new Vector2i(x / 16, y / 16);
+                }
+                int incachex = x / 16 - gencachecenter.x + gencachesize.x / 2;
+                int incachey = y / 16 - gencachecenter.y + gencachesize.y / 2;
+                if (gencache[incachex, incachey, z / 16] == null)
+                {
+                    byte[, ,] chunk = gen.GetChunk(x / 16, y / 16, z / 16, 16);
+                    gencache[incachex, incachey, z / 16] = chunk;
+                }
+                return gencache[incachex, incachey, z / 16][x % 16, y % 16, z % 16];
+                /*
+                if (chunkcache.ContainsKey(k))
+                {
+                    var ccc = gen.GetChunk(x / 16, y / 16, z / 16);
+                    chunkcache.Add(k, ccc);
+                }
+                return chunkcache[k][x % 16, y % 16, z % 16];
+                */
             }
         }
         float waterlevel = 32;
