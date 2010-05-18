@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDigger;
 
-namespace GameModeFortress
+namespace ManicDigger
 {
     public interface IGameWorld : IGameWorldRun
     {

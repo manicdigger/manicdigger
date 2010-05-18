@@ -37,6 +37,11 @@ namespace GameModeFortress
         {
         }
         #endregion
+        #region INetworkClient Members
+        public void SendCommand(byte[] cmd)
+        {
+        }
+        #endregion
     }
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
@@ -106,6 +111,8 @@ namespace GameModeFortress
                 n.Clients = clientgame;
                 n.Chatlines = w;
                 n.Position = localplayerposition;
+                n.ENABLE_FORTRESS = true;
+                n.gameworld = clientgame;
             }
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;

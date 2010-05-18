@@ -701,8 +701,9 @@ namespace GameModeFortress
                     mode = mode,
                     tiletype = (byte)activematerial,
                 };
-                //ticks.DoCommand(MakeCommand(CommandId.Build, cmd)); ???
-                network.SendSetBlock(blockpos, mode, activematerial);
+                //ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
+                network.SendCommand(MakeCommand(CommandId.Build, cmd));
+                //network.SendSetBlock(blockpos, mode, activematerial);
                 if (mode == BlockSetMode.Destroy)
                 {
                     activematerial = data.TileIdEmpty;

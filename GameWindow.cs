@@ -305,6 +305,34 @@ namespace ManicDigger
         bool ENABLE_MOVE { get; set; }
         void Log(string s);
     }
+    public class ViewportDummy : IViewport3d
+    {
+        #region IViewport3d Members
+        public int[] MaterialSlots { get; set; }
+        public int activematerial { get; set; }
+        public bool ENABLE_FREEMOVE { get; set; }
+        public bool ENABLE_MOVE { get; set; }
+        public void Log(string s)
+        {
+        }
+        #endregion
+        #region ILocalPlayerPosition Members
+        public Vector3 LocalPlayerPosition { get; set; }
+        public Vector3 LocalPlayerOrientation { get; set; }
+        public bool Swimming { get { return false; } }
+        public float CharacterHeight { get; set; }
+        #endregion
+        #region IKeyboard Members
+        public OpenTK.Input.KeyboardDevice keyboardstate
+        {
+            get { throw new NotImplementedException(); }
+        }
+        public OpenTK.Input.KeyboardKeyEventArgs keypressed
+        {
+            get { throw new NotImplementedException(); }
+        }
+        #endregion
+    }
     public interface IGameMode
     {
         void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right);
@@ -1246,6 +1274,8 @@ namespace ManicDigger
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
             GuiStateBackToGame();
+            game.OnNewMap();
+            /*
             //frametickmainthreadtodo.Add(
             //() =>
             {
@@ -1261,10 +1291,11 @@ namespace ManicDigger
                     map.MapSizeY = ee.map.GetUpperBound(1) + 1;
                     map.MapSizeZ = ee.map.GetUpperBound(2) + 1;
                     Console.WriteLine("Game loaded successfully.");
-                    DrawMap();
                 }
             }
             //);
+            */
+            DrawMap();
         }
         void maploaded()
         {
@@ -3218,6 +3249,9 @@ namespace ManicDigger
         {
             get { return keyevent; }
         }
+        #endregion
+        #region IMap Members
+        IMapStorage IMap.Map { get { return map; } }
         #endregion
     }
 }

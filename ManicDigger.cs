@@ -762,6 +762,7 @@ namespace ManicDigger
     public interface IMap
     {
         //void LoadMap(byte[, ,] map);
+        IMapStorage Map { get; }
         void SetTileAndUpdate(Vector3 pos, byte type);
     }
     public class MapDummy : ManicDigger.IMap
@@ -770,6 +771,10 @@ namespace ManicDigger
         public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
         {
         }
+        #endregion
+        IMapStorage map = new MapStorage();
+        #region IMap Members
+        public IMapStorage Map { get { return map; } }
         #endregion
     }
     public interface ILocalPlayerPosition

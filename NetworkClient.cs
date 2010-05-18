@@ -20,6 +20,7 @@ namespace ManicDigger
         void SendChat(string s);
         IEnumerable<string> ConnectedPlayers();
         void SendPosition(Vector3 position, Vector3 orientation);
+        void SendCommand(byte[] cmd);
     }
     public class MapLoadingProgressEventArgs : EventArgs
     {
@@ -184,6 +185,11 @@ namespace ManicDigger
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion
+        #region INetworkClient Members
+        public void SendCommand(byte[] cmd)
+        {
+        }
+        #endregion
     }
     public class MapLoadedEventArgs : EventArgs
     {
@@ -266,8 +272,10 @@ namespace ManicDigger
         public IGui Chatlines { get; set; }
         [Inject]
         public ILocalPlayerPosition Position { get; set; }
+        [Inject]
+        public IGameWorld gameworld { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
-
+        public bool ENABLE_FORTRESS = false;
         public void Connect(string serverAddress, int port, string username, string auth)
         {
             main = new Socket(AddressFamily.InterNetwork,
@@ -493,32 +501,45 @@ namespace ManicDigger
                         mapreceivedsizez = NetworkHelper.ReadInt16(br);
                         mapreceivedsizey = NetworkHelper.ReadInt16(br);
                         receivedMapStream.Seek(0, SeekOrigin.Begin);
-                        MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
-                        if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
-                            (decompressed.Length % 1024))
+                        if (!ENABLE_FORTRESS)
                         {
-                            //throw new Exception();
-                            Console.WriteLine("warning: invalid map data size");
-                        }
-                        byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
-                        {
-                            BinaryReader br2 = new BinaryReader(decompressed);
-                            int size = NetworkHelper.ReadInt32(br2);
-                            for (int z = 0; z < mapreceivedsizez; z++)
+                            MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
+                            if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
+                                (decompressed.Length % 1024))
                             {
-                                for (int y = 0; y < mapreceivedsizey; y++)
+                                //throw new Exception();
+                                Console.WriteLine("warning: invalid map data size");
+                            }
+                            byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
+                            {
+                                BinaryReader br2 = new BinaryReader(decompressed);
+                                int size = NetworkHelper.ReadInt32(br2);
+                                for (int z = 0; z < mapreceivedsizez; z++)
                                 {
-                                    for (int x = 0; x < mapreceivedsizex; x++)
+                                    for (int y = 0; y < mapreceivedsizey; y++)
                                     {
-                                        receivedmap[x, y, z] = br2.ReadByte();
+                                        for (int x = 0; x < mapreceivedsizex; x++)
+                                        {
+                                            receivedmap[x, y, z] = br2.ReadByte();
+                                        }
                                     }
                                 }
                             }
+                            Map.Map.UseMap(receivedmap);
+                            Map.Map.MapSizeX = receivedmap.GetUpperBound(0) + 1;
+                            Map.Map.MapSizeY = receivedmap.GetUpperBound(1) + 1;
+                            Map.Map.MapSizeZ = receivedmap.GetUpperBound(2) + 1;
+                            Console.WriteLine("Game loaded successfully.");
+                        }
+                        else
+                        {
+                            gameworld.LoadState(receivedMapStream.ToArray());
                         }
                         if (MapLoaded != null)
                         {
-                            MapLoaded.Invoke(this, new MapLoadedEventArgs() { map = receivedmap });
+                            MapLoaded.Invoke(this, new MapLoadedEventArgs() { });
                         }
+                        loadedtime = DateTime.Now;
                     }
                     break;
                 case MinecraftServerPacketId.SetBlock:
@@ -544,7 +565,14 @@ namespace ManicDigger
                         }
                         Clients.Players[playerid] = new Player();
                         Clients.Players[playerid].Name = playername;
-                        ReadAndUpdatePlayerPosition(br, playerid);
+                        if (ENABLE_FORTRESS && ((DateTime.Now - loadedtime).TotalSeconds > 10))
+                        {
+                            ReadAndUpdatePlayerPosition(br, playerid);
+                        }
+                        if (!ENABLE_FORTRESS)
+                        {
+                            ReadAndUpdatePlayerPosition(br, playerid);
+                        }
                     }
                     break;
                 case MinecraftServerPacketId.PlayerTeleport:
@@ -617,6 +645,16 @@ namespace ManicDigger
                         string disconnectReason = NetworkHelper.ReadString64(br);
                         throw new Exception(disconnectReason);
                     }
+                case MinecraftServerPacketId.ExtendedPacketCommand:
+                    {
+                        totalread += 1 + 4; if (received.Count < totalread) { return 0; }
+                        int playerid = br.ReadByte();
+                        int length = NetworkHelper.ReadInt32(br);
+                        totalread += length; if (received.Count < totalread) { return 0; }
+                        byte[] cmd = br.ReadBytes(length);
+                        gameworld.DoCommand(cmd, playerid);
+                    }
+                    break;
                 default:
                     {
                         throw new Exception();
@@ -624,6 +662,7 @@ namespace ManicDigger
             }
             return totalread;
         }
+        DateTime loadedtime;
         private void InvokeMapLoadingProgress(int progress)
         {
             if (MapLoadingProgress != null)
@@ -741,6 +780,17 @@ namespace ManicDigger
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion
+        #region INetworkClient Members
+        public void SendCommand(byte[] cmd)
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write((byte)MinecraftClientPacketId.ExtendedPacketCommand);
+            NetworkHelper.WriteInt32(bw, cmd.Length);
+            bw.Write((byte[])cmd);
+            SendPacket(ms.ToArray());
+        }
+        #endregion
     }
     /// <summary>
     /// Client -> Server packet id.
@@ -751,6 +801,8 @@ namespace ManicDigger
         SetBlock = 5,
         PositionandOrientation = 8,
         Message = 0x0d,
+
+        ExtendedPacketCommand = 100,
     }
     /// <summary>
     /// Server -> Client packet id.
@@ -771,5 +823,7 @@ namespace ManicDigger
         DespawnPlayer = 12,
         Message = 13,
         DisconnectPlayer = 14,
+
+        ExtendedPacketCommand = 100,
     }
 }

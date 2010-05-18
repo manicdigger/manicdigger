@@ -12,47 +12,6 @@ using System.Xml;
 
 namespace ManicDiggerServer
 {
-    public class Server
-    {
-        public IMapStorage map;// = new MapStorage();
-        public Server()
-        {
-            map = new MapStorage();
-            ((MapStorage)map).Map = new byte[256, 256, 64];
-            map.MapSizeX = 256;
-            map.MapSizeY = 256;
-            map.MapSizeZ = 64;
-            var gamedata = new ManicDigger.GameDataTilesMinecraft();
-            fCraft.MapGenerator Gen = new fCraft.MapGenerator();
-            manipulator = new MapManipulator() { getfile = new GetFilePathDummy(), mapgenerator = new MapGeneratorPlain() };
-            Gen.data = gamedata;
-            Gen.log = new fCraft.FLogDummy();
-            Gen.map = new MyFCraftMap() { data = gamedata, map = map, mapManipulator = manipulator };
-            Gen.rand = new GetRandomDummy();
-            //"mountains"
-            bool hollow = false;
-            if (File.Exists(manipulator.defaultminesave))
-            {
-                manipulator.LoadMap(map, manipulator.defaultminesave);
-                Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
-            }
-            else
-            {
-                Gen.GenerateMap(new fCraft.MapGeneratorParameters(8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
-            }
-        }
-        MapManipulator manipulator;
-        public void Process()
-        {
-            if ((DateTime.Now - lastsave).TotalMinutes > 2)
-            {
-                manipulator.SaveMap(map, manipulator.defaultminesave);
-                Console.WriteLine("Game saved.");
-                lastsave = DateTime.Now;
-            }
-        }
-        DateTime lastsave = DateTime.Now;
-    }
     public class ClientException : Exception
     {
         public ClientException(Exception innerException, int clientid)
@@ -62,14 +21,71 @@ namespace ManicDiggerServer
         }
         public int clientid;
     }
-    public class ServerNetwork
+    public class Server
     {
         [Inject]
-        public Water water;
-        public ServerNetwork()
+        public Water water { get; set; }
+        [Inject]
+        public IGameWorld gameworld { get; set; }
+        public IMapStorage map;
+        bool ENABLE_FORTRESS = true;
+        public void Start()
         {
             LoadConfig();
+            if (ENABLE_FORTRESS)
+            {
+                if (File.Exists(manipulator.defaultminesave))
+                {
+                    gameworld.LoadState(File.ReadAllBytes(manipulator.defaultminesave));
+                    Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
+                }
+            }
+            else
+            {
+                map = new MapStorage();
+                ((MapStorage)map).Map = new byte[256, 256, 64];
+                map.MapSizeX = 256;
+                map.MapSizeY = 256;
+                map.MapSizeZ = 64;
+                var gamedata = new ManicDigger.GameDataTilesMinecraft();
+                fCraft.MapGenerator Gen = new fCraft.MapGenerator();
+                manipulator = new MapManipulator() { getfile = new GetFilePathDummy(), mapgenerator = new MapGeneratorPlain() };
+                Gen.data = gamedata;
+                Gen.log = new fCraft.FLogDummy();
+                Gen.map = new MyFCraftMap() { data = gamedata, map = map, mapManipulator = manipulator };
+                Gen.rand = new GetRandomDummy();
+                //"mountains"
+                bool hollow = false;
+                if (File.Exists(manipulator.defaultminesave))
+                {
+                    manipulator.LoadMap(map, manipulator.defaultminesave);
+                    Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
+                }
+                else
+                {
+                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
+                }
+            }
+            Start(cfgport);
         }
+        MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
+        public void Process11()
+        {
+            if ((DateTime.Now - lastsave).TotalMinutes > 2)
+            {
+                if (!ENABLE_FORTRESS)
+                {
+                    manipulator.SaveMap(map, manipulator.defaultminesave);
+                }
+                else
+                {
+                    File.WriteAllBytes(manipulator.defaultminesave, gameworld.SaveState());
+                }
+                Console.WriteLine("Game saved.");
+                lastsave = DateTime.Now;
+            }
+        }
+        DateTime lastsave = DateTime.Now;
         void LoadConfig()
         {
             string filename = "ServerConfig.xml";
@@ -92,8 +108,6 @@ namespace ManicDiggerServer
         string cfgname = "Manic Digger server";
         string cfgmotd = "MOTD";
         public int cfgport = 25565;
-        public Server server;
-        public IMapStorage map;
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://list.fragmer.net/announce.php";
@@ -143,7 +157,7 @@ namespace ManicDiggerServer
                 Console.WriteLine("Unable to send heartbeat.");
             }
         }
-        public void Start(int port)
+        void Start(int port)
         {
             main = new Socket(AddressFamily.InterNetwork,
                    SocketType.Stream, ProtocolType.Tcp);
@@ -157,6 +171,7 @@ namespace ManicDiggerServer
         {
             try
             {
+                Process11();
                 Process1();
             }
             catch (Exception e)
@@ -298,6 +313,15 @@ namespace ManicDiggerServer
             }
             SendMessageToAll(string.Format("Player {0} disconnected.", name));
         }
+        Vector3i DefaultSpawnPosition()
+        {
+            if (ENABLE_FORTRESS)
+            {
+                return new Vector3i();
+            }
+            return new Vector3i((map.MapSizeX / 2) * 32, (map.MapSizeY / 2) * 32,
+                        MapUtil.blockheight(map, 0, map.MapSizeX / 2, map.MapSizeY / 2) * 32);
+        }
         //returns bytes read.
         private int TryReadPacket(int clientid)
         {
@@ -326,9 +350,7 @@ namespace ManicDiggerServer
                     foreach (var k in clients)
                     {
                         var cc = k.Key == clientid ? byte.MaxValue : clientid;
-                        SendSpawnPlayer(k.Key, (byte)cc, username, (server.map.MapSizeX / 2) * 32,
-                        MapUtil.blockheight(server.map, 0, server.map.MapSizeX / 2, server.map.MapSizeY / 2) * 32,
-                        (server.map.MapSizeY / 2) * 32, 0, 0);
+                        SendSpawnPlayer(k.Key, (byte)cc, username, DefaultSpawnPosition().x, DefaultSpawnPosition().y, DefaultSpawnPosition().z, 0, 0);
                     }
                     //send all players spawn to new player
                     foreach (var k in clients)
@@ -387,10 +409,34 @@ namespace ManicDiggerServer
                     //todo sanitize text
                     SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, message));
                     break;
+                case (int)MinecraftClientPacketId.ExtendedPacketCommand:
+                    totalread += 4; if (c.received.Count < totalread) { return 0; }
+                    int length = NetworkHelper.ReadInt32(br);
+                    totalread += length; if (c.received.Count < totalread) { return 0; }
+                    byte[] commandData = br.ReadBytes(length);
+                    gameworld.DoCommand(commandData, clientid);
+                    foreach (var k in clients)
+                    {
+                        if (k.Key != clientid)
+                        {
+                            SendCommand(k.Key, clientid, commandData);
+                        }
+                    }
+                    break;
                 default:
                     throw new Exception();
             }
             return totalread;
+        }
+        private void SendCommand(int clientid, int commandplayerid, byte[] commandData)
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write((byte)MinecraftServerPacketId.ExtendedPacketCommand);
+            bw.Write((byte)commandplayerid);
+            NetworkHelper.WriteInt32(bw, commandData.Length);
+            bw.Write((byte[])commandData);
+            SendPacket(clientid, ms.ToArray());
         }
         private void SendMessageToAll(string message)
         {
@@ -486,19 +532,26 @@ namespace ManicDiggerServer
             SendLevelInitialize(clientid);
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
-            var map = server.map;
-            NetworkHelper.WriteInt32(bw, map.MapSizeX * map.MapSizeY * map.MapSizeZ);
-            for (int z = 0; z < map.MapSizeZ; z++)
+            byte[] compressedmap;
+            if (!ENABLE_FORTRESS)
             {
-                for (int y = 0; y < map.MapSizeY; y++)
+                NetworkHelper.WriteInt32(bw, map.MapSizeX * map.MapSizeY * map.MapSizeZ);
+                for (int z = 0; z < map.MapSizeZ; z++)
                 {
-                    for (int x = 0; x < map.MapSizeX; x++)
+                    for (int y = 0; y < map.MapSizeY; y++)
                     {
-                        bw.Write((byte)map.GetBlock(x, y, z));
+                        for (int x = 0; x < map.MapSizeX; x++)
+                        {
+                            bw.Write((byte)map.GetBlock(x, y, z));
+                        }
                     }
                 }
+                compressedmap = GzipCompression.Compress(ms.ToArray());
             }
-            byte[] compressedmap = GzipCompression.Compress(ms.ToArray());
+            else
+            {
+                compressedmap = gameworld.SaveState();
+            }
             MemoryStream ms2 = new MemoryStream(compressedmap);
             byte[] buf = new byte[levelchunksize];
             int totalread = 0;
@@ -547,9 +600,18 @@ namespace ManicDiggerServer
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.LevelFinalize);
-            NetworkHelper.WriteInt16(bw, (short)server.map.MapSizeX);
-            NetworkHelper.WriteInt16(bw, (short)server.map.MapSizeZ);
-            NetworkHelper.WriteInt16(bw, (short)server.map.MapSizeY);
+            if (ENABLE_FORTRESS)
+            {
+                NetworkHelper.WriteInt16(bw, (short)256);
+                NetworkHelper.WriteInt16(bw, (short)256);
+                NetworkHelper.WriteInt16(bw, (short)64);
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)map.MapSizeX);
+                NetworkHelper.WriteInt16(bw, (short)map.MapSizeZ);
+                NetworkHelper.WriteInt16(bw, (short)map.MapSizeY);
+            }
             SendPacket(clientid, ms.ToArray());
         }
         int CurrentProtocolVersion = 7;
@@ -576,17 +638,28 @@ namespace ManicDiggerServer
     {
         static void Main(string[] args)
         {
-            Server server = new Server();
-            ServerNetwork s = new ServerNetwork();
+            Server s = new Server();
             s.water = new Water() { data = new GameDataTilesMinecraft() };
-            s.server = server;
-            s.map = server.map;
-            s.Start(s.cfgport);
+            //s.map = server.map;
+
+            var g = new GameModeFortress.GameFortress();
+            var data = new GameModeFortress.GameDataTilesManicDigger();
+            g.audio = new AudioDummy();
+            g.data = data;
+            g.map = new GameModeFortress.InfiniteMap();
+            g.network = new NetworkClientDummy();
+            g.pathfinder = new Pathfinder3d();
+            g.physics = new CharacterPhysics() { data = data, map = g.map };
+            g.terrain = new TerrainDrawerDummy();
+            g.ticks = new TicksDummy();
+            g.viewport = new ViewportDummy();
+            s.gameworld = g;
+
+            s.Start();
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             for (; ; )
             {
                 s.Process();
-                server.Process();
                 Thread.Sleep(1);
             }
         }
