@@ -1007,8 +1007,16 @@ namespace ManicDigger
                 */
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
-                    ConnectToInternetGame(username, pass, testgameurl);
-                    Log("Connected to default server.");
+                    string defaultserverfile = "defaultserver.txt";
+                    if (File.Exists(defaultserverfile))
+                    {
+                        ConnectToInternetGame(username, pass, File.ReadAllText(defaultserverfile));
+                        Log("Connected to default server.");
+                    }
+                    else
+                    {
+                        Log(string.Format("File {0} not found.", defaultserverfile));
+                    }
                 }
                 /*
                 if (e.Key == OpenTK.Input.Key.M)
@@ -1201,13 +1209,7 @@ namespace ManicDigger
 
         public string username = "gamer1";
         string pass = "12345";
-        string testgameurl
-        {
-            get
-            {
-                return File.ReadAllText("defaultserver.txt");
-            }
-        }
+
         private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
             var oldclientgame = map;
