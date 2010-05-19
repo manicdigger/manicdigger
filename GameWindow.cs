@@ -2571,7 +2571,7 @@ namespace ManicDigger
         }
         private void DrawMouseCursor()
         {
-            Draw2dBitmapFile("gui\\mousecursor.png", mouse_current.X, mouse_current.Y, 20, 20);
+            Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 20, 20);
         }
         int chatfontsize = 12;
         Size? aimsize;
@@ -2708,7 +2708,7 @@ namespace ManicDigger
                     data.GetTileTextureIdForInventory(buildable[ii]));
                 if (x == inventoryselectedx && y == inventoryselectedy)
                 {
-                    Draw2dBitmapFile("gui\\activematerial.png",
+                    Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                         xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
                         ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize);
                 }
@@ -2753,7 +2753,7 @@ namespace ManicDigger
                     data.GetTileTextureIdForInventory((int)materialSlots[i]));
                 if (i == activematerial)
                 {
-                    Draw2dBitmapFile("gui\\activematerial.png", xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);
+                    Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"), xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);
                 }
             }
         }
