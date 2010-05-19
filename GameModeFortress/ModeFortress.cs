@@ -7,9 +7,40 @@ using OpenTK;
 using System.IO;
 using System.Drawing;
 using System.Xml;
+using System.Security;
 
 namespace GameModeFortress
 {
+    public class WorldGeneratorSandbox : IWorldGenerator
+    {
+        static Sandboxer sandboxer = new Sandboxer();
+        static object l = new object();
+        public void Compile(string s)
+        {
+            lock (l)
+            {
+                if (sandboxer != null)
+                {
+                    sandboxer.Dispose();
+                }
+                sandboxer = new Sandboxer();
+                sandboxer.Main1(s);
+            }
+        }
+        #region IWorldGenerator Members
+        public byte[] GetBlocks(int[] pos)
+        {
+            throw new NotImplementedException();
+        }
+        public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
+        {
+            lock (l)
+            {
+                return (byte[, ,])sandboxer.Call("WorldGenerator", "GetChunk", new object[] { x, y, z, chunksize });
+            }
+        }
+        #endregion
+    }
     public interface IWorldGenerator
     {
         byte[] GetBlocks(int[] pos);
@@ -137,7 +168,7 @@ namespace GameModeFortress
         {
             Restart();
         }
-        private void Restart()
+        public void Restart()
         {
             for (int x = 0; x < gencachesize.x; x++)
             {
@@ -233,6 +264,8 @@ namespace GameModeFortress
     }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
     {
+        [Inject]
+        public WorldGeneratorSandbox worldgeneratorsandbox { get; set; }
         [Inject]
         public InfiniteMap map { get; set; }
         [Inject]
@@ -941,11 +974,13 @@ namespace GameModeFortress
             b.AppendLine(XmlTool.X("Y", "" + map.MapSizeY));
             b.AppendLine(XmlTool.X("Z", "" + map.MapSizeZ));
             b.AppendLine("</MapSize>");
+            b.AppendLine(XmlTool.X("InfiniteWorldGenerator", SecurityElement.Escape(generator)));
             byte[] mapdata = map.SaveBlocks();
             b.AppendLine(XmlTool.X("InfiniteMapData", Convert.ToBase64String(mapdata)));
             b.AppendLine("</ManicDiggerSave>");
             return GzipCompression.Compress(Encoding.UTF8.GetBytes(b.ToString()));
         }
+        public string generator;
         public void LoadState(byte[] savegame)
         {
             using (Stream s = new MemoryStream(GzipCompression.Decompress(savegame)))
@@ -961,7 +996,18 @@ namespace GameModeFortress
                 map.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/X"));
                 map.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Y"));
                 map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
+                var ss = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteWorldGenerator");
+                if (ss != null && ss != "")
+                {
+                    generator = ss;
+                }
+                else
+                {
+                    //plain map?
+                }
+                worldgeneratorsandbox.Compile(generator);
                 byte[] mapdata = Convert.FromBase64String(XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData"));
+                map.Restart();
                 map.LoadBlocks(mapdata);
             }
         }

@@ -646,7 +646,9 @@ namespace ManicDiggerServer
             var data = new GameModeFortress.GameDataTilesManicDigger();
             g.audio = new AudioDummy();
             g.data = data;
-            g.map = new GameModeFortress.InfiniteMap();
+            var gen = new GameModeFortress.WorldGeneratorSandbox();
+            g.map = new GameModeFortress.InfiniteMap() { gen=gen };
+            g.worldgeneratorsandbox = gen;
             g.network = new NetworkClientDummy();
             g.pathfinder = new Pathfinder3d();
             g.physics = new CharacterPhysics() { data = data, map = g.map };
@@ -654,6 +656,7 @@ namespace ManicDiggerServer
             g.ticks = new TicksDummy();
             g.viewport = new ViewportDummy();
             s.gameworld = g;
+            g.generator = File.ReadAllText("WorldGenerator.cs");
 
             s.Start();
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
