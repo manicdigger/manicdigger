@@ -166,5 +166,12 @@ namespace GameModeFortress
                 AppDomain.Unload(newDomain);
             }
         }
+        //http://www.dotnet247.com/247reference/msgs/13/66416.aspx
+        public override object InitializeLifetimeService()
+        {
+            //This is to insure that when created as a Singleton,
+            //the instance never dies, no matter how long between client calls.
+            return null;
+        }
     }
 }
