@@ -364,9 +364,19 @@ namespace ManicDiggerServer
                     break;
                 case (int)MinecraftClientPacketId.SetBlock:
                     totalread += 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
-                    int x = NetworkHelper.ReadInt16(br);
-                    int y = NetworkHelper.ReadInt16(br);
-                    int z = NetworkHelper.ReadInt16(br);
+                    int x;
+                    int y;
+                    int z;
+                    if (ENABLE_FORTRESS)
+                    {
+                        throw new Exception();
+                    }
+                    else
+                    {
+                        x = NetworkHelper.ReadInt16(br);
+                        y = NetworkHelper.ReadInt16(br);
+                        z = NetworkHelper.ReadInt16(br);
+                    }
                     BlockSetMode mode = br.ReadByte() == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
                     byte blocktype = br.ReadByte();
                     if (mode == BlockSetMode.Destroy)
@@ -387,11 +397,26 @@ namespace ManicDiggerServer
                     water.BlockChange(map, x, z, y);
                     break;
                 case (int)MinecraftClientPacketId.PositionandOrientation:
-                    totalread += 1 + 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
-                    byte playerid = br.ReadByte();
-                    int xx = NetworkHelper.ReadInt16(br);
-                    int yy = NetworkHelper.ReadInt16(br);
-                    int zz = NetworkHelper.ReadInt16(br);
+                    byte playerid;
+                    int xx;
+                    int yy;
+                    int zz;
+                    if (ENABLE_FORTRESS)
+                    {
+                        totalread += 1 + 3 * 4 + 1 + 1; if (c.received.Count < totalread) { return 0; }
+                        playerid = br.ReadByte();
+                        xx = NetworkHelper.ReadInt32(br);
+                        yy = NetworkHelper.ReadInt32(br);
+                        zz = NetworkHelper.ReadInt32(br);
+                    }
+                    else
+                    {
+                        totalread += 1 + 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
+                        playerid = br.ReadByte();
+                        xx = NetworkHelper.ReadInt16(br);
+                        yy = NetworkHelper.ReadInt16(br);
+                        zz = NetworkHelper.ReadInt16(br);
+                    }
                     byte heading = br.ReadByte();
                     byte pitch = br.ReadByte();
                     foreach (var k in clients)
@@ -453,9 +478,18 @@ namespace ManicDiggerServer
             bw.Write((byte)MinecraftServerPacketId.SpawnPlayer);
             bw.Write((byte)playerid);
             NetworkHelper.WriteString64(bw, playername);
-            NetworkHelper.WriteInt16(bw, (short)x);
-            NetworkHelper.WriteInt16(bw, (short)y);
-            NetworkHelper.WriteInt16(bw, (short)z);
+            if (ENABLE_FORTRESS)
+            {
+                NetworkHelper.WriteInt32(bw, (int)x);
+                NetworkHelper.WriteInt32(bw, (int)y);
+                NetworkHelper.WriteInt32(bw, (int)z);
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)x);
+                NetworkHelper.WriteInt16(bw, (short)y);
+                NetworkHelper.WriteInt16(bw, (short)z);
+            }
             bw.Write((byte)heading);
             bw.Write((byte)pitch);
             SendPacket(clientid, ms.ToArray());
@@ -465,9 +499,16 @@ namespace ManicDiggerServer
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.SetBlock);
-            NetworkHelper.WriteInt16(bw, (short)x);
-            NetworkHelper.WriteInt16(bw, (short)z);
-            NetworkHelper.WriteInt16(bw, (short)y);
+            if (ENABLE_FORTRESS)
+            {
+                throw new Exception();
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)x);
+                NetworkHelper.WriteInt16(bw, (short)z);
+                NetworkHelper.WriteInt16(bw, (short)y);
+            }
             bw.Write((byte)blocktype);
             SendPacket(clientid, ms.ToArray());
         }
@@ -477,9 +518,18 @@ namespace ManicDiggerServer
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.PlayerTeleport);
             bw.Write((byte)playerid);
-            NetworkHelper.WriteInt16(bw, (short)x);
-            NetworkHelper.WriteInt16(bw, (short)y);
-            NetworkHelper.WriteInt16(bw, (short)z);
+            if (ENABLE_FORTRESS)
+            {
+                NetworkHelper.WriteInt32(bw, (int)x);
+                NetworkHelper.WriteInt32(bw, (int)y);
+                NetworkHelper.WriteInt32(bw, (int)z);
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)x);
+                NetworkHelper.WriteInt16(bw, (short)y);
+                NetworkHelper.WriteInt16(bw, (short)z);
+            }
             bw.Write((byte)heading);
             bw.Write((byte)pitch);
             SendPacket(clientid, ms.ToArray());

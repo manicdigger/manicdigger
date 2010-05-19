@@ -318,9 +318,16 @@ namespace ManicDigger
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftClientPacketId.SetBlock);
-            NetworkHelper.WriteInt16(bw, (short)(position.X));//-4
-            NetworkHelper.WriteInt16(bw, (short)(position.Z));
-            NetworkHelper.WriteInt16(bw, (short)position.Y);
+            if (ENABLE_FORTRESS)
+            {
+                throw new Exception();
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)(position.X));//-4
+                NetworkHelper.WriteInt16(bw, (short)(position.Z));
+                NetworkHelper.WriteInt16(bw, (short)position.Y);
+            }
             bw.Write((byte)(mode == BlockSetMode.Create ? 1 : 0));
             bw.Write((byte)type);
             SendPacket(ms.ToArray());
@@ -417,9 +424,18 @@ namespace ManicDigger
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftClientPacketId.PositionandOrientation);
             bw.Write((byte)255);//player id, self
-            NetworkHelper.WriteInt16(bw, (short)((position.X) * 32));//gfd1
-            NetworkHelper.WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
-            NetworkHelper.WriteInt16(bw, (short)(position.Z * 32));
+            if (ENABLE_FORTRESS)
+            {
+                NetworkHelper.WriteInt32(bw, (int)((position.X) * 32));//gfd1
+                NetworkHelper.WriteInt32(bw, (int)((position.Y + CharacterPhysics.characterheight) * 32));
+                NetworkHelper.WriteInt32(bw, (int)(position.Z * 32));
+            }
+            else
+            {
+                NetworkHelper.WriteInt16(bw, (short)((position.X) * 32));//gfd1
+                NetworkHelper.WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
+                NetworkHelper.WriteInt16(bw, (short)(position.Z * 32));
+            }
             bw.Write((byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
             bw.Write(PitchByte());
             SendPacket(ms.ToArray());
@@ -544,10 +560,20 @@ namespace ManicDigger
                     break;
                 case MinecraftServerPacketId.SetBlock:
                     {
-                        totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
-                        int x = NetworkHelper.ReadInt16(br);
-                        int z = NetworkHelper.ReadInt16(br);
-                        int y = NetworkHelper.ReadInt16(br);
+                        int x;
+                        int y;
+                        int z;
+                        if (ENABLE_FORTRESS)
+                        {
+                            throw new Exception("SetBlock packet");//no such packet.
+                        }
+                        else
+                        {
+                            totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
+                            x = NetworkHelper.ReadInt16(br);
+                            z = NetworkHelper.ReadInt16(br);
+                            y = NetworkHelper.ReadInt16(br);
+                        }
                         byte type = br.ReadByte();
                         try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
                         catch { Console.WriteLine("Cannot update tile!"); }
@@ -555,7 +581,14 @@ namespace ManicDigger
                     break;
                 case MinecraftServerPacketId.SpawnPlayer:
                     {
-                        totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        if (ENABLE_FORTRESS)
+                        {
+                            totalread += 1 + NetworkHelper.StringLength + 4 + 4 + 4 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        }
+                        else
+                        {
+                            totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
+                        }
                         byte playerid = br.ReadByte();
                         string playername = NetworkHelper.ReadString64(br);
                         connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
@@ -573,11 +606,22 @@ namespace ManicDigger
                         {
                             ReadAndUpdatePlayerPosition(br, playerid);
                         }
+                        if (playerid == 255)
+                        {
+                            spawned = true;
+                        }
                     }
                     break;
                 case MinecraftServerPacketId.PlayerTeleport:
                     {
-                        totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
+                        if (ENABLE_FORTRESS)
+                        {
+                            totalread += 1 + (4 + 4 + 4) + 1 + 1; if (received.Count < totalread) { return 0; }
+                        }
+                        else
+                        {
+                            totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
+                        }
                         byte playerid = br.ReadByte();
                         ReadAndUpdatePlayerPosition(br, playerid);
                     }
@@ -721,9 +765,21 @@ namespace ManicDigger
         }
         private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
         {
-            float x = (float)NetworkHelper.ReadInt16(br) / 32;
-            float y = (float)NetworkHelper.ReadInt16(br) / 32;
-            float z = (float)NetworkHelper.ReadInt16(br) / 32;
+            float x;
+            float y;
+            float z;
+            if (ENABLE_FORTRESS)
+            {
+                x = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+                y = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+                z = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+            }
+            else
+            {
+                x = (float)NetworkHelper.ReadInt16(br) / 32;
+                y = (float)NetworkHelper.ReadInt16(br) / 32;
+                z = (float)NetworkHelper.ReadInt16(br) / 32;
+            }
             byte heading = br.ReadByte();
             byte pitch = br.ReadByte();
             Vector3 realpos = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
