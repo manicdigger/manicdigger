@@ -1210,9 +1210,32 @@ namespace GameModeFortress
     public class GameDataTilesManicDigger : IGameData
     {
         public GameDataTilesMinecraft data = new GameDataTilesMinecraft();
+        public GameDataTilesManicDigger()
+        {
+            datanew[(int)TileTypeManicDigger.BrushedMetal] = new TileTypeData() { Buildable=true, AllTextures = (5 * 16) + 0 };
+            datanew[(int)TileTypeManicDigger.ChemicalGreen] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 1 };
+            datanew[(int)TileTypeManicDigger.Salt] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 2 };
+            datanew[(int)TileTypeManicDigger.Roof] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 3 };
+            datanew[(int)TileTypeManicDigger.Camouflage] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 4 };
+            datanew[(int)TileTypeManicDigger.DirtForFarming] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 5 };
+            datanew[(int)TileTypeManicDigger.Apples] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 6 };
+            datanew[(int)TileTypeManicDigger.Hay] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 7 };
+        }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
         {
+            if (datanew[tileType] != null)
+            {
+                if (side == TileSide.Top)
+                {
+                    return datanew[tileType].TextureTop;
+                }
+                if (side == TileSide.Bottom)
+                {
+                    return datanew[tileType].TextureBottom;
+                }
+                return datanew[tileType].TextureSide;
+            }
             if (IsRailTile(tileType))
             {
                 //return 1;
@@ -1279,6 +1302,7 @@ namespace GameModeFortress
         }
         public bool IsBuildableTile(int tiletype)
         {
+            if (datanew[tiletype] != null) { return datanew[tiletype].Buildable; }
             if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
             if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft|RailDirectionFlags.UpRight|
                 RailDirectionFlags.DownLeft|RailDirectionFlags.DownRight)) { return true; }
@@ -1287,6 +1311,7 @@ namespace GameModeFortress
         }
         public bool IsValidTileType(int tiletype)
         {
+            if (datanew[tiletype] != null) { return true; }
             if (IsRailTile(tiletype)) { return true; }
             return data.IsValidTileType(tiletype);
         }
@@ -1338,8 +1363,24 @@ namespace GameModeFortress
             {
                 return GetTileTextureId(tileType, TileSide.Top);
             }
+            if (datanew[tileType] != null)
+            {
+                return datanew[tileType].TextureSide;
+            }
             return data.GetTileTextureIdForInventory(tileType);
         }
         #endregion
+        TileTypeData[] datanew = new TileTypeData[256];
+    }
+    public enum TileTypeManicDigger
+    {
+        BrushedMetal = 100,
+        ChemicalGreen,
+        Salt,
+        Roof,
+        Camouflage,
+        DirtForFarming,
+        Apples,
+        Hay,
     }
 }

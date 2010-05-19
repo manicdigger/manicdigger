@@ -110,6 +110,22 @@ namespace ManicDigger
         }
         #endregion
     }
+    public class TileTypeData
+    {
+        public bool Buildable;
+        public int TextureTop;
+        public int TextureSide;
+        public int TextureBottom;
+        public int AllTextures
+        {
+            set
+            {
+                TextureTop = value;
+                TextureSide = value;
+                TextureBottom = value;
+            }
+        }
+    }
     public class GameDataTilesMinecraft : IGameData
     {
         public GameDataTilesMinecraft()
@@ -280,22 +296,6 @@ namespace ManicDigger
             //burning furnace todo
         }
         TileTypeData[] data = new TileTypeData[256];
-        class TileTypeData
-        {
-            public bool Buildable;
-            public int TextureTop;
-            public int TextureSide;
-            public int TextureBottom;
-            public int AllTextures
-            {
-                set
-                {
-                    TextureTop = value;
-                    TextureSide = value;
-                    TextureBottom = value;
-                }
-            }
-        }
         /*
             if (blockUp == 0 || blockUp == 8 || blockUp == 9 ||
                 blockUp == 10 || blockUp == 11 || blockUp == 18 ||
