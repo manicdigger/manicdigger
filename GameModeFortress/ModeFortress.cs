@@ -1220,6 +1220,10 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.DirtForFarming] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 5 };
             datanew[(int)TileTypeManicDigger.Apples] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 6 };
             datanew[(int)TileTypeManicDigger.Hay] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 7 };
+            datanew[(int)TileTypeManicDigger.Crops1] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 8 };
+            datanew[(int)TileTypeManicDigger.Crops2] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 9 };
+            datanew[(int)TileTypeManicDigger.Crops3] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 10 };
+            datanew[(int)TileTypeManicDigger.Crops4] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 11 };
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -1317,6 +1321,10 @@ namespace GameModeFortress
         }
         public bool IsTransparentTile(int tiletype)
         {
+            if (tiletype == (int)TileTypeManicDigger.Crops1) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops2) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops3) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops4) { return true; }
             if (IsRailTile(tiletype)) { return true; }
             return data.IsTransparentTile(tiletype);
         }
@@ -1326,6 +1334,10 @@ namespace GameModeFortress
         }
         public bool IsBlockFlower(int tiletype)
         {
+            if (tiletype == (int)TileTypeManicDigger.Crops1) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops2) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops3) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.Crops4) { return true; }
             return data.IsBlockFlower(tiletype);
         }
         #endregion
@@ -1382,5 +1394,9 @@ namespace GameModeFortress
         DirtForFarming,
         Apples,
         Hay,
+        Crops1,
+        Crops2,
+        Crops3,
+        Crops4,
     }
 }
