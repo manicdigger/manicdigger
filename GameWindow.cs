@@ -1196,8 +1196,6 @@ namespace ManicDigger
             //mapManipulator.GeneratePlainMap(map);
             network.Connect("", 0, "", "");
             game.OnNewMap();
-            player.playerposition = game.PlayerPositionSpawn;
-            player.playerorientation = game.PlayerOrientationSpawn;
             DrawMap();
         }
         bool freemousejustdisabled;
