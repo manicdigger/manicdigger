@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using OpenTK.Audio;
-using OpenTK.Audio.OpenAL;
 using System.Threading;
 using System.Diagnostics;
 
@@ -106,12 +105,12 @@ namespace ManicDigger
                 return reader.ReadBytes((int)reader.BaseStream.Length);
             }
         }
-        public static ALFormat GetSoundFormat(int channels, int bits)
+        public static OpenTK.Audio.OpenAL.ALFormat GetSoundFormat(int channels, int bits)
         {
             switch (channels)
             {
-                case 1: return bits == 8 ? ALFormat.Mono8 : ALFormat.Mono16;
-                case 2: return bits == 8 ? ALFormat.Stereo8 : ALFormat.Stereo16;
+                case 1: return bits == 8 ? OpenTK.Audio.OpenAL.ALFormat.Mono8 : OpenTK.Audio.OpenAL.ALFormat.Mono16;
+                case 2: return bits == 8 ? OpenTK.Audio.OpenAL.ALFormat.Stereo8 : OpenTK.Audio.OpenAL.ALFormat.Stereo16;
                 default: throw new NotSupportedException("The specified sound format is not supported.");
             }
         }
@@ -151,27 +150,27 @@ namespace ManicDigger
                 {
 
                 }
-                int source = AL.GenSource();
+                int source = OpenTK.Audio.OpenAL.AL.GenSource();
                 int state;
                 //using ()
                 {
                     //Trace.WriteLine("Testing WaveReader({0}).ReadToEnd()", filename);
 
-                    int buffer = AL.GenBuffer();
+                    int buffer = OpenTK.Audio.OpenAL.AL.GenBuffer();
 
                     int channels, bits_per_sample, sample_rate;
                     byte[] sound_data = LoadWave(File.Open(filename, FileMode.Open), out channels, out bits_per_sample, out sample_rate);
-                    AL.BufferData(buffer, GetSoundFormat(channels, bits_per_sample), sound_data, sound_data.Length, sample_rate);
+                    OpenTK.Audio.OpenAL.AL.BufferData(buffer, GetSoundFormat(channels, bits_per_sample), sound_data, sound_data.Length, sample_rate);
                     //audiofiles[filename]=buffer;
 
-                    AL.Source(source, ALSourcei.Buffer, buffer);
-                    AL.SourcePlay(source);
+                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcei.Buffer, buffer);
+                    OpenTK.Audio.OpenAL.AL.SourcePlay(source);
 
                     // Query the source to find out when it stops playing.
                     for (; ; )
                     {
-                        AL.GetSource(source, ALGetSourcei.SourceState, out state);
-                        if ((!loop) && (ALSourceState)state != ALSourceState.Playing)
+                        OpenTK.Audio.OpenAL.AL.GetSource(source, OpenTK.Audio.OpenAL.ALGetSourcei.SourceState, out state);
+                        if ((!loop) && (OpenTK.Audio.OpenAL.ALSourceState)state != OpenTK.Audio.OpenAL.ALSourceState.Playing)
                         {
                             break;
                         }
@@ -181,13 +180,13 @@ namespace ManicDigger
                         }
                         if (loop)
                         {
-                            if (state == (int)ALSourceState.Playing && (!shouldplay))
+                            if (state == (int)OpenTK.Audio.OpenAL.ALSourceState.Playing && (!shouldplay))
                             {
-                                AL.SourcePause(source);
+                                OpenTK.Audio.OpenAL.AL.SourcePause(source);
                             }
-                            if (state != (int)ALSourceState.Playing && (shouldplay))
+                            if (state != (int)OpenTK.Audio.OpenAL.ALSourceState.Playing && (shouldplay))
                             {
-                                AL.SourcePlay(source);
+                                OpenTK.Audio.OpenAL.AL.SourcePlay(source);
                             }
                         }
                         /*
@@ -204,9 +203,9 @@ namespace ManicDigger
                         */
                         Thread.Sleep(1);
                     }
-                    AL.SourceStop(source);
-                    AL.DeleteSource(source);
-                    AL.DeleteBuffer(buffer);
+                    OpenTK.Audio.OpenAL.AL.SourceStop(source);
+                    OpenTK.Audio.OpenAL.AL.DeleteSource(source);
+                    OpenTK.Audio.OpenAL.AL.DeleteBuffer(buffer);
                 }
             }
             public bool loop = false;
