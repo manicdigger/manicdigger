@@ -1318,7 +1318,7 @@ namespace ManicDigger
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref perpective);
         }
-        float znear = 0.01f;
+        float znear = 0.1f;
         float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
         //int z = 0;
         Vector3 up = new Vector3(0f, 1f, 0f);
