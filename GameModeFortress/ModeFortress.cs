@@ -1308,6 +1308,15 @@ namespace GameModeFortress
         }
         public bool IsBuildableTile(int tiletype)
         {
+            //temporary
+            if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
+            if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft | RailDirectionFlags.UpRight |
+                RailDirectionFlags.DownLeft | RailDirectionFlags.DownRight)) { return true; }
+            if (IsRailTile(tiletype)) { return false; }
+            if (datanew[tiletype] != null) { return true; }
+            return data.IsValidTileType(tiletype) && !data.IsWaterTile(tiletype) && tiletype != (int)TileTypeMinecraft.Lava
+                && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource && tiletype != (int)TileTypeMinecraft.StationaryLava;
+            //----
             if (datanew[tiletype] != null) { return datanew[tiletype].Buildable; }
             if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
             if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft|RailDirectionFlags.UpRight|
