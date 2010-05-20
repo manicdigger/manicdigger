@@ -58,6 +58,7 @@ int TileIdSand=12;
         }
         private byte GetHeight(int x, int y)
         {
+            x += 30; y -= 30;
             //double p = 0.2 + ((findnoise2(x / 100.0, y / 100.0) + 1.0) / 2) * 0.3;
             double p = 0.5;
             double zoom = 150;
