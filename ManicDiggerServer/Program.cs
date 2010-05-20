@@ -547,11 +547,12 @@ namespace ManicDiggerServer
         }
         private void SendMessage(int clientid, string message)
         {
+            string truncated = message.Substring(0, Math.Min(64, message.Length));
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.Message);
             bw.Write((byte)clientid);
-            NetworkHelper.WriteString64(bw, message);
+            NetworkHelper.WriteString64(bw, truncated);
             SendPacket(clientid, ms.ToArray());
         }
         private void SendDisconnectPlayer(int clientid, string disconnectReason)
