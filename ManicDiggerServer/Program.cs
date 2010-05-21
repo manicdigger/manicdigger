@@ -155,7 +155,7 @@ namespace ManicDiggerServer
                 string requestString = staticData +
                                         "&users=" + clients.Count +
                                         "&motd=" + System.Web.HttpUtility.UrlEncode(cfgmotd) +
-                                        "&gamemode=Manic Digger f" +
+                                        "&gamemode=Fortress" +
                                         "&players=" + string.Join(",", playernames.ToArray());
 
                 var request = (HttpWebRequest)WebRequest.Create(fListUrl);
