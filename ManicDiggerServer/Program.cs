@@ -91,6 +91,8 @@ namespace ManicDiggerServer
             string filename = "ServerConfig.xml";
             if (!File.Exists(filename))
             {
+                Console.WriteLine("Server configuration file not found, creating new.");
+                SaveConfig();
                 return;
             }
             using (Stream s = new MemoryStream(File.ReadAllBytes(filename)))
@@ -102,12 +104,34 @@ namespace ManicDiggerServer
                 cfgname = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
                 cfgmotd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
                 cfgport = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
+                string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
+                if (key != null)
+                {
+                    cfgkey = key;
+                }
+                else
+                {
+                    cfgkey = Guid.NewGuid().ToString();
+                    SaveConfig();
+                }
             }
             Console.WriteLine("Server configuration loaded.");
+        }
+        void SaveConfig()
+        {
+            string s = "<ManicDiggerServerConfig>"+Environment.NewLine;
+            s += "  " + XmlTool.X("FormatVersion", "1") + Environment.NewLine;
+            s += "  " + XmlTool.X("Name", cfgname) + Environment.NewLine;
+            s += "  " + XmlTool.X("Motd", cfgmotd) + Environment.NewLine;
+            s += "  " + XmlTool.X("Port", cfgport.ToString()) + Environment.NewLine;
+            s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
+            s += "</ManicDiggerServerConfig>";
+            File.WriteAllText("ServerConfig.xml", s);
         }
         string cfgname = "Manic Digger server";
         string cfgmotd = "MOTD";
         public int cfgport = 25565;
+        string cfgkey;
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://list.fragmer.net/announce.php";
