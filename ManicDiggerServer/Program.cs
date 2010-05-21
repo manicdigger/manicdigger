@@ -134,15 +134,15 @@ namespace ManicDiggerServer
         string cfgkey;
         Socket main;
         IPEndPoint iep;
-        string fListUrl = "http://list.fragmer.net/announce.php";
+        string fListUrl = "http://fragmer.net/md/heartbeat.php";
         public void SendHeartbeat()
         {
             try
             {
                 StringWriter sw = new StringWriter();//&salt={4}
-                string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}"
+                string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
                     , System.Web.HttpUtility.UrlEncode(cfgname),
-                    32, "true", cfgport, "7");
+                    32, "true", cfgport, "7", cfgkey.Replace("-", ""));
 
                 List<string> playernames = new List<string>();
                 lock (clients)
@@ -154,9 +154,8 @@ namespace ManicDiggerServer
                 }
                 string requestString = staticData +
                                         "&users=" + clients.Count +
-                                        "&hash=" + "0123456789abcdef0123456789abcdef" +
                                         "&motd=" + System.Web.HttpUtility.UrlEncode(cfgmotd) +
-                                        "&server=Manic Digger f" +
+                                        "&gamemode=Manic Digger f" +
                                         "&players=" + string.Join(",", playernames.ToArray());
 
                 var request = (HttpWebRequest)WebRequest.Create(fListUrl);
