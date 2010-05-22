@@ -193,7 +193,6 @@ namespace GameModeFortress
             else
             {
                 if (x < 5 && y < 5 && z < 5) { return 0; }
-                var k = new Vector3i(x / 16, y / 16, z / 16);
                 if (Math.Abs(x / 16 - gencachecenter.x) >= gencachesize.x / 2 || Math.Abs(y / 16 - gencachecenter.y) >= gencachesize.y / 2)
                 {
                     Restart();

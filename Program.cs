@@ -30,7 +30,16 @@ namespace ManicDigger
             this.DataPath = new List<string>(datapath);
         }
         List<string> DataPath;
+        Dictionary<string, string> cache = new Dictionary<string, string>();
         public string GetFile(string filename)
+        {
+            if (!cache.ContainsKey(filename))
+            {
+                cache[filename] = GetFile1(filename);
+            }
+            return cache[filename];
+        }
+        string GetFile1(string filename)
         {
             if (!Directory.Exists("data"))
             {
