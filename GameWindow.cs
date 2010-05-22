@@ -1064,6 +1064,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
+                    EscapeMenuWasFreemove = ENABLE_FREEMOVE;
                     guistate = GuiState.Inventory;
                     menustate = new MenuState();
                     FreeMouse = true;
