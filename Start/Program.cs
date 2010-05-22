@@ -15,6 +15,7 @@ namespace Start
         [STAThread]
         static void Main(string[] args)
         {
+            string tempfile = Path.Combine(Path.GetTempPath(), "tmp.mdlink");
             if (args.Length > 0)
             {
                 RunLink(args[0]);
@@ -24,16 +25,16 @@ namespace Start
                 var f = new ManicDigger.ServerSelector();
                 System.Windows.Forms.Application.Run(f);
                 System.Windows.Forms.Application.Exit();
-                if (File.Exists("tmp.mdlink"))
+                if (File.Exists(tempfile))
                 {
-                    File.Delete("tmp.mdlink");
+                    File.Delete(tempfile);
                 }
                 if (f.SelectedServer != null)
                 {
                     try
                     {
-                        new WebClient().DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, "tmp.mdlink");
-                        RunLink("tmp.mdlink");
+                        new WebClient().DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, tempfile);
+                        RunLink(tempfile);
                     }
                     catch (Exception e)
                     {
