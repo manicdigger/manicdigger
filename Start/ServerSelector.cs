@@ -16,17 +16,18 @@ namespace ManicDigger
         }
         private void ServerSelector_Load(object sender, EventArgs e)
         {
-            webBrowser1.Url = new Uri("http://list.fragmer.net/");
+            webBrowser1.Url = new Uri("http://fragmer.net/md/");
             webBrowser1.Navigating += new WebBrowserNavigatingEventHandler(webBrowser1_Navigating);
         }
         void webBrowser1_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
-            if (!e.Url.AbsoluteUri.StartsWith("http://minecraft.net/play.jsp?server="))
+            string prefix = "http://fragmer.net/md/play.php?server=";
+            if (!e.Url.AbsoluteUri.StartsWith(prefix))
             {
-                e.Cancel = true;
+                //e.Cancel = true;
                 return;
             }
-            SelectedServer = e.Url.AbsoluteUri;
+            SelectedServer = e.Url.AbsoluteUri.Substring(prefix.Length);
             Close();
         }
         public string SelectedServer = null;

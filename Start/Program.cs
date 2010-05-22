@@ -6,34 +6,62 @@ using System.Xml;
 using System.Xml.XPath;
 using System.Diagnostics;
 using System.Windows.Forms;
+using System.Net;
 
 namespace Start
 {
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
-            string appPath = Path.GetDirectoryName(Application.ExecutablePath);
             if (args.Length > 0)
             {
-                if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
+                RunLink(args[0]);
+            }
+            else
+            {
+                var f = new ManicDigger.ServerSelector();
+                System.Windows.Forms.Application.Run(f);
+                System.Windows.Forms.Application.Exit();
+                if (File.Exists("tmp.mdlink"))
                 {
-                    XmlDocument d = new XmlDocument();
-                    d.Load(args[0]);
-                    string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
-                    if (mode.Equals("Fortress", StringComparison.InvariantCultureIgnoreCase))
+                    File.Delete("tmp.mdlink");
+                }
+                if (f.SelectedServer != null)
+                {
+                    try
                     {
-                        Process.Start(Path.Combine(appPath, "GameModeFortress"), "\"" + args[0] + "\"");
+                        new WebClient().DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, "tmp.mdlink");
+                        RunLink("tmp.mdlink");
                     }
-                    else if (mode.Equals("Mine", StringComparison.InvariantCultureIgnoreCase))
+                    catch (Exception e)
                     {
-                        Process.Start(Path.Combine(appPath, "GameModeMine"), "\"" + args[0] + "\"");
+                        MessageBox.Show(e.ToString());
                     }
-                    else
-                    {
-                        throw new Exception("Invalid game mode: " + mode);
-                    }
-                }             
+                }
+            }
+        }
+        private static void RunLink(string filename)
+        {
+            string appPath = Path.GetDirectoryName(Application.ExecutablePath);
+            if (filename.EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
+            {
+                XmlDocument d = new XmlDocument();
+                d.Load(filename);
+                string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
+                if (mode.Equals("Fortress", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Process.Start(Path.Combine(appPath, "GameModeFortress"), "\"" + filename + "\"");
+                }
+                else if (mode.Equals("Mine", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    Process.Start(Path.Combine(appPath, "GameModeMine"), "\"" + filename + "\"");
+                }
+                else
+                {
+                    throw new Exception("Invalid game mode: " + mode);
+                }
             }
         }
     }

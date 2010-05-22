@@ -134,20 +134,6 @@ namespace ManicDigger
                 string appPath = Path.GetDirectoryName(Application.ExecutablePath);
                 System.Environment.CurrentDirectory = appPath;
             }
-            if (args.Length > 0 && args[0] == "servers")
-            {
-                var f = new ServerSelector();
-                System.Windows.Forms.Application.Run(f);
-                System.Windows.Forms.Application.Exit();
-                var p = new ManicDiggerProgram2();
-                if (f.SelectedServer == null)
-                {
-                    return;
-                }
-                p.GameUrl = f.SelectedServer;
-                p.Start();
-                return;
-            }
             if (args.Length > 0)
             {
                 if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))

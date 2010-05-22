@@ -21,7 +21,6 @@ xcopy /s /y Start\bin\release\*.exe output\
 
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
-copy multiplayer.bat output\multiplayer.bat
 copy menu.mdxs.gz output\menu.mdxs.gz
 copy WorldGenerator.cs output\WorldGenerator.cs
 REM pause
