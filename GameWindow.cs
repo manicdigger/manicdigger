@@ -304,6 +304,7 @@ namespace ManicDigger
         bool ENABLE_FREEMOVE { get; set; }
         bool ENABLE_MOVE { get; set; }
         void Log(string s);
+        Dictionary<string, string> PerformanceInfo { get; }
     }
     public class ViewportDummy : IViewport3d
     {
@@ -331,6 +332,9 @@ namespace ManicDigger
         {
             get { throw new NotImplementedException(); }
         }
+        #endregion
+        #region IViewport3d Members
+        public Dictionary<string, string> PerformanceInfo { get; set; }
         #endregion
     }
     public interface IGameMode
@@ -2617,7 +2621,7 @@ namespace ManicDigger
             else throw new Exception();
             if (ENABLE_DRAWFPS)
             {
-                Draw2dText(fpstext, 20f, 20f, 14, Color.White);
+                Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
             }
             if (FreeMouse)
             {
@@ -3181,24 +3185,44 @@ namespace ManicDigger
         int fpscount = 0;
         string fpstext = "";
         float longestframedt = 0;
+        Dictionary<string, string> performanceinfo = new Dictionary<string, string>();
+        public Dictionary<string, string> PerformanceInfo { get { return performanceinfo; } }
+        int lastchunkupdates;
         private void UpdateTitleFps(FrameEventArgs e)
         {
-            string title = "";
             fpscount++;
             longestframedt = (float)Math.Max(longestframedt, e.Time);
-            TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
+            TimeSpan elapsed = (DateTime.Now - lasttitleupdate);            
             if (elapsed.TotalSeconds >= 1)
             {
+                string fpstext1 = "";
                 lasttitleupdate = DateTime.Now;
-                title += "FPS: " + (int)((float)fpscount / elapsed.TotalSeconds);
-                title += string.Format(" (min: {0})", (int)(1f / longestframedt));
+                fpstext1 += "FPS: " + (int)((float)fpscount / elapsed.TotalSeconds);
+                fpstext1 += string.Format(" (min: {0})", (int)(1f / longestframedt));
                 longestframedt = 0;
-                //z = 100;
                 fpscount = 0;
-                int totaltriangles = terrain.TrianglesCount();
-                title += ", triangles: " + totaltriangles;
-                //Title = title;
-                fpstext = title;
+                performanceinfo["fps"] = fpstext1;                
+                performanceinfo["triangles"] = "Triangles: " + terrain.TrianglesCount();                
+                int chunkupdates = terrain.ChunkUpdates;
+                performanceinfo["chunk updates"] = "Chunk updates: " + (chunkupdates - lastchunkupdates);
+                lastchunkupdates = terrain.ChunkUpdates;
+
+                string s = "";
+                List<string> l = new List<string>(performanceinfo.Values);
+                int perline = 2;
+                for (int i = 0; i < l.Count; i++)
+                {
+                    s += l[i];
+                    if ((i % perline == 0) && (i != l.Count - 1))
+                    {
+                        s += ", ";
+                    }
+                    if (i % perline != 0)
+                    {
+                        s += Environment.NewLine;
+                    }
+                }
+                fpstext = s;
             }
             if (!titleset)
             {

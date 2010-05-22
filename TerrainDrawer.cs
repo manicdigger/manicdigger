@@ -25,6 +25,7 @@ namespace ManicDigger
         int texturesPacked { get; }
         int terrainTexture { get; }
         int DrawDistance { get; set; }
+        int ChunkUpdates { get; }
     }
     public class TerrainDrawerDummy : ITerrainDrawer
     {
@@ -48,6 +49,9 @@ namespace ManicDigger
         public int texturesPacked { get; set; }
         public int terrainTexture { get; set; }
         public int DrawDistance { get; set; }
+        #endregion
+        #region ITerrainDrawer Members
+        public int ChunkUpdates { get; set; }
         #endregion
     }
     public class TextureAtlas
@@ -666,6 +670,8 @@ namespace ManicDigger
                 UpdateAllTiles();
             }
         }
+        int chunkupdates = 0;
+        public int ChunkUpdates { get { return chunkupdates; } }
         /// <summary>
         /// Contains chunk positions.
         /// </summary>
@@ -673,6 +679,7 @@ namespace ManicDigger
         List<Vector3[]> prioritytodo = new List<Vector3[]>();
         IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
+            chunkupdates++;
             if (x < 0 || y < 0 || z < 0) { yield break; }
             if (x >= mapstorage.MapSizeX / chunksize || y >= mapstorage.MapSizeY / chunksize || z >= mapstorage.MapSizeZ / chunksize) { yield break; }
             List<ushort> indices = new List<ushort>();
