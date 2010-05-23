@@ -11,10 +11,13 @@ using System;
         }
         int waterlevel = 20;
         byte[,] heightcache;
+        int chunksize;
         #region IWorldGenerator Members
         public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
         {
+            this.chunksize = chunksize;
             heightcache = new byte[chunksize, chunksize];
+            istreecache = new bool[chunksize, chunksize];
             x = x * chunksize;
             y = y * chunksize;
             z = z * chunksize;
@@ -24,14 +27,29 @@ using System;
                 for (int yy = 0; yy < chunksize; yy++)
                 {
                     heightcache[xx, yy] = GetHeight(x + xx, y + yy);
+                }
+            }
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    istreecache[xx, yy] = IsTree(x + xx, y + yy, heightcache[xx, yy]);
+                }
+            }
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
                     for (int zz = 0; zz < chunksize; zz++)
                     {
                         chunk[xx, yy, zz] = (byte)GetBlockInside(x + xx, y + yy, z + zz, heightcache[xx, yy]);
                     }
                 }
             }
+            istreecache = null;
             return chunk;
         }
+        bool[,] istreecache;
         public int GetBlock(int x, int y, int z)
         {
             return GetBlockInside(x, y, z, GetHeight(x, y));
@@ -43,7 +61,7 @@ using System;
         int TileIdSand = 12;
         int TileIdTreeTrunk = 17;
         int TileIdLeaves = 18;
-        float treedensity = 0.006f;
+        float treedensity = 0.008f;
         int GetBlockInside(int x, int y, int z, int height)
         {
             int tree = Tree(x, y, z, height);
@@ -94,7 +112,8 @@ using System;
         }
         bool IsLeaves(int x, int y, int z, int xdiff, int ydiff, int zdiff, int height)
         {
-            if (IsTree(x + xdiff, y + ydiff, height))
+            //if (IsTree(x + xdiff, y + ydiff, height))
+            if (istreecache[(x + xdiff) % 16, (y + ydiff) % 16])
             {
                 int heightnear = GetHeight(x + xdiff, y + ydiff);
                 return (heightnear + zdiff == z);
@@ -104,6 +123,8 @@ using System;
         bool IsTree(int x, int y, int height)
         {
             return height >= waterlevel + 3
+                && x % 16 >= 2 && x % 16 < chunksize - 2
+                && y % 16 >= 2 && y % 16 < chunksize - 2
                 && (((noise(x, y) + 1) / 2) > 1 - treedensity);
                 //&& (((noise((x * 3) + 1000, (y * 3) + 1000) + 1) / 2) > 1 - treedensity);
         }
