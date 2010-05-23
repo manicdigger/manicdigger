@@ -36,13 +36,21 @@ using System;
         {
             return GetBlockInside(x, y, z, GetHeight(x, y));
         }
-int TileIdEmpty=0;
-int TileIdGrass=2;
-int TileIdDirt=3;
-int TileIdWater=8;
-int TileIdSand=12;
+        int TileIdEmpty = 0;
+        int TileIdGrass = 2;
+        int TileIdDirt = 3;
+        int TileIdWater = 8;
+        int TileIdSand = 12;
+        int TileIdTreeTrunk = 17;
+        int TileIdLeaves = 18;
+        float treedensity = 0.006f;
         int GetBlockInside(int x, int y, int z, int height)
         {
+            int tree = Tree(x, y, z, height);
+            if (tree != 0)
+            {
+                return tree;
+            }
             if (z > waterlevel)
             {
                 if (z > height) { return TileIdEmpty; }
@@ -55,6 +63,49 @@ int TileIdSand=12;
                 if (z == height) { return TileIdSand; }
                 return TileIdDirt;
             }
+        }
+        int Tree(int x, int y, int z, int height)
+        {
+            //trunk
+            if (z == height + 1 || z == height + 2 || z == height + 3)
+            {
+                if (IsTree(x, y, height)) { return TileIdTreeTrunk; }
+            }
+            if (z - height < 10)
+            {
+                if (IsLeaves(x, y, z, -1, 0, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 1, 0, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 0, -1, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 0, 1, 3, height)) { return TileIdLeaves; }
+
+                if (IsLeaves(x, y, z, -1, 0, 4, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 1, 0, 4, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 0, -1, 4, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 0, 1, 4, height)) { return TileIdLeaves; }
+
+                if (IsLeaves(x, y, z, -1, -1, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 1, -1, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, -1, 1, 3, height)) { return TileIdLeaves; }
+                if (IsLeaves(x, y, z, 1, 1, 3, height)) { return TileIdLeaves; }
+
+                if (IsLeaves(x, y, z, 0, 0, 4, height)) { return TileIdLeaves; }
+            }
+            return 0;
+        }
+        bool IsLeaves(int x, int y, int z, int xdiff, int ydiff, int zdiff, int height)
+        {
+            if (IsTree(x + xdiff, y + ydiff, height))
+            {
+                int heightnear = GetHeight(x + xdiff, y + ydiff);
+                return (heightnear + zdiff == z);
+            }
+            return false;
+        }
+        bool IsTree(int x, int y, int height)
+        {
+            return height >= waterlevel + 3
+                && (((noise(x, y) + 1) / 2) > 1 - treedensity);
+                //&& (((noise((x * 3) + 1000, (y * 3) + 1000) + 1) / 2) > 1 - treedensity);
         }
         private byte GetHeight(int x, int y)
         {
@@ -77,6 +128,7 @@ int TileIdSand=12;
             return (byte)height;
         }
         #endregion
+        //returns number between -1 and 1.
         double findnoise2(double x, double y)
         {
             int n = (int)x + (int)y * 57;
