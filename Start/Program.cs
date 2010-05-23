@@ -33,7 +33,9 @@ namespace Start
                 {
                     try
                     {
-                        new WebClient().DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, tempfile);
+                        WebClient c = new WebClient();
+                        c.Headers[HttpRequestHeader.Cookie] = f.Cookie;
+                        c.DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, tempfile);
                         RunLink(tempfile);
                     }
                     catch (Exception e)

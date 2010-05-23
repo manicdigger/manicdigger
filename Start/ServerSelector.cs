@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using System.Net;
 
 namespace ManicDigger
 {
@@ -28,8 +29,10 @@ namespace ManicDigger
                 return;
             }
             SelectedServer = e.Url.AbsoluteUri.Substring(prefix.Length);
+            Cookie = webBrowser1.Document.Cookie;
             Close();
         }
         public string SelectedServer = null;
+        public string Cookie;
     }
 }
