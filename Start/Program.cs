@@ -43,12 +43,13 @@ namespace Start
                         MessageBox.Show(e.ToString());
                     }
                 }
+                RunLink(f.SinglePlayer);
             }
         }
         private static void RunLink(string filename)
         {
             string appPath = Path.GetDirectoryName(Application.ExecutablePath);
-            if (filename.EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
+            if (filename != null && filename.EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
             {
                 XmlDocument d = new XmlDocument();
                 d.Load(filename);
@@ -65,6 +66,14 @@ namespace Start
                 {
                     throw new Exception("Invalid game mode: " + mode);
                 }
+            }
+            if (filename == "Fortress")
+            {
+                Process.Start(Path.Combine(appPath, "GameModeFortress"));
+            }
+            if (filename == "Mine")
+            {
+                Process.Start(Path.Combine(appPath, "GameModeMine"));
             }
         }
     }

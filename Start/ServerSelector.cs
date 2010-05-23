@@ -34,5 +34,16 @@ namespace ManicDigger
         }
         public string SelectedServer = null;
         public string Cookie;
+        public string SinglePlayer = null;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SinglePlayer = "Fortress";
+            Close();
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            SinglePlayer = "Mine";
+            Close();
+        }
     }
 }
