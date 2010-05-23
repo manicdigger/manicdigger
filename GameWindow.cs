@@ -1045,6 +1045,10 @@ namespace ManicDigger
                     if (ENABLE_NOCLIP) { Log("Noclip enabled."); }
                     else { Log("Noclip disabled."); }
                 }
+                if (e.Key == OpenTK.Input.Key.I)
+                {
+                    DrawBlockInfo = !DrawBlockInfo;
+                }
                 if (e.Key == OpenTK.Input.Key.R)
                 {
                     player.playerposition = game.PlayerPositionSpawn;
@@ -2624,6 +2628,22 @@ namespace ManicDigger
             {
                 Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
             }
+            if (DrawBlockInfo)
+            {
+                int x = (int)pickcubepos.X;
+                int y = (int)pickcubepos.Z;
+                int z = (int)pickcubepos.Y;
+                string info = "None";
+                if (MapUtil.IsValidPos(map, x, y, z))
+                {
+                    var blocktype = map.GetBlock(x, y, z);
+                    if (data.IsValidTileType(blocktype))
+                    {
+                        info = data.BlockName(blocktype);
+                    }
+                }
+                Draw2dText(info, Width * 0.5f - TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+            }
             if (FreeMouse)
             {
                 DrawMouseCursor();
@@ -2641,18 +2661,19 @@ namespace ManicDigger
                 if (((LocalPlayerPosition - k.Value.Position).Length < 20)
                     || Keyboard[OpenTK.Input.Key.AltLeft] || Keyboard[OpenTK.Input.Key.AltRight])
                 {
+                    string name=k.Value.Name;Vector3 pos = ((PlayerInterpolationState)playerdrawinfo[k.Key].interpolation.InterpolatedState(totaltime)).position;
                     GL.PushMatrix();
-                    Vector3 pos = ((PlayerInterpolationState)playerdrawinfo[k.Key].interpolation.InterpolatedState(totaltime)).position;
                     GL.Translate(pos.X, pos.Y + 1f, pos.Z);
                     GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                     GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                     GL.Scale(0.02, 0.02, 0.02);
-                    GL.Translate(-TextSize(k.Value.Name, 14).Width / 2, 0, 0);
-                    Draw2dText(k.Value.Name, 0, 0, 14, Color.White);
+                    GL.Translate(-TextSize(name, 14).Width / 2, 0, 0);
+                    Draw2dText(name, 0, 0, 14, Color.White);
                     GL.PopMatrix();
                 }
             }
         }
+        bool DrawBlockInfo = false;
         int maploadingprogress;
         private void DrawMapLoading()
         {

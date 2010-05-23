@@ -377,6 +377,12 @@ namespace ManicDigger
             return GetTileTextureId(tileType, TileSide.Front);
         }
         #endregion
+        #region IGameData Members
+        public string BlockName(int blocktype)
+        {
+            return Enum.GetName(typeof(TileTypeMinecraft), blocktype);
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

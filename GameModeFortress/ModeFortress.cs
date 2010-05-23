@@ -1409,6 +1409,20 @@ namespace GameModeFortress
         }
         #endregion
         TileTypeData[] datanew = new TileTypeData[256];
+        #region IGameData Members
+        public string BlockName(int blocktype)
+        {
+            if (data.IsValidTileType(blocktype))
+            {
+                return data.BlockName(blocktype);
+            }
+            if (IsRailTile(blocktype))
+            {
+                return "Rail";
+            }
+            return Enum.GetName(typeof(TileTypeManicDigger), blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {

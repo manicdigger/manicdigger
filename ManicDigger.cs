@@ -462,6 +462,7 @@ namespace ManicDigger
         int PlayerBuildableMaterialType(int p);
         bool IsBlockFlower(int tiletype);
         RailDirectionFlags GetRail(int tiletype);
+        string BlockName(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -531,6 +532,12 @@ namespace ManicDigger
         public int GetTileTextureIdForInventory(int tileType)
         {
             return GetTileTextureId(tileType, TileSide.Front);
+        }
+        #endregion
+        #region IGameData Members
+        public string BlockName(int blocktype)
+        {
+            return blocktype.ToString();
         }
         #endregion
     }
