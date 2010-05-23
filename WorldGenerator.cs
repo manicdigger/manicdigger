@@ -113,7 +113,11 @@ using System;
         bool IsLeaves(int x, int y, int z, int xdiff, int ydiff, int zdiff, int height)
         {
             //if (IsTree(x + xdiff, y + ydiff, height))
-            if (istreecache[(x + xdiff) % 16, (y + ydiff) % 16])
+            if (x % chunksize + xdiff < 0) { return false; }
+            if (y % chunksize + ydiff < 0) { return false; }
+            if (x % chunksize + xdiff >= chunksize - xdiff) { return false; }
+            if (y % chunksize + ydiff >= chunksize - ydiff) { return false; }
+            if (istreecache[(x + xdiff) % chunksize, (y + ydiff) % chunksize])
             {
                 int heightnear = GetHeight(x + xdiff, y + ydiff);
                 return (heightnear + zdiff == z);
