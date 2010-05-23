@@ -1546,6 +1546,7 @@ namespace ManicDigger
             movedy * movespeednow * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
             if (enable_acceleration)
             {
+                curspeed *= 0.90f;
                 curspeed.X = MakeCloserToZero(curspeed.X, 2f * (float)e.Time);
                 curspeed.Y = MakeCloserToZero(curspeed.Y, 2f * (float)e.Time);
                 curspeed.Z = MakeCloserToZero(curspeed.Z, 2f * (float)e.Time);
@@ -1555,7 +1556,6 @@ namespace ManicDigger
                     curspeed.Normalize();
                     curspeed *= movespeednow;
                 }
-                curspeed *= 0.97f;
             }
             else
             {
