@@ -1687,6 +1687,7 @@ namespace ManicDigger
                 || data.IsWaterTile(map.GetBlock(x, y, z));
         }
         float PICK_DISTANCE = 3.5f;
+        public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
         Matrix4 the_modelview;
         bool leftpressedpicking = false;
         private void UpdatePicking()

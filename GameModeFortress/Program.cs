@@ -138,6 +138,7 @@ namespace GameModeFortress
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
+            w.PickDistance = 4.5f;
             clientgame.physics = physics;
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;
