@@ -648,13 +648,29 @@ namespace GameModeFortress
                     railriding = true;
                     viewport.CharacterHeight = minecartheight;
                     currentvehiclespeed = 0;
-                    if (railunderplayer == RailDirectionFlags.Horizontal)
+                    if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
                     {
                         currentdirection = VehicleDirection12.HorizontalRight;
                     }
-                    else if (railunderplayer == RailDirectionFlags.Vertical)
+                    else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
                     {
                         currentdirection = VehicleDirection12.VerticalUp;
+                    }
+                    else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                    {
+                        currentdirection = VehicleDirection12.UpLeftUp;
+                    }
+                    else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                    {
+                        currentdirection = VehicleDirection12.UpRightUp;
+                    }
+                    else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                    {
+                        currentdirection = VehicleDirection12.DownLeftLeft;
+                    }
+                    else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                    {
+                        currentdirection = VehicleDirection12.DownRightRight;
                     }
                     else
                     {
