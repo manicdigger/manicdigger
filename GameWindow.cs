@@ -209,7 +209,7 @@ namespace ManicDigger
         public IInterpolation req { get; set; }
         public bool EXTRAPOLATE = false;
         public float DELAY = 0.2f;
-        public float FRAMESIZE = 0.1f;
+        public float EXTRAPOLATION_TIME = 0.2f;
         List<Packet> received = new List<Packet>();
         public void AddNetworkPacket(object c, double time)
         {
@@ -240,14 +240,14 @@ namespace ManicDigger
             }
             //extrapolate
             else if (EXTRAPOLATE && (received.Count >= 2)
-                && time > received[received.Count - 1].timestamp)
+                && interpolationtime > received[received.Count - 1].timestamp)
             {
                 p1 = received.Count - 2;
                 p2 = received.Count - 1;
+                interpolationtime = Math.Min(interpolationtime, received[received.Count - 1].timestamp + EXTRAPOLATION_TIME);
             }
             else
             {
-                //interpolate between packets with time a) time-delay, b) curtime-delay+framesize
                 p1 = 0;
                 for (int i = 0; i < received.Count; i++)
                 {
@@ -257,12 +257,9 @@ namespace ManicDigger
                     }
                 }
                 p2 = p1;
-                for (int i = p1; i < received.Count; i++)
+                if (received.Count - 1 > p1)
                 {
-                    if (received[i].timestamp <= interpolationtime + FRAMESIZE)
-                    {
-                        p2 = i;
-                    }
+                    p2++;
                 }
             }
             if (p1 == p2)
@@ -2312,8 +2309,9 @@ namespace ManicDigger
                     playerdrawinfo[k.Key] = new PlayerDrawInfo();
                     NetworkInterpolation n = new NetworkInterpolation();
                     n.req = new PlayerInterpolate();
-                    n.FRAMESIZE = 0.1f;
-                    n.DELAY = 0.4f;
+                    n.DELAY = 0.5f;
+                    n.EXTRAPOLATE = true;
+                    n.EXTRAPOLATION_TIME = 0.3f;
                     playerdrawinfo[k.Key].interpolation = n;
                 }
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
