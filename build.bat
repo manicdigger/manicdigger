@@ -1,4 +1,6 @@
 del /s /q output
+mkdir output
+
 copy oalinst.exe output\
 xcopy /s data output\data\
 
