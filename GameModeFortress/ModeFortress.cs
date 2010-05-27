@@ -163,57 +163,32 @@ namespace GameModeFortress
         public int MapSizeX { get { return 10 * 1000; } set { } }
         public int MapSizeY { get { return 10 * 1000; } set { } }
         public int MapSizeZ { get { return 64; } set { } }
-        Dictionary<Vector3i, byte> blocks = new Dictionary<Vector3i, byte>();
-        public InfiniteMap()
-        {
-            Restart();
-        }
+        Dictionary<ulong, byte> blocks = new Dictionary<ulong, byte>();
         public void Restart()
         {
-            for (int x = 0; x < gencachesize.x; x++)
-            {
-                for (int y = 0; y < gencachesize.y; y++)
-                {
-                    for (int z = 0; z < gencachesize.z; z++)
-                    {
-                        gencache[x, y, z] = null;
-                    }
-                }
-            }
+            gencache = new Dictionary<ulong, byte[, ,]>();
         }
-        byte[, ,][, ,] gencache = new byte[64, 64, 4][, ,];
-        Vector3i gencachesize = new Vector3i(64, 64, 4);
-        Vector2i gencachecenter = new Vector2i(32, 32);
+        Dictionary<ulong, byte[, ,]> gencache = new Dictionary<ulong, byte[, ,]>();
         public int GetBlock(int x, int y, int z)
         {
-            if (blocks.ContainsKey(new Vector3i(x, y, z)))
+            if (blocks.ContainsKey(MapUtil.ToMapPos(x,y,z)))
             {
-                return blocks[new Vector3i(x, y, z)];
+                return blocks[MapUtil.ToMapPos(x, y, z)];
             }
             else
             {
-                if (x < 5 && y < 5 && z < 5) { return 0; }
-                if (Math.Abs(x / 16 - gencachecenter.x) >= gencachesize.x / 2 || Math.Abs(y / 16 - gencachecenter.y) >= gencachesize.y / 2)
+                byte[, ,] chunk = null;
+                var k = MapUtil.ToMapPos(x / 16, y / 16, z / 16);
+                if (!gencache.TryGetValue(k, out chunk))
                 {
-                    Restart();
-                    gencachecenter = new Vector2i(x / 16, y / 16);
+                    chunk = gen.GetChunk(x / 16, y / 16, z / 16, 16);
+                    if (gencache.Count > 64 * 64 * 4)
+                    {
+                        Restart();
+                    }
+                    gencache[k] = chunk;
                 }
-                int incachex = x / 16 - gencachecenter.x + gencachesize.x / 2;
-                int incachey = y / 16 - gencachecenter.y + gencachesize.y / 2;
-                if (gencache[incachex, incachey, z / 16] == null)
-                {
-                    byte[, ,] chunk = gen.GetChunk(x / 16, y / 16, z / 16, 16);
-                    gencache[incachex, incachey, z / 16] = chunk;
-                }
-                return gencache[incachex, incachey, z / 16][x % 16, y % 16, z % 16];
-                /*
-                if (chunkcache.ContainsKey(k))
-                {
-                    var ccc = gen.GetChunk(x / 16, y / 16, z / 16);
-                    chunkcache.Add(k, ccc);
-                }
-                return chunkcache[k][x % 16, y % 16, z % 16];
-                */
+                return chunk[x % 16, y % 16, z % 16];
             }
         }
         float waterlevel = 32;
@@ -225,7 +200,7 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            blocks[new Vector3i(x, y, z)] = (byte)tileType;
+            blocks[MapUtil.ToMapPos(x,y,z)] = (byte)tileType;
         }
         public void UseMap(byte[, ,] map)
         {
@@ -238,9 +213,10 @@ namespace GameModeFortress
             NetworkHelper.WriteInt32(bw, blocks.Count);
             foreach (var b in blocks)
             {
-                NetworkHelper.WriteInt32(bw, b.Key.x);
-                NetworkHelper.WriteInt32(bw, b.Key.y);
-                NetworkHelper.WriteInt32(bw, b.Key.z);
+                Vector3i v = MapUtil.FromMapPos(b.Key);
+                NetworkHelper.WriteInt32(bw, v.x);
+                NetworkHelper.WriteInt32(bw, v.y);
+                NetworkHelper.WriteInt32(bw, v.z);
                 NetworkHelper.WriteInt16(bw, b.Value);
             }
             return ms.ToArray();
@@ -257,7 +233,7 @@ namespace GameModeFortress
                 int y = NetworkHelper.ReadInt32(br);
                 int z = NetworkHelper.ReadInt32(br);
                 int type = NetworkHelper.ReadInt16(br);
-                blocks.Add(new Vector3i(x, y, z), (byte)type);
+                blocks.Add(MapUtil.ToMapPos(x, y, z), (byte)type);
             }
         }
     }

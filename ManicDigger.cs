@@ -145,6 +145,24 @@ namespace ManicDigger
             }
             return map.MapSizeZ / 2;
         }
+        static ulong pow20minus1 = 1048576 - 1;
+        public static Vector3i FromMapPos(ulong v)
+        {
+            uint z = (uint)(v & pow20minus1);
+            v = v >> 20;
+            uint y = (uint)(v & pow20minus1);
+            v = v >> 20;
+            uint x = (uint)(v & pow20minus1);
+            return new Vector3i((int)x, (int)y, (int)z);
+        }
+        public static ulong ToMapPos(int x, int y, int z)
+        {
+            ulong v = 0;
+            v = (ulong)x << 40;
+            v |= (ulong)y << 20;
+            v |= (ulong)z;
+            return v;
+        }
     }
     public class MapStorage : IMapStorage
     {
