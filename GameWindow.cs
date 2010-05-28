@@ -898,7 +898,7 @@ namespace ManicDigger
                     }
                     else if (cmd == "fov")
                     {
-                        int arg=int.Parse(arguments);
+                        int arg = int.Parse(arguments);
                         int minfov = 1;
                         int maxfov = 179;
                         if (arg < minfov || arg > maxfov)
@@ -908,6 +908,23 @@ namespace ManicDigger
                         float fov = (float)(2 * Math.PI * ((float)arg / 360));
                         this.fov = fov;
                         OnResize(new EventArgs());
+                    }
+                    else if (cmd == "tp" || cmd == "teleport")
+                    {
+                        string arg = arguments;
+                        bool tp = false;
+                        foreach (var k in clients.Players)
+                        {
+                            if (k.Value.Name.Equals(arg, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                player.playerposition = k.Value.Position;
+                                tp = true;
+                            }
+                        }
+                        if (!tp)
+                        {
+                            Log(string.Format("No such player: {0}.", arg));
+                        }
                     }
                     else
                     {
