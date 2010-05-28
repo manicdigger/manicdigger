@@ -1853,6 +1853,19 @@ namespace ManicDigger
             }
             return 1;
         }
+        bool IsPowerOfTwo(uint x)
+        {
+            return (
+              x == 1 || x == 2 || x == 4 || x == 8 || x == 16 || x == 32 ||
+              x == 64 || x == 128 || x == 256 || x == 512 || x == 1024 ||
+              x == 2048 || x == 4096 || x == 8192 || x == 16384 ||
+              x == 32768 || x == 65536 || x == 131072 || x == 262144 ||
+              x == 524288 || x == 1048576 || x == 2097152 ||
+              x == 4194304 || x == 8388608 || x == 16777216 ||
+              x == 33554432 || x == 67108864 || x == 134217728 ||
+              x == 268435456 || x == 536870912 || x == 1073741824 ||
+              x == 2147483648);
+        }
         private uint NextPowerOfTwo(uint x)
         {
             x--;
@@ -2877,12 +2890,13 @@ namespace ManicDigger
             {
                 return null;
             }
-            bmp = new Bitmap((int)size.Width, (int)size.Height);
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
+            bmp = new Bitmap((int)size2.Width, (int)size2.Height);
             g = Graphics.FromImage(bmp);
             g.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
             g.DrawString(t.text, font, new SolidBrush(t.color), 0, 0);
             int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, size = size };
+            return new CachedTexture() { textureId = texture, size = size2 };
         }
         void DeleteUnusedCachedTextures()
         {
