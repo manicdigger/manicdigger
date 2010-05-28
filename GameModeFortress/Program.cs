@@ -139,6 +139,7 @@ namespace GameModeFortress
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
+            w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
             clientgame.physics = physics;
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;

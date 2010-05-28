@@ -100,6 +100,7 @@ namespace ManicDigger
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
+            w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
             clientgame.terrain = terrainDrawer;
             clientgame.network = network;
             clientgame.viewport = w;
