@@ -1703,11 +1703,21 @@ namespace ManicDigger
                 //b) just hash
                 //c) ip:port (server must have disabled authorization checking).
                 LoginData logindata = new LoginData();
+                int? pport = null;
+                if (qgameurl.Contains(":"))
+                {
+                    pport = int.Parse(qgameurl.Substring(qgameurl.IndexOf(":") + 1).Trim());
+                    qgameurl = qgameurl.Substring(0, qgameurl.IndexOf(":"));
+                }
                 System.Net.IPAddress server2 = null;
                 if (System.Net.IPAddress.TryParse(qgameurl, out server2))
                 {
                     logindata.serveraddress = server2.ToString();
                     logindata.port = 25565;
+                    if (pport != null)
+                    {
+                        logindata.port = pport.Value;
+                    }
                     logindata.mppass = "";
                 }
                 else

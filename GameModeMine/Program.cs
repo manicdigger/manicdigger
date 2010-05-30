@@ -149,6 +149,8 @@ namespace ManicDigger
                         throw new Exception("Invalid game mode: " + mode);
                     }
                     p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
+                    p.GameUrl += ":" + port;
                     p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
                 }
             }

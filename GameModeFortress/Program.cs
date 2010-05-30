@@ -46,6 +46,7 @@ namespace GameModeFortress
     public class ManicDiggerProgram2 : IInternetGameFactory
     {
         public string GameUrl = null;
+        public string User;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
         public void Start()
@@ -170,7 +171,6 @@ namespace GameModeFortress
             MakeGame(false);
         }
         #endregion
-        public string User;
     }
     public class ManicDiggerProgram
     {
@@ -199,6 +199,8 @@ namespace GameModeFortress
                         throw new Exception("Invalid game mode: " + mode);
                     }
                     p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
+                    p.GameUrl += ":" + port;
                     p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
                 }
             }
