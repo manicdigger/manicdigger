@@ -743,8 +743,22 @@ namespace ManicDigger
         float UpDown(float time)
         {
             float jumpheight = 0.15f;
-            return (float)Math.Sin(time * 16) * jumpheight + jumpheight / 2;
+            return (float)TriSin(time * 16) * jumpheight + jumpheight / 2;
         }
+        float LeftLegRotation(float time)
+        {
+            return (float)TriSin(time * 8) * 90;
+        }
+        float RightLegRotation(float time)
+        {
+            return (float)TriSin(time * 8 + Math.PI) * 90;
+        }
+        private float TriSin(double t)
+        {
+            double period = 2 * Math.PI;
+            return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
+        }
+        /*
         float LeftLegRotation(float time)
         {
             return (float)Math.Sin(time * 8) * 90;
@@ -753,6 +767,7 @@ namespace ManicDigger
         {
             return (float)Math.Sin(time * 8 + Math.PI) * 90;
         }
+        */
         RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
         {
             RectangleF[] coords = new[]
