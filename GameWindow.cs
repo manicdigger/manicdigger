@@ -1251,6 +1251,10 @@ namespace ManicDigger
                             Log(string.Format("No such player: {0}.", arg));
                         }
                     }
+                    else if (cmd == "testmodel")
+                    {
+                        ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
+                    }
                     else
                     {
                         string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
@@ -1267,7 +1271,8 @@ namespace ManicDigger
         }
         private static bool BoolCommandArgument(string arguments)
         {
-            return (arguments == "" || arguments == "1" || arguments == "on");
+            arguments = arguments.Trim();
+            return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
         }
         private void UploadMap(bool uploadfeature, MapStorage m)
         {
@@ -2516,7 +2521,10 @@ namespace ManicDigger
                 DrawCubeLines(pickcubepos);
 
                 DrawVehicles((float)e.Time);
-                characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt);
+                if (ENABLE_DRAW_TEST_CHARACTER)
+                {
+                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt);
+                }
                 DrawPlayers((float)e.Time);
                 weapon.DrawWeapon((float)e.Time);
             }
@@ -2529,6 +2537,7 @@ namespace ManicDigger
         }
         AnimationState a = new AnimationState();
         int[] _skybox;
+        public bool ENABLE_DRAW_TEST_CHARACTER = false;
         private void DrawSkybox()
         {
             //?
