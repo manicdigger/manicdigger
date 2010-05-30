@@ -782,7 +782,7 @@ namespace ManicDigger
             }
             byte heading = br.ReadByte();
             byte pitch = br.ReadByte();
-            Vector3 realpos = new Vector3(x, y, z) + new Vector3(0.5f, 0, 0.5f);
+            Vector3 realpos = new Vector3(x, y, z);
             if (playerid == 255)
             {
                 Position.LocalPlayerPosition = realpos;

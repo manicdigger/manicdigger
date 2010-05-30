@@ -566,6 +566,7 @@ namespace ManicDigger
                 m1.loadMD2(getfile.GetFile("player.md2"));
                 m1texture = the3d.LoadTexture(getfile.GetFile("player.png"));
             }
+            pos += new Vector3(0.5f, 0, 0.5f);
             string anim = moves ? "run" : "stand";
             Md2Engine.Range tmp = m1.animationPool[m1.findAnim(anim)];
             animstate.frame = Animate(animstate, tmp.getStart(), tmp.getEnd(), animstate.frame, dt);
@@ -681,7 +682,7 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.Translate(pos);
             GL.Rotate((-((float)heading / 256)) * 360 - 90, 0, 1, 0);
-            GL.Translate(0, -1.57f, 0);
+            GL.Translate(0 - 0.3f / 2, -1.57f, 0 - 0.6f / 2);
             GL.Translate(0, UpDown(animstate.interp), 0);
             //torso
             coords = MakeCoords(8, 12, 4, 16, 16);
@@ -698,9 +699,9 @@ namespace ManicDigger
             GL.PopMatrix();
             //left leg
             GL.PushMatrix();
-            GL.Translate(0, legsheight, 0);
+            GL.Translate(0.3f / 2, legsheight, 0);
             GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(0, -legsheight, 0);
+            GL.Translate(-0.3f / 2, -legsheight, 0);
 
             coords = MakeCoords(4, 8, 4, 0, 16);
             MakeTextureCoords(coords, 64, 32);
@@ -710,18 +711,18 @@ namespace ManicDigger
 
             //right leg
             GL.PushMatrix();
-            GL.Translate(0, legsheight, 0);
+            GL.Translate(0.3f / 2, legsheight, 0);
             GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(0, -legsheight, 0);
+            GL.Translate(-0.3f / 2, -legsheight, 0);
 
             DrawCube(new Vector3(0, 0, 0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
 
             GL.PopMatrix();
             //left arm
             GL.PushMatrix();
-            GL.Translate(0, armsheight, 0);
+            GL.Translate(0.3f / 2, armsheight, 0);
             GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(0, -armsheight, 0);
+            GL.Translate(-0.3f / 2, -armsheight, 0);
 
             coords = MakeCoords(4, 8, 4, 40, 16);
             MakeTextureCoords(coords, 64, 32);
@@ -730,9 +731,9 @@ namespace ManicDigger
             GL.PopMatrix();
             //right arm
             GL.PushMatrix();
-            GL.Translate(0, armsheight, 0);
+            GL.Translate(0.3f / 2, armsheight, 0);
             GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(0, -armsheight, 0);
+            GL.Translate(-0.3f / 2, -armsheight, 0);
 
             DrawCube(new Vector3(0, 0 + legsheight, 0.6f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
 
@@ -742,7 +743,7 @@ namespace ManicDigger
         }
         float UpDown(float time)
         {
-            float jumpheight = 0.15f;
+            float jumpheight = 0.10f;
             return (float)TriSin(time * 16) * jumpheight + jumpheight / 2;
         }
         float LeftLegRotation(float time)
@@ -756,6 +757,7 @@ namespace ManicDigger
         private float TriSin(double t)
         {
             double period = 2 * Math.PI;
+            t += Math.PI / 2;
             return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
         }
         /*
