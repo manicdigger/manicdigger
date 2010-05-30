@@ -436,14 +436,18 @@ namespace ManicDigger
                 NetworkHelper.WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
                 NetworkHelper.WriteInt16(bw, (short)(position.Z * 32));
             }
-            bw.Write((byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256));
-            bw.Write(PitchByte());
+            bw.Write(HeadingByte(orientation));
+            bw.Write(PitchByte(orientation));
             SendPacket(ms.ToArray());
             lastsentposition = position;
         }
-        private byte PitchByte()
+        public static byte HeadingByte(Vector3 orientation)
         {
-            double xx = (Position.LocalPlayerOrientation.X + Math.PI) % (2 * Math.PI);
+            return (byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256);
+        }
+        public static byte PitchByte(Vector3 orientation)
+        {
+            double xx = (orientation.X + Math.PI) % (2 * Math.PI);
             xx = xx / (2 * Math.PI);
             return (byte)(xx * 256);
         }

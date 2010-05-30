@@ -1590,6 +1590,10 @@ namespace ManicDigger
                 {
                     DrawBlockInfo = !DrawBlockInfo;
                 }
+                if (e.Key == OpenTK.Input.Key.F5)
+                {
+                    ENABLE_TPP_VIEW = !ENABLE_TPP_VIEW;
+                }
                 if (e.Key == OpenTK.Input.Key.R)
                 {
                     player.playerposition = game.PlayerPositionSpawn;
@@ -2526,7 +2530,10 @@ namespace ManicDigger
                     characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt);
                 }
                 DrawPlayers((float)e.Time);
-                weapon.DrawWeapon((float)e.Time);
+                if (!ENABLE_TPP_VIEW)
+                {
+                    weapon.DrawWeapon((float)e.Time);
+                }
             }
             SetAmbientLight(Color.White);
             Draw2d();
@@ -2535,6 +2542,7 @@ namespace ManicDigger
             SwapBuffers();
             keyevent = null;
         }
+        public bool ENABLE_TPP_VIEW = true;
         AnimationState a = new AnimationState();
         int[] _skybox;
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
@@ -2730,13 +2738,28 @@ namespace ManicDigger
                 info.lastrealheading = k.Value.Heading;
                 info.lastrealpitch = k.Value.Pitch;
             }
+            if (ENABLE_TPP_VIEW)
+            {
+                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 1.25f, 0),
+                    NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
+                    NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
+                    lastlocalplayerpos != LocalPlayerPosition, dt);
+                lastlocalplayerpos = LocalPlayerPosition;
+            }
         }
+        Vector3 lastlocalplayerpos;
+        AnimationState localplayeranim = new AnimationState();
         bool overheadcamera = false;
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
             Vector3 forward = toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
-            return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0),
+            Vector3 tpp=new Vector3();
+            if (ENABLE_TPP_VIEW)
+            {
+                tpp = Vector3.Multiply(forward, -4);
+            }
+            return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0) + tpp,
                 player.playerposition + new Vector3(0, CharacterHeight, 0) + forward, up);
         }
         //Vector3 overheadCameraPosition = new Vector3(5, 32 + 20, 5);
