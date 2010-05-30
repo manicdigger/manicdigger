@@ -163,7 +163,7 @@ namespace GameModeFortress
         public int MapSizeX { get { return 10 * 1000; } set { } }
         public int MapSizeY { get { return 10 * 1000; } set { } }
         public int MapSizeZ { get { return 64; } set { } }
-        Dictionary<ulong, byte> blocks = new Dictionary<ulong, byte>();
+        public Dictionary<ulong, byte> blocks = new Dictionary<ulong, byte>();
         public void Restart()
         {
             gencache = new Dictionary<ulong, byte[, ,]>();
