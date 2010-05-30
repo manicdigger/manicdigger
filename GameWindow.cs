@@ -2543,7 +2543,7 @@ namespace ManicDigger
             SwapBuffers();
             keyevent = null;
         }
-        public bool ENABLE_TPP_VIEW = true;
+        public bool ENABLE_TPP_VIEW = false;
         AnimationState a = new AnimationState();
         int[] _skybox;
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
@@ -2755,7 +2755,7 @@ namespace ManicDigger
         Matrix4 FppCamera()
         {
             Vector3 forward = toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
-            Vector3 tpp=new Vector3();
+            Vector3 tpp = new Vector3();
             if (ENABLE_TPP_VIEW)
             {
                 tpp = Vector3.Multiply(forward, -3);
