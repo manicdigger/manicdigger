@@ -682,6 +682,7 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.Translate(pos);
             GL.Rotate((-((float)heading / 256)) * 360 - 90, 0, 1, 0);
+            GL.Scale(0.7f, 0.7f, 0.7f);
             GL.Translate(0 - 0.3f / 2, -1.57f, 0 - 0.6f / 2);
             GL.Translate(0, UpDown(animstate.interp), 0);
             //torso
@@ -2740,7 +2741,7 @@ namespace ManicDigger
             }
             if (ENABLE_TPP_VIEW)
             {
-                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 1.25f, 0),
+                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 0.8f, 0),
                     NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
                     NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt);
@@ -2757,7 +2758,7 @@ namespace ManicDigger
             Vector3 tpp=new Vector3();
             if (ENABLE_TPP_VIEW)
             {
-                tpp = Vector3.Multiply(forward, -4);
+                tpp = Vector3.Multiply(forward, -3);
             }
             return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0) + tpp,
                 player.playerposition + new Vector3(0, CharacterHeight, 0) + forward, up);
