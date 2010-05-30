@@ -669,26 +669,89 @@ namespace ManicDigger
             }
             RectangleF[] coords;
             float legsheight = 0.9f;
+            float armsheight = legsheight + 0.9f;
+            if (moves)
+            {
+                animstate.interp += dt;
+            }
+            else
+            {
+                animstate.interp = 0;
+            }
+            GL.PushMatrix();
+            GL.Translate(pos);
+            GL.Rotate((-((float)heading / 256)) * 360 - 90, 0, 1, 0);
+            GL.Translate(0, -1.57f, 0);
+            GL.Translate(0, UpDown(animstate.interp), 0);
             //torso
             coords = MakeCoords(8, 12, 4, 16, 16);
             MakeTextureCoords(coords, 64, 32);
-            DrawCube(pos + new Vector3(0, 0 + legsheight, 0), new Vector3(0.3f, 0.9f, 0.6f), playertexture, coords);
+            DrawCube(new Vector3(0, 0 + legsheight, 0), new Vector3(0.3f, 0.9f, 0.6f), playertexture, coords);
             //head
+            GL.PushMatrix();
+            GL.Translate(0, armsheight, 0);
+            GL.Rotate((((float)pitch / 256)) * 360, 0, 0, 1);
+            GL.Translate(0, -armsheight, 0);
             coords = MakeCoords(8, 8, 8, 0, 0);
             MakeTextureCoords(coords, 64, 32);
-            DrawCube(pos + new Vector3(-0.6f / 4, 0.9f + legsheight, 0), new Vector3(0.6f, 0.6f, 0.6f), playertexture, coords);
+            DrawCube(new Vector3(-0.6f / 4, 0.9f + legsheight, 0), new Vector3(0.6f, 0.6f, 0.6f), playertexture, coords);
+            GL.PopMatrix();
             //left leg
+            GL.PushMatrix();
+            GL.Translate(0, legsheight, 0);
+            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
+            GL.Translate(0, -legsheight, 0);
+
             coords = MakeCoords(4, 8, 4, 0, 16);
             MakeTextureCoords(coords, 64, 32);
-            DrawCube(pos + new Vector3(0, 0, 0), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+            DrawCube(new Vector3(0, 0, 0), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+
+            GL.PopMatrix();
+
             //right leg
-            DrawCube(pos + new Vector3(0, 0, 0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+            GL.PushMatrix();
+            GL.Translate(0, legsheight, 0);
+            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
+            GL.Translate(0, -legsheight, 0);
+
+            DrawCube(new Vector3(0, 0, 0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+
+            GL.PopMatrix();
             //left arm
+            GL.PushMatrix();
+            GL.Translate(0, armsheight, 0);
+            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
+            GL.Translate(0, -armsheight, 0);
+
             coords = MakeCoords(4, 8, 4, 40, 16);
             MakeTextureCoords(coords, 64, 32);
-            DrawCube(pos + new Vector3(0, 0 + legsheight, -0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+            DrawCube(new Vector3(0, 0 + legsheight, -0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+
+            GL.PopMatrix();
             //right arm
-            DrawCube(pos + new Vector3(0, 0 + legsheight, 0.6f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+            GL.PushMatrix();
+            GL.Translate(0, armsheight, 0);
+            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
+            GL.Translate(0, -armsheight, 0);
+
+            DrawCube(new Vector3(0, 0 + legsheight, 0.6f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
+
+            GL.PopMatrix();
+
+            GL.PopMatrix();
+        }
+        float UpDown(float time)
+        {
+            float jumpheight = 0.15f;
+            return (float)Math.Sin(time * 16) * jumpheight + jumpheight / 2;
+        }
+        float LeftLegRotation(float time)
+        {
+            return (float)Math.Sin(time * 8) * 90;
+        }
+        float RightLegRotation(float time)
+        {
+            return (float)Math.Sin(time * 8 + Math.PI) * 90;
         }
         RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
         {
@@ -788,6 +851,7 @@ namespace ManicDigger
     {
         public float interp;
         public int frame;
+        public object data;
     }
     /// <summary>
     /// </summary>
@@ -2435,6 +2499,7 @@ namespace ManicDigger
                 DrawCubeLines(pickcubepos);
 
                 DrawVehicles((float)e.Time);
+                characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt);
                 DrawPlayers((float)e.Time);
                 weapon.DrawWeapon((float)e.Time);
             }
@@ -2445,6 +2510,7 @@ namespace ManicDigger
             SwapBuffers();
             keyevent = null;
         }
+        AnimationState a = new AnimationState();
         int[] _skybox;
         private void DrawSkybox()
         {
@@ -2571,7 +2637,7 @@ namespace ManicDigger
                 PlayerInterpolationState cc = new PlayerInterpolationState();
                 cc.position = aa.position + (bb.position - aa.position) * progress;
                 cc.heading = (byte)Interpolate360(aa.heading, bb.heading, progress);
-                cc.pitch = (byte)((float)aa.pitch + ((float)bb.pitch - (float)aa.pitch) * progress);
+                cc.pitch = (byte)Interpolate360(aa.pitch, bb.pitch, progress);
                 return cc;
             }
             int Interpolate360(int a, int b, float progress)
@@ -2591,7 +2657,7 @@ namespace ManicDigger
             int CircleFull = 256;
             private int NormalizeAngle(int v)
             {
-                return v % 256;
+                return (v + int.MaxValue / 2) % 256;
             }
         }
         double totaltime;
