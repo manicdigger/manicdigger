@@ -142,7 +142,7 @@ namespace GameModeFortress
             w.PickDistance = 4.5f;
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
             //w.characterdrawer = new CharacterDrawerMd2() { getfile = getfile, the3d = w };
-            w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile, the3d = w };
+            w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile };
             clientgame.physics = physics;
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;

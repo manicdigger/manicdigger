@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Drawing.Imaging;
 using System.Threading;
 using System.IO;
+using System.Net;
 
 namespace ManicDigger
 {
@@ -546,324 +547,6 @@ namespace ManicDigger
         float zzzposx = -0.2f;
         float zzzposy = -1.3f;
         float attackprogress = 0;
-    }
-    public interface ICharacterDrawer
-    {
-        void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt);
-    }
-    public class CharacterDrawerMd2 : ICharacterDrawer
-    {
-        [Inject]
-        public IGetFilePath getfile { get; set; }
-        [Inject]
-        public IThe3d the3d { get; set; }
-        #region ICharacterDrawer Members
-        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt)
-        {
-            if (m1 == null)
-            {
-                m1 = new Md2Engine.Mesh();
-                m1.loadMD2(getfile.GetFile("player.md2"));
-                m1texture = the3d.LoadTexture(getfile.GetFile("player.png"));
-            }
-            pos += new Vector3(0.5f, 0, 0.5f);
-            string anim = moves ? "run" : "stand";
-            Md2Engine.Range tmp = m1.animationPool[m1.findAnim(anim)];
-            animstate.frame = Animate(animstate, tmp.getStart(), tmp.getEnd(), animstate.frame, dt);
-            GL.PushMatrix();
-            GL.Translate(pos);
-            GL.Rotate(-90, 1, 0, 0);
-            GL.Rotate((-((float)heading / 256)) * 360 + 90, 0, 0, 1);
-            GL.Scale(0.05f, 0.05f, 0.05f);
-            GL.BindTexture(TextureTarget.Texture2D, m1texture);
-            md2renderer.RenderFrameImmediateInterpolated(animstate.frame, animstate.interp, m1, true, tmp.getStart(), tmp.getEnd());
-            GL.PopMatrix();
-            GL.FrontFace(FrontFaceDirection.Ccw);
-        }
-        #endregion
-        int Animate(AnimationState anim, int start, int end, int frame, float dt)//update the animation parameters
-        {
-            anim.interp += dt * 5;
-
-            if (anim.interp > 1.0f)
-            {
-                anim.interp = 0.0f;
-                frame++;
-            }
-
-            if ((frame < start) || (frame >= end))
-                frame = start;
-
-            return frame;
-        }
-        class OpentkGl : Md2Engine.IOpenGl
-        {
-            #region IOpenGl Members
-            public void GlBegin(Md2Engine.BeginMode mode)
-            {
-                if (mode == Md2Engine.BeginMode.Triangles)
-                {
-                    GL.Begin(BeginMode.Triangles);
-                }
-                else if (mode == Md2Engine.BeginMode.TriangleFan)
-                {
-                    GL.Begin(BeginMode.TriangleFan);
-                }
-                else if (mode == Md2Engine.BeginMode.TriangleStrip)
-                {
-                    GL.Begin(BeginMode.TriangleStrip);
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            public void GlEnd()
-            {
-                GL.End();
-            }
-            public void GlFrontFace(Md2Engine.FrontFace mode)
-            {
-                if (mode == Md2Engine.FrontFace.Cw)
-                {
-                    GL.FrontFace(FrontFaceDirection.Cw);
-                }
-                else if (mode == Md2Engine.FrontFace.Ccw)
-                {
-                    GL.FrontFace(FrontFaceDirection.Ccw);
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            public void GlNormal3f(float x, float y, float z)
-            {
-                GL.Normal3(x, y, z);
-            }
-            public void GlTexCoord2f(float x, float y)
-            {
-                GL.TexCoord2(x, y);
-            }
-            public void GlVertex3f(float x, float y, float z)
-            {
-                GL.Vertex3(x, y, z);
-            }
-            #endregion
-        }
-        Md2Engine.GlRenderer md2renderer = new Md2Engine.GlRenderer() { gl = new OpentkGl() };
-        Md2Engine.Mesh m1;
-        int m1texture;
-    }
-    public class CharacterDrawerBlock : ICharacterDrawer
-    {
-        [Inject]
-        public IGetFilePath getfile { get; set; }
-        [Inject]
-        public IThe3d the3d { get; set; }
-        int playertexture = -1;
-        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt)
-        {
-            if (playertexture == -1)
-            {
-                playertexture = the3d.LoadTexture(getfile.GetFile("mineplayer.png"));
-            }
-            RectangleF[] coords;
-            float legsheight = 0.9f;
-            float armsheight = legsheight + 0.9f;
-            if (moves)
-            {
-                animstate.interp += dt;
-            }
-            else
-            {
-                animstate.interp = 0;
-            }
-            GL.PushMatrix();
-            GL.Translate(pos);
-            GL.Rotate((-((float)heading / 256)) * 360 - 90, 0, 1, 0);
-            GL.Scale(0.7f, 0.7f, 0.7f);
-            GL.Translate(0 - 0.3f / 2, -1.57f, 0 - 0.6f / 2);
-            GL.Translate(0, UpDown(animstate.interp), 0);
-            //torso
-            coords = MakeCoords(8, 12, 4, 16, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0 + legsheight, 0), new Vector3(0.3f, 0.9f, 0.6f), playertexture, coords);
-            //head
-            GL.PushMatrix();
-            GL.Translate(0, armsheight, 0);
-            GL.Rotate((((float)pitch / 256)) * 360, 0, 0, 1);
-            GL.Translate(0, -armsheight, 0);
-            coords = MakeCoords(8, 8, 8, 0, 0);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(-0.6f / 4, 0.9f + legsheight, 0), new Vector3(0.6f, 0.6f, 0.6f), playertexture, coords);
-            GL.PopMatrix();
-            //left leg
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, legsheight, 0);
-            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -legsheight, 0);
-
-            coords = MakeCoords(4, 8, 4, 0, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0, 0), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-
-            //right leg
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, legsheight, 0);
-            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -legsheight, 0);
-
-            DrawCube(new Vector3(0, 0, 0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-            //left arm
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, armsheight, 0);
-            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -armsheight, 0);
-
-            coords = MakeCoords(4, 8, 4, 40, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0 + legsheight, -0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-            //right arm
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, armsheight, 0);
-            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -armsheight, 0);
-
-            DrawCube(new Vector3(0, 0 + legsheight, 0.6f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-
-            GL.PopMatrix();
-        }
-        float UpDown(float time)
-        {
-            float jumpheight = 0.10f;
-            return (float)TriSin(time * 16) * jumpheight + jumpheight / 2;
-        }
-        float LeftLegRotation(float time)
-        {
-            return (float)TriSin(time * 8) * 90;
-        }
-        float RightLegRotation(float time)
-        {
-            return (float)TriSin(time * 8 + Math.PI) * 90;
-        }
-        private float TriSin(double t)
-        {
-            double period = 2 * Math.PI;
-            t += Math.PI / 2;
-            return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
-        }
-        /*
-        float LeftLegRotation(float time)
-        {
-            return (float)Math.Sin(time * 8) * 90;
-        }
-        float RightLegRotation(float time)
-        {
-            return (float)Math.Sin(time * 8 + Math.PI) * 90;
-        }
-        */
-        RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
-        {
-            RectangleF[] coords = new[]
-            {
-                new RectangleF(tsizez+tstartx,tsizez+tstarty,tsizex,tsizey),//front
-                new RectangleF(2*tsizez+tsizex+tstartx,tsizez+tstarty,tsizex,tsizey),//back
-                new RectangleF(0+tstartx,tsizez+tstarty,tsizez,tsizey),//left
-                new RectangleF(tsizez+tsizex+tstartx,tsizez+tstarty,tsizez,tsizey),//right
-                new RectangleF(tsizez+tstartx,0+tstarty,tsizex,tsizez),//top
-                new RectangleF(tsizez+tsizex+tstartx,0+tstarty,tsizex,tsizez),//bottom
-            };
-            return coords;
-        }
-        private static void MakeTextureCoords(RectangleF[] coords, float texturewidth, float textureheight)
-        {
-            for (int i = 0; i < coords.Length; i++)
-            {
-                coords[i] = new RectangleF((coords[i].X / (float)texturewidth), (coords[i].Y / (float)textureheight),
-                    (coords[i].Width / (float)texturewidth), (coords[i].Height / (float)textureheight));
-            }
-        }
-        private void DrawCube(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
-        {
-            //front
-            GL.Color3(Color.White);
-            GL.BindTexture(TextureTarget.Texture2D, textureid);
-            GL.Disable(EnableCap.CullFace);
-            GL.Begin(BeginMode.Quads);
-            RectangleF rect;
-            //front
-            rect = texturecoords[0];
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z);
-            //back
-            rect = texturecoords[1];
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z);
-            //left
-            rect = texturecoords[2];
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z);
-            //right
-            rect = texturecoords[3];
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z + size.Z);
-            //top
-            rect = texturecoords[4];
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y + size.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y + size.Y, pos.Z);
-            //bottom
-            rect = texturecoords[5];
-            GL.TexCoord2(rect.X, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Bottom);
-            GL.Vertex3(pos.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X + rect.Width, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z + size.Z);
-            GL.TexCoord2(rect.X, rect.Y);
-            GL.Vertex3(pos.X + size.X, pos.Y, pos.Z);
-
-            GL.End();
-            GL.Enable(EnableCap.CullFace);
-        }
     }
     public class AnimationState
     {
@@ -2528,7 +2211,7 @@ namespace ManicDigger
                 DrawVehicles((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt);
+                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255));
                 }
                 DrawPlayers((float)e.Time);
                 if (!ENABLE_TPP_VIEW)
@@ -2542,6 +2225,109 @@ namespace ManicDigger
             //OnResize(new EventArgs());
             SwapBuffers();
             keyevent = null;
+        }
+        //string skinserver = "http://fragmer.net/md/skin.php?player=";
+        public string skinserver = "http://minecraft.net/skin/";
+        int playertexturedefault = -1;
+        Dictionary<string, int> playertextures = new Dictionary<string, int>();
+        bool skindownloadthreadstarted = false;
+        List<string> texturestodownloadlist = new List<string>();
+        public string playertexturedefaultfilename = "mineplayer.png";
+        private int GetPlayerTexture(int playerid)
+        {
+            if (playertexturedefault == -1)
+            {
+                playertexturedefault = LoadTexture(getfile.GetFile(playertexturedefaultfilename));
+            }
+            foreach (var k in clients.Players)
+            {
+                string name = k.Value.Name;
+                if (playertextures.ContainsKey(name)
+                     || texturestodownloadlist.Contains(name))
+                {
+                    continue;
+                }
+                lock (texturestodownload)
+                {
+                    texturestodownload.Enqueue(name);
+                    texturestodownloadlist.Add(name);
+                }
+            }
+            lock (texturestoload)
+            {
+                foreach (var k in new List<KeyValuePair<string, byte[]>>(texturestoload))
+                {
+                    try
+                    {
+                        using (Bitmap bmp = new Bitmap(new MemoryStream(k.Value)))
+                        {
+                            playertextures[k.Key] = LoadTexture(bmp);
+                            Console.WriteLine("Player skin loaded: {0}", k.Key);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        playertextures[k.Key] = playertexturedefault;
+                        Console.WriteLine(e);
+                    }
+                }
+                texturestoload.Clear();
+            }
+            if (!skindownloadthreadstarted)
+            {
+                new Thread(skindownloadthread).Start();
+                skindownloadthreadstarted = true;
+            }
+            string playername;
+            if (playerid == 255)
+            {
+                playername = username;
+            }
+            else
+            {
+                playername = clients.Players[playerid].Name;
+            }
+            if (playertextures.ContainsKey(playername))
+            {
+                return playertextures[playername];
+            }
+            return playertexturedefault;
+        }
+        Dictionary<string, byte[]> texturestoload = new Dictionary<string, byte[]>();
+        Queue<string> texturestodownload = new Queue<string>();
+        void skindownloadthread()
+        {
+            WebClient c = new WebClient();
+            for (; ; )
+            {
+                if (exit) { return; }
+                for (; ; )
+                {
+                    string name;
+                    lock (texturestodownload)
+                    {
+                        if (texturestodownload.Count == 0)
+                        {
+                            break;
+                        }
+                        name = texturestodownload.Dequeue();
+                    }
+                    try
+                    {
+                        byte[] skindata = c.DownloadData(skinserver + name + ".png");
+                        lock (texturestoload)
+                        {
+                            texturestoload[name] = skindata;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        //Console.WriteLine(e);
+                        continue;
+                    }
+                }
+                Thread.Sleep(100);
+            }
         }
         public bool ENABLE_TPP_VIEW = false;
         AnimationState a = new AnimationState();
@@ -2733,7 +2519,7 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
-                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt);
+                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key));
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
@@ -2744,7 +2530,7 @@ namespace ManicDigger
                 DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 0.8f, 0),
                     NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
                     NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
-                    lastlocalplayerpos != LocalPlayerPosition, dt);
+                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255));
                 lastlocalplayerpos = LocalPlayerPosition;
             }
         }
@@ -2783,18 +2569,18 @@ namespace ManicDigger
             //if (v0 != null)
             foreach (ICharacterToDraw v0 in game.Characters)
             {
-                DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt);
+                DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255);
                 //DrawCube(v0.pos3d);
             }
         }
-        private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt)
+        private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt, int playertexture)
         {
             DrawCharacter(animstate, pos,
-                (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt);
+                (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt, playertexture);
         }
-        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt)
+        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture)
         {
-            characterdrawer.DrawCharacter(animstate, pos, heading, pitch, moves, dt);
+            characterdrawer.DrawCharacter(animstate, pos, heading, pitch, moves, dt, playertexture);
         }
         void EscapeMenuAction()
         {
