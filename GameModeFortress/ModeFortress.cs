@@ -1305,8 +1305,13 @@ namespace GameModeFortress
                 RailDirectionFlags.DownLeft | RailDirectionFlags.DownRight)) { return true; }
             if (IsRailTile(tiletype)) { return false; }
             if (datanew[tiletype] != null) { return true; }
-            return data.IsValidTileType(tiletype) && !data.IsWaterTile(tiletype) && tiletype != (int)TileTypeMinecraft.Lava
-                && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource && tiletype != (int)TileTypeMinecraft.StationaryLava;
+            return data.IsValidTileType(tiletype)
+                && tiletype != (int)TileTypeMinecraft.Water
+                && tiletype != (int)TileTypeMinecraft.InfiniteWaterSource
+                && tiletype != (int)TileTypeMinecraft.Lava
+                && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource;
+            //return data.IsValidTileType(tiletype) && !data.IsWaterTile(tiletype) && tiletype != (int)TileTypeMinecraft.Lava
+            //    && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource && tiletype != (int)TileTypeMinecraft.StationaryLava;
             //----
             if (datanew[tiletype] != null) { return datanew[tiletype].Buildable; }
             if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
@@ -1397,6 +1402,16 @@ namespace GameModeFortress
                 return "Rail";
             }
             return Enum.GetName(typeof(TileTypeManicDigger), blocktype);
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsEmptyForPhysics(int blocktype)
+        {
+            return data.IsEmptyForPhysics(blocktype)
+                || blocktype == (int)TileTypeManicDigger.Crops1
+                || blocktype == (int)TileTypeManicDigger.Crops2
+                || blocktype == (int)TileTypeManicDigger.Crops3
+                || blocktype == (int)TileTypeManicDigger.Crops4;
         }
         #endregion
     }

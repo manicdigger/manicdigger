@@ -481,6 +481,7 @@ namespace ManicDigger
         bool IsBlockFlower(int tiletype);
         RailDirectionFlags GetRail(int tiletype);
         string BlockName(int blocktype);
+        bool IsEmptyForPhysics(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -558,6 +559,12 @@ namespace ManicDigger
             return blocktype.ToString();
         }
         #endregion
+        #region IGameData Members
+        public bool IsEmptyForPhysics(int blocktype)
+        {
+            return false;
+        }
+        #endregion
     }
     public interface IMapGenerator
     {
@@ -599,7 +606,8 @@ namespace ManicDigger
             if (data.IsWaterTile(map.GetBlock(x, y, z)) &&
                 !data.IsWaterTile(map.GetBlock(x, y, z + 1))) { return true; }
             return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || (data.IsWaterTile(map.GetBlock(x,y,z)) && (!swimmingtop));
+                || (data.IsWaterTile(map.GetBlock(x, y, z)) && (!swimmingtop))
+                || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
         float walldistance = 0.3f;
         public static float characterheight = 1.5f;

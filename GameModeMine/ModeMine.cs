@@ -222,8 +222,8 @@ namespace ManicDigger
             data[(int)TileTypeMinecraft.Adminium] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 1 };
             data[(int)TileTypeMinecraft.Water] = new TileTypeData() { Buildable = false, AllTextures = 14 };
             data[(int)TileTypeMinecraft.StationaryWater] = new TileTypeData() { Buildable = false, AllTextures = 14 };
-            data[(int)TileTypeMinecraft.Lava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 15 };
-            data[(int)TileTypeMinecraft.StationaryLava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 15 };
+            data[(int)TileTypeMinecraft.Lava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 14 };
+            data[(int)TileTypeMinecraft.StationaryLava] = new TileTypeData() { Buildable = false, AllTextures = (1 * 16) + 14 };
             data[(int)TileTypeMinecraft.Sand] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 2 };
             data[(int)TileTypeMinecraft.Gravel] = new TileTypeData() { Buildable = true, AllTextures = (1 * 16) + 3 };
             data[(int)TileTypeMinecraft.GoldOre] = new TileTypeData() { Buildable = false, AllTextures = (2 * 16) + 0 };
@@ -381,6 +381,17 @@ namespace ManicDigger
         public string BlockName(int blocktype)
         {
             return Enum.GetName(typeof(TileTypeMinecraft), blocktype);
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsEmptyForPhysics(int blocktype)
+        {
+            return blocktype == (int)TileTypeMinecraft.BrownMushroom
+                || blocktype == (int)TileTypeMinecraft.Crops
+                || blocktype == (int)TileTypeMinecraft.RedMushroom
+                || blocktype == (int)TileTypeMinecraft.RedRoseDecorations
+                || blocktype == (int)TileTypeMinecraft.Sapling
+                || blocktype == (int)TileTypeMinecraft.YellowFlowerDecorations;
         }
         #endregion
     }
