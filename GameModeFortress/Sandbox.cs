@@ -27,7 +27,7 @@ namespace GameModeFortress
         AppDomain newDomain;
         public void Main1(string program)
         {
-            string pathToUntrusted = "untrusted";//AppDomain.CurrentDomain.BaseDirectory
+            string pathToUntrusted = Path.Combine(Path.GetTempPath(), "untrusted");//AppDomain.CurrentDomain.BaseDirectory
             //Setting the AppDomainSetup. It is very important to set the ApplicationBase to a folder 
             //other than the one in which the sandboxer resides.
             AppDomainSetup adSetup = new AppDomainSetup();
@@ -62,13 +62,13 @@ namespace GameModeFortress
             //param.IncludeDebugInformation = true;
             param.TempFiles.KeepFiles = true;
             // param.ReferencedAssemblies.Add("Scripting.dll");
-            if (File.Exists(param.OutputAssembly))
-            {
-                File.Delete(param.OutputAssembly);
-            }
             if (!Directory.Exists(pathToUntrusted))
             {
                 Directory.CreateDirectory(pathToUntrusted);
+            }
+            if (File.Exists(param.OutputAssembly))
+            {
+                File.Delete(param.OutputAssembly);
             }
 
             string s = program;
