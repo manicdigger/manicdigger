@@ -25,4 +25,5 @@ xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
 copy menu.mdxs.gz output\menu.mdxs.gz
 copy WorldGenerator.cs output\WorldGenerator.cs
+copy credits.html output\credits.html
 REM pause
