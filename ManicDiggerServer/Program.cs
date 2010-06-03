@@ -590,11 +590,9 @@ namespace ManicDiggerServer
         {
             try
             {
-                int sent = clients[clientid].socket.Send(packet);
-                if (sent != packet.Length)
-                {
-                    throw new Exception();
-                }
+                SocketAsyncEventArgs e = new SocketAsyncEventArgs();
+                e.SetBuffer(packet, 0, packet.Length);
+                clients[clientid].socket.SendAsync(e);
             }
             catch (Exception e)
             {
