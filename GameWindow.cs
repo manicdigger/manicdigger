@@ -2226,8 +2226,8 @@ namespace ManicDigger
             SwapBuffers();
             keyevent = null;
         }
-        //string skinserver = "http://fragmer.net/md/skin.php?player=";
-        public string skinserver = "http://minecraft.net/skin/";
+        string skinserver = "http://fragmer.net/md/skins/";
+        //public string skinserver = "http://minecraft.net/skin/";
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
         bool skindownloadthreadstarted = false;
