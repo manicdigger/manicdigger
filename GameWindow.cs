@@ -3000,7 +3000,7 @@ namespace ManicDigger
             SizeF size = g.MeasureString(text, font);
             return size;
         }
-        struct Text
+        public struct Text
         {
             public string text;
             public float fontsize;
@@ -3028,23 +3028,160 @@ namespace ManicDigger
             public DateTime lastuse;
         }
         Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
-        CachedTexture MakeTextTexture(Text t)
+        public class TextPart
         {
-            var font = new Font("Verdana", t.fontsize);
-            Bitmap bmp = new Bitmap(1, 1);
-            Graphics g = Graphics.FromImage(bmp);
-            SizeF size = g.MeasureString(t.text, font);
-            if (size.Width == 0 || size.Height == 0)
+            public Color color;
+            public string text;
+        }
+        public class TextDrawer
+        {
+            public Bitmap MakeTextTexture(Text t)
             {
+                var font = new Font("Verdana", t.fontsize);
+                var parts = DecodeColors(t.text, t.color);
+                float totalwidth = 0;
+                float totalheight = 0;
+                List<SizeF> sizes = new List<SizeF>();
+                using (Bitmap bmp = new Bitmap(1, 1))
+                {
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        for (int i = 0; i < parts.Count; i++)
+                        {
+                            SizeF size = g.MeasureString(parts[i].text, font);
+                            if (size.Width == 0 || size.Height == 0)
+                            {
+                                continue;
+                            }
+                            totalwidth += size.Width;
+                            totalheight = Math.Max(totalheight, size.Height);
+                            sizes.Add(size);
+                        }
+                    }
+                }
+                SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+                Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
+                using (Graphics g2 = Graphics.FromImage(bmp2))
+                {
+                    float currentwidth = 0;
+                    for (int i = 0; i < parts.Count; i++)
+                    {
+                        SizeF sizei = sizes[i];
+                        if (sizei.Width == 0 || sizei.Height == 0)
+                        {
+                            continue;
+                        }
+                        g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
+                        g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                        currentwidth += sizei.Width;
+                    }
+                }
+                return bmp2;
+            }
+            private uint NextPowerOfTwo(uint x)
+            {
+                x--;
+                x |= x >> 1;  // handle  2 bit numbers
+                x |= x >> 2;  // handle  4 bit numbers
+                x |= x >> 4;  // handle  8 bit numbers
+                x |= x >> 8;  // handle 16 bit numbers
+                x |= x >> 16; // handle 32 bit numbers
+                x++;
+                return x;
+            }
+            public List<TextPart> DecodeColors(string s, Color defaultcolor)
+            {
+                List<TextPart> parts = new List<TextPart>();
+                int i = 0;
+                Color currentcolor = defaultcolor;
+                string currenttext = "";
+                for (; ; )
+                {
+                    if (i >= s.Length)
+                    {
+                        if (currenttext != "")
+                        {
+                            parts.Add(new TextPart() { text = currenttext, color = currentcolor });
+                        }
+                        break;
+                    }
+                    if (s[i] == '&')
+                    {
+                        if (i + 1 < s.Length)
+                        {
+                            int? color = HexToInt(s[i + 1]);
+                            if (color != null)
+                            {
+                                if (currenttext != "")
+                                {
+                                    parts.Add(new TextPart() { text = currenttext, color = currentcolor });
+                                }
+                                currenttext = "";
+                                currentcolor = GetColor(color.Value);
+                                i++;
+                                goto next;
+                            }
+                        }
+                        else
+                        {
+                        }
+                    }
+                    currenttext += s[i];
+                next:
+                    i++;
+                }
+                return parts;
+            }
+            private Color GetColor(int currentcolor)
+            {
+                switch (currentcolor)
+                {
+                    case 0: { return Color.FromArgb(0, 0, 0); }
+                    case 1: { return Color.FromArgb(0, 0, 191); }
+                    case 2: { return Color.FromArgb(0, 191, 0); }
+                    case 3: { return Color.FromArgb(0, 191, 191); }
+                    case 4: { return Color.FromArgb(191, 0, 0); }
+                    case 5: { return Color.FromArgb(191, 0, 191); }
+                    case 6: { return Color.FromArgb(191, 191, 0); }
+                    case 7: { return Color.FromArgb(191, 191, 191); }
+                    case 8: { return Color.FromArgb(40, 40, 40); }
+                    case 9: { return Color.FromArgb(64, 64, 255); }
+                    case 10: { return Color.FromArgb(64, 255, 64); }
+                    case 11: { return Color.FromArgb(64, 255, 255); }
+                    case 12: { return Color.FromArgb(255, 64, 64); }
+                    case 13: { return Color.FromArgb(255, 64, 255); }
+                    case 14: { return Color.FromArgb(255, 255, 64); }
+                    case 15: { return Color.FromArgb(255, 255, 255); }
+                    default: throw new Exception();
+                }
+            }
+            int? HexToInt(char c)
+            {
+                if (c == '0') { return 0; }
+                if (c == '1') { return 1; }
+                if (c == '2') { return 2; }
+                if (c == '3') { return 3; }
+                if (c == '4') { return 4; }
+                if (c == '5') { return 5; }
+                if (c == '6') { return 6; }
+                if (c == '7') { return 7; }
+                if (c == '8') { return 8; }
+                if (c == '9') { return 9; }
+                if (c == 'a') { return 10; }
+                if (c == 'b') { return 11; }
+                if (c == 'c') { return 12; }
+                if (c == 'd') { return 13; }
+                if (c == 'e') { return 14; }
+                if (c == 'f') { return 15; }
                 return null;
             }
-            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
-            bmp = new Bitmap((int)size2.Width, (int)size2.Height);
-            g = Graphics.FromImage(bmp);
-            g.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
-            g.DrawString(t.text, font, new SolidBrush(t.color), 0, 0);
+        }
+        TextDrawer textdrawer = new TextDrawer();
+        CachedTexture MakeTextTexture(Text t)
+        {
+            Bitmap bmp = textdrawer.MakeTextTexture(t);
             int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, size = size2 };
+            return new CachedTexture() { textureId = texture, size = bmp.Size };
         }
         void DeleteUnusedCachedTextures()
         {
