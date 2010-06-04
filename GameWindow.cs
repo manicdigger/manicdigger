@@ -2559,7 +2559,7 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
-                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), clients.Players[k.Key].AnimationHint);
+                DrawCharacter(info.anim, curpos + new Vector3(0, -0.7f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), clients.Players[k.Key].AnimationHint);
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
