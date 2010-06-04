@@ -8,6 +8,7 @@ using System.IO;
 using System.Drawing;
 using System.Xml;
 using System.Security;
+using OpenTK.Graphics.OpenGL;
 
 namespace GameModeFortress
 {
@@ -297,6 +298,7 @@ namespace GameModeFortress
         Vector3 currentrailblock;
         float currentrailblockprogress = 0;
         VehicleDirection12 currentdirection;
+        VehicleDirection12 lastdirection;
         Vector3 CurrentRailPos()
         {
             var slope = RailMapUtil().GetRailSlope((int)currentrailblock.X,
@@ -525,6 +527,9 @@ namespace GameModeFortress
         public void OnNewFrame(double dt)
         {
             Tick();
+            viewport.LocalPlayerAnimationHint.InVehicle = railriding;
+            viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
+
             bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
             RailSound();
@@ -536,6 +541,7 @@ namespace GameModeFortress
                 currentrailblockprogress += currentvehiclespeed * (float)dt;
                 if (currentrailblockprogress >= 1)
                 {
+                    lastdirection = currentdirection;
                     currentrailblockprogress = 0;
                     var newenter = new TileEnterData();
                     newenter.BlockPosition = NextTile(currentdirection, currentrailblock);
@@ -652,11 +658,13 @@ namespace GameModeFortress
                     {
                         ExitVehicle();
                     }
+                    lastdirection = currentdirection;
                 }
             }
             else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
             {
                 ExitVehicle();
+                viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
@@ -707,6 +715,7 @@ namespace GameModeFortress
         {
             currentdirection = DirectionUtils.Reverse(currentdirection);
             currentrailblockprogress = 1 - currentrailblockprogress;
+            lastdirection = currentdirection;
             //currentvehiclespeed = 0;
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
@@ -821,14 +830,9 @@ namespace GameModeFortress
             public Vector3 Dir3d { get { return dir3d; } }
             public bool Moves { get { return moves; } }
             public Vector3? currentorder;
-            public CharacterState state;
+            //public CharacterState state;
             public float buildprogress;
             public List<Vector3> path;
-        }
-        enum CharacterState
-        {
-            Walking,
-            Building,
         }
         List<Character> characters = new List<Character>();
         [Inject]
@@ -927,17 +931,29 @@ namespace GameModeFortress
             switch (commandid)
             {
                 case CommandId.Build:
-                    var cmd = new CommandBuild();
-                    cmd.FromStream(ms);
-                    Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
-                    map.SetBlock(cmd.x, cmd.y, cmd.z, cmd.mode == BlockSetMode.Create ?
-                        (byte)cmd.tiletype : data.TileIdEmpty);
-                    terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                    {
+                        var cmd = new CommandBuild();
+                        cmd.FromStream(ms);
+                        Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
+                        map.SetBlock(cmd.x, cmd.y, cmd.z, cmd.mode == BlockSetMode.Create ?
+                            (byte)cmd.tiletype : data.TileIdEmpty);
+                        terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                    }
+                    break;
+                case CommandId.EnterLeaveRailVehicle:
+                    {
+                        var cmd = new CommandEnterLeaveRailVehicle();
+                        cmd.FromStream(ms);
+                    }
                     break;
                 default:
                     throw new Exception();
             }
         }
+        class RailVehicle
+        {
+        }
+        Dictionary<int, RailVehicle> vehicles = new Dictionary<int, RailVehicle>();
         public int GetStateHash()
         {
             return 0;
@@ -956,7 +972,7 @@ namespace GameModeFortress
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
 
         IDictionary<int, Player> players = new Dictionary<int, Player>();
-        public IDictionary<int,Player> Players { get { return players; } set { players = value; } }
+        public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
@@ -1022,10 +1038,102 @@ namespace GameModeFortress
             this.map.UseMap(map);
         }
         #endregion
+        [Inject]
+        public MinecartDrawer minecartdrawer { get; set; }
+        #region IGameMode Members
+        public IEnumerable<IModelToDraw> Models
+        {
+            get
+            {
+                if (railriding)
+                {
+                    var m = new Minecart();
+                    m.drawer = minecartdrawer;
+                    m.position = viewport.LocalPlayerPosition;
+                    m.direction = currentdirection;
+                    m.lastdirection = lastdirection;
+                    m.progress = currentrailblockprogress;
+                    yield return m;
+                }
+            }
+        }
+        #endregion
+    }
+    public class Minecart : IModelToDraw
+    {
+        public Vector3 position;
+        public VehicleDirection12 direction;
+        public VehicleDirection12 lastdirection;
+        public double progress;
+        public MinecartDrawer drawer;
+        #region IModelToDraw Members
+        public void Draw()
+        {
+            drawer.Draw(position, direction, lastdirection, progress);
+        }
+        #endregion
+    }
+    public class MinecartDrawer
+    {
+        [Inject]
+        public IGetFilePath getfile { get; set; }
+        [Inject]
+        public IThe3d the3d { get; set; }
+        int minecarttexture = -1;
+        #region IModelToDraw Members
+        public void Draw(Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
+        {
+            if (minecarttexture == -1)
+            {
+                minecarttexture = the3d.LoadTexture(getfile.GetFile("minecart.png"));
+            }
+            GL.PushMatrix();
+            GL.Translate(position + new Vector3(0, -0.7f, 0));
+            double currot = vehiclerotation(dir);
+            double lastrot = vehiclerotation(lastdir);
+            //double rot = lastrot + (currot - lastrot) * progress;
+            double rot = AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
+            GL.Rotate(-rot - 90, 0, 1, 0);
+            var c = new CharacterDrawerBlock();
+            var cc = c.MakeCoords(8, 8, 8, 0, 0);
+            CharacterDrawerBlock.MakeTextureCoords(cc, 32, 16);
+            c.DrawCube(new Vector3(-0.5f, -0.3f, -0.5f), new Vector3(1, 1, 1), minecarttexture, cc);
+            GL.PopMatrix();
+        }
+        #endregion
+        double vehiclerotation(VehicleDirection12 dir)
+        {
+            switch (dir)
+            {
+                case VehicleDirection12.VerticalUp:
+                    return 0;
+                case VehicleDirection12.DownRightRight:
+                case VehicleDirection12.UpLeftUp:
+                    return 45;
+                case VehicleDirection12.HorizontalRight:
+                    return 90;
+                case VehicleDirection12.UpRightRight:
+                case VehicleDirection12.DownLeftDown:
+                    return 90 + 45;
+                case VehicleDirection12.VerticalDown:
+                    return 180;
+                case VehicleDirection12.UpLeftLeft:
+                case VehicleDirection12.DownRightDown:
+                    return 180 + 45;
+                case VehicleDirection12.HorizontalLeft:
+                    return 180 + 90;
+                case VehicleDirection12.UpRightUp:
+                case VehicleDirection12.DownLeftLeft:
+                    return 180 + 90 + 45;
+                default:
+                    throw new Exception();
+            }
+        }
     }
     public enum CommandId
     {
         Build,
+        EnterLeaveRailVehicle,
     }
     public interface IStreamizable
     {
@@ -1057,6 +1165,31 @@ namespace GameModeFortress
             mode = (BlockSetMode)br.ReadByte();
             tiletype = br.ReadByte();
         }
+    }
+    public class CommandEnterLeaveRailVehicle : IStreamizable
+    {
+        public short x;
+        public short y;
+        public short z;
+        public bool enter;
+        #region IStreamizable Members
+        public void ToStream(Stream s)
+        {
+            BinaryWriter bw = new BinaryWriter(s);
+            bw.Write((short)x);
+            bw.Write((short)y);
+            bw.Write((short)z);
+            bw.Write((bool)enter);
+        }
+        public void FromStream(Stream s)
+        {
+            BinaryReader br = new BinaryReader(s);
+            x = br.ReadInt16();
+            y = br.ReadInt16();
+            z = br.ReadInt16();
+            enter = br.ReadBoolean();
+        }
+        #endregion
     }
     public class GameDataTilesManicDigger : IGameData
     {

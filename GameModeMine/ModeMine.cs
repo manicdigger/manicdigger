@@ -109,6 +109,12 @@ namespace ManicDigger
             mapmanipulator.LoadMap(map, savegame);
         }
         #endregion
+        #region IGameMode Members
+        public IEnumerable<IModelToDraw> Models
+        {
+            get { yield break; }
+        }
+        #endregion
     }
     public class TileTypeData
     {

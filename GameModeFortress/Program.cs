@@ -155,6 +155,7 @@ namespace GameModeFortress
             gen.Compile(clientgame.generator);
             clientgame.map = new InfiniteMap() { gen = gen };
             clientgame.worldgeneratorsandbox = gen;
+            clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile };
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;

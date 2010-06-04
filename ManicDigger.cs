@@ -119,6 +119,7 @@ namespace ManicDigger
         public byte Heading;
         public byte Pitch;
         public string Name;
+        public AnimationHint AnimationHint = new AnimationHint();
     }
     public static class MapUtil
     {

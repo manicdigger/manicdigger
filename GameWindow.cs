@@ -303,6 +303,12 @@ namespace ManicDigger
         bool ENABLE_MOVE { get; set; }
         void Log(string s);
         Dictionary<string, string> PerformanceInfo { get; }
+        AnimationHint LocalPlayerAnimationHint { get; set; }
+    }
+    public class AnimationHint
+    {
+        public bool InVehicle;
+        public Vector3 DrawFix;
     }
     public class ViewportDummy : IViewport3d
     {
@@ -334,6 +340,13 @@ namespace ManicDigger
         #region IViewport3d Members
         public Dictionary<string, string> PerformanceInfo { get; set; }
         #endregion
+        #region IViewport3d Members
+        public AnimationHint LocalPlayerAnimationHint { get; set; }
+        #endregion
+    }
+    public interface IModelToDraw
+    {
+        void Draw();
     }
     public interface IGameMode
     {
@@ -341,6 +354,7 @@ namespace ManicDigger
         void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int type);
         void OnNewFrame(double dt);
         IEnumerable<ICharacterToDraw> Characters { get; }
+        IEnumerable<IModelToDraw> Models { get; }
         Vector3 PlayerPositionSpawn { get; set; }
         Vector3 PlayerOrientationSpawn { get; }
         void OnNewMap();
@@ -553,6 +567,47 @@ namespace ManicDigger
         public float interp;
         public int frame;
         public object data;
+    }
+    public class AngleInterpolation
+    {
+        public static int InterpolateAngle256(int a, int b, float progress)
+        {
+            if (progress != 0 && b != a)
+            {
+                int diff = NormalizeAngle256(b - a);
+                if (diff >= CircleHalf256)
+                {
+                    diff -= CircleFull256;
+                }
+                a += (int)(progress * diff);
+            }
+            return NormalizeAngle256(a);
+        }
+        static int CircleHalf256 = 256 / 2;
+        static int CircleFull256 = 256;
+        static private int NormalizeAngle256(int v)
+        {
+            return (v + int.MaxValue / 2) % 256;
+        }
+        public static double InterpolateAngle360(double a, double b, double progress)
+        {
+            if (progress != 0 && b != a)
+            {
+                double diff = NormalizeAngle360(b - a);
+                if (diff >= CircleHalf360)
+                {
+                    diff -= CircleFull360;
+                }
+                a += (progress * diff);
+            }
+            return NormalizeAngle360(a);
+        }
+        static int CircleHalf360 = 360 / 2;
+        static int CircleFull360 = 360;
+        static private double NormalizeAngle360(double v)
+        {
+            return (v + ((int.MaxValue / 2) / 360) * 360) % 360;
+        }
     }
     /// <summary>
     /// </summary>
@@ -2208,12 +2263,16 @@ namespace ManicDigger
                 DrawImmediateParticleEffects(e.Time);
                 DrawCubeLines(pickcubepos);
 
-                DrawVehicles((float)e.Time);
+                //DrawVehicles((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255));
+                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
                 }
                 DrawPlayers((float)e.Time);
+                foreach (IModelToDraw m in game.Models)
+                {
+                    m.Draw();
+                }
                 if (!ENABLE_TPP_VIEW)
                 {
                     weapon.DrawWeapon((float)e.Time);
@@ -2457,28 +2516,9 @@ namespace ManicDigger
                 PlayerInterpolationState bb = b as PlayerInterpolationState;
                 PlayerInterpolationState cc = new PlayerInterpolationState();
                 cc.position = aa.position + (bb.position - aa.position) * progress;
-                cc.heading = (byte)Interpolate360(aa.heading, bb.heading, progress);
-                cc.pitch = (byte)Interpolate360(aa.pitch, bb.pitch, progress);
+                cc.heading = (byte)AngleInterpolation.InterpolateAngle256(aa.heading, bb.heading, progress);
+                cc.pitch = (byte)AngleInterpolation.InterpolateAngle256(aa.pitch, bb.pitch, progress);
                 return cc;
-            }
-            int Interpolate360(int a, int b, float progress)
-            {
-                if (progress != 0 && b != a)
-                {
-                    int diff = NormalizeAngle(b - a);
-                    if (diff >= CircleHalf)
-                    {
-                        diff -= CircleFull;
-                    }
-                    a += (int)(progress * diff);
-                }
-                return NormalizeAngle(a);
-            }
-            int CircleHalf = 256 / 2;
-            int CircleFull = 256;
-            private int NormalizeAngle(int v)
-            {
-                return (v + int.MaxValue / 2) % 256;
             }
         }
         double totaltime;
@@ -2519,7 +2559,7 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
-                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key));
+                DrawCharacter(info.anim, curpos + new Vector3(0, -0.25f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), clients.Players[k.Key].AnimationHint);
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
@@ -2530,7 +2570,7 @@ namespace ManicDigger
                 DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 0.8f, 0),
                     NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
                     NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
-                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255));
+                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255), localplayeranimationhint);
                 lastlocalplayerpos = LocalPlayerPosition;
             }
         }
@@ -2564,23 +2604,23 @@ namespace ManicDigger
         List<Chatline> chatlines = new List<Chatline>();
         Dictionary<string, int> textures = new Dictionary<string, int>();
         AnimationState v0anim = new AnimationState();
-        void DrawVehicles(float dt)
+        //void DrawVehicles(float dt)
+        //{
+        //    //if (v0 != null)
+        //    foreach (ICharacterToDraw v0 in game.Characters)
+        //    {
+        //        DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255);
+        //        //DrawCube(v0.pos3d);
+        //    }
+        //}
+        //private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt, int playertexture)
+        //{
+        //    DrawCharacter(animstate, pos,
+        //        (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt, playertexture);
+        //}
+        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
-            //if (v0 != null)
-            foreach (ICharacterToDraw v0 in game.Characters)
-            {
-                DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255);
-                //DrawCube(v0.pos3d);
-            }
-        }
-        private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt, int playertexture)
-        {
-            DrawCharacter(animstate, pos,
-                (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt, playertexture);
-        }
-        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture)
-        {
-            characterdrawer.DrawCharacter(animstate, pos, heading, pitch, moves, dt, playertexture);
+            characterdrawer.DrawCharacter(animstate, pos, heading, pitch, moves, dt, playertexture, animationhint);
         }
         void EscapeMenuAction()
         {
@@ -3400,6 +3440,14 @@ namespace ManicDigger
         #endregion
         #region IMap Members
         IMapStorage IMap.Map { get { return map; } }
+        #endregion
+        AnimationHint localplayeranimationhint = new AnimationHint();
+        #region IViewport3d Members
+        public AnimationHint LocalPlayerAnimationHint
+        {
+            get { return localplayeranimationhint; }
+            set { localplayeranimationhint = value; }
+        }
         #endregion
     }
 }

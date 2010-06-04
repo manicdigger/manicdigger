@@ -9,14 +9,19 @@ namespace ManicDigger
 {
     public interface ICharacterDrawer
     {
-        void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture);
+        void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint);
     }
     public class CharacterDrawerBlock : ICharacterDrawer
     {
         [Inject]
         public IGetFilePath getfile { get; set; }
-        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture)
+        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
+            if (animationhint.InVehicle)
+            {
+                moves = false;
+            }
+            pos += animationhint.DrawFix;
             RectangleF[] coords;
             float legsheight = 0.9f;
             float armsheight = legsheight + 0.9f;
@@ -120,7 +125,7 @@ namespace ManicDigger
             return (float)Math.Sin(time * 8 + Math.PI) * 90;
         }
         */
-        RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
+        public RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
         {
             RectangleF[] coords = new[]
             {
@@ -133,7 +138,7 @@ namespace ManicDigger
             };
             return coords;
         }
-        private static void MakeTextureCoords(RectangleF[] coords, float texturewidth, float textureheight)
+        public static void MakeTextureCoords(RectangleF[] coords, float texturewidth, float textureheight)
         {
             for (int i = 0; i < coords.Length; i++)
             {
@@ -141,7 +146,7 @@ namespace ManicDigger
                     (coords[i].Width / (float)texturewidth), (coords[i].Height / (float)textureheight));
             }
         }
-        private void DrawCube(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
+        public void DrawCube(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
         {
             //front
             GL.Color3(Color.White);
