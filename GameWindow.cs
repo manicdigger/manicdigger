@@ -648,6 +648,8 @@ namespace ManicDigger
         [Inject]
         public ICharacterDrawer characterdrawer { get; set; }
 
+        public string skinserver;
+
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
 
@@ -2298,8 +2300,6 @@ namespace ManicDigger
             SwapBuffers();
             keyevent = null;
         }
-        string skinserver = "http://fragmer.net/md/skins/";
-        //public string skinserver = "http://minecraft.net/skin/";
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
         bool skindownloadthreadstarted = false;

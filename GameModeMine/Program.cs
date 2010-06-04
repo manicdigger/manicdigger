@@ -110,6 +110,7 @@ namespace ManicDigger
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
+            w.skinserver = "http://minecraft.net/skin/";
             physics.map = clientgame;
             physics.data = gamedata;
             mapgenerator.data = gamedata;

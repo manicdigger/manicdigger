@@ -159,6 +159,7 @@ namespace GameModeFortress
             w.game = clientgame;
             w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
+            w.skinserver = "http://fragmer.net/md/skins/";
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             clientgame.physics = physics;
