@@ -532,6 +532,8 @@ namespace GameModeFortress
 
             bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
+            viewport.LocalPlayerAnimationHint.leanleft = railriding && turnleft;
+            viewport.LocalPlayerAnimationHint.leanright = railriding && turnright;
             RailSound();
             if (railriding)
             {

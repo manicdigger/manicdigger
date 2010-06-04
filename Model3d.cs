@@ -47,6 +47,14 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.Translate(0, armsheight, 0);
             GL.Rotate((((float)pitch / 256)) * 360, 0, 0, 1);
+            if (animationhint.leanleft)
+            {
+                GL.Rotate(30, 0, 1, 0);
+            }
+            if (animationhint.leanright)
+            {
+                GL.Rotate(-30, 0, 1, 0);
+            }
             GL.Translate(0, -armsheight, 0);
             coords = MakeCoords(8, 8, 8, 0, 0);
             MakeTextureCoords(coords, 64, 32);

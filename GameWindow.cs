@@ -309,6 +309,8 @@ namespace ManicDigger
     {
         public bool InVehicle;
         public Vector3 DrawFix;
+        public bool leanleft;
+        public bool leanright;
     }
     public class ViewportDummy : IViewport3d
     {
