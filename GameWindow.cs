@@ -1535,12 +1535,24 @@ namespace ManicDigger
                 //c) ip:port (server must have disabled authorization checking).
                 LoginData logindata = new LoginData();
                 int? pport = null;
-                if (qgameurl.Contains(":"))
+                if (qgameurl.Contains(":") && (!qgameurl.Contains("http")))
                 {
                     pport = int.Parse(qgameurl.Substring(qgameurl.IndexOf(":") + 1).Trim());
                     qgameurl = qgameurl.Substring(0, qgameurl.IndexOf(":"));
                 }
                 System.Net.IPAddress server2 = null;
+                try
+                {
+                    logindata = login.Login(qusername, qpass, qgameurl);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+                if (logindata == null)
+                {
+                    logindata = new LoginData();
+                }
                 if (System.Net.IPAddress.TryParse(qgameurl, out server2))
                 {
                     logindata.serveraddress = server2.ToString();
@@ -1549,11 +1561,10 @@ namespace ManicDigger
                     {
                         logindata.port = pport.Value;
                     }
-                    logindata.mppass = "";
-                }
-                else
-                {
-                    logindata = login.Login(qusername, qpass, qgameurl);
+                    if (logindata.mppass == null)
+                    {
+                        logindata.mppass = "";
+                    }
                 }
                 frametickmainthreadtodo.Add(
                     () =>

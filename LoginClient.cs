@@ -17,6 +17,15 @@ namespace ManicDigger
     {
         LoginData Login(string username, string password, string gameurl);
     }
+    public class LoginClientDummy : ILoginClient
+    {
+        #region ILoginClient Members
+        public LoginData Login(string username, string password, string gameurl)
+        {
+            return null;
+        }
+        #endregion
+    }
     public class LoginClientMinecraft : ILoginClient
     {
         //Three Steps

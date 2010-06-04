@@ -157,7 +157,7 @@ namespace GameModeFortress
             clientgame.worldgeneratorsandbox = gen;
             clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile };
             w.game = clientgame;
-            w.login = new LoginClientMinecraft();
+            w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
