@@ -50,10 +50,13 @@ namespace GameModeFortress
     public class InfiniteMap : IMapStorage
     {
         public IWorldGenerator gen { get; set; }
+        int mapsizex = 10 * 1000;
+        int mapsizey = 10 * 1000;
+        int mapsizez = 128;
         #region IMapStorage Members
-        public int MapSizeX { get { return 10 * 1000; } set { } }
-        public int MapSizeY { get { return 10 * 1000; } set { } }
-        public int MapSizeZ { get { return 64; } set { } }
+        public int MapSizeX { get { return mapsizex; } set { mapsizex = value; } }
+        public int MapSizeY { get { return mapsizey; } set { mapsizey = value; } }
+        public int MapSizeZ { get { return mapsizez; } set { mapsizez = value; } }
         public Dictionary<ulong, byte> blocks = new Dictionary<ulong, byte>();
         public void Restart()
         {
