@@ -2314,6 +2314,10 @@ namespace ManicDigger
             foreach (var k in clients.Players)
             {
                 string name = k.Value.Name;
+                if (name == null)
+                {
+                    continue;
+                }
                 if (playertextures.ContainsKey(name)
                      || texturestodownloadlist.Contains(name))
                 {
@@ -2358,6 +2362,10 @@ namespace ManicDigger
             else
             {
                 playername = clients.Players[playerid].Name;
+            }
+            if (playername == null)
+            {
+                playername = "";
             }
             if (playertextures.ContainsKey(playername))
             {
