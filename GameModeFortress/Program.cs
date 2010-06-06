@@ -37,9 +37,11 @@ namespace GameModeFortress
         {
         }
         #endregion
+        public IGameWorld gameworld;
         #region INetworkClient Members
         public void SendCommand(byte[] cmd)
         {
+            gameworld.DoCommand(cmd, 0);
         }
         #endregion
     }
@@ -65,17 +67,16 @@ namespace GameModeFortress
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesManicDigger();
-
+            var clientgame = new GameFortress();
             INetworkClient network;
             if (singleplayer)
             {
-                network = new NetworkClientDummyInfinite();
+                network = new NetworkClientDummyInfinite() { gameworld = clientgame };
             }
             else
             {
                 network = new NetworkClientMinecraft();
-            }
-            var clientgame = new GameFortress();
+            }            
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();

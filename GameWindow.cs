@@ -304,6 +304,7 @@ namespace ManicDigger
         void Log(string s);
         Dictionary<string, string> PerformanceInfo { get; }
         AnimationHint LocalPlayerAnimationHint { get; set; }
+        Vector3 PickCubePos { get; }
     }
     public class AnimationHint
     {
@@ -344,6 +345,9 @@ namespace ManicDigger
         #endregion
         #region IViewport3d Members
         public AnimationHint LocalPlayerAnimationHint { get; set; }
+        #endregion
+        #region IViewport3d Members
+        public Vector3 PickCubePos { get; set; }
         #endregion
     }
     public interface IModelToDraw
@@ -2199,7 +2203,7 @@ namespace ManicDigger
             return new Vector3((int)a.X, (int)a.Z, (int)a.Y);
         }
         bool fastclicking = false;
-        Vector3 pickcubepos;
+        public Vector3 pickcubepos;
         //double currentTime = 0;
         double accumulator = 0;
         double t = 0;
@@ -3606,6 +3610,9 @@ namespace ManicDigger
             get { return localplayeranimationhint; }
             set { localplayeranimationhint = value; }
         }
+        #endregion
+        #region IViewport3d Members
+        public Vector3 PickCubePos { get { return pickcubepos; } }
         #endregion
     }
 }

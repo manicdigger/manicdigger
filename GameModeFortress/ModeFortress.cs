@@ -186,6 +186,7 @@ namespace GameModeFortress
             map.MapSizeZ = 64;
             */
             mapforphysics = new MapForPhysics() { game = this };
+            MakeRecipes();
         }
         float currentvehiclespeed;
         Vector3 currentrailblock;
@@ -321,6 +322,7 @@ namespace GameModeFortress
         bool railriding = false;
         bool wasqpressed = false;
         bool wasvpressed = false;
+        bool wascpressed = false;
         VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
         {
             if (turnright)
@@ -561,8 +563,66 @@ namespace GameModeFortress
                 ExitVehicle();
                 viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
+            if (!wascpressed && viewport.keyboardstate[OpenTK.Input.Key.C])
+            {
+                if (viewport.PickCubePos != new Vector3(-1, -1, -1))
+                {
+                    Vector3i pos=new Vector3i((int)viewport.PickCubePos.X, (int)viewport.PickCubePos.Z, (int)viewport.PickCubePos.Y);
+                    if (map.GetBlock(pos.x,pos.y,pos.z)
+                        == (int)TileTypeManicDigger.CraftingTable)
+                    {
+                        CommandCraft cmd = new CommandCraft();
+                        cmd.x = (short)pos.x;
+                        cmd.y = (short)pos.y;
+                        cmd.z = (short)pos.z;
+                        network.SendCommand(MakeCommand(CommandId.Craft, cmd));
+                    }
+                }                
+            }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+            wascpressed = viewport.keyboardstate[OpenTK.Input.Key.C];
+        }
+        private List<Vector3i> GetTable(Vector3i pos)
+        {
+            int maxcraftingtablesize = 200;
+            List<Vector3i> l = new List<Vector3i>();
+            Queue<Vector3i> todo = new Queue<Vector3i>();
+            todo.Enqueue(pos);
+            for (; ; )
+            {
+                if (todo.Count == 0 || l.Count >= maxcraftingtablesize)
+                {
+                    break;
+                }
+                var p = todo.Dequeue();
+                if (l.Contains(p))
+                {
+                    continue;
+                }
+                l.Add(p);
+                var a = new Vector3i(p.x + 1, p.y, p.z);
+                if (map.GetBlock(a.x, a.y, a.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(a);
+                }
+                var b = new Vector3i(p.x - 1, p.y, p.z);
+                if (map.GetBlock(b.x, b.y, b.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(b);
+                }
+                var c = new Vector3i(p.x, p.y + 1, p.z);
+                if (map.GetBlock(c.x, c.y, c.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(c);
+                }
+                var d = new Vector3i(p.x, p.y - 1, p.z);
+                if (map.GetBlock(d.x, d.y, d.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(d);
+                }
+            }
+            return l;
         }
         private void ExitVehicle()
         {
@@ -841,9 +901,113 @@ namespace GameModeFortress
                         cmd.FromStream(ms);
                     }
                     break;
+                case CommandId.Craft:
+                    {
+                        var cmd = new CommandCraft();
+                        cmd.FromStream(ms);
+                        if (map.GetBlock(cmd.x, cmd.y, cmd.z) != (int)TileTypeManicDigger.CraftingTable)
+                        {
+                            return;
+                        }
+                        List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
+                        List<int> ontable = new List<int>();
+                        List<int> outputtoadd = new List<int>();
+                        foreach (var v in table)
+                        {
+                            int t = map.GetBlock(v.x, v.y, v.z + 1);
+                            ontable.Add(t);
+                        }
+                        for (int i = 0; i < craftingrecipes.Count; i++)
+                        {
+                            //try apply recipe. if success then try until fail.
+                            for (; ; )
+                            {
+                                //check if ingredients available
+                                foreach(Ingredient ingredient in craftingrecipes[i].ingredients)
+                                {
+                                    if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
+                                    {
+                                        goto nextrecipe;
+                                    }
+                                }
+                                //remove ingredients
+                                foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
+                                {
+                                    for (int ii = 0; ii < ingredient.Amount; ii++)
+                                    {
+                                        //replace on table
+                                        ReplaceOne(ontable, ingredient.Type, (int)TileTypeMinecraft.Empty);
+                                    }
+                                }
+                                //add output
+                                for (int z = 0; z < craftingrecipes[i].output.Amount;z++)
+                                {
+                                    outputtoadd.Add(craftingrecipes[i].output.Type);
+                                }
+                            }
+                        nextrecipe:
+                            ;
+                        }
+                        foreach (var v in outputtoadd)
+                        {
+                            ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
+                        }
+                        int zz = 0;
+                        foreach (var v in table)
+                        {
+                            map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
+                            terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                            zz++;
+                        }
+                        break;
+                    }
                 default:
                     throw new Exception();
             }
+        }
+        private void ReplaceOne<T>(List<T> l, T from, T to)
+        {
+            for (int ii = 0; ii < l.Count; ii++)
+            {
+                if (l[ii].Equals(from))
+                {
+                    l[ii] = to;
+                    break;
+                }
+            }
+        }
+        public class Ingredient
+        {
+            public int Type;
+            public int Amount;
+        }
+        public class CraftingRecipe
+        {
+            public List<Ingredient> ingredients = new List<Ingredient>();
+            public Ingredient output = new Ingredient();
+        }
+        List<CraftingRecipe> craftingrecipes = new List<CraftingRecipe>();
+        void MakeRecipes()
+        {
+            craftingrecipes = new List<CraftingRecipe>();
+            MakeRecipe(TileTypeMinecraft.Stone, 2, TileTypeMinecraft.Cobblestone, 1);
+            MakeRecipe(TileTypeMinecraft.Cobblestone, 2, TileTypeMinecraft.Stone, 1);
+            MakeRecipe(TileTypeMinecraft.TreeTrunk, 1, TileTypeMinecraft.Wood, 1);
+            MakeRecipe(TileTypeMinecraft.Stone, 2, TileTypeMinecraft.Brick, 1);
+            MakeRecipe(TileTypeMinecraft.GoldOre, 1, TileTypeMinecraft.CoalOre, 1, TileTypeMinecraft.GoldBlock, 1);
+            MakeRecipe(TileTypeMinecraft.IronOre, 1, TileTypeMinecraft.CoalOre, 1, TileTypeMinecraft.IronBlock, 1);
+            MakeRecipe(TileTypeMinecraft.Wood, 1, TileTypeMinecraft.IronBlock, 1, GameDataTilesManicDigger.railstart + (int)RailDirectionFlags.TwoHorizontalVertical, 1);
+            MakeRecipe(TileTypeMinecraft.Wood, 3, TileTypeManicDigger.CraftingTable, 1);
+        }
+        void MakeRecipe(params object[] r)
+        {
+            var recipe = new CraftingRecipe();
+            for (int i = 0; i < r.Length - 2; i += 2)
+            {
+                recipe.ingredients.Add(new Ingredient() { Type = Convert.ToInt32(r[i]), Amount = Convert.ToInt32(r[i + 1]) });
+            }
+            recipe.output = new Ingredient() { Type = Convert.ToInt32(r[r.Length - 2]), Amount = Convert.ToInt32(r[r.Length - 1]) };
+            craftingrecipes.Add(recipe);
         }
         class RailVehicle
         {
@@ -1029,6 +1193,7 @@ namespace GameModeFortress
     {
         Build,
         EnterLeaveRailVehicle,
+        Craft,
     }
     public interface IStreamizable
     {
@@ -1086,6 +1251,31 @@ namespace GameModeFortress
         }
         #endregion
     }
+    public class CommandCraft : IStreamizable
+    {
+        public short x;
+        public short y;
+        public short z;
+        public short blocktype;
+        #region IStreamizable Members
+        public void ToStream(Stream s)
+        {
+            BinaryWriter bw = new BinaryWriter(s);
+            bw.Write((short)x);
+            bw.Write((short)y);
+            bw.Write((short)z);
+            bw.Write((short)blocktype);
+        }
+        public void FromStream(Stream s)
+        {
+            BinaryReader br = new BinaryReader(s);
+            x = br.ReadInt16();
+            y = br.ReadInt16();
+            z = br.ReadInt16();
+            blocktype = br.ReadInt16();
+        }
+        #endregion
+    }
     public class GameDataTilesManicDigger : IGameData
     {
         public GameDataTilesMinecraft data = new GameDataTilesMinecraft();
@@ -1103,6 +1293,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Crops2] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 9 };
             datanew[(int)TileTypeManicDigger.Crops3] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 10 };
             datanew[(int)TileTypeManicDigger.Crops4] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 11 };
+            datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 0 };
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -1315,5 +1506,6 @@ namespace GameModeFortress
         Crops2,
         Crops3,
         Crops4,
+        CraftingTable,
     }
 }
