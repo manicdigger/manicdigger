@@ -299,12 +299,14 @@ namespace ManicDigger
     {
         int[] MaterialSlots { get; set; }
         int activematerial { get; set; }
+        Dictionary<int, int> FiniteInventory { get; set; }
         bool ENABLE_FREEMOVE { get; set; }
         bool ENABLE_MOVE { get; set; }
         void Log(string s);
         Dictionary<string, string> PerformanceInfo { get; }
         AnimationHint LocalPlayerAnimationHint { get; set; }
         Vector3 PickCubePos { get; }
+        string LocalPlayerName { get; }
     }
     public class AnimationHint
     {
@@ -348,6 +350,12 @@ namespace ManicDigger
         #endregion
         #region IViewport3d Members
         public Vector3 PickCubePos { get; set; }
+        #endregion
+        #region IViewport3d Members
+        public Dictionary<int, int> FiniteInventory { get; set; }
+        #endregion
+        #region IViewport3d Members
+        public string LocalPlayerName { get; set; }
         #endregion
     }
     public interface IModelToDraw
@@ -1623,6 +1631,9 @@ namespace ManicDigger
         }
         int[] materialSlots;
         public int[] MaterialSlots { get { return materialSlots; } set { materialSlots = value; } }
+        Dictionary<int, int> finiteinventory = new Dictionary<int, int>();
+        public Dictionary<int, int> FiniteInventory { get { return finiteinventory; } set { finiteinventory = value; } }
+        public bool ENABLE_FINITEINVENTORY = false;
         bool ENABLE_ZFAR = false;
         protected override void OnResize(EventArgs e)
         {
@@ -2899,14 +2910,24 @@ namespace ManicDigger
             int y = 0;
             for (int ii = 0; ii < buildable.Count; ii++)
             {
-                Draw2dTexture(terrain.terrainTexture, xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
-                    ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize,
+                int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
+                int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
+                Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
                     data.GetTileTextureIdForInventory(buildable[ii]));
                 if (x == inventoryselectedx && y == inventoryselectedy)
                 {
                     Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                         xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
                         ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize);
+                }
+                if (ENABLE_FINITEINVENTORY)
+                {
+                    int amount = 0;
+                    if (FiniteInventory.ContainsKey(buildable[ii]))
+                    {
+                        amount = FiniteInventory[buildable[ii]];
+                    }
+                    Draw2dText("" + amount, xx, yy, 8, null);
                 }
                 x++;
                 if (x >= inventorysize)
@@ -2945,11 +2966,22 @@ namespace ManicDigger
             int singlesize = 40;
             for (int i = 0; i < 10; i++)
             {
-                Draw2dTexture(terrain.terrainTexture, xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize,
-                    data.GetTileTextureIdForInventory((int)materialSlots[i]));
+                int x = xcenter(singlesize * 10) + i * singlesize;
+                int y = Height - 100;
+                Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
+                        data.GetTileTextureIdForInventory((int)materialSlots[i]));
                 if (i == activematerial)
                 {
                     Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"), xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);
+                }
+                if (ENABLE_FINITEINVENTORY)
+                {
+                    int amount = 0;
+                    if (FiniteInventory.ContainsKey((int)materialSlots[i]))
+                    {
+                        amount = FiniteInventory[(int)materialSlots[i]];
+                    }
+                    Draw2dText("" + amount, x, y, 8, null);
                 }
             }
         }
@@ -3613,6 +3645,9 @@ namespace ManicDigger
         #endregion
         #region IViewport3d Members
         public Vector3 PickCubePos { get { return pickcubepos; } }
+        #endregion
+        #region IViewport3d Members
+        public string LocalPlayerName { get { return username; } }
         #endregion
     }
 }

@@ -27,6 +27,8 @@ namespace ManicDiggerServer
         public Water water { get; set; }
         [Inject]
         public IGameWorld gameworld { get; set; }
+        [Inject]
+        public IClients players { get; set; }
         public IMapStorage map;
         bool ENABLE_FORTRESS = true;
         public void Start()
@@ -369,6 +371,7 @@ namespace ManicDiggerServer
                     SendLevel(clientid);
                     //todo verificationkey
                     clients[clientid].playername = username;
+                    players.Players[clientid] = new Player() { Name = username };
                     //send new player spawn to all players
                     foreach (var k in clients)
                     {
@@ -378,7 +381,7 @@ namespace ManicDiggerServer
                     //send all players spawn to new player
                     foreach (var k in clients)
                     {
-                        if (k.Key != clientid)
+                        if (k.Key != clientid || ENABLE_FORTRESS)
                         {
                             SendSpawnPlayer(clientid, (byte)k.Key, k.Value.playername, 0, 0, 0, 0, 0);
                         }
@@ -465,7 +468,7 @@ namespace ManicDiggerServer
                     gameworld.DoCommand(commandData, clientid);
                     foreach (var k in clients)
                     {
-                        if (k.Key != clientid)
+                        //if (k.Key != clientid)
                         {
                             SendCommand(k.Key, clientid, commandData);
                         }
@@ -729,6 +732,8 @@ namespace ManicDiggerServer
             g.viewport = new ViewportDummy();
             s.gameworld = g;
             g.generator = File.ReadAllText("WorldGenerator.cs");
+            gen.Compile(g.generator);
+            s.players = g;
 
             s.Start();
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();

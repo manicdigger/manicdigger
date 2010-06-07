@@ -453,6 +453,7 @@ namespace ManicDigger
         }
         bool spawned = false;
         string ServerName;
+        public int LocalPlayerId = 255;
         private int TryReadPacket()
         {
             BinaryReader br = new BinaryReader(new MemoryStream(received.ToArray()));
@@ -595,6 +596,11 @@ namespace ManicDigger
                         }
                         byte playerid = br.ReadByte();
                         string playername = NetworkHelper.ReadString64(br);
+                        if (ENABLE_FORTRESS && playerid == 255)
+                        {
+                            spawned = true;
+                            break;
+                        }
                         connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
                         if (Clients.Players.ContainsKey(playerid))
                         {

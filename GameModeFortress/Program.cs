@@ -72,6 +72,7 @@ namespace GameModeFortress
             if (singleplayer)
             {
                 network = new NetworkClientDummyInfinite() { gameworld = clientgame };
+                clientgame.Players[0] = new Player() { Name = "gamer1" };
             }
             else
             {
@@ -144,6 +145,7 @@ namespace GameModeFortress
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
             //w.characterdrawer = new CharacterDrawerMd2() { getfile = getfile, the3d = w };
             w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile };
+            w.ENABLE_FINITEINVENTORY = true;
             clientgame.physics = physics;
             clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;

@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Xml;
 using System.Security;
 using OpenTK.Graphics.OpenGL;
+using System.Xml.XPath;
 
 namespace GameModeFortress
 {
@@ -419,9 +420,16 @@ namespace GameModeFortress
             }
             return UpDown.None;
         }
+        Dictionary<int, int> StartFiniteInventory()
+        {
+            Dictionary<int, int> d = new Dictionary<int, int>();
+            d[(int)TileTypeManicDigger.CraftingTable] = 6;
+            return d;
+        }
         public void OnNewFrame(double dt)
         {
             Tick();
+            viewport.FiniteInventory = GetPlayerInventory(viewport.LocalPlayerName);
             viewport.LocalPlayerAnimationHint.InVehicle = railriding;
             viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
 
@@ -751,8 +759,8 @@ namespace GameModeFortress
                     activematerial = data.TileIdEmpty;
                 }
                 //speculative
-                map.SetBlock(x, y, z, (byte)activematerial);
-                terrain.UpdateTile(x, y, z);
+                //map.SetBlock(x, y, z, (byte)activematerial);
+                //terrain.UpdateTile(x, y, z);
             }
         }
         byte[] MakeCommand(CommandId cmdid, IStreamizable cmd)
@@ -833,6 +841,23 @@ namespace GameModeFortress
             b.AppendLine(XmlTool.X("Y", "" + map.MapSizeY));
             b.AppendLine(XmlTool.X("Z", "" + map.MapSizeZ));
             b.AppendLine("</MapSize>");
+            b.AppendLine("<FiniteInventory>");
+            foreach (var k in PlayersFiniteInventory)
+            {
+                b.AppendLine("<PlayerFiniteInventory>");
+                b.AppendLine(XmlTool.X("Name", SecurityElement.Escape(k.Key)));
+                b.AppendLine("<Blocks>");
+                foreach (var kk in k.Value)
+                {
+                    b.AppendLine("<Block>");
+                    b.AppendLine(XmlTool.X("Type", kk.Key.ToString()));
+                    b.AppendLine(XmlTool.X("Amount", kk.Value.ToString()));
+                    b.AppendLine("</Block>");
+                }
+                b.AppendLine("</Blocks>");
+                b.AppendLine("</PlayerFiniteInventory>");
+            }
+            b.AppendLine("</FiniteInventory>");
             b.AppendLine(XmlTool.X("InfiniteWorldGenerator", SecurityElement.Escape(generator)));
             byte[] mapdata = map.SaveBlocks();
             b.AppendLine(XmlTool.X("InfiniteMapData", Convert.ToBase64String(mapdata)));
@@ -855,6 +880,19 @@ namespace GameModeFortress
                 map.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/X"));
                 map.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Y"));
                 map.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/MapSize/Z"));
+                foreach (XPathNavigator k in d.CreateNavigator()
+                    .Select("/ManicDiggerSave/FiniteInventory/PlayerFiniteInventory"))
+                {
+                    string name = k.SelectSingleNode("Name").Value;
+                    Dictionary<int, int> blocks = new Dictionary<int, int>();
+                    foreach (XPathNavigator kk in k.SelectSingleNode("Blocks").Select("Block"))
+                    {
+                        int type = int.Parse(kk.SelectSingleNode("Type").Value);
+                        int amount = int.Parse(kk.SelectSingleNode("Amount").Value);
+                        blocks[type] = amount;
+                    }
+                    PlayersFiniteInventory[name] = blocks;
+                }
                 var ss = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteWorldGenerator");
                 if (ss != null && ss != "")
                 {
@@ -878,6 +916,26 @@ namespace GameModeFortress
         {
             float dt = 1.0f / 75;
         }
+        Dictionary<string, Dictionary<int, int>> PlayersFiniteInventory = new Dictionary<string, Dictionary<int, int>>();
+        public bool ENABLE_FINITEINVENTORY = true;
+        Dictionary<int, int> GetPlayerInventory(string playername)
+        {
+            if (!PlayersFiniteInventory.ContainsKey(playername))
+            {
+                PlayersFiniteInventory[playername] = StartFiniteInventory();
+            }
+            return PlayersFiniteInventory[playername];
+        }
+        int TotalAmount(Dictionary<int, int> inventory)
+        {
+            int sum = 0;
+            foreach (var k in inventory)
+            {
+                sum += k.Value;
+            }
+            return sum;
+        }
+        public int FiniteInventoryMax = 100;
         public void DoCommand(byte[] command, int player_id)
         {
             MemoryStream ms = new MemoryStream(command);
@@ -890,8 +948,42 @@ namespace GameModeFortress
                         var cmd = new CommandBuild();
                         cmd.FromStream(ms);
                         Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
-                        map.SetBlock(cmd.x, cmd.y, cmd.z, cmd.mode == BlockSetMode.Create ?
-                            (byte)cmd.tiletype : data.TileIdEmpty);
+                        if (ENABLE_FINITEINVENTORY)
+                        {
+                            Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
+                            if (cmd.mode == BlockSetMode.Create)
+                            {
+                                //must have in inventory
+                                if ((!inventory.ContainsKey(cmd.tiletype))
+                                    || inventory[cmd.tiletype] < 1)
+                                {
+                                    return;
+                                }
+                                inventory[cmd.tiletype]--;
+                            }
+                            else
+                            {
+                                //check inventory full
+                                if (TotalAmount(inventory) >= FiniteInventoryMax)
+                                {
+                                    return;
+                                }
+                                //add to inventory
+                                int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
+                                blocktype = data.PlayerBuildableMaterialType(blocktype);
+                                if (!inventory.ContainsKey(blocktype))
+                                {
+                                    inventory[blocktype] = 0;
+                                }
+                                inventory[blocktype]++;
+                            }
+                        }
+                        else
+                        {
+                        }
+                        int tiletype = cmd.mode == BlockSetMode.Create ?
+                            (byte)cmd.tiletype : data.TileIdEmpty;
+                        map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
                         terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                     }
                     break;
