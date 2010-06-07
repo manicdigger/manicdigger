@@ -428,6 +428,14 @@ namespace GameModeFortress
         }
         public void OnNewFrame(double dt)
         {
+            foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
+            {
+                if ((DateTime.Now - k.Value.time).TotalSeconds > 5)
+                {
+                    speculative.Remove(k.Key);
+                    terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                }
+            }
             Tick();
             viewport.FiniteInventory = GetPlayerInventory(viewport.LocalPlayerName);
             viewport.LocalPlayerAnimationHint.InVehicle = railriding;
@@ -751,18 +759,47 @@ namespace GameModeFortress
                     mode = mode,
                     tiletype = (byte)activematerial,
                 };
-                //ticks.DoCommand(MakeCommand(CommandId.Build, cmd));
-                network.SendCommand(MakeCommand(CommandId.Build, cmd));
-                //network.SendSetBlock(blockpos, mode, activematerial);
-                if (mode == BlockSetMode.Destroy)
+                if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
                 {
-                    activematerial = data.TileIdEmpty;
+                    if (mode == BlockSetMode.Destroy)
+                    {
+                        activematerial = data.TileIdEmpty;
+                    }
+                    //speculative
+                    speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = activematerial, time = DateTime.Now };
+                    terrain.UpdateTile(x, y, z);
                 }
-                //speculative
-                //map.SetBlock(x, y, z, (byte)activematerial);
-                //terrain.UpdateTile(x, y, z);
             }
         }
+        int localplayerid
+        {
+            get
+            {
+                foreach (var k in players)
+                {
+                    if (k.Value.Name == viewport.LocalPlayerName)
+                    {
+                        return k.Key;
+                    }
+                }
+                throw new Exception();
+            }
+        }
+        bool TrySendCommand(byte[] cmd)
+        {
+            if (DoCommand(cmd, localplayerid, false))
+            {
+                network.SendCommand(cmd);
+                return true;
+            }
+            return false;
+        }
+        struct Speculative
+        {
+            public DateTime time;
+            public int blocktype;
+        }
+        Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
         byte[] MakeCommand(CommandId cmdid, IStreamizable cmd)
         {
             MemoryStream ms = new MemoryStream();
@@ -938,6 +975,10 @@ namespace GameModeFortress
         public int FiniteInventoryMax = 100;
         public void DoCommand(byte[] command, int player_id)
         {
+            DoCommand(command, player_id, true);
+        }
+        public bool DoCommand(byte[] command, int player_id, bool execute)
+        {
             MemoryStream ms = new MemoryStream(command);
             BinaryReader br = new BinaryReader(ms);
             CommandId commandid = (CommandId)br.ReadByte();
@@ -957,40 +998,55 @@ namespace GameModeFortress
                                 if ((!inventory.ContainsKey(cmd.tiletype))
                                     || inventory[cmd.tiletype] < 1)
                                 {
-                                    return;
+                                    return false;
                                 }
-                                inventory[cmd.tiletype]--;
+                                if (execute)
+                                {
+                                    inventory[cmd.tiletype]--;
+                                }
                             }
                             else
                             {
-                                //check inventory full
                                 if (TotalAmount(inventory) >= FiniteInventoryMax)
                                 {
-                                    return;
+                                    return false;
+                                }
+                                if ((!data.IsValidTileType(cmd.tiletype))
+                                    || cmd.tiletype == data.TileIdEmpty)
+                                {
+                                    return false;
                                 }
                                 //add to inventory
                                 int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
                                 blocktype = data.PlayerBuildableMaterialType(blocktype);
-                                if (!inventory.ContainsKey(blocktype))
+                                if (execute)
                                 {
-                                    inventory[blocktype] = 0;
+                                    if (!inventory.ContainsKey(blocktype))
+                                    {
+                                        inventory[blocktype] = 0;
+                                    }
+                                    inventory[blocktype]++;
                                 }
-                                inventory[blocktype]++;
                             }
                         }
                         else
                         {
                         }
-                        int tiletype = cmd.mode == BlockSetMode.Create ?
-                            (byte)cmd.tiletype : data.TileIdEmpty;
-                        map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
-                        terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                        if (execute)
+                        {
+                            int tiletype = cmd.mode == BlockSetMode.Create ?
+                                (byte)cmd.tiletype : data.TileIdEmpty;
+                            map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
+                            terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                        }
+                        return true;
                     }
                     break;
                 case CommandId.EnterLeaveRailVehicle:
                     {
                         var cmd = new CommandEnterLeaveRailVehicle();
                         cmd.FromStream(ms);
+                        return true;
                     }
                     break;
                 case CommandId.Craft:
@@ -999,7 +1055,7 @@ namespace GameModeFortress
                         cmd.FromStream(ms);
                         if (map.GetBlock(cmd.x, cmd.y, cmd.z) != (int)TileTypeManicDigger.CraftingTable)
                         {
-                            return;
+                            return false;
                         }
                         List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
                         List<int> ontable = new List<int>();
@@ -1045,14 +1101,18 @@ namespace GameModeFortress
                             ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
                         }
                         int zz = 0;
-                        foreach (var v in table)
+                        if (execute)
                         {
-                            map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
-                            terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
-                            zz++;
+                            foreach (var v in table)
+                            {
+                                map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
+                                terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                                zz++;
+                            }
                         }
-                        break;
+                        return true;
                     }
+                    break;
                 default:
                     throw new Exception();
             }
@@ -1149,6 +1209,10 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public int GetTerrainBlock(int x, int y, int z)
         {
+            if (speculative.ContainsKey(new Vector3i(x, y, z)))
+            {
+                return speculative[new Vector3i(x, y, z)].blocktype;
+            }
             return map.GetBlock(x, y, z);
         }
         public System.Drawing.Color GetTerrainBlockColor(int x, int y, int z)
@@ -1178,9 +1242,12 @@ namespace GameModeFortress
             return GetTerrainBlock(x, y, z);
         }
         #endregion
-        //Needed for walking on and picking the build order blocks.
-        internal int GetBlockForPhysics(int x,int y,int z)
+        public int GetBlockForPhysics(int x,int y,int z)
         {
+            if (speculative.ContainsKey(new Vector3i(x, y, z)))
+            {
+                return speculative[new Vector3i(x, y, z)].blocktype;
+            }
             return map.GetBlock(x,y,z);
         }
         #region IMapStorage Members
