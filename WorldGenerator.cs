@@ -61,6 +61,7 @@ using System;
         int TileIdSand = 12;
         int TileIdTreeTrunk = 17;
         int TileIdLeaves = 18;
+        int TileIdStone = 1;
         float treedensity = 0.008f;
         int GetBlockInside(int x, int y, int z, int height)
         {
@@ -73,13 +74,15 @@ using System;
             {
                 if (z > height) { return TileIdEmpty; }
                 if (z == height) { return TileIdGrass; }
-                return TileIdDirt;
+                if (z > height - 5) { return TileIdDirt; }
+                return TileIdStone;
             }
             else
             {
                 if (z > height) { return TileIdWater; }
                 if (z == height) { return TileIdSand; }
-                return TileIdDirt;
+                if (z > height - 5) { return TileIdDirt; }
+                return TileIdStone;
             }
         }
         int Tree(int x, int y, int z, int height)
