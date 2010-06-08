@@ -324,6 +324,7 @@ namespace GameModeFortress
         bool wasqpressed = false;
         bool wasvpressed = false;
         bool wascpressed = false;
+        bool wasupressed = false;
         VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
         {
             if (turnright)
@@ -593,11 +594,27 @@ namespace GameModeFortress
                         cmd.z = (short)pos.z;
                         network.SendCommand(MakeCommand(CommandId.Craft, cmd));
                     }
-                }                
+                }
+            }
+            if (!wasupressed && viewport.keyboardstate[OpenTK.Input.Key.U])
+            {
+                if (viewport.PickCubePos != new Vector3(-1, -1, -1))
+                {
+                    Vector3i pos = new Vector3i((int)viewport.PickCubePos.X, (int)viewport.PickCubePos.Z, (int)viewport.PickCubePos.Y);
+                    {
+                        CommandDump cmd = new CommandDump();
+                        cmd.x = (short)pos.x;
+                        cmd.y = (short)pos.y;
+                        cmd.z = (short)pos.z;
+                        cmd.blocktype = (short)viewport.MaterialSlots[viewport.activematerial];
+                        network.SendCommand(MakeCommand(CommandId.Dump, cmd));
+                    }
+                }
             }
             wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
             wascpressed = viewport.keyboardstate[OpenTK.Input.Key.C];
+            wasupressed = viewport.keyboardstate[OpenTK.Input.Key.U];
         }
         private List<Vector3i> GetTable(Vector3i pos)
         {
@@ -1071,7 +1088,7 @@ namespace GameModeFortress
                             for (; ; )
                             {
                                 //check if ingredients available
-                                foreach(Ingredient ingredient in craftingrecipes[i].ingredients)
+                                foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
                                 {
                                     if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
                                     {
@@ -1088,7 +1105,7 @@ namespace GameModeFortress
                                     }
                                 }
                                 //add output
-                                for (int z = 0; z < craftingrecipes[i].output.Amount;z++)
+                                for (int z = 0; z < craftingrecipes[i].output.Amount; z++)
                                 {
                                     outputtoadd.Add(craftingrecipes[i].output.Type);
                                 }
@@ -1113,9 +1130,69 @@ namespace GameModeFortress
                         return true;
                     }
                     break;
+                case CommandId.Dump:
+                    {
+                        var cmd = new CommandDump();
+                        cmd.FromStream(ms);
+                        Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
+                        int dumpcount = 0;
+                        if (inventory.ContainsKey(cmd.blocktype))
+                        {
+                            dumpcount = inventory[cmd.blocktype];
+                        }
+                        Vector3i pos = new Vector3i(cmd.x, cmd.y, cmd.z);
+                        for (int i = 0; i < dumpcount; i++)
+                        {
+                            //find empty position that is nearest to dump place AND has a block under.
+                            Vector3i? nearpos = FindDumpPlace(pos);
+                            if (nearpos == null)
+                            {
+                                break;
+                            }
+                            map.SetBlock(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, cmd.blocktype);
+                            inventory[cmd.blocktype]--;
+                            terrain.UpdateTile(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z);
+                        }
+                        return true;
+                    }
+                    break;
                 default:
                     throw new Exception();
             }
+        }
+        private Vector3i? FindDumpPlace(Vector3i pos)
+        {
+            List<Vector3i> l = new List<Vector3i>();
+            for (int x = 0; x < 10; x++)
+            {
+                for (int y = 0; y < 10; y++)
+                {
+                    for (int z = 0; z < 10; z++)
+                    {
+                        int xx = pos.x + x - 10 / 2;
+                        int yy = pos.y + y - 10 / 2;
+                        int zz = pos.z + z - 10 / 2;
+                        if (map.GetBlock(xx, yy, zz) == data.TileIdEmpty && map.GetBlock(xx, yy, zz - 1) != data.TileIdEmpty)
+                        {
+                            l.Add(new Vector3i(xx, yy, zz));
+                        }
+                    }
+                }
+            }
+            l.Sort((a, b) => Length(Minus(a, pos)).CompareTo(Length(Minus(b, pos))));
+            if (l.Count > 0)
+            {
+                return l[0];
+            }
+            return null;
+        }
+        private Vector3i Minus(Vector3i a, Vector3i b)
+        {
+            return new Vector3i(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+        int Length(Vector3i v)
+        {
+            return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
         }
         private void ReplaceOne<T>(List<T> l, T from, T to)
         {
@@ -1353,6 +1430,7 @@ namespace GameModeFortress
         Build,
         EnterLeaveRailVehicle,
         Craft,
+        Dump,
     }
     public interface IStreamizable
     {
@@ -1411,6 +1489,31 @@ namespace GameModeFortress
         #endregion
     }
     public class CommandCraft : IStreamizable
+    {
+        public short x;
+        public short y;
+        public short z;
+        public short blocktype;
+        #region IStreamizable Members
+        public void ToStream(Stream s)
+        {
+            BinaryWriter bw = new BinaryWriter(s);
+            bw.Write((short)x);
+            bw.Write((short)y);
+            bw.Write((short)z);
+            bw.Write((short)blocktype);
+        }
+        public void FromStream(Stream s)
+        {
+            BinaryReader br = new BinaryReader(s);
+            x = br.ReadInt16();
+            y = br.ReadInt16();
+            z = br.ReadInt16();
+            blocktype = br.ReadInt16();
+        }
+        #endregion
+    }
+    public class CommandDump : IStreamizable
     {
         public short x;
         public short y;
