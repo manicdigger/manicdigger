@@ -588,11 +588,9 @@ namespace GameModeFortress
                     if (map.GetBlock(pos.x,pos.y,pos.z)
                         == (int)TileTypeManicDigger.CraftingTable)
                     {
-                        CommandCraft cmd = new CommandCraft();
-                        cmd.x = (short)pos.x;
-                        cmd.y = (short)pos.y;
-                        cmd.z = (short)pos.z;
-                        network.SendCommand(MakeCommand(CommandId.Craft, cmd));
+                        //draw crafting recipes list.
+                        viewport.GuiStateCraft(craftingrecipes, GetOnTable(GetTable(pos)),
+                        (recipe) => { CraftingRecipeSelected(pos, recipe); });
                     }
                 }
             }
@@ -615,6 +613,19 @@ namespace GameModeFortress
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
             wascpressed = viewport.keyboardstate[OpenTK.Input.Key.C];
             wasupressed = viewport.keyboardstate[OpenTK.Input.Key.U];
+        }
+        void CraftingRecipeSelected(Vector3i pos, int? recipe)
+        {
+            if (recipe == null)
+            {
+                return;
+            }
+            CommandCraft cmd = new CommandCraft();
+            cmd.x = (short)pos.x;
+            cmd.y = (short)pos.y;
+            cmd.z = (short)pos.z;
+            cmd.recipeid = (short)recipe.Value;
+            network.SendCommand(MakeCommand(CommandId.Craft, cmd));
         }
         private List<Vector3i> GetTable(Vector3i pos)
         {
@@ -1074,15 +1085,15 @@ namespace GameModeFortress
                         {
                             return false;
                         }
-                        List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
-                        List<int> ontable = new List<int>();
-                        List<int> outputtoadd = new List<int>();
-                        foreach (var v in table)
+                        if (cmd.recipeid < 0 || cmd.recipeid >= craftingrecipes.Count)
                         {
-                            int t = map.GetBlock(v.x, v.y, v.z + 1);
-                            ontable.Add(t);
+                            return false;
                         }
-                        for (int i = 0; i < craftingrecipes.Count; i++)
+                        List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
+                        List<int> ontable = GetOnTable(table);
+                        List<int> outputtoadd = new List<int>();
+                        //for (int i = 0; i < craftingrecipes.Count; i++)
+                        int i = cmd.recipeid;
                         {
                             //try apply recipe. if success then try until fail.
                             for (; ; )
@@ -1123,7 +1134,7 @@ namespace GameModeFortress
                             foreach (var v in table)
                             {
                                 map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
-                                terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+                                terrain.UpdateTile(v.x, v.y, v.z + 1);
                                 zz++;
                             }
                         }
@@ -1159,6 +1170,16 @@ namespace GameModeFortress
                 default:
                     throw new Exception();
             }
+        }
+        private List<int> GetOnTable(List<Vector3i> table)
+        {
+            List<int> ontable = new List<int>();
+            foreach (var v in table)
+            {
+                int t = map.GetBlock(v.x, v.y, v.z + 1);
+                ontable.Add(t);
+            }
+            return ontable;
         }
         private Vector3i? FindDumpPlace(Vector3i pos)
         {
@@ -1204,16 +1225,6 @@ namespace GameModeFortress
                     break;
                 }
             }
-        }
-        public class Ingredient
-        {
-            public int Type;
-            public int Amount;
-        }
-        public class CraftingRecipe
-        {
-            public List<Ingredient> ingredients = new List<Ingredient>();
-            public Ingredient output = new Ingredient();
         }
         List<CraftingRecipe> craftingrecipes = new List<CraftingRecipe>();
         void MakeRecipes()
@@ -1493,7 +1504,7 @@ namespace GameModeFortress
         public short x;
         public short y;
         public short z;
-        public short blocktype;
+        public short recipeid;
         #region IStreamizable Members
         public void ToStream(Stream s)
         {
@@ -1501,7 +1512,7 @@ namespace GameModeFortress
             bw.Write((short)x);
             bw.Write((short)y);
             bw.Write((short)z);
-            bw.Write((short)blocktype);
+            bw.Write((short)recipeid);
         }
         public void FromStream(Stream s)
         {
@@ -1509,7 +1520,7 @@ namespace GameModeFortress
             x = br.ReadInt16();
             y = br.ReadInt16();
             z = br.ReadInt16();
-            blocktype = br.ReadInt16();
+            recipeid = br.ReadInt16();
         }
         #endregion
     }

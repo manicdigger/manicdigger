@@ -101,7 +101,7 @@ namespace ManicDigger
         void Move(CameraMove move, float p);
         Vector3 Position { get; }
     }
-    public class KameraDummy :IKamera
+    public class KameraDummy : IKamera
     {
         #region IKamera Members
         public void Move(CameraMove move, float p)
@@ -307,6 +307,7 @@ namespace ManicDigger
         AnimationHint LocalPlayerAnimationHint { get; set; }
         Vector3 PickCubePos { get; }
         string LocalPlayerName { get; }
+        void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
     }
     public class AnimationHint
     {
@@ -356,6 +357,11 @@ namespace ManicDigger
         #endregion
         #region IViewport3d Members
         public string LocalPlayerName { get; set; }
+        #endregion
+        #region IViewport3d Members
+        public void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
+        {
+        }
         #endregion
     }
     public interface IModelToDraw
@@ -639,7 +645,7 @@ namespace ManicDigger
         [Inject]
         public IClients clients { get; set; }
         [Inject]
-        public CharacterPhysics physics { get; set; } 
+        public CharacterPhysics physics { get; set; }
         [Inject]
         public INetworkClient network { get; set; }
         [Inject]
@@ -731,7 +737,7 @@ namespace ManicDigger
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
             */
-            
+
             if (config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.Blend);
@@ -739,7 +745,7 @@ namespace ManicDigger
                 //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
                 //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
             }
-            
+
             return id;
         }
         protected override void OnFocusedChanged(EventArgs e)
@@ -751,6 +757,8 @@ namespace ManicDigger
             else if (guistate == GuiState.Inventory)
             { }
             else if (guistate == GuiState.MapLoading)
+            { }
+            else if (guistate == GuiState.CraftingRecipes)
             { }
             else { throw new Exception(); }
             base.OnFocusedChanged(e);
@@ -787,7 +795,7 @@ namespace ManicDigger
                     mapManipulator.LoadMap(map, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
                     ENABLE_FREEMOVE = true;
                     player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
-                    player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);                    
+                    player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
                 }
                 else
                 {
@@ -823,8 +831,7 @@ namespace ManicDigger
         private static void SetAmbientLight(Color c)
         {
             float mult = 1f;
-            float[] global_ambient = new float[]
-            { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
+            float[] global_ambient = new float[] { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
             GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
         }
         protected override void OnClosed(EventArgs e)
@@ -1228,7 +1235,7 @@ namespace ManicDigger
                     if (key == OpenTK.Input.Key.Keypad7) { c += "7"; }
                     if (key == OpenTK.Input.Key.Keypad8) { c += "8"; }
                     if (key == OpenTK.Input.Key.Keypad9) { c += "9"; }
-                    
+
                     if (Keyboard[OpenTK.Input.Key.ShiftLeft] || Keyboard[OpenTK.Input.Key.ShiftRight])
                     {
                         c = c.ToUpper();
@@ -1459,6 +1466,13 @@ namespace ManicDigger
             }
             else if (guistate == GuiState.MapLoading)
             {
+            }
+            else if (guistate == GuiState.CraftingRecipes)
+            {
+                if (e.Key == OpenTK.Input.Key.Escape)
+                {
+                    GuiStateBackToGame();
+                }
             }
             else throw new Exception();
         }
@@ -1697,7 +1711,7 @@ namespace ManicDigger
                 mouse_previous = new Point(centerx, centery);
             }
         }
-        public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx,double orientationy)
+        public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx, double orientationy)
         {
             //Don't calculate for nothing ...
             if (dx == 0.0f & dy == 0.0f && dz == 0.0f)
@@ -1822,7 +1836,7 @@ namespace ManicDigger
                             player.playerorientation.Y = (float)Math.PI + Vector3.CalculateAngle(new Vector3(1, 0, 0), q);
                         }
                     }
-                    else if(ENABLE_MOVE)
+                    else if (ENABLE_MOVE)
                     {
                         if (Keyboard[OpenTK.Input.Key.W]) { movedy += 1; }
                         if (Keyboard[OpenTK.Input.Key.S]) { movedy += -1; }
@@ -1850,6 +1864,9 @@ namespace ManicDigger
             else if (guistate == GuiState.MapLoading)
             {
                 //todo back to game when escape key pressed.
+            }
+            else if (guistate == GuiState.CraftingRecipes)
+            {
             }
             else throw new Exception();
 
@@ -1954,6 +1971,10 @@ namespace ManicDigger
             {
                 InventoryMouse();
             }
+            if (guistate == GuiState.CraftingRecipes)
+            {
+                CraftingMouse();
+            }
             if (!FreeMouse)
             {
                 UpdateMouseViewportControl(e);
@@ -1978,7 +1999,7 @@ namespace ManicDigger
                     c = 0;
                 }
                 return c;
-            }            
+            }
         }
         Vector3 playerdestination;
         class MenuState
@@ -2147,7 +2168,7 @@ namespace ManicDigger
                             {
                                 StartParticleEffect(newtile);//must be before deletion - gets ground type.
                             }
-                            if (!MapUtil.IsValidPos(map,(int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                            if (!MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                             {
                                 throw new Exception();
                             }
@@ -2289,7 +2310,7 @@ namespace ManicDigger
             {
                 DrawSkybox();
                 terrain.Draw();
-                
+
                 DrawImmediateParticleEffects(e.Time);
                 DrawCubeLines(pickcubepos);
 
@@ -2753,6 +2774,7 @@ namespace ManicDigger
             MainMenu,
             Inventory,
             MapLoading,
+            CraftingRecipes,
         }
         private void DrawMouseCursor()
         {
@@ -2800,6 +2822,8 @@ namespace ManicDigger
             { DrawInventory(); }
             else if (guistate == GuiState.MapLoading)
             { DrawMapLoading(); }
+            else if (guistate == GuiState.CraftingRecipes)
+            { DrawCraftingRecipes(); }
             else throw new Exception();
             if (ENABLE_DRAWFPS)
             {
@@ -2838,7 +2862,7 @@ namespace ManicDigger
                 if (((LocalPlayerPosition - k.Value.Position).Length < 20)
                     || Keyboard[OpenTK.Input.Key.AltLeft] || Keyboard[OpenTK.Input.Key.AltRight])
                 {
-                    string name=k.Value.Name;
+                    string name = k.Value.Name;
                     var ppos = playerdrawinfo[k.Key].interpolation.InterpolatedState(totaltime);
                     if (ppos != null)
                     {
@@ -2859,7 +2883,7 @@ namespace ManicDigger
         int maploadingprogress;
         private void DrawMapLoading()
         {
-            string connecting="Connecting...";
+            string connecting = "Connecting...";
             string progress = string.Format("{0}%", maploadingprogress);
             Draw2dText("Connecting...", xcenter(TextSize(connecting, 14).Width), Height / 2 - 50, 14, Color.White);
             Draw2dText(progress, xcenter(TextSize(progress, 14).Width), Height / 2 - 20, 14, Color.White);
@@ -2878,7 +2902,7 @@ namespace ManicDigger
         int inventorysize;
         int? InventoryGetSelected()
         {
-            int id=inventoryselectedx + (inventoryselectedy * inventorysize);
+            int id = inventoryselectedx + (inventoryselectedy * inventorysize);
             if (id >= Buildable.Count)
             {
                 return null;
@@ -2905,7 +2929,7 @@ namespace ManicDigger
         {
             List<int> buildable = Buildable;
             inventorysize = (int)Math.Ceiling(Math.Sqrt(buildable.Count));
-            
+
             int x = 0;
             int y = 0;
             for (int ii = 0; ii < buildable.Count; ii++)
@@ -2959,6 +2983,80 @@ namespace ManicDigger
                     GuiStateBackToGame();
                 }
                 mouseleftclick = false;
+            }
+        }
+        void CraftingMouse()
+        {
+            if (okrecipes == null)
+            {
+                return;
+            }
+            int menustartx = xcenter(600);
+            int menustarty = ycenter(okrecipes.Count * 80);
+            if (mouse_current.Y >= menustarty && mouse_current.Y < menustarty + okrecipes.Count * 80)
+            {
+                craftingselectedrecipe = (mouse_current.Y - menustarty) / 80;
+            }
+            else
+            {
+                //craftingselectedrecipe = -1;
+            }
+            if (mouseleftclick)
+            {
+                if (okrecipes.Count != 0)
+                {
+                    craftingrecipeselected(okrecipes[craftingselectedrecipe]);
+                }
+                mouseleftclick = false;
+                GuiStateBackToGame();
+            }
+        }
+        int craftingselectedrecipe = 0;
+        List<int> okrecipes;
+        private void DrawCraftingRecipes()
+        {
+            List<int> okrecipes = new List<int>();
+            this.okrecipes = okrecipes;
+            for (int i = 0; i < craftingrecipes.Count; i++)
+            {
+                CraftingRecipe r = craftingrecipes[i];
+                //can apply recipe?
+                foreach (Ingredient ingredient in r.ingredients)
+                {
+                    if (craftingblocks.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
+                    {
+                        goto next;
+                    }
+                }
+                okrecipes.Add(i);
+            next:
+                ;
+            }
+            int menustartx = xcenter(600);
+            int menustarty = ycenter(okrecipes.Count * 80);
+            if (okrecipes.Count == 0)
+            {
+                Draw2dText("No materials for crafting.", xcenter(200), ycenter(20), 12, Color.White);
+                return;
+            }
+            for (int i = 0; i < okrecipes.Count; i++)
+            {
+                CraftingRecipe r = craftingrecipes[okrecipes[i]];
+                for (int ii = 0; ii < r.ingredients.Count; ii++)
+                {
+                    int xx = menustartx + 20 + ii * 130;
+                    int yy = menustarty + i * 80;
+                    Draw2dTexture(terrain.terrainTexture, xx, yy, 30, 30, data.GetTileTextureIdForInventory(r.ingredients[ii].Type));
+                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, data.BlockName(r.ingredients[ii].Type)), xx + 50, yy, 12,
+                        i == craftingselectedrecipe ? Color.Red : Color.White);
+                }
+                {
+                    int xx = menustartx + 20 + 400;
+                    int yy = menustarty + i * 80;
+                    Draw2dTexture(terrain.terrainTexture, xx, yy, 40, 40, data.GetTileTextureIdForInventory(r.output.Type));
+                    Draw2dText(string.Format("{0} {1}", r.output.Amount, data.BlockName(r.output.Type)), xx + 50, yy, 12,
+                        i == craftingselectedrecipe ? Color.Red : Color.White);
+                }
             }
         }
         private void DrawMaterialSelector()
@@ -3229,7 +3327,7 @@ namespace ManicDigger
         }
         void DeleteUnusedCachedTextures()
         {
-            foreach (var k in new List<Text>( cachedTextTextures.Keys))
+            foreach (var k in new List<Text>(cachedTextTextures.Keys))
             {
                 var ct = cachedTextTextures[k];
                 if ((DateTime.Now - ct.lastuse).TotalSeconds > 1)
@@ -3555,7 +3653,7 @@ namespace ManicDigger
         {
             fpscount++;
             longestframedt = (float)Math.Max(longestframedt, e.Time);
-            TimeSpan elapsed = (DateTime.Now - lasttitleupdate);            
+            TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
             if (elapsed.TotalSeconds >= 1)
             {
                 string fpstext1 = "";
@@ -3564,8 +3662,8 @@ namespace ManicDigger
                 fpstext1 += string.Format(" (min: {0})", (int)(1f / longestframedt));
                 longestframedt = 0;
                 fpscount = 0;
-                performanceinfo["fps"] = fpstext1;                
-                performanceinfo["triangles"] = "Triangles: " + terrain.TrianglesCount();                
+                performanceinfo["fps"] = fpstext1;
+                performanceinfo["triangles"] = "Triangles: " + terrain.TrianglesCount();
                 int chunkupdates = terrain.ChunkUpdates;
                 performanceinfo["chunk updates"] = "Chunk updates: " + (chunkupdates - lastchunkupdates);
                 lastchunkupdates = terrain.ChunkUpdates;
@@ -3649,5 +3747,30 @@ namespace ManicDigger
         #region IViewport3d Members
         public string LocalPlayerName { get { return username; } }
         #endregion
+        #region IViewport3d Members
+        public void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
+        {
+            this.craftingrecipes = recipes;
+            this.craftingblocks = blocks;
+            this.craftingrecipeselected = craftingRecipeSelected;
+            guistate = GuiState.CraftingRecipes;
+            EscapeMenuWasFreemove = ENABLE_FREEMOVE;
+            menustate = new MenuState();
+            FreeMouse = true;
+        }
+        #endregion
+        List<CraftingRecipe> craftingrecipes;
+        List<int> craftingblocks;
+        Action<int?> craftingrecipeselected;
+    }
+    public class Ingredient
+    {
+        public int Type;
+        public int Amount;
+    }
+    public class CraftingRecipe
+    {
+        public List<Ingredient> ingredients = new List<Ingredient>();
+        public Ingredient output = new Ingredient();
     }
 }
