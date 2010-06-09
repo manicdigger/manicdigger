@@ -431,7 +431,7 @@ namespace GameModeFortress
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
             {
-                if ((DateTime.Now - k.Value.time).TotalSeconds > 5)
+                if ((DateTime.Now - k.Value.time).TotalSeconds > 2)
                 {
                     speculative.Remove(k.Key);
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
