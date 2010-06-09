@@ -121,6 +121,9 @@ namespace ManicDigger
             return 0;
         }
         #endregion
+        #region IGameMode Members
+        public int FiniteInventoryMax { get { return 0; } }
+        #endregion
     }
     public class TileTypeData
     {

@@ -381,6 +381,7 @@ namespace ManicDigger
         byte[] SaveState();
         void LoadState(byte[] savegame);
         int FiniteInventoryAmount(int blocktype);
+        int FiniteInventoryMax { get; }
     }
     public interface ICharacterToDraw
     {
@@ -2452,6 +2453,7 @@ namespace ManicDigger
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
         private void DrawSkybox()
         {
+            GL.Color3(Color.White);
             //?
             //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
             //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -2959,6 +2961,7 @@ namespace ManicDigger
             }
             DrawMaterialSelector();
         }
+        int progressbartexture = -1;
         void InventoryMouse()
         {
             int invstartx = xcenter(inventorysinglesize * inventorysize);
@@ -3074,6 +3077,36 @@ namespace ManicDigger
                     int amount = game.FiniteInventoryAmount((int)materialSlots[i]);
                     Draw2dText("" + amount, x, y, 8, null);
                 }
+            }
+            if (ENABLE_FINITEINVENTORY)
+            {
+                if (progressbartexture == -1)
+                {
+                    var bmp = new Bitmap(1, 1);
+                    bmp.SetPixel(0, 0, Color.White);
+                    progressbartexture = LoadTexture(bmp);
+                }
+                int inventoryload = 0;
+                foreach (var k in FiniteInventory)
+                {
+                    inventoryload += k.Value;
+                }
+                float inventoryloadratio = (float)inventoryload / game.FiniteInventoryMax;
+                Draw2dTexture(progressbartexture, xcenter(100), Height - 120, 100, 10, null, Color.Black);
+                Color c;
+                if (inventoryloadratio < 0.5)
+                {
+                    c = Color.Green;
+                }
+                else if (inventoryloadratio < 0.75)
+                {
+                    c = Color.Yellow;
+                }
+                else
+                {
+                    c = Color.Red;
+                }
+                Draw2dTexture(progressbartexture, xcenter(100), Height - 120, inventoryloadratio * 100, 10, null, c);
             }
         }
         private int xcenter(float width)
@@ -3367,6 +3400,10 @@ namespace ManicDigger
         }
         void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
         {
+            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
+        }
+        void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
+        {
             RectangleF rect;
             if (inAtlasId == null)
             {
@@ -3376,7 +3413,8 @@ namespace ManicDigger
             {
                 rect = TextureAtlas.TextureCoords(inAtlasId.Value, terrain.texturesPacked);
             }
-            GL.Color3(Color.White);
+            GL.PushAttrib(AttribMask.ColorBufferBit);
+            GL.Color3(color);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
             GL.Enable(EnableCap.Texture2D);
             GL.Disable(EnableCap.DepthTest);
@@ -3395,6 +3433,7 @@ namespace ManicDigger
             */
             GL.End();
             GL.Enable(EnableCap.DepthTest);
+            GL.PopAttrib();
         }
         void OrthoMode()
         {
