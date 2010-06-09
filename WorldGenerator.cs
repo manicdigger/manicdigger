@@ -46,8 +46,31 @@ using System;
                     }
                 }
             }
+            PlaceRandomOres(0.2f * randomxyz(x, y, z), TileIdGoldOre + (int)(randomxyz(x, y, z) * 3), chunksize, x, y, z, chunk);
             istreecache = null;
             return chunk;
+        }
+        void PlaceRandomOres(float oresperchunk, int oretype, int chunksize, int x, int y, int z, byte[, ,] chunk)
+        {
+            float ores = chunksize * chunksize * chunksize * oresperchunk;
+            for (int i = 0; i < ores; i++)
+            {
+                PlaceRandomOre(oretype, chunksize, x, y, z, i, chunk);
+            }
+        }
+        float randomxyz(int x, int y, int z)
+        {
+            return (float)((findnoise2(x + y * 20, z) + 1) / 2.0);
+        }
+        void PlaceRandomOre(int tiletype, int chunksize, int x, int y, int z, int i, byte[,,] chunk)
+        {
+            int xx = (int)(((findnoise2(x + i * 100, y) + 1) / 2.0) * chunksize);
+            int yy = (int)(((findnoise2(x + i * 100 + 1, y) + 1) / 2.0) * chunksize);
+            int zz = (int)(((findnoise2(x + i * 100 + 2, y) + 1) / 2.0) * chunksize);
+            if (chunk[xx, yy, zz] == TileIdStone)
+            {
+                chunk[xx, yy, zz] = (byte)tiletype;
+            }
         }
         bool[,] istreecache;
         public int GetBlock(int x, int y, int z)
@@ -62,6 +85,9 @@ using System;
         int TileIdTreeTrunk = 17;
         int TileIdLeaves = 18;
         int TileIdStone = 1;
+        int TileIdGoldOre = 14;
+        int TileIdIronOre = 15;
+        int TileIdCoalOre = 16;
         float treedensity = 0.008f;
         int GetBlockInside(int x, int y, int z, int height)
         {
