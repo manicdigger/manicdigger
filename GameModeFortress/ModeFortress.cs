@@ -1023,14 +1023,22 @@ namespace GameModeFortress
                             if (cmd.mode == BlockSetMode.Create)
                             {
                                 //must have in inventory
-                                if ((!inventory.ContainsKey(cmd.tiletype))
-                                    || inventory[cmd.tiletype] < 1)
+                                int hasblock = -1; //which equivalent block it has exactly?
+                                foreach (var k in inventory)
+                                {
+                                    if (EquivalentBlock(k.Key, cmd.tiletype)
+                                        && k.Value > 0)
+                                    {
+                                        hasblock = k.Key;
+                                    }
+                                }
+                                if (hasblock == -1)
                                 {
                                     return false;
                                 }
                                 if (execute)
                                 {
-                                    inventory[cmd.tiletype]--;
+                                    inventory[hasblock]--;
                                 }
                             }
                             else
@@ -1170,6 +1178,14 @@ namespace GameModeFortress
                 default:
                     throw new Exception();
             }
+        }
+        bool EquivalentBlock(int blocktypea, int blocktypeb)
+        {
+            if (GameDataTilesManicDigger.IsRailTile(blocktypea) && GameDataTilesManicDigger.IsRailTile(blocktypeb))
+            {
+                return true;
+            }
+            return blocktypea == blocktypeb;
         }
         private List<int> GetOnTable(List<Vector3i> table)
         {
@@ -1403,6 +1419,21 @@ namespace GameModeFortress
                     yield return m;
                 }
             }
+        }
+        #endregion
+        #region IGameMode Members
+        public int FiniteInventoryAmount(int blocktype)
+        {
+            var FiniteInventory = viewport.FiniteInventory;
+            int amount = 0;
+            foreach (var k in FiniteInventory)
+            {
+                if (EquivalentBlock(k.Key, blocktype))
+                {
+                    amount += k.Value;
+                }
+            }
+            return amount;
         }
         #endregion
     }

@@ -380,6 +380,7 @@ namespace ManicDigger
         void OnNewMap();
         byte[] SaveState();
         void LoadState(byte[] savegame);
+        int FiniteInventoryAmount(int blocktype);
     }
     public interface ICharacterToDraw
     {
@@ -2946,11 +2947,7 @@ namespace ManicDigger
                 }
                 if (ENABLE_FINITEINVENTORY)
                 {
-                    int amount = 0;
-                    if (FiniteInventory.ContainsKey(buildable[ii]))
-                    {
-                        amount = FiniteInventory[buildable[ii]];
-                    }
+                    int amount = game.FiniteInventoryAmount(buildable[ii]);
                     Draw2dText("" + amount, xx, yy, 8, null);
                 }
                 x++;
@@ -3074,11 +3071,7 @@ namespace ManicDigger
                 }
                 if (ENABLE_FINITEINVENTORY)
                 {
-                    int amount = 0;
-                    if (FiniteInventory.ContainsKey((int)materialSlots[i]))
-                    {
-                        amount = FiniteInventory[(int)materialSlots[i]];
-                    }
+                    int amount = game.FiniteInventoryAmount((int)materialSlots[i]);
                     Draw2dText("" + amount, x, y, 8, null);
                 }
             }

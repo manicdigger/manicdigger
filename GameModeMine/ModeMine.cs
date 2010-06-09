@@ -115,6 +115,12 @@ namespace ManicDigger
             get { yield break; }
         }
         #endregion
+        #region IGameMode Members
+        public int FiniteInventoryAmount(int blocktype)
+        {
+            return 0;
+        }
+        #endregion
     }
     public class TileTypeData
     {
