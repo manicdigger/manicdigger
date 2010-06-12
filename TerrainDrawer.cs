@@ -686,6 +686,25 @@ namespace ManicDigger
             List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
             List<ushort> transparentindices = new List<ushort>();
             List<VertexPositionTexture> transparentvertices = new List<VertexPositionTexture>();
+            byte[, ,] currentChunk = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
+            for (int xx = 0; xx < chunksize + 2; xx++)
+            {
+                for (int yy = 0; yy < chunksize + 2; yy++)
+                {
+                    for (int zz = 0; zz < chunksize + 2; zz++)
+                    {
+                        int xxx = x * chunksize + xx - 1;
+                        int yyy = y * chunksize + yy - 1;
+                        int zzz = z * chunksize + zz - 1;
+                        if (!IsValidPos(xxx, yyy, zzz))
+                        {
+                            continue;
+                        }
+                        currentChunk[xx, yy, zz] = (byte)mapstorage.GetTerrainBlock(xxx, yyy, zzz);
+                    }
+                }
+            }
+
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -695,14 +714,15 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx;
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
-                        if (!(data.IsTransparentTile(mapstorage.GetTerrainBlock(xxx, yyy, zzz))
-                            || data.IsWaterTile(mapstorage.GetTerrainBlock(xxx,yyy,zzz))))
+
+                        if (!(data.IsTransparentTile(currentChunk[xx + 1, yy + 1, zz + 1])
+                            || data.IsWaterTile(currentChunk[xx + 1, yy + 1, zz + 1])))
                         {
-                            BlockPolygons(indices, vertices, xxx, yyy, zzz);
+                            BlockPolygons(indices, vertices, xxx, yyy, zzz, currentChunk);
                         }
                         else
                         {
-                            BlockPolygons(transparentindices, transparentvertices, xxx, yyy, zzz);
+                            BlockPolygons(transparentindices, transparentvertices, xxx, yyy, zzz, currentChunk);
                         }
                     }
                 }
@@ -803,23 +823,30 @@ namespace ManicDigger
         public float BlockShadow = 0.6f;
         RailMapUtil railmaputil;
         #endregion
-        private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z)
+        private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, byte[, ,] currentChunk)
         {
-            var tt = mapstorage.GetTerrainBlock(x, y, z);
-            bool drawtop = IsTileEmptyForDrawingOrTransparent(x, y, z + 1, tt);
-            bool drawbottom = IsTileEmptyForDrawingOrTransparent(x, y, z - 1, tt);
-            bool drawfront = IsTileEmptyForDrawingOrTransparent(x - 1, y, z, tt);
-            bool drawback = IsTileEmptyForDrawingOrTransparent(x + 1, y, z, tt);
-            bool drawleft = IsTileEmptyForDrawingOrTransparent(x, y - 1, z, tt);
-            bool drawright = IsTileEmptyForDrawingOrTransparent(x, y + 1, z, tt);
-            int tiletype = tt;
-            Color color = mapstorage.GetTerrainBlockColor(x, y, z);
-            Color colorShadow = Color.FromArgb(color.A,
-                (int)(color.R * BlockShadow), (int)(color.G * BlockShadow), (int)(color.B * BlockShadow));
-            if (!data.IsValidTileType(tiletype))
+            int xx = x % chunksize + 1;
+            int yy = y % chunksize + 1;
+            int zz = z % chunksize + 1;
+            var tt = currentChunk[xx, yy, zz];
+            if (!data.IsValidTileType(tt))
             {
                 return;
             }
+            bool drawtop = IsTileEmptyForDrawingOrTransparent(xx, yy, zz + 1, tt, currentChunk);
+            bool drawbottom = IsTileEmptyForDrawingOrTransparent(xx, yy, zz - 1, tt, currentChunk);
+            bool drawfront = IsTileEmptyForDrawingOrTransparent(xx - 1, yy, zz, tt, currentChunk);
+            bool drawback = IsTileEmptyForDrawingOrTransparent(xx + 1, yy, zz, tt, currentChunk);
+            bool drawleft = IsTileEmptyForDrawingOrTransparent(xx, yy - 1, zz, tt, currentChunk);
+            bool drawright = IsTileEmptyForDrawingOrTransparent(xx, yy + 1, zz, tt, currentChunk);
+            int tiletype = tt;
+            if (!(drawtop || drawbottom || drawfront || drawback || drawleft || drawright))
+            {
+                return;
+            }
+            Color color = mapstorage.GetTerrainBlockColor(x, y, z);
+            Color colorShadow = Color.FromArgb(color.A,
+                (int)(color.R * BlockShadow), (int)(color.G * BlockShadow), (int)(color.B * BlockShadow));
             if (DONOTDRAWEDGES)
             {
                 //if the game is fillrate limited, then this makes it much faster.
@@ -999,28 +1026,17 @@ namespace ManicDigger
             }
             return true;
         }
-        bool IsTileEmptyForDrawing(int x, int y, int z)
+        bool IsTileEmptyForDrawingOrTransparent(int xx, int yy, int zz, int adjacenttiletype, byte[, ,] currentChunk)
         {
-            if (!IsValidPos(x, y, z))
-            {
-                return true;
-            }
-            return mapstorage.GetTerrainBlock(x, y, z) == data.TileIdEmpty;
-        }
-        bool IsTileEmptyForDrawingOrTransparent(int x, int y, int z, int adjacenttiletype)
-        {
+            byte tt = currentChunk[xx, yy, zz];
             if (!config3d.ENABLE_TRANSPARENCY)
             {
-                return IsTileEmptyForDrawing(x, y, z);
-            }
-            if (!IsValidPos(x, y, z))
-            {
-                return true;
-            }
-            return mapstorage.GetTerrainBlock(x, y, z) == data.TileIdEmpty
-                ||(data.IsWaterTile(mapstorage.GetTerrainBlock(x, y, z))
+                return tt == data.TileIdEmpty;
+            }            
+            return tt == data.TileIdEmpty
+                || (data.IsWaterTile(tt)
                  && (!data.IsWaterTile(adjacenttiletype)))
-                ||data.IsTransparentTile(mapstorage.GetTerrainBlock(x, y, z));
+                || data.IsTransparentTile(tt);
         }
         #region IDisposable Members
         public void Dispose()
