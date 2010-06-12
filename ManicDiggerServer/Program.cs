@@ -291,10 +291,12 @@ namespace ManicDiggerServer
                         }
                     }
                 }
-                catch (ClientException e)
+                catch (Exception e)
                 {
                     //client problem. disconnect client.
-                    KillPlayer(e.clientid);
+                    Console.WriteLine(e.ToString());
+                    SendDisconnectPlayer(k.Key, "exception");
+                    KillPlayer(k.Key);
                 }
             }
             water.Update();
@@ -330,6 +332,10 @@ namespace ManicDiggerServer
         }
         private void KillPlayer(int clientid)
         {
+            if (!clients.ContainsKey(clientid))
+            {
+                return;
+            }
             string name = clients[clientid].playername;
             clients.Remove(clientid);
             foreach (var kk in clients)
@@ -599,7 +605,7 @@ namespace ManicDiggerServer
             }
             catch (Exception e)
             {
-                throw new ClientException(e, clientid);
+                KillPlayer(clientid);
             }
         }
         private void SendLevel(int clientid)
