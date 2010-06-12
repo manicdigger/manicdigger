@@ -1044,18 +1044,18 @@ namespace GameModeFortress
                             }
                             else
                             {
+                                //add to inventory
                                 if (TotalAmount(inventory) >= FiniteInventoryMax)
                                 {
                                     return false;
                                 }
-                                if ((!data.IsValidTileType(cmd.tiletype))
-                                    || cmd.tiletype == data.TileIdEmpty)
+                                int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
+                                blocktype = data.PlayerBuildableMaterialType(blocktype);
+                                if ((!data.IsValidTileType(blocktype))
+                                    || blocktype == data.TileIdEmpty)
                                 {
                                     return false;
                                 }
-                                //add to inventory
-                                int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
-                                blocktype = data.PlayerBuildableMaterialType(blocktype);
                                 if (execute)
                                 {
                                     if (!inventory.ContainsKey(blocktype))
