@@ -1210,6 +1210,10 @@ namespace GameModeFortress
                         int xx = pos.x + x - 10 / 2;
                         int yy = pos.y + y - 10 / 2;
                         int zz = pos.z + z - 10 / 2;
+                        if (!MapUtil.IsValidPos(map, xx, yy, zz))
+                        {
+                            continue;
+                        }
                         if (map.GetBlock(xx, yy, zz) == data.TileIdEmpty && map.GetBlock(xx, yy, zz - 1) != data.TileIdEmpty)
                         {
                             l.Add(new Vector3i(xx, yy, zz));
