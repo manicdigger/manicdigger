@@ -732,13 +732,13 @@ namespace ManicDigger
             bmp.UnlockBits(bmp_data);
 
             GL.Enable(EnableCap.DepthTest);
-            /*
+            
             if (config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.AlphaTest);
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
-            */
+            
 
             if (config3d.ENABLE_TRANSPARENCY)
             {
