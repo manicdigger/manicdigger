@@ -189,20 +189,16 @@ namespace GameModeFortress
             mapforphysics = new MapForPhysics() { game = this };
             MakeRecipes();
         }
-        float currentvehiclespeed;
-        Vector3 currentrailblock;
-        float currentrailblockprogress = 0;
-        VehicleDirection12 currentdirection;
-        VehicleDirection12 lastdirection;
-        Vector3 CurrentRailPos()
+        Vector3 CurrentRailPos(RailVehicle railvehicle)
         {
-            var slope = RailMapUtil().GetRailSlope((int)currentrailblock.X,
-                (int)currentrailblock.Y, (int)currentrailblock.Z);
-            Vector3 a = currentrailblock;
+            var currentrailblockprogress = railvehicle.currentrailblockprogress;
+            var slope = RailMapUtil().GetRailSlope((int)railvehicle.currentrailblock.X,
+                (int)railvehicle.currentrailblock.Y, (int)railvehicle.currentrailblock.Z);
+            Vector3 a = railvehicle.currentrailblock;
             float x_correction = 0;
             float y_correction = 0;
             float z_correction = 0;
-            switch (currentdirection)
+            switch (railvehicle.currentdirection)
             {
                 case VehicleDirection12.HorizontalRight:
                     x_correction += currentrailblockprogress;
@@ -427,6 +423,7 @@ namespace GameModeFortress
             d[(int)TileTypeManicDigger.CraftingTable] = 6;
             return d;
         }
+        RailVehicle localrailvehicle = new RailVehicle();
         public void OnNewFrame(double dt)
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
@@ -447,62 +444,14 @@ namespace GameModeFortress
             viewport.LocalPlayerAnimationHint.leanleft = railriding && turnleft;
             viewport.LocalPlayerAnimationHint.leanright = railriding && turnright;
             RailSound();
-            if (railriding)
-            {
-                viewport.ENABLE_FREEMOVE = true;
-                viewport.ENABLE_MOVE = false;
-                viewport.LocalPlayerPosition = CurrentRailPos();
-                currentrailblockprogress += currentvehiclespeed * (float)dt;
-                if (currentrailblockprogress >= 1)
-                {
-                    lastdirection = currentdirection;
-                    currentrailblockprogress = 0;
-                    var newenter = new TileEnterData();
-                    newenter.BlockPosition = NextTile(currentdirection, currentrailblock);
-                    //slope
-                    if (GetUpDownMove(currentrailblock,
-                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
-                    {
-                        newenter.BlockPosition.Z++;
-                    }
-                    if (GetUpDownMove(newenter.BlockPosition + new Vector3(0, 0, -1),
-                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
-                    {
-                        newenter.BlockPosition.Z--;
-                    }
-
-                    newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
-                    var newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright);
-                    if (newdir == null)
-                    {
-                        //end of rail
-                        currentdirection = DirectionUtils.Reverse(currentdirection);
-                    }
-                    else
-                    {
-                        currentdirection = newdir.Value;
-                        currentrailblock = newenter.BlockPosition;
-                    }
-                    /*
-                    var updown = GetUpDownMove(newenter.BlockPosition, newenter.EnterDirection);
-                    if (updown == UpDown.Up)
-                    {
-                        currentvehiclespeed -= 0.5f;
-                    }
-                    if (updown == UpDown.Down)
-                    {
-                        currentvehiclespeed += 0.5f;
-                    }
-                    */
-                }
-            }
+            UpdateRailVehicle(dt, turnright, turnleft);
             if (viewport.keyboardstate[OpenTK.Input.Key.W])
             {
-                currentvehiclespeed += 1f * (float)dt;
+                localrailvehicle.currentvehiclespeed += 1f * (float)dt;
             }
             if (viewport.keyboardstate[OpenTK.Input.Key.S])
             {
-                currentvehiclespeed -= 5f * (float)dt;
+                localrailvehicle.currentvehiclespeed -= 5f * (float)dt;
             }
             /*
             if (targetspeed < 0)
@@ -518,9 +467,9 @@ namespace GameModeFortress
                 currentvehiclespeed -= 10f * (float)dt;
             }
             */
-            if (currentvehiclespeed < 0)
+            if (localrailvehicle.currentvehiclespeed < 0)
             {
-                currentvehiclespeed = 0;
+                localrailvehicle.currentvehiclespeed = 0;
             }
             //todo fix
             //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
@@ -531,48 +480,48 @@ namespace GameModeFortress
 
             if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && !railriding)
             {
-                currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
+                localrailvehicle.currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
                     (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
-                if (!MapUtil.IsValidPos(map, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
+                if (!MapUtil.IsValidPos(map, (int)localrailvehicle.currentrailblock.X, (int)localrailvehicle.currentrailblock.Y, (int)localrailvehicle.currentrailblock.Z))
                 {
                     ExitVehicle();
                 }
                 else
                 {
                     var railunderplayer = data.GetRail(
-                        map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
+                        map.GetBlock((int)localrailvehicle.currentrailblock.X, (int)localrailvehicle.currentrailblock.Y, (int)localrailvehicle.currentrailblock.Z));
                     railriding = true;
                     viewport.CharacterHeight = minecartheight;
-                    currentvehiclespeed = 0;
+                    localrailvehicle.currentvehiclespeed = 0;
                     if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
                     {
-                        currentdirection = VehicleDirection12.HorizontalRight;
+                        localrailvehicle.currentdirection = VehicleDirection12.HorizontalRight;
                     }
                     else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
                     {
-                        currentdirection = VehicleDirection12.VerticalUp;
+                        localrailvehicle.currentdirection = VehicleDirection12.VerticalUp;
                     }
                     else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
                     {
-                        currentdirection = VehicleDirection12.UpLeftUp;
+                        localrailvehicle.currentdirection = VehicleDirection12.UpLeftUp;
                     }
                     else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
                     {
-                        currentdirection = VehicleDirection12.UpRightUp;
+                        localrailvehicle.currentdirection = VehicleDirection12.UpRightUp;
                     }
                     else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
                     {
-                        currentdirection = VehicleDirection12.DownLeftLeft;
+                        localrailvehicle.currentdirection = VehicleDirection12.DownLeftLeft;
                     }
                     else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
                     {
-                        currentdirection = VehicleDirection12.DownRightRight;
+                        localrailvehicle.currentdirection = VehicleDirection12.DownRightRight;
                     }
                     else
                     {
                         ExitVehicle();
                     }
-                    lastdirection = currentdirection;
+                    localrailvehicle.lastdirection = localrailvehicle.currentdirection;
                 }
             }
             else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
@@ -613,6 +562,58 @@ namespace GameModeFortress
             wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
             wascpressed = viewport.keyboardstate[OpenTK.Input.Key.C];
             wasupressed = viewport.keyboardstate[OpenTK.Input.Key.U];
+        }
+        private void UpdateRailVehicle(double dt, bool turnright, bool turnleft)
+        {
+            if (railriding)
+            {
+                viewport.ENABLE_FREEMOVE = true;
+                viewport.ENABLE_MOVE = false;
+                viewport.LocalPlayerPosition = CurrentRailPos(localrailvehicle);
+                localrailvehicle.currentrailblockprogress += localrailvehicle.currentvehiclespeed * (float)dt;
+                if (localrailvehicle.currentrailblockprogress >= 1)
+                {
+                    localrailvehicle.lastdirection = localrailvehicle.currentdirection;
+                    localrailvehicle.currentrailblockprogress = 0;
+                    var newenter = new TileEnterData();
+                    newenter.BlockPosition = NextTile(localrailvehicle.currentdirection, localrailvehicle.currentrailblock);
+                    //slope
+                    if (GetUpDownMove(localrailvehicle.currentrailblock,
+                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(localrailvehicle.currentdirection))) == UpDown.Up)
+                    {
+                        newenter.BlockPosition.Z++;
+                    }
+                    if (GetUpDownMove(newenter.BlockPosition + new Vector3(0, 0, -1),
+                        DirectionUtils.ResultEnter(DirectionUtils.ResultExit(localrailvehicle.currentdirection))) == UpDown.Down)
+                    {
+                        newenter.BlockPosition.Z--;
+                    }
+
+                    newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(localrailvehicle.currentdirection));
+                    var newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright);
+                    if (newdir == null)
+                    {
+                        //end of rail
+                        localrailvehicle.currentdirection = DirectionUtils.Reverse(localrailvehicle.currentdirection);
+                    }
+                    else
+                    {
+                        localrailvehicle.currentdirection = newdir.Value;
+                        localrailvehicle.currentrailblock = newenter.BlockPosition;
+                    }
+                    /*
+                    var updown = GetUpDownMove(newenter.BlockPosition, newenter.EnterDirection);
+                    if (updown == UpDown.Up)
+                    {
+                        currentvehiclespeed -= 0.5f;
+                    }
+                    if (updown == UpDown.Down)
+                    {
+                        currentvehiclespeed += 0.5f;
+                    }
+                    */
+                }
+            }
         }
         void CraftingRecipeSelected(Vector3i pos, int? recipe)
         {
@@ -679,7 +680,7 @@ namespace GameModeFortress
         int lastrailsound;
         private void RailSound()
         {
-            float railsoundpersecond = currentvehiclespeed;
+            float railsoundpersecond = localrailvehicle.currentvehiclespeed;
             if (railsoundpersecond > 10)
             {
                 railsoundpersecond = 10;
@@ -712,9 +713,9 @@ namespace GameModeFortress
         float targetspeed = 0;
         private void Reverse()
         {
-            currentdirection = DirectionUtils.Reverse(currentdirection);
-            currentrailblockprogress = 1 - currentrailblockprogress;
-            lastdirection = currentdirection;
+            localrailvehicle.currentdirection = DirectionUtils.Reverse(localrailvehicle.currentdirection);
+            localrailvehicle.currentrailblockprogress = 1 - localrailvehicle.currentrailblockprogress;
+            localrailvehicle.lastdirection = localrailvehicle.currentdirection;
             //currentvehiclespeed = 0;
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
@@ -1311,9 +1312,6 @@ namespace GameModeFortress
             recipe.output = new Ingredient() { Type = Convert.ToInt32(r[r.Length - 2]), Amount = Convert.ToInt32(r[r.Length - 1]) };
             craftingrecipes.Add(recipe);
         }
-        class RailVehicle
-        {
-        }
         Dictionary<int, RailVehicle> vehicles = new Dictionary<int, RailVehicle>();
         public int GetStateHash()
         {
@@ -1415,12 +1413,12 @@ namespace GameModeFortress
             {
                 if (railriding)
                 {
-                    var m = new Minecart();
+                    var m = new MinecartToDraw();
                     m.drawer = minecartdrawer;
                     m.position = viewport.LocalPlayerPosition;
-                    m.direction = currentdirection;
-                    m.lastdirection = lastdirection;
-                    m.progress = currentrailblockprogress;
+                    m.direction = localrailvehicle.currentdirection;
+                    m.lastdirection = localrailvehicle.lastdirection;
+                    m.progress = localrailvehicle.currentrailblockprogress;
                     yield return m;
                 }
             }
@@ -1442,7 +1440,15 @@ namespace GameModeFortress
         }
         #endregion
     }
-    public class Minecart : IModelToDraw
+    public class RailVehicle
+    {
+        public float currentvehiclespeed;
+        public Vector3 currentrailblock;
+        public float currentrailblockprogress = 0;
+        public VehicleDirection12 currentdirection;
+        public VehicleDirection12 lastdirection;
+    }
+    public class MinecartToDraw : IModelToDraw
     {
         public Vector3 position;
         public VehicleDirection12 direction;
