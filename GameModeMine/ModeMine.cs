@@ -409,6 +409,16 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeMinecraft.YellowFlowerDecorations;
         }
         #endregion
+        #region IGameData Members
+        public float BlockWalkSpeed(int blocktype)
+        {
+            if (blocktype == (int)TileTypeMinecraft.Cobblestone)
+            {
+                return 1.5f;
+            }
+            return 1;
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

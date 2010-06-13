@@ -1849,6 +1849,12 @@ namespace GameModeFortress
                 || blocktype == (int)TileTypeManicDigger.Crops4;
         }
         #endregion
+        #region IGameData Members
+        public float BlockWalkSpeed(int blocktype)
+        {
+            return data.BlockWalkSpeed(blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {

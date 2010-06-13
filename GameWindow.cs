@@ -1877,12 +1877,7 @@ namespace ManicDigger
                 player.movedz += -gravity;//gravity
             }
             bool enable_acceleration = true;
-            float movespeednow = movespeed;
-            if (Keyboard[OpenTK.Input.Key.ShiftLeft])
-            {
-                //enable_acceleration = false;
-                movespeednow *= 0.2f;
-            }
+            float movespeednow = MoveSpeedNow();
             var diff1 = toVectorInFixedSystem1
             (movedx * movespeednow * (float)e.Time,
             0,
@@ -1981,6 +1976,26 @@ namespace ManicDigger
             {
                 UpdateMouseViewportControl(e);
             }
+        }
+        private float MoveSpeedNow()
+        {
+            float movespeednow = movespeed;
+            {
+                //walk faster on cobblestone
+                if (MapUtil.IsValidPos(map, (int)player.playerposition.X,
+                    (int)player.playerposition.Z, (int)player.playerposition.Y - 1))
+                {
+                    int blockunderplayer = map.GetBlock((int)player.playerposition.X,
+                        (int)player.playerposition.Z, (int)player.playerposition.Y - 1);
+                    movespeednow *= data.BlockWalkSpeed(blockunderplayer);
+                }
+            }
+            if (Keyboard[OpenTK.Input.Key.ShiftLeft])
+            {
+                //enable_acceleration = false;
+                movespeednow *= 0.2f;
+            }
+            return movespeednow;
         }
         float MakeCloserToZero(float a, float b)
         {

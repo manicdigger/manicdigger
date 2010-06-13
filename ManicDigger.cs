@@ -483,6 +483,7 @@ namespace ManicDigger
         RailDirectionFlags GetRail(int tiletype);
         string BlockName(int blocktype);
         bool IsEmptyForPhysics(int blocktype);
+        float BlockWalkSpeed(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -564,6 +565,12 @@ namespace ManicDigger
         public bool IsEmptyForPhysics(int blocktype)
         {
             return false;
+        }
+        #endregion
+        #region IGameData Members
+        public float BlockWalkSpeed(int blocktype)
+        {
+            return 1;
         }
         #endregion
     }
