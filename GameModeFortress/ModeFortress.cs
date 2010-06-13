@@ -1301,6 +1301,7 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.Dirt, 2, TileTypeManicDigger.DirtForFarming, 1);
             MakeRecipe(TileTypeManicDigger.Crops4, 1, TileTypeManicDigger.Crops1, 2);
             MakeRecipe(TileTypeMinecraft.IronBlock, 1, TileTypeMinecraft.CoalOre, 1, TileTypeManicDigger.BrushedMetal, 1);
+            MakeRecipe(TileTypeManicDigger.BrushedMetal, 5, TileTypeManicDigger.Minecart, 1);
         }
         void MakeRecipe(params object[] r)
         {
@@ -1650,6 +1651,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Crops3] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 10 };
             datanew[(int)TileTypeManicDigger.Crops4] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 11 };
             datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 0 };
+            datanew[(int)TileTypeManicDigger.Minecart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 1, TextureTop = (7 * 16) + 2 };
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -1863,5 +1865,6 @@ namespace GameModeFortress
         Crops3,
         Crops4,
         CraftingTable,
+        Minecart,
     }
 }
