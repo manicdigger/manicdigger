@@ -599,9 +599,11 @@ namespace ManicDiggerServer
         {
             try
             {
-                SocketAsyncEventArgs e = new SocketAsyncEventArgs();
-                e.SetBuffer(packet, 0, packet.Length);
-                clients[clientid].socket.SendAsync(e);
+                using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
+                {
+                    e.SetBuffer(packet, 0, packet.Length);
+                    clients[clientid].socket.SendAsync(e);
+                }
             }
             catch (Exception e)
             {
