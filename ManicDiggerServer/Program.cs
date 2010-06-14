@@ -375,6 +375,14 @@ namespace ManicDiggerServer
 
                     SendServerIdentification(clientid);
                     SendLevel(clientid);
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            username = GenerateUsername(username);
+                            break;
+                        }
+                    }
                     //todo verificationkey
                     clients[clientid].playername = username;
                     players.Players[clientid] = new Player() { Name = username };
@@ -484,6 +492,28 @@ namespace ManicDiggerServer
                     throw new Exception();
             }
             return totalread;
+        }
+        private string GenerateUsername(string name)
+        {
+            string defaultname = name;
+            if (name.Length > 0 && char.IsNumber(name[name.Length - 1]))
+            {
+                defaultname = name.Substring(0, name.Length - 1);
+            }
+            for (int i = 1; i < 100; i++)
+            {
+                foreach (var k in clients)
+                {
+                    if (k.Value.playername.Equals(defaultname + i))
+                    {
+                        goto nextname;
+                    }
+                }
+                return defaultname + i;
+            nextname:
+                ;
+            }
+            return defaultname;
         }
         private void SendCommand(int clientid, int commandplayerid, byte[] commandData)
         {
