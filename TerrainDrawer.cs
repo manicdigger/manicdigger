@@ -753,8 +753,8 @@ namespace ManicDigger
         public void Draw()
         {
             //GL.Color3(terraincolor);
-            //lock (terrainlock)
             worldfeatures.DrawWorldFeatures();
+            lock (terrainlock)            
             {
                 GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
                 //must be drawn last, for transparent blocks.
