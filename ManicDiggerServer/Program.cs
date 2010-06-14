@@ -144,7 +144,7 @@ namespace ManicDiggerServer
                 StringWriter sw = new StringWriter();//&salt={4}
                 string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
                     , System.Web.HttpUtility.UrlEncode(cfgname),
-                    32, "true", cfgport, "7", cfgkey.Replace("-", ""));
+                    32, "true", cfgport, GameVersion.Version , cfgkey.Replace("-", ""));
 
                 List<string> playernames = new List<string>();
                 lock (clients)
@@ -728,12 +728,21 @@ namespace ManicDiggerServer
             SendPacket(clientid, ms.ToArray());
         }
         int CurrentProtocolVersion = 7;
+        int MdProtocolVersion = 200;
         private void SendServerIdentification(int clientid)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.ServerIdentification);
-            bw.Write((byte)CurrentProtocolVersion);
+            if (!ENABLE_FORTRESS)
+            {
+                bw.Write((byte)CurrentProtocolVersion);
+            }
+            else
+            {
+                bw.Write((byte)MdProtocolVersion);
+                NetworkHelper.WriteString64(bw, GameVersion.Version);
+            }
             NetworkHelper.WriteString64(bw, cfgname);
             NetworkHelper.WriteString64(bw, cfgmotd);
             bw.Write((byte)0);

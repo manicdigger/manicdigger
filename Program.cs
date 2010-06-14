@@ -103,6 +103,14 @@ namespace ManicDigger
         {
             File.WriteAllText("crash.txt", e.ToString());
             File.AppendAllText("crash.txt", e.StackTrace);
+            for (int i = 0; i < 5; i++)
+            {
+                System.Windows.Forms.Cursor.Show();
+                System.Threading.Thread.Sleep(100);
+                Application.DoEvents();
+            }
+            System.Windows.Forms.MessageBox.Show(e.ToString());
+            Environment.Exit(1);
         }
     }
 }

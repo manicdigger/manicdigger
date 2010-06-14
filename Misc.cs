@@ -8,6 +8,25 @@ using System.Drawing.Imaging;
 
 namespace ManicDigger
 {
+    public static class GameVersion
+    {
+        static string gameversion;
+        public static string Version
+        {
+            get
+            {
+                if (gameversion == null)
+                {
+                    gameversion = "unknown";
+                    if (File.Exists("version.txt"))
+                    {
+                        gameversion = File.ReadAllText("version.txt");
+                    }
+                }
+                return gameversion;
+            }
+        }
+    }
     public static class GzipCompression
     {
         public static byte[] Compress(byte[] data)

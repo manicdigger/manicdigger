@@ -475,11 +475,32 @@ namespace ManicDigger
                 case MinecraftServerPacketId.ServerIdentification:
                     {
                         totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (received.Count < totalread) { return 0; }
+                        if (ENABLE_FORTRESS)
+                        {
+                            totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
+                        }
                         ServerPlayerIdentification p = new ServerPlayerIdentification();
                         p.ProtocolVersion = br.ReadByte();
-                        if (p.ProtocolVersion != 7)
+                        string invalidversionstr = "Invalid game version. Local: {0}, Server: {1}";
+                        if (!ENABLE_FORTRESS)
                         {
-                            throw new Exception();
+                            if (p.ProtocolVersion != 7)
+                            {
+                                throw new Exception(string.Format(invalidversionstr,
+                                    "Minecraft 7", "Minecraft " + p.ProtocolVersion));
+                            }
+                        }
+                        else
+                        {
+                            string servergameversion = NetworkHelper.ReadString64(br);
+                            if (p.ProtocolVersion != 200)
+                            {
+                                servergameversion = "Minecraft " + p.ProtocolVersion;
+                            }
+                            if (servergameversion != GameVersion.Version)
+                            {
+                                throw new Exception(string.Format(invalidversionstr, GameVersion.Version, servergameversion));
+                            }
                         }
                         p.ServerName = NetworkHelper.ReadString64(br);
                         p.ServerMotd = NetworkHelper.ReadString64(br);
@@ -711,7 +732,7 @@ namespace ManicDigger
                     break;
                 default:
                     {
-                        throw new Exception();
+                        throw new Exception("Invalid packet id");
                     }
             }
             return totalread;
