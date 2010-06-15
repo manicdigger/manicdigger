@@ -1024,23 +1024,53 @@ namespace GameModeFortress
                             Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
                             if (cmd.mode == BlockSetMode.Create)
                             {
-                                //must have in inventory
-                                int hasblock = -1; //which equivalent block it has exactly?
-                                foreach (var k in inventory)
+                                int blockstoput = 1;
+                                int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
+                                if (GameDataTilesManicDigger.IsRailTile(cmd.tiletype))
                                 {
-                                    if (EquivalentBlock(k.Key, cmd.tiletype)
-                                        && k.Value > 0)
+                                    //count how many rails will be created
+                                    int oldrailcount = 0;
+                                    if (GameDataTilesManicDigger.IsRailTile(oldblock))
                                     {
-                                        hasblock = k.Key;
+                                        oldrailcount = MyLinq.Count(
+                                            DirectionUtils.ToRailDirections(
+                                            (RailDirectionFlags)(oldblock - GameDataTilesManicDigger.railstart)));
+                                    }
+                                    int newrailcount = MyLinq.Count(
+                                        DirectionUtils.ToRailDirections(
+                                        (RailDirectionFlags)(cmd.tiletype - GameDataTilesManicDigger.railstart)));
+                                    blockstoput = newrailcount - oldrailcount;
+                                    //check if player has that many rails
+                                    int inventoryrail = GetEquivalentCount(inventory, cmd.tiletype);
+                                    if (blockstoput > inventoryrail)
+                                    {
+                                        return false;
+                                    }
+                                    if (execute)
+                                    {
+                                        RemoveEquivalent(inventory, cmd.tiletype, blockstoput);
                                     }
                                 }
-                                if (hasblock == -1)
+                                else
                                 {
-                                    return false;
-                                }
-                                if (execute)
-                                {
-                                    inventory[hasblock]--;
+                                    //check if player has such block
+                                    int hasblock = -1; //which equivalent block it has exactly?
+                                    foreach (var k in inventory)
+                                    {
+                                        if (EquivalentBlock(k.Key, cmd.tiletype)
+                                            && k.Value > 0)
+                                        {
+                                            hasblock = k.Key;
+                                        }
+                                    }
+                                    if (hasblock == -1)
+                                    {
+                                        return false;
+                                    }
+                                    if (execute)
+                                    {
+                                        inventory[hasblock]--;
+                                    }
                                 }
                             }
                             else
@@ -1187,6 +1217,41 @@ namespace GameModeFortress
                 default:
                     throw new Exception();
             }
+        }
+        private void RemoveEquivalent(Dictionary<int, int> inventory, byte blocktype, int count)
+        {
+            int removed = 0;
+            for (int i = 0; i < count; i++)
+            {
+                foreach (var k in new Dictionary<int, int>(inventory))
+                {
+                    if (EquivalentBlock(k.Key, blocktype)
+                        && k.Value > 0)
+                    {
+                        inventory[k.Key]--;
+                        removed++;
+                        goto removenext;
+                    }
+                }
+            removenext:
+                ;
+            }
+            if (removed != count)
+            {
+                throw new Exception();
+            }
+        }
+        private int GetEquivalentCount(Dictionary<int, int> inventory, byte blocktype)
+        {
+            int count = 0;
+            foreach (var k in inventory)
+            {
+                if (EquivalentBlock(k.Key, blocktype))
+                {
+                    count += k.Value;
+                }
+            }
+            return count;
         }
         bool EquivalentBlock(int blocktypea, int blocktypeb)
         {
