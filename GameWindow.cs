@@ -1972,9 +1972,31 @@ namespace ManicDigger
             {
                 CraftingMouse();
             }
+            if (guistate == GuiState.EscapeMenu)
+            {
+                EscapeMenuMouse();
+            }
             if (!FreeMouse)
             {
                 UpdateMouseViewportControl(e);
+            }
+        }
+        private void EscapeMenuMouse()
+        {
+            int starty = 200;
+            int textheight = 50;
+            if (mouse_current.Y >= starty && mouse_current.Y < starty + 3 * textheight)
+            {
+                menustate.selected = (mouse_current.Y - starty) / textheight;
+            }
+            else
+            {
+            }
+            if (mouseleftclick)
+            {
+                EscapeMenuAction();
+                mouseleftclick = false;
+                GuiStateBackToGame();
             }
         }
         private float MoveSpeedNow()
