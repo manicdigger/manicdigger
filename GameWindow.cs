@@ -1409,7 +1409,8 @@ namespace ManicDigger
                     menustate.selected++;
                     menustate.selected = Math.Min(menuelements - 1, menustate.selected);
                 }
-                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
+                if (menustate.selected != -1
+                    && (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter))
                 {
                     EscapeMenuAction();
                 }
@@ -1983,16 +1984,17 @@ namespace ManicDigger
         }
         private void EscapeMenuMouse()
         {
-            int starty = 200;
             int textheight = 50;
-            if (mouse_current.Y >= starty && mouse_current.Y < starty + 3 * textheight)
+            int starty = ycenter(2 * textheight);
+            if (mouse_current.Y >= starty && mouse_current.Y < starty + 2 * textheight)
             {
                 menustate.selected = (mouse_current.Y - starty) / textheight;
             }
             else
             {
+                menustate.selected = -1;
             }
-            if (mouseleftclick)
+            if (mouseleftclick && menustate.selected != -1)
             {
                 EscapeMenuAction();
                 mouseleftclick = false;
@@ -2726,12 +2728,12 @@ namespace ManicDigger
                 //GuiActionGenerateNewMap();
                 GuiStateBackToGame();
             }
+            //else if (menustate.selected == 1)
+            //{
+            //    GuiActionSaveGame();
+            //    GuiStateBackToGame();
+            //}
             else if (menustate.selected == 1)
-            {
-                GuiActionSaveGame();
-                GuiStateBackToGame();
-            }
-            else if (menustate.selected == 2)
             {
                 exit = true;
                 this.Exit();
@@ -2769,14 +2771,14 @@ namespace ManicDigger
             string newgame = "Return to game";
             string save = "Save";
             string exitstr = "Exit";
-            int starty = 200;
             int textheight = 50;
             int fontsize = 20;
+            int starty = ycenter(2 * textheight);
             if (guistate == GuiState.EscapeMenu)
             {
                 Draw2dText(newgame, xcenter(TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
-                Draw2dText(save, xcenter(TextSize(save, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
-                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
+                //Draw2dText(save, xcenter(TextSize(save, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
+                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
                 //DrawMouseCursor();
             }
         }
