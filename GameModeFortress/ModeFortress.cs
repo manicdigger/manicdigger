@@ -1028,6 +1028,11 @@ namespace GameModeFortress
                                 int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
                                 if (GameDataTilesManicDigger.IsRailTile(cmd.tiletype))
                                 {
+                                    if (!(oldblock == data.TileIdEmpty
+                                        || GameDataTilesManicDigger.IsRailTile(oldblock)))
+                                    {
+                                        return false;
+                                    }
                                     //count how many rails will be created
                                     int oldrailcount = 0;
                                     if (GameDataTilesManicDigger.IsRailTile(oldblock))
@@ -1053,6 +1058,10 @@ namespace GameModeFortress
                                 }
                                 else
                                 {
+                                    if (oldblock != data.TileIdEmpty)
+                                    {
+                                        return false;
+                                    }
                                     //check if player has such block
                                     int hasblock = -1; //which equivalent block it has exactly?
                                     foreach (var k in inventory)
