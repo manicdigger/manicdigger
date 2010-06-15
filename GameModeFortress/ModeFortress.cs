@@ -1046,14 +1046,21 @@ namespace GameModeFortress
                             else
                             {
                                 //add to inventory
-                                if (TotalAmount(inventory) >= FiniteInventoryMax)
-                                {
-                                    return false;
-                                }
                                 int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
                                 blocktype = data.PlayerBuildableMaterialType(blocktype);
                                 if ((!data.IsValidTileType(blocktype))
                                     || blocktype == data.TileIdEmpty)
+                                {
+                                    return false;
+                                }
+                                int blockstopick = 1;
+                                if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                                {
+                                    blockstopick = MyLinq.Count(
+                                        DirectionUtils.ToRailDirections(
+                                        (RailDirectionFlags)(blocktype - GameDataTilesManicDigger.railstart)));
+                                }
+                                if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
                                 {
                                     return false;
                                 }
@@ -1063,7 +1070,7 @@ namespace GameModeFortress
                                     {
                                         inventory[blocktype] = 0;
                                     }
-                                    inventory[blocktype]++;
+                                    inventory[blocktype] += blockstopick;
                                 }
                             }
                         }

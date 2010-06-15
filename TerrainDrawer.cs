@@ -88,15 +88,24 @@ namespace ManicDigger
     }
     public class MyLinq
     {
-        public static bool Any<T>(IEnumerable<T> v)
+        public static bool Any<T>(IEnumerable<T> l)
         {
-            return v.GetEnumerator().MoveNext();
+            return l.GetEnumerator().MoveNext();
         }
-        public static T First<T>(IEnumerable<T> v)
+        public static T First<T>(IEnumerable<T> l)
         {
-            var e = v.GetEnumerator();
+            var e = l.GetEnumerator();
             e.MoveNext();
             return e.Current;
+        }
+        public static int Count<T>(IEnumerable<T> l)
+        {
+            int count = 0;
+            foreach (T v in l)
+            {
+                count++;
+            }
+            return count;
         }
     }
     public class MeshBatcher
