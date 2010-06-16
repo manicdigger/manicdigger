@@ -238,10 +238,6 @@ namespace GameModeFortress
             }
         }
         bool railriding = false;
-        bool wasqpressed = false;
-        bool wasvpressed = false;
-        bool wascpressed = false;
-        bool wasupressed = false;
         static VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
         {
             if (turnright)
@@ -391,23 +387,21 @@ namespace GameModeFortress
             {
                 localrailvehicle.currentvehiclespeed = 0;
             }
-            //todo fix
-            //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
-            if(!wasqpressed && viewport.keyboardstate[OpenTK.Input.Key.Q])
+            if (KeyPressed(OpenTK.Input.Key.Q))
             {
                 Reverse();
             }
 
-            if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && !railriding)
+            if (KeyPressed(OpenTK.Input.Key.V) && !railriding)
             {
                 //todo command
             }
-            else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
+            else if (KeyPressed(OpenTK.Input.Key.V) && railriding)
             {
                 ExitVehicle();
                 viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
-            if (!wascpressed && viewport.keyboardstate[OpenTK.Input.Key.C])
+            if (KeyPressed(OpenTK.Input.Key.C))
             {
                 if (viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
@@ -421,7 +415,7 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (!wasupressed && viewport.keyboardstate[OpenTK.Input.Key.U])
+            if (KeyPressed(OpenTK.Input.Key.U))
             {
                 if (viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
@@ -436,10 +430,10 @@ namespace GameModeFortress
                     }
                 }
             }
-            wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
-            wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
-            wascpressed = viewport.keyboardstate[OpenTK.Input.Key.C];
-            wasupressed = viewport.keyboardstate[OpenTK.Input.Key.U];
+        }
+        private bool KeyPressed(OpenTK.Input.Key key)
+        {
+            return viewport.keypressed != null && viewport.keypressed.Key == key;
         }
         private void UpdateRailVehicle(double dt, int vehicleid)
         {

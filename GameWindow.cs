@@ -1111,7 +1111,10 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            keyevent = e;
+            if (GuiTyping == TypingState.None)
+            {
+                keyevent = e;
+            }
             if (guistate == GuiState.Normal)
             {
                 if (Keyboard[OpenTK.Input.Key.Escape])
