@@ -294,6 +294,7 @@ namespace ManicDigger
     {
         OpenTK.Input.KeyboardDevice keyboardstate { get; }
         OpenTK.Input.KeyboardKeyEventArgs keypressed { get; }
+        OpenTK.Input.KeyboardKeyEventArgs keydepressed { get; }
     }
     public interface IViewport3d : ILocalPlayerPosition, IKeyboard
     {
@@ -361,6 +362,12 @@ namespace ManicDigger
         #region IViewport3d Members
         public void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
         {
+        }
+        #endregion
+        #region IKeyboard Members
+        public OpenTK.Input.KeyboardKeyEventArgs keydepressed
+        {
+            get { throw new NotImplementedException(); }
         }
         #endregion
     }
@@ -821,6 +828,7 @@ namespace ManicDigger
             }
             Keyboard.KeyRepeat = true;
             Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
+            Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
             materialSlots = data.DefaultMaterialSlots;
             GL.Enable(EnableCap.Lighting);
             SetAmbientLight(terraincolor);
@@ -1109,6 +1117,14 @@ namespace ManicDigger
         }
         Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
+        OpenTK.Input.KeyboardKeyEventArgs keyeventup;
+        void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
+        {
+            if (GuiTyping == TypingState.None)
+            {
+                keyeventup = e;
+            }
+        }
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
             if (GuiTyping == TypingState.None)
@@ -1984,6 +2000,9 @@ namespace ManicDigger
             {
                 UpdateMouseViewportControl(e);
             }
+            //must be here because frametick can be called more than once per render frame.
+            keyevent = null;
+            keyeventup = null;
         }
         private void EscapeMenuMouse()
         {
@@ -2378,7 +2397,6 @@ namespace ManicDigger
 
             //OnResize(new EventArgs());
             SwapBuffers();
-            keyevent = null;
         }
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
@@ -3802,6 +3820,10 @@ namespace ManicDigger
         public OpenTK.Input.KeyboardKeyEventArgs keypressed
         {
             get { return keyevent; }
+        }
+        public OpenTK.Input.KeyboardKeyEventArgs keydepressed
+        {
+            get { return keyeventup; }
         }
         #endregion
         #region IMap Members
