@@ -262,6 +262,12 @@ namespace ManicDigger
         }
         public static int StringLength = 64;
     }
+    public interface IGameWorldTodo
+    {
+        void KeyFrame(int allowedframe, int hash);
+        void EnqueueCommand(int playerid, int frame, byte[] cmd);
+        void LoadState(byte[] savegame, int simulationstartframe);
+    }
     public class NetworkClientMinecraft : INetworkClient
     {
         [Inject]
@@ -273,7 +279,7 @@ namespace ManicDigger
         [Inject]
         public ILocalPlayerPosition Position { get; set; }
         [Inject]
-        public IGameWorld gameworld { get; set; }
+        public IGameWorldTodo gameworld { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = false;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -539,6 +545,10 @@ namespace ManicDigger
                 case MinecraftServerPacketId.LevelFinalize:
                     {
                         totalread += 2 + 2 + 2; if (received.Count < totalread) { return 0; }
+                        if (ENABLE_FORTRESS)
+                        {
+                            totalread += 4; if (received.Count < totalread) { return 0; } //simulationstartframe
+                        }
                         mapreceivedsizex = NetworkHelper.ReadInt16(br);
                         mapreceivedsizez = NetworkHelper.ReadInt16(br);
                         mapreceivedsizey = NetworkHelper.ReadInt16(br);
@@ -575,7 +585,8 @@ namespace ManicDigger
                         }
                         else
                         {
-                            gameworld.LoadState(receivedMapStream.ToArray());
+                            int simulationstartframe = NetworkHelper.ReadInt32(br);
+                            gameworld.LoadState(receivedMapStream.ToArray(), simulationstartframe);
                         }
                         if (MapLoaded != null)
                         {
@@ -722,12 +733,21 @@ namespace ManicDigger
                     }
                 case MinecraftServerPacketId.ExtendedPacketCommand:
                     {
-                        totalread += 1 + 4; if (received.Count < totalread) { return 0; }
+                        totalread += 1 + 4 + 4; if (received.Count < totalread) { return 0; }
                         int playerid = br.ReadByte();
-                        int length = NetworkHelper.ReadInt32(br);
+                        int cmdframe = NetworkHelper.ReadInt32(br);
+                        int length = NetworkHelper.ReadInt32(br);                        
                         totalread += length; if (received.Count < totalread) { return 0; }
                         byte[] cmd = br.ReadBytes(length);
-                        gameworld.DoCommand(cmd, playerid);
+                        gameworld.EnqueueCommand(playerid, cmdframe, cmd);
+                    }
+                    break;
+                case MinecraftServerPacketId.ExtendedPacketTick:
+                    {
+                        totalread += 4 + 4; if (received.Count < totalread) { return 0; }
+                        int allowedframe = NetworkHelper.ReadInt32(br);
+                        int hash = NetworkHelper.ReadInt32(br);
+                        gameworld.KeyFrame(allowedframe, hash);
                     }
                     break;
                 default:
@@ -912,5 +932,6 @@ namespace ManicDigger
         DisconnectPlayer = 14,
 
         ExtendedPacketCommand = 100,
+        ExtendedPacketTick = 101,
     }
 }

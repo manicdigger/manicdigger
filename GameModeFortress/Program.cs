@@ -147,7 +147,6 @@ namespace GameModeFortress
             w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile };
             w.ENABLE_FINITEINVENTORY = true;
             clientgame.physics = physics;
-            clientgame.ticks = new TicksDummy() { game = clientgame };
             clientgame.terrain = terrainDrawer;
             clientgame.viewport = w;
             clientgame.data = gamedata;

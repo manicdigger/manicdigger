@@ -204,11 +204,40 @@ namespace ManicDiggerServer
                 Console.WriteLine(e);
             }
         }
+        double starttime = gettime();
+        static double gettime()
+        {
+            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
+        }
+        int simulationcurrentframe;
+        double oldtime;
+        double accumulator;
         public void Process1()
         {
             if (main == null)
             {
                 return;
+            }
+            if (ENABLE_FORTRESS)
+            {
+                double currenttime = gettime() - starttime;
+                double deltaTime = currenttime - oldtime;
+                accumulator += deltaTime;
+                double dt = SIMULATION_STEP_LENGTH;
+                while (accumulator > dt)
+                {
+                    simulationcurrentframe++;
+                    gameworld.Tick();
+                    if (simulationcurrentframe % SIMULATION_KEYFRAME_EVERY == 0)
+                    {
+                        foreach (var k in clients)
+                        {
+                            SendTick(k.Key);
+                        }
+                    }
+                    accumulator -= dt;
+                }
+                oldtime = currenttime;
             }
             byte[] data = new byte[1024];
             string stringData;
@@ -484,7 +513,7 @@ namespace ManicDiggerServer
                     {
                         //if (k.Key != clientid)
                         {
-                            SendCommand(k.Key, clientid, commandData);
+                            SendCommand(k.Key, clientid, commandData, simulationcurrentframe);
                         }
                     }
                     break;
@@ -515,12 +544,13 @@ namespace ManicDiggerServer
             }
             return defaultname;
         }
-        private void SendCommand(int clientid, int commandplayerid, byte[] commandData)
+        private void SendCommand(int clientid, int commandplayerid, byte[] commandData, int simulationframe)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.ExtendedPacketCommand);
             bw.Write((byte)commandplayerid);
+            NetworkHelper.WriteInt32(bw, simulationframe);
             NetworkHelper.WriteInt32(bw, commandData.Length);
             bw.Write((byte[])commandData);
             SendPacket(clientid, ms.ToArray());
@@ -718,6 +748,7 @@ namespace ManicDiggerServer
                 NetworkHelper.WriteInt16(bw, (short)256);
                 NetworkHelper.WriteInt16(bw, (short)256);
                 NetworkHelper.WriteInt16(bw, (short)64);
+                NetworkHelper.WriteInt32(bw, (int)simulationcurrentframe);
             }
             else
             {
@@ -748,6 +779,21 @@ namespace ManicDiggerServer
             bw.Write((byte)0);
             SendPacket(clientid, ms.ToArray());
         }
+        public int SIMULATION_KEYFRAME_EVERY = 32;
+        public float SIMULATION_STEP_LENGTH = 1f / 64f;
+        void SendTick(int clientid)
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write((byte)MinecraftServerPacketId.ExtendedPacketTick);
+            if (!ENABLE_FORTRESS)
+            {
+                throw new Exception();
+            }
+            NetworkHelper.WriteInt32(bw, simulationcurrentframe);
+            NetworkHelper.WriteInt32(bw, gameworld.GetStateHash());
+            SendPacket(clientid, ms.ToArray());
+        }
         class Client
         {
             public Socket socket;
@@ -769,13 +815,12 @@ namespace ManicDiggerServer
             g.audio = new AudioDummy();
             g.data = data;
             var gen = new GameModeFortress.WorldGeneratorSandbox();
-            g.map = new GameModeFortress.InfiniteMap() { gen=gen };
+            g.map = new GameModeFortress.InfiniteMap() { gen = gen };
             g.worldgeneratorsandbox = gen;
             g.network = new NetworkClientDummy();
             g.pathfinder = new Pathfinder3d();
             g.physics = new CharacterPhysics() { data = data, map = g.map };
             g.terrain = new TerrainDrawerDummy();
-            g.ticks = new TicksDummy();
             g.viewport = new ViewportDummy();
             s.gameworld = g;
             g.generator = File.ReadAllText("WorldGenerator.cs");

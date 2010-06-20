@@ -132,7 +132,7 @@ namespace GameModeFortress
             }
         }
     }
-    public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo
+    public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo, IGameWorldTodo
     {
         [Inject]
         public WorldGeneratorSandbox worldgeneratorsandbox { get; set; }
@@ -140,8 +140,6 @@ namespace GameModeFortress
         public InfiniteMap map { get; set; }
         [Inject]
         public ITerrainDrawer terrain { get; set; }
-        [Inject]
-        public ITicks ticks { get; set; }
         [Inject]
         public IViewport3d viewport { get; set; }
         [Inject]
@@ -350,6 +348,9 @@ namespace GameModeFortress
         }
         //RailVehicle localrailvehicle = new RailVehicle();
         RailVehicle localrailvehicle { get { return vehicles[railridingall[viewport.LocalPlayerName]]; } }
+        double simulationaccumulator;
+        int simulationcurrentframe;
+        int SIMULATIONLAG { get { return (int)(0.3 / SIMULATION_STEP_LENGTH); } }
         public void OnNewFrame(double dt)
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
@@ -360,7 +361,61 @@ namespace GameModeFortress
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
-            Tick();
+            viewport.PerformanceInfo["frame"] = "Frame: " + simulationcurrentframe.ToString();
+            simulationaccumulator += dt;
+            double simulationdt = SIMULATION_STEP_LENGTH;
+            while (simulationaccumulator > simulationdt)
+            {
+                if (simulationcurrentframe >= simulationallowedkeyframe - SIMULATIONLAG)
+                {
+                    simulationaccumulator = 0;
+                    break;
+                }
+                simulationaccumulator -= simulationdt;
+                Tick();
+                //hash check
+                if (simulationhashchecktodo.Count > 0)
+                {
+                    HashCheckTodo todo = simulationhashchecktodo.Peek();
+                    if (todo.frame == simulationcurrentframe)
+                    {
+                        if (GetStateHash() != todo.hash)
+                        {
+                            Console.WriteLine("Desync.");
+                            throw new Exception("Desync.");
+                        }
+                        simulationhashchecktodo.Dequeue();
+                    }
+                }
+                //commands
+                while(simulationcmdtodo.Count > 0)
+                {
+                    CommandTodo todo = simulationcmdtodo.Peek();
+                    if (todo.frame > simulationcurrentframe)
+                    {
+                        break;
+                    }
+                    if (todo.frame == simulationcurrentframe)
+                    {
+                        try
+                        {
+                            DoCommand(todo.cmd, todo.playerid);
+                        }
+                        catch
+                        {
+                            //should not happen, server should check this.
+                            Console.WriteLine("Invalid command.");
+                        }
+                        simulationcmdtodo.Dequeue();
+                    }
+                    if (todo.frame < simulationcurrentframe)
+                    {
+                        throw new Exception("Past command.");
+                    }
+                }
+                simulationcurrentframe++;
+            }
+
             viewport.FiniteInventory = GetPlayerInventory(viewport.LocalPlayerName);
             viewport.LocalPlayerAnimationHint.InVehicle = railriding;
             viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
@@ -389,10 +444,6 @@ namespace GameModeFortress
                 if (KeyDepressed(OpenTK.Input.Key.A)) { cmd.controlaction = ControlAction.TurnNone; }
                 if (KeyDepressed(OpenTK.Input.Key.D)) { cmd.controlaction = ControlAction.TurnNone; }
                 TrySendCommand(MakeCommand(CommandId.RailVehicleControl, cmd));
-            }
-            for (int i = 0; i < vehicles.Count; i++)
-            {
-                UpdateRailVehicle(dt, i);
             }
             if (railriding)
             {
@@ -877,6 +928,15 @@ namespace GameModeFortress
             return GzipCompression.Compress(Encoding.UTF8.GetBytes(b.ToString()));
         }
         public string generator;
+        public void LoadState(byte[] savegame, int simulationstartframe)
+        {
+            LoadState(savegame);
+            simulationcurrentframe = simulationstartframe;
+            simulationaccumulator = 0;
+            simulationallowedkeyframe = 0;
+            simulationcmdtodo = new Queue<CommandTodo>();
+            simulationhashchecktodo = new Queue<HashCheckTodo>();
+        }
         public void LoadState(byte[] savegame)
         {
             using (Stream s = new MemoryStream(GzipCompression.Decompress(savegame)))
@@ -955,9 +1015,15 @@ namespace GameModeFortress
         {
             get { return ""; }
         }
+        public float SIMULATION_STEP_LENGTH = 1f / 64f;
         public void Tick()
         {
-            float dt = 1.0f / 75;
+            //float dt = 1.0f / 75;
+            float dt = SIMULATION_STEP_LENGTH;
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                UpdateRailVehicle(dt, i);
+            }
         }
         Dictionary<string, Dictionary<int, int>> PlayersFiniteInventory = new Dictionary<string, Dictionary<int, int>>();
         public bool ENABLE_FINITEINVENTORY = true;
@@ -1656,6 +1722,31 @@ namespace GameModeFortress
                 }
             }
             return amount;
+        }
+        #endregion
+        int simulationallowedkeyframe = 0;
+        #region IGameWorldTodo Members
+        public void KeyFrame(int allowedframe, int hash)
+        {
+            simulationallowedkeyframe = allowedframe;
+            simulationhashchecktodo.Enqueue(new HashCheckTodo() { frame = simulationallowedkeyframe, hash = hash });
+        }
+        struct CommandTodo
+        {
+            public byte[] cmd;
+            public int playerid;
+            public int frame;
+        }
+        struct HashCheckTodo
+        {
+            public int frame;
+            public int hash;
+        }
+        Queue<HashCheckTodo> simulationhashchecktodo = new Queue<HashCheckTodo>();
+        Queue<CommandTodo> simulationcmdtodo = new Queue<CommandTodo>();
+        public void EnqueueCommand(int playerid, int frame, byte[] cmd)
+        {
+            simulationcmdtodo.Enqueue(new CommandTodo() { playerid = playerid, frame = frame, cmd = cmd });
         }
         #endregion
     }
