@@ -779,7 +779,7 @@ namespace ManicDiggerServer
             bw.Write((byte)0);
             SendPacket(clientid, ms.ToArray());
         }
-        public int SIMULATION_KEYFRAME_EVERY = 32;
+        public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
         void SendTick(int clientid)
         {

@@ -344,6 +344,7 @@ namespace GameModeFortress
         {
             Dictionary<int, int> d = new Dictionary<int, int>();
             d[(int)TileTypeManicDigger.CraftingTable] = 6;
+            d[(int)TileTypeManicDigger.Crops1] = 1;
             return d;
         }
         //RailVehicle localrailvehicle = new RailVehicle();
@@ -413,7 +414,6 @@ namespace GameModeFortress
                         throw new Exception("Past command.");
                     }
                 }
-                simulationcurrentframe++;
             }
 
             viewport.FiniteInventory = GetPlayerInventory(viewport.LocalPlayerName);
@@ -1018,11 +1018,37 @@ namespace GameModeFortress
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
         public void Tick()
         {
+            simulationcurrentframe++;
             //float dt = 1.0f / 75;
             float dt = SIMULATION_STEP_LENGTH;
             for (int i = 0; i < vehicles.Count; i++)
             {
                 UpdateRailVehicle(dt, i);
+            }
+            if (simulationcurrentframe % (int)((10 * 60) / SIMULATION_STEP_LENGTH) == 0)
+            {
+                Dictionary<Vector3i, int> blockstoset = new Dictionary<Vector3i, int>();
+                foreach (var k in map.blocks)
+                {
+                    if (k.Value == (int)TileTypeManicDigger.DirtForFarming)
+                    {
+                        var pos = MapUtil.FromMapPos(k.Key);
+                        if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
+                        {
+                            int blockabove = map.GetBlock(pos.x, pos.y, pos.z + 1);
+                            if (blockabove == (int)TileTypeManicDigger.Crops1) { blockabove = (int)TileTypeManicDigger.Crops2; }
+                            else if (blockabove == (int)TileTypeManicDigger.Crops2) { blockabove = (int)TileTypeManicDigger.Crops3; }
+                            else if (blockabove == (int)TileTypeManicDigger.Crops3) { blockabove = (int)TileTypeManicDigger.Crops4; }
+                            else { continue; }
+                            blockstoset[new Vector3i(pos.x, pos.y, pos.z + 1)] = blockabove;
+                        }
+                    }
+                }
+                foreach (var k in blockstoset)
+                {
+                    map.SetBlock(k.Key.x, k.Key.y, k.Key.z, k.Value);
+                    terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                }
             }
         }
         Dictionary<string, Dictionary<int, int>> PlayersFiniteInventory = new Dictionary<string, Dictionary<int, int>>();

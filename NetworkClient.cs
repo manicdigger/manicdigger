@@ -472,7 +472,8 @@ namespace ManicDigger
             if (packetId != MinecraftServerPacketId.PositionandOrientationUpdate
                  && packetId != MinecraftServerPacketId.PositionUpdate
                 && packetId != MinecraftServerPacketId.OrientationUpdate
-                && packetId != MinecraftServerPacketId.PlayerTeleport)
+                && packetId != MinecraftServerPacketId.PlayerTeleport
+                && packetId != MinecraftServerPacketId.ExtendedPacketTick)
             {
                 Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packetId));
             }

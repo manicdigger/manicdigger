@@ -18,8 +18,28 @@ namespace GameModeFortress
         public void Connect(string serverAddress, int port, string username, string auth)
         {
         }
+        double starttime = gettime();
+        static double gettime()
+        {
+            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
+        }
+        int simulationcurrentframe;
+        double oldtime;
+        double accumulator;
+        double SIMULATION_STEP_LENGTH = 1.0 / 64;
         public void Process()
         {
+            double currenttime = gettime() - starttime;
+            double deltaTime = currenttime - oldtime;
+            accumulator += deltaTime;
+            double dt = SIMULATION_STEP_LENGTH;
+            while (accumulator > dt)
+            {
+                simulationcurrentframe++;
+                gameworld.Tick();
+                accumulator -= dt;
+            }
+            oldtime = currenttime;
         }
         public void SendSetBlock(OpenTK.Vector3 position, BlockSetMode mode, int type)
         {
