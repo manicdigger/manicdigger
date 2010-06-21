@@ -614,6 +614,7 @@ namespace ManicDigger
             if (data.IsWaterTile(map.GetBlock(x, y, z)) &&
                 !data.IsWaterTile(map.GetBlock(x, y, z + 1))) { return true; }
             return map.GetBlock(x, y, z) == data.TileIdEmpty
+                || map.GetBlock(x,y,z) == data.TileIdSingleStairs
                 || (data.IsWaterTile(map.GetBlock(x, y, z)) && (!swimmingtop))
                 || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
@@ -624,7 +625,9 @@ namespace ManicDigger
         }
         public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
         {
-            //Math.Floor() is needed because casting negative values to integer is not floor.
+            //Math.Floor() is needed because casting negative values to integer is not floor.            
+            bool wasonstairs = map.GetBlock((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
+                (int)Math.Floor(oldposition.Y)) == data.TileIdSingleStairs;
             Vector3 playerposition = newposition;
             //left
             {
@@ -633,9 +636,20 @@ namespace ManicDigger
                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.Z - oldposition.Z > 0)
                 {
-                    if (!newempty)
+                    if (!wasonstairs)
                     {
-                        playerposition.Z = oldposition.Z;
+                        if (!newempty)
+                        {
+                            playerposition.Z = oldposition.Z;
+                        }
+                    }
+                    else
+                    {
+                        if (!newempty)
+                        {
+                            playerposition.Y += 0.5f;
+                            goto ok;
+                        }
                     }
                 }
             }
@@ -646,9 +660,21 @@ namespace ManicDigger
                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.X - oldposition.X > 0)
                 {
-                    if (!newempty)
+                    if (!wasonstairs)
                     {
-                        playerposition.X = oldposition.X;
+                        if (!newempty)
+                        {
+                            playerposition.X = oldposition.X;
+                        }
+
+                    }
+                    else
+                    {
+                        if (!newempty)
+                        {
+                            playerposition.Y += 0.5f;
+                            goto ok;
+                        }
                     }
                 }
             }
@@ -679,9 +705,20 @@ namespace ManicDigger
                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.Z - oldposition.Z < 0)
                 {
-                    if (!newempty)
+                    if (!wasonstairs)
                     {
-                        playerposition.Z = oldposition.Z;
+                        if (!newempty)
+                        {
+                            playerposition.Z = oldposition.Z;
+                        }
+                    }
+                    else
+                    {
+                        if (!newempty)
+                        {
+                            playerposition.Y += 0.5f;
+                            goto ok;
+                        }
                     }
                 }
             }
@@ -692,9 +729,20 @@ namespace ManicDigger
                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
                 if (newposition.X - oldposition.X < 0)
                 {
-                    if (!newempty)
+                    if (!wasonstairs)
                     {
-                        playerposition.X = oldposition.X;
+                        if (!newempty)
+                        {
+                            playerposition.X = oldposition.X;
+                        }
+                    }
+                    else
+                    {
+                        if (!newempty)
+                        {
+                            playerposition.Y += 0.5f;
+                            goto ok;
+                        }
                     }
                 }
             }
@@ -709,6 +757,13 @@ namespace ManicDigger
                         playerposition.Y = oldposition.Y;
                     }
                 }
+            }
+            ok:
+            bool isonstairs = map.GetBlock((int)Math.Floor(playerposition.X), (int)Math.Floor(playerposition.Z),
+                (int)Math.Floor(playerposition.Y)) == data.TileIdSingleStairs;
+            if (isonstairs)
+            {
+                playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
             }
             return playerposition;
         }
