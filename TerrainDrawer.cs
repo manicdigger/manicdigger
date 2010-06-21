@@ -342,7 +342,6 @@ namespace ManicDigger
         public ITerrainInfo mapstorage { get; set; }
         [Inject]
         public IGameData data { get; set; }
-
         public RailSlope GetRailSlope(int x, int y, int z)
         {
             int tiletype = mapstorage.GetTerrainBlock(x, y, z);
@@ -883,6 +882,10 @@ namespace ManicDigger
                 RailPolygons(myelements, myvertices, x, y, z, rail);
                 return;
                 */
+            }
+            if (tt == data.TileIdSingleStairs)
+            {
+                blockheight = 0.5f;
             }
             //slope
             float blockheight00 = blockheight;
