@@ -277,7 +277,7 @@ namespace ManicDigger
             data[(int)TileTypeMinecraft.Lava] = new TileTypeData() { Buildable = false, AllTextures = 30 };
             data[(int)TileTypeMinecraft.GoldBlock] = new TileTypeData() { Buildable = false, AllTextures = 24 };
             data[(int)TileTypeMinecraft.IronBlock] = new TileTypeData() { Buildable = false, AllTextures = 23 };
-            data[(int)TileTypeMinecraft.DoubleStair] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 5 };//43 todo
+            data[(int)TileTypeMinecraft.DoubleStair] = new TileTypeData() { Buildable = true, AllTextures = (0 * 16) + 5, TextureTop = 6 };//43 todo
             data[(int)TileTypeMinecraft.Stair] = new TileTypeData() { Buildable = true, AllTextures = 6 };//44
             data[(int)TileTypeMinecraft.TNT] = new TileTypeData()
             {
