@@ -625,6 +625,7 @@ namespace ManicDigger
         }
         public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
         {
+            reachedceiling = false;
             //Math.Floor() is needed because casting negative values to integer is not floor.            
             bool wasonstairs = map.GetBlock((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
                 (int)Math.Floor(oldposition.Y)) == data.TileIdSingleStairs;
@@ -755,6 +756,7 @@ namespace ManicDigger
                     if (!newempty)
                     {
                         playerposition.Y = oldposition.Y;
+                        reachedceiling = true;
                     }
                 }
             }
@@ -768,6 +770,7 @@ namespace ManicDigger
             return playerposition;
         }
         internal bool swimmingtop;
+        internal bool reachedceiling;
     }
     public interface IInternetGameFactory
     {

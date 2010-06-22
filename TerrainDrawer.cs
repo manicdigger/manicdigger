@@ -973,7 +973,7 @@ namespace ManicDigger
             }
             //back - same as front, but x is 1 greater.
             if (drawback)
-            {//todo fix tcoords
+            {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
@@ -1006,7 +1006,7 @@ namespace ManicDigger
             }
             //right - same as left, but y is 1 greater.
             if (drawright)
-            {//todo fix tcoords
+            {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;

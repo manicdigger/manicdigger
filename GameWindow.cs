@@ -1969,7 +1969,10 @@ namespace ManicDigger
                     {
                         jumpacceleration -= (float)e.Time * 2.8f;
                     }
-                    player.movedz += jumpacceleration * 2;
+                    if (!physics.reachedceiling)
+                    {
+                        player.movedz += jumpacceleration * 2;
+                    }
                 }
             }
             else
