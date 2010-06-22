@@ -1359,6 +1359,20 @@ namespace GameModeFortress
                         Vector3i pos = new Vector3i(cmd.x, cmd.y, cmd.z);
                         if(execute)
                         {
+                            if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
+                            {
+                                List<Vector3i> table = GetTable(pos);
+                                foreach (Vector3i v in table)
+                                {
+                                    if (map.GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
+                                    {
+                                        map.SetBlock(v.x, v.y, v.z + 1, cmd.blocktype);
+                                        inventory[cmd.blocktype]--;
+                                        terrain.UpdateTile(v.x, v.y, v.z + 1);
+                                    }
+                                }
+                                return true;
+                            }
                             for (int i = 0; i < dumpcount; i++)
                             {
                                 //find empty position that is nearest to dump place AND has a block under.
