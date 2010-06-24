@@ -509,18 +509,19 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (KeyPressed(OpenTK.Input.Key.U))
+            if (KeyPressed(OpenTK.Input.Key.U) || KeyPressed(OpenTK.Input.Key.L))
             {
                 if (viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
                     Vector3i pos = new Vector3i((int)viewport.PickCubePos.X, (int)viewport.PickCubePos.Z, (int)viewport.PickCubePos.Y);
                     {
-                        CommandDump cmd = new CommandDump();
+                        CommandDumpOrLoad cmd = new CommandDumpOrLoad();
                         cmd.x = (short)pos.x;
                         cmd.y = (short)pos.y;
                         cmd.z = (short)pos.z;
                         cmd.blocktype = (short)viewport.MaterialSlots[viewport.activematerial];
-                        network.SendCommand(MakeCommand(CommandId.Dump, cmd));
+                        cmd.dump = KeyPressed(OpenTK.Input.Key.U);
+                        network.SendCommand(MakeCommand(CommandId.DumpOrLoad, cmd));
                     }
                 }
             }
@@ -1346,9 +1347,9 @@ namespace GameModeFortress
                         return true;
                     }
                     break;
-                case CommandId.Dump:
+                case CommandId.DumpOrLoad:
                     {
-                        var cmd = new CommandDump();
+                        var cmd = new CommandDumpOrLoad();
                         cmd.FromStream(ms);
                         Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
                         int dumpcount = 0;
@@ -1362,28 +1363,57 @@ namespace GameModeFortress
                             if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
                             {
                                 List<Vector3i> table = GetTable(pos);
-                                foreach (Vector3i v in table)
+                                if (cmd.dump)
                                 {
-                                    if (map.GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
+                                    int dumped = 0;
+                                    foreach (Vector3i v in table)
                                     {
-                                        map.SetBlock(v.x, v.y, v.z + 1, cmd.blocktype);
-                                        inventory[cmd.blocktype]--;
-                                        terrain.UpdateTile(v.x, v.y, v.z + 1);
+                                        if (dumped >= table.Count / 2 || dumped >= dumpcount)
+                                        {
+                                            break;
+                                        }
+                                        if (map.GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
+                                        {
+                                            map.SetBlock(v.x, v.y, v.z + 1, cmd.blocktype);
+                                            inventory[cmd.blocktype]--;
+                                            terrain.UpdateTile(v.x, v.y, v.z + 1);
+                                            dumped++;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (Vector3i v in table)
+                                    {
+                                        if (TotalAmount(inventory) + 1 > finiteinventorymax)
+                                        {
+                                            break;
+                                        }
+                                        int b = map.GetBlock(v.x, v.y, v.z + 1);
+                                        if (b != data.TileIdEmpty)
+                                        {
+                                            map.SetBlock(v.x, v.y, v.z + 1, data.TileIdEmpty);
+                                            inventory[b]++;
+                                            terrain.UpdateTile(v.x, v.y, v.z + 1);
+                                        }
                                     }
                                 }
                                 return true;
                             }
-                            for (int i = 0; i < dumpcount; i++)
+                            if (cmd.dump)
                             {
-                                //find empty position that is nearest to dump place AND has a block under.
-                                Vector3i? nearpos = FindDumpPlace(pos);
-                                if (nearpos == null)
+                                for (int i = 0; i < dumpcount; i++)
                                 {
-                                    break;
+                                    //find empty position that is nearest to dump place AND has a block under.
+                                    Vector3i? nearpos = FindDumpPlace(pos);
+                                    if (nearpos == null)
+                                    {
+                                        break;
+                                    }
+                                    map.SetBlock(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, cmd.blocktype);
+                                    inventory[cmd.blocktype]--;
+                                    terrain.UpdateTile(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z);
                                 }
-                                map.SetBlock(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, cmd.blocktype);
-                                inventory[cmd.blocktype]--;
-                                terrain.UpdateTile(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z);
                             }
                         }
                         return true;
@@ -1972,7 +2002,7 @@ namespace GameModeFortress
     {
         Build,
         Craft,
-        Dump,
+        DumpOrLoad,
         RailVehicleEnterLeave,
         RailVehicleControl,
     }
@@ -2077,12 +2107,13 @@ namespace GameModeFortress
         }
         #endregion
     }
-    public class CommandDump : IStreamizable
+    public class CommandDumpOrLoad : IStreamizable
     {
         public short x;
         public short y;
         public short z;
         public short blocktype;
+        public bool dump;
         #region IStreamizable Members
         public void ToStream(Stream s)
         {
@@ -2091,6 +2122,7 @@ namespace GameModeFortress
             bw.Write((short)y);
             bw.Write((short)z);
             bw.Write((short)blocktype);
+            bw.Write((bool)dump);
         }
         public void FromStream(Stream s)
         {
@@ -2099,6 +2131,7 @@ namespace GameModeFortress
             y = br.ReadInt16();
             z = br.ReadInt16();
             blocktype = br.ReadInt16();
+            dump = br.ReadBoolean();
         }
         #endregion
     }
