@@ -496,6 +496,10 @@ namespace GameModeFortress
                 cmd.vehicleid = -1;
                 for (int i = 0; i < vehicles.Count; i++)
                 {
+                    if (vehicles[i] == null)
+                    {
+                        continue;
+                    }
                     var currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
                            (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
                     if ((vehicles[i].currentrailblock - currentrailblock).Length <= 2)
@@ -1043,6 +1047,10 @@ namespace GameModeFortress
             float dt = SIMULATION_STEP_LENGTH;
             for (int i = 0; i < vehicles.Count; i++)
             {
+                if (vehicles[i] == null)
+                {
+                    continue;
+                }
                 UpdateRailVehicle(dt, i);
             }
             if (simulationcurrentframe % (int)((10 * 60) / SIMULATION_STEP_LENGTH) == 0)
@@ -1108,6 +1116,7 @@ namespace GameModeFortress
                         var cmd = new CommandBuild();
                         cmd.FromStream(ms);
                         Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
+                        bool placeminecartblock = false;
                         if (ENABLE_FINITEINVENTORY)
                         {
                             Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
@@ -1249,6 +1258,27 @@ namespace GameModeFortress
                                 }
                                 if (execute)
                                 {
+                                    //when removing rail under minecart, make minecart block in place of removed rail.
+                                    if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                                    {
+                                        for (int i = 0; i < vehicles.Count; i++)
+                                        {
+                                            if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
+                                            {
+                                                vehicles[i] = null;
+                                                placeminecartblock = true;
+                                                //stop railriding
+                                                foreach (var k in players)
+                                                {
+                                                    if (railridingall.ContainsKey(k.Value.Name)
+                                                        && railridingall[k.Value.Name] == i)
+                                                    {
+                                                        RailRidingLeave(k.Key);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                     if (!inventory.ContainsKey(blocktype))
                                     {
                                         inventory[blocktype] = 0;
@@ -1264,6 +1294,10 @@ namespace GameModeFortress
                         {
                             int tiletype = cmd.mode == BlockSetMode.Create ?
                                 (byte)cmd.tiletype : data.TileIdEmpty;
+                            if (placeminecartblock)
+                            {
+                                tiletype = (int)TileTypeManicDigger.Minecart;
+                            }
                             map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
                             terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
                         }
@@ -1289,14 +1323,7 @@ namespace GameModeFortress
                             {
                                 RailVehicle veh = vehicles[railridingall[players[player_id].Name]];
                                 veh.currentvehiclespeedMul1000 = 0;
-                                railridingall[players[player_id].Name] = -1;
-                                if (localplayerid != null && player_id == localplayerid)
-                                {
-                                    viewport.CharacterHeight = WalkCharacterHeight;
-                                    viewport.ENABLE_FREEMOVE = false;
-                                    viewport.ENABLE_MOVE = true;
-                                    viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
-                                }
+                                RailRidingLeave(player_id);
                             }
                         }
                         return true;
@@ -1487,6 +1514,17 @@ namespace GameModeFortress
                     break;
                 default:
                     throw new Exception();
+            }
+        }
+        private void RailRidingLeave(int player_id)
+        {
+            railridingall[players[player_id].Name] = -1;
+            if (localplayerid != null && player_id == localplayerid)
+            {
+                viewport.CharacterHeight = WalkCharacterHeight;
+                viewport.ENABLE_FREEMOVE = false;
+                viewport.ENABLE_MOVE = true;
+                viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
         }
         private void RemoveEquivalent(Dictionary<int, int> inventory, byte blocktype, int count)

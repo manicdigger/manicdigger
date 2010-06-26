@@ -1400,7 +1400,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
-                    EscapeMenuWasFreemove = ENABLE_FREEMOVE;
+                    //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
                     guistate = GuiState.Inventory;
                     menustate = new MenuState();
                     FreeMouse = true;
@@ -1522,18 +1522,18 @@ namespace ManicDigger
             guistate = GuiState.EscapeMenu;
             menustate = new MenuState();
             FreeMouse = true;
-            EscapeMenuWasFreemove = ENABLE_FREEMOVE;
+            //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
         }
         private void GuiActionLoadGame()
         {
             mapManipulator.LoadMap(map, mapManipulator.defaultminesave);
         }
-        bool EscapeMenuWasFreemove;
+        //bool EscapeMenuWasFreemove;
         private void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
             FreeMouse = false;
-            ENABLE_FREEMOVE = EscapeMenuWasFreemove;
+            //ENABLE_FREEMOVE = EscapeMenuWasFreemove;
             freemousejustdisabled = true;
         }
         private void GuiActionGenerateNewMap()
@@ -1785,7 +1785,12 @@ namespace ManicDigger
         //float fix = 0.5f;
 
         float jumpacceleration = 0;
-        public bool ENABLE_FREEMOVE { get; set; }
+        bool enable_freemove = false;
+        public bool ENABLE_FREEMOVE
+        {
+            get { return enable_freemove; }
+            set { enable_freemove = value; }
+        }
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
         bool ENABLE_NOCLIP = false;
@@ -3863,7 +3868,7 @@ namespace ManicDigger
             this.craftingblocks = blocks;
             this.craftingrecipeselected = craftingRecipeSelected;
             guistate = GuiState.CraftingRecipes;
-            EscapeMenuWasFreemove = ENABLE_FREEMOVE;
+            //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
             menustate = new MenuState();
             FreeMouse = true;
         }
