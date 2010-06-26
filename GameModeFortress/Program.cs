@@ -64,6 +64,10 @@ namespace GameModeFortress
             gameworld.DoCommand(cmd, 0);
         }
         #endregion
+        Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
+        #region INetworkClient Members
+        public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
+        #endregion
     }
     public class ManicDiggerProgram2 : IInternetGameFactory
     {

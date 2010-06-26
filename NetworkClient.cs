@@ -21,6 +21,7 @@ namespace ManicDigger
         IEnumerable<string> ConnectedPlayers();
         void SendPosition(Vector3 position, Vector3 orientation);
         void SendCommand(byte[] cmd);
+        Dictionary<int, bool> EnablePlayerUpdatePosition { get; set; }
     }
     public class MapLoadingProgressEventArgs : EventArgs
     {
@@ -189,6 +190,10 @@ namespace ManicDigger
         public void SendCommand(byte[] cmd)
         {
         }
+        #endregion
+        Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
+        #region INetworkClient Members
+        public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
     }
     public class MapLoadedEventArgs : EventArgs
@@ -837,7 +842,10 @@ namespace ManicDigger
             Vector3 realpos = new Vector3(x, y, z);
             if (playerid == 255)
             {
-                Position.LocalPlayerPosition = realpos;
+                if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
+                {
+                    Position.LocalPlayerPosition = realpos;
+                }
                 spawned = true;
             }
             else
@@ -846,7 +854,10 @@ namespace ManicDigger
                 {
                     Clients.Players[playerid] = new Player();
                 }
-                Clients.Players[playerid].Position = realpos;
+                if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
+                {
+                    Clients.Players[playerid].Position = realpos;
+                }
                 Clients.Players[playerid].Heading = heading;
                 Clients.Players[playerid].Pitch = pitch;
             }
@@ -898,6 +909,10 @@ namespace ManicDigger
             bw.Write((byte[])cmd);
             SendPacket(ms.ToArray());
         }
+        #endregion
+        Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
+        #region INetworkClient Members
+        public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
     }
     /// <summary>

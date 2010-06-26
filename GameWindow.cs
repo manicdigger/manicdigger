@@ -2680,6 +2680,11 @@ namespace ManicDigger
                 {
                     curstate = new PlayerInterpolationState();
                 }
+                //do not interpolate player position if player is controlled by game world
+                if (network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !network.EnablePlayerUpdatePosition[k.Key])
+                {
+                    curstate.position = k.Value.Position;
+                }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
                 DrawCharacter(info.anim, curpos + new Vector3(0, -0.7f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), clients.Players[k.Key].AnimationHint);
@@ -2933,6 +2938,11 @@ namespace ManicDigger
                     if (ppos != null)
                     {
                         Vector3 pos = ((PlayerInterpolationState)ppos).position;
+                        //do not interpolate player position if player is controlled by game world
+                        if (network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !network.EnablePlayerUpdatePosition[k.Key])
+                        {
+                            pos = k.Value.Position;
+                        }
                         GL.PushMatrix();
                         GL.Translate(pos.X, pos.Y + 1f, pos.Z);
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);

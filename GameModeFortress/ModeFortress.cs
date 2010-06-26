@@ -417,9 +417,6 @@ namespace GameModeFortress
             }
 
             viewport.FiniteInventory = GetPlayerInventory(viewport.LocalPlayerName);
-            viewport.LocalPlayerAnimationHint.InVehicle = railriding;
-            viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
-
             bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
             bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
             viewport.LocalPlayerAnimationHint.leanleft = railriding && turnleft;
@@ -453,6 +450,28 @@ namespace GameModeFortress
                     localrailvehicle.currentrailblock,
                     localrailvehicle.currentdirection,
                     (float)localrailvehicle.currentrailblockprogressMul1000 / 1000f);
+            }
+            viewport.LocalPlayerAnimationHint.InVehicle = railriding;
+            viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
+            foreach (var k in players)
+            {
+                if (k.Value.Name == viewport.LocalPlayerName)
+                {
+                    continue;
+                }
+                bool r = railridingall.ContainsKey(k.Value.Name) && railridingall[k.Value.Name] != -1;
+                if (r)
+                {
+                    var veh = vehicles[railridingall[k.Value.Name]];
+                    k.Value.Position = minecartdrawer.CurrentRailPos(
+                        veh.currentrailblock,
+                        veh.currentdirection,
+                        (float)veh.currentrailblockprogressMul1000 / 1000f);
+
+                }
+                network.EnablePlayerUpdatePosition[k.Key] = !r;
+                k.Value.AnimationHint.InVehicle = r;
+                k.Value.AnimationHint.DrawFix = r ? new Vector3(0, +0.8f, 0) : new Vector3();
             }
             /*
             if (targetspeed < 0)
