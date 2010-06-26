@@ -309,6 +309,7 @@ namespace ManicDigger
         Vector3 PickCubePos { get; }
         string LocalPlayerName { get; }
         void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
+        int SelectedModelId { get; }
     }
     public class AnimationHint
     {
@@ -370,10 +371,18 @@ namespace ManicDigger
             get { throw new NotImplementedException(); }
         }
         #endregion
+        #region IViewport3d Members
+        public int SelectedModelId
+        {
+            get { throw new NotImplementedException(); }
+        }
+        #endregion
     }
     public interface IModelToDraw
     {
         void Draw();
+        IEnumerable<Triangle3D> TrianglesForPicking { get; }
+        int Id { get; }
     }
     public interface IGameMode
     {
@@ -2110,6 +2119,8 @@ namespace ManicDigger
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
         Matrix4 the_modelview;
         bool leftpressedpicking = false;
+        public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
+        int selectedmodelid = -1;
         private void UpdatePicking()
         {
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
@@ -2162,6 +2173,37 @@ namespace ManicDigger
             raydir = Vector3.Multiply(raydir, 100);
             pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
             pick.End = ray + raydir;
+
+            //pick models
+            selectedmodelid = -1;
+            foreach (var m in game.Models)
+            {
+                Vector3 closestmodelpos = new Vector3(int.MaxValue,int.MaxValue,int.MaxValue);
+                foreach (var t in m.TrianglesForPicking)
+                {
+                    Vector3 intersection;
+                    if (Collisions.Intersection.RayTriangle(pick, t, out intersection) == 1)
+                    {
+                        if ((pick.Start - intersection).Length > PICK_DISTANCE)
+                        {
+                            continue;
+                        }
+                        if ((pick.Start - intersection).Length < (pick.Start - closestmodelpos).Length)
+                        {
+                            closestmodelpos = intersection;
+                            selectedmodelid = m.Id;
+                        }
+                    }
+                }
+            }
+            if (selectedmodelid != -1)
+            {
+                pickcubepos = new Vector3(-1, -1, -1);
+                Console.WriteLine(selectedmodelid);
+                return;
+            }
+            
+            //pick terrain
             var s = new BlockOctreeSearcher();
             s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
@@ -2393,7 +2435,22 @@ namespace ManicDigger
                 DrawPlayers((float)e.Time);
                 foreach (IModelToDraw m in game.Models)
                 {
+                    if (m.Id == selectedmodelid)
+                    {
+                        //GL.Color3(Color.Red);
+                    }
                     m.Draw();
+                    //GL.Color3(Color.White);
+                    /*
+                    GL.Begin(BeginMode.Triangles);
+                    foreach (var tri in m.TrianglesForPicking)
+                    {
+                        GL.Vertex3(tri.PointA);
+                        GL.Vertex3(tri.PointB);
+                        GL.Vertex3(tri.PointC);
+                    }
+                    GL.End();
+                    */
                 }
                 if (!ENABLE_TPP_VIEW)
                 {

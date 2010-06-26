@@ -157,7 +157,7 @@ namespace ManicDigger
         public void DrawCube(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
         {
             //front
-            GL.Color3(Color.White);
+            //GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
             GL.Disable(EnableCap.CullFace);
             GL.Begin(BeginMode.Quads);

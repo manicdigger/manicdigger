@@ -493,20 +493,7 @@ namespace GameModeFortress
                 //todo command
                 CommandRailVehicleEnterLeave cmd = new CommandRailVehicleEnterLeave();
                 cmd.enter = true;
-                cmd.vehicleid = -1;
-                for (int i = 0; i < vehicles.Count; i++)
-                {
-                    if (vehicles[i] == null)
-                    {
-                        continue;
-                    }
-                    var currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
-                           (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
-                    if ((vehicles[i].currentrailblock - currentrailblock).Length <= 2)
-                    {
-                        cmd.vehicleid = i;
-                    }
-                }
+                cmd.vehicleid = viewport.SelectedModelId;
                 if (cmd.vehicleid != -1)
                 {
                     TrySendCommand(MakeCommand(CommandId.RailVehicleEnterLeave, cmd));
@@ -1830,18 +1817,6 @@ namespace GameModeFortress
         {
             get
             {
-                /*
-                if (railriding)
-                {
-                    var m = new MinecartToDraw();
-                    m.drawer = minecartdrawer;
-                    m.position = viewport.LocalPlayerPosition;
-                    m.direction = localrailvehicle.currentdirection;
-                    m.lastdirection = localrailvehicle.lastdirection;
-                    m.progress = localrailvehicle.currentrailblockprogress;
-                    yield return m;
-                }
-                */
                 for (int i = 0; i < vehicles.Count; i++)
                 {
                     if (vehicles[i] == null)
@@ -1855,6 +1830,7 @@ namespace GameModeFortress
                     m.direction = v.currentdirection;
                     m.lastdirection = v.lastdirection;
                     m.progress = v.currentrailblockprogressMul1000 / 1000f;
+                    m.Id = i;
                     yield return m;
                 }
             }
@@ -1930,6 +1906,15 @@ namespace GameModeFortress
             drawer.Draw(currentrailblock, position, direction, lastdirection, progress);
         }
         #endregion
+        #region IModelToDraw Members
+        public IEnumerable<Triangle3D> TrianglesForPicking
+        {
+            get { return drawer.TrianglesForPicking(currentrailblock, position, direction, lastdirection, progress); }
+        }
+        #endregion
+        #region IModelToDraw Members
+        public int Id { get; set; }
+        #endregion
     }
     public class MinecartDrawer
     {
@@ -1965,13 +1950,44 @@ namespace GameModeFortress
             //double rot = lastrot + (currot - lastrot) * progress;
             double rot = AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
             GL.Rotate(-rot - 90, 0, 1, 0);
+            
             var c = new CharacterDrawerBlock();
             var cc = c.MakeCoords(8, 8, 8, 0, 0);
             CharacterDrawerBlock.MakeTextureCoords(cc, 32, 16);
             c.DrawCube(new Vector3(-0.5f, -0.3f, -0.5f), new Vector3(1, 1, 1), minecarttexture, cc);
+
             GL.PopMatrix();
         }
         #endregion
+        internal IEnumerable<Triangle3D> TrianglesForPicking(Vector3 currentrailblock, Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
+        {
+            Vector3 glpos;
+            if (position != new Vector3())
+            {
+                glpos = position;
+            }
+            else
+            {
+                glpos = CurrentRailPos(currentrailblock, dir, (float)progress);
+            }
+            glpos += new Vector3(0, -0.7f, 0);
+            //GL.Translate(glpos);
+            double currot = vehiclerotation(dir);
+            double lastrot = vehiclerotation(lastdir);
+            //double rot = lastrot + (currot - lastrot) * progress;
+            double rot = AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
+            Matrix4 m = Matrix4.Identity;
+            m *= Matrix4.Rotate(new Vector3(0, 1, 0), (-(float)rot - 90) * ((float)Math.PI / 180));
+            m *= Matrix4.Translation(glpos);
+            var tri = ManicDigger.Collisions.Intersection.BoxTriangles(new Vector3(-0.5f, -0.3f, -.5f), new Vector3(0.5f, -0.3f + 1, 0.5f));
+            foreach (var t in tri)
+            {
+                var a = Vector3.Transform(t.PointA, m);
+                var b = Vector3.Transform(t.PointB, m);
+                var c = Vector3.Transform(t.PointC, m);
+                yield return new Triangle3D() { PointA = a, PointB = b, PointC = c };
+            }
+        }
         public Vector3 CurrentRailPos(Vector3 currentrailblock, VehicleDirection12 currentdirection, float currentrailblockprogress)
         {
             var slope = railmaputil.GetRailSlope((int)currentrailblock.X,
