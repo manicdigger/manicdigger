@@ -565,22 +565,9 @@ namespace GameModeFortress
             {
                 veh.lastdirection = veh.currentdirection;
                 veh.currentrailblockprogressMul1000 = 0;
-                var newenter = new TileEnterData();
-                newenter.BlockPosition = NextTile(veh.currentdirection, veh.currentrailblock);
-                //slope
-                if (GetUpDownMove(veh.currentrailblock,
-                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection))) == UpDown.Up)
-                {
-                    newenter.BlockPosition.Z++;
-                }
-                if (GetUpDownMove(newenter.BlockPosition + new Vector3(0, 0, -1),
-                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection))) == UpDown.Down)
-                {
-                    newenter.BlockPosition.Z--;
-                }
-
-                newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection));
-                var newdir = BestNewDirection(PossibleRails(newenter), veh.turnleft, veh.turnright);
+                TileEnterData newenter;
+                VehicleDirection12? newdir;
+                NewEnterNewDir(veh, out newenter, out newdir);
                 if (newdir == null)
                 {
                     //end of rail
@@ -619,6 +606,26 @@ namespace GameModeFortress
             {
                 veh.currentvehiclespeedMul1000 = 0;
             }
+        }
+
+        private void NewEnterNewDir(RailVehicle veh, out TileEnterData newenter, out VehicleDirection12? newdir)
+        {
+            newenter = new TileEnterData();
+            newenter.BlockPosition = NextTile(veh.currentdirection, veh.currentrailblock);
+            //slope
+            if (GetUpDownMove(veh.currentrailblock,
+                DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection))) == UpDown.Up)
+            {
+                newenter.BlockPosition.Z++;
+            }
+            if (GetUpDownMove(newenter.BlockPosition + new Vector3(0, 0, -1),
+                DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection))) == UpDown.Down)
+            {
+                newenter.BlockPosition.Z--;
+            }
+
+            newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(veh.currentdirection));
+            newdir = BestNewDirection(PossibleRails(newenter), veh.turnleft, veh.turnright);
         }
         void CraftingRecipeSelected(Vector3i pos, int? recipe)
         {
@@ -1134,6 +1141,18 @@ namespace GameModeFortress
                                     {
                                         return false;
                                     }
+                                    //only allow one minecart on block.
+                                    for (int i = 0; i < vehicles.Count; i++)
+                                    {
+                                        if (vehicles[i] == null)
+                                        {
+                                            continue;
+                                        }
+                                        if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
+                                        {
+                                            return false;
+                                        }
+                                    }
                                     RailVehicle veh = new RailVehicle();
                                     veh.currentrailblock = new Vector3(cmd.x, cmd.y, cmd.z);
                                     {
@@ -1263,6 +1282,10 @@ namespace GameModeFortress
                                     {
                                         for (int i = 0; i < vehicles.Count; i++)
                                         {
+                                            if (vehicles[i] == null)
+                                            {
+                                                continue;
+                                            }
                                             if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
                                             {
                                                 vehicles[i] = null;
@@ -1494,6 +1517,7 @@ namespace GameModeFortress
                                 case ControlAction.Reverse:
                                     veh.currentdirection = DirectionUtils.Reverse(veh.currentdirection);
                                     veh.currentrailblockprogressMul1000 = 1000 - veh.currentrailblockprogressMul1000;
+                                    veh.currentrailblockprogressMul1000 = Math.Max(veh.currentrailblockprogressMul1000, 999);
                                     veh.lastdirection = veh.currentdirection;
                                     //currentvehiclespeed = 0;
                                     break;
