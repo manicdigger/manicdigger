@@ -1387,6 +1387,17 @@ namespace ManicDigger
                 {
                     ENABLE_TPP_VIEW = !ENABLE_TPP_VIEW;
                 }
+                if (e.Key == OpenTK.Input.Key.F12)
+                {
+                    using (Bitmap bmp = GrabScreenshot())
+                    {
+                        string path = System.Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+                        string time = string.Format("{0:yyyy-MM-dd_HH-mm-ss}", DateTime.Now);
+                        string filename = Path.Combine(path, time + ".png");
+                        bmp.Save(filename);
+                        screenshotflash = 5;
+                    }
+                }
                 if (e.Key == OpenTK.Input.Key.R)
                 {
                     player.playerposition = game.PlayerPositionSpawn;
@@ -1507,6 +1518,21 @@ namespace ManicDigger
                 }
             }
             else throw new Exception();
+        }
+        // Returns a System.Drawing.Bitmap with the contents of the current framebuffer
+        public Bitmap GrabScreenshot()
+        {
+            if (GraphicsContext.CurrentContext == null)
+                throw new GraphicsContextMissingException();
+
+            Bitmap bmp = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+            System.Drawing.Imaging.BitmapData data =
+                bmp.LockBits(this.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            GL.ReadPixels(0, 0, this.ClientSize.Width, this.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+            bmp.UnlockBits(data);
+
+            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            return bmp;
         }
         public void Log(string p)
         {
@@ -2460,10 +2486,10 @@ namespace ManicDigger
             }
             SetAmbientLight(Color.White);
             Draw2d();
-
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
         bool skindownloadthreadstarted = false;
@@ -2986,6 +3012,14 @@ namespace ManicDigger
             if (FreeMouse)
             {
                 DrawMouseCursor();
+            }
+            if (screenshotflash > 0)
+            {
+                Draw2dTexture(WhiteTexture(), 0, 0, Width, Height, null, Color.White);
+                string screenshottext = "Screenshot";
+                Draw2dText(screenshottext, xcenter(TextSize(screenshottext, 50).Width),
+                    ycenter(TextSize(screenshottext, 50).Height), 50, Color.White);
+                screenshotflash--;
             }
             PerspectiveMode();
             foreach (KeyValuePair<int, Player> k in clients.Players)
