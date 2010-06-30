@@ -1882,7 +1882,7 @@ namespace GameModeFortress
         {
             int x = map.MapSizeX / 2;
             int y = map.MapSizeY / 2;
-            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y), y + 0.5f);
+            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y) + 0.5f, y + 0.5f);
             viewport.LocalPlayerPosition = PlayerPositionSpawn;
             viewport.LocalPlayerOrientation = PlayerOrientationSpawn;
         }
