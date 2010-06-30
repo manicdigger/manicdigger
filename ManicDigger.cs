@@ -484,6 +484,7 @@ namespace ManicDigger
         string BlockName(int blocktype);
         bool IsEmptyForPhysics(int blocktype);
         float BlockWalkSpeed(int blocktype);
+        bool GrassGrowsUnder(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -571,6 +572,12 @@ namespace ManicDigger
         public float BlockWalkSpeed(int blocktype)
         {
             return 1;
+        }
+        #endregion
+        #region IGameData Members
+        public bool GrassGrowsUnder(int blocktype)
+        {
+            return false;
         }
         #endregion
     }

@@ -64,6 +64,7 @@ namespace GameModeFortress
             gencache = new Dictionary<ulong, byte[, ,]>();
         }
         Dictionary<ulong, byte[, ,]> gencache = new Dictionary<ulong, byte[, ,]>();
+        public List<ulong> blockslist = new List<ulong>();
         public int GetBlock(int x, int y, int z)
         {
             if (blocks.ContainsKey(MapUtil.ToMapPos(x,y,z)))
@@ -95,7 +96,12 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            blocks[MapUtil.ToMapPos(x,y,z)] = (byte)tileType;
+            ulong pos = MapUtil.ToMapPos(x, y, z);
+            if (!blocks.ContainsKey(pos))
+            {
+                blockslist.Add(pos);
+            }
+            blocks[pos] = (byte)tileType;
         }
         public void UseMap(byte[, ,] map)
         {
@@ -122,6 +128,7 @@ namespace GameModeFortress
             BinaryReader br = new BinaryReader(ms);
             int count = NetworkHelper.ReadInt32(br);
             blocks.Clear();
+            blockslist.Clear();
             for (int i = 0; i < count; i++)
             {
                 int x = NetworkHelper.ReadInt32(br);
@@ -129,6 +136,7 @@ namespace GameModeFortress
                 int z = NetworkHelper.ReadInt32(br);
                 int type = NetworkHelper.ReadInt16(br);
                 blocks.Add(MapUtil.ToMapPos(x, y, z), (byte)type);
+                blockslist.Add(MapUtil.ToMapPos(x, y, z));
             }
         }
     }
@@ -1034,6 +1042,89 @@ namespace GameModeFortress
             get { return ""; }
         }
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
+        int blocksiteration = 0;
+        public int BLOCKSLOOP_PER_FRAME = 10;
+        void BlocksLoop()
+        {
+            if (map.blockslist.Count == 0)
+            {
+                return;
+            }
+            int start = blocksiteration;
+            for (int i = 0; i < BLOCKSLOOP_PER_FRAME; i++)
+            {
+                if (i > 0 && blocksiteration == start)
+                {
+                    break;
+                }
+                blocksiteration++;
+                if (map.blocks.Count != map.blockslist.Count)
+                {
+                    throw new Exception();
+                }
+                if (blocksiteration >= map.blockslist.Count)
+                {
+                    blocksiteration = 0;
+                }
+                BlockTick(map.blockslist[blocksiteration]);
+            }
+        }
+        void BlockTick(ulong kkey)
+        {
+            BlockTickGrass(kkey);
+        }
+        private void BlockTickGrass(ulong kkey)
+        {
+            Dictionary<Vector3i, int> blockstoset = new Dictionary<Vector3i, int>();
+            var pos = MapUtil.FromMapPos(kkey);
+            int kvalue = map.GetBlock(pos.x, pos.y, pos.z);
+            if (kvalue == (int)TileTypeMinecraft.Dirt)
+            {
+                if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
+                {
+                    int block2 = map.GetBlock(pos.x, pos.y, pos.z + 1);
+                    if (data.GrassGrowsUnder(block2) && !IsShadow(pos.x, pos.y, pos.z))
+                    {
+                        blockstoset[new Vector3i(pos.x, pos.y, pos.z)] = (int)TileTypeMinecraft.Grass;
+                    }
+                }
+            }
+            else if (data.GrassGrowsUnder(kvalue))
+            {
+                if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z - 1))
+                {
+                    int block2 = map.GetBlock(pos.x, pos.y, pos.z - 1);
+                    if (block2 == (int)TileTypeMinecraft.Dirt && !IsShadow(pos.x, pos.y, pos.z - 1))
+                    {
+                        blockstoset[new Vector3i(pos.x, pos.y, pos.z - 1)] = (int)TileTypeMinecraft.Grass;
+                    }
+                }
+            }
+            else if (kvalue == data.TileIdGrass)
+            {
+                if (IsShadow(pos.x, pos.y, pos.z))
+                {
+                    blockstoset[new Vector3i(pos.x, pos.y, pos.z)] = (int)TileTypeMinecraft.Dirt;
+                }
+            }
+            if (!data.GrassGrowsUnder(kvalue))
+            {
+                //todo isshadow
+                if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z - 1))
+                {
+                    int block2 = map.GetBlock(pos.x, pos.y, pos.z - 1);
+                    if (block2 == data.TileIdGrass)
+                    {
+                        blockstoset[new Vector3i(pos.x, pos.y, pos.z - 1)] = (int)TileTypeMinecraft.Dirt;
+                    }
+                }
+            }
+            foreach (var k in blockstoset)
+            {
+                map.SetBlock(k.Key.x, k.Key.y, k.Key.z, k.Value);
+                terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+            }
+        }
         public void Tick()
         {
             simulationcurrentframe++;
@@ -1047,6 +1138,7 @@ namespace GameModeFortress
                 }
                 UpdateRailVehicle(dt, i);
             }
+            BlocksLoop();
             if (simulationcurrentframe % (int)((10 * 60) / SIMULATION_STEP_LENGTH) == 0)
             {
                 Dictionary<Vector3i, int> blockstoset = new Dictionary<Vector3i, int>();
@@ -1072,6 +1164,17 @@ namespace GameModeFortress
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
+        }
+        private bool IsShadow(int x, int y, int z)
+        {
+            for (int i = 1; i < 10; i++)
+            {
+                if (MapUtil.IsValidPos(map, x, y, z + i) && ! data.GrassGrowsUnder(map.GetBlock(x, y, z + i)))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         Dictionary<string, Dictionary<int, int>> PlayersFiniteInventory = new Dictionary<string, Dictionary<int, int>>();
         public bool ENABLE_FINITEINVENTORY = true;
@@ -2441,17 +2544,26 @@ namespace GameModeFortress
         #region IGameData Members
         public bool IsEmptyForPhysics(int blocktype)
         {
-            return data.IsEmptyForPhysics(blocktype)
-                || blocktype == (int)TileTypeManicDigger.Crops1
+            return data.IsEmptyForPhysics(blocktype) || IsCrops(blocktype);
+        }
+        #endregion
+        bool IsCrops(int blocktype)
+        {
+            return blocktype == (int)TileTypeManicDigger.Crops1
                 || blocktype == (int)TileTypeManicDigger.Crops2
                 || blocktype == (int)TileTypeManicDigger.Crops3
                 || blocktype == (int)TileTypeManicDigger.Crops4;
         }
-        #endregion
         #region IGameData Members
         public float BlockWalkSpeed(int blocktype)
         {
             return data.BlockWalkSpeed(blocktype);
+        }
+        #endregion
+        #region IGameData Members
+        public bool GrassGrowsUnder(int blocktype)
+        {
+            return data.GrassGrowsUnder(blocktype) || IsCrops(blocktype);
         }
         #endregion
     }

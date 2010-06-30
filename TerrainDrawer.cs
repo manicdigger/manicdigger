@@ -570,10 +570,17 @@ namespace ManicDigger
             return ((new Vector3(a.X * chunksize, a.Z * chunksize, a.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length)
                 .CompareTo((new Vector3(b.X * chunksize, b.Z * chunksize, b.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length);
         }
+        int MAX_PRIORITY_UPDATES = 5;
         private void ProcessAllPriorityTodos()
         {
+            int done = 0;
             while (prioritytodo.Count > 0)
             {
+                done++;
+                if (done > MAX_PRIORITY_UPDATES)
+                {
+                    break;
+                }
                 if (exit.exit || exit2) { return; }
                 Vector3[] ti;
                 lock (prioritytodo)
@@ -801,11 +808,26 @@ namespace ManicDigger
             yield return new Vector3(pos + new Vector3(0, 0, +1));
             yield return new Vector3(pos + new Vector3(0, 0, -1));
         }
+        bool IsChunkLoaded(int x, int y)
+        {
+            for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
+            {
+                if (batchedblocks.ContainsKey(new Vector3(x, y, z)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public void UpdateTile(int xx, int yy, int zz)
         {
             List<Vector3> l = new List<Vector3>();
             lock (prioritytodo)
             {
+                if (!IsChunkLoaded(xx / chunksize, yy / chunksize))
+                {
+                    return;
+                }
                 l.Add(new Vector3(xx / chunksize, yy / chunksize, zz / chunksize));
                 foreach (Vector3 t in TilesAround(new Vector3(xx, yy, zz)))
                 {
@@ -1044,7 +1066,7 @@ namespace ManicDigger
             if (!config3d.ENABLE_TRANSPARENCY)
             {
                 return tt == data.TileIdEmpty;
-            }            
+            }
             return tt == data.TileIdEmpty
                 || (data.IsWaterTile(tt)
                  && (!data.IsWaterTile(adjacenttiletype)))

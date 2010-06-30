@@ -419,6 +419,12 @@ namespace ManicDigger
             return 1;
         }
         #endregion
+        #region IGameData Members
+        public bool GrassGrowsUnder(int blocktype)
+        {
+            return blocktype == TileIdEmpty || IsBlockFlower(blocktype) || blocktype == (int)TileTypeMinecraft.Leaves;
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
