@@ -48,6 +48,16 @@ using System;
             }
             PlaceRandomOres(0.2f * randomxyz(x, y, z), TileIdGoldOre + (int)(randomxyz(x, y, z) * 3), chunksize, x, y, z, chunk);
             istreecache = null;
+            if (z == 0)
+            {
+                for (int xx = 0; xx < chunksize; xx++)
+                {
+                    for (int yy = 0; yy < chunksize; yy++)
+                    {
+                        chunk[xx, yy, 0] = (byte)TileIdLava;
+                    }
+                }
+            }
             return chunk;
         }
         void PlaceRandomOres(float oresperchunk, int oretype, int chunksize, int x, int y, int z, byte[, ,] chunk)
@@ -88,6 +98,7 @@ using System;
         int TileIdGoldOre = 14;
         int TileIdIronOre = 15;
         int TileIdCoalOre = 16;
+        int TileIdLava = 11;
         float treedensity = 0.008f;
         int GetBlockInside(int x, int y, int z, int height)
         {

@@ -633,9 +633,14 @@ namespace ManicDigger
         public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
         {
             reachedceiling = false;
-            //Math.Floor() is needed because casting negative values to integer is not floor.            
-            bool wasonstairs = map.GetBlock((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
-                (int)Math.Floor(oldposition.Y)) == data.TileIdSingleStairs;
+            //Math.Floor() is needed because casting negative values to integer is not floor.
+            Vector3i oldpositioni = new Vector3i((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
+                (int)Math.Floor(oldposition.Y));
+            bool wasonstairs = false;
+            if (MapUtil.IsValidPos(map, oldpositioni.x, oldpositioni.y, oldpositioni.z))
+            {
+                wasonstairs = map.GetBlock(oldpositioni.x, oldpositioni.y, oldpositioni.z) == data.TileIdSingleStairs;
+            }
             Vector3 playerposition = newposition;
             //left
             {
@@ -768,8 +773,13 @@ namespace ManicDigger
                 }
             }
             ok:
-            bool isonstairs = map.GetBlock((int)Math.Floor(playerposition.X), (int)Math.Floor(playerposition.Z),
-                (int)Math.Floor(playerposition.Y)) == data.TileIdSingleStairs;
+            bool isonstairs = false;
+            Vector3i playerpositioni = new Vector3i((int)Math.Floor(playerposition.X), (int)Math.Floor(playerposition.Z),
+                 (int)Math.Floor(playerposition.Y));
+            if (MapUtil.IsValidPos(map, playerpositioni.x, playerpositioni.y, playerpositioni.z))
+            {
+                isonstairs = map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == data.TileIdSingleStairs;
+            }
             if (isonstairs)
             {
                 playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;

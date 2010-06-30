@@ -204,7 +204,10 @@ namespace ManicDigger
         {
             return tiletype == (int)TileTypeMinecraft.Water
                 || tiletype == (int)TileTypeMinecraft.StationaryWater
-                || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource;
+                || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource
+                || tiletype == (int)TileTypeMinecraft.Lava
+                || tiletype == (int)TileTypeMinecraft.StationaryLava
+                || tiletype == (int)TileTypeMinecraft.InfiniteLavaSource;
         }
         #endregion
         #region IGameData Members
