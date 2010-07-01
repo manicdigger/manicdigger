@@ -532,11 +532,13 @@ namespace ManicDigger
         }
         private void CheckRespawn()
         {
+            /*
             if ((lastplayerposition - localplayerposition.LocalPlayerPosition).Length > 20)
             {
                 UpdateAllTiles();
             }
             lastplayerposition = localplayerposition.LocalPlayerPosition;
+            */
         }
         int FTodo(TodoItem a, TodoItem b)
         {

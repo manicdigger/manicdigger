@@ -65,26 +65,28 @@ namespace GameModeFortress
         }
         Dictionary<ulong, byte[, ,]> gencache = new Dictionary<ulong, byte[, ,]>();
         public List<ulong> blockslist = new List<ulong>();
+        int chunksize = 16;
+        int cachesize = 100 * 1000 * 1000;
         public int GetBlock(int x, int y, int z)
         {
-            if (blocks.ContainsKey(MapUtil.ToMapPos(x,y,z)))
+            if (blocks.ContainsKey(MapUtil.ToMapPos(x, y, z)))
             {
                 return blocks[MapUtil.ToMapPos(x, y, z)];
             }
             else
             {
                 byte[, ,] chunk = null;
-                var k = MapUtil.ToMapPos(x / 16, y / 16, z / 16);
+                var k = MapUtil.ToMapPos(x / chunksize, y / chunksize, z / chunksize);
                 if (!gencache.TryGetValue(k, out chunk))
                 {
-                    chunk = gen.GetChunk(x / 16, y / 16, z / 16, 16);
-                    if (gencache.Count > 64 * 64 * 4)
+                    chunk = gen.GetChunk(x / chunksize, y / chunksize, z / chunksize, chunksize);
+                    if (gencache.Count * chunksize * chunksize * chunksize > cachesize)
                     {
                         Restart();
                     }
                     gencache[k] = chunk;
                 }
-                return chunk[x % 16, y % 16, z % 16];
+                return chunk[x % chunksize, y % chunksize, z % chunksize];
             }
         }
         float waterlevel = 32;
@@ -1100,6 +1102,60 @@ namespace GameModeFortress
         void BlockTick(ulong kkey)
         {
             BlockTickGrass(kkey);
+            BlockTickSapling(kkey);
+        }
+        private void BlockTickSapling(ulong kkey)
+        {
+            var pos = MapUtil.FromMapPos(kkey);
+            if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeMinecraft.Sapling
+                 && (!IsShadow(pos.x, pos.y, pos.z)))
+            {
+                if (!MapUtil.IsValidPos(map, pos.x, pos.y, pos.z - 1))
+                {
+                    return;
+                }
+                int under = map.GetBlock(pos.x, pos.y, pos.z - 1);
+                if (!(under == (int)TileTypeMinecraft.Dirt
+                    || under == (int)TileTypeMinecraft.Grass
+                    || under == (int)TileTypeManicDigger.DirtForFarming))
+                {
+                    return;
+                }
+                PlaceTree(pos.x, pos.y, pos.z - 1);
+            }
+        }
+        void PlaceTree(int x, int y, int z)
+        {
+            int TileIdLeaves = (int)TileTypeMinecraft.Leaves;
+
+            Place(x, y, z + 1, (int)TileTypeMinecraft.TreeTrunk);
+            Place(x, y, z + 2, (int)TileTypeMinecraft.TreeTrunk);
+            Place(x, y, z + 3, (int)TileTypeMinecraft.TreeTrunk);
+            
+            Place(x + 1, y, z + 3, TileIdLeaves);
+            Place(x - 1, y, z + 3, TileIdLeaves);
+            Place(x, y + 1, z + 3, TileIdLeaves);
+            Place(x, y - 1, z + 3, TileIdLeaves);
+
+            Place(x + 1, y + 1, z + 3, TileIdLeaves);
+            Place(x + 1, y - 1, z + 3, TileIdLeaves);
+            Place(x - 1, y + 1, z + 3, TileIdLeaves);
+            Place(x - 1, y - 1, z + 3, TileIdLeaves);
+
+            Place(x + 1, y, z + 4, TileIdLeaves);
+            Place(x - 1, y, z + 4, TileIdLeaves);
+            Place(x, y + 1, z + 4, TileIdLeaves);
+            Place(x, y - 1, z + 4, TileIdLeaves);
+
+            Place(x, y, z + 4, TileIdLeaves);
+        }
+        private void Place(int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(map, x, y, z))
+            {
+                map.SetBlock(x, y, z, blocktype);
+                terrain.UpdateTile(x, y, z);
+            }
         }
         private void BlockTickGrass(ulong kkey)
         {
@@ -1792,7 +1848,7 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.Sand, 2, TileTypeMinecraft.Glass, 1);
             MakeRecipe(TileTypeMinecraft.Leaves, 10, TileTypeMinecraft.RedRoseDecorations, 1);
             MakeRecipe(TileTypeMinecraft.Leaves, 10, TileTypeMinecraft.YellowFlowerDecorations, 1);
-            MakeRecipe(TileTypeMinecraft.Leaves, 10, TileTypeMinecraft.Sapling, 1);
+            MakeRecipe(TileTypeMinecraft.Leaves, 3, TileTypeMinecraft.Sapling, 1);
             MakeRecipe(TileTypeMinecraft.Dirt, 10, TileTypeMinecraft.RedMushroom, 1);
             MakeRecipe(TileTypeMinecraft.Dirt, 10, TileTypeMinecraft.BrownMushroom, 1);
             MakeRecipe(TileTypeMinecraft.Wood, 2, TileTypeMinecraft.Bookcase, 1);
