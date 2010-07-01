@@ -398,6 +398,7 @@ namespace ManicDigger
         void LoadState(byte[] savegame);
         int FiniteInventoryAmount(int blocktype);
         int FiniteInventoryMax { get; }
+        double SIMULATIONLAG_SECONDS { get; set; }
     }
     public interface ICharacterToDraw
     {
@@ -1036,6 +1037,10 @@ namespace ManicDigger
                     else if (cmd == "testmodel")
                     {
                         ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
+                    }
+                    else if (cmd == "simulationlag")
+                    {
+                        game.SIMULATIONLAG_SECONDS = double.Parse(arguments);
                     }
                     else
                     {

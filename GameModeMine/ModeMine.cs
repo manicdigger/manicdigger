@@ -152,6 +152,9 @@ namespace ManicDigger
         #region IGameMode Members
         public int FiniteInventoryMax { get { return 0; } }
         #endregion
+        #region IGameMode Members
+        public double SIMULATIONLAG_SECONDS { get; set; }
+        #endregion
     }
     public class TileTypeData
     {

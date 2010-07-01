@@ -361,7 +361,9 @@ namespace GameModeFortress
         RailVehicle localrailvehicle { get { return vehicles[railridingall[viewport.LocalPlayerName]]; } }
         double simulationaccumulator;
         int simulationcurrentframe;
-        int SIMULATIONLAG { get { return (int)(0.3 / SIMULATION_STEP_LENGTH); } }
+        double simulationlagseconds = 0.3;
+        public double SIMULATIONLAG_SECONDS { get { return simulationlagseconds; } set { simulationlagseconds = value; } }
+        int SIMULATIONLAG_FRAMES { get { return Math.Max(1, (int)(simulationlagseconds / SIMULATION_STEP_LENGTH)); } }
         public void OnNewFrame(double dt)
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
@@ -374,10 +376,18 @@ namespace GameModeFortress
             }
             viewport.PerformanceInfo["frame"] = "Frame: " + simulationcurrentframe.ToString();
             simulationaccumulator += dt;
+            if ((simulationallowedkeyframe - simulationcurrentframe > SIMULATIONLAG_FRAMES * 1.5f)) 
+            {
+                //we are too far behind the server.
+                simulationaccumulator += SIMULATION_STEP_LENGTH
+                    * (simulationallowedkeyframe - simulationcurrentframe - SIMULATIONLAG_FRAMES * 1.5f);
+            }
+            viewport.PerformanceInfo["frame lag"] = "Frame lag:" + (simulationallowedkeyframe - simulationcurrentframe);
             double simulationdt = SIMULATION_STEP_LENGTH;
             while (simulationaccumulator > simulationdt)
+                 //|| (simulationallowedkeyframe - simulationcurrentframe > SIMULATIONLAG_FRAMES * 2f)) //we are too far behind the server.
             {
-                if (simulationcurrentframe >= simulationallowedkeyframe - SIMULATIONLAG)
+                if (simulationcurrentframe >= simulationallowedkeyframe - SIMULATIONLAG_FRAMES)
                 {
                     simulationaccumulator = 0;
                     break;
@@ -399,7 +409,7 @@ namespace GameModeFortress
                     }
                 }
                 //commands
-                while(simulationcmdtodo.Count > 0)
+                while (simulationcmdtodo.Count > 0)
                 {
                     CommandTodo todo = simulationcmdtodo.Peek();
                     if (todo.frame > simulationcurrentframe)
