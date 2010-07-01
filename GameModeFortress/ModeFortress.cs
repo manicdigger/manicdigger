@@ -1073,28 +1073,36 @@ namespace GameModeFortress
         }
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
         int blocksiteration = 0;
-        public int BLOCKSLOOP_PER_FRAME = 10;
+        public int BLOCKSLOOP_BLOCKS_PER_FRAME = 10;
+        public int BLOCKSLOOP_EVERY_SECONDS = 10 * 60;
         void BlocksLoop()
         {
             if (map.blockslist.Count == 0)
             {
                 return;
             }
+            if (map.blocks.Count != map.blockslist.Count)
+            {
+                throw new Exception();
+            }
             int start = blocksiteration;
-            for (int i = 0; i < BLOCKSLOOP_PER_FRAME; i++)
+            for (int i = 0; i < BLOCKSLOOP_BLOCKS_PER_FRAME; i++)
             {
                 if (i > 0 && blocksiteration == start)
                 {
                     break;
                 }
                 blocksiteration++;
-                if (map.blocks.Count != map.blockslist.Count)
-                {
-                    throw new Exception();
-                }
                 if (blocksiteration >= map.blockslist.Count)
                 {
-                    blocksiteration = 0;
+                    if (simulationcurrentframe % (int)((BLOCKSLOOP_EVERY_SECONDS) / SIMULATION_STEP_LENGTH) == 0)
+                    {
+                        blocksiteration = 0;
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
                 BlockTick(map.blockslist[blocksiteration]);
             }
@@ -1103,6 +1111,25 @@ namespace GameModeFortress
         {
             BlockTickGrass(kkey);
             BlockTickSapling(kkey);
+            BlockTickCrops(kkey);
+        }
+        private void BlockTickCrops(ulong kkey)
+        {
+            var pos = MapUtil.FromMapPos(kkey);
+            int kvalue = map.GetBlock(pos.x, pos.y, pos.z);
+            if (kvalue == (int)TileTypeManicDigger.DirtForFarming)
+            {
+                if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
+                {
+                    int blockabove = map.GetBlock(pos.x, pos.y, pos.z + 1);
+                    if (blockabove == (int)TileTypeManicDigger.Crops1) { blockabove = (int)TileTypeManicDigger.Crops2; }
+                    else if (blockabove == (int)TileTypeManicDigger.Crops2) { blockabove = (int)TileTypeManicDigger.Crops3; }
+                    else if (blockabove == (int)TileTypeManicDigger.Crops3) { blockabove = (int)TileTypeManicDigger.Crops4; }
+                    else { return; }
+                    map.SetBlock(pos.x, pos.y, pos.z + 1, blockabove);
+                    terrain.UpdateTile(pos.x, pos.y, pos.z + 1);
+                }
+            }
         }
         private void BlockTickSapling(ulong kkey)
         {
@@ -1223,31 +1250,6 @@ namespace GameModeFortress
                 UpdateRailVehicle(dt, i);
             }
             BlocksLoop();
-            if (simulationcurrentframe % (int)((10 * 60) / SIMULATION_STEP_LENGTH) == 0)
-            {
-                Dictionary<Vector3i, int> blockstoset = new Dictionary<Vector3i, int>();
-                foreach (var k in map.blocks)
-                {
-                    if (k.Value == (int)TileTypeManicDigger.DirtForFarming)
-                    {
-                        var pos = MapUtil.FromMapPos(k.Key);
-                        if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
-                        {
-                            int blockabove = map.GetBlock(pos.x, pos.y, pos.z + 1);
-                            if (blockabove == (int)TileTypeManicDigger.Crops1) { blockabove = (int)TileTypeManicDigger.Crops2; }
-                            else if (blockabove == (int)TileTypeManicDigger.Crops2) { blockabove = (int)TileTypeManicDigger.Crops3; }
-                            else if (blockabove == (int)TileTypeManicDigger.Crops3) { blockabove = (int)TileTypeManicDigger.Crops4; }
-                            else { continue; }
-                            blockstoset[new Vector3i(pos.x, pos.y, pos.z + 1)] = blockabove;
-                        }
-                    }
-                }
-                foreach (var k in blockstoset)
-                {
-                    map.SetBlock(k.Key.x, k.Key.y, k.Key.z, k.Value);
-                    terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
-                }
-            }
         }
         private bool IsShadow(int x, int y, int z)
         {
@@ -1844,13 +1846,14 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.Stone, 2, TileTypeMinecraft.DoubleStair, 1);
             MakeRecipe(TileTypeMinecraft.GoldBlock, 1, TileTypeMinecraft.TNT, 1);
             MakeRecipe(TileTypeMinecraft.GoldBlock, 1, TileTypeMinecraft.Adminium, 1);
-            MakeRecipe(TileTypeMinecraft.Stone, 1, TileTypeMinecraft.Dirt, 1, TileTypeMinecraft.Grass, 1);
             MakeRecipe(TileTypeMinecraft.Sand, 2, TileTypeMinecraft.Glass, 1);
             MakeRecipe(TileTypeMinecraft.Leaves, 10, TileTypeMinecraft.RedRoseDecorations, 1);
             MakeRecipe(TileTypeMinecraft.Leaves, 10, TileTypeMinecraft.YellowFlowerDecorations, 1);
             MakeRecipe(TileTypeMinecraft.Leaves, 3, TileTypeMinecraft.Sapling, 1);
             MakeRecipe(TileTypeMinecraft.Dirt, 10, TileTypeMinecraft.RedMushroom, 1);
             MakeRecipe(TileTypeMinecraft.Dirt, 10, TileTypeMinecraft.BrownMushroom, 1);
+            MakeRecipe(TileTypeMinecraft.Grass, 10, TileTypeMinecraft.RedMushroom, 1);
+            MakeRecipe(TileTypeMinecraft.Grass, 10, TileTypeMinecraft.BrownMushroom, 1);
             MakeRecipe(TileTypeMinecraft.Wood, 2, TileTypeMinecraft.Bookcase, 1);
             MakeRecipe(TileTypeMinecraft.Cobblestone, 1, TileTypeMinecraft.MossyCobblestone, 1);
             MakeRecipe(TileTypeMinecraft.MossyCobblestone, 1, TileTypeMinecraft.Cobblestone, 1);
@@ -1878,6 +1881,7 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.GoldBlock, 1, TileTypeManicDigger.ChemicalGreen, 1);
             MakeRecipe(TileTypeMinecraft.GoldBlock, 1, TileTypeManicDigger.Camouflage, 1);
             MakeRecipe(TileTypeMinecraft.Dirt, 2, TileTypeManicDigger.DirtForFarming, 1);
+            MakeRecipe(TileTypeMinecraft.Grass, 2, TileTypeManicDigger.DirtForFarming, 1);
             MakeRecipe(TileTypeManicDigger.Crops4, 1, TileTypeManicDigger.Crops1, 2);
             MakeRecipe(TileTypeMinecraft.IronBlock, 1, TileTypeMinecraft.CoalOre, 1, TileTypeManicDigger.BrushedMetal, 1);
             MakeRecipe(TileTypeManicDigger.BrushedMetal, 5, TileTypeManicDigger.Minecart, 1);
