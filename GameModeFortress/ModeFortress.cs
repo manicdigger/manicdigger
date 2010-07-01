@@ -774,6 +774,10 @@ namespace GameModeFortress
             int z = (short)blockpos.Z;
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
             {
+                if (IsAnyPlayerInPos(blockpos))
+                {
+                    return;
+                }
                 var cmd = new CommandBuild()
                 {
                     x = (short)blockpos.X,
@@ -796,6 +800,30 @@ namespace GameModeFortress
                     }
                 }
             }
+        }
+        private bool IsAnyPlayerInPos(Vector3 blockpos)
+        {
+            foreach (var k in players)
+            {
+                Vector3 playerpos = k.Value.Position;
+                if (IsPlayerInPos(playerpos, blockpos))
+                {
+                    return true;
+                }
+            }
+            return IsPlayerInPos(viewport.LocalPlayerPosition, blockpos);
+        }
+        private bool IsPlayerInPos(Vector3 playerpos, Vector3 blockpos)
+        {
+            if (Math.Floor(playerpos.X) == blockpos.X
+                &&
+                (Math.Floor(playerpos.Y) == blockpos.Z
+                 || Math.Floor(playerpos.Y + 1) == blockpos.Z)
+                && Math.Floor(playerpos.Z) == blockpos.Y)
+            {
+                return true;
+            }
+            return false;
         }
         //there is no local player on server
         int? localplayerid

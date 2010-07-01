@@ -19,6 +19,10 @@ namespace ManicDigger
         public void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
+            if (IsAnyPlayerInPos(blockposnew))
+            {
+                return;
+            }
             int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
             network.SendSetBlock(blockposnew, mode, activematerial);
             if (mode == BlockSetMode.Destroy)
@@ -35,6 +39,30 @@ namespace ManicDigger
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
         {
             network.SendSetBlock(vector3, blockSetMode, p);
+        }
+        private bool IsAnyPlayerInPos(Vector3 blockpos)
+        {
+            foreach (var k in players)
+            {
+                Vector3 playerpos = k.Value.Position;
+                if (IsPlayerInPos(playerpos, blockpos))
+                {
+                    return true;
+                }
+            }
+            return IsPlayerInPos(viewport.LocalPlayerPosition, blockpos);
+        }
+        private bool IsPlayerInPos(Vector3 playerpos, Vector3 blockpos)
+        {
+            if (Math.Floor(playerpos.X) == blockpos.X
+                &&
+                (Math.Floor(playerpos.Y) == blockpos.Z
+                 || Math.Floor(playerpos.Y + 1) == blockpos.Z)
+                && Math.Floor(playerpos.Z) == blockpos.Y)
+            {
+                return true;
+            }
+            return false;
         }
         public void OnNewFrame(double dt)
         {
