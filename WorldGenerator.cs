@@ -1,10 +1,9 @@
 using System;
     public interface IWorldGenerator
     {
-        byte[] GetBlocks(int[] pos);
         byte[, ,] GetChunk(int x, int y, int z, int chunksize);
     }
-    public class WorldGenerator : IWorldGenerator
+    public class WorldGenerator
     {
         public WorldGenerator()
         {
@@ -33,16 +32,19 @@ using System;
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
-                    istreecache[xx, yy] = IsTree(x + xx, y + yy, heightcache[xx, yy]);
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        chunk[xx, yy, zz] = (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy]);
+                    }
                 }
             }
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
-                    for (int zz = 0; zz < chunksize; zz++)
+                    if (IsTree(x + xx, y + yy, heightcache[xx, yy]))
                     {
-                        chunk[xx, yy, zz] = (byte)GetBlockInside(x + xx, y + yy, z + zz, heightcache[xx, yy]);
+                        PlaceTree(chunk, chunksize, xx, yy, heightcache[xx, yy] - z);
                     }
                 }
             }
@@ -59,6 +61,38 @@ using System;
                 }
             }
             return chunk;
+        }
+        void PlaceTree(byte[, ,] chunk, int chunksize, int xx, int yy, int zz)
+        {
+            if (zz < 0) { return; }
+            if (chunksize - zz < 5) { return; }
+            Place(chunk, chunksize, xx, yy, zz + 1, TileIdTreeTrunk);
+            Place(chunk, chunksize, xx, yy, zz + 2, TileIdTreeTrunk);
+            Place(chunk, chunksize, xx, yy, zz + 3, TileIdTreeTrunk);
+
+            Place(chunk, chunksize, xx + 1, yy, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx - 1, yy, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx, yy + 1, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx, yy - 1, zz + 3, TileIdLeaves);
+
+            Place(chunk, chunksize, xx + 1, yy + 1, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx + 1, yy - 1, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx - 1, yy + 1, zz + 3, TileIdLeaves);
+            Place(chunk, chunksize, xx - 1, yy - 1, zz + 3, TileIdLeaves);
+
+            Place(chunk, chunksize, xx + 1, yy, zz + 4, TileIdLeaves);
+            Place(chunk, chunksize, xx - 1, yy, zz + 4, TileIdLeaves);
+            Place(chunk, chunksize, xx, yy + 1, zz + 4, TileIdLeaves);
+            Place(chunk, chunksize, xx, yy - 1, zz + 4, TileIdLeaves);
+
+            Place(chunk, chunksize, xx, yy, zz + 4, TileIdLeaves);
+        }
+        void Place(byte[, ,] chunk, int chunksize, int xx, int yy, int zz, int blocktype)
+        {
+            if (xx < 0 || xx >= chunksize) { return; }
+            if (yy < 0 || yy >= chunksize) { return; }
+            if (zz < 0 || zz >= chunksize) { return; }
+            chunk[xx, yy, zz] = (byte)blocktype;
         }
         void PlaceRandomOres(float oresperchunk, int oretype, int chunksize, int x, int y, int z, byte[, ,] chunk)
         {
@@ -83,10 +117,6 @@ using System;
             }
         }
         bool[,] istreecache;
-        public int GetBlock(int x, int y, int z)
-        {
-            return GetBlockInside(x, y, z, GetHeight(x, y));
-        }
         int TileIdEmpty = 0;
         int TileIdGrass = 2;
         int TileIdDirt = 3;
@@ -100,13 +130,8 @@ using System;
         int TileIdCoalOre = 16;
         int TileIdLava = 11;
         float treedensity = 0.008f;
-        int GetBlockInside(int x, int y, int z, int height)
+        int GetBlock(int x, int y, int z, int height)
         {
-            int tree = Tree(x, y, z, height);
-            if (tree != 0)
-            {
-                return tree;
-            }
             if (z > waterlevel)
             {
                 if (z > height) { return TileIdEmpty; }
@@ -121,48 +146,6 @@ using System;
                 if (z > height - 5) { return TileIdDirt; }
                 return TileIdStone;
             }
-        }
-        int Tree(int x, int y, int z, int height)
-        {
-            //trunk
-            if (z == height + 1 || z == height + 2 || z == height + 3)
-            {
-                if (IsTree(x, y, height)) { return TileIdTreeTrunk; }
-            }
-            if (z - height < 10)
-            {
-                if (IsLeaves(x, y, z, -1, 0, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 1, 0, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 0, -1, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 0, 1, 3, height)) { return TileIdLeaves; }
-
-                if (IsLeaves(x, y, z, -1, 0, 4, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 1, 0, 4, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 0, -1, 4, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 0, 1, 4, height)) { return TileIdLeaves; }
-
-                if (IsLeaves(x, y, z, -1, -1, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 1, -1, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, -1, 1, 3, height)) { return TileIdLeaves; }
-                if (IsLeaves(x, y, z, 1, 1, 3, height)) { return TileIdLeaves; }
-
-                if (IsLeaves(x, y, z, 0, 0, 4, height)) { return TileIdLeaves; }
-            }
-            return 0;
-        }
-        bool IsLeaves(int x, int y, int z, int xdiff, int ydiff, int zdiff, int height)
-        {
-            //if (IsTree(x + xdiff, y + ydiff, height))
-            if (x % chunksize + xdiff < 0) { return false; }
-            if (y % chunksize + ydiff < 0) { return false; }
-            if (x % chunksize + xdiff >= chunksize - xdiff) { return false; }
-            if (y % chunksize + ydiff >= chunksize - ydiff) { return false; }
-            if (istreecache[(x + xdiff) % chunksize, (y + ydiff) % chunksize])
-            {
-                int heightnear = GetHeight(x + xdiff, y + ydiff);
-                return (heightnear + zdiff == z);
-            }
-            return false;
         }
         bool IsTree(int x, int y, int height)
         {
@@ -220,18 +203,4 @@ using System;
             double int2 = interpolate(u, v, x - floorx);//Here we use x-floorx, to get 1st dimension. Don't mind the x-floorx thingie, it's part of the cosine formula.
             return interpolate(int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.
         }
-        #region IWorldGenerator Members
-        public byte[] GetBlocks(int[] pos)
-        {
-            byte[] blocks = new byte[pos.Length / 3];
-            for (int i = 0; i < pos.Length / 3; i += 3)
-            {
-                int x = i;
-                int y = i + 1;
-                int z = i + 2;
-                blocks[i / 3] = (byte)GetBlock(x, y, z);
-            }
-            return blocks;
-        }
-        #endregion
     }
