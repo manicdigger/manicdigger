@@ -817,8 +817,8 @@ namespace GameModeFortress
         {
             if (Math.Floor(playerpos.X) == blockpos.X
                 &&
-                (Math.Floor(playerpos.Y) == blockpos.Z
-                 || Math.Floor(playerpos.Y + 1) == blockpos.Z)
+                (Math.Floor(playerpos.Y + 0.5f) == blockpos.Z
+                 || Math.Floor(playerpos.Y + 1 + 0.5f) == blockpos.Z)
                 && Math.Floor(playerpos.Z) == blockpos.Y)
             {
                 return true;
