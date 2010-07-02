@@ -68,6 +68,16 @@ namespace GameModeFortress
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
+        #region INetworkClient Members
+        public string ServerName
+        {
+            get { return "ServerName"; }
+        }
+        public string ServerMotd
+        {
+            get { return "ServerMotd"; }
+        }
+        #endregion
     }
     public class ManicDiggerProgram2 : IInternetGameFactory
     {

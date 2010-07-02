@@ -22,10 +22,13 @@ namespace ManicDigger
         void SendPosition(Vector3 position, Vector3 orientation);
         void SendCommand(byte[] cmd);
         Dictionary<int, bool> EnablePlayerUpdatePosition { get; set; }
+        string ServerName { get; }
+        string ServerMotd { get; }
     }
     public class MapLoadingProgressEventArgs : EventArgs
     {
         public int ProgressPercent { get; set; }
+        public int ProgressBytes { get; set; }
     }
     public class NetworkClientDummy : INetworkClient
     {
@@ -194,6 +197,16 @@ namespace ManicDigger
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
+        #endregion
+        #region INetworkClient Members
+        public string ServerName
+        {
+            get { return "ServerName"; }
+        }
+        public string ServerMotd
+        {
+            get { return "ServerMotd"; }
+        }
         #endregion
     }
     public class MapLoadedEventArgs : EventArgs
@@ -463,7 +476,10 @@ namespace ManicDigger
             return (byte)(xx * 256);
         }
         bool spawned = false;
-        string ServerName;
+        string serverName = "";
+        string serverMotd = "";
+        public string ServerName { get { return serverName; } set { serverName = value; } }
+        public string ServerMotd { get { return serverMotd; } set { serverMotd = value; } }
         public int LocalPlayerId = 255;
         private int TryReadPacket()
         {
@@ -518,7 +534,8 @@ namespace ManicDigger
                         p.ServerMotd = NetworkHelper.ReadString64(br);
                         p.UserType = br.ReadByte();
                         //connected = true;
-                        this.ServerName = p.ServerName;
+                        this.serverName = p.ServerName;
+                        this.ServerMotd = p.ServerMotd;
                         ChatLog("---Connected---");
                     }
                     break;
@@ -529,7 +546,7 @@ namespace ManicDigger
                 case MinecraftServerPacketId.LevelInitialize:
                     {
                         receivedMapStream = new MemoryStream();
-                        InvokeMapLoadingProgress(0);
+                        InvokeMapLoadingProgress(0, 0);
                     }
                     break;
                 case MinecraftServerPacketId.LevelDataChunk:
@@ -545,7 +562,7 @@ namespace ManicDigger
                         }
                         bw1.Write(chunkDataWithoutPadding);
                         MapLoadingPercentComplete = br.ReadByte();
-                        InvokeMapLoadingProgress(MapLoadingPercentComplete);
+                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)receivedMapStream.Length);
                     }
                     break;
                 case MinecraftServerPacketId.LevelFinalize:
@@ -764,13 +781,14 @@ namespace ManicDigger
             return totalread;
         }
         DateTime loadedtime;
-        private void InvokeMapLoadingProgress(int progress)
+        private void InvokeMapLoadingProgress(int progressPercent, int progressBytes)
         {
             if (MapLoadingProgress != null)
             {
                 MapLoadingProgress(this, new MapLoadingProgressEventArgs()
                 {
-                    ProgressPercent = progress
+                    ProgressPercent = progressPercent,
+                    ProgressBytes = progressBytes
                 });
             }
         }
@@ -786,7 +804,7 @@ namespace ManicDigger
             {
                 Directory.CreateDirectory(logsdir);
             }
-            string filename=Path.Combine(logsdir, MakeValidFileName(ServerName) + ".txt");
+            string filename=Path.Combine(logsdir, MakeValidFileName(serverName) + ".txt");
             try
             {
                 File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
