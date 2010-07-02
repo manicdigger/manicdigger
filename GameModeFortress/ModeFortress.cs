@@ -141,6 +141,99 @@ namespace GameModeFortress
                 blockslist.Add(MapUtil.ToMapPos(x, y, z));
             }
         }
+        struct Block
+        {
+            public Vector3i pos;
+            public int type;
+        }
+        public byte[] SaveBlocksChunks()
+        {
+            Dictionary<Vector3i, List<Block>> chunks = new Dictionary<Vector3i, List<Block>>();
+            int chunksizex = 9;
+            int chunksizey = 9;
+            int chunksizez = 3;
+            //211KB  9,9,3
+            //265KB  8,8,8
+            foreach (var k in blocks)
+            {
+                var pos = MapUtil.FromMapPos(k.Key);
+                var chunkpos = new Vector3i(pos.x / chunksizex, pos.y / chunksizey, pos.z / chunksizez);
+                if (!chunks.ContainsKey(chunkpos))
+                {
+                    chunks[chunkpos] = new List<Block>();
+                }
+                chunks[chunkpos].Add(new Block() { pos = pos, type = k.Value });
+            }
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            bw.Write((byte)chunksizex);
+            bw.Write((byte)chunksizey);
+            bw.Write((byte)chunksizez);
+            NetworkHelper.WriteInt32(bw, chunks.Count);
+            foreach (var k in chunks)
+            {
+                NetworkHelper.WriteInt32(bw, k.Key.x * chunksizex);
+                NetworkHelper.WriteInt32(bw, k.Key.y * chunksizey);
+                NetworkHelper.WriteInt32(bw, k.Key.z * chunksizez);
+                for (int x = 0; x < chunksizex; x++)
+                {
+                    for (int y = 0; y < chunksizey; y++)
+                    {
+                        for (int z = 0; z < chunksizez; z++)
+                        {
+                            bool found = false;
+                            var pos = MapUtil.ToMapPos(k.Key.x * chunksizex + x, k.Key.y * chunksizey + y, k.Key.z * chunksizez + z);
+                            if (blocks.ContainsKey(pos))
+                            {
+                                bw.Write((byte)blocks[pos]);
+                                found = true;
+                            }
+                            if (!found)
+                            {
+                                bw.Write((byte)255);
+                            }
+                        }
+                    }
+                }
+            }
+            return ms.ToArray();
+        }
+        public void LoadBlocksChunks(byte[] blocksdata)
+        {
+            MemoryStream ms = new MemoryStream(blocksdata);
+            BinaryReader br = new BinaryReader(ms);
+            int chunksizex = br.ReadByte();
+            int chunksizey = br.ReadByte();
+            int chunksizez = br.ReadByte();
+            int chunkscount = NetworkHelper.ReadInt32(br);
+
+            blocks.Clear();
+            blockslist.Clear();
+            for (int i = 0; i < chunkscount; i++)
+            {
+                int chunkx = NetworkHelper.ReadInt32(br);
+                int chunky = NetworkHelper.ReadInt32(br);
+                int chunkz = NetworkHelper.ReadInt32(br);
+                for (int xx = 0; xx < chunksizex; xx++)
+                {
+                    for (int yy = 0; yy < chunksizey; yy++)
+                    {
+                        for (int zz = 0; zz < chunksizez; zz++)
+                        {
+                            int type = br.ReadByte();
+                            int x = chunkx + xx;
+                            int y = chunky + yy;
+                            int z = chunkz + zz;
+                            if (type != 255)
+                            {
+                                blocks.Add(MapUtil.ToMapPos(x, y, z), (byte)type);
+                                blockslist.Add(MapUtil.ToMapPos(x, y, z));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo, IGameWorldTodo
     {
@@ -939,7 +1032,7 @@ namespace GameModeFortress
             StringBuilder b = new StringBuilder();
             b.AppendLine(@"<?xml version=""1.0"" encoding=""UTF-8""?>");
             b.AppendLine("<ManicDiggerSave>");
-            b.AppendLine(XmlTool.X("FormatVersion", "200"));
+            b.AppendLine(XmlTool.X("FormatVersion", "201"));
             b.AppendLine("<MapSize>");
             b.AppendLine(XmlTool.X("X", "" + map.MapSizeX));
             b.AppendLine(XmlTool.X("Y", "" + map.MapSizeY));
@@ -988,8 +1081,13 @@ namespace GameModeFortress
             }
             b.AppendLine("</FiniteInventory>");
             b.AppendLine(XmlTool.X("InfiniteWorldGenerator", SecurityElement.Escape(generator)));
+            /*
             byte[] mapdata = map.SaveBlocks();
             b.AppendLine(XmlTool.X("InfiniteMapData", Convert.ToBase64String(mapdata)));
+            b.AppendLine("</ManicDiggerSave>");
+            */
+            byte[] mapdata2 = map.SaveBlocksChunks();
+            b.AppendLine(XmlTool.X("InfiniteMapData2", Convert.ToBase64String(mapdata2)));
             b.AppendLine("</ManicDiggerSave>");
             return GzipCompression.Compress(Encoding.UTF8.GetBytes(b.ToString()));
         }
@@ -1011,7 +1109,7 @@ namespace GameModeFortress
                 XmlDocument d = new XmlDocument();
                 d.Load(sr);
                 int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerSave/FormatVersion"));
-                if (format != 200)
+                if (format > 201)
                 {
                     throw new Exception("Invalid map format");
                 }
@@ -1072,9 +1170,19 @@ namespace GameModeFortress
                     //plain map?
                 }
                 worldgeneratorsandbox.Compile(generator);
-                byte[] mapdata = Convert.FromBase64String(XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData"));
+                string mapdata1 = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData");
+                string mapdata2 = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData2");
                 map.Restart();
-                map.LoadBlocks(mapdata);
+                if (mapdata1 != null)
+                {
+                    byte[] mapdata = Convert.FromBase64String(mapdata1);
+                    map.LoadBlocks(mapdata);
+                }
+                if (mapdata2 != null)
+                {
+                    byte[] mapdata = Convert.FromBase64String(mapdata2);
+                    map.LoadBlocksChunks(mapdata);
+                }
             }
         }
         public string GameInfo
