@@ -714,7 +714,7 @@ namespace ManicDiggerServer
                     }
                     buf = buf2;
                 }
-                SendLevelDataChunk(clientid, buf, (int)((totalread / compressedmap.Length) * 100));
+                SendLevelDataChunk(clientid, buf, (int)(((float)totalread / compressedmap.Length) * 100));
                 totalread += read;
                 //Thread.Sleep(100);
             }
