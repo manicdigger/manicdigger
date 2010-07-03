@@ -1738,6 +1738,10 @@ namespace ManicDigger
         bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
         void UpdateMousePosition()
         {
+            if (!Focused)
+            {
+                return;
+            }
             mouseleftclick = (!wasmouseleft) && Mouse[OpenTK.Input.MouseButton.Left];
             mouserightclick = (!wasmouseright) && Mouse[OpenTK.Input.MouseButton.Right];
             mouseleftdeclick = wasmouseleft && (!Mouse[OpenTK.Input.MouseButton.Left]);
@@ -1765,7 +1769,7 @@ namespace ManicDigger
             mouse_delta = new Point(mouse_current.X - mouse_previous.X,
                 mouse_current.Y - mouse_previous.Y);
             mouse_previous = mouse_current;
-
+            
             if ((Math.Abs(System.Windows.Forms.Cursor.Position.X - centerx) > 100)
                 || (Math.Abs(System.Windows.Forms.Cursor.Position.Y - centery) > 100))
             {
