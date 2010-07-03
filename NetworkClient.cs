@@ -799,7 +799,7 @@ namespace ManicDigger
             {
                 return;
             }
-            string logsdir = "logs";
+            string logsdir = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ManicDiggerLogs");
             if (!Directory.Exists(logsdir))
             {
                 Directory.CreateDirectory(logsdir);
