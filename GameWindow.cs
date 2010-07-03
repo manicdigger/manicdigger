@@ -717,9 +717,9 @@ namespace ManicDigger
         //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmp)
         {
+            GL.Enable(EnableCap.Texture2D);
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
-
             if (!config3d.ENABLE_MIPMAPS)
             {
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -737,7 +737,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearClipmapLinearSgix);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
                 }
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             }
