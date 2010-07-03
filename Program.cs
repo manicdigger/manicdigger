@@ -101,8 +101,9 @@ namespace ManicDigger
         }
         public static void Crash(Exception e)
         {
-            File.WriteAllText("crash.txt", e.ToString());
-            File.AppendAllText("crash.txt", e.StackTrace);
+            string crashfile = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ManicDiggerCrash.txt");
+            File.WriteAllText(crashfile, e.ToString());
+            File.AppendAllText(crashfile, e.StackTrace);
             for (int i = 0; i < 5; i++)
             {
                 System.Windows.Forms.Cursor.Show();

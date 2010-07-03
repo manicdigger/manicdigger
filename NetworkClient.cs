@@ -804,7 +804,7 @@ namespace ManicDigger
             {
                 Directory.CreateDirectory(logsdir);
             }
-            string filename=Path.Combine(logsdir, MakeValidFileName(serverName) + ".txt");
+            string filename = Path.Combine(logsdir, MakeValidFileName(serverName) + ".txt");
             try
             {
                 File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
