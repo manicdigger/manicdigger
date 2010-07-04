@@ -2238,15 +2238,15 @@ namespace ManicDigger
                 Console.WriteLine(selectedmodelid);
                 return;
             }
-            
+
             //pick terrain
             var s = new BlockOctreeSearcher();
             s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
-            pick2.Sort((a, b) => { return (a.pos - player.playerposition).Length.CompareTo((b.pos - player.playerposition).Length); });
+            pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
 
             BlockPosSide pick0;
-            if (pick2.Count > 0 && (pick2[0].pos - (player.playerposition + new Vector3(0, CharacterHeight, 0))).Length <= PICK_DISTANCE
+            if (pick2.Count > 0 && (pick2[0].pos - (ray_start_point)).Length <= PICK_DISTANCE
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
                 (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
             {
