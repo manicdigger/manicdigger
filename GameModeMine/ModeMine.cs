@@ -6,7 +6,7 @@ using OpenTK;
 
 namespace ManicDigger
 {
-    public class GameMinecraft : IGameMode, IMapStorage, IClients
+    public class GameMinecraft : IGameMode, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
@@ -34,8 +34,35 @@ namespace ManicDigger
             int y = (int)blockposnew.Y;
             int z = (int)blockposnew.Z;
             map.Map[x, y, z] = (byte)activematerial;
+
             terrain.UpdateTile(x, y, z);
+            if (ENABLE_SHADOWS)
+            {
+                UpdateShadows(x, y, z);
+            }
         }
+        private void UpdateShadows(int x, int y, int z)
+        {
+            lighttoupdate.Clear();
+            UpdateSunlight(x, y, z);
+            List<Vector3i> near = new List<Vector3i>();
+            foreach (var n in BlocksNear(x, y, z))
+            {
+                if (MapUtil.IsValidPos(map, n.x, n.y, n.z))
+                {
+                    near.Add(n);
+                }
+            }
+            if (near.Count > 0)
+            {
+                DefloodLight(near);
+            }
+            foreach (var k in lighttoupdate)
+            {
+                terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+            }
+        }
+        Dictionary<Vector3i, Vector3i> lighttoupdate = new Dictionary<Vector3i, Vector3i>();
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
         {
             network.SendSetBlock(vector3, blockSetMode, p);
@@ -88,8 +115,16 @@ namespace ManicDigger
         public void SetBlock(int x, int y, int z, int tileType)
         {
             map.Map[x, y, z] = (byte)tileType;
+            if (ENABLE_SHADOWS)
+            {
+                if (loaded)
+                {
+                    UpdateShadows(x, y, z);
+                }
+            }
         }
         #endregion
+        public bool ENABLE_SHADOWS = false;
         //float waterlevel = 32;
         #region IMapStorage Members
         //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
@@ -135,6 +170,230 @@ namespace ManicDigger
         public void LoadState(byte[] savegame)
         {
             mapmanipulator.LoadMap(map, savegame);
+            if (ENABLE_SHADOWS)
+            {
+                UpdateHeightCache();
+            }
+            loaded = true;
+        }
+        bool loaded = false;
+        private void UpdateLight()
+        {
+            light = new byte[MapSizeX, MapSizeY, MapSizeZ];
+            UpdateHeightCache();
+            for (int x = 0; x < MapSizeX; x++)
+            {
+                for (int y = 0; y < MapSizeY; y++)
+                {
+                    for (int z = 0; z < MapSizeZ; z++)
+                    {
+                        if (z >= lightheight[x, y])
+                        {
+                            light[x, y, z] = (byte)maxlight;
+                        }
+                        else
+                        {
+                            light[x, y, z] = (byte)minlight;
+                        }
+                    }
+                }
+            }
+            for (int x = 0; x < MapSizeX; x++)
+            {
+                for (int y = 0; y < MapSizeY; y++)
+                {
+                    for (int z = 0; z < MapSizeZ; z++)
+                    {
+                        FloodLight(x, y, z);
+                    }
+                }
+            }
+        }
+        private void UpdateHeightCache()
+        {
+            if (lightheight == null)
+            {
+                lightheight = new int[MapSizeX, MapSizeY];
+            }
+            for (int x = 0; x < MapSizeX; x++)
+            {
+                for (int y = 0; y < MapSizeY; y++)
+                {
+                    UpdateLightHeightmapAt(x, y);
+                }
+            }
+        }
+        private void UpdateLightHeightmapAt(int x, int y)
+        {
+            lightheight[x, y] = MapSizeZ - 1;
+            for (int z = MapSizeZ - 1; z >= 0; z--)
+            {
+                if (data.GrassGrowsUnder(map.GetBlock(x, y, z)))
+                {
+                    lightheight[x, y]--;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        int[,] lightheight;
+        byte[, ,] light;
+        int minlight = 1;
+        int maxlight = 10;
+        int defaultshadow = 7;
+        void UpdateSunlight(int x, int y,int z)
+        {
+            int oldheight = lightheight[x, y];
+            UpdateLightHeightmapAt(x, y);
+            int newheight = lightheight[x, y];
+            if (newheight > oldheight)
+            {
+                //make white
+                for (int i = oldheight; i <= newheight; i++)
+                {
+                    SetLight(x, y, i, defaultshadow);
+                    FloodLight(x, y, i);
+                }
+            }
+            if (newheight < oldheight)
+            {
+                //make black
+                for (int i = newheight; i <= oldheight; i++)
+                {
+                    SetLight(x, y, i, minlight);
+                    //DefloodLight(x, i);
+
+                    List<Vector3i> deflood = new List<Vector3i>();
+                    foreach (var n in BlocksNear(x, y, i))
+                    {
+                        if (MapUtil.IsValidPos(map, n.x, n.y, n.z))
+                        {
+                            deflood.Add(n);
+                        }
+                    }
+                    if (deflood.Count != 0)
+                    {
+                        DefloodLight(deflood);
+                    }
+                }
+            }
+        }
+        void SetLight(int x,int y,int z, int value)
+        {
+            light[x, y, z] = (byte)value;
+            //todo
+            lighttoupdate[new Vector3i((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = new Vector3i();
+        }
+        private void DefloodLight(IEnumerable<Vector3i> start)
+        {
+            Queue<Vector3i> q = new Queue<Vector3i>();
+            Vector3i ss = new Vector3i();
+            foreach (var s in start)
+            {
+                q.Enqueue(s);
+                ss = s;
+            }
+            Dictionary<Vector3i, bool> reflood = new Dictionary<Vector3i, bool>();
+            for (; ; )
+            {
+                if (q.Count == 0)
+                {
+                    break;
+                }
+                Vector3i v = q.Dequeue();
+                if (distancesquare(v, new Vector3i(ss.x, ss.y, ss.z)) > maxlight * maxlight)
+                {
+                    continue;
+                }
+                if (!data.GrassGrowsUnder(map.GetBlock(v.x, v.y, v.z)))
+                {
+                    continue;
+                }
+                if (light[v.x, v.y, v.z] == minlight)
+                {
+                    continue;
+                }
+                if (light[v.x, v.y, v.z] == maxlight)
+                {
+                    reflood[v] = true;
+                    continue;
+                }
+                SetLight(v.x, v.y, v.z, minlight);
+                foreach (var n in BlocksNear(v.x, v.y, v.z))
+                {
+                    if (!MapUtil.IsValidPos(map, n.x, n.y, n.z))
+                    {
+                        continue;
+                    }
+                    if (light[n.x, n.y, n.z] > light[v.x, v.y, v.z])
+                    {
+                        q.Enqueue(n);
+                    }
+                }
+            }
+            foreach (var p in reflood.Keys)
+            {
+                FloodLight(p.x, p.y, p.z);
+            }
+        }
+        private int distancesquare(Vector3i a, Vector3i b)
+        {
+            int dx = a.x - b.x;
+            int dy = a.y - b.y;
+            int dz = a.z - b.z;
+            return dx * dx + dy * dy + dz * dz;
+        }
+        private void FloodLight(int x, int y, int z)
+        {
+            if (light == null)
+            {
+                UpdateLight();
+            }
+            Queue<Vector3i> q = new Queue<Vector3i>();
+            q.Enqueue(new Vector3i(x, y, z));
+            for (; ; )
+            {
+                if (q.Count == 0)
+                {
+                    break;
+                }
+                Vector3i v = q.Dequeue();
+                if (distancesquare(v, new Vector3i(x, y, z)) > maxlight * maxlight)
+                {
+                    continue;
+                }
+                if (light[v.x, v.y, v.z] == minlight)
+                {
+                    continue;
+                }
+                if (!data.GrassGrowsUnder(map.GetBlock(v.x, v.y, v.z)))
+                {
+                    continue;
+                }
+                foreach (var n in BlocksNear(v.x, v.y, v.z))
+                {
+                    if (!MapUtil.IsValidPos(map, n.x, n.y, n.z))
+                    {
+                        continue;
+                    }
+                    if (light[n.x, n.y, n.z] < light[v.x, v.y, v.z] - 1)
+                    {
+                        SetLight(n.x, n.y, n.z, (byte)(light[v.x, v.y, v.z] - 1));
+                        q.Enqueue(n);
+                    }
+                }
+            }
+        }
+        private IEnumerable<Vector3i> BlocksNear(int x, int y, int z)
+        {
+            yield return new Vector3i(x - 1, y, z);
+            yield return new Vector3i(x + 1, y, z);
+            yield return new Vector3i(x, y - 1, z);
+            yield return new Vector3i(x, y + 1, z);
+            yield return new Vector3i(x, y, z - 1);
+            yield return new Vector3i(x, y, z + 1);
         }
         #endregion
         #region IGameMode Members
@@ -155,6 +414,46 @@ namespace ManicDigger
         #region IGameMode Members
         public double SIMULATIONLAG_SECONDS { get; set; }
         #endregion
+        #region ITerrainInfo Members
+        public int GetTerrainBlock(int x, int y, int z)
+        {
+            return GetBlock(x, y, z);
+        }
+        public System.Drawing.Color GetTerrainBlockColor(int x, int y, int z)
+        {
+            return System.Drawing.Color.White;
+        }
+        public int GetLight(int x, int y, int z)
+        {
+            if (ENABLE_SHADOWS)
+            {
+                if (light == null)
+                {
+                    UpdateLight();
+                }
+                return light[x, y, z];
+            }
+            else
+            {
+                return IsShadow(x, y, z) ? defaultshadow : maxlight;
+            }
+        }
+        public float LightMaxValue()
+        {
+            return maxlight;
+        }
+        #endregion
+        private bool IsShadow(int x, int y, int z)
+        {
+            for (int i = 1; i < 10; i++)
+            {
+                if (MapUtil.IsValidPos(map, x, y, z + i) && !data.GrassGrowsUnder(map.GetBlock(x, y, z + i)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
     public class TileTypeData
     {
@@ -456,7 +755,11 @@ namespace ManicDigger
         #region IGameData Members
         public bool GrassGrowsUnder(int blocktype)
         {
-            return blocktype == TileIdEmpty || IsBlockFlower(blocktype) || blocktype == (int)TileTypeMinecraft.Leaves;
+            return blocktype == TileIdEmpty
+                || IsBlockFlower(blocktype)
+                || blocktype == (int)TileTypeMinecraft.Leaves
+                || blocktype == (int)TileTypeMinecraft.Glass
+                || IsWaterTile(blocktype);
         }
         #endregion
     }

@@ -3617,7 +3617,7 @@ namespace ManicDigger
         }
         void Draw2dText(string text, float x, float y, float fontsize, Color? color)
         {
-            if (text.Trim() == "")
+            if (text == null || text.Trim() == "")
             {
                 return;
             }

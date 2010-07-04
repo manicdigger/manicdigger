@@ -315,22 +315,8 @@ namespace ManicDigger
         int MapSizeX { get; }
         int MapSizeY { get; }
         int MapSizeZ { get; }
-    }
-    public class TerrainInfoMapStorage : ITerrainInfo
-    {
-        [Inject]
-        public IMapStorage mapstorage { get; set; }
-        public int GetTerrainBlock(int x, int y, int z)
-        {
-            return mapstorage.GetBlock(x, y, z);
-        }
-        public Color GetTerrainBlockColor(int x, int y, int z)
-        {
-            return Color.White;
-        }
-        public int MapSizeX { get { return mapstorage.MapSizeX; } }
-        public int MapSizeY { get { return mapstorage.MapSizeY; } }
-        public int MapSizeZ { get { return mapstorage.MapSizeZ; } }
+        int GetLight(int globalx, int globaly, int globalz);
+        float LightMaxValue();
     }
     public enum RailSlope
     {
@@ -721,7 +707,17 @@ namespace ManicDigger
                     }
                 }
             }
-            currentChunkShadows = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
+            currentChunkShadows = new float[chunksize + 2, chunksize + 2, chunksize + 2];
+            for (int xx = 0; xx < chunksize + 2; xx++)
+            {
+                for (int yy = 0; yy < chunksize + 2; yy++)
+                {
+                    for (int zz = 0; zz < chunksize + 2; zz++)
+                    {
+                        currentChunkShadows[xx, yy, zz] = float.NaN;
+                    }
+                }
+            }
 
             for (int xx = 0; xx < chunksize; xx++)
             {
@@ -855,26 +851,23 @@ namespace ManicDigger
         public int terrainTexture { get; set; }
         public float BlockShadow = 0.6f;
         RailMapUtil railmaputil;
-        byte[,,] currentChunkShadows;
-        bool IsShadow(int xx, int yy, int zz, int globalx, int globaly,int globalz)
-        {
-            if (currentChunkShadows[xx, yy, zz] == 0)
-            {
-                currentChunkShadows[xx, yy, zz] = IsShadow(globalx, globaly, globalz) ? (byte)1 : (byte)2;
-            }
-            return currentChunkShadows[xx, yy, zz] == 1 ? true : false;
-        }
+        float[,,] currentChunkShadows;
         #endregion
-        private bool IsShadow(int x, int y, int z)
+        float GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly,int globalz)
         {
-            for (int i = 1; i < 10; i++)
+            if (float.IsNaN(currentChunkShadows[xx, yy, zz]))
             {
-                if (IsValidPos(x, y, z + i) && !data.GrassGrowsUnder(mapstorage.GetTerrainBlock(x, y, z + i)))
+                if (IsValidPos(globalx, globaly, globalz))
                 {
-                    return true;
+                    currentChunkShadows[xx, yy, zz] = (float)mapstorage.GetLight(globalx, globaly, globalz)
+                        / mapstorage.LightMaxValue();
+                }
+                else
+                {
+                    currentChunkShadows[xx, yy, zz] = 1;
                 }
             }
-            return false;
+            return currentChunkShadows[xx, yy, zz];
         }
         private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, byte[, ,] currentChunk)
         {
@@ -902,7 +895,6 @@ namespace ManicDigger
                 (int)(color.R * BlockShadow),
                 (int)(color.G * BlockShadow),
                 (int)(color.B * BlockShadow));
-            Color colorShadowUnder = colorShadowSide;
             if (DONOTDRAWEDGES)
             {
                 //if the game is fillrate limited, then this makes it much faster.
@@ -973,9 +965,13 @@ namespace ManicDigger
             if (drawtop)
             {
                 curcolor = color;
-                if (IsShadow(xx, yy, zz + 1, x, y, z + 1))
+                float shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
+                if (shadowratio != 1)
                 {
-                    curcolor = colorShadowUnder;
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
@@ -994,13 +990,22 @@ namespace ManicDigger
             //bottom - same as top, but z is 1 less.
             if (drawbottom)
             {
+                curcolor = colorShadowSide;
+                float shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
+                if (shadowratio != 1)
+                {
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
+                }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
                 short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top, colorShadowSide));
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom, colorShadowSide));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top, colorShadowSide));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom, colorShadowSide));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom, curcolor));
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 0));
                 myelements.Add((ushort)(lastelement + 2));
@@ -1012,9 +1017,13 @@ namespace ManicDigger
             if (drawfront)
             {
                 curcolor = color;
-                if (IsShadow(xx - 1, yy, zz, x - 1, y, z))
+                float shadowratio=GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
+                if (shadowratio != 1)
                 {
-                    curcolor = colorShadowUnder;
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
@@ -1034,9 +1043,13 @@ namespace ManicDigger
             if (drawback)
             {
                 curcolor = color;
-                if (IsShadow(xx + 1, yy, zz, x + 1, y, z))
+                float shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
+                if (shadowratio != 1)
                 {
-                    curcolor = colorShadowUnder;
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
@@ -1055,9 +1068,13 @@ namespace ManicDigger
             if (drawleft)
             {
                 curcolor = colorShadowSide;
-                if (IsShadow(xx, yy - 1, zz, x, y - 1, z))
+                float shadowratio = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
+                if (shadowratio != 1)
                 {
-                    curcolor = colorShadowUnder;
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
                 }
                 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
@@ -1078,9 +1095,13 @@ namespace ManicDigger
             if (drawright)
             {
                 curcolor = colorShadowSide;
-                if (IsShadow(xx, yy + 1, zz, x, y + 1, z))
+                float shadowratio = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
+                if (shadowratio != 1)
                 {
-                    curcolor = colorShadowUnder;
+                    curcolor = Color.FromArgb(color.A,
+                        (int)(color.R * shadowratio),
+                        (int)(color.G * shadowratio),
+                        (int)(color.B * shadowratio));
                 }
 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);

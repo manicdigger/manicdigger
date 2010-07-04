@@ -2185,6 +2185,16 @@ namespace GameModeFortress
             simulationcmdtodo.Enqueue(new CommandTodo() { playerid = playerid, frame = frame, cmd = cmd });
         }
         #endregion
+        #region ITerrainInfo Members
+        public int GetLight(int x, int y, int z)
+        {
+            return IsShadow(x, y, z) ? 6 : 10;
+        }
+        public float LightMaxValue()
+        {
+            return 10;
+        }
+        #endregion
     }
     public class RailVehicle
     {

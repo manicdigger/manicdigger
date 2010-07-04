@@ -512,7 +512,7 @@ namespace ManicDigger
                         string invalidversionstr = "Invalid game version. Local: {0}, Server: {1}";
                         if (!ENABLE_FORTRESS)
                         {
-                            if (p.ProtocolVersion != 7)
+                            if (!(p.ProtocolVersion == 7 || p.ProtocolVersion == 6))
                             {
                                 throw new Exception(string.Format(invalidversionstr,
                                     "Minecraft 7", "Minecraft " + p.ProtocolVersion));
