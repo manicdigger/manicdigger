@@ -88,7 +88,7 @@ namespace GameModeFortress
 
         Assembly assembly;
         object targetinstance;
-        MethodInfo target;
+        Dictionary<string, MethodInfo> target = new Dictionary<string, MethodInfo>();
         public object ExecuteUntrustedCode(string assemblyName, string typeName, string entryPoint, Object[] parameters)
         {
             if (targetinstance == null)
@@ -96,16 +96,19 @@ namespace GameModeFortress
                 //Load the MethodInfo for a method in the new Assembly. This might be a method you know, or 
                 //you can use Assembly.EntryPoint to get to the main function in an executable.
                 assembly = Assembly.Load(assemblyName);//Assembly.Load(assemblyName,);
-                var z = assembly.GetTypes();
-                var type = assembly.GetType(typeName);
-                target = type.GetMethod(entryPoint);
+                Type type = assembly.GetType(typeName);
                 targetinstance = Activator.CreateInstance(type);
+            }
+            if (!target.ContainsKey(entryPoint))
+            {
+                Type type = assembly.GetType(typeName);
+                target[entryPoint] = type.GetMethod(entryPoint);
             }
             try
             {
                 //Now invoke the method.
                 //bool retVal = (bool)target.Invoke(Activator.CreateInstance(type), parameters);
-                return target.Invoke(targetinstance, parameters);
+                return target[entryPoint].Invoke(targetinstance, parameters);
             }
             catch (Exception ex)
             {

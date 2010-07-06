@@ -824,7 +824,9 @@ namespace ManicDiggerServer
             g.viewport = new ViewportDummy();
             s.gameworld = g;
             g.generator = File.ReadAllText("WorldGenerator.cs");
-            gen.Compile(g.generator);
+            int seed = new Random().Next();
+            gen.Compile(g.generator, seed);
+            g.Seed = seed;
             s.players = g;
 
             s.Start();

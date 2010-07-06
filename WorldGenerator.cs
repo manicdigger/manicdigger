@@ -8,6 +8,11 @@ using System;
         public WorldGenerator()
         {
         }
+        int seed = 0;
+        public void SetSeed(int seed)
+        {
+            this.seed = seed;
+        }
         int waterlevel = 20;
         byte[,] heightcache;
         int chunksize;
@@ -104,13 +109,13 @@ using System;
         }
         float randomxyz(int x, int y, int z)
         {
-            return (float)((findnoise2(x + y * 20, z) + 1) / 2.0);
+            return (float)((FindNoise2(x + y * 20, z) + 1) / 2.0);
         }
         void PlaceRandomOre(int tiletype, int chunksize, int x, int y, int z, int i, byte[,,] chunk)
         {
-            int xx = (int)(((findnoise2(x + i * 100, y) + 1) / 2.0) * chunksize);
-            int yy = (int)(((findnoise2(x + i * 100 + 1, y) + 1) / 2.0) * chunksize);
-            int zz = (int)(((findnoise2(x + i * 100 + 2, y) + 1) / 2.0) * chunksize);
+            int xx = (int)(((FindNoise2(x + i * 100, y) + 1) / 2.0) * chunksize);
+            int yy = (int)(((FindNoise2(x + i * 100 + 1, y) + 1) / 2.0) * chunksize);
+            int zz = (int)(((FindNoise2(x + i * 100 + 2, y) + 1) / 2.0) * chunksize);
             if (chunk[xx, yy, zz] == TileIdStone)
             {
                 chunk[xx, yy, zz] = (byte)tiletype;
@@ -177,9 +182,14 @@ using System;
         }
         #endregion
         //returns number between -1 and 1.
-        double findnoise2(double x, double y)
+        double FindNoise2(double x, double y)
         {
             int n = (int)x + (int)y * 57;
+            return FindNoise1(n);
+        }
+        private double FindNoise1(int n)
+        {
+            n += seed;
             n = (n << 13) ^ n;
             int nn = (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
             return 1.0 - ((double)nn / 1073741824.0);
@@ -195,10 +205,10 @@ using System;
             double floorx = (double)((int)x);//This is kinda a cheap way to floor a double integer.
             double floory = (double)((int)y);
             double s, t, u, v;//Integer declaration
-            s = findnoise2(floorx, floory);
-            t = findnoise2(floorx + 1, floory);
-            u = findnoise2(floorx, floory + 1);//Get the surrounding pixels to calculate the transition.
-            v = findnoise2(floorx + 1, floory + 1);
+            s = FindNoise2(floorx, floory);
+            t = FindNoise2(floorx + 1, floory);
+            u = FindNoise2(floorx, floory + 1);//Get the surrounding pixels to calculate the transition.
+            v = FindNoise2(floorx + 1, floory + 1);
             double int1 = interpolate(s, t, x - floorx);//Interpolate between the values.
             double int2 = interpolate(u, v, x - floorx);//Here we use x-floorx, to get 1st dimension. Don't mind the x-floorx thingie, it's part of the cosine formula.
             return interpolate(int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.

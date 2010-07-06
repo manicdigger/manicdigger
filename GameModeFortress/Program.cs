@@ -188,7 +188,9 @@ namespace GameModeFortress
             clientgame.audio = audio;
             var gen = new WorldGeneratorSandbox();
             clientgame.generator = File.ReadAllText("WorldGenerator.cs");
-            gen.Compile(clientgame.generator);
+            int seed = new Random().Next();
+            gen.Compile(clientgame.generator, seed);
+            clientgame.Seed = seed;
             clientgame.map = new InfiniteMap() { gen = gen };
             clientgame.worldgeneratorsandbox = gen;
             clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile,

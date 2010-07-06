@@ -17,7 +17,7 @@ namespace GameModeFortress
     {
         static Sandboxer sandboxer = new Sandboxer();
         static object l = new object();
-        public void Compile(string s)
+        public void Compile(string s, int seed)
         {
             lock (l)
             {
@@ -27,6 +27,14 @@ namespace GameModeFortress
                 }
                 sandboxer = new Sandboxer();
                 sandboxer.Main1(s);
+                try
+                {
+                    sandboxer.Call("WorldGenerator", "SetSeed", new object[] { seed });
+                }
+                catch
+                {
+                    Console.WriteLine("World generator does not support setting random seed.");
+                }
             }
         }
         #region IWorldGenerator Members
@@ -1090,6 +1098,7 @@ namespace GameModeFortress
                 b.AppendLine("</PlayerRailRiding>");
             }
             b.AppendLine("</RailRiding>");
+            b.AppendLine(XmlTool.X("Seed", Seed.ToString()));
             b.AppendLine(XmlTool.X("InfiniteWorldGenerator", SecurityElement.Escape(generator)));
             /*
             byte[] mapdata = map.SaveBlocks();
@@ -1111,6 +1120,7 @@ namespace GameModeFortress
             simulationcmdtodo = new Queue<CommandTodo>();
             simulationhashchecktodo = new Queue<HashCheckTodo>();
         }
+        public int Seed = 0;
         public void LoadState(byte[] savegame)
         {
             using (Stream s = new MemoryStream(GzipCompression.Decompress(savegame)))
@@ -1177,6 +1187,8 @@ namespace GameModeFortress
                     int vehicleid = int.Parse(k.SelectSingleNode("VehicleId").Value);
                     railridingall[name] = vehicleid;
                 }
+                string seedstr = XmlTool.XmlVal(d, "/ManicDiggerSave/Seed");
+                this.Seed = seedstr != null ? int.Parse(seedstr) : 0;
                 var ss = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteWorldGenerator");
                 if (ss != null && ss != "")
                 {
@@ -1186,7 +1198,7 @@ namespace GameModeFortress
                 {
                     //plain map?
                 }
-                worldgeneratorsandbox.Compile(generator);
+                worldgeneratorsandbox.Compile(generator, Seed);
                 string mapdata1 = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData");
                 string mapdata2 = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteMapData2");
                 map.Restart();
