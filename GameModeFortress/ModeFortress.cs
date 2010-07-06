@@ -1416,423 +1416,438 @@ namespace GameModeFortress
                     {
                         var cmd = new CommandBuild();
                         cmd.FromStream(ms);
-                        Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
-                        bool placeminecartblock = false;
-                        if (ENABLE_FINITEINVENTORY)
-                        {
-                            Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
-                            if (cmd.mode == BlockSetMode.Create)
-                            {
-                                int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
-                                if (cmd.tiletype == (int)TileTypeManicDigger.Minecart)
-                                {
-                                    if (!GameDataTilesManicDigger.IsRailTile(oldblock))
-                                    {
-                                        return false;
-                                    }
-                                    if (!(inventory.ContainsKey((int)TileTypeManicDigger.Minecart)
-                                        && inventory[(int)TileTypeManicDigger.Minecart] > 0))
-                                    {
-                                        return false;
-                                    }
-                                    //only allow one minecart on block.
-                                    for (int i = 0; i < vehicles.Count; i++)
-                                    {
-                                        if (vehicles[i] == null)
-                                        {
-                                            continue;
-                                        }
-                                        if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
-                                        {
-                                            return false;
-                                        }
-                                    }
-                                    RailVehicle veh = new RailVehicle();
-                                    veh.currentrailblock = new Vector3(cmd.x, cmd.y, cmd.z);
-                                    {
-                                        var railunderplayer = data.GetRail(oldblock);
-                                        veh.currentvehiclespeedMul1000 = 0;
-                                        if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.HorizontalRight;
-                                        }
-                                        else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.VerticalUp;
-                                        }
-                                        else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.UpLeftUp;
-                                        }
-                                        else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.UpRightUp;
-                                        }
-                                        else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.DownLeftLeft;
-                                        }
-                                        else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
-                                        {
-                                            veh.currentdirection = VehicleDirection12.DownRightRight;
-                                        }
-                                        else
-                                        {
-                                            //ExitVehicle();
-                                            return false;
-                                        }
-                                        veh.lastdirection = veh.currentdirection;
-                                    }
-                                    if (execute)
-                                    {
-                                        int vid = newrailvehicleid();
-                                        vehicles[vid] = veh;
-                                        inventory[(int)TileTypeManicDigger.Minecart]--;
-                                    }
-                                    return true;
-                                }
-                                int blockstoput = 1;
-                                if (GameDataTilesManicDigger.IsRailTile(cmd.tiletype))
-                                {
-                                    if (!(oldblock == data.TileIdEmpty
-                                        || GameDataTilesManicDigger.IsRailTile(oldblock)))
-                                    {
-                                        return false;
-                                    }
-                                    //count how many rails will be created
-                                    int oldrailcount = 0;
-                                    if (GameDataTilesManicDigger.IsRailTile(oldblock))
-                                    {
-                                        oldrailcount = MyLinq.Count(
-                                            DirectionUtils.ToRailDirections(
-                                            (RailDirectionFlags)(oldblock - GameDataTilesManicDigger.railstart)));
-                                    }
-                                    int newrailcount = MyLinq.Count(
-                                        DirectionUtils.ToRailDirections(
-                                        (RailDirectionFlags)(cmd.tiletype - GameDataTilesManicDigger.railstart)));
-                                    blockstoput = newrailcount - oldrailcount;
-                                    //check if player has that many rails
-                                    int inventoryrail = GetEquivalentCount(inventory, cmd.tiletype);
-                                    if (blockstoput > inventoryrail)
-                                    {
-                                        return false;
-                                    }
-                                    if (execute)
-                                    {
-                                        RemoveEquivalent(inventory, cmd.tiletype, blockstoput);
-                                    }
-                                }
-                                else
-                                {
-                                    if (oldblock != data.TileIdEmpty)
-                                    {
-                                        return false;
-                                    }
-                                    //check if player has such block
-                                    int hasblock = -1; //which equivalent block it has exactly?
-                                    foreach (var k in inventory)
-                                    {
-                                        if (EquivalentBlock(k.Key, cmd.tiletype)
-                                            && k.Value > 0)
-                                        {
-                                            hasblock = k.Key;
-                                        }
-                                    }
-                                    if (hasblock == -1)
-                                    {
-                                        return false;
-                                    }
-                                    if (execute)
-                                    {
-                                        inventory[hasblock]--;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                //add to inventory
-                                int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
-                                blocktype = data.PlayerBuildableMaterialType(blocktype);
-                                if ((!data.IsValidTileType(blocktype))
-                                    || blocktype == data.TileIdEmpty)
-                                {
-                                    return false;
-                                }
-                                int blockstopick = 1;
-                                if (GameDataTilesManicDigger.IsRailTile(blocktype))
-                                {
-                                    blockstopick = MyLinq.Count(
-                                        DirectionUtils.ToRailDirections(
-                                        (RailDirectionFlags)(blocktype - GameDataTilesManicDigger.railstart)));
-                                }
-                                if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
-                                {
-                                    return false;
-                                }
-                                if (execute)
-                                {
-                                    //when removing rail under minecart, make minecart block in place of removed rail.
-                                    if (GameDataTilesManicDigger.IsRailTile(blocktype))
-                                    {
-                                        for (int i = 0; i < vehicles.Count; i++)
-                                        {
-                                            if (vehicles[i] == null)
-                                            {
-                                                continue;
-                                            }
-                                            if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
-                                            {
-                                                vehicles[i] = null;
-                                                placeminecartblock = true;
-                                                //stop railriding
-                                                foreach (var k in players)
-                                                {
-                                                    if (railridingall.ContainsKey(k.Value.Name)
-                                                        && railridingall[k.Value.Name] == i)
-                                                    {
-                                                        RailRidingLeave(k.Key);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if (!inventory.ContainsKey(blocktype))
-                                    {
-                                        inventory[blocktype] = 0;
-                                    }
-                                    inventory[blocktype] += blockstopick;
-                                }
-                            }
-                        }
-                        else
-                        {
-                        }
-                        if (execute)
-                        {
-                            int tiletype = cmd.mode == BlockSetMode.Create ?
-                                (byte)cmd.tiletype : data.TileIdEmpty;
-                            if (placeminecartblock)
-                            {
-                                tiletype = (int)TileTypeManicDigger.Minecart;
-                            }
-                            map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
-                            terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
-                        }
-                        return true;
+                        return DoCommandBuild(player_id, execute, cmd);
                     }
-                    break;
                 case CommandId.RailVehicleEnterLeave:
                     {
                         var cmd = new CommandRailVehicleEnterLeave();
                         cmd.FromStream(ms);
-                        //check if vehicle id is valid
-                        if (execute)
-                        {
-                            if (cmd.enter)
-                            {
-                                railridingall[players[player_id].Name] = cmd.vehicleid;
-                                if (localplayerid != null && player_id == localplayerid)
-                                {
-                                    viewport.CharacterHeight = minecartheight;
-                                }
-                            }
-                            else
-                            {
-                                RailVehicle veh = vehicles[railridingall[players[player_id].Name]];
-                                veh.currentvehiclespeedMul1000 = 0;
-                                RailRidingLeave(player_id);
-                            }
-                        }
-                        return true;
+                        return DoCommandRailVehicleEnterLeave(player_id, execute, cmd);
                     }
-                    break;
                 case CommandId.Craft:
                     {
                         var cmd = new CommandCraft();
                         cmd.FromStream(ms);
-                        if (map.GetBlock(cmd.x, cmd.y, cmd.z) != (int)TileTypeManicDigger.CraftingTable)
-                        {
-                            return false;
-                        }
-                        if (cmd.recipeid < 0 || cmd.recipeid >= craftingrecipes.Count)
-                        {
-                            return false;
-                        }
-                        List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
-                        List<int> ontable = GetOnTable(table);
-                        List<int> outputtoadd = new List<int>();
-                        //for (int i = 0; i < craftingrecipes.Count; i++)
-                        int i = cmd.recipeid;
-                        {
-                            //try apply recipe. if success then try until fail.
-                            for (; ; )
-                            {
-                                //check if ingredients available
-                                foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
-                                {
-                                    if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
-                                    {
-                                        goto nextrecipe;
-                                    }
-                                }
-                                //remove ingredients
-                                foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
-                                {
-                                    for (int ii = 0; ii < ingredient.Amount; ii++)
-                                    {
-                                        //replace on table
-                                        ReplaceOne(ontable, ingredient.Type, (int)TileTypeMinecraft.Empty);
-                                    }
-                                }
-                                //add output
-                                for (int z = 0; z < craftingrecipes[i].output.Amount; z++)
-                                {
-                                    outputtoadd.Add(craftingrecipes[i].output.Type);
-                                }
-                            }
-                        nextrecipe:
-                            ;
-                        }
-                        foreach (var v in outputtoadd)
-                        {
-                            ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
-                        }
-                        int zz = 0;
-                        if (execute)
-                        {
-                            foreach (var v in table)
-                            {
-                                map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
-                                terrain.UpdateTile(v.x, v.y, v.z + 1);
-                                zz++;
-                            }
-                        }
-                        return true;
+                        return DoCommandCraft(execute, cmd);
                     }
-                    break;
                 case CommandId.DumpOrLoad:
                     {
                         var cmd = new CommandDumpOrLoad();
                         cmd.FromStream(ms);
-                        Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
-                        int dumpcount = 0;
-                        if (inventory.ContainsKey(cmd.blocktype))
-                        {
-                            dumpcount = inventory[cmd.blocktype];
-                        }
-                        Vector3i pos = new Vector3i(cmd.x, cmd.y, cmd.z);
-                        if(execute)
-                        {
-                            if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
-                            {
-                                List<Vector3i> table = GetTable(pos);
-                                if (cmd.dump)
-                                {
-                                    int dumped = 0;
-                                    foreach (Vector3i v in table)
-                                    {
-                                        if (dumped >= table.Count / 2 || dumped >= dumpcount)
-                                        {
-                                            break;
-                                        }
-                                        if (map.GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
-                                        {
-                                            map.SetBlock(v.x, v.y, v.z + 1, cmd.blocktype);
-                                            inventory[cmd.blocktype]--;
-                                            terrain.UpdateTile(v.x, v.y, v.z + 1);
-                                            dumped++;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    foreach (Vector3i v in table)
-                                    {
-                                        if (TotalAmount(inventory) + 1 > finiteinventorymax)
-                                        {
-                                            break;
-                                        }
-                                        int b = map.GetBlock(v.x, v.y, v.z + 1);
-                                        if (b != data.TileIdEmpty)
-                                        {
-                                            map.SetBlock(v.x, v.y, v.z + 1, data.TileIdEmpty);
-                                            inventory[b]++;
-                                            terrain.UpdateTile(v.x, v.y, v.z + 1);
-                                        }
-                                    }
-                                }
-                                return true;
-                            }
-                            if (cmd.dump)
-                            {
-                                for (int i = 0; i < dumpcount; i++)
-                                {
-                                    //find empty position that is nearest to dump place AND has a block under.
-                                    Vector3i? nearpos = FindDumpPlace(pos);
-                                    if (nearpos == null)
-                                    {
-                                        break;
-                                    }
-                                    map.SetBlock(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, cmd.blocktype);
-                                    inventory[cmd.blocktype]--;
-                                    terrain.UpdateTile(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z);
-                                }
-                            }
-                        }
-                        return true;
+                        return DoCommandDumpOrLoad(player_id, execute, cmd);
                     }
-                    break;
                 case CommandId.RailVehicleControl:
                     {
                         CommandRailVehicleControl cmd = new CommandRailVehicleControl();
                         cmd.FromStream(ms);
-                        int vehicleid = railridingall[players[player_id].Name];
-                        if (vehicleid == -1)
-                        {
-                            return false;
-                        }
-                        var veh = vehicles[vehicleid];
-                        if (execute)
-                        {
-                            switch (cmd.controlaction)
-                            {
-                                case ControlAction.AccelerateMinus:
-                                    veh.accelerate = false;
-                                    veh.decelerate = true;
-                                    break;
-                                case ControlAction.AccelerateNone:
-                                    veh.accelerate = false;
-                                    veh.decelerate = false;
-                                    break;
-                                case ControlAction.AcceleratePlus:
-                                    veh.accelerate = true;
-                                    veh.decelerate = false;
-                                    break;
-                                case ControlAction.Reverse:
-                                    veh.currentdirection = DirectionUtils.Reverse(veh.currentdirection);
-                                    veh.currentrailblockprogressMul1000 = 1000 - veh.currentrailblockprogressMul1000;
-                                    veh.currentrailblockprogressMul1000 = Math.Max(veh.currentrailblockprogressMul1000, 999);
-                                    veh.lastdirection = veh.currentdirection;
-                                    //currentvehiclespeed = 0;
-                                    break;
-                                case ControlAction.TurnLeft:
-                                    veh.turnleft = true;
-                                    break;
-                                case ControlAction.TurnRight:
-                                    veh.turnright = true;
-                                    break;
-                                case ControlAction.TurnNone:
-                                    veh.turnleft = false;
-                                    veh.turnright = false;
-                                    break;
-                            }
-                        }
-                        return true;
+                        return DoCommandRailVehicleControl(player_id, execute, cmd);
                     }
-                    break;
                 default:
                     throw new Exception();
             }
+        }
+        private bool DoCommandBuild(int player_id, bool execute, CommandBuild cmd)
+        {
+            Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
+            bool placeminecartblock = false;
+            if (ENABLE_FINITEINVENTORY)
+            {
+                Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
+                if (cmd.mode == BlockSetMode.Create)
+                {
+                    int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
+                    if (cmd.tiletype == (int)TileTypeManicDigger.Minecart)
+                    {
+                        if (!GameDataTilesManicDigger.IsRailTile(oldblock))
+                        {
+                            return false;
+                        }
+                        if (!(inventory.ContainsKey((int)TileTypeManicDigger.Minecart)
+                            && inventory[(int)TileTypeManicDigger.Minecart] > 0))
+                        {
+                            return false;
+                        }
+                        //only allow one minecart on block.
+                        for (int i = 0; i < vehicles.Count; i++)
+                        {
+                            if (vehicles[i] == null)
+                            {
+                                continue;
+                            }
+                            if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
+                            {
+                                return false;
+                            }
+                        }
+                        RailVehicle veh = new RailVehicle();
+                        veh.currentrailblock = new Vector3(cmd.x, cmd.y, cmd.z);
+                        {
+                            var railunderplayer = data.GetRail(oldblock);
+                            veh.currentvehiclespeedMul1000 = 0;
+                            if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.HorizontalRight;
+                            }
+                            else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.VerticalUp;
+                            }
+                            else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.UpLeftUp;
+                            }
+                            else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.UpRightUp;
+                            }
+                            else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.DownLeftLeft;
+                            }
+                            else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                            {
+                                veh.currentdirection = VehicleDirection12.DownRightRight;
+                            }
+                            else
+                            {
+                                //ExitVehicle();
+                                return false;
+                            }
+                            veh.lastdirection = veh.currentdirection;
+                        }
+                        if (execute)
+                        {
+                            int vid = newrailvehicleid();
+                            vehicles[vid] = veh;
+                            inventory[(int)TileTypeManicDigger.Minecart]--;
+                        }
+                        return true;
+                    }
+                    int blockstoput = 1;
+                    if (GameDataTilesManicDigger.IsRailTile(cmd.tiletype))
+                    {
+                        if (!(oldblock == data.TileIdEmpty
+                            || GameDataTilesManicDigger.IsRailTile(oldblock)))
+                        {
+                            return false;
+                        }
+                        //count how many rails will be created
+                        int oldrailcount = 0;
+                        if (GameDataTilesManicDigger.IsRailTile(oldblock))
+                        {
+                            oldrailcount = MyLinq.Count(
+                                DirectionUtils.ToRailDirections(
+                                (RailDirectionFlags)(oldblock - GameDataTilesManicDigger.railstart)));
+                        }
+                        int newrailcount = MyLinq.Count(
+                            DirectionUtils.ToRailDirections(
+                            (RailDirectionFlags)(cmd.tiletype - GameDataTilesManicDigger.railstart)));
+                        blockstoput = newrailcount - oldrailcount;
+                        //check if player has that many rails
+                        int inventoryrail = GetEquivalentCount(inventory, cmd.tiletype);
+                        if (blockstoput > inventoryrail)
+                        {
+                            return false;
+                        }
+                        if (execute)
+                        {
+                            RemoveEquivalent(inventory, cmd.tiletype, blockstoput);
+                        }
+                    }
+                    else
+                    {
+                        if (oldblock != data.TileIdEmpty)
+                        {
+                            return false;
+                        }
+                        //check if player has such block
+                        int hasblock = -1; //which equivalent block it has exactly?
+                        foreach (var k in inventory)
+                        {
+                            if (EquivalentBlock(k.Key, cmd.tiletype)
+                                && k.Value > 0)
+                            {
+                                hasblock = k.Key;
+                            }
+                        }
+                        if (hasblock == -1)
+                        {
+                            return false;
+                        }
+                        if (execute)
+                        {
+                            inventory[hasblock]--;
+                        }
+                    }
+                }
+                else
+                {
+                    //add to inventory
+                    int blocktype = map.GetBlock(cmd.x, cmd.y, cmd.z);
+                    blocktype = data.PlayerBuildableMaterialType(blocktype);
+                    if ((!data.IsValidTileType(blocktype))
+                        || blocktype == data.TileIdEmpty)
+                    {
+                        return false;
+                    }
+                    int blockstopick = 1;
+                    if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                    {
+                        blockstopick = MyLinq.Count(
+                            DirectionUtils.ToRailDirections(
+                            (RailDirectionFlags)(blocktype - GameDataTilesManicDigger.railstart)));
+                    }
+                    if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
+                    {
+                        return false;
+                    }
+                    if (execute)
+                    {
+                        //when removing rail under minecart, make minecart block in place of removed rail.
+                        if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                        {
+                            for (int i = 0; i < vehicles.Count; i++)
+                            {
+                                if (vehicles[i] == null)
+                                {
+                                    continue;
+                                }
+                                if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
+                                {
+                                    vehicles[i] = null;
+                                    placeminecartblock = true;
+                                    //stop railriding
+                                    foreach (var k in players)
+                                    {
+                                        if (railridingall.ContainsKey(k.Value.Name)
+                                            && railridingall[k.Value.Name] == i)
+                                        {
+                                            RailRidingLeave(k.Key);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (!inventory.ContainsKey(blocktype))
+                        {
+                            inventory[blocktype] = 0;
+                        }
+                        inventory[blocktype] += blockstopick;
+                    }
+                }
+            }
+            else
+            {
+            }
+            if (execute)
+            {
+                int tiletype = cmd.mode == BlockSetMode.Create ?
+                    (byte)cmd.tiletype : data.TileIdEmpty;
+                if (placeminecartblock)
+                {
+                    tiletype = (int)TileTypeManicDigger.Minecart;
+                }
+                map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
+                terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
+            }
+            return true;
+        }
+        private bool DoCommandRailVehicleEnterLeave(int player_id, bool execute, CommandRailVehicleEnterLeave cmd)
+        {
+            //check if vehicle id is valid
+            if (execute)
+            {
+                if (cmd.enter)
+                {
+                    railridingall[players[player_id].Name] = cmd.vehicleid;
+                    if (localplayerid != null && player_id == localplayerid)
+                    {
+                        viewport.CharacterHeight = minecartheight;
+                    }
+                }
+                else
+                {
+                    RailVehicle veh = vehicles[railridingall[players[player_id].Name]];
+                    veh.currentvehiclespeedMul1000 = 0;
+                    RailRidingLeave(player_id);
+                }
+            }
+            return true;
+        }
+        private bool DoCommandCraft(bool execute, CommandCraft cmd)
+        {
+            if (map.GetBlock(cmd.x, cmd.y, cmd.z) != (int)TileTypeManicDigger.CraftingTable)
+            {
+                return false;
+            }
+            if (cmd.recipeid < 0 || cmd.recipeid >= craftingrecipes.Count)
+            {
+                return false;
+            }
+            List<Vector3i> table = GetTable(new Vector3i(cmd.x, cmd.y, cmd.z));
+            List<int> ontable = GetOnTable(table);
+            List<int> outputtoadd = new List<int>();
+            //for (int i = 0; i < craftingrecipes.Count; i++)
+            int i = cmd.recipeid;
+            {
+                //try apply recipe. if success then try until fail.
+                for (; ; )
+                {
+                    //check if ingredients available
+                    foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
+                    {
+                        if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
+                        {
+                            goto nextrecipe;
+                        }
+                    }
+                    //remove ingredients
+                    foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
+                    {
+                        for (int ii = 0; ii < ingredient.Amount; ii++)
+                        {
+                            //replace on table
+                            ReplaceOne(ontable, ingredient.Type, (int)TileTypeMinecraft.Empty);
+                        }
+                    }
+                    //add output
+                    for (int z = 0; z < craftingrecipes[i].output.Amount; z++)
+                    {
+                        outputtoadd.Add(craftingrecipes[i].output.Type);
+                    }
+                }
+            nextrecipe:
+                ;
+            }
+            foreach (var v in outputtoadd)
+            {
+                ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
+            }
+            int zz = 0;
+            if (execute)
+            {
+                foreach (var v in table)
+                {
+                    map.SetBlock(v.x, v.y, v.z + 1, ontable[zz]);
+                    terrain.UpdateTile(v.x, v.y, v.z + 1);
+                    zz++;
+                }
+            }
+            return true;
+        }
+        private bool DoCommandDumpOrLoad(int player_id, bool execute, CommandDumpOrLoad cmd)
+        {
+            Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
+            int dumpcount = 0;
+            if (inventory.ContainsKey(cmd.blocktype))
+            {
+                dumpcount = inventory[cmd.blocktype];
+            }
+            Vector3i pos = new Vector3i(cmd.x, cmd.y, cmd.z);
+            if (execute)
+            {
+                if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    List<Vector3i> table = GetTable(pos);
+                    if (cmd.dump)
+                    {
+                        int dumped = 0;
+                        foreach (Vector3i v in table)
+                        {
+                            if (dumped >= table.Count / 2 || dumped >= dumpcount)
+                            {
+                                break;
+                            }
+                            if (map.GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
+                            {
+                                map.SetBlock(v.x, v.y, v.z + 1, cmd.blocktype);
+                                inventory[cmd.blocktype]--;
+                                terrain.UpdateTile(v.x, v.y, v.z + 1);
+                                dumped++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (Vector3i v in table)
+                        {
+                            if (TotalAmount(inventory) + 1 > finiteinventorymax)
+                            {
+                                break;
+                            }
+                            int b = map.GetBlock(v.x, v.y, v.z + 1);
+                            if (b != data.TileIdEmpty)
+                            {
+                                map.SetBlock(v.x, v.y, v.z + 1, data.TileIdEmpty);
+                                inventory[b]++;
+                                terrain.UpdateTile(v.x, v.y, v.z + 1);
+                            }
+                        }
+                    }
+                    return true;
+                }
+                if (cmd.dump)
+                {
+                    for (int i = 0; i < dumpcount; i++)
+                    {
+                        //find empty position that is nearest to dump place AND has a block under.
+                        Vector3i? nearpos = FindDumpPlace(pos);
+                        if (nearpos == null)
+                        {
+                            break;
+                        }
+                        map.SetBlock(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, cmd.blocktype);
+                        inventory[cmd.blocktype]--;
+                        terrain.UpdateTile(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z);
+                    }
+                }
+            }
+            return true;
+        }
+        private bool DoCommandRailVehicleControl(int player_id, bool execute, CommandRailVehicleControl cmd)
+        {
+            int vehicleid = railridingall[players[player_id].Name];
+            if (vehicleid == -1)
+            {
+                return false;
+            }
+            var veh = vehicles[vehicleid];
+            if (execute)
+            {
+                switch (cmd.controlaction)
+                {
+                    case ControlAction.AccelerateMinus:
+                        veh.accelerate = false;
+                        veh.decelerate = true;
+                        break;
+                    case ControlAction.AccelerateNone:
+                        veh.accelerate = false;
+                        veh.decelerate = false;
+                        break;
+                    case ControlAction.AcceleratePlus:
+                        veh.accelerate = true;
+                        veh.decelerate = false;
+                        break;
+                    case ControlAction.Reverse:
+                        veh.currentdirection = DirectionUtils.Reverse(veh.currentdirection);
+                        veh.currentrailblockprogressMul1000 = 1000 - veh.currentrailblockprogressMul1000;
+                        veh.currentrailblockprogressMul1000 = Math.Max(veh.currentrailblockprogressMul1000, 999);
+                        veh.lastdirection = veh.currentdirection;
+                        //currentvehiclespeed = 0;
+                        break;
+                    case ControlAction.TurnLeft:
+                        veh.turnleft = true;
+                        break;
+                    case ControlAction.TurnRight:
+                        veh.turnright = true;
+                        break;
+                    case ControlAction.TurnNone:
+                        veh.turnleft = false;
+                        veh.turnright = false;
+                        break;
+                }
+            }
+            return true;
         }
         private void RailRidingLeave(int player_id)
         {
