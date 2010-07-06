@@ -117,7 +117,7 @@ namespace GameModeFortress
                 (new PermissionSet(PermissionState.Unrestricted)).Assert();
                 Console.WriteLine("SecurityException caught:\n{0}", ex.ToString());
                 CodeAccessPermission.RevertAssert();
-                Console.ReadLine();
+                //Console.ReadLine();
                 throw new Exception();
             }
         }
