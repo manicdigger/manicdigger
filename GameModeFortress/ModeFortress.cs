@@ -1080,6 +1080,16 @@ namespace GameModeFortress
                 b.AppendLine("</PlayerFiniteInventory>");
             }
             b.AppendLine("</FiniteInventory>");
+            b.AppendLine("<RailRiding>");
+            foreach (var k in railridingall)
+            {
+                if (k.Value == -1) { continue; }
+                b.AppendLine("<PlayerRailRiding>");
+                b.AppendLine(XmlTool.X("Name", k.Key));
+                b.AppendLine(XmlTool.X("VehicleId", k.Value.ToString()));
+                b.AppendLine("</PlayerRailRiding>");
+            }
+            b.AppendLine("</RailRiding>");
             b.AppendLine(XmlTool.X("InfiniteWorldGenerator", SecurityElement.Escape(generator)));
             /*
             byte[] mapdata = map.SaveBlocks();
@@ -1159,6 +1169,13 @@ namespace GameModeFortress
                         blocks[type] = amount;
                     }
                     PlayersFiniteInventory[name] = blocks;
+                }
+                foreach (XPathNavigator k in d.CreateNavigator()
+                    .Select("/ManicDiggerSave/RailRiding/PlayerRailRiding"))
+                {
+                    string name = k.SelectSingleNode("Name").Value;
+                    int vehicleid = int.Parse(k.SelectSingleNode("VehicleId").Value);
+                    railridingall[name] = vehicleid;
                 }
                 var ss = XmlTool.XmlVal(d, "/ManicDiggerSave/InfiniteWorldGenerator");
                 if (ss != null && ss != "")
@@ -1654,10 +1671,17 @@ namespace GameModeFortress
         }
         private bool DoCommandRailVehicleEnterLeave(int player_id, bool execute, CommandRailVehicleEnterLeave cmd)
         {
-            //check if vehicle id is valid
-            if (execute)
+            if (cmd.enter)
             {
-                if (cmd.enter)
+                if (!IsValidVehicleId(cmd.vehicleid))
+                {
+                    return false;
+                }
+                if (vehicles[cmd.vehicleid] == null)
+                {
+                    return false;
+                }
+                if (execute)
                 {
                     railridingall[players[player_id].Name] = cmd.vehicleid;
                     if (localplayerid != null && player_id == localplayerid)
@@ -1665,14 +1689,30 @@ namespace GameModeFortress
                         viewport.CharacterHeight = minecartheight;
                     }
                 }
-                else
+            }
+            else
+            {
+                string playername = players[player_id].Name;
+                if (!railridingall.ContainsKey(playername))
                 {
-                    RailVehicle veh = vehicles[railridingall[players[player_id].Name]];
+                    return false;
+                }
+                if (railridingall[playername] == -1)
+                {
+                    return false;
+                }
+                if (execute)
+                {
+                    RailVehicle veh = vehicles[railridingall[playername]];
                     veh.currentvehiclespeedMul1000 = 0;
                     RailRidingLeave(player_id);
                 }
             }
             return true;
+        }
+        private bool IsValidVehicleId(int id)
+        {
+            return id >= 0 && id < vehicles.Count;
         }
         private bool DoCommandCraft(bool execute, CommandCraft cmd)
         {
@@ -1806,12 +1846,17 @@ namespace GameModeFortress
         }
         private bool DoCommandRailVehicleControl(int player_id, bool execute, CommandRailVehicleControl cmd)
         {
-            int vehicleid = railridingall[players[player_id].Name];
+            string playername = players[player_id].Name;
+            if (!railridingall.ContainsKey(playername))
+            {
+                return false;
+            }
+            int vehicleid = railridingall[playername];
             if (vehicleid == -1)
             {
                 return false;
             }
-            var veh = vehicles[vehicleid];
+            RailVehicle veh = vehicles[vehicleid];
             if (execute)
             {
                 switch (cmd.controlaction)
