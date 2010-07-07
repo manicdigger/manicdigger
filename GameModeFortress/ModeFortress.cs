@@ -2158,13 +2158,29 @@ namespace GameModeFortress
         #region IGameMode Members
         public void OnNewMap()
         {
-            int x = map.MapSizeX / 2;
-            int y = map.MapSizeY / 2;
-            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y) + 0.5f, y + 0.5f);
+            playerpositionspawn = GetSpawnPositionOnLand();
             viewport.LocalPlayerPosition = PlayerPositionSpawn;
             viewport.LocalPlayerOrientation = PlayerOrientationSpawn;
         }
         #endregion
+        Vector3 GetSpawnPositionOnLand()
+        {
+            int x = map.MapSizeX / 2;
+            int y = map.MapSizeY / 2;
+            for (int i = 0; i < 100; i++)
+            {
+                int dx = i * 5;
+                Vector3i pos = new Vector3i(x + dx, y, MapUtil.blockheight(map, data.TileIdEmpty, x + dx, y));
+                if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z - 1)
+                    && !data.IsWaterTile(GetBlock(pos.x, pos.y, pos.z - 1)))
+                {
+                    Vector3 v = new Vector3(pos.x + 0.5f, pos.z + 0.5f, pos.y + 0.5f);
+                    return v;
+                }
+            }
+            Console.WriteLine("Spawn in water.");
+            return new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y) + 0.5f, y + 0.5f);
+        }
         #region IGameMode Members
         public Vector3 PlayerOrientationSpawn
         {
