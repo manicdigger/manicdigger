@@ -31,7 +31,15 @@ namespace ManicDigger
             }
             else
             {
-                animstate.interp = 0;
+                float f = Normalize(animstate.interp);
+                if (Math.Abs(f) < 0.05f)
+                {
+                    animstate.interp = 0;
+                }
+                else
+                {
+                    animstate.interp += dt;
+                }
             }
             GL.PushMatrix();
             GL.Translate(pos);
@@ -103,6 +111,10 @@ namespace ManicDigger
             GL.PopMatrix();
 
             GL.PopMatrix();
+        }
+        private float Normalize(float p)
+        {
+            return (float)(p % (Math.PI / 8));
         }
         float UpDown(float time)
         {
