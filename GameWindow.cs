@@ -1738,6 +1738,14 @@ namespace ManicDigger
         bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
         void UpdateMousePosition()
         {
+            mouse_current = System.Windows.Forms.Cursor.Position;
+            if (FreeMouse)
+            {
+                System.Windows.Forms.Cursor.Hide();
+                mouse_current.Offset(-X, -Y);
+                mouse_current.Offset(0, -20);
+                //System.Windows.Forms.Cursor.Show();
+            }
             if (!Focused)
             {
                 return;
@@ -1748,34 +1756,27 @@ namespace ManicDigger
             mouserightdeclick = wasmouseright && (!Mouse[OpenTK.Input.MouseButton.Right]);
             wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
             wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
-
-            mouse_current = System.Windows.Forms.Cursor.Position;
             if (freemousejustdisabled)
             {
                 mouse_previous = mouse_current;
                 freemousejustdisabled = false;
             }
-            if (FreeMouse)
+            if (!FreeMouse)
             {
-                System.Windows.Forms.Cursor.Hide();
-                mouse_current.Offset(-X, -Y);
-                mouse_current.Offset(0, -20);
-                //System.Windows.Forms.Cursor.Show();
-                return;
-            }
-            int centerx = Bounds.Left + (Bounds.Width / 2);
-            int centery = Bounds.Top + (Bounds.Height / 2);
+                int centerx = Bounds.Left + (Bounds.Width / 2);
+                int centery = Bounds.Top + (Bounds.Height / 2);
 
-            mouse_delta = new Point(mouse_current.X - mouse_previous.X,
-                mouse_current.Y - mouse_previous.Y);
-            mouse_previous = mouse_current;
-            
-            if ((Math.Abs(System.Windows.Forms.Cursor.Position.X - centerx) > 100)
-                || (Math.Abs(System.Windows.Forms.Cursor.Position.Y - centery) > 100))
-            {
-                System.Windows.Forms.Cursor.Position =
-                    new Point(centerx, centery);
-                mouse_previous = new Point(centerx, centery);
+                mouse_delta = new Point(mouse_current.X - mouse_previous.X,
+                    mouse_current.Y - mouse_previous.Y);
+                mouse_previous = mouse_current;
+
+                if ((Math.Abs(System.Windows.Forms.Cursor.Position.X - centerx) > 100)
+                    || (Math.Abs(System.Windows.Forms.Cursor.Position.Y - centery) > 100))
+                {
+                    System.Windows.Forms.Cursor.Position =
+                        new Point(centerx, centery);
+                    mouse_previous = new Point(centerx, centery);
+                }
             }
         }
         public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx, double orientationy)
