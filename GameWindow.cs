@@ -2247,7 +2247,7 @@ namespace ManicDigger
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
 
             BlockPosSide pick0;
-            if (pick2.Count > 0 && (pick2[0].pos - (ray_start_point)).Length <= PICK_DISTANCE
+            if (pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE
                 && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
                 (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
             {
