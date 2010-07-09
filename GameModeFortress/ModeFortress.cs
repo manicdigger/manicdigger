@@ -1428,7 +1428,7 @@ namespace GameModeFortress
             }
             return sum;
         }
-        int finiteinventorymax = 100;
+        int finiteinventorymax = 200;
         public int FiniteInventoryMax { get { return finiteinventorymax; } }
         public void DoCommand(byte[] command, int player_id)
         {
