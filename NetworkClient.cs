@@ -832,11 +832,16 @@ namespace ManicDigger
                 if (!Clients.Players.ContainsKey(playerid))
                 {
                     Clients.Players[playerid] = new Player();
+                    Clients.Players[playerid].Name = "invalid";
                     //throw new Exception();
-                    Console.WriteLine("Position update of nonexistent player {0}." + playerid);
+                    InvalidPlayerWarning(playerid);
                 }
                 Clients.Players[playerid].Position += v;
             }
+        }        
+        private static void InvalidPlayerWarning(byte playerid)
+        {
+            Console.WriteLine("Position update of nonexistent player {0}." + playerid);
         }
         private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
         {
@@ -871,6 +876,8 @@ namespace ManicDigger
                 if (!Clients.Players.ContainsKey(playerid))
                 {
                     Clients.Players[playerid] = new Player();
+                    Clients.Players[playerid].Name = "invalid";
+                    InvalidPlayerWarning(playerid);
                 }
                 if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
                 {
