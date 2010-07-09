@@ -1978,7 +1978,8 @@ namespace ManicDigger
                             //player orientation
                             Vector3 q = playerdestination - player.playerposition;
                             float angle = VectorAngleGet(q);
-                            player.playerorientation.Y = (float)Math.PI/2 + angle;
+                            player.playerorientation.Y = (float)Math.PI / 2 + angle;
+                            player.playerorientation.X = (float)Math.PI;
                         }
                     }
                     else if (ENABLE_MOVE)
