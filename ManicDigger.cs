@@ -633,6 +633,7 @@ namespace ManicDigger
         public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
         {
             reachedceiling = false;
+            reachedwall = false;
             //Math.Floor() is needed because casting negative values to integer is not floor.
             Vector3i oldpositioni = new Vector3i((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
                 (int)Math.Floor(oldposition.Y));
@@ -653,6 +654,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Z = oldposition.Z;
                         }
                     }
@@ -660,6 +662,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -677,6 +680,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.X = oldposition.X;
                         }
 
@@ -685,6 +689,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -722,6 +727,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Z = oldposition.Z;
                         }
                     }
@@ -729,6 +735,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -746,6 +753,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.X = oldposition.X;
                         }
                     }
@@ -753,6 +761,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -786,8 +795,9 @@ namespace ManicDigger
             }
             return playerposition;
         }
-        internal bool swimmingtop;
-        internal bool reachedceiling;
+        public bool swimmingtop;
+        public bool reachedceiling;
+        public bool reachedwall;
     }
     public interface IInternetGameFactory
     {

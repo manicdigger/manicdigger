@@ -1951,7 +1951,7 @@ namespace ManicDigger
                     angleup = true;
                 }
             }
-
+            bool wantsjump = GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space];
             int movedx = 0;
             int movedy = 0;
             if (guistate == GuiState.Normal)
@@ -1971,6 +1971,10 @@ namespace ManicDigger
                         if ((player.playerposition - playerdestination).Length >= 1f)
                         {
                             movedy += 1;
+                            if (physics.reachedwall)
+                            {
+                                wantsjump = true;
+                            }
                             //player orientation
                             Vector3 q = playerdestination - player.playerposition;
                             float angle = VectorAngleGet(q);
@@ -2074,7 +2078,7 @@ namespace ManicDigger
             {
                 isplayeronground = player.playerposition.Y == previousposition.Y;
                 {
-                    if (GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space] && isplayeronground && jumpacceleration <= 0)
+                    if (wantsjump && isplayeronground && jumpacceleration <= 0)
                     {
                         jumpacceleration = 2.1f * gravity;
                         UpdateWalkSound(-1);
