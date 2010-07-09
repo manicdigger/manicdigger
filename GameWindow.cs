@@ -1943,7 +1943,7 @@ namespace ManicDigger
             bool angledown = false;
             float overheadcameraanglemovearea = 0.05f;
             float overheadcameraspeed = 3;
-            if (Focused && cameratype == CameraType.Overhead)
+            if (guistate == GuiState.Normal && Focused && cameratype == CameraType.Overhead)
             {
                 if (mouse_current.X > Width - Width * overheadcameraanglemovearea)
                 {
