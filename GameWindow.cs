@@ -3067,17 +3067,20 @@ namespace ManicDigger
             OrthoMode();
             if (guistate == GuiState.Normal)
             {
-                if (aimsize == null)
+                if (cameratype != CameraType.Overhead)
                 {
-                    using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                    if (aimsize == null)
                     {
-                        aimsize = targetbmp.Size;
+                        using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                        {
+                            aimsize = targetbmp.Size;
+                        }
                     }
-                }
-                float aimwidth = aimsize.Value.Width;
-                float aimheight = aimsize.Value.Height;
+                    float aimwidth = aimsize.Value.Width;
+                    float aimheight = aimsize.Value.Height;
 
-                Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+                    Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+                }
 
                 DrawMaterialSelector();
                 DrawChatLines(GuiTyping == TypingState.Typing);
