@@ -829,6 +829,7 @@ namespace ManicDigger
                 ClientCommand(".server " + GameUrl);
             }
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
+            Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
             if (config3d.ENABLE_BACKFACECULLING)
             {
                 GL.DepthMask(true);
@@ -846,6 +847,24 @@ namespace ManicDigger
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
             System.Windows.Forms.Cursor.Hide();
+        }
+        float overheadcameradistance = 10;
+        float tppcameradistance = 3;
+        void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
+        {
+            if (keyboardstate[OpenTK.Input.Key.LControl])
+            {
+                if (cameratype == CameraType.Overhead)
+                {
+                    overheadcameradistance -= e.DeltaPrecise;
+                    if (overheadcameradistance < 1) { overheadcameradistance = 1; }
+                }
+                if (cameratype == CameraType.Tpp)
+                {
+                    tppcameradistance -= e.DeltaPrecise;
+                    if (tppcameradistance < 1) { tppcameradistance = 1; }
+                }
+            }
         }
         public bool ENABLE_MAINMENU = false;
         private static void SetAmbientLight(Color c)
@@ -1390,7 +1409,24 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.F5)
                 {
-                    ENABLE_TPP_VIEW = !ENABLE_TPP_VIEW;
+                    if (cameratype == CameraType.Fpp)
+                    {
+                        cameratype = CameraType.Tpp;
+                        ENABLE_TPP_VIEW = true;
+                    }
+                    else if (cameratype == CameraType.Tpp)
+                    {
+                        cameratype = CameraType.Overhead;
+                        overheadcamera = true;
+                        ENABLE_TPP_VIEW = true;
+                    }
+                    else if (cameratype == CameraType.Overhead)
+                    {
+                        cameratype = CameraType.Fpp;
+                        ENABLE_TPP_VIEW = false;
+                        overheadcamera = false;
+                    }
+                    else throw new Exception();
                 }
                 if (e.Key == OpenTK.Input.Key.F12)
                 {
@@ -1524,6 +1560,13 @@ namespace ManicDigger
             }
             else throw new Exception();
         }
+        enum CameraType
+        {
+            Fpp,
+            Tpp,
+            Overhead,
+        }
+        CameraType cameratype = CameraType.Fpp;
         // Returns a System.Drawing.Bitmap with the contents of the current framebuffer
         public Bitmap GrabScreenshot()
         {
@@ -1897,16 +1940,15 @@ namespace ManicDigger
                         if (Keyboard[OpenTK.Input.Key.Q]) { overheadcameraK.TurnRight((float)e.Time * 5); }
                         if (Keyboard[OpenTK.Input.Key.E]) { overheadcameraK.TurnLeft((float)e.Time * 5); }
                         overheadcameraK.Center = player.playerposition;
-                        m.Distance = -Mouse.WheelPrecise;
+                        m.Distance = overheadcameradistance;
                         overheadcameraK.Move(m, (float)e.Time);
-                        if ((player.playerposition - playerdestination).Length >= 0.5f)
+                        if ((player.playerposition - playerdestination).Length >= 1f)
                         {
                             movedy += 1;
                             //player orientation
-                            //player.playerorientation.Y=
                             Vector3 q = playerdestination - player.playerposition;
-                            q.Y = player.playerposition.Y;
-                            player.playerorientation.Y = (float)Math.PI + Vector3.CalculateAngle(new Vector3(1, 0, 0), q);
+                            float angle = VectorAngleGet(q);
+                            player.playerorientation.Y = (float)Math.PI/2 + angle;
                         }
                     }
                     else if (ENABLE_MOVE)
@@ -2050,13 +2092,17 @@ namespace ManicDigger
             {
                 EscapeMenuMouse();
             }
-            if (!FreeMouse)
+            if (guistate == GuiState.Normal)
             {
                 UpdateMouseViewportControl(e);
             }
             //must be here because frametick can be called more than once per render frame.
             keyevent = null;
             keyeventup = null;
+        }
+        private float VectorAngleGet(Vector3 q)
+        {
+            return (float)(Math.Acos(q.X / q.Length) * Math.Sign(q.Z));
         }
         private void EscapeMenuMouse()
         {
@@ -2194,7 +2240,15 @@ namespace ManicDigger
             float ASPECT = 640f / 480;
             float near_height = NEAR * (float)(Math.Tan(FOV * Math.PI / 360.0));
             Vector3 ray = new Vector3(unit_x * near_height * ASPECT, unit_y * near_height, 1);//, 0);
-            Vector3 ray_start_point = new Vector3(0.0f, 0.0f, 0.0f);//, 1.0f);
+
+            Vector3 ray_start_point = new Vector3(0, 0, 0);
+            if (overheadcamera)
+            {
+                float mx = (float)mouse_current.X / Width - 0.5f;
+                float my = (float)mouse_current.Y / Height - 0.5f;
+                //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
+                ray_start_point = new Vector3(mx * 3f, -my * 2.2f, -1.0f);
+            }
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
@@ -2246,10 +2300,32 @@ namespace ManicDigger
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
 
+            if (overheadcamera && pick2.Count > 0 && left)
+            {
+                //if not picked any object, and mouse button is pressed, then walk to destination.
+                //walk direction: pick flat surface at player height.
+                Vector3 a = new Vector3(player.playerposition.X - 1000, player.playerposition.Y, player.playerposition.Z - 1000);
+                Vector3 b = new Vector3(player.playerposition.X + 1000, player.playerposition.Y, player.playerposition.Z);
+                Vector3 c = new Vector3(player.playerposition.X, player.playerposition.Y, player.playerposition.Z - 1000);
+                Triangle3D t = new Triangle3D() { PointA = a, PointB = b, PointC = c };
+                Vector3 intersection = new Vector3();
+                Collisions.Intersection.RayTriangle(pick, t, out intersection);
+                playerdestination = intersection;
+            }
+            else
+            {
+                playerdestination = player.playerposition;
+            }
             BlockPosSide pick0;
-            if (pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE
-                && IsTileEmptyForPhysics((int)ToMapPos(player.playerposition).X,
-                (int)ToMapPos(player.playerposition).Y, (int)ToMapPos(player.playerposition).Z))
+            if (pick2.Count > 0 &&
+                (((pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE
+                    &&
+                    IsTileEmptyForPhysics(
+                        (int)ToMapPos(player.playerposition).X,
+                        (int)ToMapPos(player.playerposition).Y,
+                        (int)ToMapPos(player.playerposition).Z))
+                || overheadcamera)
+                )
             {
                 pickcubepos = pick2[0].Current();
                 pickcubepos = new Vector3((int)pickcubepos.X, (int)pickcubepos.Y, (int)pickcubepos.Z);
@@ -2377,7 +2453,7 @@ namespace ManicDigger
         }
         private void OnPick(BlockPosSide pick0)
         {
-            playerdestination = pick0.pos;
+            //playerdestination = pick0.pos;
         }
         float BuildDelay = 0.95f * (1 / basemovespeed);
         Vector3 ToMapPos(Vector3 a)
@@ -2430,11 +2506,14 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
-            activematerial -= Mouse.WheelDelta;
-            activematerial = activematerial % 10;
-            while (activematerial < 0)
+            if (!keyboardstate[OpenTK.Input.Key.LControl])
             {
-                activematerial += 10;
+                activematerial -= Mouse.WheelDelta;
+                activematerial = activematerial % 10;
+                while (activematerial < 0)
+                {
+                    activematerial += 10;
+                }
             }
             SetAmbientLight(terraincolor);
             //const float alpha = accumulator / dt;
@@ -2811,7 +2890,7 @@ namespace ManicDigger
             Vector3 tpp = new Vector3();
             if (ENABLE_TPP_VIEW)
             {
-                tpp = Vector3.Multiply(forward, -3);
+                tpp = Vector3.Multiply(forward, -tppcameradistance);
             }
             return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0) + tpp,
                 player.playerposition + new Vector3(0, CharacterHeight, 0) + forward, up);
