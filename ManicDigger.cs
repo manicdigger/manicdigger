@@ -662,7 +662,6 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
-                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -689,7 +688,6 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
-                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -735,7 +733,6 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
-                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
@@ -761,7 +758,6 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
-                            reachedwall = true;
                             playerposition.Y += 0.5f;
                             goto ok;
                         }
