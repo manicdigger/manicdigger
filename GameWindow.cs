@@ -1161,6 +1161,17 @@ namespace ManicDigger
         }
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key == OpenTK.Input.Key.F11)
+            {
+                if (WindowState == WindowState.Fullscreen)
+                {
+                    WindowState = WindowState.Normal;
+                }
+                else
+                {
+                    WindowState = WindowState.Fullscreen;
+                }
+            }
             if (GuiTyping == TypingState.None)
             {
                 keyevent = e;
