@@ -1928,6 +1928,30 @@ namespace ManicDigger
             }
             UpdateMousePosition();
 
+            bool angleup = false;
+            bool angledown = false;
+            float overheadcameraanglemovearea = 0.05f;
+            float overheadcameraspeed = 3;
+            if (Focused && cameratype == CameraType.Overhead)
+            {
+                if (mouse_current.X > Width - Width * overheadcameraanglemovearea)
+                {
+                    overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed);
+                }
+                if (mouse_current.X < Width * overheadcameraanglemovearea)
+                {
+                    overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed);
+                }
+                if (mouse_current.Y < Height * overheadcameraanglemovearea)
+                {
+                    angledown = true;
+                }
+                if (mouse_current.Y > Height - Height * overheadcameraanglemovearea)
+                {
+                    angleup = true;
+                }
+            }
+
             int movedx = 0;
             int movedy = 0;
             if (guistate == GuiState.Normal)
@@ -1937,10 +1961,12 @@ namespace ManicDigger
                     if (overheadcamera)
                     {
                         CameraMove m = new CameraMove();
-                        if (Keyboard[OpenTK.Input.Key.Q]) { overheadcameraK.TurnRight((float)e.Time * 5); }
-                        if (Keyboard[OpenTK.Input.Key.E]) { overheadcameraK.TurnLeft((float)e.Time * 5); }
+                        if (Keyboard[OpenTK.Input.Key.Q]) { overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[OpenTK.Input.Key.E]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
                         overheadcameraK.Center = player.playerposition;
                         m.Distance = overheadcameradistance;
+                        m.AngleUp = angleup;
+                        m.AngleDown = angledown;
                         overheadcameraK.Move(m, (float)e.Time);
                         if ((player.playerposition - playerdestination).Length >= 1f)
                         {
