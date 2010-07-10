@@ -1972,8 +1972,10 @@ namespace ManicDigger
                     if (overheadcamera)
                     {
                         CameraMove m = new CameraMove();
-                        if (Keyboard[OpenTK.Input.Key.Q]) { overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed); }
-                        if (Keyboard[OpenTK.Input.Key.E]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[OpenTK.Input.Key.A]) { overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[OpenTK.Input.Key.D]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[OpenTK.Input.Key.W]) { angleup = true; }
+                        if (Keyboard[OpenTK.Input.Key.S]) { angledown = true; }
                         overheadcameraK.Center = player.playerposition;
                         m.Distance = overheadcameradistance;
                         m.AngleUp = angleup;
