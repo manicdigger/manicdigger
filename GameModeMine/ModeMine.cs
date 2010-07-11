@@ -847,6 +847,12 @@ namespace ManicDigger
                 || IsWaterTile(blocktype);
         }
         #endregion
+        #region IGameData Members
+        public bool IsSlipperyWalk(int blocktype)
+        {
+            return false;
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

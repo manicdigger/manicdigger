@@ -2122,13 +2122,23 @@ namespace ManicDigger
             (movedx * movespeednow * (float)e.Time,
             0,
             movedy * movespeednow * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
+            float acceleration1 = 0.90f;
+            float acceleration2 = 2f;
+            float acceleration3 = 700f;
+            int? blockunderplayer = BlockUnderPlayer();
+            if (blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value))
+            {
+                acceleration1 = 0.99f;
+                acceleration2 = 0.2f;
+                acceleration3 = 70;
+            }
             if (enable_acceleration)
             {
-                curspeed *= 0.90f;
-                curspeed.X = MakeCloserToZero(curspeed.X, 2f * (float)e.Time);
-                curspeed.Y = MakeCloserToZero(curspeed.Y, 2f * (float)e.Time);
-                curspeed.Z = MakeCloserToZero(curspeed.Z, 2f * (float)e.Time);
-                curspeed += Vector3.Multiply(diff1, 700f * (float)e.Time);
+                curspeed *= acceleration1;
+                curspeed.X = MakeCloserToZero(curspeed.X, acceleration2 * (float)e.Time);
+                curspeed.Y = MakeCloserToZero(curspeed.Y, acceleration2 * (float)e.Time);
+                curspeed.Z = MakeCloserToZero(curspeed.Z, acceleration2 * (float)e.Time);
+                curspeed += Vector3.Multiply(diff1, acceleration3 * (float)e.Time);
                 if (curspeed.Length > movespeednow)
                 {
                     curspeed.Normalize();
@@ -2255,12 +2265,10 @@ namespace ManicDigger
             float movespeednow = movespeed;
             {
                 //walk faster on cobblestone
-                if (MapUtil.IsValidPos(map, (int)player.playerposition.X,
-                    (int)player.playerposition.Z, (int)player.playerposition.Y - 1))
+                int? blockunderplayer = BlockUnderPlayer();
+                if (blockunderplayer != null)
                 {
-                    int blockunderplayer = map.GetBlock((int)player.playerposition.X,
-                        (int)player.playerposition.Z, (int)player.playerposition.Y - 1);
-                    movespeednow *= data.BlockWalkSpeed(blockunderplayer);
+                    movespeednow *= data.BlockWalkSpeed(blockunderplayer.Value);
                 }
             }
             if (Keyboard[OpenTK.Input.Key.ShiftLeft])
@@ -2269,6 +2277,17 @@ namespace ManicDigger
                 movespeednow *= 0.2f;
             }
             return movespeednow;
+        }
+        int? BlockUnderPlayer()
+        {
+            if (!MapUtil.IsValidPos(map, (int)player.playerposition.X,
+                 (int)player.playerposition.Z, (int)player.playerposition.Y - 1))
+            {
+                return null;
+            }
+            int blockunderplayer = map.GetBlock((int)player.playerposition.X,
+                (int)player.playerposition.Z, (int)player.playerposition.Y - 1);
+            return blockunderplayer;
         }
         float MakeCloserToZero(float a, float b)
         {

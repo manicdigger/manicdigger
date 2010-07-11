@@ -2782,14 +2782,18 @@ namespace GameModeFortress
         {
             if (CurrentSeason.CurrentSeason == 3)
             {
-                if (tiletype == (int)TileTypeMinecraft.Water
-                    || tiletype == (int)TileTypeMinecraft.StationaryWater
-                    || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource)
+                if (IsRealWater(tiletype))
                 {
                     return false;
                 }
             }
             return data.IsWaterTile(tiletype);
+        }
+        private static bool IsRealWater(int tiletype)
+        {
+            return tiletype == (int)TileTypeMinecraft.Water
+                                || tiletype == (int)TileTypeMinecraft.StationaryWater
+                                || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource;
         }
         public bool IsBuildableTile(int tiletype)
         {
@@ -2921,6 +2925,16 @@ namespace GameModeFortress
         public bool GrassGrowsUnder(int blocktype)
         {
             return data.GrassGrowsUnder(blocktype) || IsCrops(blocktype);
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsSlipperyWalk(int blocktype)
+        {
+            if (CurrentSeason.CurrentSeason == 3 && IsRealWater(blocktype))
+            {
+                return true;
+            }
+            return data.IsSlipperyWalk(blocktype);
         }
         #endregion
     }
