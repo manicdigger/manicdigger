@@ -103,6 +103,7 @@ namespace ManicDigger
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
             //w.characterdrawer = new CharacterDrawerMd2() { getfile = getfile, the3d = w };
             w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile };
+            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
             clientgame.terrain = terrainDrawer;
             clientgame.network = network;
             clientgame.viewport = w;
