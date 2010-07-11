@@ -486,6 +486,7 @@ namespace ManicDigger
         float BlockWalkSpeed(int blocktype);
         bool GrassGrowsUnder(int blocktype);
         bool IsSlipperyWalk(int blocktype);
+        string[] WalkSound(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -585,6 +586,12 @@ namespace ManicDigger
         public bool IsSlipperyWalk(int blocktype)
         {
             return false;
+        }
+        #endregion
+        #region IGameData Members
+        public string[] WalkSound(int blocktype)
+        {
+            return new[] { "walk1.wav" };
         }
         #endregion
     }

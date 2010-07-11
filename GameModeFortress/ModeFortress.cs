@@ -2937,6 +2937,19 @@ namespace GameModeFortress
             return data.IsSlipperyWalk(blocktype);
         }
         #endregion
+        #region IGameData Members
+        string[] soundwalksnow = { "walksnow1.wav", "walksnow2.wav", "walksnow3.wav", "walksnow4.wav" };
+        public string[] WalkSound(int blocktype)
+        {
+            if (CurrentSeason.CurrentSeason == 3 &&
+                (blocktype == (int)TileTypeMinecraft.Grass
+                || blocktype == (int)TileTypeMinecraft.Water))
+            {
+                return soundwalksnow;
+            }
+            return data.WalkSound(blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {

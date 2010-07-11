@@ -853,6 +853,17 @@ namespace ManicDigger
             return false;
         }
         #endregion
+        string[] soundwalk = { "walk1.wav", "walk2.wav", "walk3.wav", "walk4.wav" };
+        #region IGameData Members
+        public string[] WalkSound(int blocktype)
+        {
+            if (blocktype == (int)TileTypeMinecraft.Empty)
+            {
+                return new string[0];
+            }
+            return soundwalk;
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

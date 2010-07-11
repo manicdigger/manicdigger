@@ -961,7 +961,6 @@ namespace ManicDigger
             exit = true;
             base.OnClosed(e);
         }
-        string[] soundwalk = { "walk1.wav", "walk2.wav", "walk3.wav", "walk4.wav" };
         string soundbuild = "build.wav";
         string sounddestruct = "destruct.wav";
         string soundclone = "clone.wav";
@@ -1946,6 +1945,11 @@ namespace ManicDigger
         void UpdateWalkSound(double dt)
         {
             walksoundtimer += (float)dt;
+            string[] soundwalk = soundwalkcurrent();
+            if (soundwalk.Length == 0)
+            {
+                return;
+            }
             if (walksoundtimer >= stepsoundduration || dt == -1)
             {
                 walksoundtimer = 0;
@@ -1960,6 +1964,15 @@ namespace ManicDigger
                 }
                 audio.Play(soundwalk[lastwalksound]);
             }
+        }
+        string[] soundwalkcurrent()
+        {
+            int? b = BlockUnderPlayer();
+            if (b != null)
+            {
+                return data.WalkSound(b.Value);
+            }
+            return data.WalkSound(data.TileIdEmpty);
         }
         bool IsInLeft(Vector3 player_yy, Vector3 tile_yy)
         {
