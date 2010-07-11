@@ -243,7 +243,12 @@ namespace GameModeFortress
             }
         }
     }
+    public interface ICurrentSeason
+    {
+        int CurrentSeason { get; }
+    }
     public class GameFortress : IGameMode, IGameWorld, IMapStorage, IClients, ITerrainInfo, IGameWorldTodo
+        , ICurrentSeason
     {
         [Inject]
         public WorldGeneratorSandbox worldgeneratorsandbox { get; set; }
@@ -1221,7 +1226,8 @@ namespace GameModeFortress
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
         int blocksiteration = 0;
         public int BLOCKSLOOP_BLOCKS_PER_FRAME = 10;
-        public int BLOCKSLOOP_EVERY_SECONDS = 10 * 60;
+        public int BLOCKSLOOP_EVERY_SECONDS = 6 * 60 * 60;
+        public int SEASON_EVERY_SECONDS = 6 * 60 * 60;
         void BlocksLoop()
         {
             if (map.blockslist.Count == 0)
@@ -1397,7 +1403,18 @@ namespace GameModeFortress
                 UpdateRailVehicle(dt, i);
             }
             BlocksLoop();
+            if (simulationcurrentframe % (int)((SEASON_EVERY_SECONDS) / SIMULATION_STEP_LENGTH) == 0)
+            {
+                CurrentSeason++;
+                if (CurrentSeason >= 4)
+                {
+                    CurrentSeason = 0;
+                }
+                terrain.UpdateAllTiles();
+            }
         }
+        int currentseason = 0;
+        public int CurrentSeason { get { return currentseason; } set { currentseason = value; } }
         private bool IsShadow(int x, int y, int z)
         {
             for (int i = 1; i < 10; i++)
@@ -2641,6 +2658,7 @@ namespace GameModeFortress
     }
     public class GameDataTilesManicDigger : IGameData
     {
+        public ICurrentSeason CurrentSeason { get; set; }
         public GameDataTilesMinecraft data = new GameDataTilesMinecraft();
         public GameDataTilesManicDigger()
         {
@@ -2662,6 +2680,32 @@ namespace GameModeFortress
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
         {
+            if (CurrentSeason.CurrentSeason == 3)
+            {
+                if (tileType == (int)TileTypeMinecraft.Grass)
+                {
+                    if (side == TileSide.Top)
+                    {
+                        return (7 * 16) + 3;
+                    }
+                    if (side == TileSide.Bottom)
+                    {
+                        goto standard;
+                    }
+                    return (7 * 16) + 5;
+                }
+                if (tileType == (int)TileTypeMinecraft.Water
+                    || tileType == (int)TileTypeMinecraft.StationaryWater
+                    || tileType == (int)TileTypeMinecraft.InfiniteWaterSource)
+                {
+                    return (7 * 16) + 4;
+                }
+                if (tileType == (int)TileTypeMinecraft.Leaves)
+                {
+                    return (7 * 16) + 6;
+                }
+            }
+            standard:
             if (datanew[tileType] != null)
             {
                 if (side == TileSide.Top)
@@ -2736,6 +2780,15 @@ namespace GameModeFortress
         }
         public bool IsWaterTile(int tiletype)
         {
+            if (CurrentSeason.CurrentSeason == 3)
+            {
+                if (tiletype == (int)TileTypeMinecraft.Water
+                    || tiletype == (int)TileTypeMinecraft.StationaryWater
+                    || tiletype == (int)TileTypeMinecraft.InfiniteWaterSource)
+                {
+                    return false;
+                }
+            }
             return data.IsWaterTile(tiletype);
         }
         public bool IsBuildableTile(int tiletype)

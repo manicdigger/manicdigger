@@ -812,6 +812,7 @@ namespace ManicDiggerServer
 
             var g = new GameModeFortress.GameFortress();
             var data = new GameModeFortress.GameDataTilesManicDigger();
+            data.CurrentSeason = g;
             g.audio = new AudioDummy();
             g.data = data;
             var gen = new GameModeFortress.WorldGeneratorSandbox();
