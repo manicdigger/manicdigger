@@ -380,7 +380,7 @@ namespace ManicDigger
     }
     public interface IModelToDraw
     {
-        void Draw();
+        void Draw(float dt);
         IEnumerable<Triangle3D> TrianglesForPicking { get; }
         int Id { get; }
     }
@@ -400,11 +400,13 @@ namespace ManicDigger
         int FiniteInventoryMax { get; }
         double SIMULATIONLAG_SECONDS { get; set; }
     }
-    public interface ICharacterToDraw
+    public interface ICharacterToDraw : IModelToDraw
     {
+        /*
         Vector3 Pos3d { get; }
         Vector3 Dir3d { get; }
         bool Moves { get; }
+        */
     }
     public class WeaponBlockInfo
     {
@@ -2702,7 +2704,7 @@ namespace ManicDigger
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 DrawCubeLines(pickcubepos);
 
-                //DrawVehicles((float)e.Time);
+                DrawCharacters((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
@@ -2714,7 +2716,7 @@ namespace ManicDigger
                     {
                         //GL.Color3(Color.Red);
                     }
-                    m.Draw();
+                    m.Draw((float)e.Time);
                     //GL.Color3(Color.White);
                     /*
                     GL.Begin(BeginMode.Triangles);
@@ -3069,15 +3071,14 @@ namespace ManicDigger
         List<Chatline> chatlines = new List<Chatline>();
         Dictionary<string, int> textures = new Dictionary<string, int>();
         AnimationState v0anim = new AnimationState();
-        //void DrawVehicles(float dt)
-        //{
-        //    //if (v0 != null)
-        //    foreach (ICharacterToDraw v0 in game.Characters)
-        //    {
-        //        DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255);
-        //        //DrawCube(v0.pos3d);
-        //    }
-        //}
+        void DrawCharacters(float dt)
+        {
+            foreach (ICharacterToDraw v0 in game.Characters)
+            {
+                //DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255,);
+                v0.Draw(dt);
+            }
+        }
         //private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt, int playertexture)
         //{
         //    DrawCharacter(animstate, pos,

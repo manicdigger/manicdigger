@@ -488,6 +488,11 @@ namespace ManicDiggerServer
                     }
                     byte heading = br.ReadByte();
                     byte pitch = br.ReadByte();
+                    clients[clientid].positionxx = xx;
+                    clients[clientid].positionyy = yy;
+                    clients[clientid].positionzz = zz;
+                    clients[clientid].positionheading = heading;
+                    clients[clientid].positionpitch = pitch;
                     foreach (var k in clients)
                     {
                         if (k.Key != clientid)
@@ -609,6 +614,11 @@ namespace ManicDiggerServer
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.PlayerTeleport);
+            SendPlayerTeleportContents(playerid, x, y, z, heading, pitch, bw);
+            SendPacket(clientid, ms.ToArray());
+        }
+        private void SendPlayerTeleportContents(byte playerid, int x, int y, int z, int heading, int pitch, BinaryWriter bw)
+        {
             bw.Write((byte)playerid);
             if (ENABLE_FORTRESS)
             {
@@ -624,7 +634,6 @@ namespace ManicDiggerServer
             }
             bw.Write((byte)heading);
             bw.Write((byte)pitch);
-            SendPacket(clientid, ms.ToArray());
         }
         //SendPositionAndOrientationUpdate //delta
         //SendPositionUpdate //delta
@@ -792,6 +801,12 @@ namespace ManicDiggerServer
             }
             NetworkHelper.WriteInt32(bw, simulationcurrentframe);
             NetworkHelper.WriteInt32(bw, gameworld.GetStateHash());
+            bw.Write((byte)clients.Count);
+            foreach (var k in clients)
+            {
+                SendPlayerTeleportContents((byte)k.Key, k.Value.positionxx,
+                    k.Value.positionyy, k.Value.positionzz, k.Value.positionheading, k.Value.positionpitch, bw);
+            }
             SendPacket(clientid, ms.ToArray());
         }
         class Client
@@ -799,6 +814,11 @@ namespace ManicDiggerServer
             public Socket socket;
             public List<byte> received = new List<byte>();
             public string playername = "player";
+            public int positionxx;
+            public int positionyy;
+            public int positionzz;
+            public int positionheading;
+            public int positionpitch;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
@@ -823,6 +843,8 @@ namespace ManicDiggerServer
             g.physics = new CharacterPhysics() { data = data, map = g.map };
             g.terrain = new TerrainDrawerDummy();
             g.viewport = new ViewportDummy();
+            g.the3d = new The3dDummy();
+            g.getfile = new GetFilePathDummy();
             s.gameworld = g;
             g.generator = File.ReadAllText("WorldGenerator.cs");
             int seed = new Random().Next();

@@ -282,9 +282,15 @@ namespace ManicDigger
     }
     public interface IGameWorldTodo
     {
-        void KeyFrame(int allowedframe, int hash);
+        void KeyFrame(int allowedframe, int hash, Dictionary<int, PlayerPosition> playerpositions);
         void EnqueueCommand(int playerid, int frame, byte[] cmd);
         void LoadState(byte[] savegame, int simulationstartframe);
+    }
+    public class PlayerPosition
+    {
+        public Vector3 position;
+        public byte heading;
+        public byte pitch;
     }
     public class NetworkClientMinecraft : INetworkClient
     {
@@ -770,7 +776,23 @@ namespace ManicDigger
                         totalread += 4 + 4; if (received.Count < totalread) { return 0; }
                         int allowedframe = NetworkHelper.ReadInt32(br);
                         int hash = NetworkHelper.ReadInt32(br);
-                        gameworld.KeyFrame(allowedframe, hash);
+
+                        totalread += 1; if (received.Count < totalread) { return 0; }
+                        int clientscount = br.ReadByte();
+                        totalread += clientscount * (1 + (3 * 4) + 1 + 1); if (received.Count < totalread) { return 0; }
+                        Dictionary<int, PlayerPosition> playerpositions=new Dictionary<int,PlayerPosition>();
+                        for (int i = 0; i < clientscount; i++)
+                        {
+                            byte playerid = br.ReadByte();
+                            //copied
+                            float x = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+                            float y = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+                            float z = (float)((double)NetworkHelper.ReadInt32(br) / 32);
+                            byte heading = br.ReadByte();
+                            byte pitch = br.ReadByte();
+                            playerpositions[playerid] = new PlayerPosition() { position = new Vector3(x, y, z), heading = heading, pitch = pitch };
+                        }
+                        gameworld.KeyFrame(allowedframe, hash, playerpositions);
                     }
                     break;
                 default:

@@ -470,6 +470,7 @@ namespace GameModeFortress
         double simulationlagseconds = 0.3;
         public double SIMULATIONLAG_SECONDS { get { return simulationlagseconds; } set { simulationlagseconds = value; } }
         int SIMULATIONLAG_FRAMES { get { return Math.Max(1, (int)(simulationlagseconds / SIMULATION_STEP_LENGTH)); } }
+        Dictionary<int, PlayerPosition> PlayerPositionsDeterministic;
         public void OnNewFrame(double dt)
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
@@ -511,6 +512,7 @@ namespace GameModeFortress
                             Console.WriteLine("Desync.");
                             throw new Exception("Desync.");
                         }
+                        PlayerPositionsDeterministic = todo.playerpositions;
                         simulationhashchecktodo.Dequeue();
                     }
                 }
@@ -991,28 +993,41 @@ namespace GameModeFortress
             public BlockSetMode mode;
             public int tiletype;
         }
-        class Character : ICharacterToDraw
+        class Monster
         {
-            public Vector3 pos3d;
-            //public List<Vector3> orders = new List<Vector3>();
-            public int currentOrderId = 0;
-            public int cargoAmount = 0;
-            public Vector3 dir3d;
-            public bool moves;
-            public Vector3 Pos3d { get { return pos3d; } }
-            public Vector3 Dir3d { get { return dir3d; } }
-            public bool Moves { get { return moves; } }
-            public Vector3? currentorder;
-            //public CharacterState state;
-            public float buildprogress;
-            public List<Vector3> path;
+            public Vector3 pos;
+            public MonsterType type;
         }
-        List<Character> characters = new List<Character>();
+        class CharacterToDraw : ICharacterToDraw
+        {
+            public Vector3 pos;
+            public byte heading;
+            public byte pitch;
+            public bool moves;
+            public ICharacterDrawer drawer;
+            public AnimationState animstate = new AnimationState();
+            public int playertexture;
+            #region IModelToDraw Members
+            public void Draw(float dt)
+            {
+                drawer.DrawCharacter(animstate, pos + new Vector3(0, +0.7f, 0), heading, pitch, moves, dt, playertexture, new AnimationHint());
+            }
+            public IEnumerable<Triangle3D> TrianglesForPicking
+            {
+                get { throw new NotImplementedException(); }
+            }
+            public int Id
+            {
+                get { throw new NotImplementedException(); }
+            }
+            #endregion
+        }
+        List<Monster> monsters = new List<Monster>();
         [Inject]
         public CharacterPhysics physics { get; set; }
         float basecharactersmovespeed { get { return ManicDiggerGameWindow.basemovespeed / 3; } }
         [Inject]
-        public Pathfinder3d pathfinder{get;set;}
+        public Pathfinder3d pathfinder { get; set; }
         private void RemoveOrder(Vector3 vv)
         {
             var o = orders[vv];
@@ -1411,8 +1426,75 @@ namespace GameModeFortress
                     CurrentSeason = 0;
                 }
                 terrain.UpdateAllTiles();
+            }            
+            if (monsters.Count < 1)
+            {
+                var c = new Monster();
+                c.pos = playerpositionspawn;
+                c.type = MonsterType.Zombie;
+                monsters.Add(c);
             }
+            /*
+            for (int i = 0; i < monsters.Count; i++)
+            {
+                if (monsters[i] == null) { continue; }
+                Vector3 oldpos = monsters[i].pos;
+                int? nearestplayer = GetNearestPlayer(oldpos);
+                if (nearestplayer == null)
+                {
+                    continue;
+                }
+                Vector3 nearestplayerpos = PlayerPositionsDeterministic[nearestplayer.Value].position;
+                Vector3 diff = (nearestplayerpos - oldpos);
+                //heading to player
+                //go
+                if (diff.Length > 1f)
+                {
+                    diff.Normalize();
+                    monsters[i].pos = physics.WallSlide(oldpos, oldpos + diff * basecharactersmovespeed * dt);
+                }
+            }
+            */
         }
+        enum MonsterType
+        {
+            Zombie,
+        }
+        private int? GetNearestPlayer(Vector3 pos)
+        {
+            if (PlayerPositionsDeterministic == null)
+            {
+                return null;
+            }
+            int nearestid = -1;
+            float nearestlength = float.MaxValue;
+            foreach(var k in PlayerPositionsDeterministic)
+            {
+                float length = (k.Value.position - pos).Length;
+                if (length < nearestlength)
+                {
+                    nearestlength = length;
+                    nearestid = k.Key;
+                }
+            }
+            if (nearestid == -1)
+            {
+                return null;
+            }
+            return nearestid;
+        }
+        int zombietexture = -1;
+        int GetZombieTexture()
+        {
+            if (zombietexture == -1)
+            {
+                zombietexture = the3d.LoadTexture(getfile.GetFile("zombie.png"));
+            }
+            return zombietexture;
+        }
+        public IThe3d the3d { get; set; }
+        public IGetFilePath getfile { get; set; }
+        public ICharacterDrawer zombiedrawer { get; set; }
         int currentseason = 0;
         public int CurrentSeason { get { return currentseason; } set { currentseason = value; } }
         private bool IsShadow(int x, int y, int z)
@@ -2125,9 +2207,13 @@ namespace GameModeFortress
         {
             get
             {
-                foreach (Character c in characters)
+                foreach (Monster c in monsters)
                 {
-                    yield return c;
+                    var cc = new CharacterToDraw();
+                    cc.pos = c.pos;
+                    cc.drawer = zombiedrawer;
+                    cc.playertexture = GetZombieTexture();
+                    yield return cc;
                 }
             }
         }
@@ -2267,10 +2353,10 @@ namespace GameModeFortress
         #endregion
         int simulationallowedkeyframe = 0;
         #region IGameWorldTodo Members
-        public void KeyFrame(int allowedframe, int hash)
+        public void KeyFrame(int allowedframe, int hash, Dictionary<int, PlayerPosition> playerpositions)
         {
             simulationallowedkeyframe = allowedframe;
-            simulationhashchecktodo.Enqueue(new HashCheckTodo() { frame = simulationallowedkeyframe, hash = hash });
+            simulationhashchecktodo.Enqueue(new HashCheckTodo() { frame = simulationallowedkeyframe, hash = hash, playerpositions=playerpositions });
         }
         struct CommandTodo
         {
@@ -2282,6 +2368,7 @@ namespace GameModeFortress
         {
             public int frame;
             public int hash;
+            public Dictionary<int, PlayerPosition> playerpositions;
         }
         Queue<HashCheckTodo> simulationhashchecktodo = new Queue<HashCheckTodo>();
         Queue<CommandTodo> simulationcmdtodo = new Queue<CommandTodo>();
@@ -2325,7 +2412,7 @@ namespace GameModeFortress
         public double progress;
         public MinecartDrawer drawer;
         #region IModelToDraw Members
-        public void Draw()
+        public void Draw(float dt)
         {
             drawer.Draw(currentrailblock, position, direction, lastdirection, progress);
         }

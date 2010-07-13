@@ -40,6 +40,9 @@ namespace GameModeFortress
                 accumulator -= dt;
             }
             oldtime = currenttime;
+            //players.Players[0].Position = localplayerposition.LocalPlayerPosition;
+            //players.Players[0].Pitch = NetworkClientMinecraft.PitchByte(localplayerposition.LocalPlayerOrientation);
+            //players.Players[0].Heading = NetworkClientMinecraft.HeadingByte(localplayerposition.LocalPlayerOrientation);
         }
         public void SendSetBlock(OpenTK.Vector3 position, BlockSetMode mode, int type)
         {
@@ -58,6 +61,8 @@ namespace GameModeFortress
         }
         #endregion
         public IGameWorld gameworld;
+        public IClients players;
+        public ILocalPlayerPosition localplayerposition;
         #region INetworkClient Members
         public void SendCommand(byte[] cmd)
         {
@@ -141,6 +146,8 @@ namespace GameModeFortress
                 n.Gen.rand = new GetRandomDummy();
                 n.DEFAULTMAP = "mountains";
                 */
+                n.players = clientgame;
+                n.localplayerposition = localplayerposition;
             }
             else
             {
@@ -178,8 +185,7 @@ namespace GameModeFortress
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
-            //w.characterdrawer = new CharacterDrawerMd2() { getfile = getfile, the3d = w };
-            w.characterdrawer = new CharacterDrawerBlock() { getfile = getfile };
+            w.characterdrawer = new CharacterDrawerBlock();
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
             w.ENABLE_FINITEINVENTORY = true;
             clientgame.physics = physics;
@@ -188,6 +194,9 @@ namespace GameModeFortress
             clientgame.data = gamedata;
             clientgame.network = network;
             clientgame.audio = audio;
+            clientgame.zombiedrawer = new CharacterDrawerBlock() { zombie = true };
+            clientgame.getfile = getfile;
+            clientgame.the3d = w;
             var gen = new WorldGeneratorSandbox();
             clientgame.generator = File.ReadAllText("WorldGenerator.cs");
             int seed = new Random().Next();

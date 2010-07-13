@@ -13,8 +13,7 @@ namespace ManicDigger
     }
     public class CharacterDrawerBlock : ICharacterDrawer
     {
-        [Inject]
-        public IGetFilePath getfile { get; set; }
+        public bool zombie;
         public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
             if (animationhint.InVehicle)
