@@ -146,7 +146,7 @@ namespace ManicDigger
             get { return (float)Math.Cos(Angle * Math.PI / 180) * Distance; }
         }
         public Vector3 Center { get; set; }
-        float tt = 0;
+        public float tt = 0;
         public void TurnLeft(float p)
         {
             tt += p;
@@ -285,9 +285,64 @@ namespace ManicDigger
     }
     public class The3d : IThe3d
     {
+        public Config3d config3d { get; set; }
         public int LoadTexture(string filename)
         {
-            throw new NotImplementedException();
+            Bitmap bmp = new Bitmap(filename);
+            return LoadTexture(bmp);
+        }
+        //http://www.opentk.com/doc/graphics/textures/loading
+        public int LoadTexture(Bitmap bmp)
+        {
+            GL.Enable(EnableCap.Texture2D);
+            int id = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            if (!config3d.ENABLE_MIPMAPS)
+            {
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            }
+            else
+            {
+                //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D); //DOES NOT WORK ON ATI GRAPHIC CARDS
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1); //DOES NOT WORK ON ???
+                int[] MipMapCount = new int[1];
+                GL.GetTexParameter(TextureTarget.Texture2D, GetTextureParameter.TextureMaxLevel, out MipMapCount[0]);
+                if (MipMapCount[0] == 0)
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+                }
+                else
+                {
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
+                }
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            }
+            BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp_data.Width, bmp_data.Height, 0,
+                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bmp_data.Scan0);
+
+            bmp.UnlockBits(bmp_data);
+
+            GL.Enable(EnableCap.DepthTest);
+
+            if (config3d.ENABLE_TRANSPARENCY)
+            {
+                GL.Enable(EnableCap.AlphaTest);
+                GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
+            }
+
+
+            if (config3d.ENABLE_TRANSPARENCY)
+            {
+                GL.Enable(EnableCap.Blend);
+                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
+                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
+            }
+
+            return id;
         }
     }
     public interface IKeyboard
@@ -794,63 +849,16 @@ namespace ManicDigger
         public ManicDiggerGameWindow()
             : base(800, 600, GraphicsMode.Default, "",
                 ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { }
+        The3d the3d = new The3d();
         public int LoadTexture(string filename)
         {
-            Bitmap bmp = new Bitmap(filename);
-            return LoadTexture(bmp);
+            the3d.config3d = config3d;
+            return the3d.LoadTexture(filename);
         }
-        //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmp)
         {
-            GL.Enable(EnableCap.Texture2D);
-            int id = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, id);
-            if (!config3d.ENABLE_MIPMAPS)
-            {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            }
-            else
-            {
-                //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D); //DOES NOT WORK ON ATI GRAPHIC CARDS
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1); //DOES NOT WORK ON ???
-                int[] MipMapCount = new int[1];
-                GL.GetTexParameter(TextureTarget.Texture2D, GetTextureParameter.TextureMaxLevel, out MipMapCount[0]);
-                if (MipMapCount[0] == 0)
-                {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-                }
-                else
-                {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
-                }
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            }
-            BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp_data.Width, bmp_data.Height, 0,
-                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bmp_data.Scan0);
-
-            bmp.UnlockBits(bmp_data);
-
-            GL.Enable(EnableCap.DepthTest);
-            
-            if (config3d.ENABLE_TRANSPARENCY)
-            {
-                GL.Enable(EnableCap.AlphaTest);
-                GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
-            }
-            
-
-            if (config3d.ENABLE_TRANSPARENCY)
-            {
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
-                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
-            }
-
-            return id;
+            the3d.config3d = config3d;
+            return the3d.LoadTexture(bmp);
         }
         protected override void OnFocusedChanged(EventArgs e)
         {
