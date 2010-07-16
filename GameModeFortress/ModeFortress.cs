@@ -757,7 +757,7 @@ namespace GameModeFortress
         }
         private List<Vector3i> GetTable(Vector3i pos)
         {
-            int maxcraftingtablesize = 200;
+            int maxcraftingtablesize = 2000;
             List<Vector3i> l = new List<Vector3i>();
             Queue<Vector3i> todo = new Queue<Vector3i>();
             todo.Enqueue(pos);
