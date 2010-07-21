@@ -4,34 +4,58 @@ using System.Text;
 using OpenTK;
 using System.Drawing;
 using OpenTK.Graphics.OpenGL;
+using System.Globalization;
 
 namespace ManicDigger
 {
     public interface ICharacterDrawer
     {
+        string[] Animations();
+        double AnimPeriod { get; set; }
+        void SetAnimation(string p);
         void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint);
     }
-    public class CharacterDrawerBlock : ICharacterDrawer
+    public class CharacterDrawerMonsterCode : ICharacterDrawer
     {
-        public bool zombie;
+        public void Load(List<string> code)
+        {
+            this.code.Clear();
+            for (int i = 0; i < code.Count; i++)
+            {
+                string s = code[i];
+                if (s.Trim().Length == 0
+                    || s.StartsWith("//"))
+                {
+                    continue;
+                }
+                string[] ss = s.Split(new[] { ',' });
+                for (int ii = 0; ii < ss.Length; ii++)
+                {
+                    ss[ii] = ss[ii].Trim();
+                }
+                this.code.Add(ss);
+            }
+        }
+        List<string[]> code = new List<string[]>();
+        double animperiod = 0.8;
+        public double AnimPeriod { get { return animperiod; } set { animperiod = value; } }
+        #region ICharacterDrawer Members
         public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
-            if (animationhint.InVehicle)
+            if (animstate.data == null)
             {
-                moves = false;
+                Dictionary<string, object> d = new Dictionary<string, object>();
+                animstate.data = d;
             }
-            pos += animationhint.DrawFix;
-            RectangleF[] coords;
-            float legsheight = 0.9f;
-            float armsheight = legsheight + 0.9f;
+            var variables = (Dictionary<string, object>)animstate.data;
             if (moves)
             {
                 animstate.interp += dt;
             }
             else
             {
-                float f = Normalize(animstate.interp);
-                if (Math.Abs(f) < 0.05f)
+                float f = Normalize(animstate.interp, (float)animperiod / 2);
+                if (Math.Abs(f) < 0.02f)
                 {
                     animstate.interp = 0;
                 }
@@ -40,110 +64,211 @@ namespace ManicDigger
                     animstate.interp += dt;
                 }
             }
+
             GL.PushMatrix();
             GL.Translate(pos);
-            GL.Rotate((-((float)heading / 256)) * 360 - 90, 0, 1, 0);
-            GL.Scale(0.7f, 0.7f, 0.7f);
-            GL.Translate(0 - 0.3f / 2, -1.57f, 0 - 0.6f / 2);
-            GL.Translate(0, UpDown(animstate.interp), 0);
-            //torso
-            coords = MakeCoords(8, 12, 4, 16, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0 + legsheight, 0), new Vector3(0.3f, 0.9f, 0.6f), playertexture, coords);
-            //head
-            GL.PushMatrix();
-            GL.Translate(0, armsheight, 0);
-            GL.Rotate((((float)pitch / 256)) * 360, 0, 0, 1);
-            if (animationhint.leanleft)
+
+            variables["heading"] = (double)heading;
+            variables["pitch"] = (double)pitch;
+            variables["headingdeg"] = ((double)heading / 256) * 360;
+            variables["pitchdeg"] = ((double)pitch / 256) * 360;
+            variables["updown"] = (double)UpDown(animstate.interp, (float)animperiod);
+            variables["limbrotation1"] = (double)LeftLegRotation(animstate.interp, (float)animperiod);
+            variables["limbrotation2"] = (double)RightLegRotation(animstate.interp, (float)animperiod);
+            variables["skin"] = (double)playertexture;
+            variables["dt"] = (double)dt;
+            variables["time"] = (double)animstate.interp;
+            variables["anim"] = (double)currentanim;
+            string[] animations = Animations();
+            for (int i = 0; i < animations.Length; i++)
             {
-                GL.Rotate(30, 0, 1, 0);
+                variables[animations[i]] = (double)i;
             }
-            if (animationhint.leanright)
+            int skinsizex = 64;
+            int skinsizey = 32;
+            int pc = 0;
+            for (; ; )
             {
-                GL.Rotate(-30, 0, 1, 0);
+                if (pc >= code.Count)
+                {
+                    break;
+                }
+                string[] ss = code[pc];
+                if (ss.Length > 0)
+                {
+                    switch (ss[0])
+                    {
+                        case "set":
+                            {
+                                variables[ss[1]] = getval(ss[2], variables);
+                            }
+                            break;
+                        case "pushmatrix":
+                            {
+                                GL.PushMatrix();
+                            }
+                            break;
+                        case "popmatrix":
+                            {
+                                GL.PopMatrix();
+                            }
+                            break;
+                        case "mul":
+                            {
+                                variables[ss[1]] = (double)variables[ss[1]] * getval(ss[2], variables);
+                            }
+                            break;
+                        case "add":
+                            {
+                                variables[ss[1]] = (double)variables[ss[1]] + getval(ss[2], variables);
+                            }
+                            break;
+                        case "rotate":
+                            {
+                                GL.Rotate(
+                                    getval(ss[1], variables),
+                                    getval(ss[2], variables),
+                                    getval(ss[3], variables),
+                                    getval(ss[4], variables));
+                            }
+                            break;
+                        case "translate":
+                            {
+                                GL.Translate(
+                                    getval(ss[1], variables),
+                                    getval(ss[2], variables),
+                                    getval(ss[3], variables));
+                            }
+                            break;
+                        case "scale":
+                            {
+                                GL.Scale(
+                                    getval(ss[1], variables),
+                                    getval(ss[2], variables),
+                                    getval(ss[3], variables));
+                            }
+                            break;
+                        case "makecoords":
+                            {
+                                RectangleF[] coords = MakeCoords(
+                                   (float)getval(ss[2], variables),
+                                   (float)getval(ss[3], variables),
+                                   (float)getval(ss[4], variables),
+                                   (float)getval(ss[5], variables),
+                                   (float)getval(ss[6], variables));
+                                MakeTextureCoords(coords, skinsizex, skinsizey);
+                                variables[ss[1]] = coords;
+                            }
+                            break;
+                        case "drawcuboid":
+                            {
+                                DrawCuboid(
+                                   new Vector3((float)getval(ss[1], variables),
+                                    (float)getval(ss[2], variables),
+                                    (float)getval(ss[3], variables)),
+                                   new Vector3((float)getval(ss[4], variables),
+                                    (float)getval(ss[5], variables),
+                                    (float)getval(ss[6], variables)),
+                                   (int)getval(ss[7], variables),
+                                   (RectangleF[])variables[ss[8]]
+                                    );
+                            }
+                            break;
+                        case "skinsize":
+                            {
+                                skinsizex = (int)getval(ss[1], variables);
+                                skinsizey = (int)getval(ss[2], variables);
+                            }
+                            break;
+                        case "dim":
+                            {
+                                if (!variables.ContainsKey(ss[1]))
+                                {
+                                    variables[ss[1]] = getval(ss[2], variables);
+                                }
+                            }
+                            break;
+                        case "fun":
+                            {
+                                if (ss[2] == "tri")
+                                {
+                                    variables[ss[1]] = (double)TriWave(getval(ss[3], variables));
+                                }
+                                if (ss[2] == "sin")
+                                {
+                                    variables[ss[1]] = (double)Math.Sin(getval(ss[3], variables));
+                                }
+                                if (ss[2] == "abs")
+                                {
+                                    variables[ss[1]] = (double)Math.Abs(getval(ss[3], variables));
+                                }
+                            }
+                            break;
+                        case "ifeq":
+                            {
+                                if (variables.ContainsKey(ss[1])
+                                    && (double)variables[ss[1]] != getval(ss[2], variables))
+                                {
+                                    //find endif
+                                    for (int i = pc; i < code.Count; i++)
+                                    {
+                                        if (code[i][0] == "endif")
+                                        {
+                                            pc = i;
+                                            goto next;
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                }
+                pc++;
+            next:
+                ;
             }
-            GL.Translate(0, -armsheight, 0);
-            coords = MakeCoords(8, 8, 8, 0, 0);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(-0.6f / 4, 0.9f + legsheight, 0), new Vector3(0.6f, 0.6f, 0.6f), playertexture, coords);
-            GL.PopMatrix();
-            //left leg
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, legsheight, 0);
-            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -legsheight, 0);
-
-            coords = MakeCoords(4, 8, 4, 0, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0, 0), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-
-            //right leg
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, legsheight, 0);
-            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -legsheight, 0);
-
-            DrawCube(new Vector3(0, 0, 0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-            //left arm
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, armsheight, 0);
-            GL.Rotate(RightLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -armsheight, 0);
-
-            coords = MakeCoords(4, 8, 4, 40, 16);
-            MakeTextureCoords(coords, 64, 32);
-            DrawCube(new Vector3(0, 0 + legsheight, -0.3f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-            //right arm
-            GL.PushMatrix();
-            GL.Translate(0.3f / 2, armsheight, 0);
-            GL.Rotate(LeftLegRotation(animstate.interp), 0, 0, 1);
-            GL.Translate(-0.3f / 2, -armsheight, 0);
-
-            DrawCube(new Vector3(0, 0 + legsheight, 0.6f), new Vector3(0.3f, 0.9f, 0.3f), playertexture, coords);
-
-            GL.PopMatrix();
-
             GL.PopMatrix();
         }
-        private float Normalize(float p)
+        private float Normalize(float p, float period)
         {
-            return (float)(p % (Math.PI / 8));
+            return (float)(p % period);//(2 * Math.PI * period));
         }
-        float UpDown(float time)
+        float UpDown(float time, float period)
         {
             float jumpheight = 0.10f;
-            return (float)TriSin(time * 16) * jumpheight + jumpheight / 2;
+            return (float)TriWave(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
         }
-        float LeftLegRotation(float time)
+        float LeftLegRotation(float time, float period)
         {
-            return (float)TriSin(time * 8) * 90;
+            return (float)TriWave(2 * Math.PI * time / period) * 90;
         }
-        float RightLegRotation(float time)
+        float RightLegRotation(float time, float period)
         {
-            return (float)TriSin(time * 8 + Math.PI) * 90;
+            return (float)TriWave(2 * Math.PI * time / period + Math.PI) * 90;
         }
-        private float TriSin(double t)
+        private float TriWave(double t)
         {
             double period = 2 * Math.PI;
             t += Math.PI / 2;
             return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
         }
-        /*
-        float LeftLegRotation(float time)
+        private double getval(string ss2, Dictionary<string, object> variables)
         {
-            return (float)Math.Sin(time * 8) * 90;
+            double d = 0;
+            if (double.TryParse(ss2, NumberStyles.Number, CultureInfo.InvariantCulture, out d))
+            {
+                return d;
+            }
+            else
+            {
+                return (double)variables[ss2];
+            }
         }
-        float RightLegRotation(float time)
+        double ParseDouble(string s)
         {
-            return (float)Math.Sin(time * 8 + Math.PI) * 90;
+            return double.Parse(s, NumberStyles.Number, CultureInfo.InvariantCulture);
         }
-        */
+        #endregion
         public RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
         {
             RectangleF[] coords = new[]
@@ -165,7 +290,7 @@ namespace ManicDigger
                     (coords[i].Width / (float)texturewidth), (coords[i].Height / (float)textureheight));
             }
         }
-        public void DrawCube(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
+        public void DrawCuboid(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
         {
             //front
             //GL.Color3(Color.White);
@@ -236,6 +361,27 @@ namespace ManicDigger
 
             GL.End();
             GL.Enable(EnableCap.CullFace);
+        }
+        public string[] Animations()
+        {
+            List<string> availableanimations = new List<string>();
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i][0] == "exportanim" && code[i].Length > 1)
+                {
+                    string name = code[i][1];
+                    if (!availableanimations.Contains(name))
+                    {
+                        availableanimations.Add(name);
+                    }
+                }
+            }
+            return availableanimations.ToArray();
+        }
+        public int currentanim;
+        public void SetAnimation(string p)
+        {
+            currentanim = new List<string>(Animations()).IndexOf(p);
         }
     }
 }

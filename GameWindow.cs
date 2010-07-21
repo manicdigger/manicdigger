@@ -3034,7 +3034,10 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
-                DrawCharacter(info.anim, curpos + new Vector3(0, -0.7f, 0), curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), clients.Players[k.Key].AnimationHint);
+                DrawCharacter(info.anim, curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
+                    + new Vector3(0, -CharacterPhysics.walldistance, 0),
+                    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key),
+                    clients.Players[k.Key].AnimationHint);
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
@@ -3042,7 +3045,7 @@ namespace ManicDigger
             }
             if (ENABLE_TPP_VIEW)
             {
-                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, 0.8f, 0),
+                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
                     NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
                     NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255), localplayeranimationhint);
@@ -3094,7 +3097,8 @@ namespace ManicDigger
         //}
         private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
-            characterdrawer.DrawCharacter(animstate, pos, heading, pitch, moves, dt, playertexture, animationhint);
+            characterdrawer.SetAnimation("walk");
+            characterdrawer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
         }
         void EscapeMenuAction()
         {

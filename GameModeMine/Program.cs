@@ -101,7 +101,9 @@ namespace ManicDigger
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
-            w.characterdrawer = new CharacterDrawerBlock();
+            var playerdrawer = new CharacterDrawerMonsterCode();
+            playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
+            w.characterdrawer = playerdrawer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
             clientgame.terrain = terrainDrawer;
             clientgame.network = network;

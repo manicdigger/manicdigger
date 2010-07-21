@@ -2462,10 +2462,10 @@ namespace GameModeFortress
             double rot = AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
             GL.Rotate(-rot - 90, 0, 1, 0);
             
-            var c = new CharacterDrawerBlock();
+            var c = new CharacterDrawerMonsterCode();
             var cc = c.MakeCoords(8, 8, 8, 0, 0);
-            CharacterDrawerBlock.MakeTextureCoords(cc, 32, 16);
-            c.DrawCube(new Vector3(-0.5f, -0.3f, -0.5f), new Vector3(1, 1, 1), minecarttexture, cc);
+            CharacterDrawerMonsterCode.MakeTextureCoords(cc, 32, 16);
+            c.DrawCuboid(new Vector3(-0.5f, -0.3f, -0.5f), new Vector3(1, 1, 1), minecarttexture, cc);
 
             GL.PopMatrix();
         }

@@ -639,7 +639,7 @@ namespace ManicDigger
                 || (data.IsWaterTile(map.GetBlock(x, y, z)) && (!swimmingtop))
                 || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
-        float walldistance = 0.3f;
+        public static float walldistance = 0.3f;
         public static float characterheight = 1.5f;
         public void Move(CharacterPhysicsState state, double dt)
         {

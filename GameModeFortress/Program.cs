@@ -185,7 +185,9 @@ namespace GameModeFortress
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
             w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
-            w.characterdrawer = new CharacterDrawerBlock();
+            var playerdrawer = new CharacterDrawerMonsterCode();
+            playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
+            w.characterdrawer = playerdrawer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
             w.ENABLE_FINITEINVENTORY = true;
             clientgame.physics = physics;
@@ -194,7 +196,7 @@ namespace GameModeFortress
             clientgame.data = gamedata;
             clientgame.network = network;
             clientgame.audio = audio;
-            clientgame.zombiedrawer = new CharacterDrawerBlock() { zombie = true };
+            clientgame.zombiedrawer = new CharacterDrawerMonsterCode() { };//zombie = true };
             clientgame.getfile = getfile;
             clientgame.the3d = w;
             var gen = new WorldGeneratorSandbox();
