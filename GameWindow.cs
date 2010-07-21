@@ -2020,6 +2020,7 @@ namespace ManicDigger
         bool mouserightclick = false;
         bool mouserightdeclick = false;
         bool wasmouseright = false;
+        bool isplayeronground;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -2176,6 +2177,13 @@ namespace ManicDigger
                 }
                 curspeed = diff1 * movespeednow;
             }
+            float jumpstartacceleration = 2.1f * gravity;
+            if (blockunderplayer != null && blockunderplayer == data.TileIdTrampoline
+                && (!isplayeronground))
+            {
+                wantsjump = true;
+                jumpstartacceleration = 5f * gravity;
+            }
             var newposition = player.playerposition + (curspeed) * (float)e.Time;
             if (!(ENABLE_FREEMOVE))
             {
@@ -2203,14 +2211,13 @@ namespace ManicDigger
             {
                 player.playerposition = newposition;
             }
-            bool isplayeronground;
             if (!(ENABLE_FREEMOVE || Swimming))
             {
                 isplayeronground = player.playerposition.Y == previousposition.Y;
                 {
                     if (wantsjump && isplayeronground && jumpacceleration <= 0)
                     {
-                        jumpacceleration = 2.1f * gravity;
+                        jumpacceleration = jumpstartacceleration;
                         UpdateWalkSound(-1);
                     }
                     if (jumpacceleration < 0)

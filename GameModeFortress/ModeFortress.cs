@@ -2174,6 +2174,7 @@ namespace GameModeFortress
             MakeRecipe(TileTypeManicDigger.Crops4, 1, TileTypeManicDigger.Crops1, 2);
             MakeRecipe(TileTypeMinecraft.IronBlock, 1, TileTypeMinecraft.CoalOre, 1, TileTypeManicDigger.BrushedMetal, 1);
             MakeRecipe(TileTypeManicDigger.BrushedMetal, 5, TileTypeManicDigger.Minecart, 1);
+            MakeRecipe(TileTypeManicDigger.BrushedMetal, 1, TileTypeMinecraft.Wood, 1, TileTypeManicDigger.Trampoline, 1);
         }
         void MakeRecipe(params object[] r)
         {
@@ -2763,6 +2764,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Crops4] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 11 };
             datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 0 };
             datanew[(int)TileTypeManicDigger.Minecart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 1, TextureTop = (7 * 16) + 2 };
+            datanew[(int)TileTypeManicDigger.Trampoline] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 9};
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -3037,6 +3039,9 @@ namespace GameModeFortress
             return data.WalkSound(blocktype);
         }
         #endregion
+        #region IGameData Members
+        public int TileIdTrampoline { get { return (int)TileTypeManicDigger.Trampoline; } }
+        #endregion
     }
     public enum TileTypeManicDigger
     {
@@ -3054,5 +3059,6 @@ namespace GameModeFortress
         Crops4,
         CraftingTable,
         Minecart,
+        Trampoline,
     }
 }

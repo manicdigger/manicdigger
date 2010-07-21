@@ -487,6 +487,7 @@ namespace ManicDigger
         bool GrassGrowsUnder(int blocktype);
         bool IsSlipperyWalk(int blocktype);
         string[] WalkSound(int blocktype);
+        int TileIdTrampoline { get; }
     }
     public class GameDataDummy : IGameData
     {
@@ -592,6 +593,12 @@ namespace ManicDigger
         public string[] WalkSound(int blocktype)
         {
             return new[] { "walk1.wav" };
+        }
+        #endregion
+        #region IGameData Members
+        public int TileIdTrampoline
+        {
+            get { throw new NotImplementedException(); }
         }
         #endregion
     }

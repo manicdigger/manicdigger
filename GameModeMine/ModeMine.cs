@@ -864,6 +864,9 @@ namespace ManicDigger
             return soundwalk;
         }
         #endregion
+        #region IGameData Members
+        public int TileIdTrampoline { get { return 255; } }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
