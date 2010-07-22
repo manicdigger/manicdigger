@@ -26,10 +26,54 @@ namespace ManicDigger
         }
         #endregion
     }
+    public class ServerInfo
+    {
+        public string Url;
+        public string Name;
+        public int Players;
+        public int PlayersMax;
+    }
     public class LoginClientMinecraft : ILoginClient
     {
+        public List<ServerInfo> ServerList(string username, string password)
+        {
+            List<ServerInfo> l = new List<ServerInfo>();
+            string html = LoginAndReadPage(username, password, "http://minecraft.net/servers.jsp");
+            StringReader sr = new StringReader(html);
+            for (; ; )
+            {
+                string s = sr.ReadLine();
+                if (s == null) { break; }
+                s = s.Trim();
+                string hashprefix = "server=";
+                if (s.Contains(hashprefix))
+                {
+                    int a = s.IndexOf(hashprefix) + hashprefix.Length;
+                    int b = s.IndexOf("\"", a + 1);
+                    string url = "http://minecraft.net/play.jsp?server=" + s.Substring(a, b - a);
+                    int a2 = s.IndexOf("<b>");
+                    string name = s.Substring(a2 + "<b>".Length, s.IndexOf("</b>") - a2 - "</b>".Length + 1);
+                    int a3 = s.Length - 1;
+                    while (s[a3] != ' ') { a3--; }
+                    string playersnumstr = s.Substring(a3);
+                    string[] playersnumstrs = playersnumstr.Split(new[] { '/' });
+                    int players = int.Parse(playersnumstrs[0]);
+                    int playersmax = int.Parse(playersnumstrs[1]);
+                    l.Add(new ServerInfo() { Url = url, Name = name, Players = players, PlayersMax = playersmax });
+                }
+            }
+            return l;
+        }
         //Three Steps
         public LoginData Login(string username, string password, string gameurl)
+        {
+            string html = LoginAndReadPage(username, password, gameurl);
+            string serveraddress = ReadValue(html.Substring(html.IndexOf("\"server\""), 40));
+            string port = ReadValue(html.Substring(html.IndexOf("\"port\""), 40));
+            string mppass = ReadValue(html.Substring(html.IndexOf("\"mppass\""), 80));
+            return new LoginData() { serveraddress = serveraddress, port = int.Parse(port), mppass = mppass };
+        }
+        private string LoginAndReadPage(string username, string password, string gameurl)
         {
             if (this.username != username || this.password != password || loggedincookie.Count == 0)
             {
@@ -66,10 +110,7 @@ namespace ManicDigger
                     }
                 }
                 string html = new StreamReader(s4).ReadToEnd();
-                string serveraddress = ReadValue(html.Substring(html.IndexOf("\"server\""), 40));
-                string port = ReadValue(html.Substring(html.IndexOf("\"port\""), 40));
-                string mppass = ReadValue(html.Substring(html.IndexOf("\"mppass\""), 80));
-                return new LoginData() { serveraddress = serveraddress, port = int.Parse(port), mppass = mppass };
+                return html;
             }
         }
         private static string ReadValue(string s)
