@@ -169,11 +169,16 @@ namespace ManicDiggerServer
                 byte[] formData = Encoding.ASCII.GetBytes(requestString);
                 request.ContentLength = formData.Length;
 
+                System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
+
                 using (Stream requestStream = request.GetRequestStream())
                 {
                     requestStream.Write(formData, 0, formData.Length);
                     requestStream.Flush();
                 }
+
+                WebResponse response = request.GetResponse();
+
                 request.Abort();
                 Console.WriteLine("Heartbeat sent.");
             }
