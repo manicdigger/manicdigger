@@ -1522,6 +1522,7 @@ namespace ManicDigger
                         cameratype = CameraType.Overhead;
                         overheadcamera = true;
                         ENABLE_TPP_VIEW = true;
+                        playerdestination = player.playerposition;
                     }
                     else if (cameratype == CameraType.Overhead)
                     {
@@ -2489,18 +2490,7 @@ namespace ManicDigger
             if (overheadcamera && pick2.Count > 0 && left)
             {
                 //if not picked any object, and mouse button is pressed, then walk to destination.
-                //walk direction: pick flat surface at player height.
-                Vector3 a = new Vector3(player.playerposition.X - 1000, player.playerposition.Y, player.playerposition.Z - 1000);
-                Vector3 b = new Vector3(player.playerposition.X + 1000, player.playerposition.Y, player.playerposition.Z);
-                Vector3 c = new Vector3(player.playerposition.X, player.playerposition.Y, player.playerposition.Z - 1000);
-                Triangle3D t = new Triangle3D() { PointA = a, PointB = b, PointC = c };
-                Vector3 intersection = new Vector3();
-                Collisions.Intersection.RayTriangle(pick, t, out intersection);
-                playerdestination = intersection;
-            }
-            else
-            {
-                playerdestination = player.playerposition;
+                playerdestination = pick2[0].pos;
             }
             BlockPosSide pick0;
             if (pick2.Count > 0 &&
