@@ -12,6 +12,7 @@ namespace ManicDigger
     {
         public string GameUrl = null;
         public string User = null;
+        public string Password = null;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
         public void Start()
@@ -24,6 +25,10 @@ namespace ManicDigger
             if (User != null)
             {
                 w.username = User;
+            }
+            if (Password != null)
+            {
+                w.mppassword = Password;
             }
             w.Run();
         }
@@ -140,11 +145,11 @@ namespace ManicDigger
                 string appPath = Path.GetDirectoryName(Application.ExecutablePath);
                 System.Environment.CurrentDirectory = appPath;
             }
+            var p = new ManicDiggerProgram2();
             if (args.Length > 0)
             {
                 if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    var p = new ManicDiggerProgram2();
                     XmlDocument d = new XmlDocument();
                     d.Load(args[0]);
                     string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
@@ -156,9 +161,10 @@ namespace ManicDigger
                     int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
                     p.GameUrl += ":" + port;
                     p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                    p.Password = XmlTool.XmlVal(d, "/ManicDiggerLink/Password");
                 }
             }
-            new ManicDiggerProgram2().Start();
+            p.Start();
         }
     }
 }

@@ -1739,6 +1739,7 @@ namespace ManicDigger
 
         public string username = "gamer1";
         string pass = "12345";
+        public string mppassword;
 
         private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
@@ -1777,31 +1778,40 @@ namespace ManicDigger
                     pport = int.Parse(qgameurl.Substring(qgameurl.IndexOf(":") + 1).Trim());
                     qgameurl = qgameurl.Substring(0, qgameurl.IndexOf(":"));
                 }
-                System.Net.IPAddress server2 = null;
-                try
+                if (mppassword == null)
                 {
-                    logindata = login.Login(qusername, qpass, qgameurl);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-                if (logindata == null)
-                {
-                    logindata = new LoginData();
-                }
-                if (System.Net.IPAddress.TryParse(qgameurl, out server2))
-                {
-                    logindata.serveraddress = server2.ToString();
-                    logindata.port = 25565;
-                    if (pport != null)
+                    System.Net.IPAddress server2 = null;
+                    try
                     {
-                        logindata.port = pport.Value;
+                        logindata = login.Login(qusername, qpass, qgameurl);
                     }
-                    if (logindata.mppass == null)
+                    catch (Exception e)
                     {
-                        logindata.mppass = "";
+                        Console.WriteLine(e.ToString());
                     }
+                    if (logindata == null)
+                    {
+                        logindata = new LoginData();
+                    }
+                    if (System.Net.IPAddress.TryParse(qgameurl, out server2))
+                    {
+                        logindata.serveraddress = server2.ToString();
+                        logindata.port = 25565;
+                        if (pport != null)
+                        {
+                            logindata.port = pport.Value;
+                        }
+                        if (logindata.mppass == null)
+                        {
+                            logindata.mppass = "";
+                        }
+                    }
+                }
+                else
+                {
+                    logindata.mppass = mppassword;
+                    logindata.port = pport.Value;
+                    logindata.serveraddress = qgameurl;
                 }
                 frametickmainthreadtodo.Add(
                     () =>

@@ -59,6 +59,12 @@
       <DependentUpon>ServerSelector.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ManicDigger.csproj">
+      <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
+      <Name>ManicDigger</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
