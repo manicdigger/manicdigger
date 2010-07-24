@@ -906,6 +906,70 @@ namespace GameModeFortress
                     mode = mode,
                     tiletype = (byte)activematerial,
                 };
+                Vector3i v = new Vector3i(cmd.x, cmd.y, cmd.z);
+                Vector3i? oldfillstart = fillstart;
+                Vector3i? oldfillend = fillend;
+                if (cmd.mode == BlockSetMode.Create)
+                {
+                    if (cmd.tiletype == (int)TileTypeManicDigger.Cuboid)
+                    {
+                        ClearFillArea();
+                        if (fillstart != null)
+                        {
+                            //todo! check distance
+                            FillFill(v, fillstart.Value);
+                        }
+                        fillend = v;
+                        terrain.UpdateTile(v.x, v.y, v.z);
+                        return;
+                    }
+                    if (cmd.tiletype == (int)TileTypeManicDigger.FillStart)
+                    {
+                        ClearFillArea();
+                        fillstart = v;
+                        fillend = null;
+                        terrain.UpdateTile(v.x, v.y, v.z);
+                        return;
+                    }
+                    if (fillarea.ContainsKey(v) && fillarea[v])
+                    {
+                        foreach (var p in fillarea)
+                        {
+                            if (p.Value)
+                            {
+                                CommandBuild cmd2 = new CommandBuild();
+                                //todo!
+                                cmd2.tiletype = cmd.tiletype;
+                                cmd2.x = (short)p.Key.x;
+                                cmd2.y = (short)p.Key.y;
+                                cmd2.z = (short)p.Key.z;
+                                TrySendCommand(MakeCommand(CommandId.Build, cmd2));
+                            }
+                        }
+                        ClearFillArea();
+                        fillstart = null;
+                        fillend = null;
+                        return;
+                    }
+                }
+                else
+                {
+                    //delete fill start
+                    if (fillstart != null && fillstart == v)
+                    {
+                        ClearFillArea();
+                        fillstart = null;
+                        fillend = null;
+                        return;
+                    }
+                    //delete fill end
+                    if (fillend != null && fillend == v)
+                    {
+                        ClearFillArea();
+                        fillend = null;
+                        return;
+                    }
+                }
                 if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
                 {
                     if (mode == BlockSetMode.Destroy)
@@ -919,6 +983,30 @@ namespace GameModeFortress
                         terrain.UpdateTile(x, y, z);
                     }
                 }
+            }
+        }
+        private void ClearFillArea()
+        {
+            var oldfillstart = fillstart;
+            fillstart = null;
+            if (oldfillstart != null)
+            {
+                terrain.UpdateTile(oldfillstart.Value.x, oldfillstart.Value.y, oldfillstart.Value.z);
+            }
+            fillstart = oldfillstart;
+            var oldfillend = fillend;
+            fillend = null;
+            if (oldfillend != null)
+            {
+                terrain.UpdateTile(oldfillend.Value.x, oldfillend.Value.y, oldfillend.Value.z);
+            }
+            fillend = oldfillend;
+
+            var oldfillarea = fillarea.Keys;
+            fillarea.Clear();
+            foreach (Vector3i vv in oldfillarea)
+            {
+                terrain.UpdateTile(vv.x, vv.y, vv.z);
             }
         }
         private bool IsAnyPlayerInPos(Vector3 blockpos)
@@ -1780,6 +1868,45 @@ namespace GameModeFortress
             }
             return true;
         }
+        Dictionary<Vector3i, bool> fillarea = new Dictionary<Vector3i, bool>();
+        Vector3i? fillstart;
+        Vector3i? fillend;
+        int MAXFILL = 100;
+        private void FillFill(Vector3i a, Vector3i b)
+        {
+            int startx = Math.Min(a.x, b.x);
+            int endx = Math.Max(a.x, b.x);
+            int starty = Math.Min(a.y, b.y);
+            int endy = Math.Max(a.y, b.y);
+            int startz = Math.Min(a.z, b.z);
+            int endz = Math.Max(a.z, b.z);
+            for (int x = startx; x <= endx; x++)
+            {
+                for (int y = starty; y <= endy; y++)
+                {
+                    for (int z = startz; z <= endz; z++)
+                    {
+                        if (fillarea.Count > MAXFILL)
+                        {
+                            List<Vector3i> toclear = new List<Vector3i>();
+                            foreach (var v in fillarea.Keys)
+                            {
+                                toclear.Add(v);
+                            }
+                            foreach(var v in toclear)
+                            {
+                                fillarea[v] = false;
+                                terrain.UpdateTile(v.x, v.y, v.z);
+                            }
+                            fillarea.Clear();
+                            return;
+                        }
+                        fillarea[new Vector3i(x, y, z)] = true;
+                        terrain.UpdateTile(x, y, z);
+                    }
+                }
+            }
+        }
         private bool DoCommandRailVehicleEnterLeave(int player_id, bool execute, CommandRailVehicleEnterLeave cmd)
         {
             if (cmd.enter)
@@ -2248,9 +2375,16 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public int GetTerrainBlock(int x, int y, int z)
         {
-            if (speculative.ContainsKey(new Vector3i(x, y, z)))
+            Vector3i v = new Vector3i(x, y, z);
+            if (speculative.ContainsKey(v))
             {
-                return speculative[new Vector3i(x, y, z)].blocktype;
+                return speculative[v].blocktype;
+            }
+            if (fillstart != null && v == fillstart) { return (int)TileTypeManicDigger.FillStart; }
+            if (fillend != null && v == fillend) { return (int)TileTypeManicDigger.Cuboid; }
+            if (fillarea.ContainsKey(v) && fillarea[v])
+            {
+                return (int)TileTypeManicDigger.FillArea;
             }
             return map.GetBlock(x, y, z);
         }
@@ -2302,6 +2436,13 @@ namespace GameModeFortress
             if (speculative.ContainsKey(new Vector3i(x, y, z)))
             {
                 return speculative[new Vector3i(x, y, z)].blocktype;
+            }
+            Vector3i v = new Vector3i(x, y, z);
+            if (fillstart != null && v == fillstart) { return (int)TileTypeManicDigger.FillStart; }
+            if (fillend != null && v == fillend) { return (int)TileTypeManicDigger.Cuboid; }
+            if (fillarea.ContainsKey(v) && fillarea[v])
+            {
+                return (int)TileTypeManicDigger.FillArea;
             }
             return map.GetBlock(x,y,z);
         }
@@ -2765,6 +2906,9 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 0 };
             datanew[(int)TileTypeManicDigger.Minecart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 1, TextureTop = (7 * 16) + 2 };
             datanew[(int)TileTypeManicDigger.Trampoline] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 9};
+            datanew[(int)TileTypeManicDigger.FillStart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 10 };
+            datanew[(int)TileTypeManicDigger.Cuboid] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 11 };
+            datanew[(int)TileTypeManicDigger.FillArea] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 12 };
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -2876,6 +3020,7 @@ namespace GameModeFortress
                     return false;
                 }
             }
+            if (tiletype == (int)TileTypeManicDigger.FillArea) { return true; }
             return data.IsWaterTile(tiletype);
         }
         private static bool IsRealWater(int tiletype)
@@ -2920,6 +3065,7 @@ namespace GameModeFortress
             if (tiletype == (int)TileTypeManicDigger.Crops3) { return true; }
             if (tiletype == (int)TileTypeManicDigger.Crops4) { return true; }
             if (IsRailTile(tiletype)) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.FillArea) { return true; }
             return data.IsTransparentTile(tiletype);
         }
         public int PlayerBuildableMaterialType(int p)
@@ -3060,5 +3206,8 @@ namespace GameModeFortress
         CraftingTable,
         Minecart,
         Trampoline,
+        FillStart,
+        Cuboid,
+        FillArea,
     }
 }
