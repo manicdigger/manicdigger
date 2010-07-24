@@ -2598,6 +2598,10 @@ namespace ManicDigger
         public const float RailHeight = 0.3f;
         float getblockheight(int x, int y, int z)
         {
+            if (!MapUtil.IsValidPos(map, x, y, z))
+            {
+                return 1;
+            }
             if (data.GetRail(map.GetBlock(x, y, z)) != RailDirectionFlags.None)
             {
                 return RailHeight;
