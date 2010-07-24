@@ -36,6 +36,7 @@ namespace ManicDiggerServer
             LoadConfig();
             if (ENABLE_FORTRESS)
             {
+                ((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
                 if (File.Exists(manipulator.defaultminesave))
                 {
                     gameworld.LoadState(File.ReadAllBytes(manipulator.defaultminesave));
@@ -116,9 +117,21 @@ namespace ManicDiggerServer
                     cfgkey = Guid.NewGuid().ToString();
                     SaveConfig();
                 }
+                string creativestr = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative");
+                if (creativestr == null)
+                {
+                    cfgcreative = false;
+                }
+                else
+                {
+                    cfgcreative =
+                        (creativestr != "0"
+                        && (!creativestr.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
+                }
             }
             Console.WriteLine("Server configuration loaded.");
         }
+        bool cfgcreative;
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>"+Environment.NewLine;
@@ -127,6 +140,7 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("Motd", cfgmotd) + Environment.NewLine;
             s += "  " + XmlTool.X("Port", cfgport.ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
+            s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
             File.WriteAllText("ServerConfig.xml", s);
         }
