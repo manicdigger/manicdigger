@@ -1016,9 +1016,9 @@ namespace ManicDigger
                 if (shadowratio != 1)
                 {
                     curcolor = Color.FromArgb(color.A,
-                        (int)(color.R * shadowratio),
-                        (int)(color.G * shadowratio),
-                        (int)(color.B * shadowratio));
+                        (int)(Math.Min(curcolor.R, color.R * shadowratio)),
+                        (int)(Math.Min(curcolor.G, color.G * shadowratio)),
+                        (int)(Math.Min(curcolor.B, color.B * shadowratio)));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
                 RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
@@ -1093,9 +1093,9 @@ namespace ManicDigger
                 if (shadowratio != 1)
                 {
                     curcolor = Color.FromArgb(color.A,
-                        (int)(color.R * shadowratio),
-                        (int)(color.G * shadowratio),
-                        (int)(color.B * shadowratio));
+                        (int)(Math.Min(curcolor.R, color.R * shadowratio)),
+                        (int)(Math.Min(curcolor.G, color.G * shadowratio)),
+                        (int)(Math.Min(curcolor.B, color.B * shadowratio)));
                 }
                 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
@@ -1120,9 +1120,9 @@ namespace ManicDigger
                 if (shadowratio != 1)
                 {
                     curcolor = Color.FromArgb(color.A,
-                        (int)(color.R * shadowratio),
-                        (int)(color.G * shadowratio),
-                        (int)(color.B * shadowratio));
+                        (int)(Math.Min(curcolor.R, color.R * shadowratio)),
+                        (int)(Math.Min(curcolor.G, color.G * shadowratio)),
+                        (int)(Math.Min(curcolor.B, color.B * shadowratio)));
                 }
 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
