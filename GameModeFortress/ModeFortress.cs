@@ -3201,6 +3201,12 @@ namespace GameModeFortress
         #region IGameData Members
         public int TileIdTrampoline { get { return (int)TileTypeManicDigger.Trampoline; } }
         #endregion
+        #region IGameData Members
+        public bool IsLightEmitting(int blocktype)
+        {
+            return data.IsLightEmitting(blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {

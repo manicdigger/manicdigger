@@ -123,6 +123,8 @@ namespace ManicDigger
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
+            //clientgame.shadows = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            clientgame.shadows = new ShadowsSimple() { data = gamedata, map = clientgame };
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
