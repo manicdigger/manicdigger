@@ -122,12 +122,10 @@ namespace ManicDigger
             map.Map[x, y, z] = (byte)tileType;
             if (ENABLE_SHADOWS)
             {
-                if (loaded)
-                {
-                    UpdateShadows(x, y, z);
-                }
+                shadowstoupdate.Enqueue(new Vector3i(x, y, z));
             }
         }
+        Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();
         #endregion
         public bool ENABLE_SHADOWS = false;
         //float waterlevel = 32;
@@ -512,6 +510,14 @@ namespace ManicDigger
         {
             if (ENABLE_SHADOWS)
             {
+                if (loaded)
+                {
+                    while (shadowstoupdate.Count > 0)
+                    {
+                        Vector3i p = shadowstoupdate.Dequeue();
+                        UpdateShadows(p.x, p.y, p.z);
+                    }
+                }
                 if (light == null)
                 {
                     UpdateLight();
