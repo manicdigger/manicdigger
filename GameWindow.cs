@@ -365,6 +365,7 @@ namespace ManicDigger
         string LocalPlayerName { get; }
         void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
         int SelectedModelId { get; }
+        bool ENABLE_FINITEINVENTORY { get; set; }
     }
     public class AnimationHint
     {
@@ -431,6 +432,9 @@ namespace ManicDigger
         {
             get { throw new NotImplementedException(); }
         }
+        #endregion
+        #region IViewport3d Members
+        public bool ENABLE_FINITEINVENTORY { get; set; }
         #endregion
     }
     public interface IModelToDraw
@@ -1867,7 +1871,8 @@ namespace ManicDigger
         public int[] MaterialSlots { get { return materialSlots; } set { materialSlots = value; } }
         Dictionary<int, int> finiteinventory = new Dictionary<int, int>();
         public Dictionary<int, int> FiniteInventory { get { return finiteinventory; } set { finiteinventory = value; } }
-        public bool ENABLE_FINITEINVENTORY = false;
+        public bool enable_finiteinventory = false;
+        public bool ENABLE_FINITEINVENTORY { get { return enable_finiteinventory; } set { enable_finiteinventory = value; } }
         bool ENABLE_ZFAR = false;
         protected override void OnResize(EventArgs e)
         {

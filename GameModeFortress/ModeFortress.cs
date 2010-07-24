@@ -1215,6 +1215,7 @@ namespace GameModeFortress
             */
             byte[] mapdata2 = map.SaveBlocksChunks();
             b.AppendLine(XmlTool.X("InfiniteMapData2", Convert.ToBase64String(mapdata2)));
+            b.AppendLine(XmlTool.X("Creative", ENABLE_FINITEINVENTORY ? bool.FalseString : bool.TrueString));
             b.AppendLine("</ManicDiggerSave>");
             return GzipCompression.Compress(Encoding.UTF8.GetBytes(b.ToString()));
         }
@@ -1320,6 +1321,18 @@ namespace GameModeFortress
                     byte[] mapdata = Convert.FromBase64String(mapdata2);
                     map.LoadBlocksChunks(mapdata);
                 }
+                string creativestr = XmlTool.XmlVal(d, "/ManicDiggerSave/Creative");
+                if (creativestr == null)
+                {
+                    this.ENABLE_FINITEINVENTORY = true;
+                }
+                else
+                {
+                    this.ENABLE_FINITEINVENTORY =
+                        !(creativestr != "0"
+                        && (!creativestr.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
+                }
+                viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
             }
         }
         public string GameInfo
