@@ -245,9 +245,9 @@ namespace ManicDigger
         }
         int[,] lightheight;
         byte[, ,] light;
-        int minlight = 1;
-        int maxlight = 10;
-        int defaultshadow = 7;
+        int minlight = 2;
+        int maxlight = 16;
+        int defaultshadow = 11;
         void UpdateSunlight(int x, int y, int z)
         {
             int oldheight = lightheight[x, y];
@@ -318,7 +318,7 @@ namespace ManicDigger
                     break;
                 }
                 Vector3i v = q.Dequeue();
-                if (distancesquare(v, new Vector3i(ss.x, ss.y, ss.z)) > maxlight * maxlight)
+                if (distancesquare(v, new Vector3i(ss.x, ss.y, ss.z)) > maxlight * 2 * maxlight * 2)
                 {
                     continue;
                 }
@@ -327,13 +327,14 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (light[v.x, v.y, v.z] == minlight)
-                {
-                    continue;
-                }
-                if (light[v.x, v.y, v.z] == maxlight)
+                if (light[v.x, v.y, v.z] == maxlight
+                    || IsLightEmitting(map.GetBlock(v.x,v.y,v.z)))
                 {
                     reflood[v] = true;
+                    continue;
+                }
+                if (light[v.x, v.y, v.z] == minlight)
+                {
                     continue;
                 }
                 SetLight(v.x, v.y, v.z, minlight);
@@ -369,7 +370,7 @@ namespace ManicDigger
             }
             if (IsLightEmitting(GetBlock(x, y, z)))
             {
-                light[x, y, z] = (byte)(maxlight);
+                light[x, y, z] = (byte)(maxlight - 1);
             }
             Queue<Vector3i> q = new Queue<Vector3i>();
             q.Enqueue(new Vector3i(x, y, z));
