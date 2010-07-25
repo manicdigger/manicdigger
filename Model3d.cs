@@ -42,6 +42,11 @@ namespace ManicDigger
         #region ICharacterDrawer Members
         public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
+            if (animationhint.InVehicle)
+            {
+                moves = false;
+            }
+            pos += animationhint.DrawFix;
             if (animstate.data == null)
             {
                 Dictionary<string, object> d = new Dictionary<string, object>();
