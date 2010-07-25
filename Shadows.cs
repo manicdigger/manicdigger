@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
 
 namespace ManicDigger
 {
@@ -66,7 +67,8 @@ namespace ManicDigger
         {
             lock (lighttoupdate_lock)
             {
-                UpdateShadows(x, y, z);
+                //UpdateShadows(x, y, z);
+                shadowstoupdate.Enqueue(new Vector3i(x, y, z));
             }
         }
         public void OnSetBlock(int x, int y, int z)
@@ -97,7 +99,7 @@ namespace ManicDigger
         }
         Dictionary<Vector3i, Vector3i> lighttoupdate = new Dictionary<Vector3i, Vector3i>();
         object lighttoupdate_lock = new object();
-        public bool loaded = false;
+        public bool loaded = true;
         public void ResetShadows()
         {
             light = null;
@@ -108,67 +110,82 @@ namespace ManicDigger
         }
         private void UpdateLight()
         {
-            light = new byte[map.MapSizeX, map.MapSizeY, map.MapSizeZ];
+            light = new InfiniteMapCache();
             UpdateHeightCache();
-            for (int x = 0; x < map.MapSizeX; x++)
+        }
+        private void UpdateStartSunlight(int x, int y)
+        {
+            for (int z = 0; z < map.MapSizeZ; z++)
             {
-                for (int y = 0; y < map.MapSizeY; y++)
+                if (z >= GetLightHeight(x, y))
                 {
-                    for (int z = 0; z < map.MapSizeZ; z++)
-                    {
-                        if (z >= lightheight[x, y])
-                        {
-                            light[x, y, z] = (byte)maxlight;
-                        }
-                        else
-                        {
-                            light[x, y, z] = (byte)minlight;
-                        }
-                    }
+                    LightSetBlock(x, y, z, (byte)maxlight);
+                }
+                else
+                {
+                    LightSetBlock(x, y, z, (byte)minlight);
                 }
             }
+        }
+        int LightGetBlock(int x, int y, int z)
+        {
+            int block = light.GetBlock(x, y, z);
+            if (block == 0)//unknown
+            {
+                UpdateStartSunlight(x, y);
+            }
+            return block--;
+        }
+        void LightSetBlock(int x, int y, int z, int block)
+        {
+            light.SetBlock(x, y, z, block++);
         }
         private void UpdateHeightCache()
         {
-            if (lightheight == null)
-            {
-                lightheight = new int[map.MapSizeX, map.MapSizeY];
-            }
-            for (int x = 0; x < map.MapSizeX; x++)
-            {
-                for (int y = 0; y < map.MapSizeY; y++)
-                {
-                    UpdateLightHeightmapAt(x, y);
-                }
-            }
+            lightheight.Clear();
         }
-        private void UpdateLightHeightmapAt(int x, int y)
+        private int GetRealLightHeightAt(int x, int y)
         {
-            lightheight[x, y] = map.MapSizeZ - 1;
+            Point p = new Point(x, y);
+            int height = map.MapSizeZ - 1;
             for (int z = map.MapSizeZ - 1; z >= 0; z--)
             {
                 if (data.GrassGrowsUnder(map.GetBlock(x, y, z)))
                 {
-                    lightheight[x, y]--;
+                    height--;
                 }
                 else
                 {
                     break;
                 }
             }
+            return height;
         }
-        int[,] lightheight;
-        byte[, ,] light;
+        Dictionary<Point, int> lightheight = new Dictionary<Point, int>();
+        int GetLightHeight(int x, int y)
+        {
+            var p = new Point(x, y);
+            if (!lightheight.ContainsKey(p))
+            {
+                UpdateLightHeightmapAt(x, y);
+            }
+            return lightheight[p];
+        }
+        void UpdateLightHeightmapAt(int x, int y)
+        {
+            lightheight[new Point(x, y)] = GetRealLightHeightAt(x, y);
+        }
+        InfiniteMapCache light;
         int minlight = 1;
         public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
         {
             if (lightheight == null) { ResetShadows(); }
-            int oldheight = lightheight[x, y];
+            int oldheight = GetLightHeight(x, y);
             if (oldheight < 0) { oldheight = 0; }
             if (oldheight >= map.MapSizeZ) { oldheight = map.MapSizeZ - 1; }
             UpdateLightHeightmapAt(x, y);
-            int newheight = lightheight[x, y];
+            int newheight = GetLightHeight(x, y);
             if (newheight < oldheight)
             {
                 //make white
@@ -203,7 +220,7 @@ namespace ManicDigger
         }
         void SetLight(int x, int y, int z, int value)
         {
-            light[x, y, z] = (byte)value;
+            light.SetBlock(x, y, z, (byte)value);
             lighttoupdate[new Vector3i((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = new Vector3i();
             foreach (Vector3i v in BlocksNear(x, y, z))
             {
@@ -241,13 +258,13 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (light[v.x, v.y, v.z] == maxlight
+                if (LightGetBlock(v.x, v.y, v.z) == maxlight
                     || data.IsLightEmitting(map.GetBlock(v.x, v.y, v.z)))
                 {
                     reflood[v] = true;
                     continue;
                 }
-                if (light[v.x, v.y, v.z] == minlight)
+                if (LightGetBlock(v.x, v.y, v.z) == minlight)
                 {
                     continue;
                 }
@@ -258,7 +275,7 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (light[n.x, n.y, n.z] > light[v.x, v.y, v.z])
+                    if (LightGetBlock(n.x, n.y, n.z) > LightGetBlock(v.x, v.y, v.z))
                     {
                         q.Enqueue(n);
                     }
@@ -284,7 +301,7 @@ namespace ManicDigger
             }
             if (data.IsLightEmitting(map.GetBlock(x, y, z)))
             {
-                light[x, y, z] = (byte)(maxlight - 1);
+                light.SetBlock(x, y, z, (byte)(maxlight - 1));
             }
             Queue<Vector3i> q = new Queue<Vector3i>();
             q.Enqueue(new Vector3i(x, y, z));
@@ -299,7 +316,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (light[v.x, v.y, v.z] == minlight)
+                if (LightGetBlock(v.x, v.y, v.z) == minlight)
                 {
                     continue;
                 }
@@ -314,9 +331,9 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (light[n.x, n.y, n.z] < light[v.x, v.y, v.z] - 1)
+                    if (LightGetBlock(n.x, n.y, n.z) < LightGetBlock(v.x, v.y, v.z) - 1)
                     {
-                        SetLight(n.x, n.y, n.z, (byte)(light[v.x, v.y, v.z] - 1));
+                        SetLight(n.x, n.y, n.z, (byte)(LightGetBlock(v.x, v.y, v.z) - 1));
                         q.Enqueue(n);
                     }
                 }
@@ -376,7 +393,7 @@ namespace ManicDigger
             {
                 UpdateLight();
             }
-            return light[x, y, z];
+            return LightGetBlock(x, y, z);
         }
         public void OnGetTerrainBlock(int x, int y, int z)
         {
@@ -399,6 +416,31 @@ namespace ManicDigger
                     }
                 }
             }
+        }
+    }
+    class InfiniteMapCache
+    {
+        int chunksize = 16;
+        Dictionary<ulong, byte[, ,]> gencache = new Dictionary<ulong, byte[, ,]>();
+        public int GetBlock(int x, int y, int z)
+        {
+            byte[, ,] chunk = GetChunk(x, y, z);
+            return chunk[x % chunksize, y % chunksize, z % chunksize];
+        }
+        private byte[, ,] GetChunk(int x, int y, int z)
+        {
+            byte[, ,] chunk = null;
+            var k = MapUtil.ToMapPos(x / chunksize, y / chunksize, z / chunksize);
+            if (!gencache.TryGetValue(k, out chunk))
+            {
+                chunk = new byte[chunksize, chunksize, chunksize];
+                gencache[k] = chunk;
+            }
+            return chunk;
+        }
+        public void SetBlock(int x, int y, int z, int blocktype)
+        {
+            GetChunk(x, y, z)[x % chunksize, y % chunksize, z % chunksize] = (byte)blocktype;
         }
     }
 }

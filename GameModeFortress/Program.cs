@@ -204,7 +204,8 @@ namespace GameModeFortress
             int seed = new Random().Next();
             gen.Compile(clientgame.generator, seed);
             clientgame.Seed = seed;
-            clientgame.map = new InfiniteMap() { gen = gen };
+            InfiniteMap map = new InfiniteMap() { gen = gen };
+            clientgame.map = map;
             clientgame.worldgeneratorsandbox = gen;
             clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile,
                 railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame } };
@@ -218,7 +219,12 @@ namespace GameModeFortress
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
+            this.clientgame = clientgame;
+            this.map = map;
             w.currentshadows = this;
+            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
+            UseShadowsSimple();
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
@@ -226,7 +232,21 @@ namespace GameModeFortress
             MakeGame(false);
         }
         #endregion
+        GameFortress clientgame;
+        InfiniteMap map;
+        ShadowsSimple shadowssimple;
+        Shadows shadowsfull;
         bool fullshadows = false;
+        void UseShadowsSimple()
+        {
+            clientgame.shadows = shadowssimple;
+            map.shadows = clientgame.shadows;
+        }
+        void UseShadowsFull()
+        {
+            clientgame.shadows = shadowsfull;
+            map.shadows = clientgame.shadows;
+        }
         #region ICurrentShadows Members
         public bool ShadowsFull
         {
@@ -236,6 +256,15 @@ namespace GameModeFortress
             }
             set
             {
+                if (value && !fullshadows)
+                {
+                    UseShadowsFull();
+                }
+                if (!value && fullshadows)
+                {
+                    UseShadowsSimple();
+                }
+                fullshadows = value;
             }
         }
         #endregion

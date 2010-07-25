@@ -112,7 +112,9 @@ namespace GameModeFortress
                 blockslist.Add(pos);
             }
             blocks[pos] = (byte)tileType;
+            shadows.OnSetBlock(x, y, z);
         }
+        public IShadows shadows;
         public void UseMap(byte[, ,] map)
         {
         }
@@ -265,6 +267,7 @@ namespace GameModeFortress
         [Inject]
         public IAudio audio { get; set; }
         public IMapStorage mapforphysics;
+        public IShadows shadows;
         class MapForPhysics : IMapStorage
         {
             public GameFortress game;
@@ -1228,6 +1231,7 @@ namespace GameModeFortress
             simulationallowedkeyframe = 0;
             simulationcmdtodo = new Queue<CommandTodo>();
             simulationhashchecktodo = new Queue<HashCheckTodo>();
+            shadows.ResetShadows();
         }
         public int Seed = 0;
         public void LoadState(byte[] savegame)
@@ -2389,6 +2393,11 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public int GetTerrainBlock(int x, int y, int z)
         {
+            shadows.OnGetTerrainBlock(x, y, z);
+            return GetBlock1(x, y, z);
+        }
+        private int GetBlock1(int x, int y, int z)
+        {
             Vector3i v = new Vector3i(x, y, z);
             if (speculative.ContainsKey(v))
             {
@@ -2442,7 +2451,7 @@ namespace GameModeFortress
         #region IMapStorage Members
         public int GetBlock(int x, int y, int z)
         {
-            return GetTerrainBlock(x, y, z);
+            return GetBlock1(x, y, z);
         }
         #endregion
         public int GetBlockForPhysics(int x,int y,int z)
@@ -2536,11 +2545,12 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public int GetLight(int x, int y, int z)
         {
-            return IsShadow(x, y, z) ? 6 : 10;
+            return shadows.GetLight(x, y, z);
+            //return IsShadow(x, y, z) ? 6 : 10;
         }
         public float LightMaxValue()
         {
-            return 10;
+            return shadows.maxlight;
         }
         #endregion
     }
