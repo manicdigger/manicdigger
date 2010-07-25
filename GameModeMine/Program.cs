@@ -8,7 +8,7 @@ using System.Xml;
 
 namespace ManicDigger
 {
-    public class ManicDiggerProgram2 : IInternetGameFactory
+    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
         public string GameUrl = null;
         public string User = null;
@@ -32,6 +32,7 @@ namespace ManicDigger
             }
             w.Run();
         }
+        GameMinecraft clientgame;
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesMinecraft();
@@ -45,7 +46,7 @@ namespace ManicDigger
             {
                 network = new NetworkClientMinecraft();
             }
-            var clientgame = new GameMinecraft();
+            clientgame = new GameMinecraft();
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
@@ -123,13 +124,47 @@ namespace ManicDigger
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
-            //clientgame.shadows = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
-            clientgame.shadows = new ShadowsSimple() { data = gamedata, map = clientgame };
+            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
+            UseShadowsSimple();
+            w.currentshadows = this;
         }
+        ShadowsSimple shadowssimple;
+        Shadows shadowsfull;
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
             MakeGame(false);
+        }
+        #endregion
+        void UseShadowsSimple()
+        {
+            clientgame.shadows = shadowssimple;
+        }
+        void UseShadowsFull()
+        {
+            clientgame.shadows = shadowsfull;
+        }
+        bool fullshadows = false;
+        #region ICurrentShadows Members
+        public bool ShadowsFull
+        {
+            get
+            {
+                return fullshadows;
+            }
+            set
+            {
+                if (value && !fullshadows)
+                {
+                    UseShadowsFull();
+                }
+                if (!value && fullshadows)
+                {
+                    UseShadowsSimple();
+                }
+                fullshadows = value;
+            }
         }
         #endregion
     }

@@ -84,7 +84,7 @@ namespace GameModeFortress
         }
         #endregion
     }
-    public class ManicDiggerProgram2 : IInternetGameFactory
+    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
         public string GameUrl = null;
         public string User;
@@ -218,11 +218,25 @@ namespace GameModeFortress
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
+            w.currentshadows = this;
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
             MakeGame(false);
+        }
+        #endregion
+        bool fullshadows = false;
+        #region ICurrentShadows Members
+        public bool ShadowsFull
+        {
+            get
+            {
+                return fullshadows;
+            }
+            set
+            {
+            }
         }
         #endregion
     }

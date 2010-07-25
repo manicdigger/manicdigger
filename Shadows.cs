@@ -159,10 +159,11 @@ namespace ManicDigger
         }
         int[,] lightheight;
         byte[, ,] light;
-        int minlight = 2;
+        int minlight = 1;
         public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
         {
+            if (lightheight == null) { ResetShadows(); }
             int oldheight = lightheight[x, y];
             if (oldheight < 0) { oldheight = 0; }
             if (oldheight >= map.MapSizeZ) { oldheight = map.MapSizeZ - 1; }

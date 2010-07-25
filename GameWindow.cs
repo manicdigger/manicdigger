@@ -792,6 +792,10 @@ namespace ManicDigger
             particleEffects.Add(p);
         }
     }
+    public interface ICurrentShadows
+    {
+        bool ShadowsFull { get; set; }
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
@@ -828,6 +832,8 @@ namespace ManicDigger
         public WeaponDrawer weapon { get; set; }
         [Inject]
         public ICharacterDrawer characterdrawer { get; set; }
+        [Inject]
+        public ICurrentShadows currentshadows;
 
         public string skinserver;
 
@@ -2290,8 +2296,8 @@ namespace ManicDigger
         private void EscapeMenuMouse()
         {
             int textheight = 50;
-            int starty = ycenter(2 * textheight);
-            if (mouse_current.Y >= starty && mouse_current.Y < starty + 2 * textheight)
+            int starty = ycenter(3 * textheight);
+            if (mouse_current.Y >= starty && mouse_current.Y < starty + 3 * textheight)
             {
                 menustate.selected = (mouse_current.Y - starty) / textheight;
             }
@@ -3115,25 +3121,25 @@ namespace ManicDigger
         {
             characterdrawer.SetAnimation("walk");
             characterdrawer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
-        }
+        }        
         void EscapeMenuAction()
         {
-            if (menustate.selected == 0)
+            switch (menustate.selected)
             {
-                //GuiActionGenerateNewMap();
-                GuiStateBackToGame();
+                case 0:
+                    GuiStateBackToGame();
+                    break;
+                case 1:
+                    currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
+                    terrain.UpdateAllTiles();
+                    break;
+                case 2:
+                    exit = true;
+                    this.Exit();
+                    break;
+                default:
+                    throw new Exception();
             }
-            //else if (menustate.selected == 1)
-            //{
-            //    GuiActionSaveGame();
-            //    GuiStateBackToGame();
-            //}
-            else if (menustate.selected == 1)
-            {
-                exit = true;
-                this.Exit();
-            }
-            else throw new Exception();
         }
         private void GuiActionSaveGame()
         {
@@ -3164,16 +3170,16 @@ namespace ManicDigger
         void DrawEscapeMenu()
         {
             string newgame = "Return to game";
-            string save = "Save";
+            string shadowsoption = "Shadows " + (currentshadows.ShadowsFull ? "ON" : "OFF");
             string exitstr = "Exit";
             int textheight = 50;
             int fontsize = 20;
-            int starty = ycenter(2 * textheight);
+            int starty = ycenter(3 * textheight);
             if (guistate == GuiState.EscapeMenu)
             {
                 Draw2dText(newgame, xcenter(TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
-                //Draw2dText(save, xcenter(TextSize(save, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
-                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
+                Draw2dText(shadowsoption, xcenter(TextSize(shadowsoption, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
+                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
                 //DrawMouseCursor();
             }
         }
