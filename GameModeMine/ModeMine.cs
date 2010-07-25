@@ -359,6 +359,7 @@ namespace ManicDigger
             };//47
             data[(int)TileTypeMinecraft.MossyCobblestone] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 4 };//48
             data[(int)TileTypeMinecraft.Obsidian] = new TileTypeData() { Buildable = true, AllTextures = (2 * 16) + 5 };//49
+            data[(int)TileTypeMinecraft.Torch] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 13 };//50
             //torch todo
             //fire todo
             data[(int)TileTypeMinecraft.InfiniteWaterSource] = new TileTypeData() { Buildable = false, AllTextures = 14 };//52
@@ -406,7 +407,8 @@ namespace ManicDigger
                 || tileType == (byte)TileTypeMinecraft.RedMushroom
                 || tileType == (byte)TileTypeMinecraft.BrownMushroom
                 || tileType == (byte)TileTypeMinecraft.Stair // transparent on side
-                || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource;
+                || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource
+                || tileType == (byte)TileTypeMinecraft.Torch;
         }
         public int PlayerBuildableMaterialType(int tt)
         {
@@ -521,6 +523,9 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeMinecraft.StationaryLava
                 || blocktype == (int)TileTypeMinecraft.InfiniteLavaSource;
         }
+        #endregion
+        #region IGameData Members
+        public byte TileIdTorch { get { return (int)TileTypeMinecraft.Torch; } }
         #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values

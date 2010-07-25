@@ -2315,6 +2315,7 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.IronBlock, 1, TileTypeMinecraft.CoalOre, 1, TileTypeManicDigger.BrushedMetal, 1);
             MakeRecipe(TileTypeManicDigger.BrushedMetal, 5, TileTypeManicDigger.Minecart, 1);
             MakeRecipe(TileTypeManicDigger.BrushedMetal, 1, TileTypeMinecraft.Wood, 1, TileTypeManicDigger.Trampoline, 1);
+            MakeRecipe(TileTypeMinecraft.Wood, 1, TileTypeMinecraft.CoalOre, 1, TileTypeMinecraft.Torch, 1);
         }
         void MakeRecipe(params object[] r)
         {
@@ -3044,6 +3045,10 @@ namespace GameModeFortress
         }
         public bool IsBuildableTile(int tiletype)
         {
+            if (tiletype == (int)TileTypeMinecraft.Torch)
+            {
+                return true;
+            }
             //temporary
             if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
             if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft | RailDirectionFlags.UpRight |
@@ -3055,15 +3060,6 @@ namespace GameModeFortress
                 && tiletype != (int)TileTypeMinecraft.InfiniteWaterSource
                 && tiletype != (int)TileTypeMinecraft.Lava
                 && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource;
-            //return data.IsValidTileType(tiletype) && !data.IsWaterTile(tiletype) && tiletype != (int)TileTypeMinecraft.Lava
-            //    && tiletype != (int)TileTypeMinecraft.InfiniteLavaSource && tiletype != (int)TileTypeMinecraft.StationaryLava;
-            //----
-            if (datanew[tiletype] != null) { return datanew[tiletype].Buildable; }
-            if (tiletype == railstart + (int)RailDirectionFlags.TwoHorizontalVertical) { return true; }
-            if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft|RailDirectionFlags.UpRight|
-                RailDirectionFlags.DownLeft|RailDirectionFlags.DownRight)) { return true; }
-            if (IsRailTile(tiletype)) { return false; }
-            return data.IsBuildableTile(tiletype);
         }
         public bool IsValidTileType(int tiletype)
         {
@@ -3206,6 +3202,9 @@ namespace GameModeFortress
         {
             return data.IsLightEmitting(blocktype);
         }
+        #endregion
+        #region IGameData Members
+        public byte TileIdTorch { get { return data.TileIdTorch; } }
         #endregion
     }
     public enum TileTypeManicDigger
