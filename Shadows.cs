@@ -115,9 +115,10 @@ namespace ManicDigger
         }
         private void UpdateStartSunlight(int x, int y)
         {
+            int height = GetLightHeight(x, y);
             for (int z = 0; z < map.MapSizeZ; z++)
             {
-                if (z >= GetLightHeight(x, y))
+                if (z >= height)
                 {
                     LightSetBlock(x, y, z, (byte)maxlight);
                 }
@@ -132,13 +133,25 @@ namespace ManicDigger
             int block = light.GetBlock(x, y, z);
             if (block == 0)//unknown
             {
-                UpdateStartSunlight(x, y);
+                UpdateStartSunlightChunk(x, y);
             }
-            return block--;
+            return block - 1;
+        }
+        private void UpdateStartSunlightChunk(int x, int y)
+        {
+            int startx = (x / chunksize) * chunksize;
+            int starty = (y / chunksize) * chunksize;
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    UpdateStartSunlight(startx + xx, starty + yy);
+                }
+            }
         }
         void LightSetBlock(int x, int y, int z, int block)
         {
-            light.SetBlock(x, y, z, block++);
+            light.SetBlock(x, y, z, block + 1);
         }
         private void UpdateHeightCache()
         {
@@ -175,7 +188,7 @@ namespace ManicDigger
         {
             lightheight[new Point(x, y)] = GetRealLightHeightAt(x, y);
         }
-        InfiniteMapCache light;
+        InfiniteMapCache light = new InfiniteMapCache();
         int minlight = 1;
         public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
@@ -220,7 +233,7 @@ namespace ManicDigger
         }
         void SetLight(int x, int y, int z, int value)
         {
-            light.SetBlock(x, y, z, (byte)value);
+            LightSetBlock(x, y, z, (byte)value);
             lighttoupdate[new Vector3i((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = new Vector3i();
             foreach (Vector3i v in BlocksNear(x, y, z))
             {
@@ -293,6 +306,7 @@ namespace ManicDigger
             int dz = a.z - b.z;
             return dx * dx + dy * dy + dz * dz;
         }
+        Queue<Vector3i> q = new Queue<Vector3i>();
         private void FloodLight(int x, int y, int z)
         {
             if (light == null)
@@ -301,9 +315,9 @@ namespace ManicDigger
             }
             if (data.IsLightEmitting(map.GetBlock(x, y, z)))
             {
-                light.SetBlock(x, y, z, (byte)(maxlight - 1));
+                LightSetBlock(x, y, z, (byte)(maxlight - 1));
             }
-            Queue<Vector3i> q = new Queue<Vector3i>();
+            q.Clear();
             q.Enqueue(new Vector3i(x, y, z));
             for (; ; )
             {
@@ -401,11 +415,16 @@ namespace ManicDigger
             {
                 chunklighted = new bool[map.MapSizeX / chunksize, map.MapSizeY / chunksize, map.MapSizeZ / chunksize];
             }
-            foreach (var k in BlocksNear(x / chunksize, y / chunksize, z / chunksize))
+            //Commented out: no need to flood light from chunks around, 
+            //because TerrainDrawer calls this function for blocks in all 9 chunks around
+            //when drawing single terrain chunk to draw its boundaries anyway.
+
+            //foreach (var k in BlocksNear(x / chunksize, y / chunksize, z / chunksize))
+            var k = new Vector3i(x / chunksize, y / chunksize, z / chunksize);
             {
                 if (!IsValidChunkPos(k.x, k.y, k.z))
                 {
-                    continue;
+                    //continue;
                 }
                 if (!chunklighted[k.x, k.y, k.z])
                 {
@@ -427,7 +446,7 @@ namespace ManicDigger
             byte[, ,] chunk = GetChunk(x, y, z);
             return chunk[x % chunksize, y % chunksize, z % chunksize];
         }
-        private byte[, ,] GetChunk(int x, int y, int z)
+        public byte[, ,] GetChunk(int x, int y, int z)
         {
             byte[, ,] chunk = null;
             var k = MapUtil.ToMapPos(x / chunksize, y / chunksize, z / chunksize);
