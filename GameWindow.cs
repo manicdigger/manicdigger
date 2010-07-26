@@ -1286,6 +1286,11 @@ namespace ManicDigger
                     menustate = new MenuState();
                     FreeMouse = true;
                 }
+                if (e.Key == OpenTK.Input.Key.T && GuiTyping == TypingState.None)
+                {
+                    GuiTyping = TypingState.Typing;
+                    return;
+                }
                 if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     if (GuiTyping == TypingState.Typing)
