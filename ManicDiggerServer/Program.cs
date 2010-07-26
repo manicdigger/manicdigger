@@ -870,6 +870,7 @@ namespace ManicDiggerServer
             gen.Compile(g.generator, seed);
             g.Seed = seed;
             s.players = g;
+            g.shadows = new ShadowsSimple() { data = data, map = g };
 
             s.Start();
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
