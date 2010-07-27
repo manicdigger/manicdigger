@@ -210,13 +210,12 @@ namespace ManicDigger
             }
             if (newheight > oldheight)
             {
+                List<Vector3i> deflood = new List<Vector3i>();
                 //make black
                 for (int i = oldheight; i <= newheight; i++)
                 {
                     SetLight(x, y, i, minlight);
                     //DefloodLight(x, i);
-
-                    List<Vector3i> deflood = new List<Vector3i>();
                     foreach (var n in BlocksNear(x, y, i))
                     {
                         if (MapUtil.IsValidPos(map, n.x, n.y, n.z))
@@ -224,10 +223,10 @@ namespace ManicDigger
                             deflood.Add(n);
                         }
                     }
-                    if (deflood.Count != 0)
-                    {
-                        DefloodLight(deflood);
-                    }
+                }
+                if (deflood.Count != 0)
+                {
+                    DefloodLight(deflood);
                 }
             }
         }
