@@ -475,11 +475,31 @@ namespace ManicDigger
         public IViewport3d viewport { get; set; }
         [Inject]
         public IGameData data { get; set; }
+        [Inject]
+        public IMapStorage map { get; set; }
+        public IShadows shadows { get; set; }
         public int terrainTexture { get { return terrain.terrainTexture; } }
         public int texturesPacked { get { return terrain.texturesPacked; } }
         public int GetWeaponTextureId(TileSide side)
         {
             return data.GetTileTextureId(viewport.MaterialSlots[viewport.activematerial], side);
+        }
+        public float Light
+        {
+            get
+            {
+                Vector3 pos = viewport.LocalPlayerPosition;
+                if ((int)pos.X >= 0 && (int)pos.Y >= 0 && (int)pos.Z >= 0
+                    && (int)pos.X < map.MapSizeX
+                    && (int)pos.Z < map.MapSizeY
+                    && (int)pos.Y < map.MapSizeZ)
+                {
+                    int? light = shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y);
+                    if (light == null) { light = shadows.maxlight; }
+                    return (float)light.Value / shadows.maxlight;
+                }
+                return 1;
+            }
         }
     }
     public class WeaponDrawer
@@ -488,6 +508,10 @@ namespace ManicDigger
         public WeaponBlockInfo info { get; set; }
         public void DrawWeapon(float dt)
         {
+            int light = (int)(info.Light * 256);
+            if (light > 255) { light = 255; }
+            if (light < 0) { light = 0; }
+            GL.Color3(Color.FromArgb(light, light, light));
             GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
             List<ushort> myelements = new List<ushort>();
             List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();

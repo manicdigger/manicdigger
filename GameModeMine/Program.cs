@@ -106,7 +106,8 @@ namespace ManicDigger
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
-            w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
+            weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
+            w.weapon = new WeaponDrawer() { info = weapon };
             var playerdrawer = new CharacterDrawerMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;
@@ -131,6 +132,7 @@ namespace ManicDigger
         }
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
+        WeaponBlockInfo weapon;
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
@@ -140,10 +142,12 @@ namespace ManicDigger
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;
+            weapon.shadows = clientgame.shadows;
         }
         void UseShadowsFull()
         {
             clientgame.shadows = shadowsfull;
+            weapon.shadows = clientgame.shadows;
         }
         bool fullshadows = false;
         #region ICurrentShadows Members

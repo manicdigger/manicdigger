@@ -13,6 +13,7 @@ namespace ManicDigger
         int GetLight(int x, int y, int z);
         int maxlight { get; }
         void OnGetTerrainBlock(int x, int y, int z);
+        int? MaybeGetLight(int x, int y, int z);
     }
     public class ShadowsSimple : IShadows
     {
@@ -54,6 +55,12 @@ namespace ManicDigger
             }
             return false;
         }
+        #region IShadows Members
+        public int? MaybeGetLight(int x, int y, int z)
+        {
+            return null;
+        }
+        #endregion
     }
     public class Shadows : IShadows
     {
@@ -443,6 +450,20 @@ namespace ManicDigger
                 }
             }
         }
+        #region IShadows Members
+        public int? MaybeGetLight(int x, int y, int z)
+        {
+            int l = light.GetBlock(x, y, z);
+            if (l == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return l - 1;
+            }
+        }
+        #endregion
     }
     class InfiniteMapCache
     {

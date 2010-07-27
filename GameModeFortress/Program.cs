@@ -184,7 +184,8 @@ namespace GameModeFortress
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
-            w.weapon = new WeaponDrawer() { info = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w } };
+            weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
+            w.weapon = new WeaponDrawer() {info = weapon };
             var playerdrawer = new CharacterDrawerMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;
@@ -236,16 +237,19 @@ namespace GameModeFortress
         InfiniteMap map;
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
+        WeaponBlockInfo weapon;
         bool fullshadows = false;
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;
             map.shadows = clientgame.shadows;
+            weapon.shadows = clientgame.shadows;
         }
         void UseShadowsFull()
         {
             clientgame.shadows = shadowsfull;
             map.shadows = clientgame.shadows;
+            weapon.shadows = clientgame.shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull
