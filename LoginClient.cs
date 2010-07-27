@@ -33,10 +33,16 @@ namespace ManicDigger
         public int Players;
         public int PlayersMax;
     }
+    public class ProgressEventArgs : EventArgs
+    {
+        public int ProgressPercent;
+    }
     public class LoginClientMinecraft : ILoginClient
     {
+        public event EventHandler<ProgressEventArgs> Progress;
         public List<ServerInfo> ServerList(string username, string password)
         {
+            ReportProgress(0);
             List<ServerInfo> l = new List<ServerInfo>();
             string html = LoginAndReadPage(username, password, "http://minecraft.net/servers.jsp");
             StringReader sr = new StringReader(html);
@@ -62,7 +68,12 @@ namespace ManicDigger
                     l.Add(new ServerInfo() { Url = url, Name = name, Players = players, PlayersMax = playersmax });
                 }
             }
+            ReportProgress(1);
             return l;
+        }
+        private void ReportProgress(double progress)
+        {
+            if (Progress != null) { Progress(this, new ProgressEventArgs() { ProgressPercent = (int)(progress * 100) }); };
         }
         //Three Steps
         public LoginData Login(string username, string password, string gameurl)
@@ -143,6 +154,7 @@ namespace ManicDigger
                     sessionid = sessionid.Substring(sessionid.IndexOf("=") + 1);
                 }
             }
+            ReportProgress(1.0 / 3);
             //Step 2.
             //---
             //Go to http://www.minecraft.net/login.jsp and POST "username={0}&password={1}" using JSESSIONID cookie.
@@ -185,6 +197,7 @@ namespace ManicDigger
             {
                 loggedincookie[i] = loggedincookie[i].Replace("Set-", "");
             }
+            ReportProgress(2.0 / 3);
         }
     }
 }
