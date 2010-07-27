@@ -2272,7 +2272,6 @@ namespace GameModeFortress
             MakeRecipe(TileTypeMinecraft.Stone, 4, TileTypeMinecraft.Brick, 1);
             MakeRecipe(TileTypeMinecraft.GoldOre, 1, TileTypeMinecraft.CoalOre, 1, TileTypeMinecraft.GoldBlock, 1);
             MakeRecipe(TileTypeMinecraft.IronOre, 1, TileTypeMinecraft.CoalOre, 1, TileTypeMinecraft.IronBlock, 1);
-            MakeRecipe(TileTypeMinecraft.Wood, 1, TileTypeMinecraft.IronBlock, 1, GameDataTilesManicDigger.railstart + (int)RailDirectionFlags.TwoHorizontalVertical, 2);
             MakeRecipe(TileTypeMinecraft.Wood, 1, TileTypeMinecraft.IronBlock, 1, GameDataTilesManicDigger.railstart + (int)RailDirectionFlags.Corners, 2);
             MakeRecipe(TileTypeMinecraft.Wood, 3, TileTypeManicDigger.CraftingTable, 1);
             MakeRecipe(TileTypeMinecraft.Stone, 2, TileTypeMinecraft.Stair, 1);
