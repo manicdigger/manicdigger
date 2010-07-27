@@ -2493,7 +2493,7 @@ namespace ManicDigger
             if (selectedmodelid != -1)
             {
                 pickcubepos = new Vector3(-1, -1, -1);
-                Console.WriteLine(selectedmodelid);
+                //Console.WriteLine(selectedmodelid);
                 return;
             }
 
