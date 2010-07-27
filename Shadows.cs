@@ -255,6 +255,7 @@ namespace ManicDigger
                 ss = s;
             }
             Dictionary<Vector3i, bool> reflood = new Dictionary<Vector3i, bool>();
+            int searched = 1;
             for (; ; )
             {
                 if (q.Count == 0)
@@ -262,6 +263,7 @@ namespace ManicDigger
                     break;
                 }
                 Vector3i v = q.Dequeue();
+                searched++;
                 if (distancesquare(v, new Vector3i(ss.x, ss.y, ss.z)) > maxlight * 2 * maxlight * 2)
                 {
                     continue;
@@ -281,6 +283,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
+                int mylight = LightGetBlock(v.x, v.y, v.z);
                 SetLight(v.x, v.y, v.z, minlight);
                 foreach (var n in BlocksNear(v.x, v.y, v.z))
                 {
@@ -288,12 +291,17 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (LightGetBlock(n.x, n.y, n.z) > LightGetBlock(v.x, v.y, v.z))
+                    if (LightGetBlock(n.x, n.y, n.z) <= mylight)
                     {
                         q.Enqueue(n);
                     }
+                    else
+                    {
+                        reflood[n] = true;
+                    }
                 }
             }
+            //Console.WriteLine("reflood: {0}, searched: {1}", reflood.Keys.Count, searched);
             foreach (var p in reflood.Keys)
             {
                 FloodLight(p.x, p.y, p.z);
