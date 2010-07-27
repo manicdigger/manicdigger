@@ -951,10 +951,10 @@ namespace ManicDigger
             if (tt == data.TileIdTorch)
             {
                 TorchType type = TorchType.Normal;
-                if (currentChunk[xx - 1, yy, zz] != data.TileIdEmpty) { type = TorchType.Front; }
-                if (currentChunk[xx + 1, yy, zz] != data.TileIdEmpty) { type = TorchType.Back; }
-                if (currentChunk[xx, yy - 1, zz] != data.TileIdEmpty) { type = TorchType.Left; }
-                if (currentChunk[xx, yy + 1, zz] != data.TileIdEmpty) { type = TorchType.Right; }
+                if (CanSupportTorch(currentChunk[xx - 1, yy, zz])) { type = TorchType.Front; }
+                if (CanSupportTorch(currentChunk[xx + 1, yy, zz])) { type = TorchType.Back; }
+                if (CanSupportTorch(currentChunk[xx, yy - 1, zz])) { type = TorchType.Left; }
+                if (CanSupportTorch(currentChunk[xx, yy + 1, zz])) { type = TorchType.Right; }
                 AddTorch(myelements, myvertices, x, y, z, type);
                 return;
             }
@@ -1149,6 +1149,11 @@ namespace ManicDigger
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 2));
             }
+        }
+        private bool CanSupportTorch(byte blocktype)
+        {
+            return blocktype != data.TileIdEmpty
+                && blocktype != data.TileIdTorch;
         }
         enum TorchType
         {
