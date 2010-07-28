@@ -1961,6 +1961,7 @@ namespace GameModeFortress
             {
                 dumpcount = inventory[cmd.blocktype];
             }
+            if (dumpcount > 50) { dumpcount = 50; }
             Vector3i pos = new Vector3i(cmd.x, cmd.y, cmd.z);
             if (execute)
             {
@@ -2272,9 +2273,24 @@ namespace GameModeFortress
                         {
                             continue;
                         }
-                        if (map.GetBlock(xx, yy, zz) == data.TileIdEmpty && map.GetBlock(xx, yy, zz - 1) != data.TileIdEmpty)
+                        if (map.GetBlock(xx, yy, zz) == data.TileIdEmpty
+                            && map.GetBlock(xx, yy, zz - 1) != data.TileIdEmpty)
                         {
-                            l.Add(new Vector3i(xx, yy, zz));
+                            bool playernear = false;
+                            if (PlayerPositionsDeterministic != null)
+                            {
+                                foreach (var playerpos in PlayerPositionsDeterministic)
+                                {
+                                    if ((playerpos.Value.position - new Vector3(xx, zz, yy)).Length < 3)
+                                    {
+                                        playernear = true;
+                                    }
+                                }
+                            }
+                            if (!playernear)
+                            {
+                                l.Add(new Vector3i(xx, yy, zz));
+                            }
                         }
                     }
                 }
