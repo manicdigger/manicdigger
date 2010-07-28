@@ -458,6 +458,7 @@ namespace ManicDigger
         int FiniteInventoryAmount(int blocktype);
         int FiniteInventoryMax { get; }
         double SIMULATIONLAG_SECONDS { get; set; }
+        void ModelClick(int selectedmodelid);
     }
     public interface ICharacterToDraw : IModelToDraw
     {
@@ -2456,10 +2457,7 @@ namespace ManicDigger
                     left = false;
                 }
             }
-            if (iii++ % 2 == 0)
-            {
-                return;
-            }
+
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
@@ -2517,7 +2515,17 @@ namespace ManicDigger
             if (selectedmodelid != -1)
             {
                 pickcubepos = new Vector3(-1, -1, -1);
-                //Console.WriteLine(selectedmodelid);
+                if (mouseleftclick)
+                {
+                    game.ModelClick(selectedmodelid);
+                }
+                mouseleftclick = false;
+                leftpressedpicking = false;
+                return;
+            }
+
+            if (iii++ % 2 == 0)
+            {
                 return;
             }
 

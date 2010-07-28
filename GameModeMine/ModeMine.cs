@@ -184,6 +184,11 @@ namespace ManicDigger
             return shadows.maxlight;
         }
         #endregion
+        #region IGameMode Members
+        public void ModelClick(int selectedmodelid)
+        {
+        }
+        #endregion
     }
     public class TileTypeData
     {

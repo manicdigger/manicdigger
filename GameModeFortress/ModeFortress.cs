@@ -621,7 +621,6 @@ namespace GameModeFortress
             if (KeyPressed(OpenTK.Input.Key.V)) { Console.WriteLine("V"); }
             if (KeyPressed(OpenTK.Input.Key.V) && !railriding)
             {
-                //todo command
                 CommandRailVehicleEnterLeave cmd = new CommandRailVehicleEnterLeave();
                 cmd.enter = true;
                 cmd.vehicleid = viewport.SelectedModelId;
@@ -973,6 +972,15 @@ namespace GameModeFortress
                         return;
                     }
                 }
+                if (mode == BlockSetMode.Create && cmd.tiletype == (int)TileTypeManicDigger.Minecart)
+                {
+                    CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
+                    cmd2.x = (short)x;
+                    cmd2.y = (short)y;
+                    cmd2.z = (short)z;
+                    TrySendCommand(MakeCommand(CommandId.RailVehicleBuild, cmd2));
+                    return;
+                }
                 if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
                 {
                     if (mode == BlockSetMode.Destroy)
@@ -980,11 +988,8 @@ namespace GameModeFortress
                         activematerial = data.TileIdEmpty;
                     }
                     //speculative
-                    if (cmd.tiletype != (int)TileTypeManicDigger.Minecart)
-                    {
-                        speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = activematerial, time = DateTime.Now };
-                        terrain.UpdateTile(x, y, z);
-                    }
+                    speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = activematerial, time = DateTime.Now };
+                    terrain.UpdateTile(x, y, z);
                 }
             }
         }
@@ -1675,6 +1680,18 @@ namespace GameModeFortress
                         cmd.FromStream(ms);
                         return DoCommandRailVehicleControl(player_id, execute, cmd);
                     }
+                case CommandId.RailVehicleBuild:
+                    {
+                        CommandRailVehicleBuild cmd = new CommandRailVehicleBuild();
+                        cmd.FromStream(ms);
+                        return DoCommandRailVehicleBuild(player_id, execute, cmd);
+                    }
+                case CommandId.RailVehicleRemove:
+                    {
+                        CommandRailVehicleRemove cmd = new CommandRailVehicleRemove();
+                        cmd.FromStream(ms);
+                        return DoCommandRailVehicleRemove(player_id, execute, cmd);
+                    }
                 default:
                     throw new Exception();
             }
@@ -1682,80 +1699,12 @@ namespace GameModeFortress
         private bool DoCommandBuild(int player_id, bool execute, CommandBuild cmd)
         {
             Vector3 v = new Vector3(cmd.x, cmd.y, cmd.z);
-            bool placeminecartblock = false;
             if (ENABLE_FINITEINVENTORY)
             {
                 Dictionary<int, int> inventory = GetPlayerInventory(players[player_id].Name);
                 if (cmd.mode == BlockSetMode.Create)
                 {
                     int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
-                    if (cmd.tiletype == (int)TileTypeManicDigger.Minecart)
-                    {
-                        if (!GameDataTilesManicDigger.IsRailTile(oldblock))
-                        {
-                            return false;
-                        }
-                        if (!(inventory.ContainsKey((int)TileTypeManicDigger.Minecart)
-                            && inventory[(int)TileTypeManicDigger.Minecart] > 0))
-                        {
-                            return false;
-                        }
-                        //only allow one minecart on block.
-                        for (int i = 0; i < vehicles.Count; i++)
-                        {
-                            if (vehicles[i] == null)
-                            {
-                                continue;
-                            }
-                            if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
-                            {
-                                return false;
-                            }
-                        }
-                        RailVehicle veh = new RailVehicle();
-                        veh.currentrailblock = new Vector3(cmd.x, cmd.y, cmd.z);
-                        {
-                            var railunderplayer = data.GetRail(oldblock);
-                            veh.currentvehiclespeedMul1000 = 0;
-                            if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.HorizontalRight;
-                            }
-                            else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.VerticalUp;
-                            }
-                            else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.UpLeftUp;
-                            }
-                            else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.UpRightUp;
-                            }
-                            else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.DownLeftLeft;
-                            }
-                            else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
-                            {
-                                veh.currentdirection = VehicleDirection12.DownRightRight;
-                            }
-                            else
-                            {
-                                //ExitVehicle();
-                                return false;
-                            }
-                            veh.lastdirection = veh.currentdirection;
-                        }
-                        if (execute)
-                        {
-                            int vid = newrailvehicleid();
-                            vehicles[vid] = veh;
-                            inventory[(int)TileTypeManicDigger.Minecart]--;
-                        }
-                        return true;
-                    }
                     int blockstoput = 1;
                     if (GameDataTilesManicDigger.IsRailTile(cmd.tiletype))
                     {
@@ -1789,6 +1738,7 @@ namespace GameModeFortress
                     }
                     else
                     {
+                        //todo when removing rail under minecart, make minecart block in place of removed rail.
                         if (oldblock != data.TileIdEmpty)
                         {
                             return false;
@@ -1836,31 +1786,6 @@ namespace GameModeFortress
                     }
                     if (execute)
                     {
-                        //when removing rail under minecart, make minecart block in place of removed rail.
-                        if (GameDataTilesManicDigger.IsRailTile(blocktype))
-                        {
-                            for (int i = 0; i < vehicles.Count; i++)
-                            {
-                                if (vehicles[i] == null)
-                                {
-                                    continue;
-                                }
-                                if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
-                                {
-                                    vehicles[i] = null;
-                                    placeminecartblock = true;
-                                    //stop railriding
-                                    foreach (var k in players)
-                                    {
-                                        if (railridingall.ContainsKey(k.Value.Name)
-                                            && railridingall[k.Value.Name] == i)
-                                        {
-                                            RailRidingLeave(k.Key);
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         if (!inventory.ContainsKey(blocktype))
                         {
                             inventory[blocktype] = 0;
@@ -1876,10 +1801,6 @@ namespace GameModeFortress
             {
                 int tiletype = cmd.mode == BlockSetMode.Create ?
                     (byte)cmd.tiletype : data.TileIdEmpty;
-                if (placeminecartblock)
-                {
-                    tiletype = (int)TileTypeManicDigger.Minecart;
-                }
                 map.SetBlock(cmd.x, cmd.y, cmd.z, tiletype);
                 terrain.UpdateTile(cmd.x, cmd.y, cmd.z);
             }
@@ -2145,6 +2066,126 @@ namespace GameModeFortress
                         veh.turnleft = false;
                         veh.turnright = false;
                         break;
+                }
+            }
+            return true;
+        }
+        private bool DoCommandRailVehicleBuild(int player_id, bool execute, CommandRailVehicleBuild cmd)
+        {
+            int oldblock = map.GetBlock(cmd.x, cmd.y, cmd.z);
+            if (!GameDataTilesManicDigger.IsRailTile(oldblock))
+            {
+                return false;
+            }
+            Dictionary<int, int> inventory = null;
+            if (ENABLE_FINITEINVENTORY)
+            {
+                inventory = GetPlayerInventory(players[player_id].Name);
+                if (!(inventory.ContainsKey((int)TileTypeManicDigger.Minecart)
+                    && inventory[(int)TileTypeManicDigger.Minecart] > 0))
+                {
+                    return false;
+                }
+            }
+            //only allow one minecart on block.
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                if (vehicles[i] == null)
+                {
+                    continue;
+                }
+                if (vehicles[i].currentrailblock == new Vector3(cmd.x, cmd.y, cmd.z))
+                {
+                    return false;
+                }
+            }
+            RailVehicle veh = new RailVehicle();
+            veh.currentrailblock = new Vector3(cmd.x, cmd.y, cmd.z);
+            {
+                var railunderplayer = data.GetRail(oldblock);
+                veh.currentvehiclespeedMul1000 = 0;
+                if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.HorizontalRight;
+                }
+                else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.VerticalUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.UpLeftUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.UpRightUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.DownLeftLeft;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                {
+                    veh.currentdirection = VehicleDirection12.DownRightRight;
+                }
+                else
+                {
+                    //ExitVehicle();
+                    return false;
+                }
+                veh.lastdirection = veh.currentdirection;
+            }
+            if (execute)
+            {
+                int vid = newrailvehicleid();
+                vehicles[vid] = veh;
+                if (ENABLE_FINITEINVENTORY)
+                {
+                    inventory[(int)TileTypeManicDigger.Minecart]--;
+                }
+            }
+            return true;
+        }
+        private bool DoCommandRailVehicleRemove(int player_id, bool execute, CommandRailVehicleRemove cmd)
+        {
+            if (!IsValidVehicleId(cmd.vehicleid))
+            {
+                return false;
+            }
+            if (vehicles[cmd.vehicleid] == null)
+            {
+                return false;
+            }
+            Dictionary<int, int> inventory = null;
+            if (ENABLE_FINITEINVENTORY)
+            {
+                inventory = GetPlayerInventory(players[player_id].Name);
+                if (TotalAmount(inventory) + 1 > FiniteInventoryMax)
+                {
+                    return false;
+                }
+            }
+            if (execute)
+            {
+                vehicles[cmd.vehicleid] = null;
+                //stop railriding
+                foreach (var k in players)
+                {
+                    if (railridingall.ContainsKey(k.Value.Name)
+                        && railridingall[k.Value.Name] == cmd.vehicleid)
+                    {
+                        RailRidingLeave(k.Key);
+                    }
+                }
+                if (ENABLE_FINITEINVENTORY)
+                {
+                    inventory = GetPlayerInventory(players[player_id].Name);
+                    int blocktype = (int)TileTypeManicDigger.Minecart;
+                    if (!inventory.ContainsKey(blocktype))
+                    {
+                        inventory[blocktype] = 0;
+                    }
+                    inventory[blocktype]++;
                 }
             }
             return true;
@@ -2552,6 +2593,18 @@ namespace GameModeFortress
             return shadows.maxlight;
         }
         #endregion
+        #region IGameMode Members
+        public void ModelClick(int selectedmodelid)
+        {
+            if (railriding)
+            {
+                return;
+            }
+            CommandRailVehicleRemove cmd2 = new CommandRailVehicleRemove();
+            cmd2.vehicleid = viewport.SelectedModelId;
+            TrySendCommand(MakeCommand(CommandId.RailVehicleRemove, cmd2));
+        }
+        #endregion
     }
     public class RailVehicle
     {
@@ -2778,6 +2831,8 @@ namespace GameModeFortress
         DumpOrLoad,
         RailVehicleEnterLeave,
         RailVehicleControl,
+        RailVehicleBuild,
+        RailVehicleRemove,
     }
     public interface IStreamizable
     {
@@ -2905,6 +2960,44 @@ namespace GameModeFortress
             z = br.ReadInt16();
             blocktype = br.ReadInt16();
             dump = br.ReadBoolean();
+        }
+        #endregion
+    }
+    public class CommandRailVehicleBuild : IStreamizable
+    {
+        public short x;
+        public short y;
+        public short z;
+        #region IStreamizable Members
+        public void ToStream(Stream s)
+        {
+            BinaryWriter bw = new BinaryWriter(s);
+            bw.Write((short)x);
+            bw.Write((short)y);
+            bw.Write((short)z);
+        }
+        public void FromStream(Stream s)
+        {
+            BinaryReader br = new BinaryReader(s);
+            x = br.ReadInt16();
+            y = br.ReadInt16();
+            z = br.ReadInt16();
+        }
+        #endregion
+    }
+    public class CommandRailVehicleRemove : IStreamizable
+    {
+        public int vehicleid;
+        #region IStreamizable Members
+        public void ToStream(Stream s)
+        {
+            BinaryWriter bw = new BinaryWriter(s);
+            bw.Write((int)vehicleid);
+        }
+        public void FromStream(Stream s)
+        {
+            BinaryReader br = new BinaryReader(s);
+            vehicleid = br.ReadInt32();
         }
         #endregion
     }
