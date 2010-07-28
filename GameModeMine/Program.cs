@@ -81,6 +81,7 @@ namespace ManicDigger
                 n.Clients = clientgame;
                 n.Chatlines = w;
                 n.Position = localplayerposition;
+                n.gameworld = new GameWorldTodoDummy();
             }
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;

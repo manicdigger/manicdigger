@@ -140,6 +140,7 @@ namespace ManicDigger
         {
             light = null;
             lightheight = null;
+            lightheight = new InfiniteHeightCache();
             chunklighted = null;
             UpdateHeightCache();
             loaded = true;
@@ -191,7 +192,10 @@ namespace ManicDigger
         }
         private void UpdateHeightCache()
         {
-            lightheight.Clear();
+            if (lightheight != null)
+            {
+                lightheight.Clear();
+            }
         }
         private int GetRealLightHeightAt(int x, int y)
         {
@@ -555,6 +559,10 @@ namespace ManicDigger
         #region IShadows Members
         public int? MaybeGetLight(int x, int y, int z)
         {
+            if (light == null)
+            {
+                UpdateLight();
+            }
             int l = light.GetBlock(x, y, z);
             if (l == 0)
             {

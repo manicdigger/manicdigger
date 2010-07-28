@@ -286,6 +286,20 @@ namespace ManicDigger
         void EnqueueCommand(int playerid, int frame, byte[] cmd);
         void LoadState(byte[] savegame, int simulationstartframe);
     }
+    public class GameWorldTodoDummy : IGameWorldTodo
+    {
+        #region IGameWorldTodo Members
+        public void KeyFrame(int allowedframe, int hash, Dictionary<int, PlayerPosition> playerpositions)
+        {
+        }
+        public void EnqueueCommand(int playerid, int frame, byte[] cmd)
+        {
+        }
+        public void LoadState(byte[] savegame, int simulationstartframe)
+        {
+        }
+        #endregion
+    }
     public class PlayerPosition
     {
         public Vector3 position;
