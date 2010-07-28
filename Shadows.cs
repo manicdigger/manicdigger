@@ -133,7 +133,7 @@ namespace ManicDigger
                 terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
             }
         }
-        Dictionary<Vector3i, Vector3i> lighttoupdate = new Dictionary<Vector3i, Vector3i>();
+        Dictionary<Vector3i, bool> lighttoupdate = new Dictionary<Vector3i, bool>();
         object lighttoupdate_lock = new object();
         public bool loaded = true;
         public void ResetShadows()
@@ -273,14 +273,18 @@ namespace ManicDigger
         void SetLight(int x, int y, int z, int value)
         {
             LightSetBlock(x, y, z, (byte)value);
-            lighttoupdate[new Vector3i((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = new Vector3i();
-            foreach (Vector3i v in BlocksNear(x, y, z))
+            if (lighttoupdate != null)
             {
-                if (v.x / 16 != x / 16
-                    || v.y / 16 != y / 16
-                    || v.z / 16 != z / 16)
+                lighttoupdate[new Vector3i((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = true;
+
+                foreach (Vector3i v in BlocksNear(x, y, z))
                 {
-                    lighttoupdate[new Vector3i((v.x / 16) * 16 + 5, (v.y / 16) * 16 + 5, (v.z / 16) * 16 + 5)] = new Vector3i();
+                    if (v.x / 16 != x / 16
+                        || v.y / 16 != y / 16
+                        || v.z / 16 != z / 16)
+                    {
+                        lighttoupdate[new Vector3i((v.x / 16) * 16 + 5, (v.y / 16) * 16 + 5, (v.z / 16) * 16 + 5)] = true;
+                    }
                 }
             }
         }
@@ -443,12 +447,30 @@ namespace ManicDigger
             yield return new Vector3i(x, y, z - 1);
             yield return new Vector3i(x, y, z + 1);
         }
+        //int solidmax = 0;
+        //int solidmin = 0;
+        //int solidunknown = 0;
+        //int notsolid = 0;
         private void FloodLightChunk(int x, int y, int z)
         {
             this.currentlightchunk = light.GetChunk(x, y, z);
             this.startx = x;
             this.starty = y;
             this.startz = z;
+            if (IsSolidChunk(currentlightchunk, (byte)(maxlight + 1)))
+            {
+                //solidmax++;
+                return;
+            }
+            //if (IsSolidChunk(currentlightchunk, (byte)(minlight + 1)))
+            //{
+            //    //solidmin++;
+            //    return;
+            //}
+            //if (IsSolidChunk(currentlightchunk, 0)) { solidunknown++; }
+            //else { notsolid++; }
+            Dictionary<Vector3i, bool> lighttoupdatecopy = lighttoupdate;
+            lighttoupdate = null;
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -459,6 +481,24 @@ namespace ManicDigger
                     }
                 }
             }
+            lighttoupdate = lighttoupdatecopy;
+        }
+        bool IsSolidChunk(byte[, ,] chunk, byte value)
+        {
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        if (currentlightchunk[xx, yy, zz] != value)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
         }
         bool IsValidChunkPos(int cx, int cy, int cz)
         {
@@ -490,6 +530,7 @@ namespace ManicDigger
             {
                 chunklighted = new bool[map.MapSizeX / chunksize, map.MapSizeY / chunksize, map.MapSizeZ / chunksize];
             }
+
             //Commented out: no need to flood light from chunks around, 
             //because TerrainDrawer calls this function for blocks in all 9 chunks around
             //when drawing single terrain chunk to draw its boundaries anyway.
