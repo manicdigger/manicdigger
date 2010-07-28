@@ -126,7 +126,8 @@ namespace ManicDigger
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
-            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
+                localplayerposition = localplayerposition, config3d = config3d };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             UseShadowsSimple();
             w.currentshadows = this;

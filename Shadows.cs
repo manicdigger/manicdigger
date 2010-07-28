@@ -64,9 +64,16 @@ namespace ManicDigger
     }
     public class Shadows : IShadows
     {
+        [Inject]
         public IMapStorage map { get; set; }
+        [Inject]
         public IGameData data { get; set; }
+        [Inject]
         public ITerrainDrawer terrain { get; set; }
+        [Inject]
+        public ILocalPlayerPosition localplayerposition { get; set; }
+        [Inject]
+        public Config3d config3d { get; set; }
 
         const int chunksize = 16;
         Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();
@@ -212,6 +219,7 @@ namespace ManicDigger
                 for (int i = newheight; i <= oldheight; i++)
                 {
                     SetLight(x, y, i, maxlight);
+                    currentlightchunk = null;
                     FloodLight(x, y, i);
                 }
             }
@@ -310,6 +318,7 @@ namespace ManicDigger
             //Console.WriteLine("reflood: {0}, searched: {1}", reflood.Keys.Count, searched);
             foreach (var p in reflood.Keys)
             {
+                currentlightchunk = null;
                 FloodLight(p.x, p.y, p.z);
             }
         }
@@ -321,6 +330,8 @@ namespace ManicDigger
             return dx * dx + dy * dy + dz * dz;
         }
         Queue<Vector3i> q = new Queue<Vector3i>();
+        byte[, ,] currentlightchunk;
+        int startx; int starty; int startz;
         private void FloodLight(int x, int y, int z)
         {
             if (light == null)
@@ -344,7 +355,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (LightGetBlock(v.x, v.y, v.z) == minlight)
+                if (LightGetBlockFast(v.x, v.y, v.z) == minlight)
                 {
                     continue;
                 }
@@ -359,13 +370,32 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (LightGetBlock(n.x, n.y, n.z) < LightGetBlock(v.x, v.y, v.z) - 1)
+                    if (LightGetBlockFast(n.x, n.y, n.z) < LightGetBlockFast(v.x, v.y, v.z) - 1)
                     {
                         SetLight(n.x, n.y, n.z, (byte)(LightGetBlock(v.x, v.y, v.z) - 1));
                         q.Enqueue(n);
                     }
                 }
             }
+        }
+        int LightGetBlockFast(int x, int y, int z)
+        {
+            if (currentlightchunk != null && InSameChunk(x, y, z, startx, starty, startz))
+            {
+                int block = currentlightchunk[x % chunksize, y % chunksize, z % chunksize];
+                if (block == 0)//unknown
+                {
+                    UpdateStartSunlightChunk(x, y);
+                }
+                return block - 1;
+            }
+            return LightGetBlock(x, y, z);
+        }
+        bool InSameChunk(int x1, int y1, int z1, int x2, int y2, int z2)
+        {
+            return x1 / chunksize == x2 / chunksize
+                && y1 / chunksize == y2 / chunksize
+                && z1 / chunksize == z2 / chunksize;
         }
         private IEnumerable<Vector3i> BlocksNear(int x, int y, int z)
         {
@@ -388,6 +418,10 @@ namespace ManicDigger
         }
         private void FloodLightChunk(int x, int y, int z)
         {
+            this.currentlightchunk = light.GetChunk(x, y, z);
+            this.startx = x;
+            this.starty = y;
+            this.startz = z;
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -488,6 +522,13 @@ namespace ManicDigger
         public void SetBlock(int x, int y, int z, int blocktype)
         {
             GetChunk(x, y, z)[x % chunksize, y % chunksize, z % chunksize] = (byte)blocktype;
+        }
+        public void ClearChunk(int x, int y, int z)
+        {
+            int px = (x / chunksize) * chunksize;
+            int py = (y / chunksize) * chunksize;
+            int pz = (z / chunksize) * chunksize;
+            gencache.Remove(MapUtil.ToMapPos(px, py, pz));
         }
     }
 }

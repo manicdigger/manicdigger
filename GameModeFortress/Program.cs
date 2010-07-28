@@ -227,7 +227,8 @@ namespace GameModeFortress
             this.clientgame = clientgame;
             this.map = map;
             w.currentshadows = this;
-            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
+                localplayerposition = localplayerposition, config3d = config3d };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             UseShadowsSimple();
             if (Debugger.IsAttached)
