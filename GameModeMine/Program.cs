@@ -91,6 +91,7 @@ namespace ManicDigger
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
             terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
+            terrainDrawer.blockdrawertorch = new BlockDrawerTorchDummy();
             worldfeatures.getfile = getfile;
             worldfeatures.localplayerposition = localplayerposition;
             worldfeatures.mapstorage = mapstorage;
@@ -129,6 +130,15 @@ namespace ManicDigger
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             UseShadowsSimple();
             w.currentshadows = this;
+            if (Debugger.IsAttached)
+            {
+                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
+                    w, audio, gamedata, clientgame, network, mapstorage, getfile,
+                    config3d, mapManipulator, terrainDrawer, the3d, exit,
+                    localplayerposition, worldfeatures, physics, mapgenerator,
+                    internetgamefactory, playerdrawer, mapManipulator,
+                    w.login, shadowsfull, shadowssimple);
+            }
         }
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;

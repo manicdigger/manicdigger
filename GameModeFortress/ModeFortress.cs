@@ -266,8 +266,14 @@ namespace GameModeFortress
         public INetworkClient network { get; set; }
         [Inject]
         public IAudio audio { get; set; }
-        public IMapStorage mapforphysics;
-        public IShadows shadows;
+        [Inject]
+        public IMapStorage mapforphysics { get; set; }
+        [Inject]
+        public IShadows shadows { get; set; }
+        [Inject]
+        public CharacterPhysics physics { get; set; }
+        [Inject]
+        public IMinecartDrawer minecartdrawer { get; set; }
         class MapForPhysics : IMapStorage
         {
             public GameFortress game;
@@ -1119,11 +1125,7 @@ namespace GameModeFortress
             #endregion
         }
         List<Monster> monsters = new List<Monster>();
-        [Inject]
-        public CharacterPhysics physics { get; set; }
         float basecharactersmovespeed { get { return ManicDiggerGameWindow.basemovespeed / 3; } }
-        [Inject]
-        public Pathfinder3d pathfinder { get; set; }
         private void RemoveOrder(Vector3 vv)
         {
             var o = orders[vv];
@@ -2515,8 +2517,6 @@ namespace GameModeFortress
             this.map.UseMap(map);
         }
         #endregion
-        [Inject]
-        public MinecartDrawer minecartdrawer { get; set; }
         #region IGameMode Members
         public IEnumerable<IModelToDraw> Models
         {
@@ -2628,7 +2628,7 @@ namespace GameModeFortress
         public VehicleDirection12 direction;
         public VehicleDirection12 lastdirection;
         public double progress;
-        public MinecartDrawer drawer;
+        public IMinecartDrawer drawer;
         #region IModelToDraw Members
         public void Draw(float dt)
         {
@@ -2645,7 +2645,29 @@ namespace GameModeFortress
         public int Id { get; set; }
         #endregion
     }
-    public class MinecartDrawer
+    public interface IMinecartDrawer
+    {
+        Vector3 CurrentRailPos(Vector3 vector3, VehicleDirection12 vehicleDirection12, float p);
+        void Draw(Vector3 currentrailblock, Vector3 position, VehicleDirection12 direction, VehicleDirection12 lastdirection, double progress);
+        IEnumerable<Triangle3D> TrianglesForPicking(Vector3 currentrailblock, Vector3 position, VehicleDirection12 direction, VehicleDirection12 lastdirection, double progress);
+    }
+    public class MinecartDrawerDummy : IMinecartDrawer
+    {
+        #region IMinecartDrawer Members
+        public Vector3 CurrentRailPos(Vector3 vector3, VehicleDirection12 vehicleDirection12, float p)
+        {
+            return new Vector3();
+        }
+        public void Draw(Vector3 currentrailblock, Vector3 position, VehicleDirection12 direction, VehicleDirection12 lastdirection, double progress)
+        {
+        }
+        public IEnumerable<Triangle3D> TrianglesForPicking(Vector3 currentrailblock, Vector3 position, VehicleDirection12 direction, VehicleDirection12 lastdirection, double progress)
+        {
+            yield break;
+        }
+        #endregion
+    }
+    public class MinecartDrawer : IMinecartDrawer
     {
         public float railheight = 0.3f;
         [Inject]
@@ -2688,7 +2710,7 @@ namespace GameModeFortress
             GL.PopMatrix();
         }
         #endregion
-        internal IEnumerable<Triangle3D> TrianglesForPicking(Vector3 currentrailblock, Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
+        public IEnumerable<Triangle3D> TrianglesForPicking(Vector3 currentrailblock, Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
         {
             Vector3 glpos;
             if (position != new Vector3())

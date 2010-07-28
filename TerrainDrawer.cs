@@ -418,7 +418,7 @@ namespace ManicDigger
         [Inject]
         public IWorldFeaturesDrawer worldfeatures { get; set; }
         [Inject]
-        public BlockDrawerTorch blockdrawertorch { get; set; }
+        public IBlockDrawerTorch blockdrawertorch { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         public int chunksize = 16;
         public int chunkdrawdistance

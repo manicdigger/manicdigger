@@ -9,6 +9,7 @@ using ManicDigger;
 using System.Threading;
 using OpenTK;
 using System.Xml;
+using System.Diagnostics;
 
 namespace ManicDiggerServer
 {
@@ -858,7 +859,6 @@ namespace ManicDiggerServer
             g.map = new GameModeFortress.InfiniteMap() { gen = gen };
             g.worldgeneratorsandbox = gen;
             g.network = new NetworkClientDummy();
-            g.pathfinder = new Pathfinder3d();
             g.physics = new CharacterPhysics() { data = data, map = g.map };
             g.terrain = new TerrainDrawerDummy();
             g.viewport = new ViewportDummy();
@@ -873,6 +873,13 @@ namespace ManicDiggerServer
             var shadows = new ShadowsSimple() { data = data, map = g };
             g.shadows = shadows;
             g.map.shadows = shadows;
+            g.minecartdrawer = new GameModeFortress.MinecartDrawerDummy();
+
+            if (Debugger.IsAttached)
+            {
+                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
+                    s, g, data, gen, shadows);
+            }
 
             s.Start();
             new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();

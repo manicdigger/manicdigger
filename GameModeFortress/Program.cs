@@ -230,6 +230,15 @@ namespace GameModeFortress
             shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             UseShadowsSimple();
+            if (Debugger.IsAttached)
+            {
+                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
+                    w, audio, gamedata, clientgame, network, mapstorage, getfile,
+                    config3d, mapManipulator, terrainDrawer, the3d, exit,
+                    localplayerposition, worldfeatures, physics, mapgenerator,
+                    internetgamefactory, blockdrawertorch, playerdrawer, gen,
+                    map, w.login, shadowsfull, shadowssimple);
+            }
         }
         #region IInternetGameFactory Members
         public void NewInternetGame()

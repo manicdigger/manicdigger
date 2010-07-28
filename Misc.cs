@@ -231,4 +231,46 @@ namespace ManicDigger
             return hash;
         }
     }
+    public class DependencyChecker
+    {
+        public DependencyChecker()
+        {
+        }
+        public DependencyChecker(params Type[] injectAttributes)
+        {
+            this.InjectAttributes = injectAttributes;
+        }
+        [Inject]
+        public Type[] InjectAttributes { get; set; }
+        public void CheckDependencies(params object[] components)
+        {
+            if (InjectAttributes == null || InjectAttributes.Length == 0)
+            {
+                throw new Exception("Inject attributes list is null.");
+            }
+            foreach (object o in components)
+            {
+                CheckDependencies1(o);
+            }
+        }
+        private void CheckDependencies1(object o)
+        {
+            Type type = o.GetType();
+            var properties = type.GetProperties();
+            foreach (var property in properties)
+            {
+                var attributes = property.GetCustomAttributes(true);
+                foreach (var a in attributes)
+                {
+                    if (a is InjectAttribute)
+                    {
+                        if (property.GetValue(o, null) == null)
+                        {
+                            throw new Exception(string.Format("Dependency {0} of object of type {1} is null.", property.Name, type.Name));
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
