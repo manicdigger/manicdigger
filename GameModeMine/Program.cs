@@ -107,7 +107,7 @@ namespace ManicDigger
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
-            w.weapon = new WeaponDrawer() { info = weapon };
+            w.weapon = new WeaponDrawer() { info = weapon, blockdrawertorch = new BlockDrawerTorchDummy() }; //no torch in mine mode
             var playerdrawer = new CharacterDrawerMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;

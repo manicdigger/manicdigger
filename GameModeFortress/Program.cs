@@ -168,6 +168,10 @@ namespace GameModeFortress
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
             terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
+            var blockdrawertorch = new BlockDrawerTorch();
+            blockdrawertorch.terraindrawer = terrainDrawer;
+            blockdrawertorch.data = gamedata;
+            terrainDrawer.blockdrawertorch = blockdrawertorch;
             //worldfeatures.getfile = getfile;
             //worldfeatures.localplayerposition = localplayerposition;
             //worldfeatures.mapstorage = mapstorage;
@@ -185,7 +189,7 @@ namespace GameModeFortress
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
-            w.weapon = new WeaponDrawer() {info = weapon };
+            w.weapon = new WeaponDrawer() { info = weapon, blockdrawertorch = blockdrawertorch };
             var playerdrawer = new CharacterDrawerMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;

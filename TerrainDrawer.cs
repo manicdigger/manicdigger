@@ -417,6 +417,8 @@ namespace ManicDigger
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]
         public IWorldFeaturesDrawer worldfeatures { get; set; }
+        [Inject]
+        public BlockDrawerTorch blockdrawertorch { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         public int chunksize = 16;
         public int chunkdrawdistance
@@ -955,7 +957,7 @@ namespace ManicDigger
                 if (CanSupportTorch(currentChunk[xx + 1, yy, zz])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[xx, yy - 1, zz])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[xx, yy + 1, zz])) { type = TorchType.Right; }
-                AddTorch(myelements, myvertices, x, y, z, type);
+                blockdrawertorch.AddTorch(myelements, myvertices, x, y, z, type);
                 return;
             }
             //slope
@@ -1155,131 +1157,6 @@ namespace ManicDigger
             return blocktype != data.TileIdEmpty
                 && blocktype != data.TileIdTorch;
         }
-        enum TorchType
-        {
-            Normal, Left, Right, Front, Back
-        }
-        void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
-        {
-            int tiletype = data.TileIdTorch;
-            Color curcolor = Color.White;
-            float torchsizexy = 0.2f;
-            float topx = 1f / 2f - torchsizexy / 2f;
-            float topy = 1f / 2f - torchsizexy / 2f;
-            float bottomx = 1f / 2f - torchsizexy / 2f;
-            float bottomy = 1f / 2f - torchsizexy / 2f;
-            topx += x;
-            topy += y;
-            bottomx += x;
-            bottomy += y;
-            if (type == TorchType.Front){ bottomx = x - torchsizexy; }
-            if (type == TorchType.Back) { bottomx = x + 1; }
-            if (type == TorchType.Left) { bottomy = y - torchsizexy; }
-            if (type == TorchType.Right) { bottomy = y + 1; }
-            Vector3 top00 = new Vector3(topx, z + 1, topy);
-            Vector3 top01 = new Vector3(topx, z + 1, topy + torchsizexy);
-            Vector3 top10 = new Vector3(topx + torchsizexy, z + 1, topy);
-            Vector3 top11 = new Vector3(topx + torchsizexy, z + 1, topy + torchsizexy);
-            Vector3 bottom00 = new Vector3(bottomx, z + 0, bottomy);
-            Vector3 bottom01 = new Vector3(bottomx, z + 0, bottomy + torchsizexy);
-            Vector3 bottom10 = new Vector3(bottomx + torchsizexy, z + 0, bottomy);
-            Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
-            //top
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Right, texrec.Bottom, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-            //bottom - same as top, but z is 1 less.
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Right, texrec.Bottom, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-            //front
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Right, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-            //back - same as front, but x is 1 greater.
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Left, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Left, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-            //right - same as left, but y is 1 greater.
-            {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Right, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-            }
-        }
         private void RailPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, RailDirectionFlags rail)
         {
         }
@@ -1318,6 +1195,150 @@ namespace ManicDigger
             }
         }
         #endregion
+    }
+    public enum TorchType
+    {
+        Normal, Left, Right, Front, Back
+    }
+    public interface IBlockDrawerTorch
+    {
+        void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type);
+    }
+    public class BlockDrawerTorchDummy : IBlockDrawerTorch
+    {
+        #region IBlockDrawerTorch Members
+        public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
+        {
+        }
+        #endregion
+    }
+    public class BlockDrawerTorch : IBlockDrawerTorch
+    {
+        [Inject]
+        public IGameData data;
+        [Inject]
+        public ITerrainDrawer terraindrawer;
+        public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
+        {
+            int tiletype = data.TileIdTorch;
+            Color curcolor = Color.White;
+            float torchsizexy = 0.2f;
+            float topx = 1f / 2f - torchsizexy / 2f;
+            float topy = 1f / 2f - torchsizexy / 2f;
+            float bottomx = 1f / 2f - torchsizexy / 2f;
+            float bottomy = 1f / 2f - torchsizexy / 2f;
+            topx += x;
+            topy += y;
+            bottomx += x;
+            bottomy += y;
+            if (type == TorchType.Front) { bottomx = x - torchsizexy; }
+            if (type == TorchType.Back) { bottomx = x + 1; }
+            if (type == TorchType.Left) { bottomy = y - torchsizexy; }
+            if (type == TorchType.Right) { bottomy = y + 1; }
+            Vector3 top00 = new Vector3(topx, z + 1, topy);
+            Vector3 top01 = new Vector3(topx, z + 1, topy + torchsizexy);
+            Vector3 top10 = new Vector3(topx + torchsizexy, z + 1, topy);
+            Vector3 top11 = new Vector3(topx + torchsizexy, z + 1, topy + torchsizexy);
+            Vector3 bottom00 = new Vector3(bottomx, z + 0, bottomy);
+            Vector3 bottom01 = new Vector3(bottomx, z + 0, bottomy + torchsizexy);
+            Vector3 bottom10 = new Vector3(bottomx + torchsizexy, z + 0, bottomy);
+            Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
+            //top
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Right, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Right, texrec.Bottom, curcolor));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //bottom - same as top, but z is 1 less.
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Right, texrec.Bottom, curcolor));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //front
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Right, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Right, texrec.Top, curcolor));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //back - same as front, but x is 1 greater.
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Right, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Left, texrec.Top, curcolor));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Right, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top10.X, top10.Y, top10.Z, texrec.Left, texrec.Top, curcolor));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+            //right - same as left, but y is 1 greater.
+            {
+                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
+                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                short lastelement = (short)myvertices.Count;
+                myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Top, curcolor));
+                myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Right, texrec.Bottom, curcolor));
+                myvertices.Add(new VertexPositionTexture(top11.X, top11.Y, top11.Z, texrec.Right, texrec.Top, curcolor));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 0));
+                myelements.Add((ushort)(lastelement + 2));
+                myelements.Add((ushort)(lastelement + 3));
+                myelements.Add((ushort)(lastelement + 1));
+                myelements.Add((ushort)(lastelement + 2));
+            }
+        }
     }
     public interface IWorldFeaturesDrawer
     {
