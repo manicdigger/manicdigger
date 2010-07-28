@@ -12,6 +12,7 @@ using System.Drawing.Imaging;
 using System.Threading;
 using System.IO;
 using System.Net;
+using System.Drawing.Drawing2D;
 
 namespace ManicDigger
 {
@@ -1644,6 +1645,7 @@ namespace ManicDigger
                 int menuelements = 3;
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
+                    escapemenuOptions = false;
                     GuiStateBackToGame();
                 }
                 if (e.Key == OpenTK.Input.Key.Up)
@@ -2345,6 +2347,7 @@ namespace ManicDigger
         {
             return (float)(Math.Acos(q.X / q.Length) * Math.Sign(q.Z));
         }
+        bool escapemenuOptions = false;
         private void EscapeMenuMouse()
         {
             int textheight = 50;
@@ -2361,7 +2364,6 @@ namespace ManicDigger
             {
                 EscapeMenuAction();
                 mouseleftclick = false;
-                GuiStateBackToGame();
             }
         }
         private float MoveSpeedNow()
@@ -3183,14 +3185,37 @@ namespace ManicDigger
         }        
         void EscapeMenuAction()
         {
+            if (!escapemenuOptions) { EscapeMenuActionMain(); }
+            else { EscapeMenuActionOptions(); }
+        }
+        private void EscapeMenuActionOptions()
+        {
+            switch (menustate.selected)
+            {
+                case 0:
+                    currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
+                    terrain.UpdateAllTiles();
+                    break;
+                case 1:
+                    textdrawer.NewFont = !textdrawer.NewFont;
+                    cachedTextTextures.Clear();
+                    break;
+                case 2:
+                    escapemenuOptions = false;
+                    break;
+                default:
+                    throw new Exception();
+            }
+        }
+        private void EscapeMenuActionMain()
+        {
             switch (menustate.selected)
             {
                 case 0:
                     GuiStateBackToGame();
                     break;
                 case 1:
-                    currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
-                    terrain.UpdateAllTiles();
+                    escapemenuOptions = true;
                     break;
                 case 2:
                     exit = true;
@@ -3228,18 +3253,29 @@ namespace ManicDigger
         }
         void DrawEscapeMenu()
         {
-            string newgame = "Return to game";
-            string shadowsoption = "Shadows " + (currentshadows.ShadowsFull ? "ON" : "OFF");
-            string exitstr = "Exit";
+            List<string> items = new List<string>();
+            if (!escapemenuOptions)
+            {
+                items.Add("Return to game");
+                items.Add("Options");
+                items.Add("Exit");
+            }
+            else
+            {
+                items.Add("Shadows: " + (currentshadows.ShadowsFull ? "ON" : "OFF"));
+                items.Add("Font: " + (textdrawer.NewFont ? "2" : "1"));
+                items.Add("Return to main menu");
+            }
             int textheight = 50;
             int fontsize = 20;
             int starty = ycenter(3 * textheight);
             if (guistate == GuiState.EscapeMenu)
             {
-                Draw2dText(newgame, xcenter(TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
-                Draw2dText(shadowsoption, xcenter(TextSize(shadowsoption, fontsize).Width), starty + textheight * 1, 20, menustate.selected == 1 ? Color.Red : Color.White);
-                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
-                //DrawMouseCursor();
+                for (int i = 0; i < items.Count; i++)
+                {
+                    string s = items[i];
+                    Draw2dText(s, xcenter(TextSize(s, fontsize).Width), starty + textheight * i, fontsize, menustate.selected == i ? Color.Red : Color.White);
+                }
             }
         }
         bool SaveGameExists()
@@ -3745,7 +3781,7 @@ namespace ManicDigger
             }
             for (int i = 0; i < chatlines2.Count; i++)
             {
-                Draw2dText(chatlines2[i].text, 20, 50f + i * 25f, chatfontsize, Color.White);
+                Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
             }
         }
         SizeF TextSize(string text, float fontsize)
@@ -3793,7 +3829,18 @@ namespace ManicDigger
         {
             public Bitmap MakeTextTexture(Text t)
             {
-                var font = new Font("Verdana", t.fontsize);
+                Font font;
+                if (NewFont)
+                {
+                    //outlined font looks smaller
+                    t.fontsize = Math.Max(t.fontsize, 9);
+                    t.fontsize *= 1.65f;
+                    font = new Font("Arial", t.fontsize, FontStyle.Bold);
+                }
+                else
+                {
+                    font = new Font("Verdana", t.fontsize);
+                }
                 var parts = DecodeColors(t.text, t.color);
                 float totalwidth = 0;
                 float totalheight = 0;
@@ -3808,6 +3855,10 @@ namespace ManicDigger
                             if (size.Width == 0 || size.Height == 0)
                             {
                                 continue;
+                            }
+                            if (NewFont)
+                            {
+                                size.Width *= 0.7f;
                             }
                             totalwidth += size.Width;
                             totalheight = Math.Max(totalheight, size.Height);
@@ -3827,13 +3878,46 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
-                        g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                        if (NewFont)
+                        {
+                            StringFormat format = StringFormat.GenericTypographic;
+
+                            g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
+                            g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                            //g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                            Rectangle rect = new Rectangle() { X = (int)currentwidth, Y = 0 };
+                            using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
+                            {
+                                g2.SmoothingMode = SmoothingMode.AntiAlias;
+                                RectangleF off = rect;
+                                off.Offset(2, 2);
+                                using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
+                                {
+                                    Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
+                                    g2.FillPath(b, offPath);
+                                    b.Dispose();
+                                }
+                                g2.FillPath(new SolidBrush(parts[i].color), path);
+                                g2.DrawPath(Pens.Black, path);
+                            }
+                        }
+                        else
+                        {
+                            g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
+                            g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                        }
                         currentwidth += sizei.Width;
                     }
                 }
                 return bmp2;
             }
+            GraphicsPath GetStringPath(string s, float emSize, RectangleF rect, Font font, StringFormat format)
+            {
+                GraphicsPath path = new GraphicsPath();
+                path.AddString(s, font.FontFamily, (int)font.Style, emSize, rect, format);
+                return path;
+            }
+            int textalpha = 0;
             private uint NextPowerOfTwo(uint x)
             {
                 x--;
@@ -3931,6 +4015,7 @@ namespace ManicDigger
                 if (c == 'f') { return 15; }
                 return null;
             }
+            public bool NewFont = true;
         }
         TextDrawer textdrawer = new TextDrawer();
         CachedTexture MakeTextTexture(Text t)
@@ -3974,7 +4059,9 @@ namespace ManicDigger
             }
             ct = cachedTextTextures[t];
             ct.lastuse = DateTime.Now;
+            GL.Disable(EnableCap.AlphaTest);
             Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
+            GL.Enable(EnableCap.AlphaTest);
             DeleteUnusedCachedTextures();
         }
         bool ENABLE_DRAWFPS = false;
