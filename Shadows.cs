@@ -91,6 +91,28 @@ namespace ManicDigger
         }
         private void UpdateShadows(int x, int y, int z)
         {
+            if ((localplayerposition.LocalPlayerPosition
+                - new OpenTK.Vector3(x, z, y)).Length
+                > terrain.DrawDistance * 1.5f)
+            {
+                //do not update shadow info outside of fog range
+                // - clear shadow information there.
+                for (int zz = 0; zz < map.MapSizeZ; zz += chunksize)
+                {
+                    light.ClearChunk(x, y, zz);
+                    light.ClearChunk(x - chunksize, y, zz);
+                    light.ClearChunk(x + chunksize, y, zz);
+                    light.ClearChunk(x, y - chunksize, zz);
+                    light.ClearChunk(x, y + chunksize, zz);
+                }
+                lightheight.ClearChunk(x, y);
+                lightheight.ClearChunk(x - chunksize, y);
+                lightheight.ClearChunk(x + chunksize, y);
+                lightheight.ClearChunk(x, y - chunksize);
+                lightheight.ClearChunk(x, y - chunksize);
+                return;
+            }
+
             lighttoupdate.Clear();
             UpdateSunlight(x, y, z);
             List<Vector3i> near = new List<Vector3i>();
@@ -188,19 +210,22 @@ namespace ManicDigger
             }
             return height;
         }
-        Dictionary<Point, int> lightheight = new Dictionary<Point, int>();
+        //Dictionary<Point, int> lightheight = new Dictionary<Point, int>();
+        InfiniteHeightCache lightheight = new InfiniteHeightCache();
         int GetLightHeight(int x, int y)
         {
             var p = new Point(x, y);
-            if (!lightheight.ContainsKey(p))
+            var height = lightheight.GetBlock(x, y);
+            if (height == 0)
             {
                 UpdateLightHeightmapAt(x, y);
+                height = lightheight.GetBlock(x, y);
             }
-            return lightheight[p];
+            return height - 1;
         }
         void UpdateLightHeightmapAt(int x, int y)
         {
-            lightheight[new Point(x, y)] = GetRealLightHeightAt(x, y);
+            lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);
         }
         InfiniteMapCache light = new InfiniteMapCache();
         int minlight = 1;
@@ -331,7 +356,9 @@ namespace ManicDigger
         }
         Queue<Vector3i> q = new Queue<Vector3i>();
         byte[, ,] currentlightchunk;
-        int startx; int starty; int startz;
+        int startx;
+        int starty;
+        int startz;
         private void FloodLight(int x, int y, int z)
         {
             if (light == null)
@@ -498,6 +525,41 @@ namespace ManicDigger
             }
         }
         #endregion
+    }
+    class InfiniteHeightCache
+    {
+        int chunksize = 16;
+        Dictionary<Point, byte[,]> gencache = new Dictionary<Point, byte[,]>();
+        public int GetBlock(int x, int y)
+        {
+            byte[,] chunk = GetChunk(x, y);
+            return chunk[x % chunksize, y % chunksize];
+        }
+        public byte[,] GetChunk(int x, int y)
+        {
+            byte[,] chunk = null;
+            var k = new Point(x / chunksize, y / chunksize);
+            if (!gencache.TryGetValue(k, out chunk))
+            {
+                chunk = new byte[chunksize, chunksize];
+                gencache[k] = chunk;
+            }
+            return chunk;
+        }
+        public void SetBlock(int x, int y, int blocktype)
+        {
+            GetChunk(x, y)[x % chunksize, y % chunksize] = (byte)blocktype;
+        }
+        public void Clear()
+        {
+            gencache = new Dictionary<Point, byte[,]>();
+        }
+        public void ClearChunk(int x, int y)
+        {
+            int px = (x / chunksize) * chunksize;
+            int py = (y / chunksize) * chunksize;
+            gencache.Remove(new Point(px, py));
+        }
     }
     class InfiniteMapCache
     {
