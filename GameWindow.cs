@@ -512,9 +512,17 @@ namespace ManicDigger
         public IBlockDrawerTorch blockdrawertorch { get; set; }
         public void DrawWeapon(float dt)
         {
-            int light = (int)(info.Light * 256);
-            if (light > 255) { light = 255; }
-            if (light < 0) { light = 0; }
+            int light;
+            if (info.IsTorch())
+            {
+                light = 255;
+            }
+            else
+            {
+                light = (int)(info.Light * 256);
+                if (light > 255) { light = 255; }
+                if (light < 0) { light = 0; }
+            }
             GL.Color3(Color.FromArgb(light, light, light));
             GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
             List<ushort> myelements = new List<ushort>();
