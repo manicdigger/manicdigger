@@ -1211,6 +1211,10 @@ namespace ManicDigger
                     {
                         game.SIMULATIONLAG_SECONDS = double.Parse(arguments);
                     }
+                    else if (cmd == "gui")
+                    {
+                        ENABLE_DRAW2D = BoolCommandArgument(arguments);
+                    }
                     else
                     {
                         string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
@@ -1571,7 +1575,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.I)
                 {
-                    DrawBlockInfo = !DrawBlockInfo;
+                    drawblockinfo = !drawblockinfo;
                 }
                 if (e.Key == OpenTK.Input.Key.F5)
                 {
@@ -2793,7 +2797,10 @@ namespace ManicDigger
                 terrain.Draw();
 
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
-                DrawCubeLines(pickcubepos);
+                if (ENABLE_DRAW2D)
+                {
+                    DrawCubeLines(pickcubepos);
+                }
 
                 DrawCharacters((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
@@ -2820,16 +2827,18 @@ namespace ManicDigger
                     GL.End();
                     */
                 }
-                if (!ENABLE_TPP_VIEW)
+                if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
                 {
                     weapon.DrawWeapon((float)e.Time);
                 }
             }
             SetAmbientLight(Color.White);
             Draw2d();
+            DrawPlayerNames();
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        bool ENABLE_DRAW2D = true;
         int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
@@ -3323,49 +3332,64 @@ namespace ManicDigger
         private void Draw2d()
         {
             OrthoMode();
-            if (guistate == GuiState.Normal)
+            switch (guistate)
             {
-                if (cameratype != CameraType.Overhead)
-                {
-                    if (aimsize == null)
+                case GuiState.Normal:
                     {
-                        using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                        if (!ENABLE_DRAW2D)
                         {
-                            aimsize = targetbmp.Size;
+                            if (GuiTyping == TypingState.Typing)
+                            {
+                                DrawChatLines(true);
+                                DrawTypingBuffer();
+                            }
+                            PerspectiveMode();
+                            return;
+                        }
+                        if (cameratype != CameraType.Overhead)
+                        {
+                            DrawAim();
+                        }
+                        DrawMaterialSelector();
+                        DrawChatLines(GuiTyping == TypingState.Typing);
+                        if (GuiTyping == TypingState.Typing)
+                        {
+                            DrawTypingBuffer();
+                        }
+                        if (Keyboard[OpenTK.Input.Key.Tab])
+                        {
+                            DrawConnectedPlayersList();
                         }
                     }
-                    float aimwidth = aimsize.Value.Width;
-                    float aimheight = aimsize.Value.Height;
-
-                    Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
-                }
-
-                DrawMaterialSelector();
-                DrawChatLines(GuiTyping == TypingState.Typing);
-                if (GuiTyping == TypingState.Typing)
-                {
-                    Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
-                }
-                if (Keyboard[OpenTK.Input.Key.Tab])
-                {
-                    var l = new List<string>(network.ConnectedPlayers());
-                    for (int i = 0; i < l.Count; i++)
+                    break;
+                case GuiState.EscapeMenu:
                     {
-                        Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, chatfontsize, Color.White);
+                        DrawEscapeMenu();
                     }
-                }
+                    break;
+                case GuiState.MainMenu:
+                    {
+                        DrawMainMenu();
+                    }
+                    break;
+                case GuiState.Inventory:
+                    {
+                        DrawInventory();
+                    }
+                    break;
+                case GuiState.MapLoading:
+                    {
+                        DrawMapLoading();
+                    }
+                    break;
+                case GuiState.CraftingRecipes:
+                    {
+                        DrawCraftingRecipes();
+                    }
+                    break;
+                default:
+                    throw new Exception();
             }
-            else if (guistate == GuiState.EscapeMenu)
-            { DrawEscapeMenu(); }
-            else if (guistate == GuiState.MainMenu)
-            { DrawMainMenu(); }
-            else if (guistate == GuiState.Inventory)
-            { DrawInventory(); }
-            else if (guistate == GuiState.MapLoading)
-            { DrawMapLoading(); }
-            else if (guistate == GuiState.CraftingRecipes)
-            { DrawCraftingRecipes(); }
-            else throw new Exception();
             if (ENABLE_DRAWFPS)
             {
                 Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
@@ -3374,21 +3398,9 @@ namespace ManicDigger
             {
                 DrawFpsHistoryGraph();
             }
-            if (DrawBlockInfo)
+            if (drawblockinfo)
             {
-                int x = (int)pickcubepos.X;
-                int y = (int)pickcubepos.Z;
-                int z = (int)pickcubepos.Y;
-                string info = "None";
-                if (MapUtil.IsValidPos(map, x, y, z))
-                {
-                    var blocktype = map.GetBlock(x, y, z);
-                    if (data.IsValidTileType(blocktype))
-                    {
-                        info = data.BlockName(blocktype);
-                    }
-                }
-                Draw2dText(info, Width * 0.5f - TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+                DrawBlockInfo();
             }
             if (FreeMouse)
             {
@@ -3396,13 +3408,62 @@ namespace ManicDigger
             }
             if (screenshotflash > 0)
             {
-                Draw2dTexture(WhiteTexture(), 0, 0, Width, Height, null, Color.White);
-                string screenshottext = "Screenshot";
-                Draw2dText(screenshottext, xcenter(TextSize(screenshottext, 50).Width),
-                    ycenter(TextSize(screenshottext, 50).Height), 50, Color.White);
+                DrawScreenshotFlash();
                 screenshotflash--;
             }
             PerspectiveMode();
+        }
+        private void DrawScreenshotFlash()
+        {
+            Draw2dTexture(WhiteTexture(), 0, 0, Width, Height, null, Color.White);
+            string screenshottext = "Screenshot";
+            Draw2dText(screenshottext, xcenter(TextSize(screenshottext, 50).Width),
+                ycenter(TextSize(screenshottext, 50).Height), 50, Color.White);
+        }
+        private void DrawBlockInfo()
+        {
+            int x = (int)pickcubepos.X;
+            int y = (int)pickcubepos.Z;
+            int z = (int)pickcubepos.Y;
+            string info = "None";
+            if (MapUtil.IsValidPos(map, x, y, z))
+            {
+                var blocktype = map.GetBlock(x, y, z);
+                if (data.IsValidTileType(blocktype))
+                {
+                    info = data.BlockName(blocktype);
+                }
+            }
+            Draw2dText(info, Width * 0.5f - TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+        }
+        private void DrawConnectedPlayersList()
+        {
+            List<string> l = new List<string>(network.ConnectedPlayers());
+            for (int i = 0; i < l.Count; i++)
+            {
+                Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, chatfontsize, Color.White);
+            }
+        }
+        private void DrawTypingBuffer()
+        {
+            Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
+        }
+        private void DrawAim()
+        {
+            if (aimsize == null)
+            {
+                using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                {
+                    aimsize = targetbmp.Size;
+                }
+            }
+            float aimwidth = aimsize.Value.Width;
+            float aimheight = aimsize.Value.Height;
+
+            Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+        }
+        private void DrawPlayerNames()
+        {
             foreach (KeyValuePair<int, Player> k in clients.Players)
             {
                 if (k.Key == 255 || k.Value.Name == ""
@@ -3487,7 +3548,7 @@ namespace ManicDigger
             int B = (int)(a.B + (b.B - a.B) * p);
             return Color.FromArgb(R, G, B);
         }
-        bool DrawBlockInfo = false;
+        bool drawblockinfo = false;
         MapLoadingProgressEventArgs maploadingprogress;
         private void DrawMapLoading()
         {
