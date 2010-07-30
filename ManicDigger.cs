@@ -488,8 +488,8 @@ namespace ManicDigger
         bool IsSlipperyWalk(int blocktype);
         string[] WalkSound(int blocktype);
         int TileIdTrampoline { get; }
-        bool IsLightEmitting(int blocktype);
         byte TileIdTorch { get; }
+        int GetLightRadius(int blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -604,15 +604,15 @@ namespace ManicDigger
         }
         #endregion
         #region IGameData Members
-        public bool IsLightEmitting(int blocktype)
-        {
-            return false;
-        }
-        #endregion
-        #region IGameData Members
         public byte TileIdTorch
         {
             get { throw new NotImplementedException(); }
+        }
+        #endregion
+        #region IGameData Members
+        public int GetLightRadius(int blocktype)
+        {
+            return 0;
         }
         #endregion
     }

@@ -232,7 +232,7 @@ namespace ManicDigger
             lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);
         }
         InfiniteMapCache light = new InfiniteMapCache();
-        int minlight = 1;
+        int minlight = 0;
         public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
         {
@@ -315,22 +315,23 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (!data.GrassGrowsUnder(map.GetBlock(v.x, v.y, v.z))
-                    && !data.IsLightEmitting(map.GetBlock(v.x, v.y, v.z)))
+                int vblock = map.GetBlock(v.x, v.y, v.z);
+                if (!data.GrassGrowsUnder(vblock)
+                    && data.GetLightRadius(vblock) == 0)
                 {
                     continue;
                 }
-                if (LightGetBlock(v.x, v.y, v.z) == maxlight
-                    || data.IsLightEmitting(map.GetBlock(v.x, v.y, v.z)))
+                int vlight = LightGetBlock(v.x, v.y, v.z);
+                if (vlight == maxlight
+                    || data.GetLightRadius(vblock) != 0)
                 {
                     reflood[v] = true;
                     continue;
                 }
-                if (LightGetBlock(v.x, v.y, v.z) == minlight)
+                if (vlight == minlight)
                 {
                     continue;
                 }
-                int mylight = LightGetBlock(v.x, v.y, v.z);
                 SetLight(v.x, v.y, v.z, minlight);
                 foreach (var n in BlocksNear(v.x, v.y, v.z))
                 {
@@ -338,7 +339,7 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (LightGetBlock(n.x, n.y, n.z) <= mylight)
+                    if (LightGetBlock(n.x, n.y, n.z) <= vlight)
                     {
                         q.Enqueue(n);
                     }
@@ -373,9 +374,10 @@ namespace ManicDigger
             {
                 UpdateLight();
             }
-            if (data.IsLightEmitting(map.GetBlock(x, y, z)))
+            int lightradius = data.GetLightRadius(map.GetBlock(x, y, z));
+            if (lightradius != 0)
             {
-                LightSetBlock(x, y, z, (byte)(maxlight - 1));
+                LightSetBlock(x, y, z, (byte)(lightradius));
             }
             q.Clear();
             q.Enqueue(new Vector3i(x, y, z));
@@ -390,12 +392,14 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (LightGetBlockFast(v.x, v.y, v.z) == minlight)
+                int vlight = LightGetBlockFast(v.x, v.y, v.z);
+                if (vlight == minlight)
                 {
                     continue;
                 }
-                if (!data.GrassGrowsUnder(map.GetBlock(v.x, v.y, v.z))
-                    && !data.IsLightEmitting(map.GetBlock(v.x, v.y, v.z)))
+                int vblock = map.GetBlock(v.x, v.y, v.z);
+                if (!data.GrassGrowsUnder(vblock)
+                    && data.GetLightRadius(vblock) == 0)
                 {
                     continue;
                 }
@@ -405,9 +409,9 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (LightGetBlockFast(n.x, n.y, n.z) < LightGetBlockFast(v.x, v.y, v.z) - 1)
+                    if (LightGetBlockFast(n.x, n.y, n.z) < vlight - 1)
                     {
-                        SetLight(n.x, n.y, n.z, (byte)(LightGetBlock(v.x, v.y, v.z) - 1));
+                        SetLight(n.x, n.y, n.z, (byte)(vlight - 1));
                         q.Enqueue(n);
                     }
                 }

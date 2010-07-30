@@ -532,6 +532,23 @@ namespace ManicDigger
         #region IGameData Members
         public byte TileIdTorch { get { return (int)TileTypeMinecraft.Torch; } }
         #endregion
+        #region IGameData Members
+        public int GetLightRadius(int blocktype)
+        {
+            switch (blocktype)
+            {
+                case (int)TileTypeMinecraft.Torch:
+                    return 10;
+                case (int)TileTypeMinecraft.GoldBlock:
+                case (int)TileTypeMinecraft.Lava:
+                case (int)TileTypeMinecraft.StationaryLava:
+                case (int)TileTypeMinecraft.InfiniteLavaSource:
+                    return 10;
+                default:
+                    return 0;
+            }
+        }
+        #endregion
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

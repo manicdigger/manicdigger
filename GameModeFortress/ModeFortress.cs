@@ -3347,6 +3347,12 @@ namespace GameModeFortress
         #region IGameData Members
         public byte TileIdTorch { get { return data.TileIdTorch; } }
         #endregion
+        #region IGameData Members
+        public int GetLightRadius(int blocktype)
+        {
+            return data.GetLightRadius(blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {
