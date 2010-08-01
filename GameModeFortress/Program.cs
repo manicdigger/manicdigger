@@ -122,7 +122,7 @@ namespace GameModeFortress
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainDrawer = new TerrainDrawer3d();
+            var terrainDrawer = new TerrainDrawer();
             var the3d = w;
             var exit = w;
             var localplayerposition = w;
@@ -171,7 +171,12 @@ namespace GameModeFortress
             var blockdrawertorch = new BlockDrawerTorch();
             blockdrawertorch.terraindrawer = terrainDrawer;
             blockdrawertorch.data = gamedata;
-            terrainDrawer.blockdrawertorch = blockdrawertorch;
+            var terrainChunkDrawer = new TerrainChunkDrawer();
+            terrainChunkDrawer.config3d = config3d;
+            terrainChunkDrawer.data = gamedata;
+            terrainChunkDrawer.mapstorage = clientgame;
+            terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
+            terrainChunkDrawer.blockdrawertorch = blockdrawertorch;
             //worldfeatures.getfile = getfile;
             //worldfeatures.localplayerposition = localplayerposition;
             //worldfeatures.mapstorage = mapstorage;
@@ -238,7 +243,7 @@ namespace GameModeFortress
                     config3d, mapManipulator, terrainDrawer, the3d, exit,
                     localplayerposition, worldfeatures, physics, mapgenerator,
                     internetgamefactory, blockdrawertorch, playerdrawer, gen,
-                    map, w.login, shadowsfull, shadowssimple);
+                    map, w.login, shadowsfull, shadowssimple, terrainChunkDrawer);
             }
         }
         #region IInternetGameFactory Members

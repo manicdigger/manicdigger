@@ -51,7 +51,7 @@ namespace ManicDigger
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainDrawer = new TerrainDrawer3d();
+            var terrainDrawer = new TerrainDrawer();
             var the3d = w;
             var exit = w;
             var localplayerposition = w;
@@ -92,7 +92,12 @@ namespace ManicDigger
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
             terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
-            terrainDrawer.blockdrawertorch = new BlockDrawerTorchDummy();
+            var terrainChunkDrawer = new TerrainChunkDrawer();
+            terrainChunkDrawer.config3d = config3d;
+            terrainChunkDrawer.data = gamedata;
+            terrainChunkDrawer.mapstorage = clientgame;
+            terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
+            terrainChunkDrawer.blockdrawertorch = new BlockDrawerTorchDummy();
             worldfeatures.getfile = getfile;
             worldfeatures.localplayerposition = localplayerposition;
             worldfeatures.mapstorage = mapstorage;
@@ -139,7 +144,7 @@ namespace ManicDigger
                     config3d, mapManipulator, terrainDrawer, the3d, exit,
                     localplayerposition, worldfeatures, physics, mapgenerator,
                     internetgamefactory, playerdrawer, mapManipulator,
-                    w.login, shadowsfull, shadowssimple);
+                    w.login, shadowsfull, shadowssimple, terrainChunkDrawer);
             }
         }
         ShadowsSimple shadowssimple;
