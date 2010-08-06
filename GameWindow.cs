@@ -2253,7 +2253,6 @@ namespace ManicDigger
                 curspeed.Y = MakeCloserToZero(curspeed.Y, acceleration2 * (float)e.Time);
                 curspeed.Z = MakeCloserToZero(curspeed.Z, acceleration2 * (float)e.Time);
                 diff1.Y += moveup ? 2 * movespeednow * (float)e.Time : 0;
-                Console.WriteLine(diff1);
                 curspeed += Vector3.Multiply(diff1, acceleration3 * (float)e.Time);
                 if (curspeed.Length > movespeednow)
                 {
