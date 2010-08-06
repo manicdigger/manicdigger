@@ -2457,7 +2457,7 @@ namespace ManicDigger
         }
         float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
-        Matrix4 the_modelview;
+        Matrix4 m_theModelView;
         bool leftpressedpicking = false;
         public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
         int selectedmodelid = -1;
@@ -2506,11 +2506,12 @@ namespace ManicDigger
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
-            if (the_modelview.Equals(new Matrix4())) { return; }
-            the_modelview.Invert();
+            if (m_theModelView.Equals(new Matrix4())) { return; }
+            Matrix4 theModelView = m_theModelView;
+            theModelView.Invert();
             //the_modelview = new Matrix4();
-            ray = Vector3.Transform(ray, the_modelview);
-            ray_start_point = Vector3.Transform(ray_start_point, the_modelview);
+            ray = Vector3.Transform(ray, theModelView);
+            ray_start_point = Vector3.Transform(ray_start_point, theModelView);
 
             var pick = new Line3D();
             var raydir = -(ray - ray_start_point);
@@ -2569,14 +2570,14 @@ namespace ManicDigger
                 //if not picked any object, and mouse button is pressed, then walk to destination.
                 playerdestination = pick2[0].pos;
             }
-            BlockPosSide pick0;
-            if (pick2.Count > 0 &&
-                (((pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE
-                    &&
-                    IsTileEmptyForPhysics(
+            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE;
+            bool playertileempty = IsTileEmptyForPhysics(
                         (int)ToMapPos(player.playerposition).X,
                         (int)ToMapPos(player.playerposition).Y,
-                        (int)ToMapPos(player.playerposition).Z))
+                        (int)ToMapPos(player.playerposition).Z);
+            BlockPosSide pick0;
+            if (pick2.Count > 0 &&
+                ((pickdistanceok && playertileempty)
                 || overheadcamera)
                 )
             {
@@ -2790,7 +2791,7 @@ namespace ManicDigger
             else
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
-            the_modelview = camera;
+            m_theModelView = camera;
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
             {
@@ -4265,6 +4266,7 @@ namespace ManicDigger
 
             GL.End();
         }
+        int qsaz;
         private void DrawLinesAroundSelectedCube(Vector3 posx)
         {
             float pickcubeheight = 1;
