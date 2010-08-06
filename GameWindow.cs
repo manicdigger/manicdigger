@@ -2800,7 +2800,7 @@ namespace ManicDigger
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
-                    DrawCubeLines(pickcubepos);
+                    DrawLinesAroundSelectedCube(pickcubepos);
                 }
 
                 DrawCharacters((float)e.Time);
@@ -4340,61 +4340,70 @@ namespace ManicDigger
 
             GL.End();
         }
-        private void DrawCubeLines(Vector3 posx)
+        private void DrawLinesAroundSelectedCube(Vector3 posx)
         {
             float pickcubeheight = 1;
             if (posx != new Vector3(-1, -1, -1))
             {
                 pickcubeheight = getblockheight((int)posx.X, (int)posx.Z, (int)posx.Y);
             }
-            //Vector3 pos = new Vector3((int)posx.X, (int)posx.Y, (int)posx.Z);
             Vector3 pos = posx;
             pos += new Vector3(0.5f, pickcubeheight * 0.5f, 0.5f);
             GL.LineWidth(2);
             float size = 0.51f;
             GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.Begin(BeginMode.LineStrip);
+            GL.Begin(BeginMode.Lines);
             GL.Color3(Color.White);
-            //GL.Color3(Color.Silver);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+            });
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+            });
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+            });
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+            });
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+            });
+            DrawLineLoop(new[]{
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
+                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
+            });
 
-            //GL.Color3(Color.Honeydew);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-
-            //GL.Color3(Color.Moccasin);
-
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-
-            //GL.Color3(Color.IndianRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-
-            //GL.Color3(Color.PaleVioletRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-
-            //GL.Color3(Color.ForestGreen);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size);
-
-            GL.Color3(Color.White);//Color.Transparent);
-
+            GL.Color3(Color.White);
             GL.End();
+        }
+        void DrawLineLoop(Vector3[] points)
+        {
+            GL.Vertex3(points[0]);
+            GL.Vertex3(points[1]);
+            GL.Vertex3(points[1]);
+            GL.Vertex3(points[2]);
+            GL.Vertex3(points[2]);
+            GL.Vertex3(points[3]);
+            GL.Vertex3(points[3]);
+            GL.Vertex3(points[0]);
         }
         public static T Clamp<T>(T value, T min, T max)
              where T : System.IComparable<T>
