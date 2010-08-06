@@ -2153,6 +2153,7 @@ namespace ManicDigger
             bool wantsjump = GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space];
             int movedx = 0;
             int movedy = 0;
+            bool moveup = false;
             if (guistate == GuiState.Normal)
             {
                 if (GuiTyping == TypingState.None)
@@ -2195,7 +2196,7 @@ namespace ManicDigger
                 {
                     if (GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space])
                     {
-                        player.playerposition.Y += movespeed * (float)e.Time;
+                        moveup = true;
                     }
                 }
             }
@@ -2217,9 +2218,16 @@ namespace ManicDigger
             }
             else throw new Exception();
 
-            if (!(ENABLE_FREEMOVE || Swimming))
+            if (!(ENABLE_FREEMOVE))
             {
-                player.movedz += -gravity;//gravity
+                if (!Swimming)
+                {
+                    player.movedz += -gravity;//gravity
+                }
+                else
+                {
+                    player.movedz += -gravity * WaterGravityMultiplier; //more gravity because it's slippery.
+                }
             }
             bool enable_acceleration = true;
             float movespeednow = MoveSpeedNow();
@@ -2231,7 +2239,8 @@ namespace ManicDigger
             float acceleration2 = 2f;
             float acceleration3 = 700f;
             int? blockunderplayer = BlockUnderPlayer();
-            if (blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value))
+            //slippery walk on ice and when swimming
+            if ((blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value)) || Swimming)
             {
                 acceleration1 = 0.99f;
                 acceleration2 = 0.2f;
@@ -2243,6 +2252,8 @@ namespace ManicDigger
                 curspeed.X = MakeCloserToZero(curspeed.X, acceleration2 * (float)e.Time);
                 curspeed.Y = MakeCloserToZero(curspeed.Y, acceleration2 * (float)e.Time);
                 curspeed.Z = MakeCloserToZero(curspeed.Z, acceleration2 * (float)e.Time);
+                diff1.Y += moveup ? 2 * movespeednow * (float)e.Time : 0;
+                Console.WriteLine(diff1);
                 curspeed += Vector3.Multiply(diff1, acceleration3 * (float)e.Time);
                 if (curspeed.Length > movespeednow)
                 {
@@ -2285,7 +2296,7 @@ namespace ManicDigger
             Vector3 previousposition = player.playerposition;
             if (!ENABLE_NOCLIP)
             {
-                physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space];
+                physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space] && !Swimming;
                 player.playerposition = physics.WallSlide(player.playerposition, newposition);
             }
             else
@@ -2348,6 +2359,7 @@ namespace ManicDigger
             keyevent = null;
             keyeventup = null;
         }
+        private int WaterGravityMultiplier = 3;
         private float VectorAngleGet(Vector3 q)
         {
             return (float)(Math.Acos(q.X / q.Length) * Math.Sign(q.Z));
@@ -4266,7 +4278,6 @@ namespace ManicDigger
 
             GL.End();
         }
-        int qsaz;
         private void DrawLinesAroundSelectedCube(Vector3 posx)
         {
             float pickcubeheight = 1;
