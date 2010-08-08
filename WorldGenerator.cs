@@ -3,7 +3,17 @@ using System;
     {
         byte[, ,] GetChunk(int x, int y, int z, int chunksize);
     }
-    public class WorldGenerator
+    public class WorldGeneratorDummy : IWorldGenerator
+    {
+        #region IWorldGenerator Members
+        public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
+        {
+            byte[, ,] chunk = new byte[chunksize, chunksize, chunksize];
+            return chunk;
+        }
+        #endregion
+    }
+    public class WorldGenerator : IWorldGenerator
     {
         public WorldGenerator()
         {

@@ -107,7 +107,8 @@ namespace GameModeFortress
         {
             var gamedata = new GameDataTilesManicDigger();
             var clientgame = new GameFortress();
-            gamedata.CurrentSeason = clientgame;
+            ICurrentSeason currentseason = new CurrentSeasonDummy();
+            gamedata.CurrentSeason = currentseason;
             INetworkClient network;
             if (singleplayer)
             {
@@ -116,7 +117,7 @@ namespace GameModeFortress
             }
             else
             {
-                network = new NetworkClientMinecraft();
+                network = new NetworkClientFortress();
             }            
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
@@ -151,13 +152,13 @@ namespace GameModeFortress
             }
             else
             {
-                var n = (NetworkClientMinecraft)network;
+                var n = (NetworkClientFortress)network;
                 n.Map = w;
                 n.Clients = clientgame;
                 n.Chatlines = w;
                 n.Position = localplayerposition;
                 n.ENABLE_FORTRESS = true;
-                n.gameworld = clientgame;
+                //n.gameworld = clientgame;
             }
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
@@ -199,33 +200,34 @@ namespace GameModeFortress
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
-            w.ENABLE_FINITEINVENTORY = true;
-            clientgame.physics = physics;
+            w.ENABLE_FINITEINVENTORY = false;
+            //clientgame.physics = physics;
             clientgame.terrain = terrainDrawer;
             clientgame.viewport = w;
             clientgame.data = gamedata;
             clientgame.network = network;
-            clientgame.audio = audio;
-            clientgame.zombiedrawer = new CharacterDrawerMonsterCode() { };//zombie = true };
-            clientgame.getfile = getfile;
-            clientgame.the3d = w;
-            var gen = new WorldGeneratorSandbox();
-            clientgame.generator = File.ReadAllText("WorldGenerator.cs");
-            int seed = new Random().Next();
-            gen.Compile(clientgame.generator, seed);
-            clientgame.Seed = seed;
-            InfiniteMap map = new InfiniteMap() { gen = gen };
+            //clientgame.audio = audio;
+            //clientgame.zombiedrawer = new CharacterDrawerMonsterCode() { };//zombie = true };
+            //clientgame.getfile = getfile;
+            //clientgame.the3d = w;
+            //var gen = new WorldGeneratorSandbox();
+            //clientgame.generator = File.ReadAllText("WorldGenerator.cs");
+            //int seed = new Random().Next();
+            //gen.Compile(clientgame.generator, seed);
+            //clientgame.Seed = seed;
+            InfiniteMapChunked map = new InfiniteMapChunked() { generator = new WorldGeneratorDummy() };
+            map.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.map = map;
-            clientgame.worldgeneratorsandbox = gen;
-            clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile,
-                railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame } };
+            //clientgame.worldgeneratorsandbox = gen;
+            //clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile,
+            //    railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame } };
             w.game = clientgame;
             w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
             w.skinserver = "http://fragmer.net/md/skins/";
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
-            clientgame.physics = physics;
+            //clientgame.physics = physics;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = w;
@@ -242,7 +244,7 @@ namespace GameModeFortress
                     w, audio, gamedata, clientgame, network, mapstorage, getfile,
                     config3d, mapManipulator, terrainDrawer, the3d, exit,
                     localplayerposition, worldfeatures, physics, mapgenerator,
-                    internetgamefactory, blockdrawertorch, playerdrawer, gen,
+                    internetgamefactory, blockdrawertorch, playerdrawer,
                     map, w.login, shadowsfull, shadowssimple, terrainChunkDrawer);
             }
         }
@@ -253,7 +255,7 @@ namespace GameModeFortress
         }
         #endregion
         GameFortress clientgame;
-        InfiniteMap map;
+        InfiniteMapChunked map;
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
@@ -261,13 +263,13 @@ namespace GameModeFortress
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;
-            map.shadows = clientgame.shadows;
+            //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
         }
         void UseShadowsFull()
         {
             clientgame.shadows = shadowsfull;
-            map.shadows = clientgame.shadows;
+            //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
         }
         #region ICurrentShadows Members

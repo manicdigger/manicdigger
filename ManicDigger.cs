@@ -921,6 +921,7 @@ namespace ManicDigger
         //void LoadMap(byte[, ,] map);
         IMapStorage Map { get; }
         void SetTileAndUpdate(Vector3 pos, byte type);
+        void UpdateAllTiles();
     }
     public class MapDummy : ManicDigger.IMap
     {
@@ -932,6 +933,11 @@ namespace ManicDigger
         IMapStorage map = new MapStorage();
         #region IMap Members
         public IMapStorage Map { get { return map; } }
+        #endregion
+        #region IMap Members
+        public void UpdateAllTiles()
+        {
+        }
         #endregion
     }
     public interface ILocalPlayerPosition

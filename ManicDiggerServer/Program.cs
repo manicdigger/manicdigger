@@ -10,6 +10,7 @@ using System.Threading;
 using OpenTK;
 using System.Xml;
 using System.Diagnostics;
+using GameModeFortress;
 
 namespace ManicDiggerServer
 {
@@ -26,15 +27,16 @@ namespace ManicDiggerServer
     {
         [Inject]
         public Water water { get; set; }
+        //[Inject]
+        //public IGameWorld gameworld { get; set; }
         [Inject]
-        public IGameWorld gameworld { get; set; }
-        [Inject]
-        public IClients players { get; set; }
-        public IMapStorage map;
+        //.public IClients players { get; set; }
+        public InfiniteMapChunked map;
         bool ENABLE_FORTRESS = true;
         public void Start()
         {
             LoadConfig();
+            /*
             if (ENABLE_FORTRESS)
             {
                 ((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
@@ -44,32 +46,7 @@ namespace ManicDiggerServer
                     Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
                 }
             }
-            else
-            {
-                map = new MapStorage();
-                ((MapStorage)map).Map = new byte[256, 256, 64];
-                map.MapSizeX = 256;
-                map.MapSizeY = 256;
-                map.MapSizeZ = 64;
-                var gamedata = new ManicDigger.GameDataTilesMinecraft();
-                fCraft.MapGenerator Gen = new fCraft.MapGenerator();
-                manipulator = new MapManipulator() { getfile = new GetFilePathDummy(), mapgenerator = new MapGeneratorPlain() };
-                Gen.data = gamedata;
-                Gen.log = new fCraft.FLogDummy();
-                Gen.map = new MyFCraftMap() { data = gamedata, map = map, mapManipulator = manipulator };
-                Gen.rand = new GetRandomDummy();
-                //"mountains"
-                bool hollow = false;
-                if (File.Exists(manipulator.defaultminesave))
-                {
-                    manipulator.LoadMap(map, manipulator.defaultminesave);
-                    Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
-                }
-                else
-                {
-                    Gen.GenerateMap(new fCraft.MapGeneratorParameters(8, 1, 0.5, 0.45, 0.1, 0.5, hollow));
-                }
-            }
+            */
             Start(cfgport);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
@@ -83,7 +60,7 @@ namespace ManicDiggerServer
                 }
                 else
                 {
-                    File.WriteAllBytes(manipulator.defaultminesave, gameworld.SaveState());
+                    //File.WriteAllBytes(manipulator.defaultminesave, gameworld.SaveState());
                 }
                 Console.WriteLine("Game saved.");
                 lastsave = DateTime.Now;
@@ -247,6 +224,7 @@ namespace ManicDiggerServer
                 while (accumulator > dt)
                 {
                     simulationcurrentframe++;
+                    /*
                     gameworld.Tick();
                     if (simulationcurrentframe % SIMULATION_KEYFRAME_EVERY == 0)
                     {
@@ -255,6 +233,7 @@ namespace ManicDiggerServer
                             SendTick(k.Key);
                         }
                     }
+                    */
                     accumulator -= dt;
                 }
                 oldtime = currenttime;
@@ -395,12 +374,9 @@ namespace ManicDiggerServer
         }
         Vector3i DefaultSpawnPosition()
         {
-            if (ENABLE_FORTRESS)
-            {
-                return new Vector3i();
-            }
-            return new Vector3i((map.MapSizeX / 2) * 32, (map.MapSizeY / 2) * 32,
-                        MapUtil.blockheight(map, 0, map.MapSizeX / 2, map.MapSizeY / 2) * 32);
+            return new Vector3i((map.MapSizeX / 2) * 32,
+                        MapUtil.blockheight(map, 0, map.MapSizeX / 2, map.MapSizeY / 2) * 32,
+                        (map.MapSizeY / 2) * 32);
         }
         //returns bytes read.
         private int TryReadPacket(int clientid)
@@ -423,7 +399,6 @@ namespace ManicDiggerServer
                     byte unused1 = br.ReadByte();
 
                     SendServerIdentification(clientid);
-                    SendLevel(clientid);
                     foreach (var k in clients)
                     {
                         if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
@@ -434,33 +409,33 @@ namespace ManicDiggerServer
                     }
                     //todo verificationkey
                     clients[clientid].playername = username;
-                    players.Players[clientid] = new Player() { Name = username };
+                    Vector3i position = DefaultSpawnPosition();
+                    clients[clientid].positionxx = position.x;
+                    clients[clientid].positionyy = position.y;
+                    clients[clientid].positionzz = position.z;
+                    //.players.Players[clientid] = new Player() { Name = username };
                     //send new player spawn to all players
                     foreach (var k in clients)
                     {
                         var cc = k.Key == clientid ? byte.MaxValue : clientid;
-                        SendSpawnPlayer(k.Key, (byte)cc, username, DefaultSpawnPosition().x, DefaultSpawnPosition().y, DefaultSpawnPosition().z, 0, 0);
+                        SendSpawnPlayer(k.Key, (byte)cc, username, position.x, position.y, position.z, 0, 0);
                     }
                     //send all players spawn to new player
                     foreach (var k in clients)
                     {
-                        if (k.Key != clientid || ENABLE_FORTRESS)
+                        if (k.Key != clientid)// || ENABLE_FORTRESS)
                         {
                             SendSpawnPlayer(clientid, (byte)k.Key, k.Value.playername, 0, 0, 0, 0, 0);
                         }
-                    }
+                    }                    
                     SendMessageToAll(string.Format("Player {0} joins.", username));
+                    SendLevel(clientid);
                     break;
                 case (int)MinecraftClientPacketId.SetBlock:
                     totalread += 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
                     int x;
                     int y;
                     int z;
-                    if (ENABLE_FORTRESS)
-                    {
-                        throw new Exception();
-                    }
-                    else
                     {
                         x = NetworkHelper.ReadInt16(br);
                         y = NetworkHelper.ReadInt16(br);
@@ -490,21 +465,12 @@ namespace ManicDiggerServer
                     int xx;
                     int yy;
                     int zz;
-                    if (ENABLE_FORTRESS)
                     {
                         totalread += 1 + 3 * 4 + 1 + 1; if (c.received.Count < totalread) { return 0; }
                         playerid = br.ReadByte();
                         xx = NetworkHelper.ReadInt32(br);
                         yy = NetworkHelper.ReadInt32(br);
                         zz = NetworkHelper.ReadInt32(br);
-                    }
-                    else
-                    {
-                        totalread += 1 + 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
-                        playerid = br.ReadByte();
-                        xx = NetworkHelper.ReadInt16(br);
-                        yy = NetworkHelper.ReadInt16(br);
-                        zz = NetworkHelper.ReadInt16(br);
                     }
                     byte heading = br.ReadByte();
                     byte pitch = br.ReadByte();
@@ -528,6 +494,7 @@ namespace ManicDiggerServer
                     //todo sanitize text
                     SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, message));
                     break;
+                    /*
                 case (int)MinecraftClientPacketId.ExtendedPacketCommand:
                     totalread += 4; if (c.received.Count < totalread) { return 0; }
                     int length = NetworkHelper.ReadInt32(br);
@@ -542,6 +509,7 @@ namespace ManicDiggerServer
                         }
                     }
                     break;
+                    */
                 default:
                     throw new Exception();
             }
@@ -595,17 +563,10 @@ namespace ManicDiggerServer
             bw.Write((byte)MinecraftServerPacketId.SpawnPlayer);
             bw.Write((byte)playerid);
             NetworkHelper.WriteString64(bw, playername);
-            if (ENABLE_FORTRESS)
             {
                 NetworkHelper.WriteInt32(bw, (int)x);
                 NetworkHelper.WriteInt32(bw, (int)y);
                 NetworkHelper.WriteInt32(bw, (int)z);
-            }
-            else
-            {
-                NetworkHelper.WriteInt16(bw, (short)x);
-                NetworkHelper.WriteInt16(bw, (short)y);
-                NetworkHelper.WriteInt16(bw, (short)z);
             }
             bw.Write((byte)heading);
             bw.Write((byte)pitch);
@@ -616,11 +577,6 @@ namespace ManicDiggerServer
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.SetBlock);
-            if (ENABLE_FORTRESS)
-            {
-                throw new Exception();
-            }
-            else
             {
                 NetworkHelper.WriteInt16(bw, (short)x);
                 NetworkHelper.WriteInt16(bw, (short)z);
@@ -699,14 +655,52 @@ namespace ManicDiggerServer
                 KillPlayer(clientid);
             }
         }
+        int drawdistance = 128;
+        public int chunksize = 32;
+        int chunkdrawdistance { get { return drawdistance / chunksize; } }
+        IEnumerable<Vector3i> ChunksAroundPlayer(int clientid)
+        {
+            Vector3i playerpos = new Vector3i(clients[clientid].positionxx / 32,
+                            clients[clientid].positionzz / 32,
+                            clients[clientid].positionyy / 32);
+            playerpos.x = (playerpos.x / chunksize) * chunksize;
+            playerpos.y = (playerpos.y / chunksize) * chunksize;
+            for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
+            {
+                for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
+                {
+                    for (int z = 0; z < map.MapSizeZ / chunksize; z++)
+                    {
+                        yield return new Vector3i(playerpos.x + x*chunksize, playerpos.y + y*chunksize, z*chunksize);
+                    }
+                }
+            }
+        }
+        byte[] CompressChunk(byte[, ,] chunk)
+        {
+            MemoryStream ms = new MemoryStream();
+            BinaryWriter bw = new BinaryWriter(ms);
+            for (int z = 0; z <= chunk.GetUpperBound(2); z++)
+            {
+                for (int y = 0; y <= chunk.GetUpperBound(1); y++)
+                {
+                    for (int x = 0; x <= chunk.GetUpperBound(0); x++)
+                    {
+                        bw.Write((byte)chunk[x, y, z]);
+                    }
+                }
+            }
+            byte[] compressedchunk = GzipCompression.Compress(ms.ToArray());
+            return compressedchunk;
+        }
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
             byte[] compressedmap;
             if (!ENABLE_FORTRESS)
             {
+                MemoryStream ms = new MemoryStream();
+                BinaryWriter bw = new BinaryWriter(ms);
                 NetworkHelper.WriteInt32(bw, map.MapSizeX * map.MapSizeY * map.MapSizeZ);
                 for (int z = 0; z < map.MapSizeZ; z++)
                 {
@@ -722,7 +716,19 @@ namespace ManicDiggerServer
             }
             else
             {
-                compressedmap = gameworld.SaveState();
+                MemoryStream ms = new MemoryStream();
+                BinaryWriter bw = new BinaryWriter(ms);
+                foreach(Vector3i v in ChunksAroundPlayer(clientid))
+                {
+                    if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
+                    {
+                        byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
+                        byte[] compressedchunk = CompressChunk(chunk);
+                        byte[] b = PacketsFortress.ServerChunkWrite(v.x, v.y, v.z, chunksize, chunksize, chunksize, compressedchunk.Length, compressedchunk);
+                        bw.Write(b);
+                    }
+                }
+                compressedmap = ms.ToArray();
             }
             MemoryStream ms2 = new MemoryStream(compressedmap);
             byte[] buf = new byte[levelchunksize];
@@ -737,17 +743,40 @@ namespace ManicDiggerServer
                 if (read < levelchunksize)
                 {
                     byte[] buf2 = new byte[levelchunksize];
-                    for (int i = 0; i < buf.Length; i++)
+                    for (int i = 0; i < read; i++)
                     {
                         buf2[i] = buf[i];
                     }
                     buf = buf2;
                 }
-                SendLevelDataChunk(clientid, buf, (int)(((float)totalread / compressedmap.Length) * 100));
+                SendLevelDataChunk(clientid, buf, read, (int)(((float)totalread / compressedmap.Length) * 100));
                 totalread += read;
+                if (totalread >= ms2.Length) { break; }
                 //Thread.Sleep(100);
             }
             SendLevelFinalize(clientid);
+        }
+        byte[, ,] GenerateChunk(int x, int y, int z, int chunksize)
+        {
+            byte[, ,] chunk = new byte[chunksize, chunksize, chunksize];
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        if (z + zz < 32)
+                        {
+                            chunk[xx, yy, zz] = (int)TileTypeMinecraft.Grass;
+                        }
+                        else
+                        {
+                            chunk[xx, yy, zz] = 0;
+                        }
+                    }
+                }
+            }
+            return chunk;
         }
         int levelchunksize = 1024;
         private void SendLevelInitialize(int clientid)
@@ -757,12 +786,12 @@ namespace ManicDiggerServer
             bw.Write((byte)MinecraftServerPacketId.LevelInitialize);
             SendPacket(clientid, ms.ToArray());
         }
-        private void SendLevelDataChunk(int clientid, byte[] chunk, int percentcomplete)
+        private void SendLevelDataChunk(int clientid, byte[] chunk, int chunklength, int percentcomplete)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
             bw.Write((byte)MinecraftServerPacketId.LevelDataChunk);
-            NetworkHelper.WriteInt16(bw, (short)chunk.Length);
+            NetworkHelper.WriteInt16(bw, (short)chunklength);
             bw.Write((byte[])chunk);
             bw.Write((byte)percentcomplete);
             SendPacket(clientid, ms.ToArray());
@@ -777,7 +806,7 @@ namespace ManicDiggerServer
                 NetworkHelper.WriteInt16(bw, (short)256);
                 NetworkHelper.WriteInt16(bw, (short)256);
                 NetworkHelper.WriteInt16(bw, (short)64);
-                NetworkHelper.WriteInt32(bw, (int)simulationcurrentframe);
+                //NetworkHelper.WriteInt32(bw, (int)simulationcurrentframe);
             }
             else
             {
@@ -810,6 +839,7 @@ namespace ManicDiggerServer
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
+        /*
         void SendTick(int clientid)
         {
             MemoryStream ms = new MemoryStream();
@@ -829,6 +859,7 @@ namespace ManicDiggerServer
             }
             SendPacket(clientid, ms.ToArray());
         }
+        */
         class Client
         {
             public Socket socket;
@@ -839,6 +870,7 @@ namespace ManicDiggerServer
             public int positionzz;
             public int positionheading;
             public int positionpitch;
+            public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
@@ -849,7 +881,8 @@ namespace ManicDiggerServer
             Server s = new Server();
             s.water = new Water() { data = new GameDataTilesMinecraft() };
             //s.map = server.map;
-
+            
+            /*
             var g = new GameModeFortress.GameFortress();
             var data = new GameModeFortress.GameDataTilesManicDigger();
             data.CurrentSeason = g;
@@ -857,13 +890,13 @@ namespace ManicDiggerServer
             g.data = data;
             var gen = new GameModeFortress.WorldGeneratorSandbox();
             g.map = new GameModeFortress.InfiniteMap() { gen = gen };
-            g.worldgeneratorsandbox = gen;
+            //g.worldgeneratorsandbox = gen;
             g.network = new NetworkClientDummy();
-            g.physics = new CharacterPhysics() { data = data, map = g.map };
+            //g.physics = new CharacterPhysics() { data = data, map = g.map };
             g.terrain = new TerrainDrawerDummy();
             g.viewport = new ViewportDummy();
-            g.the3d = new The3dDummy();
-            g.getfile = new GetFilePathDummy();
+            //g.the3d = new The3dDummy();
+            //g.getfile = new GetFilePathDummy();
             s.gameworld = g;
             g.generator = File.ReadAllText("WorldGenerator.cs");
             int seed = new Random().Next();
@@ -874,11 +907,18 @@ namespace ManicDiggerServer
             g.shadows = shadows;
             g.map.shadows = shadows;
             g.minecartdrawer = new GameModeFortress.MinecartDrawerDummy();
+            */
+            var map = new GameModeFortress.InfiniteMapChunked();
+            map.chunksize = 32;
+            map.generator = new WorldGenerator();
+            s.chunksize = 32;
+            map.Reset(10000, 10000, 128);
+            s.map = map;
 
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
-                    s, g, data, gen, shadows);
+                    s);
             }
 
             s.Start();

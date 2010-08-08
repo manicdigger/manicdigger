@@ -4493,6 +4493,12 @@ namespace ManicDigger
         List<CraftingRecipe> craftingrecipes;
         List<int> craftingblocks;
         Action<int?> craftingrecipeselected;
+        #region IMap Members
+        public void UpdateAllTiles()
+        {
+            terrain.UpdateAllTiles();
+        }
+        #endregion
     }
     public class Ingredient
     {
