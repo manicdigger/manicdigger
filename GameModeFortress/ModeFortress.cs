@@ -97,6 +97,12 @@ namespace GameModeFortress
             shadows.OnSetBlock(x, y, z);
         }
         #endregion
+        #region IMapStorage Members
+        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        {
+            map.SetChunk(x, y, z, chunk);
+        }
+        #endregion
         //float waterlevel = 32;
         #region IMapStorage Members
         //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }

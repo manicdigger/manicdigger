@@ -55,5 +55,23 @@ namespace GameModeFortress
             MapSizeZ = sizez;
             chunks = new byte[sizex / chunksize, sizey / chunksize, sizez / chunksize][, ,];
         }
+        #region IMapStorage Members
+        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        {
+            int chunksizex = chunk.GetUpperBound(0) + 1;
+            int chunksizey = chunk.GetUpperBound(1) + 1;
+            int chunksizez = chunk.GetUpperBound(2) + 1;
+            for (int zz = 0; zz < chunksizez; zz++)
+            {
+                for (int yy = 0; yy < chunksizey; yy++)
+                {
+                    for (int xx = 0; xx < chunksizex; xx++)
+                    {
+                        SetBlock(x + xx, y + yy, z + zz, chunk[xx, yy, zz]);
+                    }
+                }
+            }
+        }
+        #endregion
     }
 }

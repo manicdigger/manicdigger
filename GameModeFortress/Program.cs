@@ -63,12 +63,6 @@ namespace GameModeFortress
         public IGameWorld gameworld;
         public IClients players;
         public ILocalPlayerPosition localplayerposition;
-        #region INetworkClient Members
-        public void SendCommand(byte[] cmd)
-        {
-            gameworld.DoCommand(cmd, 0);
-        }
-        #endregion
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }

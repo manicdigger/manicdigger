@@ -7,50 +7,10 @@ using System.Net;
 using System.Net.Sockets;
 using OpenTK;
 using System.Text.RegularExpressions;
+using ProtoBuf;
 
 namespace GameModeFortress
 {
-    public class PacketsFortress
-    {
-        const int packetidMapChunk = 51;
-        public static byte[] ServerChunkWrite(int x, int y, int z, int sizex, int sizey, int sizez, int chunksize, byte[] compressedchunk)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)packetidMapChunk);
-            NetworkHelper.WriteInt32(bw, x);
-            NetworkHelper.WriteInt16(bw, (short)y);
-            NetworkHelper.WriteInt32(bw, z);
-            bw.Write((byte)sizex);
-            bw.Write((byte)sizey);
-            bw.Write((byte)sizez);
-            NetworkHelper.WriteInt32(bw, chunksize);
-            bw.Write((byte[])compressedchunk);
-            return ms.ToArray();
-        }
-        public static int ServerChunkRead(byte[] buffer, int index, out int x, out int y, out int z,
-            out int sizex, out int sizey, out int sizez,
-            out int compressedchunksize, out byte[] compressedchunk)
-        {
-            x = y = z = sizex = sizey = sizez = compressedchunksize = 0;
-            int totalread = 4 + 2 + 4 + 1 + 1 + 1 + 4;
-            compressedchunk = null;
-            if (buffer.Length < totalread) { return -1; }
-            MemoryStream ms = new MemoryStream(buffer, index, buffer.Length - index);
-            BinaryReader br = new BinaryReader(ms);
-            x = NetworkHelper.ReadInt32(br);
-            y = NetworkHelper.ReadInt16(br);
-            z = NetworkHelper.ReadInt32(br);
-            sizex = br.ReadByte();
-            sizey = br.ReadByte();
-            sizez = br.ReadByte();
-            compressedchunksize = NetworkHelper.ReadInt32(br);
-            totalread += compressedchunksize;
-            if (buffer.Length < totalread) { return -1; }
-            compressedchunk = br.ReadBytes(compressedchunksize);
-            return totalread;
-        }
-    }
     public class NetworkClientFortress : INetworkClient
     {
         [Inject]
@@ -73,16 +33,15 @@ namespace GameModeFortress
             byte[] n = CreateLoginPacket(username, auth);
             main.Send(n);
         }
-        private static byte[] CreateLoginPacket(string username, string verificationKey)
+        private byte[] CreateLoginPacket(string username, string verificationKey)
         {
-            MemoryStream n = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(n);
-            bw.Write((byte)0);//Packet ID 
-            bw.Write((byte)0x07);//Protocol version
-            bw.Write(NetworkHelper.StringToBytes(username));//Username
-            bw.Write(NetworkHelper.StringToBytes(verificationKey));//Verification key
-            bw.Write((byte)0);//Unused
-            return n.ToArray();
+            PacketClientIdentification p = new PacketClientIdentification()
+            {
+                Username = username,
+                MdProtocolVersion = GameVersion.Version,
+                VerificationKey = verificationKey
+            };
+            return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
         }
         IPEndPoint iep;
         Socket main;
@@ -102,34 +61,27 @@ namespace GameModeFortress
         DateTime lastpositionsent;
         public void SendSetBlock(Vector3 position, BlockSetMode mode, int type)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftClientPacketId.SetBlock);
+            PacketClientSetBlock p = new PacketClientSetBlock()
             {
-                NetworkHelper.WriteInt16(bw, (short)(position.X));
-                NetworkHelper.WriteInt16(bw, (short)(position.Z));
-                NetworkHelper.WriteInt16(bw, (short)position.Y);
-            }
-            bw.Write((byte)(mode == BlockSetMode.Create ? 1 : 0));
-            bw.Write((byte)type);
-            SendPacket(ms.ToArray());
-            //tosend.Add(ms.ToArray());
-            //Console.WriteLine(this.position.LocalPlayerPosition);
-            //Console.WriteLine("p" + position);
-            //Console.WriteLine("player:" + lastsentposition + ", build:" + position
-            //    + ", block:" + type + ", mode:" + Enum.GetName(typeof(BlockSetMode), mode));
+                X = (int)position.X,
+                Y = (int)position.Z,
+                Z = (int)position.Y,
+                Mode = (mode == BlockSetMode.Create ? (byte)1 : (byte)0),
+                BlockType = type
+            };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
         }
         public void SendChat(string s)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftClientPacketId.Message);
-            bw.Write((byte)255);//unused
-            NetworkHelper.WriteString64(bw, s);
-            SendPacket(ms.ToArray());
-            //tosend.Add(ms.ToArray());
+            PacketClientMessage p = new PacketClientMessage() {  Message = s };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Message, Message = p }));
         }
-        //List<byte[]> tosend = new List<byte[]>();
+        private byte[] Serialize(PacketClient p)
+        {
+            MemoryStream ms = new MemoryStream();
+            Serializer.SerializeWithLengthPrefix(ms, p, PrefixStyle.Base128);
+            return ms.ToArray();
+        }
         /// <summary>
         /// This function should be called in program main loop.
         /// It exits immediately.
@@ -188,12 +140,6 @@ namespace GameModeFortress
             {
                 lastpositionsent = DateTime.Now;
                 SendPosition(Position.LocalPlayerPosition, Position.LocalPlayerOrientation);
-                //foreach (byte[] b in tosend)
-                //{
-                //    Console.WriteLine("qp" + position.LocalPlayerPosition);
-                //    SendPacket(b);
-                //}
-                //tosend.Clear();
             }
         }
         public int mapreceivedsizex;
@@ -202,25 +148,16 @@ namespace GameModeFortress
         Vector3 lastsentposition;
         public void SendPosition(Vector3 position, Vector3 orientation)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftClientPacketId.PositionandOrientation);
-            bw.Write((byte)255);//player id, self
-            if (ENABLE_FORTRESS)
+            PacketClientPositionAndOrientation p = new PacketClientPositionAndOrientation()
             {
-                NetworkHelper.WriteInt32(bw, (int)((position.X) * 32));//gfd1
-                NetworkHelper.WriteInt32(bw, (int)((position.Y + CharacterPhysics.characterheight) * 32));
-                NetworkHelper.WriteInt32(bw, (int)(position.Z * 32));
-            }
-            else
-            {
-                NetworkHelper.WriteInt16(bw, (short)((position.X) * 32));//gfd1
-                NetworkHelper.WriteInt16(bw, (short)((position.Y + CharacterPhysics.characterheight) * 32));
-                NetworkHelper.WriteInt16(bw, (short)(position.Z * 32));
-            }
-            bw.Write(HeadingByte(orientation));
-            bw.Write(PitchByte(orientation));
-            SendPacket(ms.ToArray());
+                PlayerId = 255,//self
+                X = (int)((position.X) * 32),
+                Y = (int)((position.Y + CharacterPhysics.characterheight) * 32),
+                Z = (int)(position.Z * 32),
+                Heading = HeadingByte(orientation),
+                Pitch = PitchByte(orientation),
+            };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.PositionandOrientation, PositionAndOrientation = p }));
             lastsentposition = position;
         }
         public static byte HeadingByte(Vector3 orientation)
@@ -241,134 +178,69 @@ namespace GameModeFortress
         public int LocalPlayerId = 255;
         private int TryReadPacket()
         {
-            BinaryReader br = new BinaryReader(new MemoryStream(received.ToArray()));
+            MemoryStream ms = new MemoryStream(received.ToArray());
             if (received.Count == 0)
             {
                 return 0;
             }
-            var packetId = (MinecraftServerPacketId)br.ReadByte();
-            int totalread = 1;
-            if (packetId != MinecraftServerPacketId.PositionandOrientationUpdate
-                 && packetId != MinecraftServerPacketId.PositionUpdate
-                && packetId != MinecraftServerPacketId.OrientationUpdate
-                && packetId != MinecraftServerPacketId.PlayerTeleport
-                && packetId != MinecraftServerPacketId.ExtendedPacketTick)
+            int packetLength;
+            int lengthPrefixLength;
+            bool packetLengthOk = Serializer.TryReadLengthPrefix(ms, PrefixStyle.Base128, out packetLength);
+            lengthPrefixLength = (int)ms.Position;
+            if (!packetLengthOk || lengthPrefixLength + packetLength > ms.Length)
             {
-                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packetId));
+                return 0;
             }
-            switch (packetId)
+            ms.Position = 0;
+            PacketServer packet = Serializer.DeserializeWithLengthPrefix<PacketServer>(ms, PrefixStyle.Base128);
+            if (packet.PacketId != ServerPacketId.PositionandOrientationUpdate
+                 && packet.PacketId != ServerPacketId.PositionUpdate
+                && packet.PacketId != ServerPacketId.OrientationUpdate
+                && packet.PacketId != ServerPacketId.PlayerTeleport
+                && packet.PacketId != ServerPacketId.ExtendedPacketTick)
             {
-                case MinecraftServerPacketId.ServerIdentification:
+                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
+            }
+            switch (packet.PacketId)
+            {
+                case ServerPacketId.ServerIdentification:
                     {
-                        totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (received.Count < totalread) { return 0; }
-                        if (ENABLE_FORTRESS)
-                        {
-                            totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
-                        }
-                        ServerPlayerIdentification p = new ServerPlayerIdentification();
-                        p.ProtocolVersion = br.ReadByte();
                         string invalidversionstr = "Invalid game version. Local: {0}, Server: {1}";
-                        if (!ENABLE_FORTRESS)
                         {
-                            if (!(p.ProtocolVersion == 7 || p.ProtocolVersion == 6))
-                            {
-                                throw new Exception(string.Format(invalidversionstr,
-                                    "Minecraft 7", "Minecraft " + p.ProtocolVersion));
-                            }
-                        }
-                        else
-                        {
-                            string servergameversion = NetworkHelper.ReadString64(br);
-                            if (p.ProtocolVersion != 200)
-                            {
-                                servergameversion = "Minecraft " + p.ProtocolVersion;
-                            }
+                            string servergameversion = packet.Identification.MdProtocolVersion;
                             if (servergameversion != GameVersion.Version)
                             {
                                 throw new Exception(string.Format(invalidversionstr, GameVersion.Version, servergameversion));
                             }
                         }
-                        p.ServerName = NetworkHelper.ReadString64(br);
-                        p.ServerMotd = NetworkHelper.ReadString64(br);
-                        p.UserType = br.ReadByte();
-                        //connected = true;
-                        this.serverName = p.ServerName;
-                        this.ServerMotd = p.ServerMotd;
+                        this.serverName = packet.Identification.ServerName;
+                        this.ServerMotd = packet.Identification.ServerMotd;
                         ChatLog("---Connected---");
                     }
                     break;
-                case MinecraftServerPacketId.Ping:
+                case ServerPacketId.Ping:
                     {
                     }
                     break;
-                case MinecraftServerPacketId.LevelInitialize:
+                case ServerPacketId.LevelInitialize:
                     {
                         receivedMapStream = new MemoryStream();
                         InvokeMapLoadingProgress(0, 0);
                     }
                     break;
-                case MinecraftServerPacketId.LevelDataChunk:
+                case ServerPacketId.LevelDataChunk:
                     {
-                        totalread += 2 + 1024 + 1; if (received.Count < totalread) { return 0; }
-                        int chunkLength = NetworkHelper.ReadInt16(br);
-                        byte[] chunkData = br.ReadBytes(1024);
                         BinaryWriter bw1 = new BinaryWriter(receivedMapStream);
-                        byte[] chunkDataWithoutPadding = new byte[chunkLength];
-                        for (int i = 0; i < chunkLength; i++)
-                        {
-                            chunkDataWithoutPadding[i] = chunkData[i];
-                        }
-                        bw1.Write(chunkDataWithoutPadding);
-                        MapLoadingPercentComplete = br.ReadByte();
+                        bw1.Write(packet.LevelDataChunk.Chunk);
+                        MapLoadingPercentComplete = packet.LevelDataChunk.PercentComplete;
                         InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)receivedMapStream.Length);
                     }
                     break;
-                case MinecraftServerPacketId.LevelFinalize:
+                case ServerPacketId.LevelFinalize:
                     {
-                        totalread += 2 + 2 + 2; if (received.Count < totalread) { return 0; }
-                        //if (ENABLE_FORTRESS)
-                        //{
-                        //    totalread += 4; if (received.Count < totalread) { return 0; } //simulationstartframe
-                        //}
-                        mapreceivedsizex = NetworkHelper.ReadInt16(br);
-                        mapreceivedsizez = NetworkHelper.ReadInt16(br);
-                        mapreceivedsizey = NetworkHelper.ReadInt16(br);
                         receivedMapStream.Seek(0, SeekOrigin.Begin);
-                        if (!ENABLE_FORTRESS)
                         {
-                            MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
-                            if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
-                                (decompressed.Length % 1024))
-                            {
-                                //throw new Exception();
-                                Console.WriteLine("warning: invalid map data size");
-                            }
-                            byte[, ,] receivedmap = new byte[mapreceivedsizex, mapreceivedsizey, mapreceivedsizez];
-                            {
-                                BinaryReader br2 = new BinaryReader(decompressed);
-                                int size = NetworkHelper.ReadInt32(br2);
-                                for (int z = 0; z < mapreceivedsizez; z++)
-                                {
-                                    for (int y = 0; y < mapreceivedsizey; y++)
-                                    {
-                                        for (int x = 0; x < mapreceivedsizex; x++)
-                                        {
-                                            receivedmap[x, y, z] = br2.ReadByte();
-                                        }
-                                    }
-                                }
-                            }
-                            Map.Map.UseMap(receivedmap);
-                            Map.Map.MapSizeX = receivedmap.GetUpperBound(0) + 1;
-                            Map.Map.MapSizeY = receivedmap.GetUpperBound(1) + 1;
-                            Map.Map.MapSizeZ = receivedmap.GetUpperBound(2) + 1;
-                            Console.WriteLine("Game loaded successfully.");
-                        }
-                        else
-                        {
-                            //int simulationstartframe = NetworkHelper.ReadInt32(br);
-                            //gameworld.LoadState(receivedMapStream.ToArray(), simulationstartframe);
-                            LoadChunks(receivedMapStream.ToArray());
+                            //LoadChunks(receivedMapStream.ToArray());
                             Map.UpdateAllTiles();
                         }
                         if (MapLoaded != null)
@@ -378,114 +250,39 @@ namespace GameModeFortress
                         loadedtime = DateTime.Now;
                     }
                     break;
-                case MinecraftServerPacketId.SetBlock:
+                case ServerPacketId.SetBlock:
                     {
-                        int x;
-                        int y;
-                        int z;
-                        {
-                            totalread += 2 + 2 + 2 + 1; if (received.Count < totalread) { return 0; }
-                            x = NetworkHelper.ReadInt16(br);
-                            z = NetworkHelper.ReadInt16(br);
-                            y = NetworkHelper.ReadInt16(br);
-                        }
-                        byte type = br.ReadByte();
+                        int x = packet.SetBlock.X;
+                        int y = packet.SetBlock.Y;
+                        int z = packet.SetBlock.Z;
+                        int type = packet.SetBlock.BlockType;
                         try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
                         catch { Console.WriteLine("Cannot update tile!"); }
                     }
                     break;
-                case MinecraftServerPacketId.SpawnPlayer:
+                case ServerPacketId.SpawnPlayer:
                     {
-                        if (ENABLE_FORTRESS)
-                        {
-                            totalread += 1 + NetworkHelper.StringLength + 4 + 4 + 4 + 1 + 1; if (received.Count < totalread) { return 0; }
-                        }
-                        else
-                        {
-                            totalread += 1 + NetworkHelper.StringLength + 2 + 2 + 2 + 1 + 1; if (received.Count < totalread) { return 0; }
-                        }
-                        byte playerid = br.ReadByte();
-                        string playername = NetworkHelper.ReadString64(br);
-                        /*
-                        if (ENABLE_FORTRESS && playerid == 255)
-                        {
-                            spawned = true;
-                            break;
-                        }
-                        */
+                        int playerid = packet.SpawnPlayer.PlayerId;
+                        string playername = packet.SpawnPlayer.PlayerName;
                         connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                        if (Clients.Players.ContainsKey(playerid))
-                        {
-                            //throw new Exception();
-                        }
                         Clients.Players[playerid] = new Player();
                         Clients.Players[playerid].Name = playername;
-                        //if (ENABLE_FORTRESS && ((DateTime.Now - loadedtime).TotalSeconds > 10))
-                        //{
-                        //    ReadAndUpdatePlayerPosition(br, playerid);
-                        //}
-                        //if (!ENABLE_FORTRESS)
-                        //{
-                            ReadAndUpdatePlayerPosition(br, playerid);
-                        //}
+                        ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                         if (playerid == 255)
                         {
                             spawned = true;
                         }
                     }
                     break;
-                case MinecraftServerPacketId.PlayerTeleport:
+                case ServerPacketId.PlayerTeleport:
                     {
-                        if (ENABLE_FORTRESS)
-                        {
-                            totalread += 1 + (4 + 4 + 4) + 1 + 1; if (received.Count < totalread) { return 0; }
-                        }
-                        else
-                        {
-                            totalread += 1 + (2 + 2 + 2) + 1 + 1; if (received.Count < totalread) { return 0; }
-                        }
-                        byte playerid = br.ReadByte();
-                        ReadAndUpdatePlayerPosition(br, playerid);
+                        int playerid = packet.PositionAndOrientation.PlayerId;
+                        ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
                     }
                     break;
-                case MinecraftServerPacketId.PositionandOrientationUpdate:
+                case ServerPacketId.DespawnPlayer:
                     {
-                        totalread += 1 + (1 + 1 + 1) + 1 + 1; if (received.Count < totalread) { return 0; }
-                        byte playerid = br.ReadByte();
-                        float x = (float)br.ReadSByte() / 32;
-                        float y = (float)br.ReadSByte() / 32;
-                        float z = (float)br.ReadSByte() / 32;
-                        byte heading = br.ReadByte();
-                        byte pitch = br.ReadByte();
-                        Vector3 v = new Vector3(x, y, z);
-                        UpdatePositionDiff(playerid, v);
-                    }
-                    break;
-                case MinecraftServerPacketId.PositionUpdate:
-                    {
-                        totalread += 1 + 1 + 1 + 1; if (received.Count < totalread) { return 0; }
-                        byte playerid = br.ReadByte();
-                        float x = (float)br.ReadSByte() / 32;
-                        float y = (float)br.ReadSByte() / 32;
-                        float z = (float)br.ReadSByte() / 32;
-                        Vector3 v = new Vector3(x, y, z);
-                        UpdatePositionDiff(playerid, v);
-                    }
-                    break;
-                case MinecraftServerPacketId.OrientationUpdate:
-                    {
-                        totalread += 1 + 1 + 1; if (received.Count < totalread) { return 0; }
-                        byte playerid = br.ReadByte();
-                        byte heading = br.ReadByte();
-                        byte pitch = br.ReadByte();
-                        Clients.Players[playerid].Heading = heading;
-                        Clients.Players[playerid].Pitch = pitch;
-                    }
-                    break;
-                case MinecraftServerPacketId.DespawnPlayer:
-                    {
-                        totalread += 1; if (received.Count < totalread) { return 0; }
-                        byte playerid = br.ReadByte();
+                        int playerid = packet.DespawnPlayer.PlayerId;
                         for (int i = 0; i < connectedplayers.Count; i++)
                         {
                             if (connectedplayers[i].id == playerid)
@@ -496,105 +293,44 @@ namespace GameModeFortress
                         Clients.Players.Remove(playerid);
                     }
                     break;
-                case MinecraftServerPacketId.Message:
+                case ServerPacketId.Message:
                     {
-                        totalread += 1 + NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
-                        byte unused = br.ReadByte();
-                        string message = NetworkHelper.ReadString64(br);
-                        Chatlines.AddChatline(message);
-                        ChatLog(message);
+                        Chatlines.AddChatline(packet.Message.Message);
+                        ChatLog(packet.Message.Message);
                     }
                     break;
-                case MinecraftServerPacketId.DisconnectPlayer:
+                case ServerPacketId.DisconnectPlayer:
                     {
-                        totalread += NetworkHelper.StringLength; if (received.Count < totalread) { return 0; }
-                        string disconnectReason = NetworkHelper.ReadString64(br);
-                        throw new Exception(disconnectReason);
+                        throw new Exception(packet.DisconnectPlayer.DisconnectReason);
                     }
-                    /*
-                case MinecraftServerPacketId.ExtendedPacketCommand:
+                case ServerPacketId.Chunk:
                     {
-                        totalread += 1 + 4 + 4; if (received.Count < totalread) { return 0; }
-                        int playerid = br.ReadByte();
-                        int cmdframe = NetworkHelper.ReadInt32(br);
-                        int length = NetworkHelper.ReadInt32(br);
-                        totalread += length; if (received.Count < totalread) { return 0; }
-                        byte[] cmd = br.ReadBytes(length);
-                        gameworld.EnqueueCommand(playerid, cmdframe, cmd);
-                    }
-                    break;
-                case MinecraftServerPacketId.ExtendedPacketTick:
-                    {
-                        totalread += 4 + 4; if (received.Count < totalread) { return 0; }
-                        int allowedframe = NetworkHelper.ReadInt32(br);
-                        int hash = NetworkHelper.ReadInt32(br);
-
-                        totalread += 1; if (received.Count < totalread) { return 0; }
-                        int clientscount = br.ReadByte();
-                        totalread += clientscount * (1 + (3 * 4) + 1 + 1); if (received.Count < totalread) { return 0; }
-                        Dictionary<int, PlayerPosition> playerpositions = new Dictionary<int, PlayerPosition>();
-                        for (int i = 0; i < clientscount; i++)
+                        var p = packet.Chunk;
+                        byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
+                        byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
                         {
-                            byte playerid = br.ReadByte();
-                            //copied
-                            float x = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-                            float y = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-                            float z = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-                            byte heading = br.ReadByte();
-                            byte pitch = br.ReadByte();
-                            playerpositions[playerid] = new PlayerPosition() { position = new Vector3(x, y, z), heading = heading, pitch = pitch };
-                        }
-                        gameworld.KeyFrame(allowedframe, hash, playerpositions);
-                    }
-                    break;
-                    */
-                default:
-                    {
-                        throw new Exception("Invalid packet id: " + packetId);
-                    }
-            }
-            return totalread;
-        }
-        private void LoadChunks(byte[] p)
-        {
-            int i = 0;
-            for (; ; )
-            {
-                if (i >= p.Length) { break; }
-                i += 1;//packet id
-                int x, y, z, sizex, sizey, sizez, compressedchunksize;
-                byte[] compressedchunk;
-                int read = PacketsFortress.ServerChunkRead(p, i, out x, out y, out z,
-                    out sizex, out sizey, out sizez,
-                    out compressedchunksize, out compressedchunk);
-                if (read == -1) { throw new Exception("LoadChunks"); }
-                i += read;
-                byte[] decompressedchunk = GzipCompression.Decompress(compressedchunk);
-                byte[, ,] receivedchunk = new byte[sizex, sizey, sizez];
-                {
-                    BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
-                    for (int zz = 0; zz < sizez; zz++)
-                    {
-                        for (int yy = 0; yy < sizey; yy++)
-                        {
-                            for (int xx = 0; xx < sizex; xx++)
+                            BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
+                            for (int zz = 0; zz < p.SizeZ; zz++)
                             {
-                                receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                for (int yy = 0; yy < p.SizeY; yy++)
+                                {
+                                    for (int xx = 0; xx < p.SizeX; xx++)
+                                    {
+                                        receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                    }
+                                }
                             }
                         }
+                        Map.Map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
                     }
-                }
-                for (int zz = 0; zz < sizez; zz++)
-                {
-                    for (int yy = 0; yy < sizey; yy++)
+                    break;
+                default:
                     {
-                        for (int xx = 0; xx < sizex; xx++)
-                        {
-                            Map.Map.SetBlock(x + xx, y + yy, z + zz, receivedchunk[xx, yy, zz]);
-                        }
+                        Console.WriteLine("Invalid packet id: " + packet.PacketId);
                     }
-                }
+                    break;
             }
+            return lengthPrefixLength + packetLength;
         }
         DateTime loadedtime;
         private void InvokeMapLoadingProgress(int progressPercent, int progressBytes)
@@ -655,29 +391,17 @@ namespace GameModeFortress
                 Clients.Players[playerid].Position += v;
             }
         }
-        private static void InvalidPlayerWarning(byte playerid)
+        private static void InvalidPlayerWarning(int playerid)
         {
             Console.WriteLine("Position update of nonexistent player {0}." + playerid);
         }
-        private void ReadAndUpdatePlayerPosition(BinaryReader br, byte playerid)
+        private void ReadAndUpdatePlayerPosition(PositionAndOrientation positionAndOrientation, int playerid)
         {
-            float x;
-            float y;
-            float z;
-            if (ENABLE_FORTRESS)
-            {
-                x = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-                y = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-                z = (float)((double)NetworkHelper.ReadInt32(br) / 32);
-            }
-            else
-            {
-                x = (float)NetworkHelper.ReadInt16(br) / 32;
-                y = (float)NetworkHelper.ReadInt16(br) / 32;
-                z = (float)NetworkHelper.ReadInt16(br) / 32;
-            }
-            byte heading = br.ReadByte();
-            byte pitch = br.ReadByte();
+            float x = (float)((double)positionAndOrientation.X / 32);
+            float y = (float)((double)positionAndOrientation.Y / 32);
+            float z = (float)((double)positionAndOrientation.Z / 32);
+            byte heading = positionAndOrientation.Heading;
+            byte pitch = positionAndOrientation.Pitch;
             Vector3 realpos = new Vector3(x, y, z);
             if (playerid == 255)
             {
@@ -708,22 +432,12 @@ namespace GameModeFortress
         {
             if (main != null)
             {
-                //main.DisconnectAsync(new SocketAsyncEventArgs());
                 main.Disconnect(false);
                 main = null;
             }
-            //throw new NotImplementedException();
         }
         int MapLoadingPercentComplete;
         public MemoryStream receivedMapStream;
-
-        struct ServerPlayerIdentification
-        {
-            public byte ProtocolVersion;
-            public string ServerName;
-            public string ServerMotd;
-            public byte UserType;
-        }
         class ConnectedPlayer
         {
             public int id;
@@ -740,55 +454,9 @@ namespace GameModeFortress
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion
-        #region INetworkClient Members
-        public void SendCommand(byte[] cmd)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftClientPacketId.ExtendedPacketCommand);
-            NetworkHelper.WriteInt32(bw, cmd.Length);
-            bw.Write((byte[])cmd);
-            SendPacket(ms.ToArray());
-        }
-        #endregion
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
-    }
-    /// <summary>
-    /// Client -> Server packet id.
-    /// </summary>
-    public enum FortressClientPacketId
-    {
-        PlayerIdentification = 0,
-        SetBlock = 5,
-        PositionandOrientation = 8,
-        Message = 0x0d,
-
-        ExtendedPacketCommand = 100,
-    }
-    /// <summary>
-    /// Server -> Client packet id.
-    /// </summary>
-    public enum FortressServerPacketId
-    {
-        ServerIdentification = 0,
-        Ping = 1,
-        LevelInitialize = 2,
-        LevelChunk = 3,
-        LevelFinalize = 4,
-        SetBlock = 6,
-        SpawnPlayer = 7,
-        PlayerTeleport = 8,
-        PositionandOrientationUpdate = 9,
-        PositionUpdate = 10,
-        OrientationUpdate = 11,
-        DespawnPlayer = 12,
-        Message = 13,
-        DisconnectPlayer = 14,
-
-        ExtendedPacketCommand = 100,
-        ExtendedPacketTick = 101,
     }
 }

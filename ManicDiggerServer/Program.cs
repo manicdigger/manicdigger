@@ -11,6 +11,7 @@ using OpenTK;
 using System.Xml;
 using System.Diagnostics;
 using GameModeFortress;
+using ProtoBuf;
 
 namespace ManicDiggerServer
 {
@@ -327,6 +328,40 @@ namespace ManicDiggerServer
                     KillPlayer(k.Key);
                 }
             }
+            NotifyMapChunks();
+            UpdateWater();
+        }
+        private void NotifyMapChunks()
+        {
+            foreach (var k in clients)
+            {
+                foreach(var v in ChunksAroundPlayer(k.Key))
+                {
+                    if (!k.Value.chunksseen.ContainsKey(v))
+                    {
+                        if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
+                        {
+                            byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
+                            byte[] compressedchunk = CompressChunk(chunk);
+                            PacketServerChunk p = new PacketServerChunk()
+                            {
+                                X = v.x,
+                                Y = v.y,
+                                Z = v.z,
+                                SizeX = chunksize,
+                                SizeY = chunksize,
+                                SizeZ = chunksize,
+                                CompressedChunk = compressedchunk,
+                            };
+                            SendPacket(k.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
+                            k.Value.chunksseen.Add(v, true);
+                        }
+                    }
+                }
+            }
+        }
+        private void UpdateWater()
+        {
             water.Update();
             try
             {
@@ -382,21 +417,27 @@ namespace ManicDiggerServer
         private int TryReadPacket(int clientid)
         {
             Client c = clients[clientid];
-            BinaryReader br = new BinaryReader(new MemoryStream(c.received.ToArray()));
+            MemoryStream ms = new MemoryStream(c.received.ToArray());
             if (c.received.Count == 0)
             {
                 return 0;
             }
-            int packetid = br.ReadByte();
-            int totalread = 1;
-            switch (packetid)
+            int packetLength;
+            int lengthPrefixLength;
+            bool packetLengthOk = Serializer.TryReadLengthPrefix(ms, PrefixStyle.Base128, out packetLength);
+            lengthPrefixLength = (int)ms.Position;
+            if (!packetLengthOk || lengthPrefixLength + packetLength > ms.Length)
             {
-                case (int)MinecraftClientPacketId.PlayerIdentification:
-                    totalread += 1 + NetworkHelper.StringLength + NetworkHelper.StringLength + 1; if (c.received.Count < totalread) { return 0; }
-                    byte protocolversion = br.ReadByte();
-                    string username = NetworkHelper.ReadString64(br);
-                    string verificationkey = NetworkHelper.ReadString64(br);
-                    byte unused1 = br.ReadByte();
+                return 0;
+            }
+            ms.Position = 0;
+            PacketClient packet = Serializer.DeserializeWithLengthPrefix<PacketClient>(ms, PrefixStyle.Base128);
+            //int packetid = br.ReadByte();
+            //int totalread = 1;
+            switch (packet.PacketId)
+            {
+                case ClientPacketId.PlayerIdentification:
+                    string username = packet.Identification.Username;
 
                     SendServerIdentification(clientid);
                     foreach (var k in clients)
@@ -417,32 +458,62 @@ namespace ManicDiggerServer
                     //send new player spawn to all players
                     foreach (var k in clients)
                     {
-                        var cc = k.Key == clientid ? byte.MaxValue : clientid;
-                        SendSpawnPlayer(k.Key, (byte)cc, username, position.x, position.y, position.z, 0, 0);
+                        int cc = k.Key == clientid ? byte.MaxValue : clientid;
+                        {
+                            PacketServer pp = new PacketServer();
+                            PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
+                            {
+                                PlayerId = cc,
+                                PlayerName = username,
+                                PositionAndOrientation = new PositionAndOrientation()
+                                {
+                                    X = position.x,
+                                    Y = position.y,
+                                    Z = position.z,
+                                    Heading = 0,
+                                    Pitch = 0,
+                                }
+                            };
+                            pp.PacketId = ServerPacketId.SpawnPlayer;
+                            pp.SpawnPlayer = p;
+                            SendPacket(k.Key, Serialize(pp));
+                        }
                     }
                     //send all players spawn to new player
                     foreach (var k in clients)
                     {
                         if (k.Key != clientid)// || ENABLE_FORTRESS)
                         {
-                            SendSpawnPlayer(clientid, (byte)k.Key, k.Value.playername, 0, 0, 0, 0, 0);
+                            {
+                                PacketServer pp = new PacketServer();
+                                PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
+                                {
+                                    PlayerId = k.Key,
+                                    PlayerName = k.Value.playername,
+                                    PositionAndOrientation = new PositionAndOrientation()
+                                    {
+                                        X = 0,
+                                        Y = 0,
+                                        Z = 0,
+                                        Heading = 0,
+                                        Pitch = 0,
+                                    }
+                                };
+                                pp.PacketId = ServerPacketId.SpawnPlayer;
+                                pp.SpawnPlayer = p;
+                                SendPacket(clientid, Serialize(pp));
+                            }
                         }
                     }                    
                     SendMessageToAll(string.Format("Player {0} joins.", username));
                     SendLevel(clientid);
                     break;
-                case (int)MinecraftClientPacketId.SetBlock:
-                    totalread += 3 * 2 + 1 + 1; if (c.received.Count < totalread) { return 0; }
-                    int x;
-                    int y;
-                    int z;
-                    {
-                        x = NetworkHelper.ReadInt16(br);
-                        y = NetworkHelper.ReadInt16(br);
-                        z = NetworkHelper.ReadInt16(br);
-                    }
-                    BlockSetMode mode = br.ReadByte() == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
-                    byte blocktype = br.ReadByte();
+                case ClientPacketId.SetBlock:
+                    int x = packet.SetBlock.X;
+                    int y = packet.SetBlock.Y;
+                    int z = packet.SetBlock.Z;
+                    BlockSetMode mode = packet.SetBlock.Mode == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
+                    byte blocktype = (byte)packet.SetBlock.BlockType;
                     if (mode == BlockSetMode.Destroy)
                     {
                         blocktype = 0; //data.TileIdEmpty
@@ -460,60 +531,36 @@ namespace ManicDiggerServer
                     //water
                     water.BlockChange(map, x, z, y);
                     break;
-                case (int)MinecraftClientPacketId.PositionandOrientation:
-                    byte playerid;
-                    int xx;
-                    int yy;
-                    int zz;
+                case ClientPacketId.PositionandOrientation:
                     {
-                        totalread += 1 + 3 * 4 + 1 + 1; if (c.received.Count < totalread) { return 0; }
-                        playerid = br.ReadByte();
-                        xx = NetworkHelper.ReadInt32(br);
-                        yy = NetworkHelper.ReadInt32(br);
-                        zz = NetworkHelper.ReadInt32(br);
-                    }
-                    byte heading = br.ReadByte();
-                    byte pitch = br.ReadByte();
-                    clients[clientid].positionxx = xx;
-                    clients[clientid].positionyy = yy;
-                    clients[clientid].positionzz = zz;
-                    clients[clientid].positionheading = heading;
-                    clients[clientid].positionpitch = pitch;
-                    foreach (var k in clients)
-                    {
-                        if (k.Key != clientid)
+                        var p = packet.PositionAndOrientation;
+                        clients[clientid].positionxx = p.X;
+                        clients[clientid].positionyy = p.Y;
+                        clients[clientid].positionzz = p.Z;
+                        clients[clientid].positionheading = p.Heading;
+                        clients[clientid].positionpitch = p.Pitch;
+                        foreach (var k in clients)
                         {
-                            SendPlayerTeleport(k.Key, (byte)clientid, xx, yy, zz, heading, pitch);
+                            if (k.Key != clientid)
+                            {
+                                SendPlayerTeleport(k.Key, (byte)clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
+                            }
                         }
                     }
                     break;
-                case (int)MinecraftClientPacketId.Message:
-                    totalread += 1 + 64; if (c.received.Count < totalread) { return 0; }
-                    byte unused2 = br.ReadByte();
-                    string message = NetworkHelper.ReadString64(br);
-                    //todo sanitize text
-                    SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, message));
+                case ClientPacketId.Message:
+                    SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
                     break;
-                    /*
-                case (int)MinecraftClientPacketId.ExtendedPacketCommand:
-                    totalread += 4; if (c.received.Count < totalread) { return 0; }
-                    int length = NetworkHelper.ReadInt32(br);
-                    totalread += length; if (c.received.Count < totalread) { return 0; }
-                    byte[] commandData = br.ReadBytes(length);
-                    gameworld.DoCommand(commandData, clientid);
-                    foreach (var k in clients)
-                    {
-                        //if (k.Key != clientid)
-                        {
-                            SendCommand(k.Key, clientid, commandData, simulationcurrentframe);
-                        }
-                    }
-                    break;
-                    */
                 default:
                     throw new Exception();
             }
-            return totalread;
+            return lengthPrefixLength + packetLength;
+        }
+        private byte[] Serialize(PacketServer p)
+        {
+            MemoryStream ms = new MemoryStream();
+            Serializer.SerializeWithLengthPrefix(ms, p, PrefixStyle.Base128);
+            return ms.ToArray();
         }
         private string GenerateUsername(string name)
         {
@@ -537,17 +584,6 @@ namespace ManicDiggerServer
             }
             return defaultname;
         }
-        private void SendCommand(int clientid, int commandplayerid, byte[] commandData, int simulationframe)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.ExtendedPacketCommand);
-            bw.Write((byte)commandplayerid);
-            NetworkHelper.WriteInt32(bw, simulationframe);
-            NetworkHelper.WriteInt32(bw, commandData.Length);
-            bw.Write((byte[])commandData);
-            SendPacket(clientid, ms.ToArray());
-        }
         private void SendMessageToAll(string message)
         {
             Console.WriteLine(message);
@@ -556,89 +592,52 @@ namespace ManicDiggerServer
                 SendMessage(k.Key, message);
             }
         }
-        private void SendSpawnPlayer(int clientid, byte playerid, string playername, int x, int y, int z, int heading, int pitch)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.SpawnPlayer);
-            bw.Write((byte)playerid);
-            NetworkHelper.WriteString64(bw, playername);
-            {
-                NetworkHelper.WriteInt32(bw, (int)x);
-                NetworkHelper.WriteInt32(bw, (int)y);
-                NetworkHelper.WriteInt32(bw, (int)z);
-            }
-            bw.Write((byte)heading);
-            bw.Write((byte)pitch);
-            SendPacket(clientid, ms.ToArray());
-        }
         private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.SetBlock);
-            {
-                NetworkHelper.WriteInt16(bw, (short)x);
-                NetworkHelper.WriteInt16(bw, (short)z);
-                NetworkHelper.WriteInt16(bw, (short)y);
-            }
-            bw.Write((byte)blocktype);
-            SendPacket(clientid, ms.ToArray());
+            PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = z, Z = y, BlockType = blocktype };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
         }
-        private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, int heading, int pitch)
+        private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, byte heading, byte pitch)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.PlayerTeleport);
-            SendPlayerTeleportContents(playerid, x, y, z, heading, pitch, bw);
-            SendPacket(clientid, ms.ToArray());
-        }
-        private void SendPlayerTeleportContents(byte playerid, int x, int y, int z, int heading, int pitch, BinaryWriter bw)
-        {
-            bw.Write((byte)playerid);
-            if (ENABLE_FORTRESS)
+            PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
             {
-                NetworkHelper.WriteInt32(bw, (int)x);
-                NetworkHelper.WriteInt32(bw, (int)y);
-                NetworkHelper.WriteInt32(bw, (int)z);
-            }
-            else
+                PlayerId = playerid,
+                PositionAndOrientation = new PositionAndOrientation()
+                {
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Heading = heading,
+                    Pitch = pitch,
+                }
+            };
+            SendPacket(clientid, Serialize(new PacketServer()
             {
-                NetworkHelper.WriteInt16(bw, (short)x);
-                NetworkHelper.WriteInt16(bw, (short)y);
-                NetworkHelper.WriteInt16(bw, (short)z);
-            }
-            bw.Write((byte)heading);
-            bw.Write((byte)pitch);
+                PacketId = ServerPacketId.PositionandOrientationUpdate,
+                PositionAndOrientation = p,
+            }));
         }
         //SendPositionAndOrientationUpdate //delta
         //SendPositionUpdate //delta
         //SendOrientationUpdate
         private void SendDespawnPlayer(int clientid, byte playerid)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.DespawnPlayer);
-            bw.Write((byte)playerid);
-            SendPacket(clientid, ms.ToArray());
+            PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
         }
         private void SendMessage(int clientid, string message)
         {
             string truncated = message.Substring(0, Math.Min(64, message.Length));
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.Message);
-            bw.Write((byte)clientid);
-            NetworkHelper.WriteString64(bw, truncated);
-            SendPacket(clientid, ms.ToArray());
+
+            PacketServerMessage p = new PacketServerMessage();
+            p.PlayerId = clientid;
+            p.Message = truncated;
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Message, Message = p }));
         }
         private void SendDisconnectPlayer(int clientid, string disconnectReason)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.DisconnectPlayer);
-            NetworkHelper.WriteString64(bw, disconnectReason);
-            SendPacket(clientid, ms.ToArray());
+            PacketServerDisconnectPlayer p = new PacketServerDisconnectPlayer() { DisconnectReason = disconnectReason };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DisconnectPlayer, DisconnectPlayer = p }));
         }
         public void SendPacket(int clientid, byte[] packet)
         {
@@ -696,25 +695,8 @@ namespace ManicDiggerServer
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
+            /*
             byte[] compressedmap;
-            if (!ENABLE_FORTRESS)
-            {
-                MemoryStream ms = new MemoryStream();
-                BinaryWriter bw = new BinaryWriter(ms);
-                NetworkHelper.WriteInt32(bw, map.MapSizeX * map.MapSizeY * map.MapSizeZ);
-                for (int z = 0; z < map.MapSizeZ; z++)
-                {
-                    for (int y = 0; y < map.MapSizeY; y++)
-                    {
-                        for (int x = 0; x < map.MapSizeX; x++)
-                        {
-                            bw.Write((byte)map.GetBlock(x, y, z));
-                        }
-                    }
-                }
-                compressedmap = GzipCompression.Compress(ms.ToArray());
-            }
-            else
             {
                 MemoryStream ms = new MemoryStream();
                 BinaryWriter bw = new BinaryWriter(ms);
@@ -754,6 +736,7 @@ namespace ManicDiggerServer
                 if (totalread >= ms2.Length) { break; }
                 //Thread.Sleep(100);
             }
+            */
             SendLevelFinalize(clientid);
         }
         byte[, ,] GenerateChunk(int x, int y, int z, int chunksize)
@@ -781,85 +764,31 @@ namespace ManicDiggerServer
         int levelchunksize = 1024;
         private void SendLevelInitialize(int clientid)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.LevelInitialize);
-            SendPacket(clientid, ms.ToArray());
+            PacketServerLevelInitialize p = new PacketServerLevelInitialize() { };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelInitialize, LevelInitialize = p }));
         }
         private void SendLevelDataChunk(int clientid, byte[] chunk, int chunklength, int percentcomplete)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.LevelDataChunk);
-            NetworkHelper.WriteInt16(bw, (short)chunklength);
-            bw.Write((byte[])chunk);
-            bw.Write((byte)percentcomplete);
-            SendPacket(clientid, ms.ToArray());
+            PacketServerLevelDataChunk p = new PacketServerLevelDataChunk() { Chunk = chunk, PercentComplete = percentcomplete };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelDataChunk, LevelDataChunk = p }));
         }
         private void SendLevelFinalize(int clientid)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.LevelFinalize);
-            if (ENABLE_FORTRESS)
-            {
-                NetworkHelper.WriteInt16(bw, (short)256);
-                NetworkHelper.WriteInt16(bw, (short)256);
-                NetworkHelper.WriteInt16(bw, (short)64);
-                //NetworkHelper.WriteInt32(bw, (int)simulationcurrentframe);
-            }
-            else
-            {
-                NetworkHelper.WriteInt16(bw, (short)map.MapSizeX);
-                NetworkHelper.WriteInt16(bw, (short)map.MapSizeZ);
-                NetworkHelper.WriteInt16(bw, (short)map.MapSizeY);
-            }
-            SendPacket(clientid, ms.ToArray());
+            PacketServerLevelFinalize p = new PacketServerLevelFinalize() { };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelFinalize, LevelFinalize = p }));
         }
-        int CurrentProtocolVersion = 7;
-        int MdProtocolVersion = 200;
         private void SendServerIdentification(int clientid)
         {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.ServerIdentification);
-            if (!ENABLE_FORTRESS)
+            PacketServerIdentification p = new PacketServerIdentification()
             {
-                bw.Write((byte)CurrentProtocolVersion);
-            }
-            else
-            {
-                bw.Write((byte)MdProtocolVersion);
-                NetworkHelper.WriteString64(bw, GameVersion.Version);
-            }
-            NetworkHelper.WriteString64(bw, cfgname);
-            NetworkHelper.WriteString64(bw, cfgmotd);
-            bw.Write((byte)0);
-            SendPacket(clientid, ms.ToArray());
+                MdProtocolVersion = GameVersion.Version,
+                ServerName = cfgname,
+                ServerMotd = cfgmotd,
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
-        /*
-        void SendTick(int clientid)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftServerPacketId.ExtendedPacketTick);
-            if (!ENABLE_FORTRESS)
-            {
-                throw new Exception();
-            }
-            NetworkHelper.WriteInt32(bw, simulationcurrentframe);
-            NetworkHelper.WriteInt32(bw, gameworld.GetStateHash());
-            bw.Write((byte)clients.Count);
-            foreach (var k in clients)
-            {
-                SendPlayerTeleportContents((byte)k.Key, k.Value.positionxx,
-                    k.Value.positionyy, k.Value.positionzz, k.Value.positionheading, k.Value.positionpitch, bw);
-            }
-            SendPacket(clientid, ms.ToArray());
-        }
-        */
         class Client
         {
             public Socket socket;

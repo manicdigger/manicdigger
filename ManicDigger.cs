@@ -112,6 +112,7 @@ namespace ManicDigger
         float WaterLevel { get; set; }
         void Dispose();
         void UseMap(byte[, ,] map);
+        void SetChunk(int x, int y, int z, byte[, ,] chunk);
     }
     public class Player
     {
@@ -203,6 +204,12 @@ namespace ManicDigger
         public void UseMap(byte[, ,] map)
         {
             this.map = map;
+        }
+        #endregion
+        #region IMapStorage Members
+        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }
@@ -920,13 +927,13 @@ namespace ManicDigger
     {
         //void LoadMap(byte[, ,] map);
         IMapStorage Map { get; }
-        void SetTileAndUpdate(Vector3 pos, byte type);
+        void SetTileAndUpdate(Vector3 pos, int type);
         void UpdateAllTiles();
     }
     public class MapDummy : ManicDigger.IMap
     {
         #region IMap Members
-        public void SetTileAndUpdate(OpenTK.Vector3 pos, byte type)
+        public void SetTileAndUpdate(OpenTK.Vector3 pos, int type)
         {
         }
         #endregion

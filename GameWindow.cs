@@ -893,7 +893,7 @@ namespace ManicDigger
         {
             terrain.UpdateAllTiles();
         }
-        public void SetTileAndUpdate(Vector3 pos, byte type)
+        public void SetTileAndUpdate(Vector3 pos, int type)
         {
             //            frametickmainthreadtodo.Add(() =>
             //        {

@@ -20,7 +20,6 @@ namespace ManicDigger
         void SendChat(string s);
         IEnumerable<string> ConnectedPlayers();
         void SendPosition(Vector3 position, Vector3 orientation);
-        void SendCommand(byte[] cmd);
         Dictionary<int, bool> EnablePlayerUpdatePosition { get; set; }
         string ServerName { get; }
         string ServerMotd { get; }
@@ -188,11 +187,6 @@ namespace ManicDigger
         #endregion
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
-        #endregion
-        #region INetworkClient Members
-        public void SendCommand(byte[] cmd)
-        {
-        }
         #endregion
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members
@@ -959,17 +953,6 @@ namespace ManicDigger
         }
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
-        #endregion
-        #region INetworkClient Members
-        public void SendCommand(byte[] cmd)
-        {
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter bw = new BinaryWriter(ms);
-            bw.Write((byte)MinecraftClientPacketId.ExtendedPacketCommand);
-            NetworkHelper.WriteInt32(bw, cmd.Length);
-            bw.Write((byte[])cmd);
-            SendPacket(ms.ToArray());
-        }
         #endregion
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members

@@ -189,6 +189,12 @@ namespace ManicDigger
         {
         }
         #endregion
+        #region IMapStorage Members
+        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
     public class TileTypeData
     {
