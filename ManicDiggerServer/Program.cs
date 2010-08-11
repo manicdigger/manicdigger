@@ -253,7 +253,10 @@ namespace ManicDiggerServer
                 {
                     clients[lastclient++] = c;
                 }
-                //client join event
+                c.notifyMapTimer = new ManicDigger.Timer()
+                {
+                    INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
+                };
             }
             ArrayList copyList = new ArrayList();
             foreach (var k in clients)
@@ -328,47 +331,55 @@ namespace ManicDiggerServer
                     KillPlayer(k.Key);
                 }
             }
-            NotifyMapChunks();
-            UpdateWater();
-        }
-        private void NotifyMapChunks()
-        {
             foreach (var k in clients)
             {
-                List<Vector3i> tosend = new List<Vector3i>();
-                Vector3i playerpos = PlayerBlockPosition(k.Value);
-                if (playerpos == new Vector3i())
+                k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
+            }            
+            UpdateWater();
+        }
+        int SEND_CHUNKS_PER_SECOND = 10;
+        private void NotifyMapChunks(int clientid, int limit)
+        {
+            Client c  = clients[clientid];
+            List<Vector3i> tosend = new List<Vector3i>();
+            Vector3i playerpos = PlayerBlockPosition(c);
+            if (playerpos == new Vector3i())
+            {
+                return;
+            }
+            foreach (var v in ChunksAroundPlayer(playerpos))
+            {
+                if (!c.chunksseen.ContainsKey(v))
                 {
-                    continue;
-                }
-                foreach (var v in ChunksAroundPlayer(playerpos))
-                {
-                    if (!k.Value.chunksseen.ContainsKey(v))
+                    if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
                     {
-                        if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
-                        {
-                            tosend.Add(v);
-                        }
+                        tosend.Add(v);
                     }
                 }
-                tosend.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
-                foreach (var v in tosend)
+            }
+            tosend.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
+            int i = 0;
+            foreach (var v in tosend)
+            {
+                if (i >= limit)
                 {
-                    byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
-                    byte[] compressedchunk = CompressChunk(chunk);
-                    PacketServerChunk p = new PacketServerChunk()
-                    {
-                        X = v.x,
-                        Y = v.y,
-                        Z = v.z,
-                        SizeX = chunksize,
-                        SizeY = chunksize,
-                        SizeZ = chunksize,
-                        CompressedChunk = compressedchunk,
-                    };
-                    SendPacket(k.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
-                    k.Value.chunksseen.Add(v, true);
+                    break;
                 }
+                byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
+                byte[] compressedchunk = CompressChunk(chunk);
+                PacketServerChunk p = new PacketServerChunk()
+                {
+                    X = v.x,
+                    Y = v.y,
+                    Z = v.z,
+                    SizeX = chunksize,
+                    SizeY = chunksize,
+                    SizeZ = chunksize,
+                    CompressedChunk = compressedchunk,
+                };
+                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
+                c.chunksseen.Add(v, true);
+                i++;
             }
         }
         Vector3i PlayerBlockPosition(Client c)
@@ -819,6 +830,7 @@ namespace ManicDiggerServer
             public int positionheading;
             public int positionpitch;
             public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
+            public ManicDigger.Timer notifyMapTimer;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }

@@ -2444,7 +2444,7 @@ namespace ManicDigger
             {
                 player.playerorientation.Y += (float)mouse_delta.X * rotationspeed * (float)e.Time;
                 player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
-                player.playerorientation.X = Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.15f, (float)(Math.PI / 2 + Math.PI - 0.15f));
+                player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.15f, (float)(Math.PI / 2 + Math.PI - 0.15f));
             }
             UpdatePicking();
         }
@@ -3518,8 +3518,8 @@ namespace ManicDigger
             if (dir == Direction4.Right) { inventoryselectedx++; }
             if (dir == Direction4.Up) { inventoryselectedy--; }
             if (dir == Direction4.Down) { inventoryselectedy++; }
-            inventoryselectedx = Clamp(inventoryselectedx, 0, inventorysize - 1);
-            inventoryselectedy = Clamp(inventoryselectedy, 0, inventorysize - 1);
+            inventoryselectedx = MyMath.Clamp(inventoryselectedx, 0, inventorysize - 1);
+            inventoryselectedy = MyMath.Clamp(inventoryselectedy, 0, inventorysize - 1);
         }
         int inventorysize;
         int? InventoryGetSelected()
@@ -4341,16 +4341,6 @@ namespace ManicDigger
             GL.Vertex3(points[3]);
             GL.Vertex3(points[3]);
             GL.Vertex3(points[0]);
-        }
-        public static T Clamp<T>(T value, T min, T max)
-             where T : System.IComparable<T>
-        {
-            T result = value;
-            if (value.CompareTo(max) > 0)
-                result = max;
-            if (value.CompareTo(min) < 0)
-                result = min;
-            return result;
         }
         void Mouse_Move(object sender, OpenTK.Input.MouseMoveEventArgs e)
         {

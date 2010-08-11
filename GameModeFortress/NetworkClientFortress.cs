@@ -196,7 +196,8 @@ namespace GameModeFortress
             if (packet.PacketId != ServerPacketId.PositionUpdate
                 && packet.PacketId != ServerPacketId.OrientationUpdate
                 && packet.PacketId != ServerPacketId.PlayerPositionAndOrientation
-                && packet.PacketId != ServerPacketId.ExtendedPacketTick)
+                && packet.PacketId != ServerPacketId.ExtendedPacketTick
+                && packet.PacketId != ServerPacketId.Chunk)
             {
                 Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
             }

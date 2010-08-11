@@ -8,6 +8,19 @@ using System.Drawing.Imaging;
 
 namespace ManicDigger
 {
+    public static class MyMath
+    {
+        public static T Clamp<T>(T value, T min, T max)
+            where T : System.IComparable<T>
+        {
+            T result = value;
+            if (value.CompareTo(max) > 0)
+                result = max;
+            if (value.CompareTo(min) < 0)
+                result = min;
+            return result;
+        }
+    }
     public static class GameVersion
     {
         static string gameversion;
@@ -271,6 +284,47 @@ namespace ManicDigger
                     }
                 }
             }
+        }
+    }
+    public class Timer
+    {
+        public double INTERVAL { get { return interval; } set { interval = value; } }
+        public double MaxDeltaTime { get { return maxDeltaTime; } set { maxDeltaTime = value; } }
+        double interval = 1;
+        double maxDeltaTime = double.PositiveInfinity;
+
+        double starttime;
+        double oldtime;
+        double accumulator;
+        public Timer()
+        {
+            Reset();
+        }
+        public void Reset()
+        {
+            starttime = gettime();
+        }
+        public delegate void Tick();
+        public void Update(Tick tick)
+        {
+            double currenttime = gettime() - starttime;
+            double deltaTime = currenttime - oldtime;
+            accumulator += deltaTime;
+            double dt = INTERVAL;
+            if (MaxDeltaTime != double.PositiveInfinity && accumulator > MaxDeltaTime)
+            {
+                accumulator = MaxDeltaTime;
+            }
+            while (accumulator >= dt)
+            {
+                tick();
+                accumulator -= dt;
+            }
+            oldtime = currenttime;
+        }
+        static double gettime()
+        {
+            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
     }
 }
