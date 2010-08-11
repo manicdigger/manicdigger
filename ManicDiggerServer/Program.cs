@@ -519,17 +519,17 @@ namespace ManicDiggerServer
                         blocktype = 0; //data.TileIdEmpty
                     }
                     //todo check block type.
-                    map.SetBlock(x, z, y, blocktype);
+                    map.SetBlock(x, y, z, blocktype);
                     foreach (var k in clients)
                     {
                         //original player did speculative update already.
                         if (k.Key != clientid)
                         {
-                            SendSetBlock(k.Key, x, z, y, blocktype);
+                            SendSetBlock(k.Key, x, y, z, blocktype);
                         }
                     }
                     //water
-                    water.BlockChange(map, x, z, y);
+                    water.BlockChange(map, x, y, z);
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
@@ -594,7 +594,7 @@ namespace ManicDiggerServer
         }
         private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
         {
-            PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = z, Z = y, BlockType = blocktype };
+            PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
         }
         private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, byte heading, byte pitch)
@@ -613,7 +613,7 @@ namespace ManicDiggerServer
             };
             SendPacket(clientid, Serialize(new PacketServer()
             {
-                PacketId = ServerPacketId.PositionandOrientationUpdate,
+                PacketId = ServerPacketId.PlayerPositionAndOrientation,
                 PositionAndOrientation = p,
             }));
         }

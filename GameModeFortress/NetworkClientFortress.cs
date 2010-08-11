@@ -64,8 +64,8 @@ namespace GameModeFortress
             PacketClientSetBlock p = new PacketClientSetBlock()
             {
                 X = (int)position.X,
-                Y = (int)position.Z,
-                Z = (int)position.Y,
+                Y = (int)position.Y,
+                Z = (int)position.Z,
                 Mode = (mode == BlockSetMode.Create ? (byte)1 : (byte)0),
                 BlockType = type
             };
@@ -193,10 +193,9 @@ namespace GameModeFortress
             }
             ms.Position = 0;
             PacketServer packet = Serializer.DeserializeWithLengthPrefix<PacketServer>(ms, PrefixStyle.Base128);
-            if (packet.PacketId != ServerPacketId.PositionandOrientationUpdate
-                 && packet.PacketId != ServerPacketId.PositionUpdate
+            if (packet.PacketId != ServerPacketId.PositionUpdate
                 && packet.PacketId != ServerPacketId.OrientationUpdate
-                && packet.PacketId != ServerPacketId.PlayerTeleport
+                && packet.PacketId != ServerPacketId.PlayerPositionAndOrientation
                 && packet.PacketId != ServerPacketId.ExtendedPacketTick)
             {
                 Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
@@ -274,7 +273,7 @@ namespace GameModeFortress
                         }
                     }
                     break;
-                case ServerPacketId.PlayerTeleport:
+                case ServerPacketId.PlayerPositionAndOrientation:
                     {
                         int playerid = packet.PositionAndOrientation.PlayerId;
                         ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
