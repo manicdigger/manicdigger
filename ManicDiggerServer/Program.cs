@@ -335,30 +335,52 @@ namespace ManicDiggerServer
         {
             foreach (var k in clients)
             {
-                foreach(var v in ChunksAroundPlayer(k.Key))
+                List<Vector3i> tosend = new List<Vector3i>();
+                Vector3i playerpos = PlayerBlockPosition(k.Value);
+                if (playerpos == new Vector3i())
+                {
+                    continue;
+                }
+                foreach (var v in ChunksAroundPlayer(playerpos))
                 {
                     if (!k.Value.chunksseen.ContainsKey(v))
                     {
                         if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
                         {
-                            byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
-                            byte[] compressedchunk = CompressChunk(chunk);
-                            PacketServerChunk p = new PacketServerChunk()
-                            {
-                                X = v.x,
-                                Y = v.y,
-                                Z = v.z,
-                                SizeX = chunksize,
-                                SizeY = chunksize,
-                                SizeZ = chunksize,
-                                CompressedChunk = compressedchunk,
-                            };
-                            SendPacket(k.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
-                            k.Value.chunksseen.Add(v, true);
+                            tosend.Add(v);
                         }
                     }
                 }
+                tosend.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
+                foreach (var v in tosend)
+                {
+                    byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
+                    byte[] compressedchunk = CompressChunk(chunk);
+                    PacketServerChunk p = new PacketServerChunk()
+                    {
+                        X = v.x,
+                        Y = v.y,
+                        Z = v.z,
+                        SizeX = chunksize,
+                        SizeY = chunksize,
+                        SizeZ = chunksize,
+                        CompressedChunk = compressedchunk,
+                    };
+                    SendPacket(k.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
+                    k.Value.chunksseen.Add(v, true);
+                }
             }
+        }
+        Vector3i PlayerBlockPosition(Client c)
+        {
+            return new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlZ / 32, c.PositionMul32GlY / 32);
+        }
+        int DistanceSquared(Vector3i a, Vector3i b)
+        {
+            int dx = a.x - b.x;
+            int dy = a.y - b.y;
+            int dz = a.z - b.z;
+            return dx * dx + dy * dy + dz * dz;
         }
         private void UpdateWater()
         {
@@ -451,9 +473,9 @@ namespace ManicDiggerServer
                     //todo verificationkey
                     clients[clientid].playername = username;
                     Vector3i position = DefaultSpawnPosition();
-                    clients[clientid].positionxx = position.x;
-                    clients[clientid].positionyy = position.y;
-                    clients[clientid].positionzz = position.z;
+                    clients[clientid].PositionMul32GlX = position.x;
+                    clients[clientid].PositionMul32GlY = position.y;
+                    clients[clientid].PositionMul32GlZ = position.z;
                     //.players.Players[clientid] = new Player() { Name = username };
                     //send new player spawn to all players
                     foreach (var k in clients)
@@ -534,9 +556,9 @@ namespace ManicDiggerServer
                 case ClientPacketId.PositionandOrientation:
                     {
                         var p = packet.PositionAndOrientation;
-                        clients[clientid].positionxx = p.X;
-                        clients[clientid].positionyy = p.Y;
-                        clients[clientid].positionzz = p.Z;
+                        clients[clientid].PositionMul32GlX = p.X;
+                        clients[clientid].PositionMul32GlY = p.Y;
+                        clients[clientid].PositionMul32GlZ = p.Z;
                         clients[clientid].positionheading = p.Heading;
                         clients[clientid].positionpitch = p.Pitch;
                         foreach (var k in clients)
@@ -657,11 +679,8 @@ namespace ManicDiggerServer
         int drawdistance = 128;
         public int chunksize = 32;
         int chunkdrawdistance { get { return drawdistance / chunksize; } }
-        IEnumerable<Vector3i> ChunksAroundPlayer(int clientid)
+        IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)
         {
-            Vector3i playerpos = new Vector3i(clients[clientid].positionxx / 32,
-                            clients[clientid].positionzz / 32,
-                            clients[clientid].positionyy / 32);
             playerpos.x = (playerpos.x / chunksize) * chunksize;
             playerpos.y = (playerpos.y / chunksize) * chunksize;
             for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
@@ -794,9 +813,9 @@ namespace ManicDiggerServer
             public Socket socket;
             public List<byte> received = new List<byte>();
             public string playername = "player";
-            public int positionxx;
-            public int positionyy;
-            public int positionzz;
+            public int PositionMul32GlX;
+            public int PositionMul32GlY;
+            public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
             public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
