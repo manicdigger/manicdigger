@@ -224,25 +224,18 @@ namespace GameModeFortress
                     break;
                 case ServerPacketId.LevelInitialize:
                     {
-                        receivedMapStream = new MemoryStream();
+                        ReceivedMapLength = 0;
                         InvokeMapLoadingProgress(0, 0);
                     }
                     break;
                 case ServerPacketId.LevelDataChunk:
                     {
-                        BinaryWriter bw1 = new BinaryWriter(receivedMapStream);
-                        bw1.Write(packet.LevelDataChunk.Chunk);
                         MapLoadingPercentComplete = packet.LevelDataChunk.PercentComplete;
-                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)receivedMapStream.Length);
+                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)ReceivedMapLength);
                     }
                     break;
                 case ServerPacketId.LevelFinalize:
                     {
-                        receivedMapStream.Seek(0, SeekOrigin.Begin);
-                        {
-                            //LoadChunks(receivedMapStream.ToArray());
-                            Map.UpdateAllTiles();
-                        }
                         if (MapLoaded != null)
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });
@@ -322,6 +315,7 @@ namespace GameModeFortress
                             }
                         }
                         Map.Map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
+                        ReceivedMapLength += lengthPrefixLength + packetLength;
                     }
                     break;
                 default:
@@ -332,6 +326,7 @@ namespace GameModeFortress
             }
             return lengthPrefixLength + packetLength;
         }
+        int ReceivedMapLength = 0;
         DateTime loadedtime;
         private void InvokeMapLoadingProgress(int progressPercent, int progressBytes)
         {
@@ -437,7 +432,6 @@ namespace GameModeFortress
             }
         }
         int MapLoadingPercentComplete;
-        public MemoryStream receivedMapStream;
         class ConnectedPlayer
         {
             public int id;

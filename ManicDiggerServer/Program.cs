@@ -338,15 +338,11 @@ namespace ManicDiggerServer
             UpdateWater();
         }
         int SEND_CHUNKS_PER_SECOND = 10;
-        private void NotifyMapChunks(int clientid, int limit)
+        private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
         {
-            Client c  = clients[clientid];
+            Client c = clients[clientid];
             List<Vector3i> tosend = new List<Vector3i>();
             Vector3i playerpos = PlayerBlockPosition(c);
-            if (playerpos == new Vector3i())
-            {
-                return;
-            }
             foreach (var v in ChunksAroundPlayer(playerpos))
             {
                 if (!c.chunksseen.ContainsKey(v))
@@ -357,11 +353,22 @@ namespace ManicDiggerServer
                     }
                 }
             }
+            return tosend;
+        }
+        private int NotifyMapChunks(int clientid, int limit)
+        {
+            Client c  = clients[clientid];
+            Vector3i playerpos = PlayerBlockPosition(c);
+            if (playerpos == new Vector3i())
+            {
+                return 0;
+            }
+            List<Vector3i> tosend = UnknownChunksAroundPlayer(clientid);
             tosend.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
-            int i = 0;
+            int sent = 0;
             foreach (var v in tosend)
             {
-                if (i >= limit)
+                if (sent >= limit)
                 {
                     break;
                 }
@@ -379,8 +386,9 @@ namespace ManicDiggerServer
                 };
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
                 c.chunksseen.Add(v, true);
-                i++;
+                sent++;
             }
+            return sent;
         }
         Vector3i PlayerBlockPosition(Client c)
         {
@@ -725,48 +733,13 @@ namespace ManicDiggerServer
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
-            /*
-            byte[] compressedmap;
+            List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
+            int sent = 0;
+            for (int i = 0; i < unknown.Count; i++)
             {
-                MemoryStream ms = new MemoryStream();
-                BinaryWriter bw = new BinaryWriter(ms);
-                foreach(Vector3i v in ChunksAroundPlayer(clientid))
-                {
-                    if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
-                    {
-                        byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
-                        byte[] compressedchunk = CompressChunk(chunk);
-                        byte[] b = PacketsFortress.ServerChunkWrite(v.x, v.y, v.z, chunksize, chunksize, chunksize, compressedchunk.Length, compressedchunk);
-                        bw.Write(b);
-                    }
-                }
-                compressedmap = ms.ToArray();
+                sent += NotifyMapChunks(clientid, 5);
+                SendLevelDataChunk(clientid, null, 0, (int)(((float)sent / unknown.Count) * 100));
             }
-            MemoryStream ms2 = new MemoryStream(compressedmap);
-            byte[] buf = new byte[levelchunksize];
-            int totalread = 0;
-            for (; ; )
-            {
-                int read = ms2.Read(buf, 0, levelchunksize);
-                if (read == 0)
-                {
-                    break;
-                }
-                if (read < levelchunksize)
-                {
-                    byte[] buf2 = new byte[levelchunksize];
-                    for (int i = 0; i < read; i++)
-                    {
-                        buf2[i] = buf[i];
-                    }
-                    buf = buf2;
-                }
-                SendLevelDataChunk(clientid, buf, read, (int)(((float)totalread / compressedmap.Length) * 100));
-                totalread += read;
-                if (totalread >= ms2.Length) { break; }
-                //Thread.Sleep(100);
-            }
-            */
             SendLevelFinalize(clientid);
         }
         byte[, ,] GenerateChunk(int x, int y, int z, int chunksize)
