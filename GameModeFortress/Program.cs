@@ -77,6 +77,12 @@ namespace GameModeFortress
             get { return "ServerMotd"; }
         }
         #endregion
+        #region IIsChunkReady Members
+        public bool IsChunkReady(int chunkx, int chunky, int chunkz)
+        {
+            return true;
+        }
+        #endregion
     }
     public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
@@ -212,6 +218,7 @@ namespace GameModeFortress
             InfiniteMapChunked map = new InfiniteMapChunked() { generator = new WorldGeneratorDummy() };
             map.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.map = map;
+            terrainDrawer.ischunkready = map;
             //clientgame.worldgeneratorsandbox = gen;
             //clientgame.minecartdrawer = new MinecartDrawer() { the3d = the3d, getfile = getfile,
             //    railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame } };

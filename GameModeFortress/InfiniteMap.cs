@@ -5,11 +5,12 @@ using ManicDigger;
 
 namespace GameModeFortress
 {
-    public class InfiniteMapChunked : IMapStorage
+    public class InfiniteMapChunked : IMapStorage, IIsChunkReady
     {
         [Inject]
         public IWorldGenerator generator { get; set; }
         byte[, ,][, ,] chunks;
+        bool[, ,] chunksreceived;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -54,6 +55,7 @@ namespace GameModeFortress
             MapSizeY = sizey;
             MapSizeZ = sizez;
             chunks = new byte[sizex / chunksize, sizey / chunksize, sizez / chunksize][, ,];
+            chunksreceived = new bool[sizex / chunksize, sizey / chunksize, sizez / chunksize];
         }
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
@@ -61,6 +63,19 @@ namespace GameModeFortress
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
             int chunksizez = chunk.GetUpperBound(2) + 1;
+            for (int xxx = 0; xxx < chunksizex; xxx += chunksize)
+            {
+                for (int yyy = 0; yyy < chunksizex; yyy += chunksize)
+                {
+                    for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
+                    {
+                        //if (!chunksreceived[(x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize])
+                        {
+                            chunksreceived[(x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize] = true;
+                        }
+                    }
+                }
+            }
             for (int zz = 0; zz < chunksizez; zz++)
             {
                 for (int yy = 0; yy < chunksizey; yy++)
@@ -71,6 +86,12 @@ namespace GameModeFortress
                     }
                 }
             }
+        }
+        #endregion
+        #region IIsChunkReady Members
+        public bool IsChunkReady(int x, int y, int z)
+        {
+            return chunksreceived[x / chunksize, y / chunksize, z / chunksize];
         }
         #endregion
     }

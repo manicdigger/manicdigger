@@ -173,6 +173,19 @@ namespace ManicDigger
             return RailSlope.Flat;
         }
     }
+    public interface IIsChunkReady
+    {
+        bool IsChunkReady(int x, int y, int z);
+    }
+    public class IsChunkReadyDummy : IIsChunkReady
+    {
+        #region IIsChunkReady Members
+        public bool IsChunkReady(int x, int y, int z)
+        {
+            return true;
+        }
+        #endregion
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
@@ -188,6 +201,8 @@ namespace ManicDigger
         public Config3d config3d { get; set; }
         [Inject]
         public ITerrainInfo mapstorage { get; set; }
+        [Inject]
+        public IIsChunkReady ischunkready { get; set; }
         [Inject]
         public IGameData data { get; set; }
         [Inject]
@@ -292,12 +307,12 @@ namespace ManicDigger
                     {
                         int xx = (int)localplayerposition.LocalPlayerPosition.X / chunksize + x;
                         int yy = (int)localplayerposition.LocalPlayerPosition.Z / chunksize + y;
-                        bool add = true;
+                        bool add = false;
                         for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
                         {
-                            if (batchedblocks.ContainsKey(new Vector3(xx, yy, z)))
+                            if (!batchedblocks.ContainsKey(new Vector3(xx, yy, z)))
                             {
-                                add = false;
+                                add = true;
                             }
                         }
                         if (add && (new Vector3(xx * chunksize, localplayerposition.LocalPlayerPosition.Y, yy * chunksize) - localplayerposition.LocalPlayerPosition).Length <= chunkdrawdistance * chunksize
@@ -308,13 +323,14 @@ namespace ManicDigger
                     }
                 }
                 l.Sort(FTodo);
-                for (int i = 0; i < Math.Min(5, l.Count); i++)//l.Count; i++)
+                int max = 5;
+                for (int i = 0; i < Math.Min(max, l.Count); i++)//l.Count; i++)
                 {
                     var ti = l[i];
                     if (exit.exit || exit2) { break; }
                     CheckRespawn();
                     ProcessAllPriorityTodos();
-                    ProcessUpdaterTodo(ti);
+                    if (!ProcessUpdaterTodo(ti)) { max++; }
                 }
             }
             updateThreadRunning--;
@@ -408,9 +424,13 @@ namespace ManicDigger
                 {
                     foreach (Vector3 p in nearchunksremove)
                     {
-                        foreach (int id in batchedblocks[p])
+                        int[] b = batchedblocks[p];
+                        if (b != null)
                         {
-                            batcher.Remove(id);
+                            foreach (int id in b)
+                            {
+                                batcher.Remove(id);
+                            }
                         }
                         batchedblocks.Remove(p);
                     }
@@ -428,9 +448,10 @@ namespace ManicDigger
                 }
             }
         }
-        private void ProcessUpdaterTodo(TodoItem ti)
+        private bool ProcessUpdaterTodo(TodoItem ti)
         {
             var p = ti.position;
+            bool processed = false;
             if (ti.action == TodoAction.Add)
             {
                 for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
@@ -439,6 +460,15 @@ namespace ManicDigger
                     {
                         //lock (terrainlock)
                         {
+                            if (batchedblocks.ContainsKey(new Vector3(p.X, p.Y, z)))
+                            {
+                                continue;
+                            }
+                            if (!ischunkready.IsChunkReady(p.X * chunksize, p.Y * chunksize, z * chunksize))
+                            {
+                                continue;
+                            }
+                            processed = true;
                             var chunk = MakeChunk(p.X, p.Y, z);
                             var chunkk = new List<VerticesIndicesToLoad>(chunk);
                             List<int> ids = new List<int>();
@@ -453,6 +483,10 @@ namespace ManicDigger
                             {
                                 batchedblocks[new Vector3(p.X, p.Y, z)] = ids.ToArray();
                             }
+                            else
+                            {
+                                batchedblocks[new Vector3(p.X, p.Y, z)] = null;
+                            }
                         }
                     }
                     catch { Console.WriteLine("Chunk error"); }
@@ -460,15 +494,20 @@ namespace ManicDigger
             }
             else if (ti.action == TodoAction.Delete)
             {
+                processed = true;
                 for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
                 {
                     //lock (terrainlock)
                     {
                         if (batchedblocks.ContainsKey(new Vector3(p.X, p.Y, z)))
                         {
-                            foreach (int id in batchedblocks[new Vector3(p.X, p.Y, z)])
+                            int[] b = batchedblocks[new Vector3(p.X, p.Y, z)];
+                            if (b != null)
                             {
-                                batcher.Remove(id);
+                                foreach (int id in b)
+                                {
+                                    batcher.Remove(id);
+                                }
                             }
                             batchedblocks.Remove(new Vector3(p.X, p.Y, z));
                         }
@@ -477,8 +516,10 @@ namespace ManicDigger
             }
             else
             {
+                processed = true;
                 UpdateAllTiles();
             }
+            return processed;
         }
         private IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {

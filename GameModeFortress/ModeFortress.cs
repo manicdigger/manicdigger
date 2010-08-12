@@ -18,6 +18,8 @@ namespace GameModeFortress
         public IGameData data { get; set; }
         [Inject]
         public IShadows shadows { get; set; }
+        [Inject]
+        public InfiniteMapChunked map { get; set; }
         public void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
@@ -77,7 +79,6 @@ namespace GameModeFortress
         }
         Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
-        public IMapStorage map;
         public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
         IDictionary<int, Player> players = new Dictionary<int, Player>();
         public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
