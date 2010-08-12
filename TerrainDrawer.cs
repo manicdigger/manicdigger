@@ -293,35 +293,8 @@ namespace ManicDigger
                 Point playerpoint = new Point((int)(localplayerposition.LocalPlayerPosition.X / chunksize), (int)(localplayerposition.LocalPlayerPosition.Z / chunksize));
                 ProcessAllPriorityTodos();
                 List<TodoItem> l = new List<TodoItem>();
-                foreach (var k in batchedblocks)
-                {
-                    var v = k.Key;
-                    if ((new Vector3(v.X * chunksize, localplayerposition.LocalPlayerPosition.Y, v.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length > chunkdrawdistance * chunksize)
-                    {
-                        l.Add(new TodoItem() { position = new Point((int)v.X, (int)v.Y), action = TodoAction.Delete });
-                    }
-                }
-                for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
-                {
-                    for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
-                    {
-                        int xx = (int)localplayerposition.LocalPlayerPosition.X / chunksize + x;
-                        int yy = (int)localplayerposition.LocalPlayerPosition.Z / chunksize + y;
-                        bool add = false;
-                        for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
-                        {
-                            if (!batchedblocks.ContainsKey(new Vector3(xx, yy, z)))
-                            {
-                                add = true;
-                            }
-                        }
-                        if (add && (new Vector3(xx * chunksize, localplayerposition.LocalPlayerPosition.Y, yy * chunksize) - localplayerposition.LocalPlayerPosition).Length <= chunkdrawdistance * chunksize
-                            && IsValidChunkPosition(xx, yy))
-                        {
-                            l.Add(new TodoItem() { position = new Point(xx, yy), action = TodoAction.Add });
-                        }
-                    }
-                }
+                FindChunksToDelete(l);
+                FindChunksToAdd(l);
                 l.Sort(FTodo);
                 int max = 5;
                 for (int i = 0; i < Math.Min(max, l.Count); i++)//l.Count; i++)
@@ -334,6 +307,41 @@ namespace ManicDigger
                 }
             }
             updateThreadRunning--;
+        }
+        private void FindChunksToDelete(List<TodoItem> l)
+        {
+            foreach (var k in batchedblocks)
+            {
+                var v = k.Key;
+                if ((new Vector3(v.X * chunksize, localplayerposition.LocalPlayerPosition.Y, v.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length > chunkdrawdistance * chunksize)
+                {
+                    l.Add(new TodoItem() { position = new Point((int)v.X, (int)v.Y), action = TodoAction.Delete });
+                }
+            }
+        }
+        private void FindChunksToAdd(List<TodoItem> l)
+        {
+            for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
+            {
+                for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
+                {
+                    int xx = (int)localplayerposition.LocalPlayerPosition.X / chunksize + x;
+                    int yy = (int)localplayerposition.LocalPlayerPosition.Z / chunksize + y;
+                    bool add = false;
+                    for (int z = 0; z < mapstorage.MapSizeZ / chunksize; z++)
+                    {
+                        if (!batchedblocks.ContainsKey(new Vector3(xx, yy, z)))
+                        {
+                            add = true;
+                        }
+                    }
+                    if (add && (new Vector3(xx * chunksize, localplayerposition.LocalPlayerPosition.Y, yy * chunksize) - localplayerposition.LocalPlayerPosition).Length <= chunkdrawdistance * chunksize
+                        && IsValidChunkPosition(xx, yy))
+                    {
+                        l.Add(new TodoItem() { position = new Point(xx, yy), action = TodoAction.Add });
+                    }
+                }
+            }
         }
         private bool IsValidChunkPosition(int xx, int yy)
         {
