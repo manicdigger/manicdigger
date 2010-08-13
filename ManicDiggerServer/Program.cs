@@ -632,7 +632,7 @@ namespace ManicDiggerServer
                     foreach (var k in clients)
                     {
                         //original player did speculative update already.
-                        if (k.Key != clientid)
+                        //if (k.Key != clientid)
                         {
                             SendSetBlock(k.Key, x, y, z, blocktype);
                         }
