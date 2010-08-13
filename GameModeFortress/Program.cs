@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace GameModeFortress
 {
-    public class NetworkClientDummyInfinite : INetworkClient
+    public class NetworkClientDummyInfinite : INetworkClientFortress
     {
         #region INetworkClient Members
         public void Dispose()
@@ -83,6 +83,11 @@ namespace GameModeFortress
             return true;
         }
         #endregion
+        #region INetworkClientFortress Members
+        public void SendPacketClient(PacketClient packetClient)
+        {
+        }
+        #endregion
     }
     public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
@@ -109,7 +114,7 @@ namespace GameModeFortress
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = new CurrentSeasonDummy();
             gamedata.CurrentSeason = currentseason;
-            INetworkClient network;
+            INetworkClientFortress network;
             if (singleplayer)
             {
                 network = new NetworkClientDummyInfinite() { gameworld = clientgame };
@@ -207,6 +212,7 @@ namespace GameModeFortress
             clientgame.viewport = w;
             clientgame.data = gamedata;
             clientgame.network = network;
+            clientgame.craftingtabletool = new CraftingTableTool() { map = mapstorage };
             //clientgame.audio = audio;
             //clientgame.zombiedrawer = new CharacterDrawerMonsterCode() { };//zombie = true };
             //clientgame.getfile = getfile;

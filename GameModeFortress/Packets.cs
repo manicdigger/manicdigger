@@ -186,6 +186,8 @@ namespace GameModeFortress
         public PacketClientPositionAndOrientation PositionAndOrientation;
         [ProtoMember(5, IsRequired = false)]
         public PacketClientMessage Message;
+        [ProtoMember(6, IsRequired = false)]
+        public PacketClientCraft Craft;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -215,6 +217,18 @@ namespace GameModeFortress
         [ProtoMember(3, IsRequired = false)]
         public int Max = 200;
     }
+    [ProtoContract]
+    public class PacketClientCraft
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        [ProtoMember(3, IsRequired = false)]
+        public int Z;
+        [ProtoMember(4, IsRequired = false)]
+        public int RecipeId;
+    }
     /// <summary>
     /// Client -> Server packet id.
     /// </summary>
@@ -223,6 +237,7 @@ namespace GameModeFortress
         PlayerIdentification = 0,
         SetBlock = 5,
         PositionandOrientation = 8,
+        Craft = 9,
         Message = 0x0d,
 
         ExtendedPacketCommand = 100,

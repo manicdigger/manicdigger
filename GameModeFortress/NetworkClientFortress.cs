@@ -15,7 +15,11 @@ namespace GameModeFortress
     {
         bool NetworkPacketReceived(PacketServer packet);
     }
-    public class NetworkClientFortress : INetworkClient
+    public interface INetworkClientFortress : INetworkClient
+    {
+        void SendPacketClient(PacketClient packetClient);
+    }
+    public class NetworkClientFortress : INetworkClientFortress
     {
         [Inject]
         public IMap Map { get; set; }
@@ -76,6 +80,10 @@ namespace GameModeFortress
                 BlockType = type
             };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
+        }
+        public void SendPacketClient(PacketClient packet)
+        {
+            SendPacket(Serialize(packet));
         }
         public void SendChat(string s)
         {

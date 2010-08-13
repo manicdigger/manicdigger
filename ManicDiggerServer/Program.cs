@@ -48,6 +48,9 @@ namespace ManicDiggerServer
         public InfiniteMapChunked map { get; set; }
         [Inject]
         public IGameData data { get; set; }
+        [Inject]
+        public CraftingTableTool craftingtabletool { get; set; }
+        public CraftingRecipes craftingrecipes = new CraftingRecipes();
         bool ENABLE_FORTRESS = true;
         public void Start()
         {
@@ -717,8 +720,12 @@ namespace ManicDiggerServer
                 case ClientPacketId.Message:
                     SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
                     break;
+                case ClientPacketId.Craft:
+                    DoCommandCraft(true, packet.Craft);
+                    break;
                 default:
-                    throw new Exception();
+                    Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
+                    break;
             }
             return lengthPrefixLength + packetLength;
         }
@@ -730,6 +737,77 @@ namespace ManicDiggerServer
             }
         }
         bool ENABLE_FINITEINVENTORY { get { return !cfgcreative; } }
+        private bool DoCommandCraft(bool execute, PacketClientCraft cmd)
+        {
+            if (map.GetBlock(cmd.X, cmd.Y, cmd.Z) != (int)TileTypeManicDigger.CraftingTable)
+            {
+                return false;
+            }
+            if (cmd.RecipeId < 0 || cmd.RecipeId >= craftingrecipes.craftingrecipes.Count)
+            {
+                return false;
+            }
+            List<Vector3i> table = craftingtabletool.GetTable(new Vector3i(cmd.X, cmd.Y, cmd.Z));
+            List<int> ontable = craftingtabletool.GetOnTable(table);
+            List<int> outputtoadd = new List<int>();
+            //for (int i = 0; i < craftingrecipes.Count; i++)
+            int i = cmd.RecipeId;
+            {
+                //try apply recipe. if success then try until fail.
+                for (; ; )
+                {
+                    //check if ingredients available
+                    foreach (Ingredient ingredient in craftingrecipes.craftingrecipes[i].ingredients)
+                    {
+                        if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
+                        {
+                            goto nextrecipe;
+                        }
+                    }
+                    //remove ingredients
+                    foreach (Ingredient ingredient in craftingrecipes.craftingrecipes[i].ingredients)
+                    {
+                        for (int ii = 0; ii < ingredient.Amount; ii++)
+                        {
+                            //replace on table
+                            ReplaceOne(ontable, ingredient.Type, (int)TileTypeMinecraft.Empty);
+                        }
+                    }
+                    //add output
+                    for (int z = 0; z < craftingrecipes.craftingrecipes[i].output.Amount; z++)
+                    {
+                        outputtoadd.Add(craftingrecipes.craftingrecipes[i].output.Type);
+                    }
+                }
+            nextrecipe:
+                ;
+            }
+            foreach (var v in outputtoadd)
+            {
+                ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
+            }
+            int zz = 0;
+            if (execute)
+            {
+                foreach (var v in table)
+                {
+                    SetBlockAndNotify(v.x, v.y, v.z + 1, ontable[zz]);
+                    zz++;
+                }
+            }
+            return true;
+        }
+        private void ReplaceOne<T>(List<T> l, T from, T to)
+        {
+            for (int ii = 0; ii < l.Count; ii++)
+            {
+                if (l[ii].Equals(from))
+                {
+                    l[ii] = to;
+                    break;
+                }
+            }
+        }
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
@@ -1129,6 +1207,7 @@ namespace ManicDiggerServer
             s.map = map;
             s.generator = generator;
             s.data = new GameDataTilesManicDigger();
+            s.craftingtabletool = new CraftingTableTool() { map = map };
 
             if (Debugger.IsAttached)
             {

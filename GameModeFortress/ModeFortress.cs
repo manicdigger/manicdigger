@@ -6,6 +6,62 @@ using OpenTK;
 
 namespace GameModeFortress
 {
+    public class CraftingTableTool
+    {
+        [Inject]
+        public IMapStorage map { get; set; }
+        public List<int> GetOnTable(List<Vector3i> table)
+        {
+            List<int> ontable = new List<int>();
+            foreach (var v in table)
+            {
+                int t = map.GetBlock(v.x, v.y, v.z + 1);
+                ontable.Add(t);
+            }
+            return ontable;
+        }
+        public int maxcraftingtablesize = 2000;
+        public List<Vector3i> GetTable(Vector3i pos)
+        {
+            List<Vector3i> l = new List<Vector3i>();
+            Queue<Vector3i> todo = new Queue<Vector3i>();
+            todo.Enqueue(pos);
+            for (; ; )
+            {
+                if (todo.Count == 0 || l.Count >= maxcraftingtablesize)
+                {
+                    break;
+                }
+                var p = todo.Dequeue();
+                if (l.Contains(p))
+                {
+                    continue;
+                }
+                l.Add(p);
+                var a = new Vector3i(p.x + 1, p.y, p.z);
+                if (map.GetBlock(a.x, a.y, a.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(a);
+                }
+                var b = new Vector3i(p.x - 1, p.y, p.z);
+                if (map.GetBlock(b.x, b.y, b.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(b);
+                }
+                var c = new Vector3i(p.x, p.y + 1, p.z);
+                if (map.GetBlock(c.x, c.y, c.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(c);
+                }
+                var d = new Vector3i(p.x, p.y - 1, p.z);
+                if (map.GetBlock(d.x, d.y, d.z) == (int)TileTypeManicDigger.CraftingTable)
+                {
+                    todo.Enqueue(d);
+                }
+            }
+            return l;
+        }
+    }
     public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived
     {
         [Inject]
@@ -13,13 +69,16 @@ namespace GameModeFortress
         [Inject]
         public IViewport3d viewport { get; set; }
         [Inject]
-        public INetworkClient network { get; set; }
+        public INetworkClientFortress network { get; set; }
         [Inject]
         public IGameData data { get; set; }
         [Inject]
         public IShadows shadows { get; set; }
         [Inject]
         public InfiniteMapChunked map { get; set; }
+        public CraftingRecipes craftingrecipes = new CraftingRecipes();
+        [Inject]
+        public CraftingTableTool craftingtabletool { get; set; }
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
@@ -275,8 +334,43 @@ namespace GameModeFortress
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
+            if (KeyPressed(OpenTK.Input.Key.C))
+            {
+                if (viewport.PickCubePos != new Vector3(-1, -1, -1))
+                {
+                    Vector3i pos = new Vector3i((int)viewport.PickCubePos.X, (int)viewport.PickCubePos.Z, (int)viewport.PickCubePos.Y);
+                    if (map.GetBlock(pos.x, pos.y, pos.z)
+                        == (int)TileTypeManicDigger.CraftingTable)
+                    {
+                        //draw crafting recipes list.
+                        viewport.GuiStateCraft(craftingrecipes.craftingrecipes, craftingtabletool.GetOnTable(craftingtabletool.GetTable(pos)),
+                        (recipe) => { CraftingRecipeSelected(pos, recipe); });
+                    }
+                }
+            }
             viewport.FiniteInventory = FiniteInventory;
             viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
+        }
+        void CraftingRecipeSelected(Vector3i pos, int? recipe)
+        {
+            if (recipe == null)
+            {
+                return;
+            }
+            PacketClientCraft cmd = new PacketClientCraft();
+            cmd.X = (short)pos.x;
+            cmd.Y = (short)pos.y;
+            cmd.Z = (short)pos.z;
+            cmd.RecipeId = (short)recipe.Value;
+            network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Craft, Craft = cmd });
+        }
+        private bool KeyPressed(OpenTK.Input.Key key)
+        {
+            return viewport.keypressed != null && viewport.keypressed.Key == key;
+        }
+        private bool KeyDepressed(OpenTK.Input.Key key)
+        {
+            return viewport.keydepressed != null && viewport.keydepressed.Key == key;
         }
         Dictionary<int, int> FiniteInventory = new Dictionary<int, int>();
         public IEnumerable<ICharacterToDraw> Characters
