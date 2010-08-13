@@ -46,6 +46,8 @@ namespace ManicDiggerServer
         public Water water { get; set; }
         [Inject]
         public InfiniteMapChunked map { get; set; }
+        [Inject]
+        public IGameData data { get; set; }
         bool ENABLE_FORTRESS = true;
         public void Start()
         {
@@ -415,7 +417,8 @@ namespace ManicDiggerServer
             foreach (var k in clients)
             {
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
-            }            
+                NotifyFiniteInventory(k.Key);
+            }
             UpdateWater();
         }
         int SEND_CHUNKS_PER_SECOND = 10;
@@ -470,6 +473,54 @@ namespace ManicDiggerServer
                 sent++;
             }
             return sent;
+        }
+        const string invalidplayername = "invalid";
+        private void NotifyFiniteInventory(int clientid)
+        {
+            Client c = clients[clientid];
+            if (c.IsInventoryDirty && c.playername != invalidplayername)
+            {
+                PacketServerFiniteInventory p;
+                if (cfgcreative)
+                {
+                    p = new PacketServerFiniteInventory()
+                    {
+                        BlockTypeAmount = StartFiniteInventory(),
+                        IsFinite = false,
+                    };
+                }
+                else
+                {
+                    p = GetPlayerInventory(c.playername);
+                }
+                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FiniteInventory, FiniteInventory = p }));
+                c.IsInventoryDirty = false;
+            }
+        }
+        PacketServerFiniteInventory GetPlayerInventory(string playername)
+        {
+            if (Inventory == null)
+            {
+                Inventory = new Dictionary<string, PacketServerFiniteInventory>();
+            }
+            if (!Inventory.ContainsKey(playername))
+            {
+                Inventory[playername] = new PacketServerFiniteInventory()
+                {
+                    BlockTypeAmount = StartFiniteInventory(),
+                    IsFinite = true,
+                    Max = FiniteInventoryMax,
+                };
+            }
+            return Inventory[playername];
+        }
+        public int FiniteInventoryMax = 200;
+        Dictionary<int, int> StartFiniteInventory()
+        {
+            Dictionary<int, int> d = new Dictionary<int, int>();
+            d[(int)TileTypeManicDigger.CraftingTable] = 6;
+            d[(int)TileTypeManicDigger.Crops1] = 1;
+            return d;
         }
         Vector3i PlayerBlockPosition(Client c)
         {
@@ -641,15 +692,8 @@ namespace ManicDiggerServer
                         blocktype = 0; //data.TileIdEmpty
                     }
                     //todo check block type.
-                    map.SetBlock(x, y, z, blocktype);
-                    foreach (var k in clients)
-                    {
-                        //original player did speculative update already.
-                        //if (k.Key != clientid)
-                        {
-                            SendSetBlock(k.Key, x, y, z, blocktype);
-                        }
-                    }
+                    //map.SetBlock(x, y, z, blocktype);
+                    DoCommandBuild(clientid, true, packet.SetBlock);
                     //water
                     water.BlockChange(map, x, y, z);
                     break;
@@ -677,6 +721,181 @@ namespace ManicDiggerServer
                     throw new Exception();
             }
             return lengthPrefixLength + packetLength;
+        }
+        private void NotifyBlock(int x, int y, int z, int blocktype)
+        {
+            foreach (var k in clients)
+            {
+                SendSetBlock(k.Key, x, y, z, blocktype);
+            }
+        }
+        bool ENABLE_FINITEINVENTORY { get { return !cfgcreative; } }
+        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
+        {
+            Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
+            if (ENABLE_FINITEINVENTORY)
+            {
+                Dictionary<int, int> inventory = GetPlayerInventory(clients[player_id].playername).BlockTypeAmount;
+                if (cmd.Mode == (int)BlockSetMode.Create)
+                {
+                    int oldblock = map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+                    int blockstoput = 1;
+                    if (GameDataTilesManicDigger.IsRailTile(cmd.BlockType))
+                    {
+                        if (!(oldblock == data.TileIdEmpty
+                            || GameDataTilesManicDigger.IsRailTile(oldblock)))
+                        {
+                            return false;
+                        }
+                        //count how many rails will be created
+                        int oldrailcount = 0;
+                        if (GameDataTilesManicDigger.IsRailTile(oldblock))
+                        {
+                            oldrailcount = MyLinq.Count(
+                                DirectionUtils.ToRailDirections(
+                                (RailDirectionFlags)(oldblock - GameDataTilesManicDigger.railstart)));
+                        }
+                        int newrailcount = MyLinq.Count(
+                            DirectionUtils.ToRailDirections(
+                            (RailDirectionFlags)(cmd.BlockType - GameDataTilesManicDigger.railstart)));
+                        blockstoput = newrailcount - oldrailcount;
+                        //check if player has that many rails
+                        int inventoryrail = GetEquivalentCount(inventory, cmd.BlockType);
+                        if (blockstoput > inventoryrail)
+                        {
+                            return false;
+                        }
+                        if (execute)
+                        {
+                            RemoveEquivalent(inventory, cmd.BlockType, blockstoput);
+                        }
+                    }
+                    else
+                    {
+                        //todo when removing rail under minecart, make minecart block in place of removed rail.
+                        if (oldblock != data.TileIdEmpty)
+                        {
+                            return false;
+                        }
+                        //check if player has such block
+                        int hasblock = -1; //which equivalent block it has exactly?
+                        foreach (var k in inventory)
+                        {
+                            if (EquivalentBlock(k.Key, cmd.BlockType)
+                                && k.Value > 0)
+                            {
+                                hasblock = k.Key;
+                            }
+                        }
+                        if (hasblock == -1)
+                        {
+                            return false;
+                        }
+                        if (execute)
+                        {
+                            inventory[hasblock]--;
+                        }
+                    }
+                }
+                else
+                {
+                    //add to inventory
+                    int blocktype = map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+                    blocktype = data.PlayerBuildableMaterialType(blocktype);
+                    if ((!data.IsValidTileType(blocktype))
+                        || blocktype == data.TileIdEmpty)
+                    {
+                        return false;
+                    }
+                    int blockstopick = 1;
+                    if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                    {
+                        blockstopick = MyLinq.Count(
+                            DirectionUtils.ToRailDirections(
+                            (RailDirectionFlags)(blocktype - GameDataTilesManicDigger.railstart)));
+                    }
+                    if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
+                    {
+                        return false;
+                    }
+                    if (execute)
+                    {
+                        if (!inventory.ContainsKey(blocktype))
+                        {
+                            inventory[blocktype] = 0;
+                        }
+                        inventory[blocktype] += blockstopick;
+                    }
+                }
+                clients[player_id].IsInventoryDirty = true;
+            }
+            else
+            {
+            }
+            if (execute)
+            {
+                int tiletype = cmd.Mode == (int)BlockSetMode.Create ?
+                    (byte)cmd.BlockType : data.TileIdEmpty;
+                SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, tiletype);
+            }
+            return true;
+        }
+        void SetBlockAndNotify(int x, int y, int z, int blocktype)
+        {
+            map.SetBlock(x, y, z, blocktype);
+            NotifyBlock(x, y, z, blocktype);
+        }
+        int TotalAmount(Dictionary<int, int> inventory)
+        {
+            int sum = 0;
+            foreach (var k in inventory)
+            {
+                sum += k.Value;
+            }
+            return sum;
+        }
+        private void RemoveEquivalent(Dictionary<int, int> inventory, int blocktype, int count)
+        {
+            int removed = 0;
+            for (int i = 0; i < count; i++)
+            {
+                foreach (var k in new Dictionary<int, int>(inventory))
+                {
+                    if (EquivalentBlock(k.Key, blocktype)
+                        && k.Value > 0)
+                    {
+                        inventory[k.Key]--;
+                        removed++;
+                        goto removenext;
+                    }
+                }
+            removenext:
+                ;
+            }
+            if (removed != count)
+            {
+                //throw new Exception();
+            }
+        }
+        private int GetEquivalentCount(Dictionary<int, int> inventory, int blocktype)
+        {
+            int count = 0;
+            foreach (var k in inventory)
+            {
+                if (EquivalentBlock(k.Key, blocktype))
+                {
+                    count += k.Value;
+                }
+            }
+            return count;
+        }
+        bool EquivalentBlock(int blocktypea, int blocktypeb)
+        {
+            if (GameDataTilesManicDigger.IsRailTile(blocktypea) && GameDataTilesManicDigger.IsRailTile(blocktypeb))
+            {
+                return true;
+            }
+            return blocktypea == blocktypeb;
         }
         private byte[] Serialize(PacketServer p)
         {
@@ -855,7 +1074,7 @@ namespace ManicDiggerServer
         {
             public Socket socket;
             public List<byte> received = new List<byte>();
-            public string playername = "player";
+            public string playername = invalidplayername;
             public int PositionMul32GlX;
             public int PositionMul32GlY;
             public int PositionMul32GlZ;
@@ -863,6 +1082,7 @@ namespace ManicDiggerServer
             public int positionpitch;
             public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
             public ManicDigger.Timer notifyMapTimer;
+            public bool IsInventoryDirty = true;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
@@ -908,6 +1128,7 @@ namespace ManicDiggerServer
             map.Reset(10000, 10000, 128);
             s.map = map;
             s.generator = generator;
+            s.data = new GameDataTilesManicDigger();
 
             if (Debugger.IsAttached)
             {

@@ -6,7 +6,7 @@ using OpenTK;
 
 namespace GameModeFortress
 {
-    public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld
+    public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
@@ -276,6 +276,7 @@ namespace GameModeFortress
                 }
             }
             viewport.FiniteInventory = FiniteInventory;
+            viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
         }
         Dictionary<int, int> FiniteInventory = new Dictionary<int, int>();
         public IEnumerable<ICharacterToDraw> Characters
@@ -383,11 +384,15 @@ namespace GameModeFortress
         #region IGameMode Members
         public int FiniteInventoryAmount(int blocktype)
         {
-            return 0;
+            if (!FiniteInventory.ContainsKey(blocktype))
+            {
+                return 0;
+            }
+            return FiniteInventory[blocktype];
         }
         #endregion
         #region IGameMode Members
-        public int FiniteInventoryMax { get { return 0; } }
+        public int FiniteInventoryMax { get; set; }
         #endregion
         #region IGameMode Members
         public double SIMULATIONLAG_SECONDS { get; set; }
@@ -436,5 +441,22 @@ namespace GameModeFortress
         #endregion
         public IMapStorage mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
+        #region INetworkPacketReceived Members
+        public bool NetworkPacketReceived(PacketServer packet)
+        {
+            switch (packet.PacketId)
+            {
+                case ServerPacketId.FiniteInventory:
+                    {
+                        FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
+                        ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
+                        FiniteInventoryMax = packet.FiniteInventory.Max;
+                    }
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        #endregion
     }
 }

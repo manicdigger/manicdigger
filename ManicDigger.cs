@@ -979,8 +979,8 @@ namespace ManicDigger
     }
     public enum BlockSetMode
     {
-        Create,
         Destroy,
+        Create,
     }
     public interface ILogger
     {

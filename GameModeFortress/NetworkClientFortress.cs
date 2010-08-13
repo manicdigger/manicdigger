@@ -11,6 +11,10 @@ using ProtoBuf;
 
 namespace GameModeFortress
 {
+    public interface INetworkPacketReceived
+    {
+        bool NetworkPacketReceived(PacketServer packet);
+    }
     public class NetworkClientFortress : INetworkClient
     {
         [Inject]
@@ -21,6 +25,8 @@ namespace GameModeFortress
         public IGui Chatlines { get; set; }
         [Inject]
         public ILocalPlayerPosition Position { get; set; }
+        [Inject]
+        public INetworkPacketReceived NetworkPacketReceived { get; set; }
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -320,7 +326,11 @@ namespace GameModeFortress
                     break;
                 default:
                     {
-                        Console.WriteLine("Invalid packet id: " + packet.PacketId);
+                        bool handled = NetworkPacketReceived.NetworkPacketReceived(packet);
+                        if (!handled)
+                        {
+                            Console.WriteLine("Invalid packet id: " + packet.PacketId);
+                        }
                     }
                     break;
             }

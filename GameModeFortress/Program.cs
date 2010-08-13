@@ -159,6 +159,7 @@ namespace GameModeFortress
                 n.Position = localplayerposition;
                 n.ENABLE_FORTRESS = true;
                 //n.gameworld = clientgame;
+                n.NetworkPacketReceived = clientgame;
             }
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;

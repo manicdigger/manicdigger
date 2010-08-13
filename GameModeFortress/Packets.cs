@@ -170,6 +170,8 @@ namespace GameModeFortress
         public PacketServerDisconnectPlayer DisconnectPlayer;
         [ProtoMember(11, IsRequired = false)]
         public PacketServerChunk Chunk;
+        [ProtoMember(12, IsRequired = false)]
+        public PacketServerFiniteInventory FiniteInventory;
     }
     [ProtoContract]
     public class PacketClient
@@ -207,9 +209,11 @@ namespace GameModeFortress
     public class PacketServerFiniteInventory
     {
         [ProtoMember(1, IsRequired = false)]
-        public bool IsInfinite;
+        public bool IsFinite;
         [ProtoMember(2, IsRequired = false)]
         public Dictionary<int, int> BlockTypeAmount = new Dictionary<int, int>();
+        [ProtoMember(3, IsRequired = false)]
+        public int Max = 200;
     }
     /// <summary>
     /// Client -> Server packet id.
@@ -242,6 +246,7 @@ namespace GameModeFortress
         Message = 13,
         DisconnectPlayer = 14,
         Chunk = 15,
+        FiniteInventory = 16,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
