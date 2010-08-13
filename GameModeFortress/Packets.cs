@@ -203,14 +203,14 @@ namespace GameModeFortress
         [ProtoMember(7, IsRequired = false)]
         public byte[] CompressedChunk;
     }
-    /*
     [ProtoContract]
-    public class PacketMapLoadingProgress
+    public class PacketServerFiniteInventory
     {
         [ProtoMember(1, IsRequired = false)]
-        public byte ProgressPercent;
+        public bool IsInfinite;
+        [ProtoMember(2, IsRequired = false)]
+        public Dictionary<int, int> BlockTypeAmount = new Dictionary<int, int>();
     }
-    */
     /// <summary>
     /// Client -> Server packet id.
     /// </summary>

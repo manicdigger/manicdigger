@@ -9,7 +9,7 @@ namespace GameModeFortress
     {
         [Inject]
         public IWorldGenerator generator { get; set; }
-        byte[, ,][, ,] chunks;
+        public byte[, ,][, ,] chunks;
         bool[, ,] chunksreceived;
         #region IMapStorage Members
         public int MapSizeX { get; set; }

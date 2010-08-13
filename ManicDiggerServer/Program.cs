@@ -24,31 +24,97 @@ namespace ManicDiggerServer
         }
         public int clientid;
     }
+    [ProtoContract]
+    public class ManicDiggerSave
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int MapSizeX;
+        [ProtoMember(2, IsRequired = false)]
+        public int MapSizeY;
+        [ProtoMember(3, IsRequired = false)]
+        public int MapSizeZ;
+        [ProtoMember(4, IsRequired = false)]
+        public Dictionary<string, PacketServerFiniteInventory> Inventory;
+        [ProtoMember(6, IsRequired = false)]
+        public List<PacketServerChunk> MapChunks;
+    }
     public class Server
     {
         [Inject]
         public Water water { get; set; }
-        //[Inject]
-        //public IGameWorld gameworld { get; set; }
         [Inject]
-        //.public IClients players { get; set; }
-        public InfiniteMapChunked map;
+        public InfiniteMapChunked map { get; set; }
         bool ENABLE_FORTRESS = true;
         public void Start()
         {
             LoadConfig();
-            /*
-            if (ENABLE_FORTRESS)
             {
-                ((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
+                //((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
                 if (File.Exists(manipulator.defaultminesave))
                 {
-                    gameworld.LoadState(File.ReadAllBytes(manipulator.defaultminesave));
+                    Console.WriteLine("Loading savegame...");
+                    LoadGame(new MemoryStream(File.ReadAllBytes(manipulator.defaultminesave)));
                     Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
                 }
             }
-            */
             Start(cfgport);
+        }
+        private void LoadGame(Stream s)
+        {
+            ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(s);
+            map.Reset(map.MapSizeX, map.MapSizeX, map.MapSizeZ);
+            foreach (PacketServerChunk chunk in save.MapChunks)
+            {
+                //same as in client
+                var p = chunk;
+                byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
+                byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
+                {
+                    BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
+                    for (int zz = 0; zz < p.SizeZ; zz++)
+                    {
+                        for (int yy = 0; yy < p.SizeY; yy++)
+                        {
+                            for (int xx = 0; xx < p.SizeX; xx++)
+                            {
+                                receivedchunk[xx, yy, zz] = br2.ReadByte();
+                            }
+                        }
+                    }
+                }
+                map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
+            }
+            this.Inventory = save.Inventory;
+        }
+        public Dictionary<string, PacketServerFiniteInventory> Inventory = new Dictionary<string, PacketServerFiniteInventory>();
+        public void SaveGame(Stream s)
+        {
+            ManicDiggerSave save = new ManicDiggerSave();
+            save.MapChunks = new List<PacketServerChunk>();
+            for (int cx = 0; cx < map.MapSizeX / chunksize; cx++)
+            {
+                for (int cy = 0; cy < map.MapSizeY / chunksize; cy++)
+                {
+                    for (int cz = 0; cz < map.MapSizeZ / chunksize; cz++)
+                    {
+                        byte[, ,] b = map.chunks[cx, cy, cz];
+                        if (b != null)
+                        {
+                            PacketServerChunk chunk = new PacketServerChunk();
+                            chunk.SizeX = chunksize;
+                            chunk.SizeY = chunksize;
+                            chunk.SizeZ = chunksize;
+                            chunk.X = cx * chunksize;
+                            chunk.Y = cy * chunksize;
+                            chunk.Z = cz * chunksize;
+                            chunk.CompressedChunk = CompressChunk(b);
+                            save.MapChunks.Add(chunk);
+                        }
+                    }
+                }
+            }
+            save.Inventory = Inventory;
+            Serializer.Serialize(s, save);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
         public void Process11()
@@ -61,7 +127,9 @@ namespace ManicDiggerServer
                 }
                 else
                 {
-                    //File.WriteAllBytes(manipulator.defaultminesave, gameworld.SaveState());
+                    MemoryStream ms = new MemoryStream();
+                    SaveGame(ms);
+                    File.WriteAllBytes(manipulator.defaultminesave, ms.ToArray());
                 }
                 Console.WriteLine("Game saved.");
                 lastsave = DateTime.Now;

@@ -247,6 +247,7 @@ namespace ManicDigger
         public IMapGenerator mapgenerator { get; set; }
         //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
+        public const string BinSaveExtension = ".mdbs";
         public const string MinecraftMapSaveExtension = ".dat";
         public void LoadMap(IMapStorage map, string filename)
         {
@@ -306,7 +307,7 @@ namespace ManicDigger
             //.gui.DrawMap();
             Console.WriteLine("Game loaded successfully.");
         }
-        public string defaultminesave = "default" + XmlSaveExtension;
+        public string defaultminesave = "default" + BinSaveExtension;
         public byte[] SaveMap(IMapStorage map)
         {
             return GzipCompression.Compress(SaveXml(map));
