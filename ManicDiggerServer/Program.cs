@@ -37,6 +37,8 @@ namespace ManicDiggerServer
         public Dictionary<string, PacketServerFiniteInventory> Inventory;
         [ProtoMember(6, IsRequired = false)]
         public List<PacketServerChunk> MapChunks;
+        [ProtoMember(7, IsRequired = false)]
+        public int Seed;
     }
     public class Server
     {
@@ -56,12 +58,20 @@ namespace ManicDiggerServer
                     LoadGame(new MemoryStream(File.ReadAllBytes(manipulator.defaultminesave)));
                     Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
                 }
+                else
+                {
+                    Seed = new Random().Next();
+                    generator.SetSeed(Seed);
+                }
             }
             Start(cfgport);
         }
+        int Seed;
         private void LoadGame(Stream s)
         {
             ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(s);
+            generator.SetSeed(save.Seed);
+            Seed = save.Seed;
             map.Reset(map.MapSizeX, map.MapSizeX, map.MapSizeZ);
             foreach (PacketServerChunk chunk in save.MapChunks)
             {
@@ -86,6 +96,8 @@ namespace ManicDiggerServer
             }
             this.Inventory = save.Inventory;
         }
+        [Inject]
+        public WorldGenerator generator { get; set; }
         public Dictionary<string, PacketServerFiniteInventory> Inventory = new Dictionary<string, PacketServerFiniteInventory>();
         public void SaveGame(Stream s)
         {
@@ -114,6 +126,7 @@ namespace ManicDiggerServer
                 }
             }
             save.Inventory = Inventory;
+            save.Seed = Seed;
             Serializer.Serialize(s, save);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
@@ -889,10 +902,12 @@ namespace ManicDiggerServer
             */
             var map = new GameModeFortress.InfiniteMapChunked();
             map.chunksize = 32;
-            map.generator = new WorldGenerator();
+            var generator = new WorldGenerator();
+            map.generator = generator;
             s.chunksize = 32;
             map.Reset(10000, 10000, 128);
             s.map = map;
+            s.generator = generator;
 
             if (Debugger.IsAttached)
             {
