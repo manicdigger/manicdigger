@@ -742,28 +742,6 @@ namespace ManicDiggerServer
             }
             SendLevelFinalize(clientid);
         }
-        byte[, ,] GenerateChunk(int x, int y, int z, int chunksize)
-        {
-            byte[, ,] chunk = new byte[chunksize, chunksize, chunksize];
-            for (int xx = 0; xx < chunksize; xx++)
-            {
-                for (int yy = 0; yy < chunksize; yy++)
-                {
-                    for (int zz = 0; zz < chunksize; zz++)
-                    {
-                        if (z + zz < 32)
-                        {
-                            chunk[xx, yy, zz] = (int)TileTypeMinecraft.Grass;
-                        }
-                        else
-                        {
-                            chunk[xx, yy, zz] = 0;
-                        }
-                    }
-                }
-            }
-            return chunk;
-        }
         int levelchunksize = 1024;
         private void SendLevelInitialize(int clientid)
         {

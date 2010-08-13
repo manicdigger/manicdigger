@@ -295,6 +295,8 @@ namespace ManicDigger
                 List<TodoItem> l = new List<TodoItem>();
                 FindChunksToDelete(l);
                 FindChunksToAdd(l);
+                //without local cache, sort could crash when player moves during sort.
+                localplayerpositioncache = localplayerposition.LocalPlayerPosition;
                 l.Sort(FTodo);
                 int max = 5;
                 for (int i = 0; i < Math.Min(max, l.Count); i++)//l.Count; i++)
@@ -347,6 +349,13 @@ namespace ManicDigger
         {
             return xx >= 0 && yy >= 0 && xx < mapstorage.MapSizeX / chunksize && yy < mapstorage.MapSizeY / chunksize;
         }
+        private bool IsValidChunkPosition(int xx, int yy, int zz)
+        {
+            return xx >= 0 && yy >= 0 && zz >= 0
+                && xx < mapstorage.MapSizeX / chunksize
+                && yy < mapstorage.MapSizeY / chunksize
+                && zz < mapstorage.MapSizeZ / chunksize;
+        }
         private void CheckRespawn()
         {
             /*
@@ -357,6 +366,7 @@ namespace ManicDigger
             lastplayerposition = localplayerposition.LocalPlayerPosition;
             */
         }
+        Vector3 localplayerpositioncache;
         int FTodo(TodoItem a, TodoItem b)
         {
             if (a.action == TodoAction.Delete && b.action == TodoAction.Add)
@@ -371,8 +381,8 @@ namespace ManicDigger
         }
         int FPoint(Point a, Point b)
         {
-            return ((new Vector3(a.X * chunksize, localplayerposition.LocalPlayerPosition.Y, a.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length)
-                .CompareTo((new Vector3(b.X * chunksize, localplayerposition.LocalPlayerPosition.Y, b.Y * chunksize) - localplayerposition.LocalPlayerPosition).Length);
+            return ((new Vector3(a.X * chunksize, localplayerpositioncache.Y, a.Y * chunksize) - localplayerpositioncache).Length)
+                .CompareTo((new Vector3(b.X * chunksize, localplayerpositioncache.Y, b.Y * chunksize) - localplayerpositioncache).Length);
         }
         int FVector3Arr(Vector3[] a, Vector3[] b)
         {
@@ -472,7 +482,7 @@ namespace ManicDigger
                             {
                                 continue;
                             }
-                            if (!ischunkready.IsChunkReady(p.X * chunksize, p.Y * chunksize, z * chunksize))
+                            if (!IsChunksAroundReady(p.X, p.Y, z))
                             {
                                 continue;
                             }
@@ -528,6 +538,41 @@ namespace ManicDigger
                 UpdateAllTiles();
             }
             return processed;
+        }
+        private bool IsChunksAroundReady(int chunkx, int chunky, int chunkz)
+        {
+            int x = chunkx * chunksize;
+            int y = chunky * chunksize;
+            int z = chunkz * chunksize;
+            if (!(ischunkready.IsChunkReady(x, y, z)))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx - 1, chunky, chunkz) && !ischunkready.IsChunkReady(x - chunksize, y, z))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx + 1, chunky, chunkz) && !ischunkready.IsChunkReady(x + chunksize, y, z))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx, chunky - 1, chunkz) && !ischunkready.IsChunkReady(x, y - chunksize, z))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx, chunky + 1, chunkz) && !ischunkready.IsChunkReady(x, y + chunksize, z))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx, chunky, chunkz - 1) && !ischunkready.IsChunkReady(x, y, z - chunksize))
+            {
+                return false;
+            }
+            if (IsValidChunkPosition(chunkx, chunky, chunkz + 1) && !ischunkready.IsChunkReady(x, y, z + chunksize))
+            {
+                return false;
+            }
+            return true;
         }
         private IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
