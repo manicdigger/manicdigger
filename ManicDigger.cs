@@ -124,6 +124,10 @@ namespace ManicDigger
     }
     public static class MapUtil
     {
+        public static int Index(int x, int y, int h, int sizex, int sizey)
+        {
+            return (h * sizey + y) * sizex + x;
+        }
         public static bool IsValidPos(IMapStorage map, int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0)
@@ -164,6 +168,24 @@ namespace ManicDigger
             v |= (ulong)y << 20;
             v |= (ulong)z;
             return v;
+        }
+        public static byte[] ToFlatMap(byte[, ,] map)
+        {
+            int sizex = map.GetUpperBound(0) + 1;
+            int sizey = map.GetUpperBound(1) + 1;
+            int sizez = map.GetUpperBound(2) + 1;
+            byte[] flatmap = new byte[sizex * sizey * sizez];
+            for (int x = 0; x < sizex; x++)
+            {
+                for (int y = 0; y < sizey; y++)
+                {
+                    for (int z = 0; z < sizez; z++)
+                    {
+                        flatmap[Index(x, y, z, sizex, sizey)] = map[x, y, z];
+                    }
+                }
+            }
+            return flatmap;
         }
     }
     public class MapStorage : IMapStorage

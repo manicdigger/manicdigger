@@ -82,22 +82,31 @@ namespace ManicDiggerServer
             {
                 //same as in client
                 var p = chunk;
-                byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
-                byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
+                if (p.SizeX == chunksize && p.SizeY == chunksize && p.SizeZ == chunksize)
                 {
-                    BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
-                    for (int zz = 0; zz < p.SizeZ; zz++)
+                    var c = new InfiniteMapChunked.Chunk();
+                    map.chunks[p.X / chunksize, p.Y / chunksize, p.Z / chunksize] = c;
+                    c.compressed = p.CompressedChunk;
+                }
+                else
+                {
+                    byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
+                    byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
                     {
-                        for (int yy = 0; yy < p.SizeY; yy++)
+                        BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
+                        for (int zz = 0; zz < p.SizeZ; zz++)
                         {
-                            for (int xx = 0; xx < p.SizeX; xx++)
+                            for (int yy = 0; yy < p.SizeY; yy++)
                             {
-                                receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                for (int xx = 0; xx < p.SizeX; xx++)
+                                {
+                                    receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                }
                             }
                         }
                     }
+                    map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
                 }
-                map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
             }
             this.Inventory = save.Inventory;
         }
@@ -114,8 +123,8 @@ namespace ManicDiggerServer
                 {
                     for (int cz = 0; cz < map.MapSizeZ / chunksize; cz++)
                     {
-                        byte[, ,] b = map.chunks[cx, cy, cz];
-                        if (b != null)
+                        GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[cx, cy, cz];
+                        if (c != null)
                         {
                             PacketServerChunk chunk = new PacketServerChunk();
                             chunk.SizeX = chunksize;
@@ -124,7 +133,9 @@ namespace ManicDiggerServer
                             chunk.X = cx * chunksize;
                             chunk.Y = cy * chunksize;
                             chunk.Z = cz * chunksize;
-                            chunk.CompressedChunk = CompressChunk(b);
+                            if (c.compressed != null) { chunk.CompressedChunk = c.compressed; }
+                            else { chunk.CompressedChunk = c.data; }
+                            if (chunk.CompressedChunk == null) { throw new Exception(); }
                             save.MapChunks.Add(chunk);
                         }
                     }
@@ -459,7 +470,7 @@ namespace ManicDiggerServer
                 {
                     break;
                 }
-                byte[, ,] chunk = map.GetChunk(v.x, v.y, v.z);
+                byte[] chunk = map.GetChunk(v.x, v.y, v.z);
                 byte[] compressedchunk = CompressChunk(chunk);
                 PacketServerChunk p = new PacketServerChunk()
                 {
@@ -1090,6 +1101,10 @@ namespace ManicDiggerServer
                     }
                 }
             }
+        }
+        byte[] CompressChunk(byte[] chunk)
+        {
+            return GzipCompression.Compress(chunk);
         }
         byte[] CompressChunk(byte[, ,] chunk)
         {

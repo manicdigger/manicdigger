@@ -7,9 +7,14 @@ namespace GameModeFortress
 {
     public class InfiniteMapChunked : IMapStorage, IIsChunkReady
     {
+        public class Chunk
+        {
+            public byte[] data;
+            public byte[] compressed;
+        }
         [Inject]
         public IWorldGenerator generator { get; set; }
-        public byte[, ,][, ,] chunks;
+        public Chunk[, ,] chunks;
         bool[, ,] chunksreceived;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
@@ -17,13 +22,13 @@ namespace GameModeFortress
         public int MapSizeZ { get; set; }
         public int GetBlock(int x, int y, int z)
         {
-            byte[, ,] chunk = GetChunk(x, y, z);
-            return chunk[x % chunksize, y % chunksize, z % chunksize];
+            byte[] chunk = GetChunk(x, y, z);
+            return chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            byte[, ,] chunk = GetChunk(x, y, z);
-            chunk[x % chunksize, y % chunksize, z % chunksize] = (byte)tileType;
+            byte[] chunk = GetChunk(x, y, z);
+            chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
         }
         public float WaterLevel { get; set; }
         public void Dispose()
@@ -33,20 +38,26 @@ namespace GameModeFortress
         {
         }
         #endregion
-        public byte[, ,] GetChunk(int x, int y, int z)
+        public byte[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
             z = z / chunksize;
-            byte[, ,] chunk = chunks[x, y, z];
+            Chunk chunk = chunks[x, y, z];
             if (chunk == null)
             {
+
                 //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
                 byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
-                chunks[x, y, z] = newchunk;
-                return newchunk;
+                chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                return chunks[x, y, z].data;
             }
-            return chunk;
+            if (chunk.compressed != null)
+            {
+                chunk.data = GzipCompression.Decompress(chunk.compressed);
+                chunk.compressed = null;
+            }
+            return chunk.data;
         }
         public int chunksize = 16;
         public void Reset(int sizex, int sizey, int sizez)
@@ -54,7 +65,7 @@ namespace GameModeFortress
             MapSizeX = sizex;
             MapSizeY = sizey;
             MapSizeZ = sizez;
-            chunks = new byte[sizex / chunksize, sizey / chunksize, sizez / chunksize][, ,];
+            chunks = new Chunk[sizex / chunksize, sizey / chunksize, sizez / chunksize];
             chunksreceived = new bool[sizex / chunksize, sizey / chunksize, sizez / chunksize];
         }
         #region IMapStorage Members
