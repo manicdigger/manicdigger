@@ -112,7 +112,7 @@ namespace GameModeFortress
         {
             var gamedata = new GameDataTilesManicDigger();
             var clientgame = new GameFortress();
-            ICurrentSeason currentseason = new CurrentSeasonDummy();
+            ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
             INetworkClientFortress network;
             if (singleplayer)

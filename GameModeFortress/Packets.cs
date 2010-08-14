@@ -172,6 +172,8 @@ namespace GameModeFortress
         public PacketServerChunk Chunk;
         [ProtoMember(12, IsRequired = false)]
         public PacketServerFiniteInventory FiniteInventory;
+        [ProtoMember(13, IsRequired = false)]
+        public PacketServerSeason Season;
     }
     [ProtoContract]
     public class PacketClient
@@ -218,6 +220,12 @@ namespace GameModeFortress
         public int Max = 200;
     }
     [ProtoContract]
+    public class PacketServerSeason
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int Season;
+    }
+    [ProtoContract]
     public class PacketClientCraft
     {
         [ProtoMember(1, IsRequired = false)]
@@ -262,6 +270,7 @@ namespace GameModeFortress
         DisconnectPlayer = 14,
         Chunk = 15,
         FiniteInventory = 16,
+        Season = 17,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

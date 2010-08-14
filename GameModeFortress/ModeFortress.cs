@@ -62,7 +62,7 @@ namespace GameModeFortress
             return l;
         }
     }
-    public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived
+    public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
     {
         [Inject]
         public ITerrainDrawer terrain { get; set; }
@@ -692,10 +692,22 @@ namespace GameModeFortress
                         FiniteInventoryMax = packet.FiniteInventory.Max;
                     }
                     return true;
+                case ServerPacketId.Season:
+                    {
+                        CurrentSeason = packet.Season.Season;
+                        if (CurrentSeason == 0 || CurrentSeason == 3)
+                        {
+                            terrain.UpdateAllTiles();
+                        }
+                    }
+                    return true;
                 default:
                     return false;
             }
         }
+        #endregion
+        #region ICurrentSeason Members
+        public int CurrentSeason { get; set; }
         #endregion
     }
 }

@@ -341,6 +341,14 @@ namespace ManicDiggerServer
                         }
                     }
                     */
+                    if (GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
+                    {
+                        foreach(var c in clients)
+                        {
+                            PacketServerSeason p = new PacketServerSeason() { Season = GetSeason(simulationcurrentframe) };
+                            SendPacket(c.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season=p}));
+                        }
+                    }
                     accumulator -= dt;
                 }
                 oldtime = currenttime;
@@ -447,6 +455,12 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
+        }
+        int SEASON_EVERY_SECONDS = 60 * 60;//1 hour
+        int GetSeason(long frame)
+        {
+            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * SEASON_EVERY_SECONDS;
+            return (int)((frame / everyframes) % 4);
         }
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
