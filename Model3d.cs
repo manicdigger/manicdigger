@@ -234,7 +234,7 @@ namespace ManicDigger
             }
             GL.PopMatrix();
         }
-        private float Normalize(float p, float period)
+        public static float Normalize(float p, float period)
         {
             return (float)(p % period);//(2 * Math.PI * period));
         }
