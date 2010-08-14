@@ -15,6 +15,26 @@ using ProtoBuf;
 
 namespace ManicDiggerServer
 {
+    [ProtoContract]
+    public class SaveChunk
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        [ProtoMember(3, IsRequired = false)]
+        public int Z;
+        [ProtoMember(4, IsRequired = false)]
+        public int SizeX;
+        [ProtoMember(5, IsRequired = false)]
+        public int SizeY;
+        [ProtoMember(6, IsRequired = false)]
+        public int SizeZ;
+        [ProtoMember(7, IsRequired = false)]
+        public byte[] CompressedChunk;
+        [ProtoMember(8, IsRequired = false)]
+        public long LastUpdate;
+    }
     public class ClientException : Exception
     {
         public ClientException(Exception innerException, int clientid)
@@ -36,9 +56,11 @@ namespace ManicDiggerServer
         [ProtoMember(4, IsRequired = false)]
         public Dictionary<string, PacketServerFiniteInventory> Inventory;
         [ProtoMember(6, IsRequired = false)]
-        public List<PacketServerChunk> MapChunks;
+        public List<SaveChunk> MapChunks;
         [ProtoMember(7, IsRequired = false)]
         public int Seed;
+        [ProtoMember(8, IsRequired = false)]
+        public long SimulationCurrentFrame;
     }
     public class Server
     {
@@ -78,7 +100,7 @@ namespace ManicDiggerServer
             generator.SetSeed(save.Seed);
             Seed = save.Seed;
             map.Reset(map.MapSizeX, map.MapSizeX, map.MapSizeZ);
-            foreach (PacketServerChunk chunk in save.MapChunks)
+            foreach (SaveChunk chunk in save.MapChunks)
             {
                 //same as in client
                 var p = chunk;
@@ -87,28 +109,15 @@ namespace ManicDiggerServer
                     var c = new InfiniteMapChunked.Chunk();
                     map.chunks[p.X / chunksize, p.Y / chunksize, p.Z / chunksize] = c;
                     c.compressed = p.CompressedChunk;
+                    c.LastUpdate = p.LastUpdate;
                 }
                 else
                 {
-                    byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
-                    byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
-                    {
-                        BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
-                        for (int zz = 0; zz < p.SizeZ; zz++)
-                        {
-                            for (int yy = 0; yy < p.SizeY; yy++)
-                            {
-                                for (int xx = 0; xx < p.SizeX; xx++)
-                                {
-                                    receivedchunk[xx, yy, zz] = br2.ReadByte();
-                                }
-                            }
-                        }
-                    }
-                    map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
+                    throw new NotImplementedException();
                 }
             }
             this.Inventory = save.Inventory;
+            this.simulationcurrentframe = save.SimulationCurrentFrame;
         }
         [Inject]
         public WorldGenerator generator { get; set; }
@@ -116,7 +125,7 @@ namespace ManicDiggerServer
         public void SaveGame(Stream s)
         {
             ManicDiggerSave save = new ManicDiggerSave();
-            save.MapChunks = new List<PacketServerChunk>();
+            save.MapChunks = new List<SaveChunk>();
             for (int cx = 0; cx < map.MapSizeX / chunksize; cx++)
             {
                 for (int cy = 0; cy < map.MapSizeY / chunksize; cy++)
@@ -126,7 +135,7 @@ namespace ManicDiggerServer
                         GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[cx, cy, cz];
                         if (c != null)
                         {
-                            PacketServerChunk chunk = new PacketServerChunk();
+                            SaveChunk chunk = new SaveChunk();
                             chunk.SizeX = chunksize;
                             chunk.SizeY = chunksize;
                             chunk.SizeZ = chunksize;
@@ -136,6 +145,7 @@ namespace ManicDiggerServer
                             if (c.compressed != null) { chunk.CompressedChunk = c.compressed; }
                             else { chunk.CompressedChunk = CompressChunk(c.data); }
                             if (chunk.CompressedChunk == null) { throw new Exception(); }
+                            chunk.LastUpdate = c.LastUpdate;
                             save.MapChunks.Add(chunk);
                         }
                     }
@@ -143,6 +153,7 @@ namespace ManicDiggerServer
             }
             save.Inventory = Inventory;
             save.Seed = Seed;
+            save.SimulationCurrentFrame = simulationcurrentframe;
             Serializer.Serialize(s, save);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
@@ -304,7 +315,7 @@ namespace ManicDiggerServer
         {
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
-        int simulationcurrentframe;
+        long simulationcurrentframe;
         double oldtime;
         double accumulator;
         public void Process1()
@@ -434,7 +445,168 @@ namespace ManicDiggerServer
                 NotifyFiniteInventory(k.Key);
             }
             CompressUnusedChunks();
+            for (int i = 0; i < ChunksSimulated; i++)
+            {
+                ChunkSimulation();
+            }
             UpdateWater();
+        }
+        int ChunksSimulated = 1;
+        int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
+        void ChunkSimulation()
+        {
+            foreach (var k in clients)
+            {
+                var pos = PlayerBlockPosition(k.Value);
+
+                long oldesttime = long.MaxValue;
+                Vector3i oldestpos = new Vector3i();
+
+                foreach (var p in ChunksAroundPlayer(pos))
+                {
+                    if (!MapUtil.IsValidPos(map, p.x, p.y, p.z)) { continue; }
+                    GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
+                    if (c == null) { continue; }
+                    if (c.data == null) { continue; }
+                    if (c.LastUpdate < oldesttime)
+                    {
+                        oldesttime = c.LastUpdate;
+                        oldestpos = p;
+                    }
+                }
+                if (simulationcurrentframe - oldesttime > chunksimulation_every)
+                {
+                    ChunkUpdate(oldestpos, oldesttime);
+                    GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize];
+                    c.LastUpdate = simulationcurrentframe;
+                    return;
+                }
+            }
+        }
+        private void ChunkUpdate(Vector3i p, long lastupdate)
+        {
+            byte[] chunk = map.GetChunk(p.x, p.y, p.z);
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        int block = chunk[MapUtil.Index(xx, yy, zz, chunksize, chunksize)];
+                        if (block == (int)TileTypeManicDigger.DirtForFarming)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickCrops(pos);
+                        }
+                        if (block == (int)TileTypeMinecraft.Sapling)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickSapling(pos);
+                        }
+                        if (block == (int)TileTypeMinecraft.Dirt)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickDirt(pos);
+                        }
+                        if (block == (int)TileTypeMinecraft.Grass)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickGrass(pos);
+                        }
+                    }
+                }
+            }
+        }
+        private void BlockTickCrops(Vector3i pos)
+        {
+            if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
+            {
+                int blockabove = map.GetBlock(pos.x, pos.y, pos.z + 1);
+                if (blockabove == (int)TileTypeManicDigger.Crops1) { blockabove = (int)TileTypeManicDigger.Crops2; }
+                else if (blockabove == (int)TileTypeManicDigger.Crops2) { blockabove = (int)TileTypeManicDigger.Crops3; }
+                else if (blockabove == (int)TileTypeManicDigger.Crops3) { blockabove = (int)TileTypeManicDigger.Crops4; }
+                else { return; }
+                SetBlockAndNotify(pos.x, pos.y, pos.z + 1, blockabove);
+            }
+        }
+        private void BlockTickSapling(Vector3i pos)
+        {
+            if (!IsShadow(pos.x, pos.y, pos.z))
+            {
+                if (!MapUtil.IsValidPos(map, pos.x, pos.y, pos.z - 1))
+                {
+                    return;
+                }
+                int under = map.GetBlock(pos.x, pos.y, pos.z - 1);
+                if (!(under == (int)TileTypeMinecraft.Dirt
+                    || under == (int)TileTypeMinecraft.Grass
+                    || under == (int)TileTypeManicDigger.DirtForFarming))
+                {
+                    return;
+                }
+                PlaceTree(pos.x, pos.y, pos.z - 1);
+            }
+        }
+        void PlaceTree(int x, int y, int z)
+        {
+            int TileIdLeaves = (int)TileTypeMinecraft.Leaves;
+
+            Place(x, y, z + 1, (int)TileTypeMinecraft.TreeTrunk);
+            Place(x, y, z + 2, (int)TileTypeMinecraft.TreeTrunk);
+            Place(x, y, z + 3, (int)TileTypeMinecraft.TreeTrunk);
+
+            Place(x + 1, y, z + 3, TileIdLeaves);
+            Place(x - 1, y, z + 3, TileIdLeaves);
+            Place(x, y + 1, z + 3, TileIdLeaves);
+            Place(x, y - 1, z + 3, TileIdLeaves);
+
+            Place(x + 1, y + 1, z + 3, TileIdLeaves);
+            Place(x + 1, y - 1, z + 3, TileIdLeaves);
+            Place(x - 1, y + 1, z + 3, TileIdLeaves);
+            Place(x - 1, y - 1, z + 3, TileIdLeaves);
+
+            Place(x + 1, y, z + 4, TileIdLeaves);
+            Place(x - 1, y, z + 4, TileIdLeaves);
+            Place(x, y + 1, z + 4, TileIdLeaves);
+            Place(x, y - 1, z + 4, TileIdLeaves);
+
+            Place(x, y, z + 4, TileIdLeaves);
+        }
+        private void Place(int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(map, x, y, z))
+            {
+                SetBlockAndNotify(x, y, z, blocktype);
+            }
+        }
+        private void BlockTickDirt(Vector3i pos)
+        {
+            if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
+            {
+                int block2 = map.GetBlock(pos.x, pos.y, pos.z + 1);
+                if (data.GrassGrowsUnder(block2) && !IsShadow(pos.x, pos.y, pos.z))
+                {
+                    SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
+                }
+            }
+        }
+        private void BlockTickGrass(Vector3i pos)
+        {
+            if (IsShadow(pos.x, pos.y, pos.z))
+            {
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Dirt);
+            }
+        }
+        private bool IsShadow(int x, int y, int z)
+        {
+            for (int i = 1; i < 10; i++)
+            {
+                if (MapUtil.IsValidPos(map, x, y, z + i) && !data.GrassGrowsUnder(map.GetBlock(x, y, z + i)))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         int CompressUnusedIteration = 0;
         private void CompressUnusedChunks()
@@ -456,7 +628,8 @@ namespace ManicDiggerServer
                         bool compress = true;
                         foreach (var k in clients)
                         {
-                            if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= (int)(chunkdrawdistance * chunkdrawdistance * 1.5f * 1.5f))
+                            int viewdist = (int)(chunkdrawdistance * chunksize * 1.5f);
+                            if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
                             {
                                 compress = false;
                             }
@@ -532,6 +705,16 @@ namespace ManicDiggerServer
                 sent++;
             }
             return sent;
+        }
+        void ChunkDirty(Vector3i pos)
+        {
+            int x = pos.x / chunksize * chunksize;
+            int y = pos.y / chunksize * chunksize;
+            int z = pos.z / chunksize * chunksize;
+            foreach (var k in clients)
+            {
+                k.Value.chunksseen.Remove(new Vector3i(x, y, z));
+            }
         }
         const string invalidplayername = "invalid";
         private void NotifyFiniteInventory(int clientid)
