@@ -65,8 +65,6 @@ namespace ManicDiggerServer
     public class Server
     {
         [Inject]
-        public Water water { get; set; }
-        [Inject]
         public InfiniteMapChunked map { get; set; }
         [Inject]
         public IGameData data { get; set; }
@@ -449,7 +447,6 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
-            UpdateWater();
         }
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
@@ -775,39 +772,6 @@ namespace ManicDiggerServer
             int dz = a.z - b.z;
             return dx * dx + dy * dy + dz * dz;
         }
-        private void UpdateWater()
-        {
-            water.Update();
-            try
-            {
-                foreach (var v in water.tosetwater)
-                {
-                    byte watertype = (byte)TileTypeMinecraft.Water;
-                    map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, watertype);
-                    foreach (var k in clients)
-                    {
-                        SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, watertype);
-                        //SendSetBlock(k.Key, x, z, y, watertype);
-                    }
-                }
-                foreach (var v in water.tosetempty)
-                {
-                    byte emptytype = (byte)TileTypeMinecraft.Empty;
-                    map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, emptytype);
-                    foreach (var k in clients)
-                    {
-                        SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, emptytype);
-                        //SendSetBlock(k.Key, x, z, y, watertype);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            water.tosetwater.Clear();
-            water.tosetempty.Clear();
-        }
         private void KillPlayer(int clientid)
         {
             if (!clients.ContainsKey(clientid))
@@ -936,8 +900,6 @@ namespace ManicDiggerServer
                     //todo check block type.
                     //map.SetBlock(x, y, z, blocktype);
                     DoCommandBuild(clientid, true, packet.SetBlock);
-                    //water
-                    water.BlockChange(map, x, y, z);
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
@@ -1412,7 +1374,6 @@ namespace ManicDiggerServer
         static void Main(string[] args)
         {
             Server s = new Server();
-            s.water = new Water() { data = new GameDataTilesMinecraft() };
             //s.map = server.map;
             
             /*
