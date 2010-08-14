@@ -134,7 +134,7 @@ namespace ManicDiggerServer
                             chunk.Y = cy * chunksize;
                             chunk.Z = cz * chunksize;
                             if (c.compressed != null) { chunk.CompressedChunk = c.compressed; }
-                            else { chunk.CompressedChunk = c.data; }
+                            else { chunk.CompressedChunk = CompressChunk(c.data); }
                             if (chunk.CompressedChunk == null) { throw new Exception(); }
                             save.MapChunks.Add(chunk);
                         }
@@ -433,7 +433,52 @@ namespace ManicDiggerServer
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyFiniteInventory(k.Key);
             }
+            CompressUnusedChunks();
             UpdateWater();
+        }
+        int CompressUnusedIteration = 0;
+        private void CompressUnusedChunks()
+        {
+            int sizex = map.chunks.GetUpperBound(0) + 1;
+            int sizey = map.chunks.GetUpperBound(1) + 1;
+            int sizez = map.chunks.GetUpperBound(2) + 1;
+
+            for (int i = 0; i < 100; i++)
+            {
+                var v = MapUtil.Pos(CompressUnusedIteration, map.MapSizeX / chunksize, map.MapSizeY / chunksize);
+                GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[v.x, v.y, v.z];
+                var vg = new Vector3i(v.x * chunksize, v.y * chunksize, v.z * chunksize);
+                bool stop = false;
+                if (c != null)
+                {
+                    if (c.compressed == null)
+                    {
+                        bool compress = true;
+                        foreach (var k in clients)
+                        {
+                            if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= (int)(chunkdrawdistance * chunkdrawdistance * 1.5f * 1.5f))
+                            {
+                                compress = false;
+                            }
+                        }
+                        if (compress)
+                        {
+                            c.compressed = CompressChunk(c.data);
+                            c.data = null;
+                            stop = true;
+                        }
+                    }
+                }
+                CompressUnusedIteration++;
+                if (CompressUnusedIteration >= sizex * sizey * sizez)
+                {
+                    CompressUnusedIteration = 0;
+                }
+                if (stop)
+                {
+                    return;
+                }
+            }
         }
         int SEND_CHUNKS_PER_SECOND = 10;
         private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
