@@ -8,14 +8,14 @@ using System.Globalization;
 
 namespace ManicDigger
 {
-    public interface ICharacterDrawer
+    public interface ICharacterRenderer
     {
         string[] Animations();
         double AnimPeriod { get; set; }
         void SetAnimation(string p);
         void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint);
     }
-    public class CharacterDrawerMonsterCode : ICharacterDrawer
+    public class CharacterRendererMonsterCode : ICharacterRenderer
     {
         public void Load(List<string> code)
         {

@@ -7,7 +7,7 @@ using ManicDigger.Collisions;
 
 namespace ManicDigger
 {
-    public class TerrainChunkDrawer
+    public class TerrainChunkRenderer
     {
         [Inject]
         public ITerrainInfo mapstorage { get; set; }

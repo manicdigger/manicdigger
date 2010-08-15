@@ -65,7 +65,7 @@ namespace GameModeFortress
     public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
     {
         [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        public ITerrainRenderer terrain { get; set; }
         [Inject]
         public IViewport3d viewport { get; set; }
         [Inject]

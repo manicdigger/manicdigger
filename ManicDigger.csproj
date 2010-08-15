@@ -55,27 +55,30 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="LoginClient.cs" />
+    <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
-    <Compile Include="Model3d.cs" />
-    <Compile Include="NetworkClient.cs" />
+    <Compile Include="Renderers\Model3d.cs" />
+    <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
     <Compile Include="FCraft.cs" />
     <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />
+    <Compile Include="Network\NetworkClientMinecraft.cs" />
+    <Compile Include="Network\PlayerSkinDownloader.cs" />
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rail.cs" />
-    <Compile Include="Shadows.cs" />
-    <Compile Include="SkySphere.cs" />
-    <Compile Include="TerrainChunkDrawer.cs" />
-    <Compile Include="TerrainDrawer.cs" />
+    <Compile Include="MapTools\Shadows.cs" />
+    <Compile Include="Renderers\SkySphere.cs" />
+    <Compile Include="Renderers\TerrainChunkRenderer.cs" />
+    <Compile Include="Renderers\TerrainRenderer.cs" />
+    <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="Ticks.cs" />
-    <Compile Include="WaterSimple.cs" />
-    <Compile Include="WeaponDrawer.cs" />
-    <Compile Include="WorldGenerator.cs" />
+    <Compile Include="MapTools\WaterSimple.cs" />
+    <Compile Include="Renderers\WeaponRenderer.cs" />
+    <Compile Include="MapTools\WorldGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

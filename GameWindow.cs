@@ -13,6 +13,7 @@ using System.Threading;
 using System.IO;
 using System.Net;
 using System.Drawing.Drawing2D;
+using ManicDigger.Network;
 
 namespace ManicDigger
 {
@@ -70,6 +71,7 @@ namespace ManicDigger
     public interface IThe3d
     {
         int LoadTexture(string filename);
+        int LoadTexture(Bitmap bmp);
     }
     public class The3dDummy : IThe3d
     {
@@ -80,6 +82,12 @@ namespace ManicDigger
             return TextureId;
         }
         public int LoadTerrainTexture(string filename)
+        {
+            return TextureId;
+        }
+        #endregion
+        #region IThe3d Members
+        public int LoadTexture(Bitmap bmp)
         {
             return TextureId;
         }
@@ -525,7 +533,7 @@ namespace ManicDigger
     public class ParticleEffectBlockBreak
     {
         public IMapStorage map;
-        public ITerrainDrawer terrain;
+        public ITerrainRenderer terrain;
         public IGameData data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {
@@ -612,7 +620,7 @@ namespace ManicDigger
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d
     {
         [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        public ITerrainRenderer terrain { get; set; }
         [Inject]
         public IGameMode game { get; set; }
         [Inject]
@@ -637,13 +645,11 @@ namespace ManicDigger
         [Inject]
         public Config3d config3d { get; set; }
         [Inject]
-        public WeaponDrawer weapon { get; set; }
+        public WeaponRenderer weapon { get; set; }
         [Inject]
-        public ICharacterDrawer characterdrawer { get; set; }
+        public ICharacterRenderer characterdrawer { get; set; }
         [Inject]
         public ICurrentShadows currentshadows;
-
-        public string skinserver;
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
@@ -1564,7 +1570,7 @@ namespace ManicDigger
         TypingState GuiTyping = TypingState.None;
         string GuiTypingBuffer = "";
         INetworkClient newnetwork;
-        ITerrainDrawer newterrain;
+        ITerrainRenderer newterrain;
 
         public string username = "gamer1";
         string pass = "12345";
@@ -2614,8 +2620,6 @@ namespace ManicDigger
         int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
-        bool skindownloadthreadstarted = false;
-        List<string> texturestodownloadlist = new List<string>();
         public string playertexturedefaultfilename = "mineplayer.png";
         private int GetPlayerTexture(int playerid)
         {
@@ -2623,49 +2627,12 @@ namespace ManicDigger
             {
                 playertexturedefault = LoadTexture(getfile.GetFile(playertexturedefaultfilename));
             }
+            List<string> players = new List<string>();
             foreach (var k in clients.Players)
             {
-                string name = k.Value.Name;
-                if (name == null)
-                {
-                    continue;
-                }
-                if (playertextures.ContainsKey(name)
-                     || texturestodownloadlist.Contains(name))
-                {
-                    continue;
-                }
-                lock (texturestodownload)
-                {
-                    texturestodownload.Enqueue(name);
-                    texturestodownloadlist.Add(name);
-                }
+                players.Add(k.Value.Name);
             }
-            lock (texturestoload)
-            {
-                foreach (var k in new List<KeyValuePair<string, byte[]>>(texturestoload))
-                {
-                    try
-                    {
-                        using (Bitmap bmp = new Bitmap(new MemoryStream(k.Value)))
-                        {
-                            playertextures[k.Key] = LoadTexture(bmp);
-                            Console.WriteLine("Player skin loaded: {0}", k.Key);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        playertextures[k.Key] = playertexturedefault;
-                        Console.WriteLine(e);
-                    }
-                }
-                texturestoload.Clear();
-            }
-            if (!skindownloadthreadstarted)
-            {
-                new Thread(skindownloadthread).Start();
-                skindownloadthreadstarted = true;
-            }
+            playerskindownloader.Update(players.ToArray(), playertextures, playertexturedefault);
             string playername;
             if (playerid == 255)
             {
@@ -2685,42 +2652,7 @@ namespace ManicDigger
             }
             return playertexturedefault;
         }
-        Dictionary<string, byte[]> texturestoload = new Dictionary<string, byte[]>();
-        Queue<string> texturestodownload = new Queue<string>();
-        void skindownloadthread()
-        {
-            WebClient c = new WebClient();
-            for (; ; )
-            {
-                if (exit) { return; }
-                for (; ; )
-                {
-                    string name;
-                    lock (texturestodownload)
-                    {
-                        if (texturestodownload.Count == 0)
-                        {
-                            break;
-                        }
-                        name = texturestodownload.Dequeue();
-                    }
-                    try
-                    {
-                        byte[] skindata = c.DownloadData(skinserver + name + ".png");
-                        lock (texturestoload)
-                        {
-                            texturestoload[name] = skindata;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        //Console.WriteLine(e);
-                        continue;
-                    }
-                }
-                Thread.Sleep(100);
-            }
-        }
+        public PlayerSkinDownloader playerskindownloader { get; set; }
         public bool ENABLE_TPP_VIEW = false;
         AnimationState a = new AnimationState();
         int[] _skybox;
@@ -2835,8 +2767,8 @@ namespace ManicDigger
             if (ENABLE_TPP_VIEW)
             {
                 DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
-                    NetworkClientMinecraft.HeadingByte(LocalPlayerOrientation),
-                    NetworkClientMinecraft.PitchByte(LocalPlayerOrientation),
+                    NetworkHelper.HeadingByte(LocalPlayerOrientation),
+                    NetworkHelper.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255), localplayeranimationhint);
                 lastlocalplayerpos = LocalPlayerPosition;
             }
@@ -3550,27 +3482,6 @@ namespace ManicDigger
             SizeF size = g.MeasureString(text, font);
             return size;
         }
-        public struct Text
-        {
-            public string text;
-            public float fontsize;
-            public Color color;
-            public override int GetHashCode()
-            {
-                return ("" + text.GetHashCode() + fontsize.GetHashCode() + color.GetHashCode()).GetHashCode();
-            }
-            public override bool Equals(object obj)
-            {
-                if (obj is Text)
-                {
-                    Text other = (Text)obj;
-                    return other.text.Equals(this.text)
-                        && other.fontsize.Equals(this.fontsize)
-                        && other.color.Equals(this.color);
-                }
-                return base.Equals(obj);
-            }
-        }
         class CachedTexture
         {
             public int textureId;
@@ -3578,204 +3489,7 @@ namespace ManicDigger
             public DateTime lastuse;
         }
         Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
-        public class TextPart
-        {
-            public Color color;
-            public string text;
-        }
-        public class TextDrawer
-        {
-            public Bitmap MakeTextTexture(Text t)
-            {
-                Font font;
-                if (NewFont)
-                {
-                    //outlined font looks smaller
-                    t.fontsize = Math.Max(t.fontsize, 9);
-                    t.fontsize *= 1.65f;
-                    font = new Font("Arial", t.fontsize, FontStyle.Bold);
-                }
-                else
-                {
-                    font = new Font("Verdana", t.fontsize);
-                }
-                var parts = DecodeColors(t.text, t.color);
-                float totalwidth = 0;
-                float totalheight = 0;
-                List<SizeF> sizes = new List<SizeF>();
-                using (Bitmap bmp = new Bitmap(1, 1))
-                {
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    {
-                        for (int i = 0; i < parts.Count; i++)
-                        {
-                            SizeF size = g.MeasureString(parts[i].text, font);
-                            if (size.Width == 0 || size.Height == 0)
-                            {
-                                continue;
-                            }
-                            if (NewFont)
-                            {
-                                size.Width *= 0.7f;
-                            }
-                            totalwidth += size.Width;
-                            totalheight = Math.Max(totalheight, size.Height);
-                            sizes.Add(size);
-                        }
-                    }
-                }
-                SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
-                Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
-                using (Graphics g2 = Graphics.FromImage(bmp2))
-                {
-                    float currentwidth = 0;
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF sizei = sizes[i];
-                        if (sizei.Width == 0 || sizei.Height == 0)
-                        {
-                            continue;
-                        }
-                        if (NewFont)
-                        {
-                            StringFormat format = StringFormat.GenericTypographic;
-
-                            g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
-                            g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                            //g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                            Rectangle rect = new Rectangle() { X = (int)currentwidth, Y = 0 };
-                            using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
-                            {
-                                g2.SmoothingMode = SmoothingMode.AntiAlias;
-                                RectangleF off = rect;
-                                off.Offset(2, 2);
-                                using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
-                                {
-                                    Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
-                                    g2.FillPath(b, offPath);
-                                    b.Dispose();
-                                }
-                                g2.FillPath(new SolidBrush(parts[i].color), path);
-                                g2.DrawPath(Pens.Black, path);
-                            }
-                        }
-                        else
-                        {
-                            g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
-                            g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                        }
-                        currentwidth += sizei.Width;
-                    }
-                }
-                return bmp2;
-            }
-            GraphicsPath GetStringPath(string s, float emSize, RectangleF rect, Font font, StringFormat format)
-            {
-                GraphicsPath path = new GraphicsPath();
-                path.AddString(s, font.FontFamily, (int)font.Style, emSize, rect, format);
-                return path;
-            }
-            int textalpha = 0;
-            private uint NextPowerOfTwo(uint x)
-            {
-                x--;
-                x |= x >> 1;  // handle  2 bit numbers
-                x |= x >> 2;  // handle  4 bit numbers
-                x |= x >> 4;  // handle  8 bit numbers
-                x |= x >> 8;  // handle 16 bit numbers
-                x |= x >> 16; // handle 32 bit numbers
-                x++;
-                return x;
-            }
-            public List<TextPart> DecodeColors(string s, Color defaultcolor)
-            {
-                List<TextPart> parts = new List<TextPart>();
-                int i = 0;
-                Color currentcolor = defaultcolor;
-                string currenttext = "";
-                for (; ; )
-                {
-                    if (i >= s.Length)
-                    {
-                        if (currenttext != "")
-                        {
-                            parts.Add(new TextPart() { text = currenttext, color = currentcolor });
-                        }
-                        break;
-                    }
-                    if (s[i] == '&')
-                    {
-                        if (i + 1 < s.Length)
-                        {
-                            int? color = HexToInt(s[i + 1]);
-                            if (color != null)
-                            {
-                                if (currenttext != "")
-                                {
-                                    parts.Add(new TextPart() { text = currenttext, color = currentcolor });
-                                }
-                                currenttext = "";
-                                currentcolor = GetColor(color.Value);
-                                i++;
-                                goto next;
-                            }
-                        }
-                        else
-                        {
-                        }
-                    }
-                    currenttext += s[i];
-                next:
-                    i++;
-                }
-                return parts;
-            }
-            private Color GetColor(int currentcolor)
-            {
-                switch (currentcolor)
-                {
-                    case 0: { return Color.FromArgb(0, 0, 0); }
-                    case 1: { return Color.FromArgb(0, 0, 191); }
-                    case 2: { return Color.FromArgb(0, 191, 0); }
-                    case 3: { return Color.FromArgb(0, 191, 191); }
-                    case 4: { return Color.FromArgb(191, 0, 0); }
-                    case 5: { return Color.FromArgb(191, 0, 191); }
-                    case 6: { return Color.FromArgb(191, 191, 0); }
-                    case 7: { return Color.FromArgb(191, 191, 191); }
-                    case 8: { return Color.FromArgb(40, 40, 40); }
-                    case 9: { return Color.FromArgb(64, 64, 255); }
-                    case 10: { return Color.FromArgb(64, 255, 64); }
-                    case 11: { return Color.FromArgb(64, 255, 255); }
-                    case 12: { return Color.FromArgb(255, 64, 64); }
-                    case 13: { return Color.FromArgb(255, 64, 255); }
-                    case 14: { return Color.FromArgb(255, 255, 64); }
-                    case 15: { return Color.FromArgb(255, 255, 255); }
-                    default: throw new Exception();
-                }
-            }
-            int? HexToInt(char c)
-            {
-                if (c == '0') { return 0; }
-                if (c == '1') { return 1; }
-                if (c == '2') { return 2; }
-                if (c == '3') { return 3; }
-                if (c == '4') { return 4; }
-                if (c == '5') { return 5; }
-                if (c == '6') { return 6; }
-                if (c == '7') { return 7; }
-                if (c == '8') { return 8; }
-                if (c == '9') { return 9; }
-                if (c == 'a') { return 10; }
-                if (c == 'b') { return 11; }
-                if (c == 'c') { return 12; }
-                if (c == 'd') { return 13; }
-                if (c == 'e') { return 14; }
-                if (c == 'f') { return 15; }
-                return null;
-            }
-            public bool NewFont = true;
-        }
-        TextDrawer textdrawer = new TextDrawer();
+        TextRenderer textdrawer = new TextRenderer();
         CachedTexture MakeTextTexture(Text t)
         {
             Bitmap bmp = textdrawer.MakeTextTexture(t);

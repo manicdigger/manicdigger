@@ -69,7 +69,7 @@ namespace ManicDigger
         [Inject]
         public IGameData data { get; set; }
         [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        public ITerrainRenderer terrain { get; set; }
         [Inject]
         public ILocalPlayerPosition localplayerposition { get; set; }
         [Inject]

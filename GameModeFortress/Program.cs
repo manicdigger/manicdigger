@@ -6,6 +6,7 @@ using System.IO;
 using System.Xml;
 using System.Windows.Forms;
 using System.Diagnostics;
+using ManicDigger.Network;
 
 namespace GameModeFortress
 {
@@ -128,7 +129,7 @@ namespace GameModeFortress
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainDrawer = new TerrainDrawer();
+            var terrainDrawer = new TerrainRenderer();
             var the3d = w;
             var exit = w;
             var localplayerposition = w;
@@ -178,7 +179,7 @@ namespace GameModeFortress
             var blockdrawertorch = new BlockDrawerTorch();
             blockdrawertorch.terraindrawer = terrainDrawer;
             blockdrawertorch.data = gamedata;
-            var terrainChunkDrawer = new TerrainChunkDrawer();
+            var terrainChunkDrawer = new TerrainChunkRenderer();
             terrainChunkDrawer.config3d = config3d;
             terrainChunkDrawer.data = gamedata;
             terrainChunkDrawer.mapstorage = clientgame;
@@ -202,8 +203,8 @@ namespace GameModeFortress
             w.PickDistance = 4.5f;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
             //w.weapon = new WeaponDrawer() { info = weapon, blockdrawertorch = blockdrawertorch, keyboard = w, playerpos = w };
-            w.weapon = new WeaponDrawer() { info = weapon, blockdrawertorch = blockdrawertorch, playerpos = w };
-            var playerdrawer = new CharacterDrawerMonsterCode();
+            w.weapon = new WeaponRenderer() { info = weapon, blockdrawertorch = blockdrawertorch, playerpos = w };
+            var playerdrawer = new CharacterRendererMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
@@ -233,7 +234,11 @@ namespace GameModeFortress
             w.game = clientgame;
             w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
-            w.skinserver = "http://fragmer.net/md/skins/";
+            PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
+            playerskindownloader.exit = w;
+            playerskindownloader.the3d = the3d;
+            playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
+            w.playerskindownloader = playerskindownloader;
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             //clientgame.physics = physics;

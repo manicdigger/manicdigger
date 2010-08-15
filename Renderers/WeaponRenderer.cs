@@ -11,7 +11,7 @@ namespace ManicDigger
     public class WeaponBlockInfo
     {
         [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        public ITerrainRenderer terrain { get; set; }
         [Inject]
         public IViewport3d viewport { get; set; }
         [Inject]
@@ -44,7 +44,7 @@ namespace ManicDigger
         }
         public bool IsTorch() { return viewport.MaterialSlots[viewport.activematerial] == data.TileIdTorch; }
     }
-    public class WeaponDrawer
+    public class WeaponRenderer
     {
         [Inject]
         public WeaponBlockInfo info { get; set; }
@@ -140,7 +140,7 @@ namespace ManicDigger
             }
             else
             {
-                float f = CharacterDrawerMonsterCode.Normalize(t, (float)animperiod / 2);
+                float f = CharacterRendererMonsterCode.Normalize(t, (float)animperiod / 2);
                 if (Math.Abs(f) < 0.02f)
                 {
                     t = 0;

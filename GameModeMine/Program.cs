@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using System.Xml;
+using ManicDigger.Network;
 
 namespace ManicDigger
 {
@@ -51,7 +52,7 @@ namespace ManicDigger
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainDrawer = new TerrainDrawer();
+            var terrainDrawer = new TerrainRenderer();
             var the3d = w;
             var exit = w;
             var localplayerposition = w;
@@ -92,7 +93,7 @@ namespace ManicDigger
             terrainDrawer.localplayerposition = localplayerposition;
             terrainDrawer.worldfeatures = worldfeatures;
             terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
-            var terrainChunkDrawer = new TerrainChunkDrawer();
+            var terrainChunkDrawer = new TerrainChunkRenderer();
             terrainChunkDrawer.config3d = config3d;
             terrainChunkDrawer.data = gamedata;
             terrainChunkDrawer.mapstorage = clientgame;
@@ -114,8 +115,8 @@ namespace ManicDigger
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
-            w.weapon = new WeaponDrawer() { info = weapon, blockdrawertorch = new BlockDrawerTorchDummy(), playerpos = w }; //no torch in mine mode
-            var playerdrawer = new CharacterDrawerMonsterCode();
+            w.weapon = new WeaponRenderer() { info = weapon, blockdrawertorch = new BlockDrawerTorchDummy(), playerpos = w }; //no torch in mine mode
+            var playerdrawer = new CharacterRendererMonsterCode();
             playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.characterdrawer = playerdrawer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
@@ -126,7 +127,11 @@ namespace ManicDigger
             w.game = clientgame;
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
-            w.skinserver = "http://minecraft.net/skin/";
+            PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
+            playerskindownloader.exit = w;
+            playerskindownloader.the3d = the3d;
+            playerskindownloader.skinserver = "http://minecraft.net/skin/";
+            w.playerskindownloader = playerskindownloader;
             physics.map = clientgame;
             physics.data = gamedata;
             mapgenerator.data = gamedata;

@@ -15,7 +15,7 @@ namespace ManicDigger
         public int TextureId;
         public int TextureInAtlasId;
     }
-    public interface ITerrainDrawer
+    public interface ITerrainRenderer
     {
         void Start();
         void Draw();
@@ -27,7 +27,7 @@ namespace ManicDigger
         int DrawDistance { get; set; }
         int ChunkUpdates { get; }
     }
-    public class TerrainDrawerDummy : ITerrainDrawer
+    public class TerrainDrawerDummy : ITerrainRenderer
     {
         #region ITerrainDrawer Members
         public void Start()
@@ -191,7 +191,7 @@ namespace ManicDigger
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class TerrainDrawer : ITerrainDrawer, IDisposable
+    public class TerrainRenderer : ITerrainRenderer, IDisposable
     {
         [Inject]
         public IThe3d the3d { get; set; }
@@ -212,7 +212,7 @@ namespace ManicDigger
         [Inject]
         public IWorldFeaturesDrawer worldfeatures { get; set; }
         [Inject]
-        public TerrainChunkDrawer terrainchunkdrawer { get; set; }
+        public TerrainChunkRenderer terrainchunkdrawer { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         
         public int chunksize = 16;
@@ -703,7 +703,7 @@ namespace ManicDigger
         [Inject]
         public IGameData data;
         [Inject]
-        public ITerrainDrawer terraindrawer;
+        public ITerrainRenderer terraindrawer;
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
             int tiletype = data.TileIdTorch;

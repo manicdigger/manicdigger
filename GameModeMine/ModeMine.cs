@@ -9,7 +9,7 @@ namespace ManicDigger
     public class GameMinecraft : IGameMode, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
-        public ITerrainDrawer terrain { get; set; }
+        public ITerrainRenderer terrain { get; set; }
         [Inject]
         public IViewport3d viewport { get; set; }
         [Inject]
