@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio.cs" />
+    <Compile Include="CharacterPhysics.cs" />
     <Compile Include="ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -72,6 +73,7 @@
     <Compile Include="TerrainChunkDrawer.cs" />
     <Compile Include="TerrainDrawer.cs" />
     <Compile Include="Ticks.cs" />
+    <Compile Include="WaterSimple.cs" />
     <Compile Include="WeaponDrawer.cs" />
     <Compile Include="WorldGenerator.cs" />
   </ItemGroup>
