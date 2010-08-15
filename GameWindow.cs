@@ -1771,24 +1771,6 @@ namespace ManicDigger
                 }
             }
         }
-        public Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx, double orientationy)
-        {
-            //Don't calculate for nothing ...
-            if (dx == 0.0f & dy == 0.0f && dz == 0.0f)
-                return new Vector3();
-
-            //Convert to Radian : 360° = 2PI
-            double xRot = orientationx;//Math.toRadians(orientation.X);
-            double yRot = orientationy;//Math.toRadians(orientation.Y);
-
-            //Calculate the formula
-            float x = (float)(dx * Math.Cos(yRot) + dy * Math.Sin(xRot) * Math.Sin(yRot) - dz * Math.Cos(xRot) * Math.Sin(yRot));
-            float y = (float)(+dy * Math.Cos(xRot) + dz * Math.Sin(xRot));
-            float z = (float)(dx * Math.Sin(yRot) - dy * Math.Sin(xRot) * Math.Cos(yRot) + dz * Math.Cos(xRot) * Math.Cos(yRot));
-
-            //Return the vector expressed in the global axis system
-            return new Vector3(x, y, z);
-        }
         float rotationspeed = 0.15f;
         float movespeed = basemovespeed;
         float fallspeed { get { return movespeed / 10; } }
@@ -1836,7 +1818,6 @@ namespace ManicDigger
         }
         //float fix = 0.5f;
 
-        float jumpacceleration = 0;
         bool enable_freemove = false;
         public bool ENABLE_FREEMOVE
         {
@@ -1846,7 +1827,6 @@ namespace ManicDigger
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
         bool ENABLE_NOCLIP = false;
-        float gravity = 0.3f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
@@ -1859,14 +1839,12 @@ namespace ManicDigger
         }
         CharacterPhysicsState player = new CharacterPhysicsState();
         DateTime lasttodo;
-        Vector3 curspeed;
         bool mouseleftclick = false;
         bool mouseleftdeclick = false;
         bool wasmouseleft = false;
         bool mouserightclick = false;
         bool mouserightdeclick = false;
         bool wasmouseright = false;
-        bool isplayeronground;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -1982,124 +1960,48 @@ namespace ManicDigger
             {
             }
             else throw new Exception();
-
-            if (!(ENABLE_FREEMOVE))
-            {
-                if (!Swimming)
-                {
-                    player.movedz += -gravity;//gravity
-                }
-                else
-                {
-                    player.movedz += -gravity * WaterGravityMultiplier; //more gravity because it's slippery.
-                }
-            }
-            bool enable_acceleration = true;
             float movespeednow = MoveSpeedNow();
-            var diff1 = toVectorInFixedSystem1
-            (movedx * movespeednow * (float)e.Time,
-            0,
-            movedy * movespeednow * (float)e.Time, player.playerorientation.X, player.playerorientation.Y);
-            float acceleration1 = 0.90f;
-            float acceleration2 = 2f;
-            float acceleration3 = 700f;
+            Acceleration acceleration = new Acceleration();
             int? blockunderplayer = BlockUnderPlayer();
-            //slippery walk on ice and when swimming
-            if ((blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value)) || Swimming)
             {
-                acceleration1 = 0.99f;
-                acceleration2 = 0.2f;
-                acceleration3 = 70;
-            }
-            if (enable_acceleration)
-            {
-                curspeed *= acceleration1;
-                curspeed.X = MakeCloserToZero(curspeed.X, acceleration2 * (float)e.Time);
-                curspeed.Y = MakeCloserToZero(curspeed.Y, acceleration2 * (float)e.Time);
-                curspeed.Z = MakeCloserToZero(curspeed.Z, acceleration2 * (float)e.Time);
-                diff1.Y += moveup ? 2 * movespeednow * (float)e.Time : 0;
-                curspeed += Vector3.Multiply(diff1, acceleration3 * (float)e.Time);
-                if (curspeed.Length > movespeednow)
+                //slippery walk on ice and when swimming
+                if ((blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value)) || Swimming)
                 {
-                    curspeed.Normalize();
-                    curspeed *= movespeednow;
+                    acceleration = new Acceleration()
+                    {
+                        acceleration1 = 0.99f,
+                        acceleration2 = 0.2f,
+                        acceleration3 = 70,
+                    };
                 }
             }
-            else
-            {
-                if (diff1.Length > 0)
-                {
-                    diff1.Normalize();
-                }
-                curspeed = diff1 * movespeednow;
-            }
-            float jumpstartacceleration = 2.1f * gravity;
+            float jumpstartacceleration = 2.1f * physics.gravity;
             if (blockunderplayer != null && blockunderplayer == data.TileIdTrampoline
-                && (!isplayeronground))
+                && (!player.isplayeronground))
             {
                 wantsjump = true;
-                jumpstartacceleration = 5f * gravity;
+                jumpstartacceleration = 5f * physics.gravity;
             }
-            var newposition = player.playerposition + (curspeed) * (float)e.Time;
-            if (!(ENABLE_FREEMOVE))
+            var move = new CharacterPhysics.MoveInfo()
             {
-                if (!Swimming)
-                {
-                    newposition.Y = player.playerposition.Y;
-                }
-                //fast move when looking at the ground.
-                var diff = newposition - player.playerposition;
-                if (diff.Length > 0)
-                {
-                    diff.Normalize();
-                    diff *= 1 * curspeed.Length;
-                }
-                newposition = player.playerposition + diff * (float)e.Time;
-            }
-            newposition.Y += player.movedz * (float)e.Time;
-            Vector3 previousposition = player.playerposition;
-            if (!ENABLE_NOCLIP)
+                movedx = movedx,
+                movedy = movedy,
+                acceleration = acceleration,
+                ENABLE_FREEMOVE = ENABLE_FREEMOVE,
+                ENABLE_NOCLIP = ENABLE_NOCLIP,
+                jumpstartacceleration = jumpstartacceleration,
+                movespeednow = movespeednow,
+                moveup = moveup,
+                Swimming = Swimming,
+                wantsjump = wantsjump,
+            };
+            bool soundnow;
+            physics.Move(player, move, e.Time, out soundnow);
+            if (soundnow)
             {
-                physics.swimmingtop = Keyboard[OpenTK.Input.Key.Space] && !Swimming;
-                player.playerposition = physics.WallSlide(player.playerposition, newposition);
+                UpdateWalkSound(-1);
             }
-            else
-            {
-                player.playerposition = newposition;
-            }
-            if (!(ENABLE_FREEMOVE || Swimming))
-            {
-                isplayeronground = player.playerposition.Y == previousposition.Y;
-                {
-                    if (wantsjump && isplayeronground && jumpacceleration <= 0)
-                    {
-                        jumpacceleration = jumpstartacceleration;
-                        UpdateWalkSound(-1);
-                    }
-                    if (jumpacceleration < 0)
-                    {
-                        jumpacceleration = 0;
-                        player.movedz = 0;
-                    }
-                    if (jumpacceleration > 0)
-                    {
-                        jumpacceleration -= (float)e.Time * 2.8f;
-                    }
-                    if (!physics.reachedceiling)
-                    {
-                        player.movedz += jumpacceleration * 2;
-                    }
-                }
-            }
-            else
-            {
-                isplayeronground = true;
-            }
-            if (isplayeronground)
-            {
-                player.movedz = Math.Max(0, player.movedz);
-            }
-            if (isplayeronground && movedx != 0 || movedy != 0)
+            if (player.isplayeronground && movedx != 0 || movedy != 0)
             {
                 UpdateWalkSound(e.Time);
             }
@@ -2123,7 +2025,6 @@ namespace ManicDigger
             keyevent = null;
             keyeventup = null;
         }
-        private int WaterGravityMultiplier = 3;
         private float VectorAngleGet(Vector3 q)
         {
             return (float)(Math.Acos(q.X / q.Length) * Math.Sign(q.Z));
@@ -2175,27 +2076,6 @@ namespace ManicDigger
             int blockunderplayer = map.GetBlock((int)player.playerposition.X,
                 (int)player.playerposition.Z, (int)player.playerposition.Y - 1);
             return blockunderplayer;
-        }
-        float MakeCloserToZero(float a, float b)
-        {
-            if (a > 0)
-            {
-                float c = a - b;
-                if (c < 0)
-                {
-                    c = 0;
-                }
-                return c;
-            }
-            else
-            {
-                float c = a + b;
-                if (c > 0)
-                {
-                    c = 0;
-                }
-                return c;
-            }
         }
         Vector3 playerdestination;
         class MenuState
@@ -2779,7 +2659,7 @@ namespace ManicDigger
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
-            Vector3 forward = toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
+            Vector3 forward = VectorTool.toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
             Vector3 tpp = new Vector3();
             if (ENABLE_TPP_VIEW)
             {
