@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 using ManicDigger.Network;
+using ManicDigger.Renderers;
 
 namespace ManicDigger
 {

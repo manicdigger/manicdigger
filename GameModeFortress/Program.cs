@@ -7,6 +7,7 @@ using System.Xml;
 using System.Windows.Forms;
 using System.Diagnostics;
 using ManicDigger.Network;
+using ManicDigger.Renderers;
 
 namespace GameModeFortress
 {

@@ -14,6 +14,7 @@ using System.IO;
 using System.Net;
 using System.Drawing.Drawing2D;
 using ManicDigger.Network;
+using ManicDigger.Renderers;
 
 namespace ManicDigger
 {
@@ -525,89 +526,6 @@ namespace ManicDigger
             return (v + ((int.MaxValue / 2) / 360) * 360) % 360;
         }
     }
-    class Particle
-    {
-        public Vector3 position;
-        public Vector3 direction;
-    }
-    public class ParticleEffectBlockBreak
-    {
-        public IMapStorage map;
-        public ITerrainRenderer terrain;
-        public IGameData data;
-        public void DrawImmediateParticleEffects(double deltaTime)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
-            foreach (ParticleEffect p in new List<ParticleEffect>(particleEffects))
-            {
-                foreach (Particle pp in p.particles)
-                {
-                    GL.Begin(BeginMode.Triangles);
-                    RectangleF texrec = TextureAtlas.TextureCoords(p.textureid, terrain.texturesPacked);
-                    GL.TexCoord2(texrec.Left, texrec.Top);
-                    GL.Vertex3(pp.position);
-                    GL.TexCoord2(texrec.Right, texrec.Top);
-                    GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(0, particlesize, particlesize)));
-                    GL.TexCoord2(texrec.Right, texrec.Bottom);
-                    GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(particlesize, 0, particlesize)));
-                    Vector3 delta = pp.direction;
-                    delta = Vector3.Multiply(delta, (float)deltaTime * particlespeed);
-                    pp.direction.Y -= (float)deltaTime * particlegravity;
-                    pp.position += delta;
-                    GL.End();
-                }
-                if ((DateTime.Now - p.start) >= particletime)
-                {
-                    particleEffects.Remove(p);
-                }
-            }
-        }
-        float particlesize = 0.6f;
-        float particlespeed = 5;
-        float particlegravity = 2f;
-        int particlecount = 20;
-        TimeSpan particletime = TimeSpan.FromSeconds(5);
-        int maxparticleeffects = 50;
-        List<ParticleEffect> particleEffects = new List<ParticleEffect>();
-        class ParticleEffect
-        {
-            public Vector3 center;
-            public DateTime start;
-            public List<Particle> particles = new List<Particle>();
-            public int textureid;
-        }
-        Random rnd = new Random();
-        public void StartParticleEffect(Vector3 v)
-        {
-            if (particleEffects.Count >= maxparticleeffects)
-            {
-                return;
-            }
-            ParticleEffect p = new ParticleEffect();
-            p.center = v + new Vector3(0.5f, 0.5f, 0.5f);
-            p.start = DateTime.Now;
-            if (!MapUtil.IsValidPos(map, (int)v.X, (int)v.Z, (int)v.Y))
-            {
-                return;
-            }
-            int tiletype = map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
-            if (!data.IsValidTileType(tiletype))
-            {
-                return;
-            }
-            p.textureid = data.GetTileTextureId(tiletype, TileSide.Top);
-            for (int i = 0; i < particlecount; i++)
-            {
-                Particle pp = new Particle();
-                pp.position = p.center;
-                pp.direction = new Vector3((float)rnd.NextDouble() - 0.5f,
-                    (float)rnd.NextDouble() - 0.5f, (float)rnd.NextDouble() - 0.5f);
-                pp.direction.Normalize();
-                p.particles.Add(pp);
-            }
-            particleEffects.Add(p);
-        }
-    }
     public interface ICurrentShadows
     {
         bool ShadowsFull { get; set; }
@@ -860,20 +778,11 @@ namespace ManicDigger
                         }
                         File.WriteAllBytes(arguments + MapManipulator.XmlSaveExtension, game.SaveState());
                         //mapManipulator.SaveMap(map, arguments + MapManipulator.XmlSaveExtension);
-
                     }
                     else if (cmd == "fps")
                     {
                         ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
                         ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
-                    }
-                    else if (cmd == "uploadmap" || cmd == "uploadfeature")
-                    {
-                        //load map from disk
-                        MapStorage m = new MapStorage();
-                        mapManipulator.LoadMap(m, arguments);
-                        //add build commands to queue
-                        new Thread(() => { UploadMap(cmd == "uploadfeature", m); }).Start();
                     }
                     else if (cmd == "savefeature")
                     {
@@ -1000,75 +909,6 @@ namespace ManicDigger
             arguments = arguments.Trim();
             return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
         }
-        private void UploadMap(bool uploadfeature, MapStorage m)
-        {
-            ENABLE_NOCLIP = true;
-            ENABLE_FREEMOVE = true;
-            Vector3 playerpos = player.playerposition;
-            for (int z = m.MapSizeZ - 1; z >= 0; z--)
-            {
-                for (int x = 0; x < m.MapSizeX; x++)
-                {
-                    for (int y = 0; y < m.MapSizeY; y++)
-                    {
-                        if (exit)
-                        {
-                            return;
-                        }
-                        int destx = x;
-                        int desty = y;
-                        int destz = z;
-                        if (uploadfeature)
-                        {
-                            destx += (int)playerpos.X;
-                            desty += (int)playerpos.Z;
-                            destz += (int)playerpos.Y;
-                        }
-                        if (!MapUtil.IsValidPos(map, destx, desty, destz))
-                        {
-                            continue;
-                        }
-                        byte oldtile = (byte)map.GetBlock(destx, desty, destz);
-                        byte newtile = m.Map[x, y, z];
-                        if (!(data.IsBuildableTile(oldtile) && data.IsBuildableTile(newtile)))
-                        {
-                            continue;
-                        }
-                        if (oldtile != newtile)
-                        {
-                            int xx = destx;
-                            int yy = desty;
-                            int zz = destz;
-                            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
-                            Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
-                            todo.Enqueue(() => { network.SendPosition(newposition, player.playerorientation); });
-                            player.playerposition = newposition;
-                            if (oldtile != data.TileIdEmpty)
-                            {
-                                Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
-                                todo.Enqueue(() => ChangeTile(oldtile, newtile, xx, yy, zz));
-                            }
-                            if (newtile != data.TileIdEmpty)
-                            {
-                                Thread.Sleep(TimeSpan.FromSeconds(BuildDelay));
-                                todo.Enqueue(() => ChangeTile2(oldtile, newtile, xx, yy, zz));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        private void ChangeTile(byte oldtile, byte newtile, int xx, int yy, int zz)
-        {
-            Console.WriteLine(map.GetBlock(xx, yy, zz));
-            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
-            game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Destroy, 0);
-        }
-        private void ChangeTile2(byte oldtile, byte newtile, int xx, int yy, int zz)
-        {
-            var newposition = new Vector3(xx + 0.5f, zz + 1 + 0.2f, yy + 0.5f);
-            game.SendSetBlock(new Vector3(xx, yy, zz), BlockSetMode.Create, newtile);
-        }
         Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
@@ -1113,16 +953,11 @@ namespace ManicDigger
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
-                        //GuiTyping = TypingState.Ready;
-                        //?
-                        //if (GuiTyping == TypingState.Ready)
-                        {
-                            typinglog.Add(GuiTypingBuffer);
-                            typinglogpos = typinglog.Count;
-                            ClientCommand(GuiTypingBuffer);
-                            GuiTypingBuffer = "";
-                            GuiTyping = TypingState.None;
-                        }
+                        typinglog.Add(GuiTypingBuffer);
+                        typinglogpos = typinglog.Count;
+                        ClientCommand(GuiTypingBuffer);
+                        GuiTypingBuffer = "";
+                        GuiTyping = TypingState.None;
                     }
                     else if (GuiTyping == TypingState.None)
                     {
@@ -1287,22 +1122,6 @@ namespace ManicDigger
                     movespeed = basemovespeed * 10;
                     Log("Move speed: 10x.");
                 }
-                /*
-                if (e.Key == OpenTK.Input.Key.F7)
-                {
-                    GuiActionLoadGame();
-                }
-                if (e.Key == OpenTK.Input.Key.F5)
-                {
-                    mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
-                }
-                */
-                /*
-                if (e.Key == OpenTK.Input.Key.F8)
-                {
-                    GuiActionGenerateNewMap();
-                }
-                */
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
                     string defaultserverfile = "defaultserver.txt";
@@ -1316,17 +1135,6 @@ namespace ManicDigger
                         Log(string.Format("File {0} not found.", defaultserverfile));
                     }
                 }
-                /*
-                if (e.Key == OpenTK.Input.Key.M)
-                {
-                    FreeMouse = !FreeMouse;
-                    mouse_delta = new Point(0, 0);
-                    if (!FreeMouse)
-                    {
-                        freemousejustdisabled = true;
-                    }
-                }
-                */
                 if (e.Key == OpenTK.Input.Key.F3)
                 {
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
@@ -1672,26 +1480,6 @@ namespace ManicDigger
         {
             GuiStateBackToGame();
             game.OnNewMap();
-            /*
-            //frametickmainthreadtodo.Add(
-            //() =>
-            {
-                //.this.network = newnetwork;
-                //.this.clientgame = newclientgame;
-                //.this.terrain = newterrain;
-                //.newnetwork = null; newclientgame = null; newterrain = null;
-                var ee = (MapLoadedEventArgs)e;
-                //lock (clientgame.mapupdate)
-                {
-                    map.UseMap(ee.map);
-                    map.MapSizeX = ee.map.GetUpperBound(0) + 1;
-                    map.MapSizeY = ee.map.GetUpperBound(1) + 1;
-                    map.MapSizeZ = ee.map.GetUpperBound(2) + 1;
-                    Console.WriteLine("Game loaded successfully.");
-                }
-            }
-            //);
-            */
             DrawMap();
         }
         void maploaded()
@@ -1722,7 +1510,6 @@ namespace ManicDigger
         }
         float znear = 0.1f;
         float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
-        //int z = 0;
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
         Point mouse_delta;
@@ -1816,8 +1603,6 @@ namespace ManicDigger
         {
             return (int)player_yy.X == (int)tile_yy.X && (int)player_yy.Z == (int)tile_yy.Z;
         }
-        //float fix = 0.5f;
-
         bool enable_freemove = false;
         public bool ENABLE_FREEMOVE
         {
@@ -3574,62 +3359,7 @@ namespace ManicDigger
         }
         public ParticleEffectBlockBreak particleEffectBlockBreak = new ParticleEffectBlockBreak();
         Random rnd = new Random();
-        /*
-        private Vector3 From3dPos(BlockPosSide v)
-        {
-            if (v.side == TileSide.Back) { return v.pos + new Vector3(-1, 0, 0); }
-            if (v.side == TileSide.Right) { return v.pos + new Vector3(0, 0, -1); }
-            if (v.side == TileSide.Top) { return v.pos + new Vector3(0, -1, 0); }
-            return v.pos;
-        }
-        */
         public int activematerial { get; set; }
-        void DrawCube(Vector3 pos)
-        {
-            float size = 0.5f;
-            GL.Begin(BeginMode.Quads);
-            GL.Color3(Color.Purple);
-            //GL.Color3(Color.Silver);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-
-            //GL.Color3(Color.Honeydew);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-
-            //GL.Color3(Color.Moccasin);
-
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-
-            //GL.Color3(Color.IndianRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-
-            //GL.Color3(Color.PaleVioletRed);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + -1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-
-            //GL.Color3(Color.ForestGreen);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + -1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + 1.0f * size, pos.Z + 1.0f * size);
-            GL.Vertex3(pos.X + 1.0f * size, pos.Y + -1.0f * size, pos.Z + 1.0f * size);
-
-            GL.Color3(Color.Transparent);
-
-            GL.End();
-        }
         private void DrawLinesAroundSelectedCube(Vector3 posx)
         {
             float pickcubeheight = 1;
