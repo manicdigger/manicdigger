@@ -47,10 +47,16 @@ namespace GameModeFortress
             Chunk chunk = chunks[x, y, z];
             if (chunk == null)
             {
-
                 //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
                 byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
-                chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                if (newchunk != null)
+                {
+                    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                }
+                else
+                {
+                    chunks[x, y, z] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
+                }
                 return chunks[x, y, z].data;
             }
             if (chunk.compressed != null)
@@ -75,6 +81,9 @@ namespace GameModeFortress
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
             int chunksizez = chunk.GetUpperBound(2) + 1;
+            if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
+            if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
+            if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
             for (int xxx = 0; xxx < chunksizex; xxx += chunksize)
             {
                 for (int yyy = 0; yyy < chunksizex; yyy += chunksize)
@@ -88,13 +97,35 @@ namespace GameModeFortress
                     }
                 }
             }
-            for (int zz = 0; zz < chunksizez; zz++)
+            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
-                for (int yy = 0; yy < chunksizey; yy++)
+                for (int cy = 0; cy < chunksizey / chunksize; cy++)
                 {
-                    for (int xx = 0; xx < chunksizex; xx++)
+                    for (int cz = 0; cz < chunksizex / chunksize; cz++)
                     {
-                        SetBlock(x + xx, y + yy, z + zz, chunk[xx, yy, zz]);
+                        localchunks[cx, cy, cz] = GetChunk(x + cx*chunksize, y + cy*chunksize, z + cz*chunksize);
+                        FillChunk(localchunks[cx, cy, cz], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk);
+                    }
+                }
+            }
+        }
+        private void FillChunk(byte[] destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, byte[, ,] source)
+        {
+            for (int x = 0; x < destinationchunksize; x++)
+            {
+                for (int y = 0; y < destinationchunksize; y++)
+                {
+                    for (int z = 0; z < destinationchunksize; z++)
+                    {
+                        //if (x + sourcex < source.GetUpperBound(0) + 1
+                        //    && y + sourcey < source.GetUpperBound(1) + 1
+                        //    && z + sourcez < source.GetUpperBound(2) + 1)
+                        {
+                            destination[MapUtil.Index(x, y, z, destinationchunksize, destinationchunksize)]
+                                = source[x + sourcex, y + sourcey, z + sourcez];
+                        }
                     }
                 }
             }

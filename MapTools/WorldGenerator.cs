@@ -8,8 +8,7 @@ using System;
         #region IWorldGenerator Members
         public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
         {
-            byte[, ,] chunk = new byte[chunksize, chunksize, chunksize];
-            return chunk;
+            return null;
         }
         #endregion
     }

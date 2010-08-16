@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using OpenTK;
 using System.Text.RegularExpressions;
 using ProtoBuf;
+using System.Diagnostics;
 
 namespace GameModeFortress
 {
@@ -207,7 +208,8 @@ namespace GameModeFortress
             }
             ms.Position = 0;
             PacketServer packet = Serializer.DeserializeWithLengthPrefix<PacketServer>(ms, PrefixStyle.Base128);
-            if (packet.PacketId != ServerPacketId.PositionUpdate
+            if (Debugger.IsAttached
+                && packet.PacketId != ServerPacketId.PositionUpdate
                 && packet.PacketId != ServerPacketId.OrientationUpdate
                 && packet.PacketId != ServerPacketId.PlayerPositionAndOrientation
                 && packet.PacketId != ServerPacketId.ExtendedPacketTick
