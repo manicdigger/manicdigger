@@ -54,6 +54,23 @@ namespace ManicDigger
         //public IKeyboard keyboard { get; set; }
         [Inject]
         public ILocalPlayerPosition playerpos { get; set; }
+        public void SetAttack(bool isattack, bool build)
+        {
+            this.build = build;
+            if (isattack)
+            {
+                if (attack == -1)
+                {
+                    attack = 0;
+                }
+            }
+            else
+            {
+                attack = -1;
+            }
+        }
+        float attack = -1;
+        bool build = false;
         public void DrawWeapon(float dt)
         {
             int light;
@@ -114,9 +131,9 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.LoadIdentity();
 
-            GL.Translate(0.3 + zzzposz, -1.5f + zzzposx, -1.5f + zzzposy);
+            GL.Translate(0.3 + zzzposz - attackt * 5, -1.5f + zzzposx - buildt * 10, -1.5f + zzzposy);
             //GL.Scale(2, 2, 2);
-            GL.Rotate(30 + (zzzx), new Vector3(1, 0, 0));//zzz += 0.01f
+            GL.Rotate(30 + (zzzx) - attackt * 300, new Vector3(1, 0, 0));//zzz += 0.01f
             GL.Rotate(60 + zzzy, new Vector3(0, 1, 0));
             GL.Scale(0.8, 0.8, 0.8);
             //GL.Rotate(0-(zzz+=0.05f), new Vector3(0, 1, 0));
@@ -152,6 +169,35 @@ namespace ManicDigger
             }
             zzzposx = rot(t);
             zzzposz = rot2(t);
+            if (attack != -1)
+            {
+                attack += dt * 7;
+                if (attack > Math.PI / 2)
+                {
+                    attack = -1;
+                    if (build)
+                    {
+                        buildt = 0;
+                    }
+                    else
+                    {
+                        attackt = 0;
+                    }
+                }
+                else
+                {
+                    if (build)
+                    {
+                        buildt = rot(attack / 5);
+                        attackt = 0;
+                    }
+                    else
+                    {
+                        attackt = rot(attack / 5);
+                        buildt = 0;
+                    }
+                }
+            }
 
             GL.Begin(BeginMode.Triangles);
             GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
@@ -166,6 +212,8 @@ namespace ManicDigger
             //Console.WriteLine("({0}||{1}):({2}||{3})", zzzx, zzzy, zzzposx, zzzposy);
             //(-19,00004||-13,70002):(-0,2000001||-1,3)
         }
+        float attackt = 0;
+        float buildt;
         float range = 0.07f;
         const float speed = 5;
         float animperiod = (float)Math.PI / (speed / 2);

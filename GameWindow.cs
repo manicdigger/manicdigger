@@ -1995,6 +1995,15 @@ namespace ManicDigger
                 return;
             }
 
+            if (left)
+            {
+                weapon.SetAttack(true, false);
+            }
+            else if (right)
+            {
+                weapon.SetAttack(true, true);
+            }
+
             if (iii++ % 2 == 0)
             {
                 return;
