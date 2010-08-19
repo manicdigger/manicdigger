@@ -42,6 +42,7 @@ namespace Start
                         }
                         else
                         {
+                            /* Mine Mode
                             string ip = f.LoginIp;
                             string port = f.LoginPort;
                             string user = f.LoginUser;
@@ -56,6 +57,7 @@ namespace Start
 </ManicDiggerLink>", ip, port, user, password);
                             File.WriteAllText(tempfile, s);
                             RunLink(tempfile);
+                            */
                         }
                     }
                     catch (Exception e)

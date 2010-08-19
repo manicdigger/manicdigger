@@ -20,8 +20,10 @@ namespace ManicDigger
         {
             webBrowser1.Url = new Uri("http://fragmer.net/md/");
             webBrowser1.Navigating += new WebBrowserNavigatingEventHandler(webBrowser1_Navigating);
+            /* Mine Mode
             webBrowser2.Navigating += new WebBrowserNavigatingEventHandler(webBrowser2_Navigating);
             LoadPassword();
+            */
         }
         void webBrowser1_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
@@ -38,6 +40,7 @@ namespace ManicDigger
         }
         void webBrowser2_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
+            /* Mine Mode
             if (!e.Url.AbsoluteUri.StartsWith("http://minecraft.net/"))
             {
                 return;
@@ -47,6 +50,7 @@ namespace ManicDigger
             SelectedServerMinecraft = true;
             SetLoginData(SelectedServer);
             Close();
+            */
         }
         public string SelectedServer = null;
         public bool SelectedServerMinecraft = false;
@@ -80,6 +84,7 @@ namespace ManicDigger
             SinglePlayer = "Fortress";
             Close();
         }
+        /* Mine Mode
         private void button3_Click(object sender, EventArgs e)
         {
             LoginClientMinecraft c = new LoginClientMinecraft();
@@ -185,5 +190,6 @@ namespace ManicDigger
         {
             return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MinecraftPassword.txt");
         }
+        */
     }
 }
