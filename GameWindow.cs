@@ -689,7 +689,9 @@ namespace ManicDigger
             if (GuiTyping == TypingState.Typing)
             {
                 char c = e.KeyChar;
-                if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
+                if ((char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)
+                    || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
+                    && c != '\r')
                 {
                     GuiTypingBuffer += e.KeyChar;
                 }
