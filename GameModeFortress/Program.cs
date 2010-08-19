@@ -240,6 +240,7 @@ namespace GameModeFortress
             playerskindownloader.the3d = the3d;
             playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
             w.playerskindownloader = playerskindownloader;
+            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = w, viewportsize = w };
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             //clientgame.physics = physics;

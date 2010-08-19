@@ -362,7 +362,12 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keypressed { get; }
         OpenTK.Input.KeyboardKeyEventArgs keydepressed { get; }
     }
-    public interface IViewport3d : ILocalPlayerPosition, IKeyboard
+    public interface IViewportSize
+    {
+        int Width { get; }
+        int Height { get; }
+    }
+    public interface IViewport3d : ILocalPlayerPosition, IKeyboard, IViewportSize
     {
         int[] MaterialSlots { get; set; }
         int activematerial { get; set; }
@@ -447,6 +452,10 @@ namespace ManicDigger
         #region IViewport3d Members
         public bool ENABLE_FINITEINVENTORY { get; set; }
         #endregion
+        #region IViewportSize Members
+        public int Width { get { return 1; } }
+        public int Height { get { return 1; } }
+        #endregion
     }
     public interface IModelToDraw
     {
@@ -530,12 +539,21 @@ namespace ManicDigger
     {
         bool ShadowsFull { get; set; }
     }
+    public struct Draw2dData
+    {
+        public float x1;
+        public float y1;
+        public float width;
+        public float height;
+        public int? inAtlasId;
+        public Color color;
+    }
     /// <summary>
     /// </summary>
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d
+    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d, IDraw2d
     {
         [Inject]
         public ITerrainRenderer terrain { get; set; }
@@ -568,6 +586,8 @@ namespace ManicDigger
         public ICharacterRenderer characterdrawer { get; set; }
         [Inject]
         public ICurrentShadows currentshadows;
+        [Inject]
+        public FpsHistoryGraphRenderer fpshistorygraphrenderer { get; set; }
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
@@ -2617,7 +2637,7 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWFPSHISTORY)
             {
-                DrawFpsHistoryGraph();
+                fpshistorygraphrenderer.DrawFpsHistoryGraph();
             }
             if (drawblockinfo)
             {
@@ -2719,56 +2739,6 @@ namespace ManicDigger
                 }
             }
         }
-        private void DrawFpsHistoryGraph()
-        {
-            float maxtime = 0;
-            foreach (var v in fpshistory)
-            {
-                if (v > maxtime)
-                {
-                    maxtime = v;
-                }
-            }
-            float historyheight = 80;
-            int posx = 25;
-            int posy = Height - (int)historyheight - 20;
-            Color[] colors = new[] { Color.Black, Color.Red };
-            Color linecolor = Color.White;
-
-            List<Draw2dData> todraw = new List<Draw2dData>();
-            for (int i = 0; i < fpshistory.Count; i++)
-            {
-                float time = fpshistory[i];
-                time = (time * 60) * historyheight;
-                Color c = InterpolateColor((float)i / fpshistory.Count, colors);
-                todraw.Add(new Draw2dData() { x1 = posx + i, y1 = posy - time, width = 1, height = time, inAtlasId = null, color = c });
-            }
-            Draw2dTextures(todraw, WhiteTexture());
-
-            Draw2dTexture(WhiteTexture(), posx, posy - historyheight, fpshistory.Count, 1, null, linecolor);
-            Draw2dTexture(WhiteTexture(), posx, posy - historyheight * (60f / 75), fpshistory.Count, 1, null, linecolor);
-            Draw2dTexture(WhiteTexture(), posx, posy - historyheight * (60f / 30), fpshistory.Count, 1, null, linecolor);
-            Draw2dTexture(WhiteTexture(), posx, posy - historyheight * (60f / 150), fpshistory.Count, 1, null, linecolor);
-            Draw2dText("60", posx, posy - historyheight * (60f / 60), 6, null);
-            Draw2dText("75", posx, posy - historyheight * (60f / 75), 6, null);
-            Draw2dText("30", posx, posy - historyheight * (60f / 30), 6, null);
-            Draw2dText("150", posx, posy - historyheight * (60f / 150), 6, null);
-        }
-        Color InterpolateColor(float progress, params Color[] colors)
-        {
-            int colora = (int)((colors.Length - 1) * progress);
-            if (colora < 0) { colora = 0; }
-            if (colora >= colors.Length) { colora = colors.Length - 1; }
-            int colorb = colora + 1;
-            if (colorb >= colors.Length) { colorb = colors.Length - 1; }
-            Color a = colors[colora];
-            Color b = colors[colorb];
-            float p = (progress - (float)colora / (colors.Length - 1)) * (colors.Length - 1);
-            int R = (int)(a.R + (b.R - a.R) * p);
-            int G = (int)(a.G + (b.G - a.G) * p);
-            int B = (int)(a.B + (b.B - a.B) * p);
-            return Color.FromArgb(R, G, B);
-        }
         bool drawblockinfo = false;
         MapLoadingProgressEventArgs maploadingprogress;
         private void DrawMapLoading()
@@ -2789,7 +2759,7 @@ namespace ManicDigger
                 int sizex = 400;
                 int sizey = 40;
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, Color.Black);
-                Color c = InterpolateColor(progressratio, Color.Red, Color.Yellow, Color.Green);
+                Color c = Interpolation.InterpolateColor(progressratio, Color.Red, Color.Yellow, Color.Green);
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, c);
             }
         }
@@ -3005,7 +2975,7 @@ namespace ManicDigger
                 Draw2dTexture(WhiteTexture(), xcenter(100), Height - 120, inventoryloadratio * 100, 10, null, c);
             }
         }
-        int WhiteTexture()
+        public int WhiteTexture()
         {
             if (whitetexture == -1)
             {
@@ -3100,7 +3070,7 @@ namespace ManicDigger
                 }
             }
         }
-        void Draw2dText(string text, float x, float y, float fontsize, Color? color)
+        public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
         {
             if (text == null || text.Trim() == "")
             {
@@ -3142,7 +3112,7 @@ namespace ManicDigger
         {
             Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
         }
-        void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
+        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
         {
             RectangleF rect;
             if (inAtlasId == null)
@@ -3175,16 +3145,7 @@ namespace ManicDigger
             GL.Enable(EnableCap.DepthTest);
             GL.PopAttrib();
         }
-        struct Draw2dData
-        {
-            public float x1;
-            public float y1;
-            public float width;
-            public float height;
-            public int? inAtlasId;
-            public Color color;
-        }
-        void Draw2dTextures(List<Draw2dData> todraw, int textureid)
+        public void Draw2dTextures(List<Draw2dData> todraw, int textureid)
         {
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
@@ -3362,25 +3323,12 @@ namespace ManicDigger
         Dictionary<string, string> performanceinfo = new Dictionary<string, string>();
         public Dictionary<string, string> PerformanceInfo { get { return performanceinfo; } }
         int lastchunkupdates;
-        List<float> m_fpshistory = new List<float>();
-        List<float> fpshistory
-        {
-            get
-            {
-                while (m_fpshistory.Count < 300)
-                {
-                    m_fpshistory.Add(0);
-                }
-                return m_fpshistory;
-            }
-        }
         private void UpdateTitleFps(FrameEventArgs e)
         {
             fpscount++;
             longestframedt = (float)Math.Max(longestframedt, e.Time);
             TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
-            fpshistory.RemoveAt(0);
-            fpshistory.Add((float)e.Time);
+            fpshistorygraphrenderer.Update((float)e.Time);
             if (elapsed.TotalSeconds >= 1)
             {
                 string fpstext1 = "";

@@ -9,6 +9,24 @@ using OpenTK;
 
 namespace ManicDigger
 {
+    public static class Interpolation
+    {
+        public static Color InterpolateColor(float progress, params Color[] colors)
+        {
+            int colora = (int)((colors.Length - 1) * progress);
+            if (colora < 0) { colora = 0; }
+            if (colora >= colors.Length) { colora = colors.Length - 1; }
+            int colorb = colora + 1;
+            if (colorb >= colors.Length) { colorb = colors.Length - 1; }
+            Color a = colors[colora];
+            Color b = colors[colorb];
+            float p = (progress - (float)colora / (colors.Length - 1)) * (colors.Length - 1);
+            int R = (int)(a.R + (b.R - a.R) * p);
+            int G = (int)(a.G + (b.G - a.G) * p);
+            int B = (int)(a.B + (b.B - a.B) * p);
+            return Color.FromArgb(R, G, B);
+        }
+    }
     public static class VectorTool
     {
         public static Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx, double orientationy)
