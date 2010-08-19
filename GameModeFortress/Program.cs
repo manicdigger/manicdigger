@@ -318,9 +318,9 @@ namespace GameModeFortress
         }
         private static void Start(string[] args)
         {
+            string appPath = Path.GetDirectoryName(Application.ExecutablePath);
             if (!Debugger.IsAttached)
             {
-                string appPath = Path.GetDirectoryName(Application.ExecutablePath);
                 System.Environment.CurrentDirectory = appPath;
             }
             var p = new ManicDiggerProgram2();
@@ -339,6 +339,19 @@ namespace GameModeFortress
                     int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
                     p.GameUrl += ":" + port;
                     p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                }
+            }
+            else
+            {
+                if (!Debugger.IsAttached)
+                {
+                    Process.Start(Path.Combine(appPath, "ManicDiggerServer.exe"), "singleplayer");
+                    p.GameUrl = "127.0.0.1:25570";
+                    p.User = "local";
+                }
+                else
+                {
+                    //Single-player broken in debugger.
                 }
             }
             p.Start();

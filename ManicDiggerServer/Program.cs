@@ -72,6 +72,8 @@ namespace ManicDiggerServer
         public CraftingTableTool craftingtabletool { get; set; }
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         bool ENABLE_FORTRESS = true;
+        public bool LocalConnectionsOnly { get; set; }
+        public int singleplayerport = 25570;
         public void Start()
         {
             LoadConfig();
@@ -88,6 +90,10 @@ namespace ManicDiggerServer
                     Seed = new Random().Next();
                     generator.SetSeed(Seed);
                 }
+            }
+            if (LocalConnectionsOnly)
+            {
+                cfgport = singleplayerport;
             }
             Start(cfgport);
         }
@@ -202,19 +208,23 @@ namespace ManicDiggerServer
                     cfgkey = Guid.NewGuid().ToString();
                     SaveConfig();
                 }
-                string creativestr = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative");
-                if (creativestr == null)
-                {
-                    cfgcreative = false;
-                }
-                else
-                {
-                    cfgcreative =
-                        (creativestr != "0"
-                        && (!creativestr.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
-                }
+                cfgcreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
+                cfgpublic = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
+
             }
             Console.WriteLine("Server configuration loaded.");
+        }
+        private bool ReadBool(string str)
+        {
+            if (str == null)
+            {
+                return false;
+            }
+            else
+            {
+                return (str != "0"
+                    && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
+            }
         }
         bool cfgcreative;
         void SaveConfig()
@@ -226,6 +236,7 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("Port", cfgport.ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
+            s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
             File.WriteAllText("ServerConfig.xml", s);
         }
@@ -233,6 +244,7 @@ namespace ManicDiggerServer
         string cfgmotd = "MOTD";
         public int cfgport = 25565;
         string cfgkey;
+        public bool cfgpublic = false;
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://fragmer.net/md/heartbeat.php";
@@ -291,7 +303,14 @@ namespace ManicDiggerServer
             main = new Socket(AddressFamily.InterNetwork,
                    SocketType.Stream, ProtocolType.Tcp);
 
-            iep = new IPEndPoint(IPAddress.Any, port);
+            if (LocalConnectionsOnly)
+            {
+                iep = new IPEndPoint(IPAddress.Loopback, port);
+            }
+            else
+            {
+                iep = new IPEndPoint(IPAddress.Any, port);
+            }
             main.Bind(iep);
             main.Listen(10);
         }
@@ -1426,15 +1445,25 @@ namespace ManicDiggerServer
             s.generator = generator;
             s.data = new GameDataTilesManicDigger();
             s.craftingtabletool = new CraftingTableTool() { map = map };
-
+            bool singleplayer = false;
+            foreach (string arg in args)
+            {
+                if (arg.Equals("singleplayer", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    singleplayer = true;
+                }
+            }
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
                     s);
             }
-
+            s.LocalConnectionsOnly = singleplayer;
             s.Start();
-            new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+            if ((!singleplayer) && (s.cfgpublic))
+            {
+                new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+            }
             for (; ; )
             {
                 s.Process();
