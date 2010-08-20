@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
+    <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />
     <Compile Include="Renderers\Model3d.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />

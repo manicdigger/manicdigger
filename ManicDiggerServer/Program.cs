@@ -364,8 +364,7 @@ namespace ManicDiggerServer
                     {
                         foreach(var c in clients)
                         {
-                            PacketServerSeason p = new PacketServerSeason() { Season = GetSeason(simulationcurrentframe) };
-                            SendPacket(c.Key, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season=p}));
+                            NotifySeason(c.Key);
                         }
                     }
                     accumulator -= dt;
@@ -474,6 +473,11 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
+        }
+        private void NotifySeason(int clientid)
+        {
+            PacketServerSeason p = new PacketServerSeason() { Season = GetSeason(simulationcurrentframe) };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season = p }));
         }
         int SEASON_EVERY_SECONDS = 60 * 60;//1 hour
         int GetSeason(long frame)
@@ -919,6 +923,7 @@ namespace ManicDiggerServer
                     }                    
                     SendMessageToAll(string.Format("Player {0} joins.", username));
                     SendLevel(clientid);
+                    NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
                     int x = packet.SetBlock.X;
