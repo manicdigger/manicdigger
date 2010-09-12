@@ -242,6 +242,7 @@ namespace ManicDigger
             if (oldheight >= map.MapSizeZ) { oldheight = map.MapSizeZ - 1; }
             UpdateLightHeightmapAt(x, y);
             int newheight = GetLightHeight(x, y);
+            if (newheight < 0) { newheight = 0; } //fixes crash
             if (newheight < oldheight)
             {
                 //make white
