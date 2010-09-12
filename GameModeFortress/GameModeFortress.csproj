@@ -63,7 +63,7 @@
       <Project>{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}</Project>
       <Name>GameModeMine</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ManicDigger.csproj">
+    <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
       <Name>ManicDigger</Name>
     </ProjectReference>
