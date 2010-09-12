@@ -107,9 +107,10 @@ namespace ManicDigger
                 }
                 state.curspeed = diff1 * move.movespeednow;
             }
-            var newposition = state.playerposition + (state.curspeed) * (float)dt;
+            Vector3 newposition;
             if (!(move.ENABLE_FREEMOVE))
             {
+                newposition = state.playerposition + state.curspeed;
                 if (!move.Swimming)
                 {
                     newposition.Y = state.playerposition.Y;
@@ -122,6 +123,10 @@ namespace ManicDigger
                     diff *= 1 * state.curspeed.Length;
                 }
                 newposition = state.playerposition + diff * (float)dt;
+            }
+            else
+            {
+                newposition = state.playerposition + (state.curspeed) * (float)dt;
             }
             newposition.Y += state.movedz * (float)dt;
             Vector3 previousposition = state.playerposition;

@@ -1812,7 +1812,7 @@ namespace ManicDigger
             {
                 player.playerorientation.Y += (float)mouse_delta.X * rotationspeed * (float)e.Time;
                 player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
-                player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.15f, (float)(Math.PI / 2 + Math.PI - 0.15f));
+                player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.015f, (float)(Math.PI / 2 + Math.PI - 0.015f));
             }
             UpdatePicking();
         }
