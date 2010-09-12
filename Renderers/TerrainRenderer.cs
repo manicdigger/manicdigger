@@ -442,6 +442,11 @@ namespace ManicDigger
                 {
                     foreach (Vector3 p in nearchunksremove)
                     {
+                        if (!batchedblocks.ContainsKey(p))
+                        {
+                            //crash fix. crash happens on UpdateAllTiles().
+                            continue;
+                        }
                         int[] b = batchedblocks[p];
                         if (b != null)
                         {
