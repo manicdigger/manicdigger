@@ -48,7 +48,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OldModeFortress.cs" />
     <Compile Include="CraftingRecipes.cs" />
     <Compile Include="GameData.cs" />
     <Compile Include="InfiniteMap.cs" />

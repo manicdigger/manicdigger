@@ -197,6 +197,7 @@ namespace GameModeFortress
             }
             speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = activematerial, time = DateTime.Now };
             terrain.UpdateTile(x, y, z);
+            shadows.OnLocalBuild(x, y, z);
         }
         private void ClearFillArea()
         {
