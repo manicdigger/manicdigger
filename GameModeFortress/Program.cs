@@ -253,7 +253,14 @@ namespace GameModeFortress
             shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
                 localplayerposition = localplayerposition, config3d = config3d };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
-            UseShadowsSimple();
+            if (fullshadows)
+            {
+                UseShadowsFull();
+            }
+            else
+            {
+                UseShadowsSimple();
+            }
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
@@ -275,7 +282,7 @@ namespace GameModeFortress
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
-        bool fullshadows = false;
+        public bool fullshadows = true;
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;
