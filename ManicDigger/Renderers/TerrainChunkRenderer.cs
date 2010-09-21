@@ -17,19 +17,36 @@ namespace ManicDigger
         public IBlockDrawerTorch blockdrawertorch { get; set; }
         [Inject]
         public Config3d config3d { get; set; }
+        [Inject]
+        public ITerrainRenderer terrainrenderer { get; set; }//textures
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16
         public int texturesPacked = 16;
         public float BlockShadow = 0.6f;
+        public bool ENABLE_ATLAS1D = true;
+        int maxblocktypes = 256;
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0) { yield break; }
-            if (x >= mapstorage.MapSizeX / chunksize || y >= mapstorage.MapSizeY / chunksize || z >= mapstorage.MapSizeZ / chunksize) { yield break; }
-            List<ushort> indices = new List<ushort>();
-            List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
-            List<ushort> transparentindices = new List<ushort>();
-            List<VertexPositionTexture> transparentvertices = new List<VertexPositionTexture>();
+            if (x >= mapstorage.MapSizeX / chunksize
+                || y >= mapstorage.MapSizeY / chunksize
+                || z >= mapstorage.MapSizeZ / chunksize) { yield break; }
+            if (ENABLE_ATLAS1D)
+            {
+                toreturnatlas1d = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
+                toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
+                for (int i = 0; i < toreturnatlas1d.Length; i++)
+                {
+                    toreturnatlas1d[i] = new VerticesIndices();
+                    toreturnatlas1dtransparent[i] = new VerticesIndices();
+                }
+            }
+            //else
+            {
+                toreturnmain = new VerticesIndices();
+                toreturntransparent = new VerticesIndices();
+            }
             byte[, ,] currentChunk = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
             for (int xx = 0; xx < chunksize + 2; xx++)
             {
@@ -59,6 +76,7 @@ namespace ManicDigger
                     }
                 }
             }
+            
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -68,40 +86,77 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx;
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
-
-                        if (!(data.IsTransparentTile(currentChunk[xx + 1, yy + 1, zz + 1])
-                            || data.IsWaterTile(currentChunk[xx + 1, yy + 1, zz + 1])))
-                        {
-                            BlockPolygons(indices, vertices, xxx, yyy, zzz, currentChunk);
-                        }
-                        else
-                        {
-                            BlockPolygons(transparentindices, transparentvertices, xxx, yyy, zzz, currentChunk);
-                        }
+                        BlockPolygons(xxx, yyy, zzz, currentChunk);
                     }
                 }
             }
-            if (indices.Count > 0)
+            if (ENABLE_ATLAS1D)
             {
-                yield return new VerticesIndicesToLoad()
+                for (int i = 0; i < toreturnatlas1d.Length; i++)
                 {
-                    indices = indices.ToArray(),
-                    vertices = vertices.ToArray(),
-                    position =
-                        new Vector3(x * chunksize, y * chunksize, z * chunksize)
-                };
+                    if (toreturnatlas1d[i].indices.Count > 0)
+                    {
+                        yield return new VerticesIndicesToLoad()
+                        {
+                            indices = toreturnatlas1d[i].indices.ToArray(),
+                            vertices = toreturnatlas1d[i].vertices.ToArray(),
+                            position =
+                                new Vector3(x * chunksize, y * chunksize, z * chunksize),
+                            texture = terrainrenderer.terrainTextures1d[i % terrainrenderer.terrainTexturesPerAtlas],
+                        };
+                    }
+                }
+                for (int i = 0; i < toreturnatlas1dtransparent.Length; i++)
+                {
+                    if (toreturnatlas1dtransparent[i].indices.Count > 0)
+                    {
+                        yield return new VerticesIndicesToLoad()
+                        {
+                            indices = toreturnatlas1dtransparent[i].indices.ToArray(),
+                            vertices = toreturnatlas1dtransparent[i].vertices.ToArray(),
+                            position =
+                                new Vector3(x * chunksize, y * chunksize, z * chunksize),
+                            texture = terrainrenderer.terrainTextures1d[i % terrainrenderer.terrainTexturesPerAtlas],
+                            transparent = true,
+                        };
+                    }
+                }
             }
-            if (transparentindices.Count > 0)
+            //else
             {
-                yield return new VerticesIndicesToLoad()
+                if (toreturnmain.indices.Count > 0)
                 {
-                    indices = transparentindices.ToArray(),
-                    vertices = transparentvertices.ToArray(),
-                    position =
-                        new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                    transparent = true
-                };
+                    yield return new VerticesIndicesToLoad()
+                    {
+                        indices = toreturnmain.indices.ToArray(),
+                        vertices = toreturnmain.vertices.ToArray(),
+                        position =
+                            new Vector3(x * chunksize, y * chunksize, z * chunksize),
+                        texture = terrainrenderer.terrainTexture,
+                    };
+                }
+                if (toreturntransparent.indices.Count > 0)
+                {
+                    yield return new VerticesIndicesToLoad()
+                    {
+                        indices = toreturntransparent.indices.ToArray(),
+                        vertices = toreturntransparent.vertices.ToArray(),
+                        position =
+                            new Vector3(x * chunksize, y * chunksize, z * chunksize),
+                        transparent = true,
+                        texture = terrainrenderer.terrainTexture,
+                    };
+                }
             }
+        }
+        VerticesIndices toreturnmain;
+        VerticesIndices toreturntransparent;
+        VerticesIndices[] toreturnatlas1d;
+        VerticesIndices[] toreturnatlas1dtransparent;
+        class VerticesIndices
+        {
+            public List<ushort> indices = new List<ushort>();
+            public List<VertexPositionTexture> vertices = new List<VertexPositionTexture>();
         }
         private bool IsValidPos(int x, int y, int z)
         {
@@ -116,7 +171,7 @@ namespace ManicDigger
             return true;
         }
         float[, ,] currentChunkShadows;
-        private void BlockPolygons(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, byte[, ,] currentChunk)
+        private void BlockPolygons(int x, int y, int z, byte[, ,] currentChunk)
         {
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
@@ -181,7 +236,7 @@ namespace ManicDigger
                 if (CanSupportTorch(currentChunk[xx + 1, yy, zz])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[xx, yy - 1, zz])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[xx, yy + 1, zz])) { type = TorchType.Right; }
-                blockdrawertorch.AddTorch(myelements, myvertices, x, y, z, type);
+                blockdrawertorch.AddTorch(toreturnmain.indices, toreturnmain.vertices, x, y, z, type);
                 return;
             }
             //slope
@@ -231,18 +286,19 @@ namespace ManicDigger
                         (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + blockheight00, y + 0.0f, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z + blockheight01, y + 1.0f, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + blockheight10, y + 0.0f, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z + blockheight11, y + 1.0f, texrec.Right, texrec.Bottom, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0.0f, z + blockheight00, y + 0.0f, texrec.Left, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0.0f, z + blockheight01, y + 1.0f, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1.0f, z + blockheight10, y + 0.0f, texrec.Right, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1.0f, z + blockheight11, y + 1.0f, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 2));
             }
             //bottom - same as top, but z is 1 less.
             if (drawbottom)
@@ -257,18 +313,19 @@ namespace ManicDigger
                         (int)(Math.Min(curcolor.B, color.B * shadowratio)));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 0.0f, texrec.Right, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1.0f, z, y + 1.0f, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
             }
             //front
             if (drawfront)
@@ -283,18 +340,19 @@ namespace ManicDigger
                         (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 0, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 1, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + blockheight00, y + 0, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + blockheight01, y + 1, texrec.Right, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 0, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 1, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + blockheight00, y + 0, texrec.Left, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0 + flowerfix, z + blockheight01, y + 1, texrec.Right, texrec.Top, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 2));
             }
             //back - same as front, but x is 1 greater.
             if (drawback)
@@ -309,18 +367,19 @@ namespace ManicDigger
                         (int)(color.B * shadowratio));
                 }
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 0, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 1, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + blockheight10, y + 0, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + blockheight11, y + 1, texrec.Left, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 0, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 1, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + blockheight10, y + 0, texrec.Right, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1 - flowerfix, z + blockheight11, y + 1, texrec.Left, texrec.Top, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
             }
             if (drawleft)
             {
@@ -335,18 +394,19 @@ namespace ManicDigger
                 }
 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0 + flowerfix, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + blockheight00, y + 0 + flowerfix, texrec.Right, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0 + flowerfix, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + blockheight10, y + 0 + flowerfix, texrec.Left, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0 + flowerfix, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0, z + blockheight00, y + 0 + flowerfix, texrec.Right, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0 + flowerfix, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1, z + blockheight10, y + 0 + flowerfix, texrec.Left, texrec.Top, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 2));
             }
             //right - same as left, but y is 1 greater.
             if (drawright)
@@ -362,18 +422,44 @@ namespace ManicDigger
                 }
 
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, texturesPacked);
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1 - flowerfix, texrec.Left, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 0, z + blockheight01, y + 1 - flowerfix, texrec.Left, texrec.Top, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1 - flowerfix, texrec.Right, texrec.Bottom, curcolor));
-                myvertices.Add(new VertexPositionTexture(x + 1, z + blockheight11, y + 1 - flowerfix, texrec.Right, texrec.Top, curcolor));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 0));
-                myelements.Add((ushort)(lastelement + 2));
-                myelements.Add((ushort)(lastelement + 3));
-                myelements.Add((ushort)(lastelement + 1));
-                myelements.Add((ushort)(lastelement + 2));
+                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                RectangleF texrec = TextureAtlas.TextureCoords1d(sidetexture, terrainrenderer.terrainTexturesPerAtlas);
+                short lastelement = (short)toreturn.vertices.Count;
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1 - flowerfix, texrec.Left, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 0, z + blockheight01, y + 1 - flowerfix, texrec.Left, texrec.Top, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1 - flowerfix, texrec.Right, texrec.Bottom, curcolor));
+                toreturn.vertices.Add(new VertexPositionTexture(x + 1, z + blockheight11, y + 1 - flowerfix, texrec.Right, texrec.Top, curcolor));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 0));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+                toreturn.indices.Add((ushort)(lastelement + 3));
+                toreturn.indices.Add((ushort)(lastelement + 1));
+                toreturn.indices.Add((ushort)(lastelement + 2));
+            }
+        }
+        private VerticesIndices GetToReturn(byte tiletype, int textureid)
+        {
+            if (ENABLE_ATLAS1D)
+            {
+                if (!(data.IsTransparentTile(tiletype) || data.IsWaterTile(tiletype)))
+                {
+                    return toreturnatlas1d[textureid / terrainrenderer.terrainTexturesPerAtlas];
+                }
+                else
+                {
+                    return toreturnatlas1dtransparent[textureid / terrainrenderer.terrainTexturesPerAtlas];
+                }
+            }
+            else
+            {
+                if (!(data.IsTransparentTile(tiletype) || data.IsWaterTile(tiletype)))
+                {
+                    return toreturnmain;
+                }
+                else
+                {
+                    return toreturntransparent;
+                }
             }
         }
         bool IsTileEmptyForDrawingOrTransparent(int xx, int yy, int zz, int adjacenttiletype, byte[, ,] currentChunk)

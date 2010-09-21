@@ -234,7 +234,7 @@ namespace ManicDigger
             //if (drawtop)
             {
                 int sidetexture = info.GetWeaponTextureId(TileSide.Top);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
@@ -251,7 +251,7 @@ namespace ManicDigger
             //if (drawbottom)
             {
                 int sidetexture = info.GetWeaponTextureId(TileSide.Bottom);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
@@ -268,7 +268,7 @@ namespace ManicDigger
             //if (drawfront)
             {
                 int sidetexture = info.GetWeaponTextureId(TileSide.Front);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
@@ -285,7 +285,7 @@ namespace ManicDigger
             //if (drawback)
             {//todo fix tcoords
                 int sidetexture = info.GetWeaponTextureId(TileSide.Back);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
@@ -301,7 +301,7 @@ namespace ManicDigger
             //if (drawleft)
             {
                 int sidetexture = info.GetWeaponTextureId(TileSide.Left);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
@@ -318,7 +318,7 @@ namespace ManicDigger
             //if (drawright)
             {//todo fix tcoords
                 int sidetexture = info.GetWeaponTextureId(TileSide.Right);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, info.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));

@@ -29,7 +29,7 @@ namespace ManicDigger.Renderers
                 foreach (Particle pp in p.particles)
                 {
                     GL.Begin(BeginMode.Triangles);
-                    RectangleF texrec = TextureAtlas.TextureCoords(p.textureid, terrain.texturesPacked);
+                    RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, terrain.texturesPacked);
                     GL.TexCoord2(texrec.Left, texrec.Top);
                     GL.Vertex3(pp.position);
                     GL.TexCoord2(texrec.Right, texrec.Top);

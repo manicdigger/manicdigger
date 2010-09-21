@@ -26,6 +26,8 @@ namespace ManicDigger
         int terrainTexture { get; }
         int DrawDistance { get; set; }
         int ChunkUpdates { get; }
+        int[] terrainTextures1d { get; }
+        int terrainTexturesPerAtlas { get; }
     }
     public class TerrainDrawerDummy : ITerrainRenderer
     {
@@ -53,17 +55,29 @@ namespace ManicDigger
         #region ITerrainDrawer Members
         public int ChunkUpdates { get; set; }
         #endregion
+        #region ITerrainRenderer Members
+        public int[] terrainTextures1d { get; set; }
+        public int terrainTexturesPerAtlas { get; set; }
+        #endregion
     }
     public class TextureAtlas
     {
-        public static RectangleF TextureCoords(int textureId, int texturesPacked)
+        public static RectangleF TextureCoords2d(int textureId, int texturesPacked)
         {
-            float bufferRatio = 0.0f;//0.1
             RectangleF r = new RectangleF();
-            r.Y = (1.0f / texturesPacked * (int)(textureId / texturesPacked)) + ((bufferRatio) * (1.0f / texturesPacked));
-            r.X = (1.0f / texturesPacked * (textureId % texturesPacked)) + ((bufferRatio) * (1.0f / texturesPacked));
-            r.Width = (1f - 2f * bufferRatio) * 1.0f / texturesPacked;
-            r.Height = (1f - 2f * bufferRatio) * 1.0f / texturesPacked;
+            r.Y = (1.0f / texturesPacked * (int)(textureId / texturesPacked));
+            r.X = (1.0f / texturesPacked * (textureId % texturesPacked));
+            r.Width = 1.0f / texturesPacked;
+            r.Height =  1.0f / texturesPacked;
+            return r;
+        }
+        public static RectangleF TextureCoords1d(int textureId, int texturesPerAtlas)
+        {
+            RectangleF r = new RectangleF();
+            r.Y = (1.0f / texturesPerAtlas * (int)(textureId % texturesPerAtlas));
+            r.X = 0;
+            r.Width = 1.0f;
+            r.Height = 1.0f / texturesPerAtlas;
             return r;
         }
     }
@@ -248,9 +262,22 @@ namespace ManicDigger
             started = true;
             GL.Enable(EnableCap.Texture2D);
             terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
+            List<int> terrainTextures1d = new List<int>();
+            using (var atlas2d = new Bitmap(getfile.GetFile("terrain.png")))
+            {
+                List<Bitmap> atlases1d = new TextureAtlasConverter().Atlas2dInto1d(atlas2d, 16, 32, 4096);
+                foreach (Bitmap bmp in atlases1d)
+                {
+                    terrainTextures1d.Add(the3d.LoadTexture(bmp));
+                    bmp.Dispose();
+                }
+            }
+            this.terrainTextures1d = terrainTextures1d.ToArray();
             updateThreadRunning++;
             new Thread(UpdateThreadStart).Start();
         }
+        public int[] terrainTextures1d { get; set; }
+        public int terrainTexturesPerAtlas { get { return 128; } }
         bool exit2;
         void UpdateThreadStart()
         {
@@ -464,7 +491,7 @@ namespace ManicDigger
                         List<int> ids = new List<int>();
                         foreach (var cc in chunk)
                         {
-                            ids.Add(batcher.Add(cc.indices, cc.vertices, cc.transparent));
+                            ids.Add(batcher.Add(cc.indices, cc.vertices, cc.transparent, cc.texture));
                         }
                         batchedblocks[p] = ids.ToArray();
                     }
@@ -499,7 +526,7 @@ namespace ManicDigger
                             {
                                 if (v.indices.Length != 0)
                                 {
-                                    ids.Add(batcher.Add(v.indices, v.vertices, v.transparent));
+                                    ids.Add(batcher.Add(v.indices, v.vertices, v.transparent, v.texture));
                                 }
                             }
                             if (ids.Count > 0)
@@ -757,7 +784,7 @@ namespace ManicDigger
             //top
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -773,7 +800,7 @@ namespace ManicDigger
             //bottom - same as top, but z is 1 less.
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -789,7 +816,7 @@ namespace ManicDigger
             //front
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -805,7 +832,7 @@ namespace ManicDigger
             //back - same as front, but x is 1 greater.
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -820,7 +847,7 @@ namespace ManicDigger
             }
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Right, texrec.Top, curcolor));
@@ -836,7 +863,7 @@ namespace ManicDigger
             //right - same as left, but y is 1 greater.
             {
                 int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
-                RectangleF texrec = TextureAtlas.TextureCoords(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Top, curcolor));

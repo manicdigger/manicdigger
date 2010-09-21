@@ -186,6 +186,7 @@ namespace GameModeFortress
             terrainChunkDrawer.mapstorage = clientgame;
             terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
             terrainChunkDrawer.blockdrawertorch = blockdrawertorch;
+            terrainChunkDrawer.terrainrenderer = terrainDrawer;
             //worldfeatures.getfile = getfile;
             //worldfeatures.localplayerposition = localplayerposition;
             //worldfeatures.mapstorage = mapstorage;

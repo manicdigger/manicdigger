@@ -53,13 +53,10 @@ namespace ManicDigger
             public VertexPositionTexture[] vertices;
             public int id;
             public bool transparent;
+            public int texture;
         }
         Queue<ToAdd> toadd = new Queue<ToAdd>();
-        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture)
-        {
-            return Add(p, vertexPositionTexture, false);
-        }
-        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent)
+        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent, int texture)
         {
             int id;
             lock (toadd)
@@ -74,7 +71,8 @@ namespace ManicDigger
                     id = count;
                     count++;
                 }
-                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id, transparent = transparent });
+                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id,
+                    transparent = transparent, texture = texture });
             }
             return id;
         }
@@ -95,6 +93,7 @@ namespace ManicDigger
                     ToAdd t = toadd.Dequeue();
                     GL.NewList(GetList(t.id), ListMode.Compile);
 
+                    GL.BindTexture(TextureTarget.Texture2D, t.texture);
                     GL.EnableClientState(EnableCap.TextureCoordArray);
                     GL.EnableClientState(EnableCap.VertexArray);
                     GL.EnableClientState(EnableCap.ColorArray);

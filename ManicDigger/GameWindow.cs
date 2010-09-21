@@ -59,6 +59,7 @@ namespace ManicDigger
         public ushort[] indices;
         public Vector3 position;
         public bool transparent;
+        public int texture;
     }
     public class Config3d
     {
@@ -3121,7 +3122,7 @@ namespace ManicDigger
             }
             else
             {
-                rect = TextureAtlas.TextureCoords(inAtlasId.Value, terrain.texturesPacked);
+                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, terrain.texturesPacked);
             }
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.Color3(color);
@@ -3164,7 +3165,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    rect = TextureAtlas.TextureCoords(v.inAtlasId.Value, terrain.texturesPacked);
+                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, terrain.texturesPacked);
                 }
                 GL.Color3(v.color);
                 float x2 = v.x1 + v.width;
