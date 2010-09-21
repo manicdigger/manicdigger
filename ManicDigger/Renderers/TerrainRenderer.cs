@@ -544,38 +544,58 @@ namespace ManicDigger
             }
             return processed;
         }
-        private bool IsChunksAroundReady(int chunkx, int chunky, int chunkz)
+        private bool IsChunksAroundReady(int chunkx, int chunky, int achunkz)
         {
-            int x = chunkx * chunksize;
-            int y = chunky * chunksize;
-            int z = chunkz * chunksize;
-            if (!(ischunkready.IsChunkReady(x, y, z)))
+            //Bad fix
+            //Was: Just making sure that 6 chunks around are loaded - for drawing edges of chunk.
+            //Is: Forced whole columns to be loaded, so that when using full shadows,
+            //light does not flood into not yet ready chunks which would cause 
+            //UpdateStartSunlight() to mark a whole column of chunks as fully-lighted.
+            for (int zz = 0; zz < mapstorage.MapSizeZ / chunksize; zz++)
+            //int zz = achunkz;
             {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx - 1, chunky, chunkz) && !ischunkready.IsChunkReady(x - chunksize, y, z))
-            {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx + 1, chunky, chunkz) && !ischunkready.IsChunkReady(x + chunksize, y, z))
-            {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx, chunky - 1, chunkz) && !ischunkready.IsChunkReady(x, y - chunksize, z))
-            {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx, chunky + 1, chunkz) && !ischunkready.IsChunkReady(x, y + chunksize, z))
-            {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx, chunky, chunkz - 1) && !ischunkready.IsChunkReady(x, y, z - chunksize))
-            {
-                return false;
-            }
-            if (IsValidChunkPosition(chunkx, chunky, chunkz + 1) && !ischunkready.IsChunkReady(x, y, z + chunksize))
-            {
-                return false;
+                int chunkz = zz;
+                int x = chunkx * chunksize;
+                int y = chunky * chunksize;
+                int z = chunkz * chunksize;
+                if (!(ischunkready.IsChunkReady(x, y, z)))
+                {
+                    return false;
+                }
+
+                if (IsValidChunkPosition(chunkx - 1, chunky, chunkz) && !ischunkready.IsChunkReady(x - chunksize, y, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx + 1, chunky, chunkz) && !ischunkready.IsChunkReady(x + chunksize, y, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx, chunky - 1, chunkz) && !ischunkready.IsChunkReady(x, y - chunksize, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx, chunky + 1, chunkz) && !ischunkready.IsChunkReady(x, y + chunksize, z))
+                {
+                    return false;
+                }
+
+                if (IsValidChunkPosition(chunkx - 1, chunky - 1, chunkz) && !ischunkready.IsChunkReady(x - chunksize, y - chunksize, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx - 1, chunky + 1, chunkz) && !ischunkready.IsChunkReady(x - chunksize, y + chunksize, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx + 1, chunky - 1, chunkz) && !ischunkready.IsChunkReady(x + chunksize, y - chunksize, z))
+                {
+                    return false;
+                }
+                if (IsValidChunkPosition(chunkx + 1, chunky + 1, chunkz) && !ischunkready.IsChunkReady(x + chunksize, y + chunksize, z))
+                {
+                    return false;
+                }
             }
             return true;
         }
