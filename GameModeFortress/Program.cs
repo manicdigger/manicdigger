@@ -251,7 +251,7 @@ namespace GameModeFortress
             this.map = map;
             w.currentshadows = this;
             shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
-                localplayerposition = localplayerposition, config3d = config3d };
+                localplayerposition = localplayerposition, config3d = config3d, ischunkready = map };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             if (fullshadows)
             {
