@@ -73,10 +73,14 @@ namespace ManicDigger
         }
         public static RectangleF TextureCoords1d(int textureId, int texturesPerAtlas)
         {
+            return TextureCoords1d(textureId, texturesPerAtlas, 1);
+        }
+        public static RectangleF TextureCoords1d(int textureId, int texturesPerAtlas, int tilecount)
+        {
             RectangleF r = new RectangleF();
             r.Y = (1.0f / texturesPerAtlas * (int)(textureId % texturesPerAtlas));
             r.X = 0;
-            r.Width = 1.0f;
+            r.Width = 1.0f * tilecount;
             r.Height = 1.0f / texturesPerAtlas;
             return r;
         }
