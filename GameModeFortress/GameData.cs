@@ -40,7 +40,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.FillStart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 10 };
             datanew[(int)TileTypeManicDigger.Cuboid] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 11 };
             datanew[(int)TileTypeManicDigger.FillArea] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 12 };
-            datanew[(int)TileTypeMinecraft.Torch] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 13 }; //50
+            datanew[(int)TileTypeMinecraft.Torch] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 13, TextureTop = (7 * 16) + 14 }; //50
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
