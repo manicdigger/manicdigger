@@ -34,6 +34,8 @@ namespace ManicDiggerServer
         public byte[] CompressedChunk;
         [ProtoMember(8, IsRequired = false)]
         public long LastUpdate;
+        [ProtoMember(9, IsRequired = false)]
+        public bool IsPopulated;
     }
     public class ClientException : Exception
     {
@@ -114,6 +116,7 @@ namespace ManicDiggerServer
                     map.chunks[p.X / chunksize, p.Y / chunksize, p.Z / chunksize] = c;
                     c.compressed = p.CompressedChunk;
                     c.LastUpdate = p.LastUpdate;
+                    c.IsPopulated = p.IsPopulated;
                 }
                 else
                 {
@@ -150,6 +153,7 @@ namespace ManicDiggerServer
                             else { chunk.CompressedChunk = CompressChunk(c.data); }
                             if (chunk.CompressedChunk == null) { throw new Exception(); }
                             chunk.LastUpdate = c.LastUpdate;
+                            chunk.IsPopulated = c.IsPopulated;
                             save.MapChunks.Add(chunk);
                         }
                     }
@@ -507,6 +511,11 @@ namespace ManicDiggerServer
                         oldesttime = c.LastUpdate;
                         oldestpos = p;
                     }
+                    if (!c.IsPopulated && IsChunksAroundLoaded(p, false, 5))
+                    {
+                        PopulateChunk(p);
+                        c.IsPopulated = true;
+                    }
                 }
                 if (simulationcurrentframe - oldesttime > chunksimulation_every)
                 {
@@ -516,6 +525,46 @@ namespace ManicDiggerServer
                     return;
                 }
             }
+        }
+        private void PopulateChunk(Vector3i p)
+        {
+            generator.PopulateChunk(map, p.x / chunksize, p.y / chunksize, p.z / chunksize, chunksize);
+        }
+        bool IsChunksAroundLoaded(Vector3i gpos, bool aroundPopulated,int range)
+        {
+            //int range = 3;
+            for (int x = 0; x < range; x++)
+            {
+                for (int y = 0; y < range; y++)
+                {
+                    for (int z = 0; z < range; z++)
+                    {
+                        int gpos2x = gpos.x + chunksize * (x - range / 2);
+                        int gpos2y = gpos.y + chunksize * (y - range / 2);
+                        int gpos2z = gpos.z + chunksize * (z - range / 2);
+                        if (!MapUtil.IsValidPos(map, gpos2x, gpos2y, gpos2z))
+                        {
+                            continue;
+                        }
+                        var c = map.chunks[gpos2x / chunksize, gpos2y / chunksize, gpos2z / chunksize];
+                        if (!aroundPopulated)
+                        {
+                            if (c == null)// || c.compressed != null)
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            if (c == null || !c.IsPopulated)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
         }
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {
@@ -695,7 +744,11 @@ namespace ManicDiggerServer
             Vector3i playerpos = PlayerBlockPosition(c);
             foreach (var v in ChunksAroundPlayer(playerpos))
             {
-                if (!c.chunksseen.ContainsKey(v))
+                //if (map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize] == null)
+                {
+                    map.GetBlock(v.x, v.y, v.z); //force load
+                }
+                if (!c.chunksseen.ContainsKey(v) && IsChunksAroundLoaded(v, true, 2))
                 {
                     if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
                     {
@@ -1312,7 +1365,7 @@ namespace ManicDiggerServer
                 KillPlayer(clientid);
             }
         }
-        int drawdistance = 128;
+        int drawdistance = 192;
         public int chunksize = 32;
         int chunkdrawdistance { get { return drawdistance / chunksize; } }
         IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)

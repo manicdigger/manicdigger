@@ -12,6 +12,7 @@ namespace GameModeFortress
             public byte[] data;
             public byte[] compressed;
             public long LastUpdate;
+            public bool IsPopulated;
         }
         [Inject]
         public IWorldGenerator generator { get; set; }

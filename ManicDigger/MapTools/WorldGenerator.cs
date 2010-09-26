@@ -1,7 +1,9 @@
 using System;
+using ManicDigger;
     public interface IWorldGenerator
     {
         byte[, ,] GetChunk(int x, int y, int z, int chunksize);
+        void PopulateChunk(IMapStorage map, int x, int y, int z, int chunksize);
     }
     public class WorldGeneratorDummy : IWorldGenerator
     {
@@ -9,6 +11,11 @@ using System;
         public byte[, ,] GetChunk(int x, int y, int z, int chunksize)
         {
             return null;
+        }
+        #endregion
+        #region IWorldGenerator Members
+        public void PopulateChunk(IMapStorage map, int x, int y, int z, int chunksize)
+        {
         }
         #endregion
     }
@@ -62,7 +69,6 @@ using System;
                     }
                 }
             }
-            PlaceRandomOres(0.2f * randomxyz(x, y, z), TileIdGoldOre + (int)(randomxyz(x, y, z) * 3), chunksize, x, y, z, chunk);
             istreecache = null;
             if (z == 0)
             {
@@ -107,28 +113,6 @@ using System;
             if (yy < 0 || yy >= chunksize) { return; }
             if (zz < 0 || zz >= chunksize) { return; }
             chunk[xx, yy, zz] = (byte)blocktype;
-        }
-        void PlaceRandomOres(float oresperchunk, int oretype, int chunksize, int x, int y, int z, byte[, ,] chunk)
-        {
-            float ores = chunksize * chunksize * chunksize * oresperchunk;
-            for (int i = 0; i < ores; i++)
-            {
-                PlaceRandomOre(oretype, chunksize, x, y, z, i, chunk);
-            }
-        }
-        float randomxyz(int x, int y, int z)
-        {
-            return (float)((FindNoise2(x + y * 20, z) + 1) / 2.0);
-        }
-        void PlaceRandomOre(int tiletype, int chunksize, int x, int y, int z, int i, byte[,,] chunk)
-        {
-            int xx = (int)(((FindNoise2(x + i * 100, y) + 1) / 2.0) * chunksize);
-            int yy = (int)(((FindNoise2(x + i * 100 + 1, y) + 1) / 2.0) * chunksize);
-            int zz = (int)(((FindNoise2(x + i * 100 + 2, y) + 1) / 2.0) * chunksize);
-            if (chunk[xx, yy, zz] == TileIdStone)
-            {
-                chunk[xx, yy, zz] = (byte)tiletype;
-            }
         }
         bool[,] istreecache;
         int TileIdEmpty = 0;
@@ -222,4 +206,114 @@ using System;
             double int2 = interpolate(u, v, x - floorx);//Here we use x-floorx, to get 1st dimension. Don't mind the x-floorx thingie, it's part of the cosine formula.
             return interpolate(int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.
         }
+        public Random rnd = new Random();
+        int goldorelength = 150;
+        int ironorelength = 150;
+        int coalorelength = 150;
+        #region IWorldGenerator Members
+        public void PopulateChunk(IMapStorage map, int x, int y, int z, int chunksize)
+        {
+            x *= chunksize;
+            y *= chunksize;
+            z *= chunksize;
+            //if (rnd.NextDouble() >= 0.6)
+            {
+                //return;
+            }
+
+            //find cave start
+            double curx = x;
+            double cury = y;
+            double curz = z;
+            for (int i = 0; i < 10; i++)
+            {
+                curx = x + rnd.Next(chunksize);
+                cury = y + rnd.Next(chunksize);
+                curz = z + rnd.Next(chunksize);
+                if (map.GetBlock((int)curx, (int)cury, (int)curz) == TileIdStone)
+                {
+                    goto ok;
+                }
+            }
+            return;
+        ok:
+            int blocktype = TileIdEmpty;
+            int length = 200;
+            if (rnd.NextDouble() < 0.5)
+            {
+                int oretype = rnd.Next(3);
+                if (oretype == 0) { length = goldorelength; }
+                if (oretype == 1) { length = ironorelength; }
+                if (oretype == 2) { length = coalorelength; }
+                length = rnd.Next(length);
+                blocktype = TileIdGoldOre + oretype;
+            }
+            //map.SetBlock(x, y, z, TileIdLava);
+            double curspeedx = rnd.Next(-1, 2);
+            double curspeedy = rnd.Next(-1, 2);
+            double curspeedz = rnd.Next(-1, 2);
+            int dir = rnd.NextDouble() < 0.5 ? -1 : 1;
+            for (int i = 0; i < length; i++)
+            {
+                if (rnd.NextDouble() < 0.05)
+                {
+                    curspeedx = rnd.NextDouble() * dir;
+                }
+                if (rnd.NextDouble() < 0.05)
+                {
+                    curspeedy = rnd.NextDouble() * dir;
+                }
+                if (rnd.NextDouble() < 0.02)
+                {
+                    curspeedz = rnd.NextDouble() * 0.5 * dir;
+                }
+                curx += curspeedx;
+                cury += curspeedy;
+                curz += curspeedz;
+                if (!MapUtil.IsValidPos(map, (int)curx, (int)cury, (int)curz))
+                {
+                    continue;
+                }
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    int sizex = rnd.Next(3, 5);
+                    int sizey = rnd.Next(3, 5);
+                    int sizez = rnd.Next(3, 5);
+                    int dx = rnd.Next(-sizex / 1, sizex / 1);
+                    int dy = rnd.Next(-sizey / 1, sizey / 1);
+                    int dz = rnd.Next(-sizez / 2, sizez / 2);
+                    int[] allowin = blocktype == TileIdEmpty ? new int[] { TileIdStone, TileIdDirt, TileIdGrass } : new int[] { TileIdStone };
+                    double density = blocktype == TileIdEmpty ? 1 : 0.5;
+                    MakeCuboid(map, (int)curx - sizex / 2 + dx, (int)cury - sizey / 2 + dy, (int)curz - sizez / 2 + dz, sizex, sizey, sizez, blocktype, allowin, density);
+                }
+            }
+        }
+        void MakeCuboid(IMapStorage map, int x, int y, int z, int sizex, int sizey, int sizez, int blocktype, int[] allowin, double chance)
+        {
+            for (int xx = 0; xx < sizex; xx++)
+            {
+                for (int yy = 0; yy < sizey; yy++)
+                {
+                    for (int zz = 0; zz < sizez; zz++)
+                    {
+                        if (MapUtil.IsValidPos(map, x + xx, y + yy, z + zz))
+                        {
+                            int t = map.GetBlock(x + xx, y + yy, z + zz);
+                            if (allowin == null) { goto ok; }
+                            foreach (int tt in allowin)
+                            {
+                                if (tt == t) { goto ok; }
+                            }
+                            continue;
+                        ok:
+                            if (rnd.NextDouble() < chance)
+                            {
+                                map.SetBlock(x + xx, y + yy, z + zz, blocktype);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
     }
