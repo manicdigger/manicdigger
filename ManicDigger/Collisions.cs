@@ -107,25 +107,19 @@ namespace ManicDigger.Collisions
         }
         public delegate bool IsBlockEmpty(int x, int y, int z);
         public delegate float GetBlockHeight(int x, int y, int z);
+        bool BoxHit(Box3D box)
+        {
+            return Intersection.CheckLineBox(box, currentLine, out currentHit);
+        }
+        Line3D currentLine;
+        Vector3 currentHit;
         public IEnumerable<BlockPosSide> LineIntersection(IsBlockEmpty isEmpty, GetBlockHeight getBlockHeight, Line3D line)
         {
-            Vector3 hit = new Vector3();
-            foreach (var node in
-                //quadtree.Search(v=>true))
-                 Search(v => Intersection.CheckLineBox(v, line, out hit)))
+            currentLine = line;
+            currentHit = new Vector3();
+            foreach (var node in Search(BoxHit))
             {
-                /*
-                foreach (var obj in node.ObjectsHere)
-                {
-                    Vector3 intersection;
-                    Triangle3D t = triangles[obj.ObjectId];
-                    bool intersects = Intersection.RayTriangle(line, t, out intersection) != 0;
-                    if (intersects)
-                    {
-                        yield return intersection;
-                    }
-                }
-                */
+                Vector3 hit = currentHit;
                 int x = (int)node.MinEdge.X;
                 int y = (int)node.MinEdge.Z;
                 int z = (int)node.MinEdge.Y;
