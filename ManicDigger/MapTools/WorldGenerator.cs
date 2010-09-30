@@ -207,9 +207,9 @@ using ManicDigger;
             return interpolate(int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.
         }
         public Random rnd = new Random();
-        int goldorelength = 150;
-        int ironorelength = 150;
-        int coalorelength = 150;
+        int goldorelength = 50;
+        int ironorelength = 50;
+        int coalorelength = 50;
         #region IWorldGenerator Members
         public void PopulateChunk(IMapStorage map, int x, int y, int z, int chunksize)
         {
@@ -249,23 +249,24 @@ using ManicDigger;
                 blocktype = TileIdGoldOre + oretype;
             }
             //map.SetBlock(x, y, z, TileIdLava);
-            double curspeedx = rnd.Next(-1, 2);
-            double curspeedy = rnd.Next(-1, 2);
-            double curspeedz = rnd.Next(-1, 2);
-            int dir = rnd.NextDouble() < 0.5 ? -1 : 1;
+            int dirx = rnd.NextDouble() < 0.5 ? -1 : 1;
+            int dirz = rnd.NextDouble() < 0.5 ? -1 : 1;
+            double curspeedx = rnd.NextDouble() * dirx;
+            double curspeedy = rnd.NextDouble();
+            double curspeedz = rnd.NextDouble() * 0.5 * dirz;
             for (int i = 0; i < length; i++)
             {
                 if (rnd.NextDouble() < 0.05)
                 {
-                    curspeedx = rnd.NextDouble() * dir;
+                    curspeedx = rnd.NextDouble() * dirx;
                 }
                 if (rnd.NextDouble() < 0.05)
                 {
-                    curspeedy = rnd.NextDouble() * dir;
+                    curspeedy = rnd.NextDouble();
                 }
                 if (rnd.NextDouble() < 0.02)
                 {
-                    curspeedz = rnd.NextDouble() * 0.5 * dir;
+                    curspeedz = rnd.NextDouble() * 0.5 * dirz;
                 }
                 curx += curspeedx;
                 cury += curspeedy;
@@ -282,8 +283,10 @@ using ManicDigger;
                     int dx = rnd.Next(-sizex / 1, sizex / 1);
                     int dy = rnd.Next(-sizey / 1, sizey / 1);
                     int dz = rnd.Next(-sizez / 2, sizez / 2);
-                    int[] allowin = blocktype == TileIdEmpty ? new int[] { TileIdStone, TileIdDirt, TileIdGrass } : new int[] { TileIdStone };
-                    double density = blocktype == TileIdEmpty ? 1 : 0.5;
+                    int[] allowin = blocktype == TileIdEmpty
+                        ? new int[] { TileIdStone, TileIdDirt, TileIdGrass, TileIdGoldOre, TileIdIronOre, TileIdCoalOre }
+                        : new int[] { TileIdStone };
+                    double density = blocktype == TileIdEmpty ? 1 : rnd.NextDouble() * 0.4;
                     MakeCuboid(map, (int)curx - sizex / 2 + dx, (int)cury - sizey / 2 + dy, (int)curz - sizez / 2 + dz, sizex, sizey, sizez, blocktype, allowin, density);
                 }
             }
