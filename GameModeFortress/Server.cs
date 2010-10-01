@@ -918,8 +918,19 @@ namespace GameModeFortress
                     clients[clientid].playername = username;
                     Vector3i position = DefaultSpawnPosition();
                     clients[clientid].PositionMul32GlX = position.x;
-                    clients[clientid].PositionMul32GlY = position.y;
+                    clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                     clients[clientid].PositionMul32GlZ = position.z;
+                    
+                    Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
+                    foreach (var v in ChunksAroundPlayer(playerpos))
+                    {
+                        map.GetBlock(v.x, v.y, v.z); //force load
+                    }
+                    ChunkSimulation();
+               
+                    SendMessageToAll(string.Format("Player {0} joins.", username));
+                    SendLevel(clientid);
+
                     //.players.Players[clientid] = new Player() { Name = username };
                     //send new player spawn to all players
                     foreach (var k in clients)
@@ -934,7 +945,7 @@ namespace GameModeFortress
                                 PositionAndOrientation = new PositionAndOrientation()
                                 {
                                     X = position.x,
-                                    Y = position.y,
+                                    Y = position.y + (int)(0.5 * 32),
                                     Z = position.z,
                                     Heading = 0,
                                     Pitch = 0,
@@ -971,8 +982,7 @@ namespace GameModeFortress
                             }
                         }
                     }
-                    SendMessageToAll(string.Format("Player {0} joins.", username));
-                    SendLevel(clientid);
+
                     NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
