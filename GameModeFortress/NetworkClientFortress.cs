@@ -239,7 +239,12 @@ namespace GameModeFortress
                                 {
                                     throw new Exception(q);
                                 }
-                                System.Windows.Forms.Cursor.Hide();
+                                for (int i = 0; i < 10; i++)
+                                {
+                                    System.Windows.Forms.Cursor.Hide();
+                                    System.Threading.Thread.Sleep(100);
+                                    Application.DoEvents();
+                                }
                             }
                         }
                         this.serverName = packet.Identification.ServerName;
