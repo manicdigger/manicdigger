@@ -1459,7 +1459,7 @@ namespace ManicDigger
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (FreeMouse)
             {
-                System.Windows.Forms.Cursor.Hide();
+                //System.Windows.Forms.Cursor.Hide();
                 mouse_current.Offset(-X, -Y);
                 mouse_current.Offset(0, -20);
                 //System.Windows.Forms.Cursor.Show();

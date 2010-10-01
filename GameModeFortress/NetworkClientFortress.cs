@@ -9,6 +9,7 @@ using OpenTK;
 using System.Text.RegularExpressions;
 using ProtoBuf;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace GameModeFortress
 {
@@ -221,12 +222,24 @@ namespace GameModeFortress
             {
                 case ServerPacketId.ServerIdentification:
                     {
-                        string invalidversionstr = "Invalid game version. Local: {0}, Server: {1}";
+                        string invalidversionstr = "Invalid game version. Local: {0}, Server: {1}. Do you want to connect anyway?";
                         {
                             string servergameversion = packet.Identification.MdProtocolVersion;
                             if (servergameversion != GameVersion.Version)
                             {
-                                throw new Exception(string.Format(invalidversionstr, GameVersion.Version, servergameversion));
+                                for (int i = 0; i < 5; i++)
+                                {
+                                    System.Windows.Forms.Cursor.Show();
+                                    System.Threading.Thread.Sleep(100);
+                                    Application.DoEvents();
+                                }
+                                string q = string.Format(invalidversionstr, GameVersion.Version, servergameversion);
+                                var result = System.Windows.Forms.MessageBox.Show(q, "Invalid version", System.Windows.Forms.MessageBoxButtons.OKCancel);
+                                if (result == System.Windows.Forms.DialogResult.Cancel)
+                                {
+                                    throw new Exception(q);
+                                }
+                                System.Windows.Forms.Cursor.Hide();
                             }
                         }
                         this.serverName = packet.Identification.ServerName;
