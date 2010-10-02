@@ -7,12 +7,13 @@ namespace ManicDigger
 {
     public class TextureAtlasConverter
     {
-        public List<Bitmap> Atlas2dInto1d(Bitmap atlas2d, int tiles, int tilesize, int atlassizezlimit)
+        //tiles = 16 means 16 x 16 atlas
+        public List<Bitmap> Atlas2dInto1d(Bitmap atlas2d, int tiles, int atlassizezlimit)
         {
-            //tiles 16 means 16 x 16 atlas
-
             FastBitmap orig = new FastBitmap();
             orig.bmp = atlas2d;
+
+            int tilesize = atlas2d.Width / tiles;
 
             int atlasescount = Math.Max(1, (tiles * tiles * tilesize) / atlassizezlimit);
             List<Bitmap> atlases = new List<Bitmap>();

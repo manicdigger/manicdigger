@@ -269,7 +269,8 @@ namespace ManicDigger
             List<int> terrainTextures1d = new List<int>();
             using (var atlas2d = new Bitmap(getfile.GetFile("terrain.png")))
             {
-                List<Bitmap> atlases1d = new TextureAtlasConverter().Atlas2dInto1d(atlas2d, 16, 32, 4096);
+                terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
+                List<Bitmap> atlases1d = new TextureAtlasConverter().Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
                 foreach (Bitmap bmp in atlases1d)
                 {
                     terrainTextures1d.Add(the3d.LoadTexture(bmp));
@@ -280,8 +281,10 @@ namespace ManicDigger
             updateThreadRunning++;
             new Thread(UpdateThreadStart).Start();
         }
+        public int atlas1dheight = 2048;
+        public int atlas2dtiles = 16; // 16x16
         public int[] terrainTextures1d { get; set; }
-        public int terrainTexturesPerAtlas { get { return 128; } }
+        public int terrainTexturesPerAtlas { get; set; }
         bool exit2;
         void UpdateThreadStart()
         {
