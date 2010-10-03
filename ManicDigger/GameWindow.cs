@@ -707,6 +707,12 @@ namespace ManicDigger
         }
         void ManicDiggerGameWindow_KeyPress(object sender, OpenTK.KeyPressEventArgs e)
         {
+            if ((e.KeyChar == 't' || e.KeyChar=='T') && GuiTyping == TypingState.None)
+            {
+                GuiTyping = TypingState.Typing;
+                GuiTypingBuffer = "";
+                return;
+            }
             if (GuiTyping == TypingState.Typing)
             {
                 char c = e.KeyChar;
@@ -979,11 +985,6 @@ namespace ManicDigger
                     menustate = new MenuState();
                     FreeMouse = true;
                 }
-                if (e.Key == OpenTK.Input.Key.T && GuiTyping == TypingState.None)
-                {
-                    GuiTyping = TypingState.Typing;
-                    return;
-                }
                 if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
                 {
                     if (GuiTyping == TypingState.Typing)
@@ -997,6 +998,7 @@ namespace ManicDigger
                     else if (GuiTyping == TypingState.None)
                     {
                         GuiTyping = TypingState.Typing;
+                        GuiTypingBuffer = "";
                     }
                     else if (GuiTyping == TypingState.Ready)
                     {
