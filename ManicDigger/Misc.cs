@@ -6,9 +6,31 @@ using System.IO.Compression;
 using System.Drawing;
 using System.Drawing.Imaging;
 using OpenTK;
+using System.Windows.Forms;
 
 namespace ManicDigger
 {
+    public static class GameStorePath
+    {
+        public static string GetStorePath()
+        {
+            string apppath = Path.GetDirectoryName(Application.ExecutablePath);
+            string mdfolder = "ManicDiggerUserData";
+            if (apppath.Contains(
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)))
+            {
+                string mdpath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    mdfolder);
+                return mdpath;
+            }
+            else
+            {
+                //return Path.Combine(apppath, mdfolder);
+                return mdfolder;
+            }
+        }
+    }
     public static class Interpolation
     {
         public static Color InterpolateColor(float progress, params Color[] colors)

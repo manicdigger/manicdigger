@@ -99,9 +99,10 @@ namespace ManicDigger
                 main(args);
             }
         }
+        public static string gamepathcrash = GameStorePath.GetStorePath();
         public static void Crash(Exception e)
         {
-            string crashfile = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ManicDiggerCrash.txt");
+            string crashfile = Path.Combine(gamepathcrash, "ManicDiggerCrash.txt");
             File.WriteAllText(crashfile, e.ToString());
             for (int i = 0; i < 5; i++)
             {

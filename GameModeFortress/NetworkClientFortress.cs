@@ -378,18 +378,18 @@ namespace GameModeFortress
             }
         }
         public bool ENABLE_CHATLOG = true;
+        public string gamepathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
         private void ChatLog(string p)
         {
             if (!ENABLE_CHATLOG)
             {
                 return;
             }
-            string logsdir = Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ManicDiggerLogs");
-            if (!Directory.Exists(logsdir))
+            if (!Directory.Exists(gamepathlogs))
             {
-                Directory.CreateDirectory(logsdir);
+                Directory.CreateDirectory(gamepathlogs);
             }
-            string filename = Path.Combine(logsdir, MakeValidFileName(serverName) + ".txt");
+            string filename = Path.Combine(gamepathlogs, MakeValidFileName(serverName) + ".txt");
             try
             {
                 File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));

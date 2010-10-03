@@ -78,11 +78,11 @@ namespace GameModeFortress
             LoadConfig();
             {
                 //((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
-                if (File.Exists(manipulator.defaultminesave))
+                if (File.Exists(GetSaveFilename()))
                 {
                     Console.WriteLine("Loading savegame...");
-                    LoadGame(new MemoryStream(File.ReadAllBytes(manipulator.defaultminesave)));
-                    Console.WriteLine("Savegame loaded: " + manipulator.defaultminesave);
+                    LoadGame(new MemoryStream(File.ReadAllBytes(GetSaveFilename())));
+                    Console.WriteLine("Savegame loaded: " + GetSaveFilename());
                 }
                 else
                 {
@@ -162,6 +162,15 @@ namespace GameModeFortress
             Serializer.Serialize(s, save);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
+        public string gamepathconfig = GameStorePath.GetStorePath();
+        public string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
+        string GetSaveFilename()
+        {
+            return Path.Combine(gamepathsaves, "default" + MapManipulator.BinSaveExtension);
+            //string key = cfgkey;
+            //if (key == null) { key = ""; }
+            //return Path.Combine(gamepathsaves, key.Replace("-", "") + MapManipulator.BinSaveExtension);
+        }
         public void Process11()
         {
             if ((DateTime.Now - lastsave).TotalMinutes > 2)
@@ -174,7 +183,11 @@ namespace GameModeFortress
                 {
                     MemoryStream ms = new MemoryStream();
                     SaveGame(ms);
-                    File.WriteAllBytes(manipulator.defaultminesave, ms.ToArray());
+                    if (!Directory.Exists(gamepathsaves))
+                    {
+                        Directory.CreateDirectory(gamepathsaves);
+                    }
+                    File.WriteAllBytes(GetSaveFilename(), ms.ToArray());
                 }
                 Console.WriteLine("Game saved.");
                 lastsave = DateTime.Now;
@@ -184,13 +197,13 @@ namespace GameModeFortress
         void LoadConfig()
         {
             string filename = "ServerConfig.xml";
-            if (!File.Exists(filename))
+            if (!File.Exists(Path.Combine(gamepathconfig, filename)))
             {
                 Console.WriteLine("Server configuration file not found, creating new.");
                 SaveConfig();
                 return;
             }
-            using (Stream s = new MemoryStream(File.ReadAllBytes(filename)))
+            using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
             {
                 StreamReader sr = new StreamReader(s);
                 XmlDocument d = new XmlDocument();
@@ -239,7 +252,11 @@ namespace GameModeFortress
             s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
-            File.WriteAllText("ServerConfig.xml", s);
+            if (!Directory.Exists(gamepathconfig))
+            {
+                Directory.CreateDirectory(gamepathconfig);
+            }
+            File.WriteAllText(Path.Combine(gamepathconfig, "ServerConfig.xml"), s);
         }
         string cfgname = "Manic Digger server";
         string cfgmotd = "MOTD";
