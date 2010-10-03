@@ -49,6 +49,8 @@ namespace ManicDigger
                 network = new NetworkClientMinecraft();
             }
             clientgame = new GameMinecraft();
+            /* fix for crash */
+            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = w, viewportsize = w };
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
@@ -99,6 +101,7 @@ namespace ManicDigger
             terrainChunkDrawer.data = gamedata;
             terrainChunkDrawer.mapstorage = clientgame;
             terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
+            terrainChunkDrawer.terrainrenderer = terrainDrawer;
             terrainChunkDrawer.blockdrawertorch = new BlockDrawerTorchDummy();
             worldfeatures.getfile = getfile;
             worldfeatures.localplayerposition = localplayerposition;
