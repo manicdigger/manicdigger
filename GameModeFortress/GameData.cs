@@ -34,7 +34,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Crops2] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 9 };
             datanew[(int)TileTypeManicDigger.Crops3] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 10 };
             datanew[(int)TileTypeManicDigger.Crops4] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 11 };
-            datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 0 };
+            datanew[(int)TileTypeManicDigger.CraftingTable] = new TileTypeData() { Buildable = true, AllTextures = (8 * 16) + 0, TextureTop = (7 * 16) + 0, TextureBottom = (8 * 16) + 1 };
             datanew[(int)TileTypeManicDigger.Minecart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 1, TextureTop = (7 * 16) + 2 };
             datanew[(int)TileTypeManicDigger.Trampoline] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 9 };
             datanew[(int)TileTypeManicDigger.FillStart] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 10 };
@@ -191,6 +191,7 @@ namespace GameModeFortress
             if (tiletype == (int)TileTypeManicDigger.Crops2) { return true; }
             if (tiletype == (int)TileTypeManicDigger.Crops3) { return true; }
             if (tiletype == (int)TileTypeManicDigger.Crops4) { return true; }
+            if (tiletype == (int)TileTypeManicDigger.CraftingTable) { return true; }
             if (IsRailTile(tiletype)) { return true; }
             if (tiletype == (int)TileTypeManicDigger.FillArea) { return true; }
             return data.IsTransparentTile(tiletype);
