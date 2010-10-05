@@ -18,8 +18,8 @@ xcopy /s /y ManicDiggerServer\bin\release\*.dll output\
 xcopy /s /y ManicDiggerServer\bin\release\*.exe output\
 copy /y ServerConfig.xml output\
 REM Start
-xcopy /s /y Start\bin\release\*.dll output\
-xcopy /s /y Start\bin\release\*.exe output\
+xcopy /s /y GameLauncher\bin\release\*.dll output\
+xcopy /s /y GameLauncher\bin\release\*.exe output\
 
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
