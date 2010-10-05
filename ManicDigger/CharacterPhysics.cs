@@ -50,8 +50,11 @@ namespace ManicDigger
                 || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
         public static float walldistance = 0.3f;
-        public static float characterheight = 1.5f;
-        public float gravity = 0.3f;
+        public static float characterheight = 1.2f;
+        public float gravity = 0.023f; // was 0.3f
+        public float maxgravity = -0.5f; // new - sets a maximum fall speed
+        public bool jumping = false; // new - just to keep you from jumping over and over in the air
+        public float fallspeed = 0.0f; // new - adjusts with gravity and jumping for your actual Z movement
         public float WaterGravityMultiplier = 3;
         public bool enable_acceleration = true;
         public class MoveInfo
@@ -78,7 +81,20 @@ namespace ManicDigger
             {
                 if (!move.Swimming)
                 {
-                    state.movedz += -gravity;//gravity
+                    // new stuff here
+                    fallspeed -= gravity;
+                    if (fallspeed < maxgravity)
+                    {
+                        fallspeed = maxgravity;
+                    }
+
+                    if (this.reachedceiling && fallspeed > 0f)
+                    {
+                        fallspeed = -0.2f;
+                        state.jumpacceleration = 0f;
+                    }
+                    state.movedz += fallspeed;
+                   // state.movedz += -gravity;//gravity  // old version
                 }
                 else
                 {
@@ -143,10 +159,16 @@ namespace ManicDigger
             {
                 state.isplayeronground = state.playerposition.Y == previousposition.Y;
                 {
-                    if (move.wantsjump && state.isplayeronground && state.jumpacceleration <= 0)
+
+                    if (move.wantsjump && state.isplayeronground && state.jumpacceleration <= 0 && jumping == false) // added jumping check
                     {
-                        state.jumpacceleration = move.jumpstartacceleration;
-                        soundnow = true;
+
+                            state.jumpacceleration = move.jumpstartacceleration;
+                            fallspeed = state.jumpacceleration * 9;
+                            jumping = true;
+                            soundnow = true;
+             
+                       
                     }
                     if (state.jumpacceleration < 0)
                     {
@@ -160,15 +182,17 @@ namespace ManicDigger
                     if (!this.reachedceiling)
                     {
                         state.movedz += state.jumpacceleration * 2;
-                    }
+                    } 
                 }
             }
             else
             {
                 state.isplayeronground = true;
+                
             }
             if (state.isplayeronground)
             {
+         
                 state.movedz = Math.Max(0, state.movedz);
             }
         }
@@ -218,6 +242,7 @@ namespace ManicDigger
                         if (!newempty)
                         {
                             reachedwall = true;
+                            
                             playerposition.Z = oldposition.Z;
                         }
                     }
@@ -274,6 +299,8 @@ namespace ManicDigger
                     if (newfull)
                     {
                         playerposition.Y = oldposition.Y;
+                        jumping = false;
+                        fallspeed = 0f;
                     }
                 }
             }
@@ -288,6 +315,7 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+
                             reachedwall = true;
                             playerposition.Z = oldposition.Z;
                         }
@@ -335,8 +363,10 @@ namespace ManicDigger
                 {
                     if (!newempty)
                     {
+
                         playerposition.Y = oldposition.Y;
                         reachedceiling = true;
+                        
                     }
                 }
             }
