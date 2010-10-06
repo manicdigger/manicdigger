@@ -318,28 +318,7 @@ namespace ManicDigger
                     }
                 }
             }
-            //top
-            {
-                var qnewposition = newposition + new Vector3(0, -walldistance, 0);
-                int x = (int)Math.Floor(qnewposition.X);
-                int y = (int)Math.Floor(qnewposition.Z);
-                int z = (int)Math.Floor(qnewposition.Y);
-                float a = walldistance;
-                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
-                if (newposition.Y - oldposition.Y < 0)
-                {
-                    if (newfull)
-                    {
-                        playerposition.Y = oldposition.Y;
-                        jumping = false;
-                        fallspeed = 0f;
-                    }
-                }
-            }
+            
             //right
             {
                 var qnewposition = newposition + new Vector3(0, 0, -walldistance);
@@ -428,6 +407,31 @@ namespace ManicDigger
                         playerposition.Y = oldposition.Y;
                         reachedceiling = true;
                         
+                    }
+                }
+            }
+
+            //top
+            {
+                var qnewposition = newposition + new Vector3(0, -walldistance, 0);
+                qnewposition.X = playerposition.X;
+                qnewposition.Z = playerposition.Z;
+                int x = (int)Math.Floor(qnewposition.X);
+                int y = (int)Math.Floor(qnewposition.Z);
+                int z = (int)Math.Floor(qnewposition.Y);
+                float a = walldistance;
+                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+                if (newposition.Y - oldposition.Y < 0)
+                {
+                    if (newfull)
+                    {
+                        playerposition.Y = oldposition.Y;
+                        jumping = false;
+                        fallspeed = 0f;
                     }
                 }
             }
