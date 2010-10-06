@@ -7,6 +7,7 @@ using System.Xml.XPath;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Net;
+using Utilities;
 
 namespace Start
 {
@@ -96,28 +97,6 @@ namespace Start
             if (filename == "Mine")
             {
                 Process.Start(Path.Combine(appPath, "GameModeMine.exe"));
-            }
-        }
-    }
-    public class XmlTool
-    {
-        public static string XmlVal(XmlDocument d, string path)
-        {
-            XPathNavigator navigator = d.CreateNavigator();
-            XPathNodeIterator iterator = navigator.Select(path);
-            foreach (XPathNavigator n in iterator)
-            {
-                return n.Value;
-            }
-            return null;
-        }
-        public static IEnumerable<string> XmlVals(XmlDocument d, string path)
-        {
-            XPathNavigator navigator = d.CreateNavigator();
-            XPathNodeIterator iterator = navigator.Select(path);
-            foreach (XPathNavigator n in iterator)
-            {
-                yield return n.Value;
             }
         }
     }
