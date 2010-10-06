@@ -55,7 +55,7 @@ namespace GameModeFortress
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesManicDigger();
-            var clientgame = new GameFortress();
+            var clientgame = new GMFortressLogic();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
             INetworkClientFortress network;
@@ -187,7 +187,7 @@ namespace GameModeFortress
             MakeGame(false);
         }
         #endregion
-        GameFortress clientgame;
+        GMFortressLogic clientgame;
         InfiniteMapChunked map;
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;

@@ -50,15 +50,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CraftingRecipes.cs" />
+    <Compile Include="Crafting\CraftingRecipes.cs" />
+    <Compile Include="Crafting\CraftingTable.cs" />
     <Compile Include="Server\FortressModeServerFactory.cs" />
     <Compile Include="Map\GameData.cs" />
     <Compile Include="Map\InfiniteMap.cs" />
-    <Compile Include="ModeFortress.cs" />
+    <Compile Include="GMFortressLogic.cs" />
     <Compile Include="Map\ModeMine.cs" />
     <Compile Include="Network\NetworkClientFortress.cs" />
     <Compile Include="Network\Packets.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="GMFortress.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Server\ServerHeartbeat.cs" />
