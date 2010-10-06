@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDigger.Collisions;
 using OpenTK;
+using ManicDigger;
 
-namespace ManicDigger
+namespace GameModeFortress
 {
     public class GameMinecraft : IGameMode, IMapStorage, IClients, ITerrainInfo
     {
