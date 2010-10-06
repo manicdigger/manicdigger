@@ -17,6 +17,10 @@ xcopy /s /y GameLauncher\bin\release\*.exe output\
 REM Utilities
 xcopy /s /y Utilities\bin\release\*.dll output\
 
+REM Standalone Server
+xcopy /s /y StandaloneServer\bin\release\*.exe output\
+xcopy /s /y StandaloneServer\bin\release\*.dll output\
+
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
 REM copy menu.mdxs.gz output\menu.mdxs.gz

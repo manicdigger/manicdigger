@@ -322,8 +322,9 @@ namespace GameModeFortress
                 request.Abort();
                 Console.WriteLine("Heartbeat sent.");
             }
-            catch
+            catch(Exception e)
             {
+                Console.WriteLine(e.ToString());
                 Console.WriteLine("Unable to send heartbeat.");
             }
         }
