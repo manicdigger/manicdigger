@@ -240,7 +240,7 @@ namespace GameModeFortress
                     && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
             }
         }
-        bool cfgcreative;
+       bool cfgcreative = true ;
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
@@ -258,8 +258,8 @@ namespace GameModeFortress
             }
             File.WriteAllText(Path.Combine(gamepathconfig, "ServerConfig.xml"), s);
         }
-        string cfgname = "Manic Digger server";
-        string cfgmotd = "MOTD";
+        string cfgname = "Testing server";
+        string cfgmotd = "A banana a day keeps the doctor away";
         public int cfgport = 25565;
         string cfgkey;
         public bool cfgpublic = false;
