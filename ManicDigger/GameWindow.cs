@@ -1788,7 +1788,12 @@ namespace ManicDigger
             if (Keyboard[OpenTK.Input.Key.ShiftLeft])
             {
                 //enable_acceleration = false;
-                movespeednow *= 0.2f;
+                movespeednow *= 1.3f;
+            }
+            if (Keyboard[OpenTK.Input.Key.ControlLeft])
+            {
+                //enable_acceleration = false;
+                movespeednow *= 0.3f;
             }
             return movespeednow;
         }
