@@ -63,7 +63,7 @@ namespace ManicDigger
         public float maxgravity = -0.5f; // new - sets a maximum fall speed
         public bool jumping = false; // new - just to keep you from jumping over and over in the air
         public float thrust = 0f;
-        public float thrustspeed = 0.1f;
+        public float thrustspeed = 0.2f;
         public float fallspeed = 0.0f; // new - adjusts with gravity and jumping for your actual Z movement
         public float WaterGravityMultiplier = 15;
         public bool enable_acceleration = true;
@@ -99,7 +99,7 @@ namespace ManicDigger
                     }
 
 
-                    if (thrust > 0 && fallspeed < 0)
+                    if (thrust > 0 && fallspeed <= thrustspeed)
                     {
                         fallspeed = thrustspeed;
                         thrust -= 1;
@@ -307,7 +307,8 @@ namespace ManicDigger
                             }
                             else
                             {
-                                playerposition.Y += 0.5f;
+                                thrust = 2;
+                                playerposition.Y += 0.2f;
                                 goto ok;
                             }
                         }
@@ -369,7 +370,9 @@ namespace ManicDigger
                             }
                             else
                             {
-                                playerposition.Y += 0.5f;
+
+                                thrust = 2;
+                                playerposition.Y += 0.2f;
                                 goto ok;
                             }
                         }
@@ -433,7 +436,8 @@ namespace ManicDigger
                             }
                             else
                             {
-                                playerposition.Y += 0.5f;
+                                thrust = 2;
+                                playerposition.Y += 0.2f;
                                 goto ok;
                             }
 
@@ -497,7 +501,8 @@ namespace ManicDigger
                             }
                             else
                             {
-                                playerposition.Y += 0.5f;
+                                thrust = 2;
+                                playerposition.Y += 0.2f;
                                 goto ok;
                             }
                         }
@@ -595,7 +600,7 @@ namespace ManicDigger
                 {
                     jumping = false;
                     fallspeed = 0f;
-                    playerposition.Y += 0.03f;
+                    playerposition.Y += 0.1f;
 
                 }
                 //playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
