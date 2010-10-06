@@ -55,6 +55,7 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="MDLinkReader.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
     <Compile Include="RandomCode.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Renderers\TerrainChunkRenderer.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />
+    <Compile Include="ServerConnectInfo.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
     <Compile Include="Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />

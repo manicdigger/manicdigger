@@ -79,7 +79,8 @@ namespace Start
                 string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
                 if (mode.Equals("Fortress", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    Process.Start(Path.Combine(appPath, "GameModeFortress.exe"), "\"" + filename + "\"");
+                    //Process.Start(Path.Combine(appPath, "GameModeFortress.exe"), "\"" + filename + "\"");
+                    Process.Start(Path.Combine(appPath, "GameClient.exe"), "\"" + filename + "\"");
                 }
                 else if (mode.Equals("Mine", StringComparison.InvariantCultureIgnoreCase))
                 {

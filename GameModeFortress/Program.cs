@@ -99,6 +99,13 @@ namespace GameModeFortress
         public string User;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
+
+        public ServerConnectInfo connectinfo
+        {
+            get;
+            set;
+        }
+
         public void Start()
         {
             w = new ManicDiggerGameWindow();
@@ -110,6 +117,17 @@ namespace GameModeFortress
             {
                 w.username = User;
             }
+            
+            // Temporary plugin of ServerConnectInfo.  Need to come back and clean this up.
+            if (connectinfo.url != null)
+            {
+                w.GameUrl = connectinfo.url + ":" + connectinfo.port;
+            }
+            if (connectinfo.username != null)
+            {
+                w.username = connectinfo.username;
+            }
+
             ManicDiggerProgram.exit = w;
             w.Run();
         }

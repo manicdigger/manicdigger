@@ -643,12 +643,22 @@ namespace ManicDigger
     }
     public interface IInternetGameFactory
     {
+        ServerConnectInfo connectinfo { get; set; }
         void NewInternetGame();
+        void Start();
     }
     public class InternetGameFactoryDummy : IInternetGameFactory
     {
         #region IInternetGameFactory Members
+        public ServerConnectInfo connectinfo
+        {
+            get;
+            set;
+        }
         public void NewInternetGame()
+        {
+        }
+        public void Start()
         {
         }
         #endregion
