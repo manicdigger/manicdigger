@@ -13,8 +13,6 @@ xcopy /s /y GameModeMine\bin\release\*.exe output\
 REM Fortress mode
 xcopy /s /y GameModeFortress\bin\release\*.dll output\
 xcopy /s /y GameModeFortress\bin\release\*.exe output\
-
-
 REM GameLauncher
 xcopy /s /y GameLauncher\bin\release\*.dll output\
 xcopy /s /y GameLauncher\bin\release\*.exe output\
