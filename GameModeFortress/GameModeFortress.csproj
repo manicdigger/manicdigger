@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CraftingRecipes.cs" />
+    <Compile Include="FortressModeServerFactory.cs" />
     <Compile Include="GameData.cs" />
     <Compile Include="InfiniteMap.cs" />
     <Compile Include="ModeFortress.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="ServerHeartbeat.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
