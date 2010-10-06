@@ -292,9 +292,14 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y + 1));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 2));
                             bool nextempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
                                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
-                            if (!nextempty)
+                            if (!nextempty || !newstairs || !newstairs2)
                             {
                                 reachedwall = true;
                                 playerposition.Z = oldposition.Z;
@@ -349,9 +354,14 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y + 1));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 2));
                             bool nextempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
                                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
-                            if (!nextempty)
+                            if (!nextempty || !newstairs || !newstairs2)
                             {
                                 reachedwall = true;
                                 playerposition.X = oldposition.X;
@@ -407,10 +417,15 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
-                         
+
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y + 1));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 2));
                             bool nextempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
                                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
-                            if (!nextempty)
+                            if (!nextempty || !newstairs || !newstairs2)
                             {
                                 reachedwall = true;
                                 playerposition.Z = oldposition.Z;
@@ -466,9 +481,15 @@ namespace ManicDigger
                     {
                         if (!newempty)
                         {
+
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y + 1));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 2));
                             bool nextempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
                                 && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
-                            if (!nextempty)
+                            if (!nextempty || !newstairs || !newstairs2)
                             {
                                 reachedwall = true;
                                 playerposition.X = oldposition.X;
