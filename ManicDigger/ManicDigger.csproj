@@ -49,10 +49,10 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="ConsoleForm.cs">
+    <Compile Include="Misc\ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ConsoleForm.Designer.cs">
+    <Compile Include="Misc\ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Misc\MDLinkReader.cs" />
@@ -91,7 +91,7 @@
     <None Include="c.snk" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ConsoleForm.resx">
+    <EmbeddedResource Include="Misc\ConsoleForm.resx">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
