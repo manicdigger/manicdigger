@@ -7,9 +7,6 @@ xcopy /s data output\data\
 REM Dll
 xcopy /s ManicDigger\bin\release\*.dll output\
 
-REM Mine mode
-xcopy /s /y GameModeMine\bin\release\*.dll output\
-xcopy /s /y GameModeMine\bin\release\*.exe output\
 REM Fortress mode
 xcopy /s /y GameModeFortress\bin\release\*.dll output\
 xcopy /s /y GameModeFortress\bin\release\*.exe output\
