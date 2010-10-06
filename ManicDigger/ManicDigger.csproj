@@ -48,7 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio.cs" />
-    <Compile Include="CharacterPhysics.cs" />
+    <Compile Include="..\..\CharacterPhysics.cs">
+      <Link>CharacterPhysics.cs</Link>
+    </Compile>
     <Compile Include="ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>
