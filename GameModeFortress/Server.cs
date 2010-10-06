@@ -76,6 +76,9 @@ namespace GameModeFortress
         public void Start()
         {
             LoadConfig();
+            //this is for creative mode
+            cfgcreative = true;
+
             {
                 //((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
                 if (File.Exists(GetSaveFilename()))
