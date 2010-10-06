@@ -95,6 +95,7 @@ namespace GameModeFortress
     }
     public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
+        public IGameExit exit;
         public string GameUrl = null;
         public string User;
         ManicDiggerGameWindow w;
@@ -128,6 +129,7 @@ namespace GameModeFortress
                 w.username = connectinfo.username;
             }
 
+            this.exit = w;
             ManicDiggerProgram.exit = w;
             w.Run();
         }
@@ -305,6 +307,17 @@ namespace GameModeFortress
             }
         }
         #endregion
+        public void ServerThread()
+        {
+            Server s = FortressModeServerFactory.create(true);
+            s.Start();
+            for (; ; )
+            {
+                s.Process();
+                Thread.Sleep(1);
+                if (exit != null && exit.exit) { return; }
+            }
+        }
     }
     public class ManicDiggerProgram
     {

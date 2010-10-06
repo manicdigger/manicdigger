@@ -93,7 +93,8 @@ namespace Start
             }
             if (filename == "Fortress")
             {
-                Process.Start(Path.Combine(appPath, "GameModeFortress.exe"));
+                //Process.Start(Path.Combine(appPath, "GameModeFortress.exe"));
+                Process.Start(Path.Combine(appPath, "GameClient.exe"));
             }
             if (filename == "Mine")
             {
