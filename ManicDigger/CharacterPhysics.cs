@@ -13,6 +13,7 @@ namespace ManicDigger
         public Vector3 curspeed;
         public float jumpacceleration = 0;
         public bool isplayeronground;
+        
     }
     public class Acceleration
     {
@@ -93,6 +94,7 @@ namespace ManicDigger
                 {
                     // new stuff here
                     fallspeed -= gravity;
+                    
                     if (fallspeed < maxgravity)
                     {
                         fallspeed = maxgravity;
@@ -189,7 +191,6 @@ namespace ManicDigger
                             fallspeed = state.jumpacceleration * 9;
                             jumping = true;
                             soundnow = true;
-             
                        
                     }
                     if (state.jumpacceleration < 0)
