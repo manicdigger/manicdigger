@@ -55,10 +55,10 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="MDLinkReader.cs" />
+    <Compile Include="Misc\MDLinkReader.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
-    <Compile Include="RandomCode.cs" />
+    <Compile Include="Misc\RandomCode.cs" />
     <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />
     <Compile Include="Renderers\Model3d.cs" />
     <Compile Include="Network\NetworkClient.cs" />
@@ -66,7 +66,7 @@
     <Compile Include="FCraft.cs" />
     <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />
-    <Compile Include="Misc.cs" />
+    <Compile Include="Misc\Misc.cs" />
     <Compile Include="Network\NetworkClientMinecraft.cs" />
     <Compile Include="Network\PlayerSkinDownloader.cs" />
     <Compile Include="Pathfinding.cs" />
@@ -79,7 +79,7 @@
     <Compile Include="Renderers\TerrainChunkRenderer.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />
-    <Compile Include="ServerConnectInfo.cs" />
+    <Compile Include="Misc\ServerConnectInfo.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
     <Compile Include="Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
