@@ -331,18 +331,7 @@ namespace GameModeFortress
         public static IGameExit exit;
         static void ServerThread()
         {
-            Server s = new Server();
-            var map = new GameModeFortress.InfiniteMapChunked();
-            map.chunksize = 32;
-            var generator = new WorldGenerator();
-            map.generator = generator;
-            s.chunksize = 32;
-            map.Reset(10000, 10000, 128);
-            s.map = map;
-            s.generator = generator;
-            s.data = new GameDataTilesManicDigger();
-            s.craftingtabletool = new CraftingTableTool() { map = map };
-            s.LocalConnectionsOnly = true;
+            Server s = FortressModeServerFactory.create(true);
             s.Start();
             for (; ; )
             {
