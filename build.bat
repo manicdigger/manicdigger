@@ -21,6 +21,10 @@ REM Standalone Server
 xcopy /s /y StandaloneServer\bin\release\*.exe output\
 xcopy /s /y StandaloneServer\bin\release\*.dll output\
 
+REM GameClient
+xcopy /s /y GameClient\bin\release\*.exe output\
+xcopy /s /y GameClient\bin\release\*.dll output\
+
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
 REM copy menu.mdxs.gz output\menu.mdxs.gz
