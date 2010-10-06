@@ -30,7 +30,7 @@ namespace GameClient
                 info.url = "127.0.0.1";
                 info.port = 25570;
                 info.username = "Local";
-                game = new ManicDiggerProgram2();
+                game = new GMFortress();
 
                 new Thread(game.ServerThread).Start();
             }
@@ -46,7 +46,7 @@ namespace GameClient
                 // Create the game object based on the game mode from mdlink
                 if (gamemode.Equals("fortress"))
                 {
-                    game = new ManicDiggerProgram2();
+                    game = new GMFortress();
                 }
             }
 
