@@ -51,7 +51,7 @@
     <Compile Include="CraftingRecipes.cs" />
     <Compile Include="FortressModeServerFactory.cs" />
     <Compile Include="GameData.cs" />
-    <Compile Include="InfiniteMap.cs" />
+    <Compile Include="Map\InfiniteMap.cs" />
     <Compile Include="ModeFortress.cs" />
     <Compile Include="ModeMine.cs" />
     <Compile Include="NetworkClientFortress.cs" />
