@@ -78,40 +78,4 @@ namespace ManicDigger
             throw new FileNotFoundException(filename + " not found.");
         }
     }
-    public class CrashReporter
-    {
-        public delegate void Main(string[] args);
-        public void Start(Main main, string[] args)
-        {
-            if (!Debugger.IsAttached)
-            {
-                try
-                {
-                    main(args);
-                }
-                catch (Exception e)
-                {
-                    Crash(e);
-                }
-            }
-            else
-            {
-                main(args);
-            }
-        }
-        public static string gamepathcrash = GameStorePath.GetStorePath();
-        public static void Crash(Exception e)
-        {
-            string crashfile = Path.Combine(gamepathcrash, "ManicDiggerCrash.txt");
-            File.WriteAllText(crashfile, e.ToString());
-            for (int i = 0; i < 5; i++)
-            {
-                System.Windows.Forms.Cursor.Show();
-                System.Threading.Thread.Sleep(100);
-                Application.DoEvents();
-            }
-            System.Windows.Forms.MessageBox.Show(e.ToString());
-            Environment.Exit(1);
-        }
-    }
 }

@@ -9,6 +9,7 @@ using System.Diagnostics;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
 using System.Threading;
+using Utilities;
 
 namespace GameModeFortress
 {
@@ -292,7 +293,7 @@ namespace GameModeFortress
         [STAThread]
         public static void Main(string[] args)
         {
-            new CrashReporter().Start(Start, args);
+            new CrashReporter(GameStorePath.GetStorePath(), "ManicDiggerCrash.log").Start(Start, args);
         }
         private static void Start(string[] args)
         {
