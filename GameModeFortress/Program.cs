@@ -130,7 +130,6 @@ namespace GameModeFortress
             }
 
             this.exit = w;
-            ManicDiggerProgram.exit = w;
             w.Run();
         }
         private void MakeGame(bool singleplayer)
@@ -308,59 +307,6 @@ namespace GameModeFortress
         }
         #endregion
         public void ServerThread()
-        {
-            Server s = FortressModeServerFactory.create(true);
-            s.Start();
-            for (; ; )
-            {
-                s.Process();
-                Thread.Sleep(1);
-                if (exit != null && exit.exit) { return; }
-            }
-        }
-    }
-    public class ManicDiggerProgram
-    {
-        [STAThread]
-        public static void Main(string[] args)
-        {
-            new CrashReporter(GameStorePath.GetStorePath(), "ManicDiggerCrash.log").Start(Start, args);
-        }
-        private static void Start(string[] args)
-        {
-            string appPath = Path.GetDirectoryName(Application.ExecutablePath);
-            if (!Debugger.IsAttached)
-            {
-                System.Environment.CurrentDirectory = appPath;
-            }
-            var p = new ManicDiggerProgram2();
-            if (args.Length > 0)
-            {
-                if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    XmlDocument d = new XmlDocument();
-                    d.Load(args[0]);
-                    string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
-                    if (mode != "Fortress")
-                    {
-                        throw new Exception("Invalid game mode: " + mode);
-                    }
-                    p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
-                    int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
-                    p.GameUrl += ":" + port;
-                    p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
-                }
-            }
-            else
-            {
-                new Thread(ServerThread).Start();
-                p.GameUrl = "127.0.0.1:25570";
-                p.User = "Local";
-            }
-            p.Start();
-        }
-        public static IGameExit exit;
-        static void ServerThread()
         {
             Server s = FortressModeServerFactory.create(true);
             s.Start();
