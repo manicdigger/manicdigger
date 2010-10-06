@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.Text;
 using GameModeFortress;
 using ManicDigger;
+using Utilities;
 
 namespace GameClient
 {
     class Program
     {
         static void Main(string[] args)
+        {
+            new CrashReporter("", "ManicDiggerCrash.log").Start(RunGame, args);
+        }
+
+        public static void RunGame(string[] args)
         {
             // Exit now if no arguments were passed
             if (args.Length == 0)
