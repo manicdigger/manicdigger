@@ -5,7 +5,7 @@ copy oalinst.exe output\
 xcopy /s data output\data\
 
 REM Dll
-xcopy /s ManicDigger\bin\release\*.dll output\
+xcopy /s /y ManicDigger\bin\release\*.dll output\
 
 REM Fortress mode
 xcopy /s /y GameModeFortress\bin\release\*.dll output\
