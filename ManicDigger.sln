@@ -2,8 +2,6 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeFortress", "GameModeFortress\GameModeFortress.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeMine", "GameModeMine\GameModeMine.csproj", "{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameLauncher", "GameLauncher\GameLauncher.csproj", "{60E371DD-30DB-4A1A-BC73-D15E8CF51A91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger\ManicDigger.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
@@ -18,10 +16,6 @@ Global
 		{650BC108-C744-4DA1-AEFD-CD8F011483B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{650BC108-C744-4DA1-AEFD-CD8F011483B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{650BC108-C744-4DA1-AEFD-CD8F011483B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60E371DD-30DB-4A1A-BC73-D15E8CF51A91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{60E371DD-30DB-4A1A-BC73-D15E8CF51A91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60E371DD-30DB-4A1A-BC73-D15E8CF51A91}.Release|Any CPU.ActiveCfg = Release|Any CPU

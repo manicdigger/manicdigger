@@ -52,6 +52,7 @@
     <Compile Include="GameData.cs" />
     <Compile Include="InfiniteMap.cs" />
     <Compile Include="ModeFortress.cs" />
+    <Compile Include="ModeMine.cs" />
     <Compile Include="NetworkClientFortress.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
@@ -59,10 +60,6 @@
     <Compile Include="Server.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GameModeMine\GameModeMine.csproj">
-      <Project>{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}</Project>
-      <Name>GameModeMine</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
       <Name>ManicDigger</Name>
