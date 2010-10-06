@@ -16,8 +16,6 @@ namespace GameModeFortress
     public class GMFortress : IInternetGameFactory, ICurrentShadows
     {
         public IGameExit exit;
-        public string GameUrl = null;
-        public string User;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
 
@@ -33,11 +31,6 @@ namespace GameModeFortress
             audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
-            w.GameUrl = GameUrl;
-            if (User != null)
-            {
-                w.username = User;
-            }
             
             // Temporary plugin of ServerConnectInfo.  Need to come back and clean this up.
             if (connectinfo.url != null)
