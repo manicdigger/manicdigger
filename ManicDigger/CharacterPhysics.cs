@@ -49,6 +49,14 @@ namespace ManicDigger
                 || (data.IsWaterTile(map.GetBlock(x, y, z)) && (!swimmingtop))
                 || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
+
+        bool IsTileEmptyForStairs(int x, int y, int z)
+        {
+
+            return map.GetBlock(x, y, z) == data.TileIdSingleStairs;
+        }
+
+        
         public static float walldistance = 0.3f; // char size
         public static float characterheight = 1.2f;
         public float gravity = 0.023f; // was 0.3f- no longer is constant speed
@@ -259,6 +267,26 @@ namespace ManicDigger
                             
                             playerposition.Z = oldposition.Z;
                         }
+                        else
+                        {
+                            // IsTileEmptyForStairs
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 1));
+
+                            if (!newstairs2)
+                            {
+                                reachedwall = true;
+                                playerposition.Z = oldposition.Z;
+                            }
+                            if (!newstairs && newstairs2)
+                            {
+
+                            }
+
+                        }
                     }
                     else
                     {
@@ -294,6 +322,26 @@ namespace ManicDigger
                         {
                             reachedwall = true;
                             playerposition.X = oldposition.X;
+                        }
+                        else
+                        {
+                            // IsTileEmptyForStairs
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 1));
+
+                            if (!newstairs2)
+                            {
+                                reachedwall = true;
+                                playerposition.X = oldposition.X;
+                            }
+                            if (!newstairs && newstairs2)
+                            {
+
+                            }
+
                         }
 
                     }
@@ -334,6 +382,26 @@ namespace ManicDigger
                             reachedwall = true;
                             playerposition.Z = oldposition.Z;
                         }
+                        else
+                        {
+                            // IsTileEmptyForStairs
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 1));
+
+                            if (!newstairs2)
+                            {
+                                reachedwall = true;
+                                playerposition.Z = oldposition.Z;
+                            }
+                            if (!newstairs && newstairs2)
+                            {
+
+                            }
+
+                        }
                     }
                     else
                     {
@@ -373,6 +441,26 @@ namespace ManicDigger
                             reachedwall = true;
                             playerposition.X = oldposition.X;
                         }
+                        else
+                        {
+                            // IsTileEmptyForStairs
+                            int x = (int)Math.Floor(qnewposition.X);
+                            int y = (int)Math.Floor(qnewposition.Y);
+                            int z = (int)Math.Floor(qnewposition.Z);
+                            bool newstairs = (!IsTileEmptyForStairs(x, z, y));
+                            bool newstairs2 = (!IsTileEmptyForStairs(x, z, y + 1));
+
+                            if (!newstairs2)
+                            {
+                                reachedwall = true;
+                                playerposition.X = oldposition.X;
+                            }
+                            if (!newstairs && newstairs2)
+                            {
+                                
+                            }
+
+                        }
                     }
                     else
                     {
@@ -395,9 +483,11 @@ namespace ManicDigger
                     }
                 }
             }
-            //bottom
+            //bottom of block
             {
                 var qnewposition = newposition + new Vector3(0, +walldistance + characterheight, 0);
+                qnewposition.X = playerposition.X; // updates to prevent going through the 
+                qnewposition.Z = playerposition.Z; // updates to prevent going through the ceiling rarely
                 bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
                 if (newposition.Y - oldposition.Y > 0)
                 {
@@ -408,30 +498,64 @@ namespace ManicDigger
                         reachedceiling = true;
                         
                     }
+                    else
+                    {
+                        // IsTileEmptyForStairs
+                        int x = (int)Math.Floor(qnewposition.X);
+                        int y = (int)Math.Floor(qnewposition.Y); 
+                        int z = (int)Math.Floor(qnewposition.Z); 
+                        bool newstairs = (!IsTileEmptyForStairs(x, z, y));
+              
+                        if (!newstairs)
+                        {
+                            playerposition.Y = oldposition.Y;
+                            reachedceiling = true;
+                        }
+
+                    }
                 }
             }
 
-            //top
+            //top of block
             {
                 var qnewposition = newposition + new Vector3(0, -walldistance, 0);
                 qnewposition.X = playerposition.X;
                 qnewposition.Z = playerposition.Z;
                 int x = (int)Math.Floor(qnewposition.X);
-                int y = (int)Math.Floor(qnewposition.Z);
-                int z = (int)Math.Floor(qnewposition.Y);
+                int y = (int)Math.Floor(qnewposition.Y); 
+                int z = (int)Math.Floor(qnewposition.Z); 
                 float a = walldistance;
-                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+                bool newfull = (!IsTileEmptyForPhysics(x, z, y))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, z, y)) && (IsTileEmptyForPhysics(x - 1, z, y + 1)))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, z, y)) && (IsTileEmptyForPhysics(x + 1, z, y + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, z - 1, y)) && (IsTileEmptyForPhysics(x, z - 1, y + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, z + 1, y)) && (IsTileEmptyForPhysics(x, z + 1, y + 1)));
                 if (newposition.Y - oldposition.Y < 0)
                 {
                     if (newfull)
                     {
+
                         playerposition.Y = oldposition.Y;
                         jumping = false;
                         fallspeed = 0f;
+                    }
+                    else
+                    {
+                        // IsTileEmptyForStairs
+                        bool newstairs = (!IsTileEmptyForStairs(x, z, y))
+                        || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForStairs(x - 1, z, y)) && (IsTileEmptyForStairs(x - 1, z, y + 1)))
+                        || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForStairs(x + 1, z, y)) && (IsTileEmptyForStairs(x + 1, z, y + 1)))
+                        || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForStairs(x, z - 1, y)) && (IsTileEmptyForStairs(x, y - 1, y + 1)))
+                        || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForStairs(x, z + 1, y)) && (IsTileEmptyForStairs(x, z + 1, y + 1)));
+
+                        if (!newstairs && qnewposition.Y - y < 0.5)
+                        {
+                            //Console.WriteLine("small" + z + "qnewposition" + qnewposition.Y);
+                            playerposition.Y = oldposition.Y;
+                            jumping = false;
+                            fallspeed = 0f;
+                        }
+
                     }
                 }
             }
@@ -451,12 +575,6 @@ namespace ManicDigger
                     jumping = false;
                     fallspeed = 0f;
                     playerposition.Y += 0.03f;
-
-                    if (playerposition.Y > ((int)Math.Floor(playerposition.Y)) + 0.4f + walldistance)
-                    {
-                       // playerposition.Y = oldposition.Y;
-                        playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
-                    }
 
                 }
                 //playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
