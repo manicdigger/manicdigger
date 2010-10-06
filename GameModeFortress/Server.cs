@@ -77,9 +77,6 @@ namespace GameModeFortress
         public void Start()
         {
             LoadConfig();
-            //this is for creative mode
-            cfgcreative = true;
-
             {
                 //((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
                 if (File.Exists(GetSaveFilename()))
@@ -99,6 +96,12 @@ namespace GameModeFortress
                 cfgport = singleplayerport;
             }
             Start(cfgport);
+
+            //Begin our heartbeat if multiplayer and public
+            if (!LocalConnectionsOnly && cfgpublic)
+            {
+                new ServerHeartbeat(this).Start();
+            }
         }
         int Seed;
         private void LoadGame(Stream s)
@@ -247,6 +250,10 @@ namespace GameModeFortress
        bool cfgcreative = true ;
         void SaveConfig()
         {
+            //Create the defaults for creative and public
+            cfgcreative = true;
+            cfgpublic = true;
+
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
             s += "  " + XmlTool.X("FormatVersion", "1") + Environment.NewLine;
             s += "  " + XmlTool.X("Name", cfgname) + Environment.NewLine;
