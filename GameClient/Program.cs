@@ -18,12 +18,12 @@ namespace GameClient
         public static IGameClient SinglePlayer()
         {
             // Create the game
-            IServer game = new GMFortress();
+            ISinglePlayer game = new GMFortress();
 
             // Run the server thread, so we can connect
             new Thread(game.ServerThread).Start();
 
-            return (IGameClient)game;
+            return game;
         }
         public static IGameClient MultiPlayer(string[] args)
         {
@@ -44,7 +44,7 @@ namespace GameClient
                 game.connectinfo = info;
             }
 
-            return (IGameClient)game;
+            return game;
         }
 
         public static void RunGame(string[] args)

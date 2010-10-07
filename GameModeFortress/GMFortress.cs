@@ -13,7 +13,7 @@ using Utilities;
 
 namespace GameModeFortress
 {
-    public class GMFortress : IInternetGameFactory, ICurrentShadows, IServer, IOnlineGame, IGameClient
+    public class GMFortress : IInternetGameFactory, ICurrentShadows, ISinglePlayer, IOnlineGame
     {
         public IGameExit exit;
         ManicDiggerGameWindow w;

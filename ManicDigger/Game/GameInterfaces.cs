@@ -9,7 +9,11 @@ namespace ManicDigger
         void Start();
     }
 
-    public interface IOnlineGame
+    public interface ISinglePlayer : IGameClient, IServer
+    {
+    }
+
+    public interface IOnlineGame : IGameClient
     {
         ServerConnectInfo connectinfo { get; set; }
     }
