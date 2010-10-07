@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio.cs" />
-    <Compile Include="CharacterPhysics.cs" />
+    <Compile Include="Game\CharacterPhysics.cs" />
     <Compile Include="Misc\ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -62,17 +62,16 @@
     <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />
     <Compile Include="Renderers\Model3d.cs" />
     <Compile Include="Network\NetworkClient.cs" />
-    <Compile Include="Collisions.cs" />
-    <Compile Include="FCraft.cs" />
+    <Compile Include="Game\Collisions.cs" />
+    <Compile Include="Game\FCraft.cs" />
     <Compile Include="GameWindow.cs" />
-    <Compile Include="ManicDigger.cs" />
+    <Compile Include="Game\ManicDigger.cs" />
     <Compile Include="Misc\Misc.cs" />
     <Compile Include="Network\NetworkClientMinecraft.cs" />
     <Compile Include="Network\PlayerSkinDownloader.cs" />
-    <Compile Include="Pathfinding.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Game\Pathfinding.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rail.cs" />
+    <Compile Include="Game\Rail.cs" />
     <Compile Include="MapTools\Shadows.cs" />
     <Compile Include="Renderers\ParticleEffectBlockBreak.cs" />
     <Compile Include="Renderers\SkySphere.cs" />
@@ -81,7 +80,7 @@
     <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="Misc\ServerConnectInfo.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
-    <Compile Include="Ticks.cs" />
+    <Compile Include="Game\Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
     <Compile Include="Renderers\WeaponRenderer.cs" />
     <Compile Include="MapTools\WorldGenerator.cs" />
