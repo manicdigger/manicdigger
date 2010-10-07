@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="Game\CharacterPhysics.cs" />
+    <Compile Include="Game\GameInterfaces.cs" />
     <Compile Include="Misc\ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>

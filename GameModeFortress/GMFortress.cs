@@ -13,7 +13,7 @@ using Utilities;
 
 namespace GameModeFortress
 {
-    public class GMFortress : IInternetGameFactory, ICurrentShadows
+    public class GMFortress : IInternetGameFactory, ICurrentShadows, IServer, IOnlineGame, IGameClient
     {
         public IGameExit exit;
         ManicDiggerGameWindow w;
@@ -31,6 +31,15 @@ namespace GameModeFortress
             audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
+
+            // Defaults for connectioninfo
+            if (connectinfo == null)
+            {
+                connectinfo = new ServerConnectInfo();
+                connectinfo.url = "127.0.0.1";
+                connectinfo.port = 25570;
+                connectinfo.username = "Local";
+            }
             
             // Temporary plugin of ServerConnectInfo.  Need to come back and clean this up.
             if (connectinfo.url != null)

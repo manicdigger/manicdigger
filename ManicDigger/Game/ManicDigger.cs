@@ -646,7 +646,6 @@ namespace ManicDigger
         ServerConnectInfo connectinfo { get; set; }
         void NewInternetGame();
         void Start();
-        void ServerThread();
     }
     public class InternetGameFactoryDummy : IInternetGameFactory
     {
