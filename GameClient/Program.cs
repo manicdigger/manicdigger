@@ -10,6 +10,7 @@ namespace GameClient
 {
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             new CrashReporter("", "ManicDiggerCrash.log").Start(RunGame, args);
