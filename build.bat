@@ -5,25 +5,21 @@ copy oalinst.exe output\
 xcopy /s data output\data\
 
 REM Dll
-xcopy /s /y ManicDigger\bin\release\*.dll output\
+xcopy /s ManicDigger\bin\release\*.dll output\
 
+REM Mine mode
+xcopy /s /y GameModeMine\bin\release\*.dll output\
+xcopy /s /y GameModeMine\bin\release\*.exe output\
 REM Fortress mode
 xcopy /s /y GameModeFortress\bin\release\*.dll output\
 xcopy /s /y GameModeFortress\bin\release\*.exe output\
-REM GameLauncher
-xcopy /s /y GameLauncher\bin\release\*.dll output\
-xcopy /s /y GameLauncher\bin\release\*.exe output\
-
-REM Utilities
-xcopy /s /y Utilities\bin\release\*.dll output\
-
-REM Standalone Server
-xcopy /s /y StandaloneServer\bin\release\*.exe output\
-xcopy /s /y StandaloneServer\bin\release\*.dll output\
-
-REM GameClient
-xcopy /s /y GameClient\bin\release\*.exe output\
-xcopy /s /y GameClient\bin\release\*.dll output\
+REM Server
+xcopy /s /y ManicDiggerServer\bin\release\*.dll output\
+xcopy /s /y ManicDiggerServer\bin\release\*.exe output\
+copy /y ServerConfig.xml output\
+REM Start
+xcopy /s /y Start\bin\release\*.dll output\
+xcopy /s /y Start\bin\release\*.exe output\
 
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe

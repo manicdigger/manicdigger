@@ -1788,12 +1788,7 @@ namespace ManicDigger
             if (Keyboard[OpenTK.Input.Key.ShiftLeft])
             {
                 //enable_acceleration = false;
-                movespeednow *= 1.3f;
-            }
-            if (Keyboard[OpenTK.Input.Key.ControlLeft])
-            {
-                //enable_acceleration = false;
-                movespeednow *= 0.3f;
+                movespeednow *= 0.2f;
             }
             return movespeednow;
         }
@@ -1841,26 +1836,6 @@ namespace ManicDigger
             }
             return map.GetBlock(x, y, z) == data.TileIdEmpty
                 || data.IsWaterTile(map.GetBlock(x, y, z));
-        }
-
-        bool IsTileEmptyForPhysicsClose(int x, int y, int z)
-        {
-            if (z >= map.MapSizeZ)
-            {
-                return true;
-            }
-            if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
-            {
-                return ENABLE_FREEMOVE;
-            }
-            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
-            {
-                return ENABLE_FREEMOVE;
-            }
-            return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || map.GetBlock(x, y, z) == data.TileIdSingleStairs
-                || data.IsWaterTile(map.GetBlock(x, y, z))
-                || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
         float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
@@ -1991,13 +1966,9 @@ namespace ManicDigger
                         (int)ToMapPos(player.playerposition).X,
                         (int)ToMapPos(player.playerposition).Y,
                         (int)ToMapPos(player.playerposition).Z);
-            bool playertileemptyclose = IsTileEmptyForPhysicsClose(
-                        (int)ToMapPos(player.playerposition).X,
-                        (int)ToMapPos(player.playerposition).Y,
-                        (int)ToMapPos(player.playerposition).Z);
             BlockPosSide pick0;
             if (pick2.Count > 0 &&
-                ((pickdistanceok && (playertileempty || (playertileemptyclose)) )
+                ((pickdistanceok && playertileempty)
                 || overheadcamera)
                 )
             {
