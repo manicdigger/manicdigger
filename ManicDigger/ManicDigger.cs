@@ -527,6 +527,7 @@ namespace ManicDigger
         int TileIdTrampoline { get; }
         byte TileIdTorch { get; }
         int GetLightRadius(int blocktype);
+        bool IsTransparentTileFully(byte blocktype);
     }
     public class GameDataDummy : IGameData
     {
@@ -650,6 +651,12 @@ namespace ManicDigger
         public int GetLightRadius(int blocktype)
         {
             return 0;
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsTransparentTileFully(byte blocktype)
+        {
+            return false;
         }
         #endregion
     }

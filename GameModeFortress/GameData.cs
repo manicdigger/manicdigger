@@ -330,6 +330,12 @@ namespace GameModeFortress
             return data.GetLightRadius(blocktype);
         }
         #endregion
+        #region IGameData Members
+        public bool IsTransparentTileFully(byte blocktype)
+        {
+            return data.IsTransparentTileFully(blocktype);
+        }
+        #endregion
     }
     public enum TileTypeManicDigger
     {

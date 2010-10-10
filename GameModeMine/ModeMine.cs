@@ -421,6 +421,10 @@ namespace ManicDigger
                 || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource
                 || tileType == (byte)TileTypeMinecraft.Torch;
         }
+        public bool IsTransparentTileTexture(int tileType)
+        {
+            return IsWaterTile(tileType);
+        }
         public int PlayerBuildableMaterialType(int tt)
         {
             TileTypeMinecraft t = (TileTypeMinecraft)tt;
@@ -553,6 +557,12 @@ namespace ManicDigger
                 default:
                     return 0;
             }
+        }
+        #endregion
+        #region IGameData Members
+        public bool IsTransparentTileFully(byte blocktype)
+        {
+            return IsWaterTile(blocktype);
         }
         #endregion
     }
