@@ -240,7 +240,7 @@ namespace GameModeFortress
                     && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
             }
         }
-        bool cfgcreative;
+        bool cfgcreative = true;
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
