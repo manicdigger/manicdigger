@@ -133,7 +133,16 @@ namespace ManicDigger
             if (!move.ENABLE_NOCLIP)
             {
                 this.swimmingtop = move.wantsjump && !move.Swimming;
-                state.playerposition = WallSlide(state.playerposition, newposition);
+                // This is a temporary workaround for crashing at the top of the map.
+                // This needs to be cleaned up some other way.
+                try
+                {
+                    state.playerposition = WallSlide(state.playerposition, newposition);
+                }
+                catch
+                {
+                    // The block probably doesn't exist...
+                }
             }
             else
             {
