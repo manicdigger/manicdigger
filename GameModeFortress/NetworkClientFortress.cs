@@ -42,9 +42,13 @@ namespace GameModeFortress
 
             iep = new IPEndPoint(IPAddress.Any, port);
             main.Connect(serverAddress, port);
+            this.username = username;
+            this.auth = auth;
             byte[] n = CreateLoginPacket(username, auth);
             main.Send(n);
         }
+        string username;
+        string auth;
         private byte[] CreateLoginPacket(string username, string verificationKey)
         {
             PacketClientIdentification p = new PacketClientIdentification()
@@ -250,6 +254,12 @@ namespace GameModeFortress
                         this.serverName = packet.Identification.ServerName;
                         this.ServerMotd = packet.Identification.ServerMotd;
                         ChatLog("---Connected---");
+                        List<byte[]> needed = new List<byte[]>();
+                        foreach (byte[] b in packet.Identification.UsedBlobsMd5)
+                        {
+                            if (!IsBlob(b)) { needed.Add(b); }
+                        }
+                        SendRequestBlob(needed);
                     }
                     break;
                 case ServerPacketId.Ping:
@@ -259,13 +269,14 @@ namespace GameModeFortress
                 case ServerPacketId.LevelInitialize:
                     {
                         ReceivedMapLength = 0;
-                        InvokeMapLoadingProgress(0, 0);
+                        InvokeMapLoadingProgress(0, 0, "Connecting...");
                     }
                     break;
                 case ServerPacketId.LevelDataChunk:
                     {
                         MapLoadingPercentComplete = packet.LevelDataChunk.PercentComplete;
-                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)ReceivedMapLength);
+                        MapLoadingStatus = packet.LevelDataChunk.Status;
+                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)ReceivedMapLength, MapLoadingStatus);
                     }
                     break;
                 case ServerPacketId.LevelFinalize:
@@ -353,32 +364,57 @@ namespace GameModeFortress
                     }
                     break;
                 default:
-                    {
-                        bool handled = NetworkPacketReceived.NetworkPacketReceived(packet);
-                        if (!handled)
-                        {
-                            Console.WriteLine("Invalid packet id: " + packet.PacketId);
-                        }
-                    }
                     break;
+            }
+            {
+                bool handled = NetworkPacketReceived.NetworkPacketReceived(packet);
+                if (!handled)
+                {
+                    //Console.WriteLine("Invalid packet id: " + packet.PacketId);
+                }
             }
             return lengthPrefixLength + packetLength;
         }
-        int ReceivedMapLength = 0;
+        private void SendRequestBlob(List<byte[]> needed)
+        {
+            PacketClientRequestBlob p = new PacketClientRequestBlob() { RequestBlobMd5 = needed };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.RequestBlob, RequestBlob = p }));
+        }
+        bool IsBlob(byte[] hash)
+        {
+            return false;
+            //return File.Exists(Path.Combine(gamepathblobs, BytesToHex(hash)));
+        }
+        byte[] GetBlob(byte[] hash)
+        {
+            return null;
+        }
+        string BytesToHex(byte[] ba)
+        {
+            StringBuilder sb = new StringBuilder(ba.Length * 2);
+            foreach (byte b in ba)
+            {
+                sb.AppendFormat("{0:x2}", b);
+            }
+            return sb.ToString();
+        }
+        public int ReceivedMapLength = 0;
         DateTime loadedtime;
-        private void InvokeMapLoadingProgress(int progressPercent, int progressBytes)
+        private void InvokeMapLoadingProgress(int progressPercent, int progressBytes, string status)
         {
             if (MapLoadingProgress != null)
             {
                 MapLoadingProgress(this, new MapLoadingProgressEventArgs()
                 {
                     ProgressPercent = progressPercent,
-                    ProgressBytes = progressBytes
+                    ProgressBytes = progressBytes,
+                    ProgressStatus = status,
                 });
             }
         }
         public bool ENABLE_CHATLOG = true;
         public string gamepathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
+        public string gamepathblobs = Path.Combine(GameStorePath.GetStorePath(), "Blobs");
         private void ChatLog(string p)
         {
             if (!ENABLE_CHATLOG)
@@ -470,6 +506,7 @@ namespace GameModeFortress
             }
         }
         int MapLoadingPercentComplete;
+        string MapLoadingStatus;
         class ConnectedPlayer
         {
             public int id;

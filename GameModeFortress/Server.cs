@@ -9,6 +9,7 @@ using System.Net;
 using System.Xml;
 using System.Collections;
 using OpenTK;
+using System.Security.Cryptography;
 
 namespace GameModeFortress
 {
@@ -69,6 +70,8 @@ namespace GameModeFortress
         public IGameData data { get; set; }
         [Inject]
         public CraftingTableTool craftingtabletool { get; set; }
+        [Inject]
+        public IGetFilePath getfile { get; set; }
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         bool ENABLE_FORTRESS = true;
         public bool LocalConnectionsOnly { get; set; }
@@ -921,9 +924,8 @@ namespace GameModeFortress
             switch (packet.PacketId)
             {
                 case ClientPacketId.PlayerIdentification:
-                    string username = packet.Identification.Username;
-
                     SendServerIdentification(clientid);
+                    string username = packet.Identification.Username;
                     foreach (var k in clients)
                     {
                         if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
@@ -934,19 +936,32 @@ namespace GameModeFortress
                     }
                     //todo verificationkey
                     clients[clientid].playername = username;
+                    break;
+                case ClientPacketId.RequestBlob:
+                    List<byte[]> b = packet.RequestBlob.RequestBlobMd5;
+                    foreach (var bb in b)
+                    {
+                        foreach (byte[] used in UsedBlobs())
+                        {
+                            if (CompareByteArray(bb, used))
+                            {
+                                clients[clientid].blobstosend.Add(bb);
+                            }
+                        }
+                    }
                     Vector3i position = DefaultSpawnPosition();
                     clients[clientid].PositionMul32GlX = position.x;
                     clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                     clients[clientid].PositionMul32GlZ = position.z;
-                    
+
                     Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
                     foreach (var v in ChunksAroundPlayer(playerpos))
                     {
                         map.GetBlock(v.x, v.y, v.z); //force load
                     }
                     ChunkSimulation();
-               
-                    SendMessageToAll(string.Format("Player {0} joins.", username));
+                    string username1 = clients[clientid].playername;
+                    SendMessageToAll(string.Format("Player {0} joins.", username1));
                     SendLevel(clientid);
 
                     //.players.Players[clientid] = new Player() { Name = username };
@@ -959,7 +974,7 @@ namespace GameModeFortress
                             PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
                             {
                                 PlayerId = cc,
-                                PlayerName = username,
+                                PlayerName = username1,
                                 PositionAndOrientation = new PositionAndOrientation()
                                 {
                                     X = position.x,
@@ -1045,6 +1060,15 @@ namespace GameModeFortress
                     break;
             }
             return lengthPrefixLength + packetLength;
+        }
+        bool CompareByteArray(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) { return false; }
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (a[i] != b[i]) { return false; }
+            }
+            return true;
         }
         private void NotifyBlock(int x, int y, int z, int blocktype)
         {
@@ -1377,6 +1401,7 @@ namespace GameModeFortress
         }
         public void SendPacket(int clientid, byte[] packet)
         {
+            //System.Threading.Thread.Sleep(10);//. remove!!!!
             try
             {
                 using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
@@ -1429,27 +1454,76 @@ namespace GameModeFortress
             byte[] compressedchunk = GzipCompression.Compress(ms.ToArray());
             return compressedchunk;
         }
+        int BlobPartLength = 1024 * 4;
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
+            var blobstosend = clients[clientid].blobstosend;
+            for (int i = 0; i < blobstosend.Count; i++)
+            {
+                byte[] hash = blobstosend[i];
+                SendBlobInitialize(clientid, hash);
+                byte[] blob = GetBlob(hash);
+                int totalsent = 0;
+                foreach (byte[] part in Parts(blob, BlobPartLength))
+                {
+                    SendLevelProgress(clientid,
+                        (int)(((float)i / blobstosend.Count
+                        + ((float)totalsent / blob.Length) / blobstosend.Count) * 100), "Downloading data...");
+                    SendBlobPart(clientid, part);
+                    totalsent += part.Length;
+                }
+                SendBlobFinalize(clientid);
+            }
             List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
             int sent = 0;
             for (int i = 0; i < unknown.Count; i++)
             {
                 sent += NotifyMapChunks(clientid, 5);
-                SendLevelDataChunk(clientid, null, 0, (int)(((float)sent / unknown.Count) * 100));
+                SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
             }
             SendLevelFinalize(clientid);
         }
-        int levelchunksize = 1024;
+        static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
+        {
+            int i = 0;
+            for (; ; )
+            {
+                if (i >= blob.Length) { break; }
+                int curpartsize = blob.Length - i;
+                if (curpartsize > partsize) { curpartsize = partsize; }
+                byte[] part = new byte[curpartsize];
+                for (int ii = 0; ii < curpartsize; ii++)
+                {
+                    part[ii] = blob[i + ii];
+                }
+                yield return part;
+                i += curpartsize;
+            }
+        }
+        private void SendBlobInitialize(int clientid, byte[] hash)
+        {
+            PacketServerBlobInitialize p = new PacketServerBlobInitialize() { hash = hash };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobInitialize, BlobInitialize = p }));
+        }
+        private void SendBlobPart(int clientid, byte[] data)
+        {
+            PacketServerBlobPart p = new PacketServerBlobPart() { data = data };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobPart, BlobPart = p }));
+        }
+        private void SendBlobFinalize(int clientid)
+        {
+            PacketServerBlobFinalize p = new PacketServerBlobFinalize() { };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobFinalize, BlobFinalize = p }));
+        }
         private void SendLevelInitialize(int clientid)
         {
             PacketServerLevelInitialize p = new PacketServerLevelInitialize() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelInitialize, LevelInitialize = p }));
         }
-        private void SendLevelDataChunk(int clientid, byte[] chunk, int chunklength, int percentcomplete)
+        private void SendLevelProgress(int clientid, int percentcomplete, string status)
         {
-            PacketServerLevelDataChunk p = new PacketServerLevelDataChunk() { Chunk = chunk, PercentComplete = percentcomplete };
+            PacketServerLevelProgress p = new PacketServerLevelProgress() { PercentComplete = percentcomplete, Status = status};
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelDataChunk, LevelDataChunk = p }));
         }
         private void SendLevelFinalize(int clientid)
@@ -1464,8 +1538,40 @@ namespace GameModeFortress
                 MdProtocolVersion = GameVersion.Version,
                 ServerName = cfgname,
                 ServerMotd = cfgmotd,
+                UsedBlobsMd5 = UsedBlobs(),
+                TerrainTextureMd5 = GetTerrainTextureMd5(),
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
+        }
+        byte[] GetTerrainTextureMd5()
+        {
+            if (terrainTexture == null)
+            {
+                terrainTexture = File.ReadAllBytes(getfile.GetFile("terrain.png"));
+            }
+            if (terrainTextureMd5 == null)
+            {
+                terrainTextureMd5 = ComputeMd5(terrainTexture);
+            }
+            return terrainTextureMd5;
+        }
+        byte[] terrainTexture;
+        byte[] terrainTextureMd5;
+        public List<byte[]> UsedBlobs()
+        {
+            List<byte[]> l = new List<byte[]>();
+            l.Add(GetTerrainTextureMd5());
+            return l;
+        }
+        private byte[] GetBlob(byte[] hash)
+        {
+            //todo
+            return terrainTexture;
+        }
+        byte[] ComputeMd5(byte[] b)
+        {
+            MD5 md5 = System.Security.Cryptography.MD5.Create();
+            return md5.ComputeHash(terrainTexture);
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
@@ -1482,6 +1588,7 @@ namespace GameModeFortress
             public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
+            public List<byte[]> blobstosend = new List<byte[]>();
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }

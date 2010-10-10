@@ -2771,6 +2771,10 @@ namespace ManicDigger
         private void DrawMapLoading()
         {
             string connecting = "Connecting...";
+            if (maploadingprogress.ProgressStatus != null)
+            {
+                connecting = maploadingprogress.ProgressStatus;
+            }
             string progress = string.Format("{0}%\n", maploadingprogress.ProgressPercent);
             string progress1 = string.Format("{0} KB", (maploadingprogress.ProgressBytes / 1024));
             Draw2dText(network.ServerName, xcenter(TextSize(network.ServerName, 14).Width), Height / 2 - 150, 14, Color.White);

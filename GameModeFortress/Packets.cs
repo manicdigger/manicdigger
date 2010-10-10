@@ -16,6 +16,12 @@ namespace GameModeFortress
         public string VerificationKey;
     }
     [ProtoContract]
+    public class PacketClientRequestBlob
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public List<byte[]> RequestBlobMd5;
+    }
+    [ProtoContract]
     public class PacketClientSetBlock
     {
         [ProtoMember(1, IsRequired = false)]
@@ -60,6 +66,10 @@ namespace GameModeFortress
         public string ServerName;
         [ProtoMember(3, IsRequired = false)]
         public string ServerMotd;
+        [ProtoMember(4, IsRequired = false)]
+        public List<byte[]> UsedBlobsMd5;
+        [ProtoMember(5, IsRequired = false)]
+        public byte[] TerrainTextureMd5;
     }
     //public class PacketServerPing
     [ProtoContract]
@@ -67,12 +77,34 @@ namespace GameModeFortress
     {
     }
     [ProtoContract]
-    public class PacketServerLevelDataChunk
+    public class PacketServerBlobInitialize
     {
         [ProtoMember(1, IsRequired = false)]
-        public byte[] Chunk;
+        public byte[] hash;
+    }
+    [ProtoContract]
+    public class PacketServerBlobPart
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public byte[] data;
+        [ProtoMember(2, IsRequired = false)]
+        public bool lastpart;
+    }
+    [ProtoContract]
+    public class PacketServerBlobFinalize
+    {
+    }
+    [ProtoContract]
+    public class PacketServerLevelProgress
+    {
+        //[ProtoMember(1, IsRequired = false)]
+        //public byte[] Chunk;
         [ProtoMember(2, IsRequired = false)]
         public int PercentComplete;
+        [ProtoMember(3, IsRequired = false)]
+        public string Status;
+        [ProtoMember(4, IsRequired = false)]
+        public int PercentCompleteSubitem;
     }
     [ProtoContract]
     public class PacketServerLevelFinalize
@@ -153,7 +185,7 @@ namespace GameModeFortress
         [ProtoMember(2, IsRequired = false)]
         public PacketServerLevelInitialize LevelInitialize;
         [ProtoMember(3, IsRequired = false)]
-        public PacketServerLevelDataChunk LevelDataChunk;
+        public PacketServerLevelProgress LevelDataChunk;
         [ProtoMember(4, IsRequired = false)]
         public PacketServerLevelFinalize LevelFinalize;
         [ProtoMember(5, IsRequired = false)]
@@ -174,6 +206,12 @@ namespace GameModeFortress
         public PacketServerFiniteInventory FiniteInventory;
         [ProtoMember(13, IsRequired = false)]
         public PacketServerSeason Season;
+        [ProtoMember(14, IsRequired = false)]
+        public PacketServerBlobInitialize BlobInitialize;
+        [ProtoMember(15, IsRequired = false)]
+        public PacketServerBlobPart BlobPart;
+        [ProtoMember(16, IsRequired = false)]
+        public PacketServerBlobFinalize BlobFinalize;
     }
     [ProtoContract]
     public class PacketClient
@@ -190,6 +228,8 @@ namespace GameModeFortress
         public PacketClientMessage Message;
         [ProtoMember(6, IsRequired = false)]
         public PacketClientCraft Craft;
+        [ProtoMember(7, IsRequired = false)]
+        public PacketClientRequestBlob RequestBlob;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -247,7 +287,7 @@ namespace GameModeFortress
         PositionandOrientation = 8,
         Craft = 9,
         Message = 0x0d,
-
+        RequestBlob = 50,
         ExtendedPacketCommand = 100,
     }
     /// <summary>
@@ -271,6 +311,9 @@ namespace GameModeFortress
         Chunk = 15,
         FiniteInventory = 16,
         Season = 17,
+        BlobInitialize = 18,
+        BlobPart = 19,
+        BlobFinalize = 20,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

@@ -28,6 +28,7 @@ namespace ManicDigger
     {
         public int ProgressPercent { get; set; }
         public int ProgressBytes { get; set; }
+        public string ProgressStatus { get; set; }
     }
     public class NetworkClientDummy : INetworkClient
     {

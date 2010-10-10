@@ -44,6 +44,7 @@ namespace ManicDiggerServer
                     s, generator, map);
             }
             s.LocalConnectionsOnly = singleplayer;
+            s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
             s.Start();
             if ((!singleplayer) && (s.cfgpublic))
             {

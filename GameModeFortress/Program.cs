@@ -342,6 +342,7 @@ namespace GameModeFortress
             s.data = new GameDataTilesManicDigger();
             s.craftingtabletool = new CraftingTableTool() { map = map };
             s.LocalConnectionsOnly = true;
+            s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
             s.Start();
             for (; ; )
             {

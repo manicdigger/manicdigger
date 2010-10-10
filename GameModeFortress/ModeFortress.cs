@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDigger;
 using OpenTK;
+using System.IO;
+using System.Drawing;
 
 namespace GameModeFortress
 {
@@ -702,11 +704,52 @@ namespace GameModeFortress
                         }
                     }
                     return true;
+                case ServerPacketId.BlobInitialize:
+                    {
+                        blobdownload = new MemoryStream();
+                        blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
+                        ((NetworkClientFortress)network).ReceivedMapLength = 0; //todo
+                    }
+                    return true;
+                case ServerPacketId.BlobPart:
+                    {
+                        BinaryWriter bw = new BinaryWriter(blobdownload);
+                        bw.Write(packet.BlobPart.data);
+                        ((NetworkClientFortress)network).ReceivedMapLength += packet.BlobPart.data.Length; //todo
+                    }
+                    return true;
+                case ServerPacketId.BlobFinalize:
+                    {
+                        blobs[blobdownloadhash] = blobdownload.ToArray();
+                        blobdownload = null;
+                        if (blobdownloadhash == serverterraintexture)
+                        {
+                            using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
+                            {
+                                terrain.UseTerrainTextureAtlas2d(bmp);
+                            }
+                        }
+                    }
+                    return true;
+                case ServerPacketId.ServerIdentification:
+                    {
+                        serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
+                    }
+                    return true;
                 default:
                     return false;
             }
         }
+        string serverterraintexture;
         #endregion
+        public static string ByteArrayToString(byte[] ba)
+        {
+            string hex = BitConverter.ToString(ba);
+            return hex.Replace("-", "");
+        }
+        string blobdownloadhash;
+        MemoryStream blobdownload;
+        Dictionary<string, byte[]> blobs = new Dictionary<string, byte[]>();
         #region ICurrentSeason Members
         public int CurrentSeason { get; set; }
         #endregion

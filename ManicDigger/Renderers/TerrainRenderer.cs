@@ -28,6 +28,7 @@ namespace ManicDigger
         int ChunkUpdates { get; }
         int[] terrainTextures1d { get; }
         int terrainTexturesPerAtlas { get; }
+        void UseTerrainTextureAtlas2d(Bitmap atlas2d);
     }
     public class TerrainDrawerDummy : ITerrainRenderer
     {
@@ -58,6 +59,11 @@ namespace ManicDigger
         #region ITerrainRenderer Members
         public int[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get; set; }
+        #endregion
+        #region ITerrainRenderer Members
+        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
+        {
+        }
         #endregion
     }
     public class TextureAtlas
@@ -265,9 +271,17 @@ namespace ManicDigger
             }
             started = true;
             GL.Enable(EnableCap.Texture2D);
-            terrainTexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
-            List<int> terrainTextures1d = new List<int>();
             using (var atlas2d = new Bitmap(getfile.GetFile("terrain.png")))
+            {
+                UseTerrainTextureAtlas2d(atlas2d);
+            }
+            updateThreadRunning++;
+            new Thread(UpdateThreadStart).Start();
+        }
+        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
+        {
+            terrainTexture = the3d.LoadTexture(atlas2d);
+            List<int> terrainTextures1d = new List<int>();
             {
                 terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
                 List<Bitmap> atlases1d = new TextureAtlasConverter().Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
@@ -278,8 +292,6 @@ namespace ManicDigger
                 }
             }
             this.terrainTextures1d = terrainTextures1d.ToArray();
-            updateThreadRunning++;
-            new Thread(UpdateThreadStart).Start();
         }
         public int atlas1dheight = 2048;
         public int atlas2dtiles = 16; // 16x16
