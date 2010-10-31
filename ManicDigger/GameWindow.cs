@@ -2299,28 +2299,47 @@ namespace ManicDigger
         AnimationState a = new AnimationState();
         int[] _skybox;
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
-        int skyspheretexture = -1;
+        int skyspheretexture = -1;        
+        ushort[] skysphereelements;
+        ManicDigger.SkySphere.VertexP3N3T2[] skyspherevertices;
         private void DrawSkySphere()
         {
             if (skyspheretexture == -1)
             {
                 skyspheretexture = LoadTexture(getfile.GetFile("skysphere.png"));
             }
+
             SkySphere skysphere = new SkySphere();
-            ushort[] elements = skysphere.CalculateElements(1000, 1000, 20, 20);
-            SkySphere.VertexP3N3T2[] vertices = skysphere.CalculateVertices(1000, 1000, 20, 20);
+
+            if (skysphereelements == null)
+            {
+                skysphereelements = skysphere.CalculateElements(1000, 1000, 20, 20);
+                skyspherevertices = skysphere.CalculateVertices(1000, 1000, 20, 20);
+            }
+            
             GL.PushMatrix();
             GL.Translate(LocalPlayerPosition);
             GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, skyspheretexture);
-            GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < elements.Length; i++)
+
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
+            GL.EnableClientState(ArrayCap.VertexArray);
+            GL.EnableClientState(ArrayCap.NormalArray);
+            //int stride = BlittableValueType.StrideOf(new SkySphere.VertexP3N3T2());
+            int stride = 32;
+            unsafe
             {
-                var v = vertices[elements[i]];
-                GL.TexCoord2(v.TexCoord);
-                GL.Vertex3(v.Position);
+                fixed (SkySphere.VertexP3N3T2 * p = skyspherevertices)
+                {
+                    GL.VertexPointer(3, VertexPointerType.Float, stride, (IntPtr)(0 + (byte*)p));
+                    GL.NormalPointer(NormalPointerType.Float, stride, (IntPtr)(12 + (byte*)p));
+                    GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, (IntPtr)(24 + (byte*)p));
+                    GL.DrawElements(BeginMode.Triangles, skysphereelements.Length, DrawElementsType.UnsignedShort, skysphereelements);
+                }
             }
-            GL.End();
+            GL.DisableClientState(ArrayCap.TextureCoordArray);
+            GL.DisableClientState(ArrayCap.VertexArray);
+            GL.DisableClientState(ArrayCap.NormalArray);
             GL.PopMatrix();
             return;
         }

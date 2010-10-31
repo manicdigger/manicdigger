@@ -109,6 +109,7 @@ namespace ManicDigger
                     }
                     GL.DisableClientState(EnableCap.TextureCoordArray);
                     GL.DisableClientState(EnableCap.VertexArray);
+                    GL.DisableClientState(EnableCap.ColorArray);
 
                     /*
                     GL.Begin(BeginMode.Triangles);
