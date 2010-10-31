@@ -194,6 +194,21 @@ namespace ManicDigger
             }
             return flatmap;
         }
+        public static int SearchColumn(IMapStorage map, int x, int y, int id, int startH)
+        {
+            for (int h = startH; h > 0; h--)
+            {
+                if (map.GetBlock(x, y, h) == (byte)id)
+                {
+                    return h;
+                }
+            }
+            return -1; // -1 means 'not found'
+        }
+        public static int SearchColumn(IMapStorage map, int x, int y, int id)
+        {
+            return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
+        }
     }
     public class MapStorage : IMapStorage
     {

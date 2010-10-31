@@ -131,6 +131,19 @@ namespace ManicDigger
             }
             return count;
         }
+        public static IEnumerable<T> Take<T>(IEnumerable<T> l, int n)
+        {
+            int i = 0;
+            foreach (var v in l)
+            {
+                if (i >= n)
+                {
+                    yield break;
+                }
+                yield return v;
+                i++;
+            }
+        }
     }
     public interface ITerrainInfo
     {

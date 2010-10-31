@@ -413,7 +413,7 @@ namespace ManicDigger
                 //|| tileType == (byte)TileTypeMinecraft.StationaryLava
                 || tileType == (byte)TileTypeMinecraft.YellowFlowerDecorations
                 || tileType == (byte)TileTypeMinecraft.RedRoseDecorations
-                || tileType == (byte)TileTypeMinecraft.Leaves
+                //|| tileType == (byte)TileTypeMinecraft.Leaves
                 || tileType == (byte)TileTypeMinecraft.Glass
                 || tileType == (byte)TileTypeMinecraft.RedMushroom
                 || tileType == (byte)TileTypeMinecraft.BrownMushroom
@@ -504,7 +504,7 @@ namespace ManicDigger
         {
             return blocktype == TileIdEmpty
                 || IsBlockFlower(blocktype)
-                || blocktype == (int)TileTypeMinecraft.Leaves
+                //|| blocktype == (int)TileTypeMinecraft.Leaves
                 || blocktype == (int)TileTypeMinecraft.Glass
                 || IsWaterTile(blocktype);
         }

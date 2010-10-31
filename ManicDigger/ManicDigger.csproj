@@ -55,6 +55,8 @@
     <Compile Include="ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="MapTools\FcraftVector.cs" />
+    <Compile Include="MapTools\Forester.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
     <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />

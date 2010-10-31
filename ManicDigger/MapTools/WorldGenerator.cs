@@ -37,7 +37,6 @@ using ManicDigger;
         {
             this.chunksize = chunksize;
             heightcache = new byte[chunksize, chunksize];
-            istreecache = new bool[chunksize, chunksize];
             x = x * chunksize;
             y = y * chunksize;
             z = z * chunksize;
@@ -59,17 +58,6 @@ using ManicDigger;
                     }
                 }
             }
-            for (int xx = 0; xx < chunksize; xx++)
-            {
-                for (int yy = 0; yy < chunksize; yy++)
-                {
-                    if (IsTree(x + xx, y + yy, heightcache[xx, yy]))
-                    {
-                        PlaceTree(chunk, chunksize, xx, yy, heightcache[xx, yy] - z);
-                    }
-                }
-            }
-            istreecache = null;
             if (z == 0)
             {
                 for (int xx = 0; xx < chunksize; xx++)
@@ -82,39 +70,6 @@ using ManicDigger;
             }
             return chunk;
         }
-        void PlaceTree(byte[, ,] chunk, int chunksize, int xx, int yy, int zz)
-        {
-            if (zz < 0) { return; }
-            if (chunksize - zz < 5) { return; }
-            Place(chunk, chunksize, xx, yy, zz + 1, TileIdTreeTrunk);
-            Place(chunk, chunksize, xx, yy, zz + 2, TileIdTreeTrunk);
-            Place(chunk, chunksize, xx, yy, zz + 3, TileIdTreeTrunk);
-
-            Place(chunk, chunksize, xx + 1, yy, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx - 1, yy, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx, yy + 1, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx, yy - 1, zz + 3, TileIdLeaves);
-
-            Place(chunk, chunksize, xx + 1, yy + 1, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx + 1, yy - 1, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx - 1, yy + 1, zz + 3, TileIdLeaves);
-            Place(chunk, chunksize, xx - 1, yy - 1, zz + 3, TileIdLeaves);
-
-            Place(chunk, chunksize, xx + 1, yy, zz + 4, TileIdLeaves);
-            Place(chunk, chunksize, xx - 1, yy, zz + 4, TileIdLeaves);
-            Place(chunk, chunksize, xx, yy + 1, zz + 4, TileIdLeaves);
-            Place(chunk, chunksize, xx, yy - 1, zz + 4, TileIdLeaves);
-
-            Place(chunk, chunksize, xx, yy, zz + 4, TileIdLeaves);
-        }
-        void Place(byte[, ,] chunk, int chunksize, int xx, int yy, int zz, int blocktype)
-        {
-            if (xx < 0 || xx >= chunksize) { return; }
-            if (yy < 0 || yy >= chunksize) { return; }
-            if (zz < 0 || zz >= chunksize) { return; }
-            chunk[xx, yy, zz] = (byte)blocktype;
-        }
-        bool[,] istreecache;
         int TileIdEmpty = 0;
         int TileIdGrass = 2;
         int TileIdDirt = 3;
@@ -216,6 +171,7 @@ using ManicDigger;
             x *= chunksize;
             y *= chunksize;
             z *= chunksize;
+            MakeTrees(map, x, y, z, chunksize);
             //if (rnd.NextDouble() >= 0.6)
             {
                 //return;
@@ -319,4 +275,24 @@ using ManicDigger;
             }
         }
         #endregion
+        void MakeTrees(IMapStorage map, int x, int y, int z, int chunksize)
+        {
+            if (z != 0) { return; }
+            //if (rnd.Next(100) > 30) { return; }
+            var foresterArgs = new fCraft.Forester.ForesterArgs();
+            if (rnd.Next(100) < 15)
+            {
+                foresterArgs.SHAPE = fCraft.Forester.TreeShape.Procedural;
+            }
+            else
+            {
+                foresterArgs.SHAPE = (fCraft.Forester.TreeShape)rnd.Next(9);
+                foresterArgs.HEIGHT = rnd.Next(5, 10);
+                foresterArgs.TREECOUNT = 3;
+            }
+            fCraft.Forester forester = new fCraft.Forester(foresterArgs);
+            foresterArgs.inMap = map;
+            foresterArgs.outMap = map;
+            forester.Generate(x, y, z, chunksize);
+        }
     }
