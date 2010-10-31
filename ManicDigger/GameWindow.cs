@@ -590,6 +590,8 @@ namespace ManicDigger
         [Inject]
         public FpsHistoryGraphRenderer fpshistorygraphrenderer { get; set; }
 
+        bool IsMono = Type.GetType("Mono.Runtime") != null;
+
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
 
@@ -2162,11 +2164,12 @@ namespace ManicDigger
                 GL.Disable(EnableCap.Fog);
             }
 
-            Application.DoEvents();
             //Sleep is required in Mono for running the terrain background thread.
-            Thread.Sleep(0);
-            //Console.WriteLine("pos:" + player.playerposition);
-            //Console.WriteLine("orientation:" + player.playerorientation);
+            if (IsMono)
+            {
+                Application.DoEvents();
+                Thread.Sleep(0);
+            }
 
             var deltaTime = e.Time;
 
