@@ -130,16 +130,20 @@ namespace ManicDigger
                     addcounter = 0;
                 }
             }
+            List<int> tocall=new List<int>();
             for (int i = 0; i < count; i++)
             {
                 if (!empty.ContainsKey(i))
                 {
                     if (!GetListInfo(i).transparent)
                     {
-                        GL.CallList(GetList(i));
+                        //GL.CallList(GetList(i));
+                        tocall.Add(GetList(i));
                     }
                 }
             }
+            GL.CallLists(tocall.Count, ListNameType.Int, tocall.ToArray());
+            tocall.Clear();
             GL.Disable(EnableCap.CullFace);//for water.
             for (int i = 0; i < count; i++)
             {
@@ -147,10 +151,13 @@ namespace ManicDigger
                 {
                     if (GetListInfo(i).transparent)
                     {
-                        GL.CallList(GetList(i));
+                        //GL.CallList(GetList(i));
+                        tocall.Add(GetList(i));
                     }
                 }
             }
+            GL.CallLists(tocall.Count, ListNameType.Int, tocall.ToArray());
+            tocall.Clear();
             GL.Enable(EnableCap.CullFace);
             //depth sorting. is it needed?
             /*
