@@ -3114,10 +3114,11 @@ namespace ManicDigger
         void DeleteUnusedCachedTextTextures()
         {
             List<Text> toremove = new List<Text>();
+            DateTime now = DateTime.UtcNow;
             foreach (var k in cachedTextTextures)
             {
                 var ct = k.Value;
-                if ((DateTime.Now - ct.lastuse).TotalSeconds > 1)
+                if ((now - ct.lastuse).TotalSeconds > 1)
                 {
                     GL.DeleteTexture(ct.textureId);
                     toremove.Add(k.Key);
@@ -3150,7 +3151,7 @@ namespace ManicDigger
                 cachedTextTextures.Add(t, ct);
             }
             ct = cachedTextTextures[t];
-            ct.lastuse = DateTime.Now;
+            ct.lastuse = DateTime.UtcNow;
             GL.Disable(EnableCap.AlphaTest);
             Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
             GL.Enable(EnableCap.AlphaTest);
