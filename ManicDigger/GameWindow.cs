@@ -1859,7 +1859,7 @@ namespace ManicDigger
                 || data.IsWaterTile(map.GetBlock(x, y, z))
                 || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
         }
-        float PICK_DISTANCE = 3.5f;
+        public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
         Matrix4 m_theModelView;
         bool leftpressedpicking = false;
@@ -1920,7 +1920,7 @@ namespace ManicDigger
             var pick = new Line3D();
             var raydir = -(ray - ray_start_point);
             raydir.Normalize();
-            raydir = Vector3.Multiply(raydir, 100);
+            raydir = Vector3.Multiply(raydir, PICK_DISTANCE * 2);
             pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
             pick.End = ray + raydir;
 
