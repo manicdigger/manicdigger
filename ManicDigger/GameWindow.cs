@@ -3204,6 +3204,9 @@ namespace ManicDigger
             GL.Enable(EnableCap.DepthTest);
             GL.PopAttrib();
         }
+        VertexPositionTexture[] draw2dtexturesVertices;
+        ushort[] draw2dtexturesIndices;
+        int draw2dtexturesMAX = 512;
         public void Draw2dTextures(Draw2dData[] todraw, int textureid)
         {
             GL.PushAttrib(AttribMask.ColorBufferBit);
@@ -3211,10 +3214,25 @@ namespace ManicDigger
             GL.Enable(EnableCap.Texture2D);
             GL.Disable(EnableCap.DepthTest);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[todraw.Length * 4];
-            ushort[] indices = new ushort[todraw.Length * 4];
+            VertexPositionTexture[] vertices;
+            ushort[] indices;
+            if (todraw.Length >= draw2dtexturesMAX)
+            {
+                vertices = new VertexPositionTexture[todraw.Length * 4];
+                indices = new ushort[todraw.Length * 4];
+            }
+            else
+            {
+                if (draw2dtexturesVertices == null)
+                {
+                    draw2dtexturesVertices = new VertexPositionTexture[draw2dtexturesMAX * 4];
+                    draw2dtexturesIndices = new ushort[draw2dtexturesMAX * 4];
+                }
+                vertices = draw2dtexturesVertices;
+                indices = draw2dtexturesIndices;
+            }
             ushort i = 0;
-            foreach (var v in todraw)
+            foreach (Draw2dData v in todraw)
             {
                 RectangleF rect;
                 if (v.inAtlasId == null)
@@ -3247,7 +3265,7 @@ namespace ManicDigger
                     GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, (IntPtr)(0 + (byte*)p));
                     GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, (IntPtr)(12 + (byte*)p));
                     GL.ColorPointer(4, ColorPointerType.UnsignedByte, StrideOfVertices, (IntPtr)(20 + (byte*)p));
-                    GL.DrawElements(BeginMode.Quads, indices.Length, DrawElementsType.UnsignedShort, indices);
+                    GL.DrawElements(BeginMode.Quads, i, DrawElementsType.UnsignedShort, indices);
                 }
             }
             GL.DisableClientState(ArrayCap.TextureCoordArray);

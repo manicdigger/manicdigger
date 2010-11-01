@@ -23,13 +23,15 @@ namespace ManicDigger.Renderers
         {
             get
             {
-                while (m_fpshistory.Count < 300)
+                while (m_fpshistory.Count < MAX_COUNT - 1)
                 {
                     m_fpshistory.Add(0);
                 }
                 return m_fpshistory;
             }
         }
+        public int MAX_COUNT = 300;
+        Draw2dData[] todraw;
         public void DrawFpsHistoryGraph()
         {
             float maxtime = 0;
@@ -46,13 +48,21 @@ namespace ManicDigger.Renderers
             Color[] colors = new[] { Color.Black, Color.Red };
             Color linecolor = Color.White;
 
-            Draw2dData[] todraw = new Draw2dData[fpshistory.Count];
+            if (todraw == null)
+            {
+                todraw = new Draw2dData[MAX_COUNT];
+            }
             for (int i = 0; i < fpshistory.Count; i++)
             {
                 float time = fpshistory[i];
                 time = (time * 60) * historyheight;
                 Color c = Interpolation.InterpolateColor((float)i / fpshistory.Count, colors);
-                todraw[i] = new Draw2dData() { x1 = posx + i, y1 = posy - time, width = 1, height = time, inAtlasId = null, color = c };
+                todraw[i].x1 = posx + i;
+                todraw[i].y1 = posy - time;
+                todraw[i].width = 1;
+                todraw[i].height = time;
+                todraw[i].inAtlasId = null;
+                todraw[i].color = c;
             }
             draw.Draw2dTextures(todraw, draw.WhiteTexture());
 
