@@ -3111,16 +3111,21 @@ namespace ManicDigger
             int texture = LoadTexture(bmp);
             return new CachedTexture() { textureId = texture, size = bmp.Size };
         }
-        void DeleteUnusedCachedTextures()
+        void DeleteUnusedCachedTextTextures()
         {
-            foreach (var k in new List<Text>(cachedTextTextures.Keys))
+            List<Text> toremove = new List<Text>();
+            foreach (var k in cachedTextTextures)
             {
-                var ct = cachedTextTextures[k];
+                var ct = k.Value;
                 if ((DateTime.Now - ct.lastuse).TotalSeconds > 1)
                 {
                     GL.DeleteTexture(ct.textureId);
-                    cachedTextTextures.Remove(k);
+                    toremove.Add(k.Key);
                 }
+            }
+            foreach (var k in toremove)
+            {
+                cachedTextTextures.Remove(k);
             }
         }
         public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
@@ -3149,7 +3154,7 @@ namespace ManicDigger
             GL.Disable(EnableCap.AlphaTest);
             Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
             GL.Enable(EnableCap.AlphaTest);
-            DeleteUnusedCachedTextures();
+            DeleteUnusedCachedTextTextures();
         }
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
