@@ -28,15 +28,20 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                string[] ss = s.Split(new[] { ',' });
+                object[] ss = new List<object>(s.Split(new[] { ',' })).ToArray();
                 for (int ii = 0; ii < ss.Length; ii++)
                 {
-                    ss[ii] = ss[ii].Trim();
+                    ss[ii] = ((string)ss[ii]).Trim();
+                    double d;
+                    if (double.TryParse((string)ss[ii], NumberStyles.Any, CultureInfo.InvariantCulture, out d))
+                    {
+                        ss[ii] = d;
+                    }
                 }
                 this.code.Add(ss);
             }
         }
-        List<string[]> code = new List<string[]>();
+        List<object[]> code = new List<object[]>();
         double animperiod = 0.8;
         public double AnimPeriod { get { return animperiod; } set { animperiod = value; } }
         #region ICharacterDrawer Members
@@ -98,14 +103,14 @@ namespace ManicDigger
                 {
                     break;
                 }
-                string[] ss = code[pc];
+                object[] ss = code[pc];
                 if (ss.Length > 0)
                 {
-                    switch (ss[0])
+                    switch ((string)ss[0])
                     {
                         case "set":
                             {
-                                variables[ss[1]] = getval(ss[2], variables);
+                                variables[(string)ss[1]] = getval(ss[2], variables);
                             }
                             break;
                         case "pushmatrix":
@@ -120,12 +125,12 @@ namespace ManicDigger
                             break;
                         case "mul":
                             {
-                                variables[ss[1]] = (double)variables[ss[1]] * getval(ss[2], variables);
+                                variables[(string)ss[1]] = (double)variables[(string)ss[1]] * getval(ss[2], variables);
                             }
                             break;
                         case "add":
                             {
-                                variables[ss[1]] = (double)variables[ss[1]] + getval(ss[2], variables);
+                                variables[(string)ss[1]] = (double)variables[(string)ss[1]] + getval(ss[2], variables);
                             }
                             break;
                         case "rotate":
@@ -162,7 +167,7 @@ namespace ManicDigger
                                    (float)getval(ss[5], variables),
                                    (float)getval(ss[6], variables));
                                 MakeTextureCoords(coords, skinsizex, skinsizey);
-                                variables[ss[1]] = coords;
+                                variables[(string)ss[1]] = coords;
                             }
                             break;
                         case "drawcuboid":
@@ -175,7 +180,7 @@ namespace ManicDigger
                                     (float)getval(ss[5], variables),
                                     (float)getval(ss[6], variables)),
                                    (int)getval(ss[7], variables),
-                                   (RectangleF[])variables[ss[8]]
+                                   (RectangleF[])variables[(string)ss[8]]
                                     );
                             }
                             break;
@@ -187,37 +192,37 @@ namespace ManicDigger
                             break;
                         case "dim":
                             {
-                                if (!variables.ContainsKey(ss[1]))
+                                if (!variables.ContainsKey((string)ss[1]))
                                 {
-                                    variables[ss[1]] = getval(ss[2], variables);
+                                    variables[(string)ss[1]] = getval(ss[2], variables);
                                 }
                             }
                             break;
                         case "fun":
                             {
-                                if (ss[2] == "tri")
+                                if ((string)ss[2] == "tri")
                                 {
-                                    variables[ss[1]] = (double)TriWave(getval(ss[3], variables));
+                                    variables[(string)ss[1]] = (double)TriWave(getval(ss[3], variables));
                                 }
-                                if (ss[2] == "sin")
+                                if ((string)ss[2] == "sin")
                                 {
-                                    variables[ss[1]] = (double)Math.Sin(getval(ss[3], variables));
+                                    variables[(string)ss[1]] = (double)Math.Sin(getval(ss[3], variables));
                                 }
-                                if (ss[2] == "abs")
+                                if ((string)ss[2] == "abs")
                                 {
-                                    variables[ss[1]] = (double)Math.Abs(getval(ss[3], variables));
+                                    variables[(string)ss[1]] = (double)Math.Abs(getval(ss[3], variables));
                                 }
                             }
                             break;
                         case "ifeq":
                             {
-                                if (variables.ContainsKey(ss[1])
-                                    && (double)variables[ss[1]] != getval(ss[2], variables))
+                                if (variables.ContainsKey((string)ss[1])
+                                    && (double)variables[(string)ss[1]] != getval(ss[2], variables))
                                 {
                                     //find endif
                                     for (int i = pc; i < code.Count; i++)
                                     {
-                                        if (code[i][0] == "endif")
+                                        if ((string)(code[i][0]) == "endif")
                                         {
                                             pc = i;
                                             goto next;
@@ -257,16 +262,16 @@ namespace ManicDigger
             t += Math.PI / 2;
             return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
         }
-        private double getval(string ss2, Dictionary<string, object> variables)
+        private double getval(object ss2, Dictionary<string, object> variables)
         {
             double d = 0;
-            if (double.TryParse(ss2, NumberStyles.Number, CultureInfo.InvariantCulture, out d))
+            if (ss2 is double)
             {
-                return d;
+                return (double)ss2;
             }
             else
             {
-                return (double)variables[ss2];
+                return (double)variables[(string)ss2];
             }
         }
         double ParseDouble(string s)
@@ -372,9 +377,9 @@ namespace ManicDigger
             List<string> availableanimations = new List<string>();
             for (int i = 0; i < code.Count; i++)
             {
-                if (code[i][0] == "exportanim" && code[i].Length > 1)
+                if ((string)(code[i][0]) == "exportanim" && code[i].Length > 1)
                 {
-                    string name = code[i][1];
+                    string name = (string)(code[i][1]);
                     if (!availableanimations.Contains(name))
                     {
                         availableanimations.Add(name);
