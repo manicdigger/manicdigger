@@ -10,7 +10,7 @@ namespace ManicDigger.Renderers
         void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color);
         int WhiteTexture();
         void Draw2dText(string text, float x, float y, float fontsize, Color? color);
-        void Draw2dTextures(List<Draw2dData> todraw, int textureid);
+        void Draw2dTextures(Draw2dData[] todraw, int textureid);
     }
     public class FpsHistoryGraphRenderer
     {
@@ -46,13 +46,13 @@ namespace ManicDigger.Renderers
             Color[] colors = new[] { Color.Black, Color.Red };
             Color linecolor = Color.White;
 
-            List<Draw2dData> todraw = new List<Draw2dData>();
+            Draw2dData[] todraw = new Draw2dData[fpshistory.Count];
             for (int i = 0; i < fpshistory.Count; i++)
             {
                 float time = fpshistory[i];
                 time = (time * 60) * historyheight;
                 Color c = Interpolation.InterpolateColor((float)i / fpshistory.Count, colors);
-                todraw.Add(new Draw2dData() { x1 = posx + i, y1 = posy - time, width = 1, height = time, inAtlasId = null, color = c });
+                todraw[i] = new Draw2dData() { x1 = posx + i, y1 = posy - time, width = 1, height = time, inAtlasId = null, color = c };
             }
             draw.Draw2dTextures(todraw, draw.WhiteTexture());
 

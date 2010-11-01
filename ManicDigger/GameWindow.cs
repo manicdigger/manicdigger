@@ -3203,16 +3203,16 @@ namespace ManicDigger
             GL.Enable(EnableCap.DepthTest);
             GL.PopAttrib();
         }
-        public void Draw2dTextures(List<Draw2dData> todraw, int textureid)
+        public void Draw2dTextures(Draw2dData[] todraw, int textureid)
         {
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
             GL.Enable(EnableCap.Texture2D);
             GL.Disable(EnableCap.DepthTest);
 
-            VertexPositionTexture[] vertices = new VertexPositionTexture[todraw.Count * 4];
-            ushort[] indices = new ushort[todraw.Count * 4];
-            ushort i=0;
+            VertexPositionTexture[] vertices = new VertexPositionTexture[todraw.Length * 4];
+            ushort[] indices = new ushort[todraw.Length * 4];
+            ushort i = 0;
             foreach (var v in todraw)
             {
                 RectangleF rect;
@@ -3224,7 +3224,6 @@ namespace ManicDigger
                 {
                     rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, terrain.texturesPacked);
                 }
-                GL.Color3(v.color);
                 float x2 = v.x1 + v.width;
                 float y2 = v.y1 + v.height;
                 vertices[i] = new VertexPositionTexture(x2, y2, 0, rect.Right, rect.Bottom, v.color);
