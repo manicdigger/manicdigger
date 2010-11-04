@@ -1116,6 +1116,21 @@ namespace ManicDigger
                     }
                     else throw new Exception();
                 }
+                if (e.Key == OpenTK.Input.Key.F6)
+                {
+                    terrain.UpdateAllTiles();
+                }
+                if (e.Key == OpenTK.Input.Key.F7)
+                {
+                    if (ENABLE_DRAWFPSHISTORY)
+                    {
+                        ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = false;
+                    }
+                    else
+                    {
+                        ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = true;
+                    }
+                }
                 if (e.Key == OpenTK.Input.Key.F12)
                 {
                     using (Bitmap bmp = GrabScreenshot())

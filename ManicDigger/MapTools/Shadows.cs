@@ -133,6 +133,7 @@ namespace ManicDigger
             foreach (var k in lighttoupdate)
             {
                 terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                ischunkready.SetChunkDirty(k.Key.x/chunksize, k.Key.y/chunksize, k.Key.z / chunksize, true);
             }
         }
         Dictionary<Vector3i, bool> lighttoupdate = new Dictionary<Vector3i, bool>();
@@ -412,7 +413,8 @@ namespace ManicDigger
                         //Bad fix, breaks flooding of torches.
                         //Fixes flooding into not yet ready (hence empty) chunks, which would cause
                         //UpdateStartSunlight() to mark a whole column of chunks as fully-lighted.
-                        || !ischunkready.IsChunkReady(n.x, n.y, n.z))
+        //                || !ischunkready.IsChunkReady(n.x, n.y, n.z))
+                        )
                     {
                         continue;
                     }
