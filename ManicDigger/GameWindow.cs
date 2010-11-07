@@ -74,6 +74,8 @@ namespace ManicDigger
     {
         int LoadTexture(string filename);
         int LoadTexture(Bitmap bmp);
+        Matrix4 ModelViewMatrix { get; }
+        Matrix4 ProjectionMatrix { get; }
     }
     public class The3dDummy : IThe3d
     {
@@ -92,6 +94,16 @@ namespace ManicDigger
         public int LoadTexture(Bitmap bmp)
         {
             return TextureId;
+        }
+        #endregion
+        #region IThe3d Members
+        public Matrix4 ModelViewMatrix
+        {
+            get { return new Matrix4(); }
+        }
+        public Matrix4 ProjectionMatrix
+        {
+            get { return new Matrix4(); }
         }
         #endregion
     }
@@ -356,6 +368,10 @@ namespace ManicDigger
 
             return id;
         }
+        #region IThe3d Members
+        public Matrix4 ModelViewMatrix { get; set; }
+        public Matrix4 ProjectionMatrix { get; set; }
+        #endregion
     }
     public interface IKeyboard
     {
@@ -1462,6 +1478,7 @@ namespace ManicDigger
         {
             float aspect_ratio = Width / (float)Height;
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
+            this.m_projectionMatrix = perpective;
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref perpective);
@@ -1877,6 +1894,7 @@ namespace ManicDigger
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
         Matrix4 m_theModelView;
+        Matrix4 m_projectionMatrix;
         bool leftpressedpicking = false;
         public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
         int selectedmodelid = -1;
@@ -2160,7 +2178,6 @@ namespace ManicDigger
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
-
             float density = 0.3f;
             float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             if (terrain.DrawDistance < 256)
@@ -2225,6 +2242,7 @@ namespace ManicDigger
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
             m_theModelView = camera;
+            
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
             {
@@ -3536,6 +3554,16 @@ namespace ManicDigger
         public void UpdateAllTiles()
         {
             terrain.UpdateAllTiles();
+        }
+        #endregion
+        #region IThe3d Members
+        public Matrix4 ModelViewMatrix
+        {
+            get { return m_theModelView; }
+        }
+        public Matrix4 ProjectionMatrix
+        {
+            get { return m_projectionMatrix; }
         }
         #endregion
     }

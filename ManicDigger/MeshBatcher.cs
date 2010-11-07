@@ -8,6 +8,8 @@ namespace ManicDigger
 {
     public class MeshBatcher
     {
+        [Inject]
+        public IFrustumCulling frustumculling { get; set; }
         public MeshBatcher()
         {
         }
@@ -54,9 +56,11 @@ namespace ManicDigger
             public int id;
             public bool transparent;
             public int texture;
+            public Vector3 center;
+            public float radius;
         }
         Queue<ToAdd> toadd = new Queue<ToAdd>();
-        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent, int texture)
+        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent, int texture, Vector3 center, float radius)
         {
             int id;
             lock (toadd)
@@ -71,8 +75,16 @@ namespace ManicDigger
                     id = count;
                     count++;
                 }
-                toadd.Enqueue(new ToAdd() { indices = p, vertices = vertexPositionTexture, id = id,
-                    transparent = transparent, texture = texture });
+                toadd.Enqueue(new ToAdd()
+                {
+                    indices = p,
+                    vertices = vertexPositionTexture,
+                    id = id,
+                    transparent = transparent,
+                    texture = texture,
+                    center = center,
+                    radius = radius
+                });
             }
             return id;
         }
@@ -123,7 +135,8 @@ namespace ManicDigger
                     */
                     GL.EndList();
                     GetListInfo(t.id).indicescount = t.indices.Length;
-                    GetListInfo(t.id).center = t.vertices[0].Position;//todo
+                    GetListInfo(t.id).center = t.center;
+                    GetListInfo(t.id).radius = t.radius;
                     GetListInfo(t.id).transparent = t.transparent;
                 }
                 if (toadd.Count == 0)
@@ -135,13 +148,23 @@ namespace ManicDigger
             {
                 tocall = new int[MAX_DISPLAY_LISTS];
             }
+            frustumculling.CalcFrustumEquations();
             int tocallpos = 0;
             for (int i = 0; i < count; i++)
             {
                 if (!empty.ContainsKey(i))
                 {
-                    if (!GetListInfo(i).transparent)
+                    ListInfo li = GetListInfo(i);
+                    if (!li.transparent)
                     {
+                        Vector3 center = li.center;
+                        float radius = li.radius;
+                        if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
+                        {
+                            li.wasrendered = false;
+                            continue;
+                        }
+                        li.wasrendered = true;
                         tocall[tocallpos] = GetList(i);
                         tocallpos++;
                     }
@@ -154,8 +177,17 @@ namespace ManicDigger
             {
                 if (!empty.ContainsKey(i))
                 {
-                    if (GetListInfo(i).transparent)
+                    ListInfo li = GetListInfo(i);
+                    if (li.transparent)
                     {
+                        Vector3 center = li.center;
+                        float radius = li.radius;
+                        if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
+                        {
+                            li.wasrendered = false;
+                            continue;
+                        }
+                        li.wasrendered = true;
                         tocall[tocallpos] = GetList(i);
                         tocallpos++;
                     }
@@ -189,7 +221,9 @@ namespace ManicDigger
         {
             public int indicescount;
             public Vector3 center;
+            public float radius;
             public bool transparent;
+            public bool wasrendered = true;
         }
         /// <summary>
         /// Indices count in list.
@@ -226,7 +260,11 @@ namespace ManicDigger
                     {
                         if (i < listinfo.Count)
                         {
-                            sum += GetListInfo(i).indicescount;
+                            ListInfo li = GetListInfo(i);
+                            if (li.wasrendered)
+                            {
+                                sum += li.indicescount;
+                            }
                         }
                     }
                 }

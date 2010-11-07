@@ -173,6 +173,10 @@ namespace GameModeFortress
             terrainChunkDrawer.data = gamedata;
             terrainChunkDrawer.mapstorage = clientgame;
             terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
+            var frustumculling = new FrustumCulling() { the3d = the3d };
+            terrainDrawer.batcher = new MeshBatcher() { frustumculling = new FrustumCullingDummy() };
+            terrainDrawer.frustumculling = frustumculling;
+            w.RenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             terrainChunkDrawer.blockdrawertorch = blockdrawertorch;
             terrainChunkDrawer.terrainrenderer = terrainDrawer;
             mapManipulator.getfile = getfile;

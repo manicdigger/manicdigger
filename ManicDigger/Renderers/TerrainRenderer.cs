@@ -249,6 +249,8 @@ namespace ManicDigger
     public class TerrainRenderer : ITerrainRenderer, IDisposable
     {
         [Inject]
+        public MeshBatcher batcher { get; set; }
+        [Inject]
         public IThe3d the3d { get; set; }
         [Inject]
         public IGetFilePath getfile { get; set; }
@@ -268,6 +270,8 @@ namespace ManicDigger
         public IWorldFeaturesDrawer worldfeatures { get; set; }
         [Inject]
         public TerrainChunkRenderer terrainchunkdrawer { get; set; }
+        [Inject]
+        public IFrustumCulling frustumculling { get; set; }
         public event EventHandler<ExceptionEventArgs> OnCrash;
         
         public int chunksize = 16;
@@ -451,10 +455,8 @@ namespace ManicDigger
             {
                 return false;
             }
-            else
-            {
-                ischunkready.SetChunkDirty(x, y, z, false);
-            }
+            if (!InFrustum(x, y, z)) { return false; }
+            ischunkready.SetChunkDirty(x, y, z, false);
             //if any chunk around is dirty too, update it at the same time. 
             //(no flicker on chunk boundaries)            
             List<Vector3i> l = new List<Vector3i>();
@@ -467,6 +469,10 @@ namespace ManicDigger
             if (IsValidChunkPosition(x, y, z + 1) && ischunkready.IsChunkDirty(x, y, z + 1)) { l.Add(new Vector3i(x, y, z + 1)); ischunkready.SetChunkDirty(x, y, z + 1, false); }
             UpdateChunks(l.ToArray());
             return true;
+        }
+        private bool InFrustum(int x, int y, int z)
+        {
+            return frustumculling.SphereInFrustum(x * chunksize + chunksize / 2, z * chunksize + chunksize / 2, y * chunksize + chunksize / 2, chunksize);
         }
         private void UpdateChunks(Vector3i[] l)
         {
@@ -504,7 +510,9 @@ namespace ManicDigger
                     {
                         if (v.indices.Length != 0)
                         {
-                            ids.Add(batcher.Add(v.indices, v.vertices, v.transparent, v.texture));
+                            Vector3 center = new Vector3(v.position.X + chunksize / 2, v.position.Z + chunksize / 2, v.position.Y + chunksize / 2);
+                            float radius = chunksize;
+                            ids.Add(batcher.Add(v.indices, v.vertices, v.transparent, v.texture, center, radius));
                         }
                     }
                     if (ids.Count > 0)
@@ -583,7 +591,6 @@ namespace ManicDigger
         int[, ,][] batchedblocks = new int[100, 100, 100][];
         Dictionary<Vector3i, bool> batchedblockspositions = new Dictionary<Vector3i, bool>();
         Vector3 lastplayerposition;
-        MeshBatcher batcher = new MeshBatcher();
         void BatchedBlocksClear()
         {
             batchedblocks = new int[mapstorage.MapSizeX / chunksize,
