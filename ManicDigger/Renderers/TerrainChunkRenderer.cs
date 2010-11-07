@@ -26,12 +26,28 @@ namespace ManicDigger
         public float BlockShadow = 0.6f;
         public bool ENABLE_ATLAS1D = true;
         int maxblocktypes = 256;
+        byte[, ,] currentChunk;
+        bool started = false;
+        int mapsizex; //cache
+        int mapsizey;
+        int mapsizez;
+        void Start()
+        {
+            currentChunk = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
+            currentChunkShadows = new float[chunksize + 2, chunksize + 2, chunksize + 2];
+            currentChunkDraw = new byte[chunksize, chunksize, chunksize, 6];
+            mapsizex = mapstorage.MapSizeX;
+            mapsizey = mapstorage.MapSizeY;
+            mapsizez = mapstorage.MapSizeZ;
+            started = true;
+        }
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0) { yield break; }
-            if (x >= mapstorage.MapSizeX / chunksize
-                || y >= mapstorage.MapSizeY / chunksize
-                || z >= mapstorage.MapSizeZ / chunksize) { yield break; }
+            if (!started) { Start(); }
+            if (x >= mapsizex / chunksize
+                || y >= mapsizey / chunksize
+                || z >= mapsizez / chunksize) { yield break; }
             if (ENABLE_ATLAS1D)
             {
                 toreturnatlas1d = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
@@ -42,56 +58,24 @@ namespace ManicDigger
                     toreturnatlas1dtransparent[i] = new VerticesIndices();
                 }
             }
-            //else
+            //else //torch block
             {
                 toreturnmain = new VerticesIndices();
                 toreturntransparent = new VerticesIndices();
             }
-            byte[, ,] currentChunk = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
-            for (int xx = 0; xx < chunksize + 2; xx++)
-            {
-                for (int yy = 0; yy < chunksize + 2; yy++)
-                {
-                    for (int zz = 0; zz < chunksize + 2; zz++)
-                    {
-                        int xxx = x * chunksize + xx - 1;
-                        int yyy = y * chunksize + yy - 1;
-                        int zzz = z * chunksize + zz - 1;
-                        if (!IsValidPos(xxx, yyy, zzz))
-                        {
-                            continue;
-                        }
-                        currentChunk[xx, yy, zz] = (byte)mapstorage.GetTerrainBlock(xxx, yyy, zzz);
-                    }
-                }
-            }
-            currentChunkShadows = new float[chunksize + 2, chunksize + 2, chunksize + 2];
-            currentChunkDraw = new byte[chunksize, chunksize, chunksize, 6];
-            for (int xx = 0; xx < chunksize + 2; xx++)
-            {
-                for (int yy = 0; yy < chunksize + 2; yy++)
-                {
-                    for (int zz = 0; zz < chunksize + 2; zz++)
-                    {
-                        currentChunkShadows[xx, yy, zz] = float.NaN;
-                    }
-                }
-            }
+            GetExtendedChunk(x, y, z);
+            if (IsSolidChunk(currentChunk)) { yield break; }
+            ResetCurrentShadows();
             CalculateVisibleFaces(currentChunk);
             CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
-            for (int xx = 0; xx < chunksize; xx++)
+            CalculateBlockPolygons(x, y, z);
+            foreach (VerticesIndicesToLoad v in GetFinalVerticesIndices(x, y, z))
             {
-                for (int yy = 0; yy < chunksize; yy++)
-                {
-                    for (int zz = 0; zz < chunksize; zz++)
-                    {
-                        int xxx = x * chunksize + xx;
-                        int yyy = y * chunksize + yy;
-                        int zzz = z * chunksize + zz;
-                        BlockPolygons(xxx, yyy, zzz, currentChunk);
-                    }
-                }
+                yield return v;
             }
+        }
+        IEnumerable<VerticesIndicesToLoad> GetFinalVerticesIndices(int x, int y, int z)
+        {
             if (ENABLE_ATLAS1D)
             {
                 for (int i = 0; i < toreturnatlas1d.Length; i++)
@@ -124,7 +108,7 @@ namespace ManicDigger
                     }
                 }
             }
-            //else
+            //else //torch block
             {
                 if (toreturnmain.indices.Count > 0)
                 {
@@ -151,6 +135,82 @@ namespace ManicDigger
                 }
             }
         }
+        private void CalculateBlockPolygons(int x, int y, int z)
+        {
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        int xxx = x * chunksize + xx;
+                        int yyy = y * chunksize + yy;
+                        int zzz = z * chunksize + zz;
+                        BlockPolygons(xxx, yyy, zzz, currentChunk);
+                    }
+                }
+            }
+        }
+        private void ResetCurrentShadows()
+        {
+            for (int xx = 0; xx < chunksize + 2; xx++)
+            {
+                for (int yy = 0; yy < chunksize + 2; yy++)
+                {
+                    for (int zz = 0; zz < chunksize + 2; zz++)
+                    {
+                        currentChunkShadows[xx, yy, zz] = float.NaN;
+                    }
+                }
+            }
+        }
+        private bool IsSolidChunk(byte[, ,] currentChunk)
+        {
+            for (int xx = 0; xx < chunksize + 2; xx++)
+            {
+                for (int yy = 0; yy < chunksize + 2; yy++)
+                {
+                    for (int zz = 0; zz < chunksize + 2; zz++)
+                    {
+                        if (currentChunk[xx, yy, zz] != currentChunk[0, 0, 0])
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        private void GetExtendedChunk(int x, int y, int z)
+        {
+            byte[] mapchunk = mapstorage.GetChunk(x * chunksize, y * chunksize, z * chunksize);          
+            for (int xx = 0; xx < chunksize + 2; xx++)
+            {
+                for (int yy = 0; yy < chunksize + 2; yy++)
+                {
+                    for (int zz = 0; zz < chunksize + 2; zz++)
+                    {
+                        int xxx = x * chunksize + xx - 1;
+                        int yyy = y * chunksize + yy - 1;
+                        int zzz = z * chunksize + zz - 1;
+                        if (xx != 0 && yy != 0 && zz != 0
+                            && xx != chunksize + 1 && yy != chunksize + 1 && zz != chunksize + 1)
+                        {
+                            currentChunk[xx, yy, zz] = mapchunk[MapUtil.Index(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
+                        }
+                        else
+                        {
+                            if (!IsValidPos(xxx, yyy, zzz))
+                            {
+                                continue;
+                            }
+                            currentChunk[xx, yy, zz] = (byte)mapstorage.GetTerrainBlock(xxx, yyy, zzz);
+                        }
+                    }
+                }
+            }
+            
+        }
         VerticesIndices toreturnmain;
         VerticesIndices toreturntransparent;
         VerticesIndices[] toreturnatlas1d;
@@ -166,7 +226,7 @@ namespace ManicDigger
             {
                 return false;
             }
-            if (x >= mapstorage.MapSizeX || y >= mapstorage.MapSizeY || z >= mapstorage.MapSizeZ)
+            if (x >= mapsizex || y >= mapsizey || z >= mapsizez)
             {
                 return false;
             }

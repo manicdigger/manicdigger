@@ -195,6 +195,12 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
         #endregion
+        #region ITerrainInfo Members
+        public byte[] GetChunk(int x, int y, int z)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
     public class TileTypeData
     {

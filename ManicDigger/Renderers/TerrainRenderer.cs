@@ -154,6 +154,7 @@ namespace ManicDigger
         int MapSizeZ { get; }
         int GetLight(int globalx, int globaly, int globalz);
         float LightMaxValue();
+        byte[] GetChunk(int x, int y, int z);
     }
     public enum RailSlope
     {

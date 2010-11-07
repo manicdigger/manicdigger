@@ -753,5 +753,11 @@ namespace GameModeFortress
         #region ICurrentSeason Members
         public int CurrentSeason { get; set; }
         #endregion
+        #region ITerrainInfo Members
+        public byte[] GetChunk(int x, int y, int z)
+        {
+            return map.GetChunk(x, y, z);
+        }
+        #endregion
     }
 }
