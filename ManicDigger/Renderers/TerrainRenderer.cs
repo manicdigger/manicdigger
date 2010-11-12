@@ -444,9 +444,11 @@ namespace ManicDigger
                         Thread.Sleep(0);
                     }
                 }
+                updated = updatedn != 0;
             }
             updateThreadRunning--;
         }
+        bool updated = true;
         private bool UpdateChunk(int x, int y, int z)
         {
             if (!IsValidChunkPosition(x, y, z)) { return false; }
@@ -455,7 +457,7 @@ namespace ManicDigger
             {
                 return false;
             }
-            if (!InFrustum(x, y, z)) { return false; }
+            if (!InFrustum(x, y, z) && updated) { return false; }
             ischunkready.SetChunkDirty(x, y, z, false);
             //if any chunk around is dirty too, update it at the same time. 
             //(no flicker on chunk boundaries)            
