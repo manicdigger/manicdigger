@@ -10,31 +10,10 @@ using System.Xml;
 using System.Collections;
 using OpenTK;
 using System.Security.Cryptography;
+using GameModeFortress;
 
-namespace GameModeFortress
+namespace ManicDiggerServer
 {
-    [ProtoContract]
-    public class SaveChunk
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int X;
-        [ProtoMember(2, IsRequired = false)]
-        public int Y;
-        [ProtoMember(3, IsRequired = false)]
-        public int Z;
-        [ProtoMember(4, IsRequired = false)]
-        public int SizeX;
-        [ProtoMember(5, IsRequired = false)]
-        public int SizeY;
-        [ProtoMember(6, IsRequired = false)]
-        public int SizeZ;
-        [ProtoMember(7, IsRequired = false)]
-        public byte[] CompressedChunk;
-        [ProtoMember(8, IsRequired = false)]
-        public long LastUpdate;
-        [ProtoMember(9, IsRequired = false)]
-        public bool IsPopulated;
-    }
     public class ClientException : Exception
     {
         public ClientException(Exception innerException, int clientid)
@@ -55,17 +34,15 @@ namespace GameModeFortress
         public int MapSizeZ;
         [ProtoMember(4, IsRequired = false)]
         public Dictionary<string, PacketServerFiniteInventory> Inventory;
-        [ProtoMember(6, IsRequired = false)]
-        public List<SaveChunk> MapChunks;
         [ProtoMember(7, IsRequired = false)]
         public int Seed;
         [ProtoMember(8, IsRequired = false)]
         public long SimulationCurrentFrame;
     }
-    public class Server
+    public class Server : ICurrentTime
     {
         [Inject]
-        public InfiniteMapChunked map { get; set; }
+        public ServerMap map { get; set; }
         [Inject]
         public IGameData data { get; set; }
         [Inject]
@@ -73,25 +50,25 @@ namespace GameModeFortress
         [Inject]
         public IGetFilePath getfile { get; set; }
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
-        bool ENABLE_FORTRESS = true;
+        [Inject]
+        public IChunkDb chunkdb { get; set; }
         public bool LocalConnectionsOnly { get; set; }
         public int singleplayerport = 25570;
         public void Start()
         {
             LoadConfig();
             {
-                //((GameModeFortress.GameFortress)gameworld).ENABLE_FINITEINVENTORY = !cfgcreative;
-                if (File.Exists(GetSaveFilename()))
+                if (!Directory.Exists(gamepathsaves))
                 {
-                    Console.WriteLine("Loading savegame...");
-                    LoadGame(new MemoryStream(File.ReadAllBytes(GetSaveFilename())));
-                    Console.WriteLine("Savegame loaded: " + GetSaveFilename());
+                    Directory.CreateDirectory(gamepathsaves);
                 }
-                else
+                Console.WriteLine("Loading savegame...");
+                if (!File.Exists(GetSaveFilename()))
                 {
-                    Seed = new Random().Next();
-                    generator.SetSeed(Seed);
+                    Console.WriteLine("Creating new savegame file.");
                 }
+                LoadGame(GetSaveFilename());
+                Console.WriteLine("Savegame loaded: " + GetSaveFilename());
             }
             if (LocalConnectionsOnly)
             {
@@ -100,29 +77,24 @@ namespace GameModeFortress
             Start(cfgport);
         }
         int Seed;
-        private void LoadGame(Stream s)
+        private void LoadGame(string filename)
         {
-            ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(s);
+            chunkdb.Open(filename);
+            byte[] globaldata = chunkdb.GetGlobalData();
+            if (globaldata == null)
+            {
+                //no savegame
+                Seed = new Random().Next();
+                generator.SetSeed(Seed);
+                MemoryStream ms = new MemoryStream();
+                SaveGame(ms);
+                chunkdb.SetGlobalData(ms.ToArray());
+                return;
+            }
+            ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
             generator.SetSeed(save.Seed);
             Seed = save.Seed;
             map.Reset(map.MapSizeX, map.MapSizeX, map.MapSizeZ);
-            foreach (SaveChunk chunk in save.MapChunks)
-            {
-                //same as in client
-                var p = chunk;
-                if (p.SizeX == chunksize && p.SizeY == chunksize && p.SizeZ == chunksize)
-                {
-                    var c = new InfiniteMapChunked.Chunk();
-                    map.chunks[p.X / chunksize, p.Y / chunksize, p.Z / chunksize] = c;
-                    c.compressed = p.CompressedChunk;
-                    c.LastUpdate = p.LastUpdate;
-                    c.IsPopulated = p.IsPopulated;
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-            }
             this.Inventory = save.Inventory;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
         }
@@ -132,37 +104,37 @@ namespace GameModeFortress
         public void SaveGame(Stream s)
         {
             ManicDiggerSave save = new ManicDiggerSave();
-            save.MapChunks = new List<SaveChunk>();
+            SaveAllLoadedChunks();
+            save.Inventory = Inventory;
+            save.Seed = Seed;
+            save.SimulationCurrentFrame = simulationcurrentframe;
+            Serializer.Serialize(s, save);
+        }
+        private void SaveAllLoadedChunks()
+        {
+            List<DbChunk> tosave = new List<DbChunk>();
             for (int cx = 0; cx < map.MapSizeX / chunksize; cx++)
             {
                 for (int cy = 0; cy < map.MapSizeY / chunksize; cy++)
                 {
                     for (int cz = 0; cz < map.MapSizeZ / chunksize; cz++)
                     {
-                        GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[cx, cy, cz];
+                        Chunk c = map.chunks[cx, cy, cz];
                         if (c != null)
                         {
-                            SaveChunk chunk = new SaveChunk();
-                            chunk.SizeX = chunksize;
-                            chunk.SizeY = chunksize;
-                            chunk.SizeZ = chunksize;
-                            chunk.X = cx * chunksize;
-                            chunk.Y = cy * chunksize;
-                            chunk.Z = cz * chunksize;
-                            if (c.compressed != null) { chunk.CompressedChunk = c.compressed; }
-                            else { chunk.CompressedChunk = CompressChunk(c.data); }
-                            if (chunk.CompressedChunk == null) { throw new Exception(); }
-                            chunk.LastUpdate = c.LastUpdate;
-                            chunk.IsPopulated = c.IsPopulated;
-                            save.MapChunks.Add(chunk);
+                            MemoryStream ms = new MemoryStream();
+                            Serializer.Serialize(ms, c);
+                            tosave.Add(new DbChunk() { Position = new Xyz() { X = cx, Y = cy, Z = cz }, Chunk = ms.ToArray() });
+                        }
+                        if (tosave.Count > 20)
+                        {
+                            chunkdb.SetChunks(tosave);
+                            tosave.Clear();
                         }
                     }
                 }
             }
-            save.Inventory = Inventory;
-            save.Seed = Seed;
-            save.SimulationCurrentFrame = simulationcurrentframe;
-            Serializer.Serialize(s, save);
+            chunkdb.SetChunks(tosave);
         }
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
         public string gamepathconfig = GameStorePath.GetStorePath();
@@ -170,28 +142,15 @@ namespace GameModeFortress
         string GetSaveFilename()
         {
             return Path.Combine(gamepathsaves, "default" + MapManipulator.BinSaveExtension);
-            //string key = cfgkey;
-            //if (key == null) { key = ""; }
-            //return Path.Combine(gamepathsaves, key.Replace("-", "") + MapManipulator.BinSaveExtension);
         }
         public void Process11()
         {
             if ((DateTime.Now - lastsave).TotalMinutes > 2)
             {
-                if (!ENABLE_FORTRESS)
-                {
-                    manipulator.SaveMap(map, manipulator.defaultminesave);
-                }
-                else
-                {
-                    MemoryStream ms = new MemoryStream();
-                    SaveGame(ms);
-                    if (!Directory.Exists(gamepathsaves))
-                    {
-                        Directory.CreateDirectory(gamepathsaves);
-                    }
-                    File.WriteAllBytes(GetSaveFilename(), ms.ToArray());
-                }
+                MemoryStream ms = new MemoryStream();
+                SaveGame(ms);
+                chunkdb.SetGlobalData(ms.ToArray());
+
                 Console.WriteLine("Game saved.");
                 lastsave = DateTime.Now;
             }
@@ -355,6 +314,7 @@ namespace GameModeFortress
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
         long simulationcurrentframe;
+        public int SimulationCurrentFrame { get { return (int)simulationcurrentframe; } }
         double oldtime;
         double accumulator;
         public void Process1()
@@ -363,7 +323,6 @@ namespace GameModeFortress
             {
                 return;
             }
-            if (ENABLE_FORTRESS)
             {
                 double currenttime = gettime() - starttime;
                 double deltaTime = currenttime - oldtime;
@@ -490,7 +449,7 @@ namespace GameModeFortress
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyFiniteInventory(k.Key);
             }
-            CompressUnusedChunks();
+            UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
                 ChunkSimulation();
@@ -521,7 +480,7 @@ namespace GameModeFortress
                 foreach (var p in ChunksAroundPlayer(pos))
                 {
                     if (!MapUtil.IsValidPos(map, p.x, p.y, p.z)) { continue; }
-                    GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
+                    Chunk c = map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
                     if (c == null) { continue; }
                     if (c.data == null) { continue; }
                     if (c.LastUpdate < oldesttime)
@@ -529,7 +488,7 @@ namespace GameModeFortress
                         oldesttime = c.LastUpdate;
                         oldestpos = p;
                     }
-                    if (!c.IsPopulated && IsChunksAroundLoaded(p, false, 5))
+                    if (!c.IsPopulated)
                     {
                         PopulateChunk(p);
                         c.IsPopulated = true;
@@ -538,8 +497,8 @@ namespace GameModeFortress
                 if (simulationcurrentframe - oldesttime > chunksimulation_every)
                 {
                     ChunkUpdate(oldestpos, oldesttime);
-                    GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize];
-                    c.LastUpdate = simulationcurrentframe;
+                    Chunk c = map.chunks[oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize];
+                    c.LastUpdate = (int)simulationcurrentframe;
                     return;
                 }
             }
@@ -547,42 +506,6 @@ namespace GameModeFortress
         private void PopulateChunk(Vector3i p)
         {
             generator.PopulateChunk(map, p.x / chunksize, p.y / chunksize, p.z / chunksize, chunksize);
-        }
-        bool IsChunksAroundLoaded(Vector3i gpos, bool aroundPopulated, int range)
-        {
-            //int range = 3;
-            for (int x = 0; x < range; x++)
-            {
-                for (int y = 0; y < range; y++)
-                {
-                    for (int z = 0; z < range; z++)
-                    {
-                        int gpos2x = gpos.x + chunksize * (x - range / 2);
-                        int gpos2y = gpos.y + chunksize * (y - range / 2);
-                        int gpos2z = gpos.z + chunksize * (z - range / 2);
-                        if (!MapUtil.IsValidPos(map, gpos2x, gpos2y, gpos2z))
-                        {
-                            continue;
-                        }
-                        var c = map.chunks[gpos2x / chunksize, gpos2y / chunksize, gpos2z / chunksize];
-                        if (!aroundPopulated)
-                        {
-                            if (c == null)// || c.compressed != null)
-                            {
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            if (c == null || !c.IsPopulated)
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                }
-            }
-            return true;
         }
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {
@@ -710,7 +633,7 @@ namespace GameModeFortress
             return false;
         }
         int CompressUnusedIteration = 0;
-        private void CompressUnusedChunks()
+        private void UnloadUnusedChunks()
         {
             int sizex = map.chunks.GetUpperBound(0) + 1;
             int sizey = map.chunks.GetUpperBound(1) + 1;
@@ -719,28 +642,25 @@ namespace GameModeFortress
             for (int i = 0; i < 100; i++)
             {
                 var v = MapUtil.Pos(CompressUnusedIteration, map.MapSizeX / chunksize, map.MapSizeY / chunksize);
-                GameModeFortress.InfiniteMapChunked.Chunk c = map.chunks[v.x, v.y, v.z];
+                Chunk c = map.chunks[v.x, v.y, v.z];
                 var vg = new Vector3i(v.x * chunksize, v.y * chunksize, v.z * chunksize);
                 bool stop = false;
                 if (c != null)
                 {
-                    if (c.compressed == null)
+                    bool unload = true;
+                    foreach (var k in clients)
                     {
-                        bool compress = true;
-                        foreach (var k in clients)
+                        int viewdist = (int)(chunkdrawdistance * chunksize * 1.5f);
+                        if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
                         {
-                            int viewdist = (int)(chunkdrawdistance * chunksize * 1.5f);
-                            if (DistanceSquared(PlayerBlockPosition(k.Value), vg) <= viewdist * viewdist)
-                            {
-                                compress = false;
-                            }
+                            unload = false;
                         }
-                        if (compress)
-                        {
-                            c.compressed = CompressChunk(c.data);
-                            c.data = null;
-                            stop = true;
-                        }
+                    }
+                    if (unload)
+                    {
+                        DoSaveChunk(v.x, v.y, v.z, c);
+                        map.chunks[v.x, v.y, v.z] = null;
+                        stop = true;
                     }
                 }
                 CompressUnusedIteration++;
@@ -754,6 +674,12 @@ namespace GameModeFortress
                 }
             }
         }
+        private void DoSaveChunk(int x, int y, int z, Chunk c)
+        {
+            MemoryStream ms = new MemoryStream();
+            Serializer.Serialize(ms, c);
+            ChunkDb.SetChunk(chunkdb, x, y, z, ms.ToArray());
+        }
         int SEND_CHUNKS_PER_SECOND = 10;
         private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
         {
@@ -762,11 +688,14 @@ namespace GameModeFortress
             Vector3i playerpos = PlayerBlockPosition(c);
             foreach (var v in ChunksAroundPlayer(playerpos))
             {
-                //if (map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize] == null)
+                Chunk chunk = map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize];
+                if (chunk == null)
                 {
-                    map.GetBlock(v.x, v.y, v.z); //force load
+                    LoadChunk(v);
+                    chunk = map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize];
                 }
-                if (!c.chunksseen.ContainsKey(v) && IsChunksAroundLoaded(v, true, 2))
+                int chunkupdatetime = chunk.LastChange;
+                if (!c.chunksseen.ContainsKey(v) || c.chunksseen[v] < chunkupdatetime)
                 {
                     if (MapUtil.IsValidPos(map, v.x, v.y, v.z))
                     {
@@ -775,6 +704,10 @@ namespace GameModeFortress
                 }
             }
             return tosend;
+        }
+        private void LoadChunk(Vector3i v)
+        {
+            map.GetBlock(v.x, v.y, v.z);
         }
         private int NotifyMapChunks(int clientid, int limit)
         {
@@ -806,20 +739,10 @@ namespace GameModeFortress
                     CompressedChunk = compressedchunk,
                 };
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
-                c.chunksseen.Add(v, true);
+                c.chunksseen[v] = (int)simulationcurrentframe;
                 sent++;
             }
             return sent;
-        }
-        void ChunkDirty(Vector3i pos)
-        {
-            int x = pos.x / chunksize * chunksize;
-            int y = pos.y / chunksize * chunksize;
-            int z = pos.z / chunksize * chunksize;
-            foreach (var k in clients)
-            {
-                k.Value.chunksseen.Remove(new Vector3i(x, y, z));
-            }
         }
         const string invalidplayername = "invalid";
         private void NotifyFiniteInventory(int clientid)
@@ -1261,7 +1184,7 @@ namespace GameModeFortress
         }
         void SetBlockAndNotify(int x, int y, int z, int blocktype)
         {
-            map.SetBlock(x, y, z, blocktype);
+            map.SetBlockNotMakingDirty(x, y, z, blocktype);
             NotifyBlock(x, y, z, blocktype);
         }
         int TotalAmount(Dictionary<int, int> inventory)
@@ -1585,7 +1508,7 @@ namespace GameModeFortress
             public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
-            public Dictionary<Vector3i, bool> chunksseen = new Dictionary<Vector3i, bool>();
+            public Dictionary<Vector3i, int> chunksseen = new Dictionary<Vector3i, int>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public List<byte[]> blobstosend = new List<byte[]>();

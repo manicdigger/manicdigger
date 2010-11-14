@@ -9,6 +9,7 @@ using System.Diagnostics;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
 using System.Threading;
+using ManicDiggerServer;
 
 namespace GameModeFortress
 {
@@ -325,17 +326,29 @@ namespace GameModeFortress
             }
             else
             {
-                new Thread(ServerThread).Start();
+                new Thread(ServerThreadStart).Start();
                 p.GameUrl = "127.0.0.1:25570";
                 p.User = "Local";
             }
             p.Start();
         }
         public static IGameExit exit;
+        static void ServerThreadStart()
+        {
+            try
+            {
+                ServerThread();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
+        }
         static void ServerThread()
         {
             Server s = new Server();
-            var map = new GameModeFortress.InfiniteMapChunked();
+            var map = new ManicDiggerServer.ServerMap();
+            map.currenttime = s;
             map.chunksize = 32;
             var generator = new WorldGenerator();
             map.generator = generator;
@@ -347,6 +360,9 @@ namespace GameModeFortress
             s.craftingtabletool = new CraftingTableTool() { map = map };
             s.LocalConnectionsOnly = true;
             s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite() };
+            s.chunkdb = chunkdb;
+            map.chunkdb = chunkdb;
             s.Start();
             for (; ; )
             {

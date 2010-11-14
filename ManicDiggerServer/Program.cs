@@ -20,7 +20,8 @@ namespace ManicDiggerServer
         static void Main(string[] args)
         {
             Server s = new Server();
-            var map = new GameModeFortress.InfiniteMapChunked();
+            var map = new ManicDiggerServer.ServerMap();
+            map.currenttime = s;
             map.chunksize = 32;
             var generator = new WorldGenerator();
             map.generator = generator;
@@ -45,6 +46,9 @@ namespace ManicDiggerServer
             }
             s.LocalConnectionsOnly = singleplayer;
             s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite() };
+            s.chunkdb = chunkdb;
+            map.chunkdb = chunkdb;
             s.Start();
             if ((!singleplayer) && (s.cfgpublic))
             {
