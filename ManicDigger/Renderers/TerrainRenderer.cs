@@ -216,7 +216,6 @@ namespace ManicDigger
         bool IsChunkReady(int x, int y, int z);
         bool IsChunkDirty(int x, int y, int z);
         void SetChunkDirty(int x, int y, int z, bool dirty);
-        void SetAllChunksDirty();
     }
     public class IsChunkReadyDummy : IIsChunkReady
     {
@@ -314,11 +313,17 @@ namespace ManicDigger
             this.mapsizex = mapstorage.MapSizeX;
             this.mapsizey = mapstorage.MapSizeY;
             this.mapsizez = mapstorage.MapSizeZ;
+            this.mapsizexchunks = mapstorage.MapSizeX / chunksize;
+            this.mapsizeychunks = mapstorage.MapSizeY / chunksize;
+            this.mapsizezchunks = mapstorage.MapSizeZ / chunksize;
             new Thread(UpdateThreadStart).Start();
         }
         int mapsizex;//cache
         int mapsizey;
         int mapsizez;
+        int mapsizexchunks;
+        int mapsizeychunks;
+        int mapsizezchunks;
         public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
         {
             terrainTexture = the3d.LoadTexture(atlas2d);
@@ -422,20 +427,32 @@ namespace ManicDigger
 
                 Vector3i[] chunksnear = ChunksNear();
                 int updatedn = 0;
+                Vector3 playerpos = localplayerposition.LocalPlayerPosition;
+                int pdx = (int)playerpos.X / chunksize;
+                int pdy = (int)playerpos.Z / chunksize;
+                int pdz = (int)playerpos.Y / chunksize;
+                
                 for (int i = 0; i < chunksnear.Length; i++)//chunksnear.Length; i++)
                 {
-                    Vector3 playerpos = localplayerposition.LocalPlayerPosition;
-                    int x = chunksnear[i].x + (int)playerpos.X / chunksize;
-                    int y = chunksnear[i].y + (int)playerpos.Z / chunksize;
-                    int z = chunksnear[i].z + (int)playerpos.Y / chunksize;
+                    int x = chunksnear[i].x + pdx;
+                    int y = chunksnear[i].y + pdy;
+                    int z = chunksnear[i].z + pdz;
+                    if (!IsValidChunkPosition(x, y, z))
+                    {
+                        continue;
+                    }
                     updatedn += UpdateChunk(x, y, z) ? 1 : 0;
                     if (updatedn > 10) { break; }
                     //priority
                     for (int a = 0; a < 7; a++)
                     {
-                        int xa = chunksnear[a].x + (int)playerpos.X / chunksize;
-                        int ya = chunksnear[a].y + (int)playerpos.Z / chunksize;
-                        int za = chunksnear[a].z + (int)playerpos.Y / chunksize;
+                        int xa = chunksnear[a].x + pdx;
+                        int ya = chunksnear[a].y + pdy;
+                        int za = chunksnear[a].z + pdz;
+                        if (!IsValidChunkPosition(xa, ya, za))
+                        {
+                            continue;
+                        }
                         updatedn += UpdateChunk(xa, ya, za) ? 1 : 0;
                     }
                     if (updatedn > 10) { break; }
@@ -451,13 +468,11 @@ namespace ManicDigger
         bool updated = true;
         private bool UpdateChunk(int x, int y, int z)
         {
-            if (!IsValidChunkPosition(x, y, z)) { return false; }
-            //if (!ischunkready.IsChunkReady(x * chunksize, y * chunksize, z * chunksize)) { return false; }
             if (!ischunkready.IsChunkDirty(x, y, z))
             {
                 return false;
             }
-            if (!InFrustum(x, y, z) && updated) { return false; }
+            if (updated && !InFrustum(x, y, z)) { return false; }
             ischunkready.SetChunkDirty(x, y, z, false);
             //if any chunk around is dirty too, update it at the same time. 
             //(no flicker on chunk boundaries)            
@@ -532,28 +547,39 @@ namespace ManicDigger
         private IEnumerable<Vector3i> FindChunksToDelete()
         {
             Vector3 playerpos = localplayerposition.LocalPlayerPosition;
+            int px = (int)playerpos.X;
+            int py = (int)playerpos.Y;
+            int pz = (int)playerpos.Z;
             int i = 0;
-            foreach (var k in batchedblockspositions)
+            int viewdistsquared = (int)((chunkdrawdistance + 2) * chunksize * 1.3);
+            viewdistsquared = viewdistsquared * viewdistsquared;
+            foreach (Vector3i k in batchedblockspositions.Keys)
             {
-                int x = k.Key.x;
-                int y = k.Key.y;
-                int z = k.Key.z;
+                int x = k.x;
+                int y = k.y;
+                int z = k.z;
                 if (batchedblocks[x, y, z] == null
                     || batchedblocks[x, y, z].Length == 0)
                 {
                     continue;
                 }
-                if ((new Vector3(x * chunksize, z * chunksize, y * chunksize)
-                    - playerpos).Length
-                    > (chunkdrawdistance + 2) * chunksize * 1.3)
+
+                if (DistanceSquared(x * chunksize, z * chunksize, y * chunksize, px, py, pz) > viewdistsquared)
                 {
-                    yield return new Vector3i(x, y, z);                    
+                    yield return new Vector3i(x, y, z);
                 }
-                if ((i++) % 50 == 0)
+                if ((i++) % 100 == 0)
                 {
                     Thread.Sleep(0);
                 }
             }
+        }
+        static int DistanceSquared(int x1, int y1, int z1, int x2, int y2, int z2)
+        {
+            int dx = x1 - x2;
+            int dy = y1 - y2;
+            int dz = z1 - z2;
+            return dx * dx + dy * dy + dz * dz;
         }
         private bool IsValidChunkPosition(int xx, int yy)
         {
@@ -562,9 +588,9 @@ namespace ManicDigger
         private bool IsValidChunkPosition(int xx, int yy, int zz)
         {
             return xx >= 0 && yy >= 0 && zz >= 0
-                && xx < mapsizex / chunksize
-                && yy < mapsizey / chunksize
-                && zz < mapsizez / chunksize;
+                && xx < mapsizexchunks
+                && yy < mapsizeychunks
+                && zz < mapsizezchunks;
         }
         private IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
@@ -601,14 +627,10 @@ namespace ManicDigger
         }
         public void UpdateAllTiles()
         {
-            ischunkready.SetAllChunksDirty();
-            /*
-            lock (terrainlock)
+            foreach (var v in batchedblockspositions)
             {
-                BatchedBlocksClear();
-                batcher.Clear();
+                ischunkready.SetChunkDirty(v.Key.x, v.Key.y, v.Key.z, true);
             }
-            */
             return;
         }
         IEnumerable<Vector3> TilesAround(Vector3 pos)

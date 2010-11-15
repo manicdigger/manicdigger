@@ -18,7 +18,7 @@ namespace GameModeFortress
         [Inject]
         public IWorldGenerator generator { get; set; }
         public Chunk[, ,] chunks;
-        bool[, ,] notchunksdirty;
+        bool[, ,] chunksdirty;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -32,7 +32,7 @@ namespace GameModeFortress
         {
             byte[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
-            notchunksdirty[x / chunksize, y / chunksize, z / chunksize] = false;
+            SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
         }
         public float WaterLevel { get; set; }
         public void Dispose()
@@ -76,7 +76,7 @@ namespace GameModeFortress
             MapSizeY = sizey;
             MapSizeZ = sizez;
             chunks = new Chunk[sizex / chunksize, sizey / chunksize, sizez / chunksize];
-            SetAllChunksDirty();
+            SetAllChunksNotDirty();
         }
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
@@ -105,7 +105,7 @@ namespace GameModeFortress
                 {
                     for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
                     {
-                        notchunksdirty[(x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize] = false;
+                        SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true);
                         SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
                     }
                 }
@@ -152,24 +152,22 @@ namespace GameModeFortress
         #region IIsChunkReady Members
         public bool IsChunkReady(int x, int y, int z)
         {
-            return !notchunksdirty[x / chunksize, y / chunksize, z / chunksize];
+            return IsChunkDirty(x, y, z);
         }
         #endregion
         #region IIsChunkReady Members
         public bool IsChunkDirty(int x, int y, int z)
         {
-            return !notchunksdirty[x, y, z];
+            return chunksdirty[x, y, z];
         }
         public void SetChunkDirty(int x, int y, int z, bool dirty)
         {
-            notchunksdirty[x, y, z] = !dirty;
+            chunksdirty[x, y, z] = dirty;
         }
         #endregion
-        #region IIsChunkReady Members
-        public void SetAllChunksDirty()
+        public void SetAllChunksNotDirty()
         {
-            notchunksdirty = new bool[MapSizeX / chunksize, MapSizeY / chunksize, MapSizeZ / chunksize];
+            chunksdirty = new bool[MapSizeX / chunksize, MapSizeY / chunksize, MapSizeZ / chunksize];
         }
-        #endregion
     }
 }
