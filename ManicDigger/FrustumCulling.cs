@@ -30,18 +30,58 @@ namespace ManicDigger
     {
         [Inject]
         public IThe3d the3d { get; set; }
-        float[,] frustum = new float[6, 4];
+        float frustum00;
+        float frustum01;
+        float frustum02;
+        float frustum03;
+
+        float frustum10;
+        float frustum11;
+        float frustum12;
+        float frustum13;
+
+        float frustum20;
+        float frustum21;
+        float frustum22;
+        float frustum23;
+
+        float frustum30;
+        float frustum31;
+        float frustum32;
+        float frustum33;
+
+        float frustum40;
+        float frustum41;
+        float frustum42;
+        float frustum43;
+
+        float frustum50;
+        float frustum51;
+        float frustum52;
+        float frustum53;
         public bool SphereInFrustum(float x, float y, float z, float radius)
         {
-            int p;
             float d = 0;
 
-            for (p = 0; p < 6; p++)
-            {
-                d = frustum[p, 0] * x + frustum[p, 1] * y + frustum[p, 2] * z + frustum[p, 3];
-                if (d <= -radius)
-                    return false;
-            }
+            d = frustum00 * x + frustum01 * y + frustum02 * z + frustum03;
+            if (d <= -radius)
+                return false;
+            d = frustum10 * x + frustum11 * y + frustum12 * z + frustum13;
+            if (d <= -radius)
+                return false;
+            d = frustum20 * x + frustum21 * y + frustum22 * z + frustum23;
+            if (d <= -radius)
+                return false;
+            d = frustum30 * x + frustum31 * y + frustum32 * z + frustum33;
+            if (d <= -radius)
+                return false;
+            d = frustum40 * x + frustum41 * y + frustum42 * z + frustum43;
+            if (d <= -radius)
+                return false;
+            d = frustum50 * x + frustum51 * y + frustum52 * z + frustum53;
+            if (d <= -radius)
+                return false;
+
             return true;
         }
         /// <summary>
@@ -68,82 +108,82 @@ namespace ManicDigger
                 float* clip1 = (float*)(&matFrustum);
                 {
                     // Extract the numbers for the RIGHT plane
-                    frustum[0, 0] = clip1[3] - clip1[0];
-                    frustum[0, 1] = clip1[7] - clip1[4];
-                    frustum[0, 2] = clip1[11] - clip1[8];
-                    frustum[0, 3] = clip1[15] - clip1[12];
+                    frustum00 = clip1[3] - clip1[0];
+                    frustum01 = clip1[7] - clip1[4];
+                    frustum02 = clip1[11] - clip1[8];
+                    frustum03 = clip1[15] - clip1[12];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[0, 0] * frustum[0, 0] + frustum[0, 1] * frustum[0, 1] + frustum[0, 2] * frustum[0, 2]);
-                    frustum[0, 0] /= t;
-                    frustum[0, 1] /= t;
-                    frustum[0, 2] /= t;
-                    frustum[0, 3] /= t;
+                    t = (float)Math.Sqrt(frustum00 * frustum00 + frustum01 * frustum01 + frustum02 * frustum02);
+                    frustum00 /= t;
+                    frustum01 /= t;
+                    frustum02 /= t;
+                    frustum03 /= t;
 
                     // Extract the numbers for the LEFT plane
-                    frustum[1, 0] = clip1[3] + clip1[0];
-                    frustum[1, 1] = clip1[7] + clip1[4];
-                    frustum[1, 2] = clip1[11] + clip1[8];
-                    frustum[1, 3] = clip1[15] + clip1[12];
+                    frustum10 = clip1[3] + clip1[0];
+                    frustum11 = clip1[7] + clip1[4];
+                    frustum12 = clip1[11] + clip1[8];
+                    frustum13 = clip1[15] + clip1[12];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[1, 0] * frustum[1, 0] + frustum[1, 1] * frustum[1, 1] + frustum[1, 2] * frustum[1, 2]);
-                    frustum[1, 0] /= t;
-                    frustum[1, 1] /= t;
-                    frustum[1, 2] /= t;
-                    frustum[1, 3] /= t;
+                    t = (float)Math.Sqrt(frustum10 * frustum10 + frustum11 * frustum11 + frustum12 * frustum12);
+                    frustum10 /= t;
+                    frustum11 /= t;
+                    frustum12 /= t;
+                    frustum13 /= t;
 
                     // Extract the BOTTOM plane
-                    frustum[2, 0] = clip1[3] + clip1[1];
-                    frustum[2, 1] = clip1[7] + clip1[5];
-                    frustum[2, 2] = clip1[11] + clip1[9];
-                    frustum[2, 3] = clip1[15] + clip1[13];
+                    frustum20 = clip1[3] + clip1[1];
+                    frustum21 = clip1[7] + clip1[5];
+                    frustum22 = clip1[11] + clip1[9];
+                    frustum23 = clip1[15] + clip1[13];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[2, 0] * frustum[2, 0] + frustum[2, 1] * frustum[2, 1] + frustum[2, 2] * frustum[2, 2]);
-                    frustum[2, 0] /= t;
-                    frustum[2, 1] /= t;
-                    frustum[2, 2] /= t;
-                    frustum[2, 3] /= t;
+                    t = (float)Math.Sqrt(frustum20 * frustum20 + frustum21 * frustum21 + frustum22 * frustum22);
+                    frustum20 /= t;
+                    frustum21 /= t;
+                    frustum22 /= t;
+                    frustum23 /= t;
 
                     // Extract the TOP plane
-                    frustum[3, 0] = clip1[3] - clip1[1];
-                    frustum[3, 1] = clip1[7] - clip1[5];
-                    frustum[3, 2] = clip1[11] - clip1[9];
-                    frustum[3, 3] = clip1[15] - clip1[13];
+                    frustum30 = clip1[3] - clip1[1];
+                    frustum31 = clip1[7] - clip1[5];
+                    frustum32 = clip1[11] - clip1[9];
+                    frustum33 = clip1[15] - clip1[13];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[3, 0] * frustum[3, 0] + frustum[3, 1] * frustum[3, 1] + frustum[3, 2] * frustum[3, 2]);
-                    frustum[3, 0] /= t;
-                    frustum[3, 1] /= t;
-                    frustum[3, 2] /= t;
-                    frustum[3, 3] /= t;
+                    t = (float)Math.Sqrt(frustum30 * frustum30 + frustum31 * frustum31 + frustum32 * frustum32);
+                    frustum30 /= t;
+                    frustum31 /= t;
+                    frustum32 /= t;
+                    frustum33 /= t;
 
                     // Extract the FAR plane
-                    frustum[4, 0] = clip1[3] - clip1[2];
-                    frustum[4, 1] = clip1[7] - clip1[6];
-                    frustum[4, 2] = clip1[11] - clip1[10];
-                    frustum[4, 3] = clip1[15] - clip1[14];
+                    frustum40 = clip1[3] - clip1[2];
+                    frustum41 = clip1[7] - clip1[6];
+                    frustum42 = clip1[11] - clip1[10];
+                    frustum43 = clip1[15] - clip1[14];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[4, 0] * frustum[4, 0] + frustum[4, 1] * frustum[4, 1] + frustum[4, 2] * frustum[4, 2]);
-                    frustum[4, 0] /= t;
-                    frustum[4, 1] /= t;
-                    frustum[4, 2] /= t;
-                    frustum[4, 3] /= t;
+                    t = (float)Math.Sqrt(frustum40 * frustum40 + frustum41 * frustum41 + frustum42 * frustum42);
+                    frustum40 /= t;
+                    frustum41 /= t;
+                    frustum42 /= t;
+                    frustum43 /= t;
 
                     // Extract the NEAR plane
-                    frustum[5, 0] = clip1[3] + clip1[2];
-                    frustum[5, 1] = clip1[7] + clip1[6];
-                    frustum[5, 2] = clip1[11] + clip1[10];
-                    frustum[5, 3] = clip1[15] + clip1[14];
+                    frustum50 = clip1[3] + clip1[2];
+                    frustum51 = clip1[7] + clip1[6];
+                    frustum52 = clip1[11] + clip1[10];
+                    frustum53 = clip1[15] + clip1[14];
 
                     // Normalize the result
-                    t = (float)Math.Sqrt(frustum[5, 0] * frustum[5, 0] + frustum[5, 1] * frustum[5, 1] + frustum[5, 2] * frustum[5, 2]);
-                    frustum[5, 0] /= t;
-                    frustum[5, 1] /= t;
-                    frustum[5, 2] /= t;
-                    frustum[5, 3] /= t;
+                    t = (float)Math.Sqrt(frustum50 * frustum50 + frustum51 * frustum51 + frustum52 * frustum52);
+                    frustum50 /= t;
+                    frustum51 /= t;
+                    frustum52 /= t;
+                    frustum53 /= t;
                 }
             }
         }

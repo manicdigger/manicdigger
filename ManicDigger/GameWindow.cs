@@ -2242,7 +2242,9 @@ namespace ManicDigger
                 camera = FppCamera();
             GL.LoadMatrix(ref camera);
             m_theModelView = camera;
-            
+
+            if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
+
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
             {
@@ -2291,6 +2293,7 @@ namespace ManicDigger
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        public event EventHandler BeforeRenderFrame;
         bool ENABLE_DRAW2D = true;
         int screenshotflash;
         int playertexturedefault = -1;
