@@ -45,7 +45,7 @@ namespace ManicDigger.Renderers
             float historyheight = 80;
             int posx = 25;
             int posy = viewportsize.Height - (int)historyheight - 20;
-            Color[] colors = new[] { Color.Black, Color.Red };
+            FastColor[] colors = new[] { new FastColor(Color.Black), new FastColor(Color.Red) };
             Color linecolor = Color.White;
 
             if (todraw == null)

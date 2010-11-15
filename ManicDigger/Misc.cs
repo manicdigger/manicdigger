@@ -31,17 +31,31 @@ namespace ManicDigger
             }
         }
     }
+    public struct FastColor
+    {
+        public FastColor(Color c)
+        {
+            this.A = c.A;
+            this.R = c.R;
+            this.G = c.G;
+            this.B = c.B;
+        }
+        public byte A;
+        public byte R;
+        public byte G;
+        public byte B;
+    }
     public static class Interpolation
     {
-        public static Color InterpolateColor(float progress, params Color[] colors)
+        public static Color InterpolateColor(float progress, params FastColor[] colors)
         {
             int colora = (int)((colors.Length - 1) * progress);
             if (colora < 0) { colora = 0; }
             if (colora >= colors.Length) { colora = colors.Length - 1; }
             int colorb = colora + 1;
             if (colorb >= colors.Length) { colorb = colors.Length - 1; }
-            Color a = colors[colora];
-            Color b = colors[colorb];
+            FastColor a = colors[colora];
+            FastColor b = colors[colorb];
             float p = (progress - (float)colora / (colors.Length - 1)) * (colors.Length - 1);
             int R = (int)(a.R + (b.R - a.R) * p);
             int G = (int)(a.G + (b.G - a.G) * p);

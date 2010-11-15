@@ -50,8 +50,6 @@ namespace ManicDigger
         public WeaponBlockInfo info { get; set; }
         [Inject]
         public IBlockDrawerTorch blockdrawertorch { get; set; }
-        //[Inject]
-        //public IKeyboard keyboard { get; set; }
         [Inject]
         public ILocalPlayerPosition playerpos { get; set; }
         public void SetAttack(bool isattack, bool build)
@@ -71,6 +69,10 @@ namespace ManicDigger
         }
         float attack = -1;
         bool build = false;
+        List<ushort> myelements;
+        List<VertexPositionTexture> myvertices;
+        int oldMaterial;
+        float oldLight;
         public void DrawWeapon(float dt)
         {
             int light;
@@ -86,44 +88,30 @@ namespace ManicDigger
             }
             GL.Color3(Color.FromArgb(light, light, light));
             GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
-            List<ushort> myelements = new List<ushort>();
-            List<VertexPositionTexture> myvertices = new List<VertexPositionTexture>();
-            int x = 0;
-            int y = 0;
-            int z = 0;
-            if (info.IsTorch())
+
+            int curmaterial=info.viewport.MaterialSlots[info.viewport.activematerial];
+            float curlight = info.Light;
+            if (curmaterial != oldMaterial || curlight != oldLight)
             {
-                blockdrawertorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
+                myelements = new List<ushort>();
+                myvertices = new List<VertexPositionTexture>();
+                int x = 0;
+                int y = 0;
+                int z = 0;
+                if (info.IsTorch())
+                {
+                    blockdrawertorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
+                }
+                else
+                {
+                    DrawCube(myelements, myvertices, x, y, z);
+                }
             }
-            else
-            {
-                DrawCube(myelements, myvertices, x, y, z);
-            }
+            oldMaterial = curmaterial;
+            oldLight = curlight;
             for (int i = 0; i < myvertices.Count; i++)
             {
                 var v = myvertices[i];
-                //v.Position += new Vector3(-0.5f, 0, -0.5f);
-                //v.Position += new Vector3(2, 2, 2);
-                /*
-                Matrix4 m2;
-                Matrix4.CreateRotationY(0.9f, out m2);
-                v.Position = Vector3.TransformVector(v.Position, m2);
-
-                Matrix4 m3;
-                Matrix4.CreateRotationX(0.3f, out m3);
-                v.Position = Vector3.TransformVector(v.Position, m3);
-                */
-
-                //Matrix4 m;
-                //Matrix4.CreateRotationY(-player.playerorientation.Y, out m);
-                //v.Position = Vector3.TransformPosition(v.Position, m);
-
-                ////Matrix4.CreateRotationX(player.playerorientation.X, out m);
-                ////v.Position = Vector3.TransformPosition(v.Position, m);
-
-                //v.Position += new Vector3(0, -0.2f, 0);
-                //v.Position += player.playerposition;
-                //v.Position += toVectorInFixedSystem1(0.7f, 0, 1, player.playerorientation.X, player.playerorientation.Y);
                 myvertices[i] = v;
             }
             GL.Clear(ClearBufferMask.DepthBufferBit);
@@ -132,22 +120,9 @@ namespace ManicDigger
             GL.LoadIdentity();
 
             GL.Translate(0.3 + zzzposz - attackt * 5, -1.5f + zzzposx - buildt * 10, -1.5f + zzzposy);
-            //GL.Scale(2, 2, 2);
-            GL.Rotate(30 + (zzzx) - attackt * 300, new Vector3(1, 0, 0));//zzz += 0.01f
+            GL.Rotate(30 + (zzzx) - attackt * 300, new Vector3(1, 0, 0));
             GL.Rotate(60 + zzzy, new Vector3(0, 1, 0));
             GL.Scale(0.8, 0.8, 0.8);
-            //GL.Rotate(0-(zzz+=0.05f), new Vector3(0, 1, 0));
-            //GL.Translate(0, -2, 0);
-
-
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Left]) zzzx += -0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Right]) zzzx += 0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Up]) zzzy += 0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Down]) zzzy += -0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Keypad4]) zzzposx += -0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Keypad6]) zzzposx += 0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Keypad8]) zzzposz += 0.1f;
-            //if (keyboard.keyboardstate[OpenTK.Input.Key.Keypad2]) zzzposz += -0.1f;
 
             bool move = oldplayerpos != playerpos.LocalPlayerPosition;
             oldplayerpos = playerpos.LocalPlayerPosition;
@@ -209,8 +184,6 @@ namespace ManicDigger
             }
             GL.End();
             GL.PopMatrix();
-            //Console.WriteLine("({0}||{1}):({2}||{3})", zzzx, zzzy, zzzposx, zzzposy);
-            //(-19,00004||-13,70002):(-0,2000001||-1,3)
         }
         float attackt = 0;
         float buildt;

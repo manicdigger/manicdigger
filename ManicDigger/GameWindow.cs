@@ -2412,6 +2412,10 @@ namespace ManicDigger
             totaltime += dt;
             foreach (var k in clients.Players)
             {
+                if (k.Key == 255)
+                {
+                    continue;
+                }
                 if (!playerdrawinfo.ContainsKey(k.Key))
                 {
                     playerdrawinfo[k.Key] = new PlayerDrawInfo();
@@ -2845,7 +2849,7 @@ namespace ManicDigger
                 int sizex = 400;
                 int sizey = 40;
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, Color.Black);
-                Color c = Interpolation.InterpolateColor(progressratio, Color.Red, Color.Yellow, Color.Green);
+                Color c = Interpolation.InterpolateColor(progressratio, new FastColor(Color.Red), new FastColor(Color.Yellow), new FastColor(Color.Green));
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, c);
             }
         }
@@ -3122,12 +3126,43 @@ namespace ManicDigger
                 Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
             }
         }
+        struct TextAndSize
+        {
+            public string text;
+            public float size;
+            public override int GetHashCode()
+            {
+                return text.GetHashCode() % size.GetHashCode();
+            }
+            public override bool Equals(object obj)
+            {
+                if (obj is TextAndSize)
+                {
+                    TextAndSize other = (TextAndSize)obj;
+                    return this.text == other.text && this.size == other.size;
+                }
+                return base.Equals(obj);
+            }
+        }
+        Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
         SizeF TextSize(string text, float fontsize)
         {
-            var font = new Font("Verdana", fontsize);
-            Bitmap bmp = new Bitmap(1, 1);
-            Graphics g = Graphics.FromImage(bmp);
-            SizeF size = g.MeasureString(text, font);
+            SizeF size;
+            if (textsizes.TryGetValue(new TextAndSize() { text = text, size = fontsize }, out size))
+            {
+                return size;
+            }
+            using (Font font = new Font("Verdana", fontsize))
+            {
+                using (Bitmap bmp = new Bitmap(1, 1))
+                {
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        size = g.MeasureString(text, font);
+                    }
+                }
+            }
+            textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
             return size;
         }
         class CachedTexture
@@ -3227,12 +3262,6 @@ namespace ManicDigger
             GL.TexCoord2(rect.Right, rect.Top); GL.Vertex2(x2, y1);
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
             GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex2(x1, y2);
-            /*
-            GL.TexCoord2(1, 1); GL.Vertex2(x2, y2);
-            GL.TexCoord2(1, 0); GL.Vertex2(x2, y1);
-            GL.TexCoord2(0, 0); GL.Vertex2(x1, y1);
-            GL.TexCoord2(0, 1); GL.Vertex2(x1, y2);
-            */
             GL.End();
             GL.Enable(EnableCap.DepthTest);
             GL.PopAttrib();

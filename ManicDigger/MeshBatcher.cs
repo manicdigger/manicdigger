@@ -23,13 +23,8 @@ namespace ManicDigger
             this.lists.Add(lists);
         }
         public int listincrease = 1000;
-        //public int nlists = 50000;
         private int GetList(int i)
         {
-            while (i >= lists.Count * listincrease)
-            {
-                genlists();
-            }
             return lists[i / listincrease] + i % listincrease;
         }
         private void ClearLists()
@@ -47,6 +42,7 @@ namespace ManicDigger
         int count = 0;
         public void Remove(int p)
         {
+            GetListInfo(p).empty = true;
             empty[p] = 0;
         }
         struct ToAdd
@@ -88,6 +84,22 @@ namespace ManicDigger
             }
             return id;
         }
+        private void AllocateLists()
+        {
+            while (count >= lists.Count * listincrease)
+            {
+                genlists();
+            }
+            while (count >= listinfoCount)
+            {
+                Array.Resize(ref listinfo, listinfoCount + listincrease);
+                for (int i = listinfoCount; i < listinfoCount + listincrease; i++)
+                {
+                    listinfo[i] = new ListInfo();
+                }
+                listinfoCount += listincrease;
+            }
+        }
         Dictionary<int, int> empty = new Dictionary<int, int>();
         float addperframe = 0.5f;
         float addcounter = 0;
@@ -95,6 +107,7 @@ namespace ManicDigger
         public void Draw(Vector3 playerpos)
         {
             this.playerpos = playerpos;
+            AllocateLists();
             lock (toadd)
             {
                 addcounter += addperframe;
@@ -134,10 +147,12 @@ namespace ManicDigger
                     GL.End();
                     */
                     GL.EndList();
-                    GetListInfo(t.id).indicescount = t.indices.Length;
-                    GetListInfo(t.id).center = t.center;
-                    GetListInfo(t.id).radius = t.radius;
-                    GetListInfo(t.id).transparent = t.transparent;
+                    ListInfo li = GetListInfo(t.id);
+                    li.indicescount = t.indices.Length;
+                    li.center = t.center;
+                    li.radius = t.radius;
+                    li.transparent = t.transparent;
+                    li.empty = false;
                 }
                 if (toadd.Count == 0)
                 {
@@ -152,22 +167,19 @@ namespace ManicDigger
             int tocallpos = 0;
             for (int i = 0; i < count; i++)
             {
-                if (!empty.ContainsKey(i))
+                ListInfo li = listinfo[i];
+                if ((!li.empty) && (!li.transparent))
                 {
-                    ListInfo li = GetListInfo(i);
-                    if (!li.transparent)
+                    Vector3 center = li.center;
+                    float radius = li.radius;
+                    if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
                     {
-                        Vector3 center = li.center;
-                        float radius = li.radius;
-                        if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
-                        {
-                            li.wasrendered = false;
-                            continue;
-                        }
-                        li.wasrendered = true;
-                        tocall[tocallpos] = GetList(i);
-                        tocallpos++;
+                        li.wasrendered = false;
+                        continue;
                     }
+                    li.wasrendered = true;
+                    tocall[tocallpos] = GetList(i);
+                    tocallpos++;
                 }
             }
             GL.CallLists(tocallpos, ListNameType.Int, tocall);
@@ -175,22 +187,19 @@ namespace ManicDigger
             GL.Disable(EnableCap.CullFace);//for water.
             for (int i = 0; i < count; i++)
             {
-                if (!empty.ContainsKey(i))
+                ListInfo li = listinfo[i];
+                if ((!li.empty) && li.transparent)
                 {
-                    ListInfo li = GetListInfo(i);
-                    if (li.transparent)
+                    Vector3 center = li.center;
+                    float radius = li.radius;
+                    if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
                     {
-                        Vector3 center = li.center;
-                        float radius = li.radius;
-                        if (!frustumculling.SphereInFrustum(center.X, center.Y, center.Z, radius))
-                        {
-                            li.wasrendered = false;
-                            continue;
-                        }
-                        li.wasrendered = true;
-                        tocall[tocallpos] = GetList(i);
-                        tocallpos++;
+                        li.wasrendered = false;
+                        continue;
                     }
+                    li.wasrendered = true;
+                    tocall[tocallpos] = GetList(i);
+                    tocallpos++;
                 }
             }
             GL.CallLists(tocallpos, ListNameType.Int, tocall);
@@ -219,22 +228,17 @@ namespace ManicDigger
         }
         class ListInfo
         {
+            public bool empty;
             public int indicescount;
             public Vector3 center;
             public float radius;
             public bool transparent;
             public bool wasrendered = true;
         }
-        /// <summary>
-        /// Indices count in list.
-        /// </summary>
-        List<ListInfo> listinfo = new List<ListInfo>();
+        ListInfo[] listinfo = new ListInfo[0];
+        int listinfoCount = 0;
         private ListInfo GetListInfo(int id)
         {
-            while (id >= listinfo.Count)
-            {
-                listinfo.Add(new ListInfo());
-            }
             return listinfo[id];
         }
         public void Clear()
@@ -243,7 +247,8 @@ namespace ManicDigger
             count = 0;
             empty.Clear();
             toadd.Clear();
-            listinfo = new List<ListInfo>();
+            listinfo = new ListInfo[0];
+            listinfoCount = 0;
         }
         public int TotalTriangleCount
         {
@@ -258,7 +263,7 @@ namespace ManicDigger
                 {
                     if (!empty.ContainsKey(i))
                     {
-                        if (i < listinfo.Count)
+                        if (i < listinfoCount)
                         {
                             ListInfo li = GetListInfo(i);
                             if (li.wasrendered)
