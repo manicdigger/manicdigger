@@ -42,16 +42,18 @@ namespace ManicDiggerServer
     public class Server : ICurrentTime
     {
         [Inject]
-        public ServerMap map { get; set; }
+        public ServerMap map;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public CraftingTableTool craftingtabletool { get; set; }
+        public CraftingTableTool craftingtabletool;
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         [Inject]
-        public IChunkDb chunkdb { get; set; }
+        public IChunkDb chunkdb;
+        [Inject]
+        public WorldGenerator generator;
         public bool LocalConnectionsOnly { get; set; }
         public int singleplayerport = 25570;
         public void Start()
@@ -98,8 +100,6 @@ namespace ManicDiggerServer
             this.Inventory = save.Inventory;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
         }
-        [Inject]
-        public WorldGenerator generator { get; set; }
         public Dictionary<string, PacketServerFiniteInventory> Inventory = new Dictionary<string, PacketServerFiniteInventory>();
         public void SaveGame(Stream s)
         {

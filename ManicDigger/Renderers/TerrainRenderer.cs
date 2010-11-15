@@ -163,9 +163,9 @@ namespace ManicDigger
     public class RailMapUtil
     {
         [Inject]
-        public ITerrainInfo mapstorage { get; set; }
+        public ITerrainInfo mapstorage;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         public RailSlope GetRailSlope(int x, int y, int z)
         {
             int tiletype = mapstorage.GetTerrainBlock(x, y, z);
@@ -248,29 +248,29 @@ namespace ManicDigger
     public class TerrainRenderer : ITerrainRenderer, IDisposable
     {
         [Inject]
-        public MeshBatcher batcher { get; set; }
+        public MeshBatcher batcher;
         [Inject]
-        public IThe3d the3d { get; set; }
+        public IThe3d the3d;
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         [Inject]
-        public Config3d config3d { get; set; }
+        public Config3d config3d;
         [Inject]
-        public ITerrainInfo mapstorage { get; set; }
+        public ITerrainInfo mapstorage;
         [Inject]
-        public IIsChunkReady ischunkready { get; set; }
+        public IIsChunkReady ischunkready;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IGameExit exit { get; set; }
+        public IGameExit exit;
         [Inject]
-        public ILocalPlayerPosition localplayerposition { get; set; }
+        public ILocalPlayerPosition localplayerposition;
         [Inject]
-        public IWorldFeaturesDrawer worldfeatures { get; set; }
+        public IWorldFeaturesDrawer worldfeatures;
         [Inject]
-        public TerrainChunkRenderer terrainchunkdrawer { get; set; }
+        public TerrainChunkRenderer terrainchunkdrawer;
         [Inject]
-        public IFrustumCulling frustumculling { get; set; }
+        public IFrustumCulling frustumculling;
         public event EventHandler<ExceptionEventArgs> OnCrash;
         
         public int chunksize = 16;
@@ -840,13 +840,13 @@ namespace ManicDigger
     public class WorldFeaturesDrawer : IWorldFeaturesDrawer
     {
         [Inject]
-        public IThe3d the3d { get; set; }
+        public IThe3d the3d;
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         [Inject]
-        public IMapStorage mapstorage { get; set; }
+        public IMapStorage mapstorage;
         [Inject]
-        public ILocalPlayerPosition localplayerposition { get; set; }
+        public ILocalPlayerPosition localplayerposition;
         public void DrawWorldFeatures()
         {
             if (ENABLE_WATER)

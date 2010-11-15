@@ -23,9 +23,9 @@ namespace ManicDigger
     public class CharacterPhysics
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
             if (z >= map.MapSizeZ)

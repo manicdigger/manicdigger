@@ -15,9 +15,9 @@ namespace ManicDigger.Renderers
     public class FpsHistoryGraphRenderer
     {
         [Inject]
-        public IViewportSize viewportsize { get; set; }
+        public IViewportSize viewportsize;
         [Inject]
-        public IDraw2d draw { get; set; }
+        public IDraw2d draw;
         List<float> m_fpshistory = new List<float>();
         List<float> fpshistory
         {

@@ -10,15 +10,15 @@ namespace ManicDigger
     public class TerrainChunkRenderer
     {
         [Inject]
-        public ITerrainInfo mapstorage { get; set; }
+        public ITerrainInfo mapstorage;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IBlockDrawerTorch blockdrawertorch { get; set; }
+        public IBlockDrawerTorch blockdrawertorch;
         [Inject]
-        public Config3d config3d { get; set; }
+        public Config3d config3d;
         [Inject]
-        public ITerrainRenderer terrainrenderer { get; set; }//textures
+        public ITerrainRenderer terrainrenderer; //textures
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16

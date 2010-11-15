@@ -59,7 +59,7 @@ namespace ManicDigger
     public class MapGeneratorPlain : IMapGenerator
     {
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         public void GenerateMap(IMapStorage map)
         {
             for (int x = 0; x < map.MapSizeX; x++)
@@ -286,9 +286,9 @@ namespace ManicDigger
     public class MapManipulator
     {
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         [Inject]
-        public IMapGenerator mapgenerator { get; set; }
+        public IMapGenerator mapgenerator;
         //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
         public const string BinSaveExtension = ".mdbs";

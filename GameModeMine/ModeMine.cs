@@ -9,15 +9,15 @@ namespace ManicDigger
     public class GameMinecraft : IGameMode, IMapStorage, IClients, ITerrainInfo
     {
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public IViewport3d viewport { get; set; }
+        public IViewport3d viewport;
         [Inject]
-        public INetworkClient network { get; set; }
+        public INetworkClient network;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IShadows shadows { get; set; }
+        public IShadows shadows;
         public void OnPick(Vector3 blockposnew, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;

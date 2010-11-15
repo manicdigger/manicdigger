@@ -25,9 +25,9 @@ namespace ManicDigger
     public class AudioOpenAl : IAudio
     {
         [Inject]
-        public IGameExit gameexit { get; set; }
+        public IGameExit gameexit;
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         public AudioOpenAl()
         {
             try

@@ -573,38 +573,40 @@ namespace ManicDigger
     public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d, IDraw2d
     {
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public IGameMode game { get; set; }
+        public IGameMode game;
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public IClients clients { get; set; }
+        public IClients clients;
         [Inject]
-        public CharacterPhysics physics { get; set; }
+        public CharacterPhysics physics;
         [Inject]
-        public INetworkClient network { get; set; }
+        public INetworkClient network;
         [Inject]
-        public IInternetGameFactory internetgamefactory { get; set; }
+        public IInternetGameFactory internetgamefactory;
 
         [Inject]
-        public IAudio audio { get; set; }
+        public IAudio audio;
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath getfile;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public ILoginClient login { get; set; }
+        public ILoginClient login;
         [Inject]
-        public Config3d config3d { get; set; }
+        public Config3d config3d;
         [Inject]
-        public WeaponRenderer weapon { get; set; }
+        public WeaponRenderer weapon;
         [Inject]
-        public ICharacterRenderer characterdrawer { get; set; }
+        public ICharacterRenderer characterdrawer;
         [Inject]
         public ICurrentShadows currentshadows;
         [Inject]
-        public FpsHistoryGraphRenderer fpshistorygraphrenderer { get; set; }
+        public FpsHistoryGraphRenderer fpshistorygraphrenderer;
+        [Inject]
+        public MapManipulator mapManipulator;
 
         bool IsMono = Type.GetType("Mono.Runtime") != null;
 
@@ -656,8 +658,6 @@ namespace ManicDigger
             else { throw new Exception(); }
             base.OnFocusedChanged(e);
         }
-        [Inject]
-        public MapManipulator mapManipulator { get; set; }
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);

@@ -23,11 +23,11 @@ namespace ManicDiggerServer
     public class ServerMap : IMapStorage
     {
         [Inject]
-        public IChunkDb chunkdb { get; set; }
+        public IChunkDb chunkdb;
         [Inject]
-        public IWorldGenerator generator { get; set; }
+        public IWorldGenerator generator;
         [Inject]
-        public ICurrentTime currenttime { get; set; }
+        public ICurrentTime currenttime;
         public Chunk[, ,] chunks;
         #region IMapStorage Members
         public int MapSizeX { get; set; }

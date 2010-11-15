@@ -11,7 +11,7 @@ namespace GameModeFortress
     public class CraftingTableTool
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         public List<int> GetOnTable(List<Vector3i> table)
         {
             List<int> ontable = new List<int>();
@@ -77,20 +77,20 @@ namespace GameModeFortress
     public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
     {
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public IViewport3d viewport { get; set; }
+        public IViewport3d viewport;
         [Inject]
-        public INetworkClientFortress network { get; set; }
+        public INetworkClientFortress network;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IShadows shadows { get; set; }
+        public IShadows shadows;
         [Inject]
-        public InfiniteMapChunked map { get; set; }
+        public InfiniteMapChunked map;
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         [Inject]
-        public CraftingTableTool craftingtabletool { get; set; }
+        public CraftingTableTool craftingtabletool;
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);

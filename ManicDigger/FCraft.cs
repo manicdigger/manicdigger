@@ -11,9 +11,11 @@ namespace ManicDigger
     public class MyFCraftMap : fCraft.IFMap
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public MapManipulator mapManipulator { get; set; }
+        public MapManipulator mapManipulator;
+        [Inject]
+        public IGameData data;
         #region IFMap Members
         public int MapSizeX
         {
@@ -88,8 +90,6 @@ namespace ManicDigger
         {
             return true;
         }
-        [Inject]
-        public IGameData data { get; set; }
         public void ClearMap()
         {
             for (int x = 0; x < MapSizeX; x++)
@@ -168,7 +168,7 @@ namespace fCraft
     public class MapLoaderDAT
     {
         [Inject]
-        public IFLogger log { get; set; }
+        public IFLogger log;
         public void Load(string fileName, IFMap map)
         {
             log.Log("Converting {0}...", FLogType.SystemActivity, fileName);
@@ -327,13 +327,13 @@ namespace fCraft
     public class MapGenerator
     {
         [Inject]
-        public IGetRandom rand { get; set; }
+        public IGetRandom rand;
         [Inject]
-        public IFMap map { get; set; }
+        public IFMap map;
         [Inject]
-        public IFLogger log { get; set; }
+        public IFLogger log;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         MapGeneratorParameters parameters;
         public void GenerateMap(MapGeneratorParameters parameters)
         {

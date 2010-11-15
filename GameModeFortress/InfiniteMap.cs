@@ -16,7 +16,7 @@ namespace GameModeFortress
             public int LastChange;
         }
         [Inject]
-        public IWorldGenerator generator { get; set; }
+        public IWorldGenerator generator;
         public Chunk[, ,] chunks;
         bool[, ,] chunksdirty;
         #region IMapStorage Members

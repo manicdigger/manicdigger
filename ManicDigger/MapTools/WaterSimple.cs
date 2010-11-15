@@ -9,7 +9,7 @@ namespace ManicDigger
     public class WaterSimple
     {
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         public void Update()
         {
             if ((DateTime.Now - lastflood).TotalSeconds > 1)

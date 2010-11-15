@@ -23,11 +23,11 @@ namespace ManicDigger
     public class Pathfinder3d : IPathfinder3d
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public IWalkable walkable { get; set; }
+        public IWalkable walkable;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         AStarFastNode[] nodes = new AStarFastNode[100 * 1000];
         Dictionary<Vector3, int> node_id_at_position = new Dictionary<Vector3, int>();
         Dictionary<int, Vector3> position_at_node_id = new Dictionary<int, Vector3>();

@@ -24,7 +24,7 @@ namespace ManicDigger
     public class TicksDummy : ITicks
     {
         [Inject]
-        public IGameWorldRun game { get; set; }
+        public IGameWorldRun game;
         public void DoCommand(byte[] command)
         {
             game.DoCommand(command, 0);

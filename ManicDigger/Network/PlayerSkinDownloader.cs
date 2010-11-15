@@ -11,9 +11,9 @@ namespace ManicDigger.Network
     public class PlayerSkinDownloader
     {
         [Inject]
-        public IGameExit exit { get; set; }
+        public IGameExit exit;
         [Inject]
-        public IThe3d the3d { get; set; }
+        public IThe3d the3d;
         public string skinserver;
         Dictionary<string, byte[]> texturestoload = new Dictionary<string, byte[]>();
         Queue<string> texturestodownload = new Queue<string>();

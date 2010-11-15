@@ -322,6 +322,8 @@ namespace ManicDigger
     }
     public class DependencyChecker
     {
+        [Inject]
+        public Type[] InjectAttributes;
         public DependencyChecker()
         {
         }
@@ -329,8 +331,6 @@ namespace ManicDigger
         {
             this.InjectAttributes = injectAttributes;
         }
-        [Inject]
-        public Type[] InjectAttributes { get; set; }
         public void CheckDependencies(params object[] components)
         {
             if (InjectAttributes == null || InjectAttributes.Length == 0)
@@ -346,6 +346,7 @@ namespace ManicDigger
         {
             Type type = o.GetType();
             var properties = type.GetProperties();
+            var fields = type.GetFields();
             foreach (var property in properties)
             {
                 var attributes = property.GetCustomAttributes(true);
@@ -356,6 +357,20 @@ namespace ManicDigger
                         if (property.GetValue(o, null) == null)
                         {
                             throw new Exception(string.Format("Dependency {0} of object of type {1} is null.", property.Name, type.Name));
+                        }
+                    }
+                }
+            }
+            foreach (var field in fields)
+            {
+                var attributes = field.GetCustomAttributes(true);
+                foreach (var a in attributes)
+                {
+                    if (a is InjectAttribute)
+                    {
+                        if (field.GetValue(o) == null)
+                        {
+                            throw new Exception(string.Format("Dependency {0} of object of type {1} is null.", field.Name, type.Name));
                         }
                     }
                 }

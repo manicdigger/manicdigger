@@ -16,11 +16,11 @@ namespace ManicDigger.Renderers
     public class ParticleEffectBlockBreak
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {
             GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);

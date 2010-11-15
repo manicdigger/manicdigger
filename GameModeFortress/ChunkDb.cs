@@ -64,7 +64,7 @@ namespace GameModeFortress
     public class ChunkDbCompressed : IChunkDb
     {
         [Inject]
-        public IChunkDb chunkdb { get; set; }
+        public IChunkDb chunkdb;
         #region IChunkDb Members
         public void Open(string filename)
         {

@@ -29,7 +29,7 @@ namespace ManicDigger
     public class FrustumCulling : IFrustumCulling
     {
         [Inject]
-        public IThe3d the3d { get; set; }
+        public IThe3d the3d;
         float frustum00;
         float frustum01;
         float frustum02;

@@ -18,9 +18,9 @@ namespace ManicDigger
     public class ShadowsSimple : IShadows
     {
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         int defaultshadow = 11;
         #region IShadows Members
         public void OnLocalBuild(int x, int y, int z)
@@ -65,17 +65,17 @@ namespace ManicDigger
     public class Shadows : IShadows
     {
         [Inject]
-        public IMapStorage map { get; set; }
+        public IMapStorage map;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public ILocalPlayerPosition localplayerposition { get; set; }
+        public ILocalPlayerPosition localplayerposition;
         [Inject]
-        public Config3d config3d { get; set; }
+        public Config3d config3d;
         [Inject]
-        public IIsChunkReady ischunkready { get; set; }
+        public IIsChunkReady ischunkready;
 
         const int chunksize = 16;
         Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();

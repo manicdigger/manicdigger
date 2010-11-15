@@ -13,15 +13,15 @@ namespace ManicDigger
     public class NetworkClientMinecraft : INetworkClient
     {
         [Inject]
-        public IMap Map { get; set; }
+        public IMap Map;
         [Inject]
-        public IClients Clients { get; set; }
+        public IClients Clients;
         [Inject]
-        public IGui Chatlines { get; set; }
+        public IGui Chatlines;
         [Inject]
-        public ILocalPlayerPosition Position { get; set; }
+        public ILocalPlayerPosition Position;
         [Inject]
-        public IGameWorldTodo gameworld { get; set; }
+        public IGameWorldTodo gameworld;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = false;
         public void Connect(string serverAddress, int port, string username, string auth)

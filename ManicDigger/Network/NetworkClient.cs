@@ -33,18 +33,18 @@ namespace ManicDigger
     public class NetworkClientDummy : INetworkClient
     {
         [Inject]
-        public ILocalPlayerPosition player { get; set; }
+        public ILocalPlayerPosition player;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         [Inject]
-        public IGui Gui { get; set; }
+        public IGui Gui;
         [Inject]
-        public IMap Map1 { get; set; }
+        public IMap Map1;
         [Inject]
-        public IMapStorage Map { get; set; }
+        public IMapStorage Map;
         [Inject]
-        public IGameData Data { get; set; }
+        public IGameData Data;
         [Inject]
-        public fCraft.MapGenerator Gen { get; set; }
+        public fCraft.MapGenerator Gen;
         public string DEFAULTMAP = "flatgrass";
         public void Dispose()
         {

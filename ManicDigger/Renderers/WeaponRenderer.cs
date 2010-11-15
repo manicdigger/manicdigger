@@ -11,14 +11,15 @@ namespace ManicDigger
     public class WeaponBlockInfo
     {
         [Inject]
-        public ITerrainRenderer terrain { get; set; }
+        public ITerrainRenderer terrain;
         [Inject]
-        public IViewport3d viewport { get; set; }
+        public IViewport3d viewport;
         [Inject]
-        public IGameData data { get; set; }
+        public IGameData data;
         [Inject]
-        public IMapStorage map { get; set; }
-        public IShadows shadows { get; set; }
+        public IMapStorage map;
+        [Inject]
+        public IShadows shadows;
         public int terrainTexture { get { return terrain.terrainTexture; } }
         public int texturesPacked { get { return terrain.texturesPacked; } }
         public int GetWeaponTextureId(TileSide side)
@@ -47,11 +48,11 @@ namespace ManicDigger
     public class WeaponRenderer
     {
         [Inject]
-        public WeaponBlockInfo info { get; set; }
+        public WeaponBlockInfo info;
         [Inject]
-        public IBlockDrawerTorch blockdrawertorch { get; set; }
+        public IBlockDrawerTorch blockdrawertorch;
         [Inject]
-        public ILocalPlayerPosition playerpos { get; set; }
+        public ILocalPlayerPosition playerpos;
         public void SetAttack(bool isattack, bool build)
         {
             this.build = build;
