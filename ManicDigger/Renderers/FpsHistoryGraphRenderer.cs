@@ -56,7 +56,7 @@ namespace ManicDigger.Renderers
             {
                 float time = fpshistory[i];
                 time = (time * 60) * historyheight;
-                Color c = Interpolation.InterpolateColor((float)i / fpshistory.Count, colors);
+                FastColor c = Interpolation.InterpolateColor((float)i / fpshistory.Count, colors);
                 todraw[i].x1 = posx + i;
                 todraw[i].y1 = posy - time;
                 todraw[i].width = 1;

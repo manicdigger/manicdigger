@@ -655,9 +655,10 @@ namespace GameModeFortress
             shadows.OnGetTerrainBlock(x, y, z);
             return GetBlock(x, y, z);
         }
-        public System.Drawing.Color GetTerrainBlockColor(int x, int y, int z)
+        FastColor white = new FastColor(Color.White);
+        public FastColor GetTerrainBlockColor(int x, int y, int z)
         {
-            return System.Drawing.Color.White;
+            return white;
         }
         public int GetLight(int x, int y, int z)
         {

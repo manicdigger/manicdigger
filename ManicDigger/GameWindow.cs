@@ -48,6 +48,16 @@ namespace ManicDigger
             b = c.B;
             a = c.A;
         }
+        public VertexPositionTexture(float x, float y, float z, float u, float v, FastColor c)
+        {
+            Position = new Vector3(x, y, z);
+            this.u = u;
+            this.v = v;
+            r = c.R;
+            g = c.G;
+            b = c.B;
+            a = c.A;
+        }
         static uint ToRgba(Color color)
         {
             return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
@@ -563,7 +573,7 @@ namespace ManicDigger
         public float width;
         public float height;
         public int? inAtlasId;
-        public Color color;
+        public FastColor color;
     }
     /// <summary>
     /// </summary>
@@ -2852,7 +2862,7 @@ namespace ManicDigger
                 int sizex = 400;
                 int sizey = 40;
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, Color.Black);
-                Color c = Interpolation.InterpolateColor(progressratio, new FastColor(Color.Red), new FastColor(Color.Yellow), new FastColor(Color.Green));
+                Color c = Interpolation.InterpolateColor(progressratio, new FastColor(Color.Red), new FastColor(Color.Yellow), new FastColor(Color.Green)).ToColor();
                 Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, c);
             }
         }

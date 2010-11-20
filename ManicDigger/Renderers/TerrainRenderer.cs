@@ -148,7 +148,7 @@ namespace ManicDigger
     public interface ITerrainInfo
     {
         int GetTerrainBlock(int x, int y, int z);
-        Color GetTerrainBlockColor(int x, int y, int z);
+        FastColor GetTerrainBlockColor(int x, int y, int z);
         int MapSizeX { get; }
         int MapSizeY { get; }
         int MapSizeZ { get; }

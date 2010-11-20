@@ -33,6 +33,20 @@ namespace ManicDigger
     }
     public struct FastColor
     {
+        public FastColor(byte A, byte R, byte G, byte B)
+        {
+            this.A = A;
+            this.R = R;
+            this.G = G;
+            this.B = B;
+        }
+        public FastColor(int A, int R, int G, int B)
+        {
+            this.A = (byte)A;
+            this.R = (byte)R;
+            this.G = (byte)G;
+            this.B = (byte)B;
+        }
         public FastColor(Color c)
         {
             this.A = c.A;
@@ -44,10 +58,14 @@ namespace ManicDigger
         public byte R;
         public byte G;
         public byte B;
+        public Color ToColor()
+        {
+            return Color.FromArgb(A, R, G, B);
+        }
     }
     public static class Interpolation
     {
-        public static Color InterpolateColor(float progress, params FastColor[] colors)
+        public static FastColor InterpolateColor(float progress, params FastColor[] colors)
         {
             int colora = (int)((colors.Length - 1) * progress);
             if (colora < 0) { colora = 0; }
@@ -57,10 +75,11 @@ namespace ManicDigger
             FastColor a = colors[colora];
             FastColor b = colors[colorb];
             float p = (progress - (float)colora / (colors.Length - 1)) * (colors.Length - 1);
+            int A = (int)(a.A + (b.A - a.A) * p);
             int R = (int)(a.R + (b.R - a.R) * p);
             int G = (int)(a.G + (b.G - a.G) * p);
             int B = (int)(a.B + (b.B - a.B) * p);
-            return Color.FromArgb(R, G, B);
+            return new FastColor(A, R, G, B);
         }
     }
     public static class VectorTool
