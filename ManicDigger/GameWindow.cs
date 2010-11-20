@@ -318,15 +318,35 @@ namespace ManicDigger
     }
     public class The3d : IThe3d
     {
+        [Inject]
         public Config3d config3d { get; set; }
+        public bool ALLOW_NON_POWER_OF_TWO = false;
         public int LoadTexture(string filename)
         {
             Bitmap bmp = new Bitmap(filename);
             return LoadTexture(bmp);
         }
+        bool IsPowerOfTwo(uint x)
+        {
+            return (
+              x == 1 || x == 2 || x == 4 || x == 8 || x == 16 || x == 32 ||
+              x == 64 || x == 128 || x == 256 || x == 512 || x == 1024 ||
+              x == 2048 || x == 4096 || x == 8192 || x == 16384 ||
+              x == 32768 || x == 65536 || x == 131072 || x == 262144 ||
+              x == 524288 || x == 1048576 || x == 2097152 ||
+              x == 4194304 || x == 8388608 || x == 16777216 ||
+              x == 33554432 || x == 67108864 || x == 134217728 ||
+              x == 268435456 || x == 536870912 || x == 1073741824 ||
+              x == 2147483648);
+        }        
         //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmp)
         {
+            if ((!ALLOW_NON_POWER_OF_TWO) &&
+                (!(IsPowerOfTwo((uint)bmp.Width) && IsPowerOfTwo((uint)bmp.Height))))
+            {
+                throw new ArgumentException("Non-power-of-two.");
+            }
             GL.Enable(EnableCap.Texture2D);
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
@@ -2145,19 +2165,6 @@ namespace ManicDigger
             }
             return 1;
         }
-        bool IsPowerOfTwo(uint x)
-        {
-            return (
-              x == 1 || x == 2 || x == 4 || x == 8 || x == 16 || x == 32 ||
-              x == 64 || x == 128 || x == 256 || x == 512 || x == 1024 ||
-              x == 2048 || x == 4096 || x == 8192 || x == 16384 ||
-              x == 32768 || x == 65536 || x == 131072 || x == 262144 ||
-              x == 524288 || x == 1048576 || x == 2097152 ||
-              x == 4194304 || x == 8388608 || x == 16777216 ||
-              x == 33554432 || x == 67108864 || x == 134217728 ||
-              x == 268435456 || x == 536870912 || x == 1073741824 ||
-              x == 2147483648);
-        }
         private uint NextPowerOfTwo(uint x)
         {
             x--;
@@ -2665,7 +2672,7 @@ namespace ManicDigger
         }
         private void DrawMouseCursor()
         {
-            Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 20, 20);
+            Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
         int chatfontsize = 12;
         Size? aimsize;
@@ -2916,12 +2923,7 @@ namespace ManicDigger
                 int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
                 Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
                     data.GetTileTextureIdForInventory(buildable[ii]));
-                if (x == inventoryselectedx && y == inventoryselectedy)
-                {
-                    Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
-                        xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize,
-                        ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize, inventorysinglesize, inventorysinglesize);
-                }
+
                 if (ENABLE_FINITEINVENTORY)
                 {
                     int amount = game.FiniteInventoryAmount(buildable[ii]);
@@ -2933,6 +2935,13 @@ namespace ManicDigger
                     x = 0;
                     y++;
                 }
+            }
+            if (inventoryselectedx + inventoryselectedy * inventorysize < buildable.Count)
+            {
+                Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+                    xcenter(inventorysinglesize * inventorysize) + inventoryselectedx * inventorysinglesize,
+                    ycenter(inventorysinglesize * inventorysize) + inventoryselectedy * inventorysinglesize,
+                    NextPowerOfTwo((uint)inventorysinglesize), NextPowerOfTwo((uint)inventorysinglesize));
             }
             DrawMaterialSelector();
         }
@@ -3043,16 +3052,16 @@ namespace ManicDigger
                 int y = Height - 100;
                 Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
                         data.GetTileTextureIdForInventory((int)materialSlots[i]));
-                if (i == activematerial)
-                {
-                    Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"), xcenter(singlesize * 10) + i * singlesize, Height - 100, singlesize, singlesize);
-                }
+
                 if (ENABLE_FINITEINVENTORY)
                 {
                     int amount = game.FiniteInventoryAmount((int)materialSlots[i]);
                     Draw2dText("" + amount, x, y, 8, null);
                 }
             }
+            Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+                xcenter(singlesize * 10) + activematerial * singlesize, Height - 100,
+                NextPowerOfTwo((uint)singlesize), NextPowerOfTwo((uint)singlesize));
             if (ENABLE_FINITEINVENTORY)
             {
                 int inventoryload = 0;
