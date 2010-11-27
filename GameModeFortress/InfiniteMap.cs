@@ -5,7 +5,7 @@ using ManicDigger;
 
 namespace GameModeFortress
 {
-    public class InfiniteMapChunked : IMapStorage, IIsChunkReady
+    public class InfiniteMapChunked : IMapStorage
     {
         public class Chunk
         {
@@ -17,8 +17,9 @@ namespace GameModeFortress
         }
         [Inject]
         public IWorldGenerator generator;
+        [Inject]
+        public IIsChunkReady ischunkready;
         public Chunk[, ,] chunks;
-        bool[, ,] chunksdirty;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -158,16 +159,16 @@ namespace GameModeFortress
         #region IIsChunkReady Members
         public bool IsChunkDirty(int x, int y, int z)
         {
-            return chunksdirty[x, y, z];
+            return ischunkready.IsChunkDirty(x, y, z);
         }
         public void SetChunkDirty(int x, int y, int z, bool dirty)
         {
-            chunksdirty[x, y, z] = dirty;
+            ischunkready.SetChunkDirty(x, y, z, dirty);
         }
         #endregion
         public void SetAllChunksNotDirty()
         {
-            chunksdirty = new bool[MapSizeX / chunksize, MapSizeY / chunksize, MapSizeZ / chunksize];
+            ischunkready.SetAllChunksNotDirty();
         }
     }
 }

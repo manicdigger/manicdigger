@@ -205,9 +205,13 @@ namespace GameModeFortress
             clientgame.network = network;
             clientgame.craftingtabletool = new CraftingTableTool() { map = mapstorage };
             InfiniteMapChunked map = new InfiniteMapChunked() { generator = new WorldGeneratorDummy() };
+            var dirtychunks = new DirtyChunks() { mapstorage = map };
+            terrainDrawer.ischunkready = dirtychunks;
+            map.ischunkready = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
+            dirtychunks.Start();
+            dirtychunks.frustum = frustumculling;
             clientgame.map = map;
-            terrainDrawer.ischunkready = map;
             w.game = clientgame;
             w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
@@ -226,7 +230,7 @@ namespace GameModeFortress
             this.map = map;
             w.currentshadows = this;
             shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
-                localplayerposition = localplayerposition, config3d = config3d, ischunkready = map };
+                localplayerposition = localplayerposition, config3d = config3d, ischunkready = dirtychunks };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             if (fullshadows)
             {
@@ -257,7 +261,7 @@ namespace GameModeFortress
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
-        public bool fullshadows = true;
+        public bool fullshadows = false;
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;

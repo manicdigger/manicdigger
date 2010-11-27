@@ -146,7 +146,7 @@ namespace ManicDigger
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
             UseShadowsSimple();
             w.currentshadows = this;
-            terrainDrawer.ischunkready = new IsChunkReadyDummy();
+            terrainDrawer.ischunkready = new DirtyChunks();
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(

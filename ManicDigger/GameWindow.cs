@@ -705,7 +705,7 @@ namespace ManicDigger
             {
                 TargetRenderFrequency = 0;
             }
-            GL.ClearColor(System.Drawing.Color.MidnightBlue);
+            GL.ClearColor(Color.Black);
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
             //clientgame.GeneratePlainMap();
             //clientgame.LoadMapMinecraft();
@@ -928,6 +928,7 @@ namespace ManicDigger
                             terrain.DrawDistance = foglevel2;
                             //terrain.UpdateAllTiles();
                         }
+                        OnResize(new EventArgs());
                     }
                     else if (cmd == "noclip")
                     {
@@ -1202,12 +1203,19 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.F)
                 {
-                    if (terrain.DrawDistance == 64) { terrain.DrawDistance = 128; }
-                    else if (terrain.DrawDistance == 128) { terrain.DrawDistance = 256; }
-                    else if (terrain.DrawDistance == 256) { terrain.DrawDistance = 512; }
-                    else if (terrain.DrawDistance == 512) { terrain.DrawDistance = 64; }
-                    else { terrain.DrawDistance = 64; }
+                    int[] drawDistances = { 32, 64, 128, 256, 512 };
+                    for (int i = 0; i < drawDistances.Length; i++)
+                    {
+                        if (terrain.DrawDistance == drawDistances[i])
+                        {
+                            terrain.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
+                            goto done;
+                        }
+                    }
+                    terrain.DrawDistance = drawDistances[0];
+                done:
                     Log("Fog distance: " + terrain.DrawDistance);
+                    OnResize(new EventArgs());
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
@@ -1495,7 +1503,7 @@ namespace ManicDigger
         public Dictionary<int, int> FiniteInventory { get { return finiteinventory; } set { finiteinventory = value; } }
         public bool enable_finiteinventory = false;
         public bool ENABLE_FINITEINVENTORY { get { return enable_finiteinventory; } set { enable_finiteinventory = value; } }
-        bool ENABLE_ZFAR = false;
+        bool ENABLE_ZFAR = true;
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
@@ -1506,6 +1514,10 @@ namespace ManicDigger
         public float fov = MathHelper.PiOver3;
         private void Set3dProjection()
         {
+            Set3dProjection(zfar);
+        }
+        private void Set3dProjection(float zfar)
+        {
             float aspect_ratio = Width / (float)Height;
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
             this.m_projectionMatrix = perpective;
@@ -1514,7 +1526,7 @@ namespace ManicDigger
             GL.LoadMatrix(ref perpective);
         }
         float znear = 0.1f;
-        float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
+        float zfar { get { return ENABLE_ZFAR ? terrain.DrawDistance : 99999; } }
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
         Point mouse_delta;
@@ -2192,27 +2204,19 @@ namespace ManicDigger
         double t = 0;
         //Vector3 oldplayerposition;
         public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
+        public Color clearcolor = Color.FromArgb(171, 202, 228);
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
             base.OnRenderFrame(e);
-            float density = 0.3f;
-            float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             if (terrain.DrawDistance < 256)
             {
-                GL.Enable(EnableCap.Fog);
-                GL.Hint(HintTarget.FogHint, HintMode.Nicest);
-                GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
-                GL.Fog(FogParameter.FogColor, fogColor);
-                GL.Fog(FogParameter.FogDensity, density);
-                float fogstart = terrain.DrawDistance - 40;
-                GL.Fog(FogParameter.FogStart, fogstart);
-                GL.Fog(FogParameter.FogEnd, fogstart + 20);
+                SetFog();
             }
             else
             {
                 GL.Disable(EnableCap.Fog);
             }
-
             //Sleep is required in Mono for running the terrain background thread.
             if (IsMono)
             {
@@ -2244,6 +2248,7 @@ namespace ManicDigger
             //const float alpha = accumulator / dt;
             //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
             UpdateTitleFps(e);
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
@@ -2267,7 +2272,6 @@ namespace ManicDigger
             {
                 DrawSkySphere();
                 terrain.Draw();
-
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
@@ -2310,6 +2314,25 @@ namespace ManicDigger
             //OnResize(new EventArgs());
             SwapBuffers();
         }
+        private void SetFog()
+        {
+            float density = 0.3f;
+            //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
+            float[] fogColor = new[] { (float)clearcolor.R / 256, (float)clearcolor.G / 256, (float)clearcolor.B / 256, (float)clearcolor.A / 256 };
+            GL.Enable(EnableCap.Fog);
+            GL.Hint(HintTarget.FogHint, HintMode.Nicest);
+            GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
+            GL.Fog(FogParameter.FogColor, fogColor);
+            GL.Fog(FogParameter.FogDensity, density);
+            float fogsize = 10;
+            if (terrain.DrawDistance <= 64)
+            {
+                fogsize = 5;
+            }
+            float fogstart = terrain.DrawDistance - fogsize;
+            GL.Fog(FogParameter.FogStart, fogstart);
+            GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
+        }
         public event EventHandler BeforeRenderFrame;
         bool ENABLE_DRAW2D = true;
         int screenshotflash;
@@ -2350,7 +2373,6 @@ namespace ManicDigger
         public PlayerSkinDownloader playerskindownloader { get; set; }
         public bool ENABLE_TPP_VIEW = false;
         AnimationState a = new AnimationState();
-        int[] _skybox;
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
         int skyspheretexture = -1;        
         ushort[] skysphereelements;
@@ -2366,10 +2388,13 @@ namespace ManicDigger
 
             if (skysphereelements == null)
             {
-                skysphereelements = skysphere.CalculateElements(1000, 1000, 20, 20);
-                skyspherevertices = skysphere.CalculateVertices(1000, 1000, 20, 20);
+                int size = 1000;
+                skysphereelements = skysphere.CalculateElements(size, size, 20, 20);
+                skyspherevertices = skysphere.CalculateVertices(size, size, 20, 20);
             }
-            
+            Set3dProjection(1000 * 2);
+            GL.MatrixMode(MatrixMode.Modelview);
+
             GL.PushMatrix();
             GL.Translate(LocalPlayerPosition);
             GL.Color3(Color.White);
@@ -2394,6 +2419,7 @@ namespace ManicDigger
             GL.DisableClientState(ArrayCap.VertexArray);
             GL.DisableClientState(ArrayCap.NormalArray);
             GL.PopMatrix();
+            Set3dProjection();
             return;
         }
         NetworkInterpolation interpolation = new NetworkInterpolation();
