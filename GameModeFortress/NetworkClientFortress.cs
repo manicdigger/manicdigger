@@ -63,10 +63,17 @@ namespace GameModeFortress
         Socket main;
         public void SendPacket(byte[] packet)
         {
-            int sent = main.Send(packet);
-            if (sent != packet.Length)
+            try
             {
-                throw new Exception();
+                using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
+                {
+                    e.SetBuffer(packet, 0, packet.Length);
+                    main.SendAsync(e);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("SendPacket error");
             }
         }
         public void Disconnect()
@@ -108,14 +115,22 @@ namespace GameModeFortress
         /// </summary>
         public void Process()
         {
+            stopwatch.Reset();
+            stopwatch.Start();
             if (main == null)
             {
                 return;
             }
+            bool again = false;
             for (; ; )
             {
-                if (!main.Poll(0, SelectMode.SelectRead))
+                if (!(main.Poll(0, SelectMode.SelectRead)))
                 {
+                    if (!again)
+                    {
+                        again = true;
+                        goto process;
+                    }
                     break;
                 }
                 byte[] data = new byte[1024];
@@ -137,11 +152,16 @@ namespace GameModeFortress
                 {
                     received.Add(data[i]);
                 }
+            process:
                 for (; ; )
                 {
                     if (received.Count < 4)
                     {
                         break;
+                    }
+                    if (stopwatch.ElapsedMilliseconds >= maxMiliseconds)
+                    {
+                        goto end;
                     }
                     byte[] packet = new byte[received.Count];
                     int bytesRead;
@@ -156,9 +176,10 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (spawned && ((DateTime.Now - lastpositionsent).TotalSeconds > 0.1))
+            end:
+            if (spawned && ((DateTime.UtcNow - lastpositionsent).TotalSeconds > 0.1))
             {
-                lastpositionsent = DateTime.Now;
+                lastpositionsent = DateTime.UtcNow;
                 SendPosition(Position.LocalPlayerPosition, Position.LocalPlayerOrientation);
             }
         }
@@ -196,6 +217,8 @@ namespace GameModeFortress
         public string ServerName { get { return serverName; } set { serverName = value; } }
         public string ServerMotd { get { return serverMotd; } set { serverMotd = value; } }
         public int LocalPlayerId = 255;
+        Stopwatch stopwatch = new Stopwatch();
+        public int maxMiliseconds = 3;
         private int TryReadPacket()
         {
             MemoryStream ms = new MemoryStream(received.ToArray());

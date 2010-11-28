@@ -74,7 +74,7 @@ namespace ManicDigger
                     animstate.interp += dt;
                 }
             }
-
+            GL.MatrixMode(MatrixMode.Modelview);
             GL.PushMatrix();
             GL.Translate(pos);
 

@@ -1324,7 +1324,6 @@ namespace ManicDiggerServer
         }
         public void SendPacket(int clientid, byte[] packet)
         {
-            //System.Threading.Thread.Sleep(10);//. remove!!!!
             try
             {
                 using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
