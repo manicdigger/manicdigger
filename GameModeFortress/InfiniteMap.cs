@@ -10,7 +10,6 @@ namespace GameModeFortress
         public class Chunk
         {
             public byte[] data;
-            public byte[] compressed;
             public int LastUpdate;
             public bool IsPopulated;
             public int LastChange;
@@ -62,11 +61,6 @@ namespace GameModeFortress
                     chunks[x, y, z] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
                 }
                 return chunks[x, y, z].data;
-            }
-            if (chunk.compressed != null)
-            {
-                chunk.data = GzipCompression.Decompress(chunk.compressed);
-                chunk.compressed = null;
             }
             return chunk.data;
         }

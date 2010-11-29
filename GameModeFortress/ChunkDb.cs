@@ -65,6 +65,8 @@ namespace GameModeFortress
     {
         [Inject]
         public IChunkDb chunkdb;
+        [Inject]
+        public ICompression compression;
         #region IChunkDb Members
         public void Open(string filename)
         {
@@ -80,7 +82,7 @@ namespace GameModeFortress
                 }
                 else
                 {
-                    yield return GzipCompression.Decompress(b);
+                    yield return compression.Decompress(b);
                 }
             }
         }
@@ -96,7 +98,7 @@ namespace GameModeFortress
                 }
                 else
                 {
-                    b = GzipCompression.Compress(c.Chunk);
+                    b = compression.Compress(c.Chunk);
                 }
                 compressed.Add(new DbChunk() { Position = c.Position, Chunk = b });
             }
@@ -111,7 +113,7 @@ namespace GameModeFortress
             }
             else
             {
-                return GzipCompression.Decompress(globaldata);
+                return compression.Decompress(globaldata);
             }
         }
         public void SetGlobalData(byte[] data)
@@ -122,7 +124,7 @@ namespace GameModeFortress
             }
             else
             {
-                chunkdb.SetGlobalData(GzipCompression.Compress(data));
+                chunkdb.SetGlobalData(compression.Compress(data));
             }
         }
         #endregion

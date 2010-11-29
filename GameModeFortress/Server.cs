@@ -54,6 +54,8 @@ namespace ManicDiggerServer
         public IChunkDb chunkdb;
         [Inject]
         public WorldGenerator generator;
+        [Inject]
+        public ICompression networkcompression;
         public bool LocalConnectionsOnly { get; set; }
         public int singleplayerport = 25570;
         public void Start()
@@ -727,7 +729,7 @@ namespace ManicDiggerServer
                     break;
                 }
                 byte[] chunk = map.GetChunk(v.x, v.y, v.z);
-                byte[] compressedchunk = CompressChunk(chunk);
+                byte[] compressedchunk = CompressChunkNetwork(chunk);
                 PacketServerChunk p = new PacketServerChunk()
                 {
                     X = v.x,
@@ -1355,11 +1357,11 @@ namespace ManicDiggerServer
                 }
             }
         }
-        byte[] CompressChunk(byte[] chunk)
+        byte[] CompressChunkNetwork(byte[] chunk)
         {
-            return GzipCompression.Compress(chunk);
+            return networkcompression.Compress(chunk);
         }
-        byte[] CompressChunk(byte[, ,] chunk)
+        byte[] CompressChunkNetwork(byte[, ,] chunk)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
@@ -1373,7 +1375,7 @@ namespace ManicDiggerServer
                     }
                 }
             }
-            byte[] compressedchunk = GzipCompression.Compress(ms.ToArray());
+            byte[] compressedchunk = networkcompression.Compress(ms.ToArray());
             return compressedchunk;
         }
         int BlobPartLength = 1024 * 4;

@@ -289,6 +289,8 @@ namespace ManicDigger
         public IGetFilePath getfile;
         [Inject]
         public IMapGenerator mapgenerator;
+        [Inject]
+        public ICompression compression;
         //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
         public const string BinSaveExtension = ".mdbs";
@@ -317,7 +319,7 @@ namespace ManicDigger
         }
         public void LoadMap(IMapStorage map, byte[] data)
         {
-            using (Stream s = new MemoryStream(GzipCompression.Decompress(data)))
+            using (Stream s = new MemoryStream(compression.Decompress(data)))
             {
                 StreamReader sr = new StreamReader(s);
                 XmlDocument d = new XmlDocument();
@@ -354,7 +356,7 @@ namespace ManicDigger
         public string defaultminesave = "default" + BinSaveExtension;
         public byte[] SaveMap(IMapStorage map)
         {
-            return GzipCompression.Compress(SaveXml(map));
+            return compression.Compress(SaveXml(map));
         }
         public void SaveMap(IMapStorage map, string filename)
         {
@@ -380,7 +382,7 @@ namespace ManicDigger
             }
             File.WriteAllBytes("default.minesave", GzipCompression.Compress(s.ToArray()));
             */
-            File.WriteAllBytes(filename, GzipCompression.Compress(SaveXml(map)));
+            File.WriteAllBytes(filename, compression.Compress(SaveXml(map)));
             Console.WriteLine("Game saved successfully.");
         }
         static public string Base64Encode(string toEncode)
@@ -446,7 +448,7 @@ namespace ManicDigger
         }
         public void LoadMapMinecraft(IMapStorage map, string filename)
         {
-            byte[] serialized = GzipCompression.Decompress(new FileInfo(getfile.GetFile(filename)));
+            byte[] serialized = CompressionGzip.Decompress(new FileInfo(getfile.GetFile(filename)));
             fCraft.MapLoaderDAT maploaderdat = new fCraft.MapLoaderDAT();
             fCraft.IFMap mymap = new MyFCraftMap() { map = map };
             maploaderdat.log = new fCraft.FLogDummy();

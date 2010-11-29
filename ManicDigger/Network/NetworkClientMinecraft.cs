@@ -22,6 +22,8 @@ namespace ManicDigger
         public ILocalPlayerPosition Position;
         [Inject]
         public IGameWorldTodo gameworld;
+        [Inject]
+        public ICompression compression;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = false;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -292,7 +294,7 @@ namespace ManicDigger
                         receivedMapStream.Seek(0, SeekOrigin.Begin);
                         if (!ENABLE_FORTRESS)
                         {
-                            MemoryStream decompressed = new MemoryStream(GzipCompression.Decompress(receivedMapStream.ToArray()));
+                            MemoryStream decompressed = new MemoryStream(compression.Decompress(receivedMapStream.ToArray()));
                             if (decompressed.Length != mapreceivedsizex * mapreceivedsizey * mapreceivedsizez +
                                 (decompressed.Length % 1024))
                             {

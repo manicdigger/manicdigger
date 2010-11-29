@@ -19,18 +19,18 @@ namespace ManicDiggerServer
     {
         static void Main(string[] args)
         {
-            Server s = new Server();
+            Server server = new Server();
             var map = new ManicDiggerServer.ServerMap();
-            map.currenttime = s;
+            map.currenttime = server;
             map.chunksize = 32;
             var generator = new WorldGenerator();
             map.generator = generator;
-            s.chunksize = 32;
+            server.chunksize = 32;
             map.Reset(10000, 10000, 128);
-            s.map = map;
-            s.generator = generator;
-            s.data = new GameDataTilesManicDigger();
-            s.craftingtabletool = new CraftingTableTool() { map = map };
+            server.map = map;
+            server.generator = generator;
+            server.data = new GameDataTilesManicDigger();
+            server.craftingtabletool = new CraftingTableTool() { map = map };
             bool singleplayer = false;
             foreach (string arg in args)
             {
@@ -42,21 +42,23 @@ namespace ManicDiggerServer
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
-                    s, generator, map);
+                    server, generator, map);
             }
-            s.LocalConnectionsOnly = singleplayer;
-            s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
-            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite() };
-            s.chunkdb = chunkdb;
+            server.LocalConnectionsOnly = singleplayer;
+            server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var compression = new CompressionGzip();
+            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = compression };
+            server.chunkdb = chunkdb;
             map.chunkdb = chunkdb;
-            s.Start();
-            if ((!singleplayer) && (s.cfgpublic))
+            server.networkcompression = compression;
+            server.Start();
+            if ((!singleplayer) && (server.cfgpublic))
             {
-                new Thread((a) => { for (; ; ) { s.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+                new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             }
             for (; ; )
             {
-                s.Process();
+                server.Process();
                 Thread.Sleep(1);
             }
         }

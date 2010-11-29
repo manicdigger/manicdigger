@@ -135,9 +135,33 @@ namespace ManicDigger
             }
         }
     }
-    public static class GzipCompression
+    public interface ICompression
     {
-        public static byte[] Compress(byte[] data)
+        byte[] Compress(byte[] data);
+        byte[] Decompress(byte[] data);
+    }
+    public class CompressionDummy : ICompression
+    {
+        #region ICompression Members
+        public byte[] Compress(byte[] data)
+        {
+            return Copy(data);
+        }
+        public byte[] Decompress(byte[] data)
+        {
+            return Copy(data);
+        }
+        private static byte[] Copy(byte[] data)
+        {
+            byte[] copy = new byte[data.Length];
+            Array.Copy(data, copy, data.Length);
+            return copy;
+        }
+        #endregion
+    }
+    public class CompressionGzip : ICompression
+    {
+        public byte[] Compress(byte[] data)
         {
             MemoryStream input = new MemoryStream(data);
             MemoryStream output = new MemoryStream();
@@ -152,30 +176,21 @@ namespace ManicDigger
             }
             return output.ToArray();
         }
-        public static byte[] Decompress(byte[] fi)
+        public byte[] Decompress(byte[] fi)
         {
             MemoryStream ms = new MemoryStream();
             // Get the stream of the source file.
             using (MemoryStream inFile = new MemoryStream(fi))
             {
-                // Get original file extension, for example "doc" from report.doc.gz.
-                //string curFile = fi.FullName;
-                //string origName = curFile.Remove(curFile.Length - fi.Extension.Length);
-
-                //Create the decompressed file.
-                //using (FileStream outFile = File.Create(origName))
+                using (GZipStream Decompress = new GZipStream(inFile,
+                        CompressionMode.Decompress))
                 {
-                    using (GZipStream Decompress = new GZipStream(inFile,
-                            CompressionMode.Decompress))
+                    //Copy the decompression stream into the output file.
+                    byte[] buffer = new byte[4096];
+                    int numRead;
+                    while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
                     {
-                        //Copy the decompression stream into the output file.
-                        byte[] buffer = new byte[4096];
-                        int numRead;
-                        while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
-                        {
-                            ms.Write(buffer, 0, numRead);
-                        }
-                        //Console.WriteLine("Decompressed: {0}", fi.Name);
+                        ms.Write(buffer, 0, numRead);
                     }
                 }
             }

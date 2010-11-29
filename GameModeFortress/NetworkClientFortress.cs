@@ -33,6 +33,8 @@ namespace GameModeFortress
         public ILocalPlayerPosition Position;
         [Inject]
         public INetworkPacketReceived NetworkPacketReceived;
+        [Inject]
+        public ICompression compression;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -163,7 +165,6 @@ namespace GameModeFortress
                     {
                         goto end;
                     }
-                    byte[] packet = new byte[received.Count];
                     int bytesRead;
                     bytesRead = TryReadPacket();
                     if (bytesRead > 0)
@@ -367,7 +368,7 @@ namespace GameModeFortress
                 case ServerPacketId.Chunk:
                     {
                         var p = packet.Chunk;
-                        byte[] decompressedchunk = GzipCompression.Decompress(p.CompressedChunk);
+                        byte[] decompressedchunk = compression.Decompress(p.CompressedChunk);
                         byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
                         {
                             BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));

@@ -13,92 +13,13 @@ using ManicDiggerServer;
 
 namespace GameModeFortress
 {
-    public class NetworkClientDummyInfinite : INetworkClientFortress
-    {
-        #region INetworkClient Members
-        public void Dispose()
-        {
-        }
-        public void Connect(string serverAddress, int port, string username, string auth)
-        {
-        }
-        double starttime = gettime();
-        static double gettime()
-        {
-            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
-        }
-        int simulationcurrentframe;
-        double oldtime;
-        double accumulator;
-        double SIMULATION_STEP_LENGTH = 1.0 / 64;
-        public void Process()
-        {
-            double currenttime = gettime() - starttime;
-            double deltaTime = currenttime - oldtime;
-            accumulator += deltaTime;
-            double dt = SIMULATION_STEP_LENGTH;
-            while (accumulator > dt)
-            {
-                simulationcurrentframe++;
-                gameworld.Tick();
-                accumulator -= dt;
-            }
-            oldtime = currenttime;
-            //players.Players[0].Position = localplayerposition.LocalPlayerPosition;
-            //players.Players[0].Pitch = NetworkClientMinecraft.PitchByte(localplayerposition.LocalPlayerOrientation);
-            //players.Players[0].Heading = NetworkClientMinecraft.HeadingByte(localplayerposition.LocalPlayerOrientation);
-        }
-        public void SendSetBlock(OpenTK.Vector3 position, BlockSetMode mode, int type)
-        {
-        }
-        public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
-        public event EventHandler<MapLoadedEventArgs> MapLoaded;
-        public void SendChat(string s)
-        {
-        }
-        public IEnumerable<string> ConnectedPlayers()
-        {
-            yield return "[Local player]";
-        }
-        public void SendPosition(OpenTK.Vector3 position, OpenTK.Vector3 orientation)
-        {
-        }
-        #endregion
-        public IGameWorld gameworld;
-        public IClients players;
-        public ILocalPlayerPosition localplayerposition;
-        Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
-        #region INetworkClient Members
-        public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
-        #endregion
-        #region INetworkClient Members
-        public string ServerName
-        {
-            get { return "ServerName"; }
-        }
-        public string ServerMotd
-        {
-            get { return "ServerMotd"; }
-        }
-        #endregion
-        #region IIsChunkReady Members
-        public bool IsChunkReady(int chunkx, int chunky, int chunkz)
-        {
-            return true;
-        }
-        #endregion
-        #region INetworkClientFortress Members
-        public void SendPacketClient(PacketClient packetClient)
-        {
-        }
-        #endregion
-    }
     public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
     {
         public string GameUrl = null;
         public string User;
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
+        bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
             w = new ManicDiggerGameWindow();
@@ -119,16 +40,7 @@ namespace GameModeFortress
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
-            INetworkClientFortress network;
-            if (singleplayer)
-            {
-                network = new NetworkClientDummyInfinite() { gameworld = clientgame };
-                clientgame.Players[0] = new Player() { Name = "gamer1" };
-            }
-            else
-            {
-                network = new NetworkClientFortress();
-            }            
+            var network = new NetworkClientFortress();
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
@@ -141,22 +53,14 @@ namespace GameModeFortress
             var physics = new CharacterPhysics();
             var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
-            if (singleplayer)
-            {
-                var n = (NetworkClientDummyInfinite)network;
-                n.players = clientgame;
-                n.localplayerposition = localplayerposition;
-            }
-            else
-            {
-                var n = (NetworkClientFortress)network;
-                n.Map = w;
-                n.Clients = clientgame;
-                n.Chatlines = w;
-                n.Position = localplayerposition;
-                n.ENABLE_FORTRESS = true;
-                n.NetworkPacketReceived = clientgame;
-            }
+            ICompression compression = IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
+            network.Map = w;
+            network.Clients = clientgame;
+            network.Chatlines = w;
+            network.Position = localplayerposition;
+            network.ENABLE_FORTRESS = true;
+            network.NetworkPacketReceived = clientgame;
+            network.compression = compression;
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
             terrainDrawer.config3d = config3d;
@@ -182,6 +86,7 @@ namespace GameModeFortress
             terrainChunkDrawer.terrainrenderer = terrainDrawer;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
+            mapManipulator.compression = compression;
             w.map = clientgame.mapforphysics;
             w.physics = physics;
             w.clients = clientgame;
@@ -350,27 +255,30 @@ namespace GameModeFortress
         }
         static void ServerThread()
         {
-            Server s = new Server();
+            Server server = new Server();
             var map = new ManicDiggerServer.ServerMap();
-            map.currenttime = s;
+            map.currenttime = server;
             map.chunksize = 32;
             var generator = new WorldGenerator();
             map.generator = generator;
-            s.chunksize = 32;
+            server.chunksize = 32;
             map.Reset(10000, 10000, 128);
-            s.map = map;
-            s.generator = generator;
-            s.data = new GameDataTilesManicDigger();
-            s.craftingtabletool = new CraftingTableTool() { map = map };
-            s.LocalConnectionsOnly = true;
-            s.getfile = new GetFilePath(new[] { "mine", "minecraft" });
-            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite() };
-            s.chunkdb = chunkdb;
+            server.map = map;
+            server.generator = generator;
+            server.data = new GameDataTilesManicDigger();
+            server.craftingtabletool = new CraftingTableTool() { map = map };
+            server.LocalConnectionsOnly = true;
+            server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var networkcompression = new CompressionGzip();
+            var diskcompression = new CompressionGzip();
+            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = diskcompression };
+            server.chunkdb = chunkdb;
             map.chunkdb = chunkdb;
-            s.Start();
+            server.networkcompression = networkcompression;
+            server.Start();
             for (; ; )
             {
-                s.Process();
+                server.Process();
                 Thread.Sleep(1);
                 if (exit != null && exit.exit) { return; }
             }
