@@ -183,7 +183,7 @@ namespace ManicDigger
         }
         private void GetExtendedChunk(int x, int y, int z)
         {
-            byte[] mapchunk = mapstorage.GetChunk(x * chunksize, y * chunksize, z * chunksize);          
+            //byte[] mapchunk = mapstorage.GetChunk(x * chunksize, y * chunksize, z * chunksize);          
             for (int xx = 0; xx < chunksize + 2; xx++)
             {
                 for (int yy = 0; yy < chunksize + 2; yy++)
@@ -193,12 +193,13 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx - 1;
                         int yyy = y * chunksize + yy - 1;
                         int zzz = z * chunksize + zz - 1;
-                        if (xx != 0 && yy != 0 && zz != 0
-                            && xx != chunksize + 1 && yy != chunksize + 1 && zz != chunksize + 1)
-                        {
-                            currentChunk[xx, yy, zz] = mapchunk[MapUtil.Index(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
-                        }
-                        else
+                        //commented out, breaks GetTerrainBlock() hooks.
+                        //if (xx != 0 && yy != 0 && zz != 0
+                        //    && xx != chunksize + 1 && yy != chunksize + 1 && zz != chunksize + 1)
+                        //{
+                        //    currentChunk[xx, yy, zz] = mapchunk[MapUtil.Index(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
+                        //}
+                        //else
                         {
                             if (!IsValidPos(xxx, yyy, zzz))
                             {
