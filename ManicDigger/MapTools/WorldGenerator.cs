@@ -171,7 +171,20 @@ using ManicDigger;
             x *= chunksize;
             y *= chunksize;
             z *= chunksize;
-            MakeTrees(map, x, y, z, chunksize);
+            if (!EnableBigTrees)
+            {
+                MakeSmallTrees(map, x, y, z, chunksize);
+            }
+            else
+            {
+                MakeTrees(map, x, y, z, chunksize);
+            }
+            MakeCaves(map, x, y, z, chunksize);
+        }
+        public bool EnableBigTrees = false;
+        public bool EnableCaves = false;
+        private void MakeCaves(IMapStorage map, int x, int y, int z, int chunksize)
+        {
             //if (rnd.NextDouble() >= 0.6)
             {
                 //return;
@@ -203,6 +216,10 @@ using ManicDigger;
                 if (oretype == 2) { length = coalorelength; }
                 length = rnd.Next(length);
                 blocktype = TileIdGoldOre + oretype;
+            }
+            if (blocktype == TileIdEmpty && (!EnableCaves))
+            {
+                return;
             }
             //map.SetBlock(x, y, z, TileIdLava);
             int dirx = rnd.NextDouble() < 0.5 ? -1 : 1;
@@ -245,6 +262,50 @@ using ManicDigger;
                     double density = blocktype == TileIdEmpty ? 1 : rnd.NextDouble() * 0.4;
                     MakeCuboid(map, (int)curx - sizex / 2 + dx, (int)cury - sizey / 2 + dy, (int)curz - sizez / 2 + dz, sizex, sizey, sizez, blocktype, allowin, density);
                 }
+            }
+        }
+        private void MakeSmallTrees(IMapStorage map, int cx, int cy, int cz, int chunksize)
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                int x = cx + rnd.Next(chunksize);
+                int y = cy + rnd.Next(chunksize);
+                int z = cz + rnd.Next(chunksize);
+                if (!MapUtil.IsValidPos(map, x, y, z))
+                {
+                    continue;
+                }
+                if (map.GetBlock(x, y, z) != TileIdGrass)
+                {
+                    continue;
+                }
+                SetBlock(map, x, y, z + 1, TileIdTreeTrunk);
+                SetBlock(map, x, y, z + 2, TileIdTreeTrunk);
+                SetBlock(map, x, y, z + 3, TileIdTreeTrunk);
+
+                SetBlock(map, x + 1, y, z + 3, TileIdLeaves);
+                SetBlock(map, x - 1, y, z + 3, TileIdLeaves);
+                SetBlock(map, x, y + 1, z + 3, TileIdLeaves);
+                SetBlock(map, x, y - 1, z + 3, TileIdLeaves);
+
+                SetBlock(map, x + 1, y + 1, z + 3, TileIdLeaves);
+                SetBlock(map, x + 1, y - 1, z + 3, TileIdLeaves);
+                SetBlock(map, x - 1, y + 1, z + 3, TileIdLeaves);
+                SetBlock(map, x - 1, y - 1, z + 3, TileIdLeaves);
+
+                SetBlock(map, x + 1, y, z + 4, TileIdLeaves);
+                SetBlock(map, x - 1, y, z + 4, TileIdLeaves);
+                SetBlock(map, x, y + 1, z + 4, TileIdLeaves);
+                SetBlock(map, x, y - 1, z + 4, TileIdLeaves);
+
+                SetBlock(map, x, y, z + 4, TileIdLeaves);
+            }
+        }
+        private void SetBlock(IMapStorage map, int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(map, x, y, z))
+            {
+                map.SetBlock(x, y, z, blocktype);
             }
         }
         void MakeCuboid(IMapStorage map, int x, int y, int z, int sizex, int sizey, int sizez, int blocktype, int[] allowin, double chance)
