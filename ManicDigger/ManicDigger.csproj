@@ -52,12 +52,6 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="ConsoleForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ConsoleForm.Designer.cs">
-      <DependentUpon>ConsoleForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="IterableSet.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
@@ -74,7 +68,6 @@
     <Compile Include="Misc.cs" />
     <Compile Include="Network\NetworkClientMinecraft.cs" />
     <Compile Include="Network\PlayerSkinDownloader.cs" />
-    <Compile Include="Pathfinding.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rail.cs" />
@@ -93,11 +86,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="c.snk" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="ConsoleForm.resx">
-      <DependentUpon>ConsoleForm.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
