@@ -53,6 +53,7 @@
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
     <Compile Include="FrustumCulling.cs" />
+    <Compile Include="Interpolation.cs" />
     <Compile Include="IterableSet.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
