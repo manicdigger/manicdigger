@@ -1992,12 +1992,11 @@ namespace ManicDigger
             ray = Vector3.Transform(ray, theModelView);
             ray_start_point = Vector3.Transform(ray_start_point, theModelView);
 
-            var pick = new Line3D();
-            var raydir = -(ray - ray_start_point);
+            Line3D pick = new Line3D();
+            Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
-            raydir = Vector3.Multiply(raydir, PICK_DISTANCE * 2);
-            pick.Start = ray + Vector3.Multiply(raydir, 0.01f); //do not pick behind
-            pick.End = ray + raydir;
+            pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
+            pick.End = ray + Vector3.Multiply(raydir, PICK_DISTANCE * 2);
 
             //pick models
             selectedmodelid = -1;
@@ -2044,6 +2043,7 @@ namespace ManicDigger
 
             if (iii++ % 2 == 0)
             {
+                //To improve speed, update picking only every second frame.
                 return;
             }
 
