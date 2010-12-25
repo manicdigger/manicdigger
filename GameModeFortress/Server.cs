@@ -58,6 +58,8 @@ namespace ManicDiggerServer
         public ICompression networkcompression;
         public bool LocalConnectionsOnly { get; set; }
         public int singleplayerport = 25570;
+        public Random rnd = new Random();
+        public int SpawnPositionRandomizationRange = 96;
         public void Start()
         {
             LoadConfig();
@@ -821,9 +823,11 @@ namespace ManicDiggerServer
         }
         Vector3i DefaultSpawnPosition()
         {
-            return new Vector3i((map.MapSizeX / 2) * 32,
-                        MapUtil.blockheight(map, 0, map.MapSizeX / 2, map.MapSizeY / 2) * 32,
-                        (map.MapSizeY / 2) * 32);
+            int x = map.MapSizeX / 2;
+            int y = map.MapSizeY / 2;
+            x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+            y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+            return new Vector3i(x * 32, MapUtil.blockheight(map, 0, x, y) * 32, y * 32);
         }
         //returns bytes read.
         private int TryReadPacket(int clientid)
