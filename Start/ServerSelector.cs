@@ -22,8 +22,8 @@ namespace ManicDigger
             webBrowser1.Navigating += new WebBrowserNavigatingEventHandler(webBrowser1_Navigating);
             /* Mine Mode
             webBrowser2.Navigating += new WebBrowserNavigatingEventHandler(webBrowser2_Navigating);
-            LoadPassword();
             */
+            LoadPassword();
         }
         void webBrowser1_Navigating(object sender, WebBrowserNavigatingEventArgs e)
         {
@@ -34,7 +34,7 @@ namespace ManicDigger
                 return;
             }
             SelectedServer = e.Url.AbsoluteUri.Substring(prefix.Length);
-            SelectedServerMinecraft = false;
+            //SelectedServerMinecraft = false;
             Cookie = webBrowser1.Document.Cookie;
             Close();
         }
@@ -53,7 +53,7 @@ namespace ManicDigger
             */
         }
         public string SelectedServer = null;
-        public bool SelectedServerMinecraft = false;
+        //public bool SelectedServerMinecraft = false;
         public string Cookie;
         public string SinglePlayer = null;
         private void button1_Click(object sender, EventArgs e)
@@ -120,23 +120,6 @@ namespace ManicDigger
         {
             progressBar1.Value = e.ProgressPercent;
         }
-        private void button4_Click(object sender, EventArgs e)
-        {
-            if (textBox2.Text == "" || textBox3.Text == "")
-            {
-                MessageBox.Show("Enter username and password.");
-                return;
-            }
-            if (textBox4.Text == "")
-            {
-                MessageBox.Show("Invalid server address.");
-                return;
-            }
-            SelectedServer = textBox4.Text;
-            SelectedServerMinecraft = true;
-            SetLoginData(textBox4.Text);
-            Close();
-        }
         private void SetLoginData(string url)
         {
             LoginClientMinecraft c = new LoginClientMinecraft();
@@ -146,18 +129,19 @@ namespace ManicDigger
             this.LoginPort = logindata.port.ToString();
             this.LoginUser = textBox2.Text;
         }
+        private void splitContainer2_Panel1_Paint(object sender, PaintEventArgs e)
+        {
+        }
+        */
         public string LoginIp;
         public string LoginPort;
         public string LoginUser;
         public string LoginPassword;
-        private void splitContainer2_Panel1_Paint(object sender, PaintEventArgs e)
-        {
-        }
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             if (!checkBox1.Checked)
             {
-                string filename = GetMinecraftPasswordFilePath();
+                string filename = GetPasswordFilePath();
                 if (File.Exists(filename))
                 {
                     File.Delete(filename);
@@ -173,11 +157,11 @@ namespace ManicDigger
             StringBuilder b = new StringBuilder();
             b.AppendLine(user);
             b.AppendLine(password);
-            File.WriteAllText(GetMinecraftPasswordFilePath(), b.ToString());
+            File.WriteAllText(GetPasswordFilePath(), b.ToString());
         }
         void LoadPassword()
         {
-            string filename = GetMinecraftPasswordFilePath();
+            string filename = GetPasswordFilePath();
             if (File.Exists(filename))
             {
                 string[] lines = File.ReadAllLines(filename);
@@ -186,10 +170,47 @@ namespace ManicDigger
                 checkBox1.Checked = true;
             }
         }
-        private static string GetMinecraftPasswordFilePath()
+        private static string GetPasswordFilePath()
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "MinecraftPassword.txt");
+            string path = GameStorePath.GetStorePath();
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return Path.Combine(path, "Password.txt");
         }
-        */
+        private void button2_Click_3(object sender, EventArgs e)
+        {
+            if (textBox2.Text == "")// || textBox3.Text == "")
+            {
+                MessageBox.Show("Enter username."); // and password.");
+                return;
+            }
+            if (textBox1.Text == "")
+            {
+                MessageBox.Show("Invalid server address.");
+                return;
+            }
+            SelectedServer = textBox1.Text;
+            //SelectedServerMinecraft = true;
+            SetLoginData();
+            Close();
+        }
+        private void SetLoginData()
+        {
+            this.LoginIp = textBox1.Text;
+            this.LoginUser = textBox2.Text;
+            this.LoginPassword = textBox3.Text;
+        }
+        private void textBox2_TextChanged_1(object sender, EventArgs e)
+        {
+            RememberPassword(textBox2.Text, textBox3.Text);
+            SetLoginData();
+        }
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+            RememberPassword(textBox2.Text, textBox3.Text);
+            SetLoginData();
+        }
     }
 }

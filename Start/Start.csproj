@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Start</RootNamespace>
     <AssemblyName>Start</AssemblyName>
-	<PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkSubset>
@@ -60,6 +60,12 @@
     <EmbeddedResource Include="ServerSelector.resx">
       <DependentUpon>ServerSelector.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
+      <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
+      <Name>ManicDigger</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

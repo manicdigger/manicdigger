@@ -33,15 +33,56 @@ namespace Start
                 {
                     try
                     {
-                        if (!f.SelectedServerMinecraft)
+                        //if (!f.SelectedServerMinecraft)
                         {
-                            WebClient c = new WebClient();
-                            c.Headers[HttpRequestHeader.Cookie] = f.Cookie;
-                            c.DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, tempfile);
+                            string ip;
+                            string port;
+                            string user;
+                            string password;
+                            string gamemode;
+                            if (string.IsNullOrEmpty(f.LoginIp))
+                            {
+                                WebClient c = new WebClient();
+                                c.Headers[HttpRequestHeader.Cookie] = f.Cookie;
+                                //c.DownloadFile("http://fragmer.net/md/play.php?server=" + f.SelectedServer, tempfile);
+                                string xml = c.DownloadString("http://fragmer.net/md/play.php?server=" + f.SelectedServer);
+                                XmlDocument d = new XmlDocument();
+                                d.LoadXml(xml);
+                                gamemode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
+                                ip = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                                port = XmlTool.XmlVal(d, "/ManicDiggerLink/Port");
+                                user = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                                password = XmlTool.XmlVal(d, "/ManicDiggerLink/Password");
+                                if (user == null) { user = f.LoginUser; }
+                                if (password == null) { password = f.LoginPassword; }
+                                //RunLink(tempfile);
+                            }
+                            else
+                            {
+                                ip = f.LoginIp;
+                                port = f.LoginPort;
+                                user = f.LoginUser;
+                                password = f.LoginPassword;
+                                gamemode = "Fortress";
+                            }
+                            if (port == null)
+                            {
+                                port = GetPort(ip).ToString();
+                                ip = GetIp(ip);
+                            }
+                            string s = string.Format(@"<?xml version=""1.0""?>
+<ManicDiggerLink>
+	<Ip>{0}</Ip>
+	<Port>{1}</Port>
+	<GameMode>{2}</GameMode>
+	<User>{3}</User>
+    <Password>{4}</Password>
+</ManicDiggerLink>", ip, port, gamemode, user, "");//, password);
+                            File.WriteAllText(tempfile, s);
                             RunLink(tempfile);
                         }
-                        else
-                        {
+                        //else
+                        //{
                             /* Mine Mode
                             string ip = f.LoginIp;
                             string port = f.LoginPort;
@@ -58,7 +99,7 @@ namespace Start
                             File.WriteAllText(tempfile, s);
                             RunLink(tempfile);
                             */
-                        }
+                        //}
                     }
                     catch (Exception e)
                     {
@@ -67,6 +108,24 @@ namespace Start
                 }
                 RunLink(f.SinglePlayer);
             }
+        }
+        static string GetIp(string address)
+        {
+            if (!address.Contains(":"))
+            {
+                return address;
+            }
+            string ip = address.Substring(0, address.IndexOf(":"));
+            return ip;
+        }
+        static int GetPort(string address)
+        {
+            if (!address.Contains(":"))
+            {
+                return 25565;
+            }
+            int port = int.Parse(address.Substring(address.IndexOf(":") + 1).Trim());
+            return port;
         }
         private static void RunLink(string filename)
         {
