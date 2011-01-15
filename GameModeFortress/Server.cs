@@ -239,6 +239,10 @@ namespace ManicDiggerServer
         {
             try
             {
+                if (cfgkey == null)
+                {
+                    return;
+                }
                 StringWriter sw = new StringWriter();//&salt={4}
                 string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
                     , System.Web.HttpUtility.UrlEncode(cfgname),

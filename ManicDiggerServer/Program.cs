@@ -39,11 +39,6 @@ namespace ManicDiggerServer
                     singleplayer = true;
                 }
             }
-            if (Debugger.IsAttached)
-            {
-                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
-                    server, generator, map);
-            }
             server.LocalConnectionsOnly = singleplayer;
             server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var compression = new CompressionGzip();
@@ -51,6 +46,11 @@ namespace ManicDiggerServer
             server.chunkdb = chunkdb;
             map.chunkdb = chunkdb;
             server.networkcompression = compression;
+            if (Debugger.IsAttached)
+            {
+                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
+                    server, generator, map);
+            }
             server.Start();
             if ((!singleplayer) && (server.cfgpublic))
             {
