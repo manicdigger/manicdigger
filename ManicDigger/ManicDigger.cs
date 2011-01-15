@@ -293,7 +293,7 @@ namespace ManicDigger
         public ICompression compression;
         //void LoadMapArray(Stream ms);
         public const string XmlSaveExtension = ".mdxs.gz";
-        public const string BinSaveExtension = ".mdbs";
+        public const string BinSaveExtension = ".mddbs";
         public const string MinecraftMapSaveExtension = ".dat";
         public void LoadMap(IMapStorage map, string filename)
         {
