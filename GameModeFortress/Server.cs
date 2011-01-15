@@ -178,6 +178,7 @@ namespace ManicDiggerServer
                 cfgname = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
                 cfgmotd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
                 cfgport = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
+                cfgmaxclients = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients"));
                 string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
                 if (key != null)
                 {
@@ -214,6 +215,7 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("Name", cfgname) + Environment.NewLine;
             s += "  " + XmlTool.X("Motd", cfgmotd) + Environment.NewLine;
             s += "  " + XmlTool.X("Port", cfgport.ToString()) + Environment.NewLine;
+            s += "  " + XmlTool.X("MaxClients", cfgmaxclients.ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
@@ -227,6 +229,7 @@ namespace ManicDiggerServer
         string cfgname = "Manic Digger server";
         string cfgmotd = "MOTD";
         public int cfgport = 25565;
+        public int cfgmaxclients = 16;
         string cfgkey;
         public bool cfgpublic = false;
         Socket main;
@@ -239,7 +242,7 @@ namespace ManicDiggerServer
                 StringWriter sw = new StringWriter();//&salt={4}
                 string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
                     , System.Web.HttpUtility.UrlEncode(cfgname),
-                    32, "true", cfgport, GameVersion.Version, cfgkey.Replace("-", ""));
+                    cfgmaxclients, "true", cfgport, GameVersion.Version, cfgkey.Replace("-", ""));
 
                 List<string> playernames = new List<string>();
                 lock (clients)
@@ -374,6 +377,11 @@ namespace ManicDiggerServer
                 {
                     INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
                 };
+                if (clients.Count > cfgmaxclients)
+                {
+                    SendDisconnectPlayer(lastclient - 1, "Too many players! Try to connect later.");
+                    KillPlayer(lastclient - 1);
+                }
             }
             ArrayList copyList = new ArrayList();
             foreach (var k in clients)
@@ -819,7 +827,10 @@ namespace ManicDiggerServer
             {
                 SendDespawnPlayer(kk.Key, (byte)clientid);
             }
-            SendMessageToAll(string.Format("Player {0} disconnected.", name));
+            if (name != "invalid")
+            {
+                SendMessageToAll(string.Format("Player {0} disconnected.", name));
+            }
         }
         Vector3i DefaultSpawnPosition()
         {
