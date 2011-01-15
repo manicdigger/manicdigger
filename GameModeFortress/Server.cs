@@ -231,7 +231,7 @@ namespace ManicDiggerServer
         public int cfgport = 25565;
         public int cfgmaxclients = 16;
         string cfgkey;
-        public bool cfgpublic = false;
+        public bool cfgpublic = true;
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://fragmer.net/md/heartbeat.php";
