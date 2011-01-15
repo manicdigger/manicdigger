@@ -178,7 +178,11 @@ namespace ManicDiggerServer
                 cfgname = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
                 cfgmotd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
                 cfgport = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
-                cfgmaxclients = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients"));
+                string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
+                if (maxclients != null)
+                {
+                    cfgmaxclients = int.Parse(maxclients);
+                }
                 string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
                 if (key != null)
                 {
