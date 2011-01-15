@@ -733,11 +733,14 @@ namespace GameModeFortress
                     {
                         blobs[blobdownloadhash] = blobdownload.ToArray();
                         blobdownload = null;
-                        if (blobdownloadhash == serverterraintexture)
+                        if (ENABLE_PER_SERVER_TEXTURES)
                         {
-                            using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
+                            if (blobdownloadhash == serverterraintexture)
                             {
-                                terrain.UseTerrainTextureAtlas2d(bmp);
+                                using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
+                                {
+                                    terrain.UseTerrainTextureAtlas2d(bmp);
+                                }
                             }
                         }
                     }
@@ -751,6 +754,7 @@ namespace GameModeFortress
                     return false;
             }
         }
+        public bool ENABLE_PER_SERVER_TEXTURES = false;
         string serverterraintexture;
         #endregion
         public static string ByteArrayToString(byte[] ba)
