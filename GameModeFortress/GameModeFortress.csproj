@@ -65,6 +65,7 @@
     <Compile Include="GameData.cs" />
     <Compile Include="InfiniteMap.cs" />
     <Compile Include="ModeFortress.cs" />
+    <Compile Include="ModeFortressRail.cs" />
     <Compile Include="NetworkClientFortress.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />

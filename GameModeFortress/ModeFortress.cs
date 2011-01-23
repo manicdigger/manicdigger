@@ -74,7 +74,7 @@ namespace GameModeFortress
         public int SimulationCurrentFrame { get { return 0; } }
         #endregion
     }
-    public class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
+    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
     {
         [Inject]
         public ITerrainRenderer terrain;
@@ -377,6 +377,7 @@ namespace GameModeFortress
             }
             viewport.FiniteInventory = FiniteInventory;
             viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
+            RailOnNewFrame((float)dt);
         }
         private bool DoCommandDumpOrLoad(int x,int y,int z, bool dump, int blocktype)
         {
@@ -628,12 +629,6 @@ namespace GameModeFortress
         }
         #endregion
         #region IGameMode Members
-        public IEnumerable<IModelToDraw> Models
-        {
-            get { yield break; }
-        }
-        #endregion
-        #region IGameMode Members
         public int FiniteInventoryAmount(int blocktype)
         {
             if (!FiniteInventory.ContainsKey(blocktype))
@@ -774,5 +769,8 @@ namespace GameModeFortress
             return map.GetChunk(x, y, z);
         }
         #endregion
+
+
+        
     }
 }
