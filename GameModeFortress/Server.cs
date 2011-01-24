@@ -124,13 +124,19 @@ namespace ManicDiggerServer
                     for (int cz = 0; cz < map.MapSizeZ / chunksize; cz++)
                     {
                         Chunk c = map.chunks[cx, cy, cz];
-                        if (c != null)
+                        if (c == null)
                         {
-                            MemoryStream ms = new MemoryStream();
-                            Serializer.Serialize(ms, c);
-                            tosave.Add(new DbChunk() { Position = new Xyz() { X = cx, Y = cy, Z = cz }, Chunk = ms.ToArray() });
+                            continue;
                         }
-                        if (tosave.Count > 20)
+                        if (!c.DirtyForSaving)
+                        {
+                            continue;
+                        }
+                        c.DirtyForSaving = false;
+                        MemoryStream ms = new MemoryStream();
+                        Serializer.Serialize(ms, c);
+                        tosave.Add(new DbChunk() { Position = new Xyz() { X = cx, Y = cy, Z = cz }, Chunk = ms.ToArray() });
+                        if (tosave.Count > 200)
                         {
                             chunkdb.SetChunks(tosave);
                             tosave.Clear();
@@ -152,10 +158,12 @@ namespace ManicDiggerServer
             if ((DateTime.Now - lastsave).TotalMinutes > 2)
             {
                 MemoryStream ms = new MemoryStream();
+                DateTime start = DateTime.UtcNow;
+
                 SaveGame(ms);
                 chunkdb.SetGlobalData(ms.ToArray());
 
-                Console.WriteLine("Game saved.");
+                Console.WriteLine("Game saved. ({0} seconds)" + (DateTime.UtcNow - start));
                 lastsave = DateTime.Now;
             }
         }

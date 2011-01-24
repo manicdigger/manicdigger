@@ -19,6 +19,7 @@ namespace ManicDiggerServer
         public bool IsPopulated;
         [ProtoMember(4, IsRequired = false)]
         public int LastChange;
+        public bool DirtyForSaving;
     }
     public class ServerMap : IMapStorage
     {
@@ -43,11 +44,13 @@ namespace ManicDiggerServer
             byte[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunks[x / chunksize, y / chunksize, z / chunksize].LastChange = currenttime.SimulationCurrentFrame;
+            chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
         }
         public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
         {
             byte[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
         }
         public float WaterLevel { get; set; }
         public void Dispose()
@@ -81,6 +84,8 @@ namespace ManicDiggerServer
                 {
                     chunks[x, y, z] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
                 }
+                //chunks[x, y, z].LastChange = currenttime.SimulationCurrentFrame;
+                chunks[x, y, z].DirtyForSaving = true;
                 return chunks[x, y, z].data;
             }
             return chunk.data;
