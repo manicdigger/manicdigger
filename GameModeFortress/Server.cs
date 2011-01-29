@@ -203,7 +203,7 @@ namespace ManicDiggerServer
                 }
                 cfgcreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
                 cfgpublic = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-
+                cfgbuildpassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildPassword");
             }
             Console.WriteLine("Server configuration loaded.");
         }
@@ -231,6 +231,7 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
+            s += "  " + XmlTool.X("BuildPassword", cfgbuildpassword) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
             if (!Directory.Exists(gamepathconfig))
             {
@@ -244,6 +245,7 @@ namespace ManicDiggerServer
         public int cfgmaxclients = 16;
         string cfgkey;
         public bool cfgpublic = true;
+        public string cfgbuildpassword;
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://fragmer.net/md/heartbeat.php";
@@ -852,8 +854,9 @@ namespace ManicDiggerServer
         {
             int x = map.MapSizeX / 2;
             int y = map.MapSizeY / 2;
-            x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-            y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+            //spawn position randomization disabled.
+            //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+            //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             return new Vector3i(x * 32, MapUtil.blockheight(map, 0, x, y) * 32, y * 32);
         }
         //returns bytes read.
@@ -978,6 +981,16 @@ namespace ManicDiggerServer
                     int x = packet.SetBlock.X;
                     int y = packet.SetBlock.Y;
                     int z = packet.SetBlock.Z;
+                    if ((!string.IsNullOrEmpty(cfgbuildpassword))
+                        && (!clients[clientid].CanBuild))
+                    {
+                        if (y > map.MapSizeY / 2)
+                        {
+                            SendMessage(clientid, colorError + "You need a permission to build on this half of the world.");
+                            SendSetBlock(clientid, x, y, z, map.GetBlock(x, y, z)); //revert
+                            break;
+                        }
+                    }
                     BlockSetMode mode = packet.SetBlock.Mode == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
                     byte blocktype = (byte)packet.SetBlock.BlockType;
                     if (mode == BlockSetMode.Destroy)
@@ -1006,7 +1019,86 @@ namespace ManicDiggerServer
                     }
                     break;
                 case ClientPacketId.Message:
-                    SendMessageToAll(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                    packet.Message.Message = packet.Message.Message.Trim();
+                    if (packet.Message.Message.StartsWith("/msg"))
+                    {
+                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                        bool messageSent = false;
+                        if (ss.Length >= 3)
+                        {
+                            foreach(var k in clients)
+                            {
+                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    string msg = string.Join(" ", ss, 2, ss.Length - 2);
+                                    SendMessage(k.Key, "msg " + k.Value.playername + ": " + msg);
+                                    messageSent = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!messageSent)
+                        {
+                            SendMessage(clientid, colorError + "Usage: /msg [username] [message]");
+                            break;
+                        }
+                        break;
+                    }
+                    else if (packet.Message.Message.StartsWith("/op"))
+                    {
+                        if (!clients[clientid].CanBuild)
+                        {
+                            SendMessage(clientid, colorError + "You can't op others because you are not an op.");
+                            break;
+                        }
+                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                        foreach(var k in clients)
+                        {
+                            if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                k.Value.CanBuild = true;
+                                SendMessageToAll(colorSuccess + k.Value.playername + " can now build.");
+                                SendMessage(k.Key, colorSuccess + "To build, type /login " + cfgbuildpassword);
+                            }
+                        }
+                        break;
+                    }
+                    else if (packet.Message.Message.StartsWith("/login"))
+                    {
+                        if (string.IsNullOrEmpty(cfgbuildpassword))
+                        {
+                            break;
+                        }
+                        if (packet.Message.Message.Replace("/login ", "")
+                            .Equals(cfgbuildpassword, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            clients[clientid].CanBuild = true;
+                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
+                        }
+                        else
+                        {
+                            SendMessage(clientid, colorError + "Invalid password.");
+                        }
+                    }
+                    else if (packet.Message.Message.StartsWith("/help"))
+                    {
+                        SendMessage(clientid, colorHelp + "/login [serverpassword]");
+                        SendMessage(clientid, colorHelp + "/op [username]");
+                        SendMessage(clientid, colorHelp + "/msg [username] text");
+                    }
+                    else if (packet.Message.Message.StartsWith("."))
+                    {
+                        break;
+                    }
+                    else if (packet.Message.Message.StartsWith("/"))
+                    {
+                        SendMessage(clientid, colorError + "Invalid command.");
+                        break;
+                    }
+                    else
+                    {
+                        SendMessageToAll(string.Format("{0}: {1}", PlayerNameColored(clientid), colorNormal + packet.Message.Message));
+                    }
                     break;
                 case ClientPacketId.Craft:
                     DoCommandCraft(true, packet.Craft);
@@ -1017,6 +1109,16 @@ namespace ManicDiggerServer
             }
             return lengthPrefixLength + packetLength;
         }
+        string PlayerNameColored(int clientid)
+        {
+            return (clients[clientid].CanBuild ? colorOpUsername : "")
+                + clients[clientid].playername;
+        }
+        string colorNormal = "&f"; //white
+        string colorHelp = "&4"; //red
+        string colorOpUsername = "&2"; //green
+        string colorSuccess = "&2"; //green
+        string colorError = "&4"; //red
         bool CompareByteArray(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) { return false; }
@@ -1343,8 +1445,8 @@ namespace ManicDiggerServer
         }
         private void SendMessage(int clientid, string message)
         {
-            string truncated = message.Substring(0, Math.Min(64, message.Length));
-
+            string truncated = message; //.Substring(0, Math.Min(64, message.Length));
+            
             PacketServerMessage p = new PacketServerMessage();
             p.PlayerId = clientid;
             p.Message = truncated;
@@ -1544,6 +1646,7 @@ namespace ManicDiggerServer
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public List<byte[]> blobstosend = new List<byte[]>();
+            public bool CanBuild;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
