@@ -163,7 +163,7 @@ namespace ManicDiggerServer
                 SaveGame(ms);
                 chunkdb.SetGlobalData(ms.ToArray());
 
-                Console.WriteLine("Game saved. ({0} seconds)" + (DateTime.UtcNow - start));
+                Console.WriteLine("Game saved. ({0} seconds)", (DateTime.UtcNow - start));
                 lastsave = DateTime.Now;
             }
         }
