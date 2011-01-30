@@ -2222,7 +2222,10 @@ namespace ManicDigger
             List<string> players = new List<string>();
             foreach (var k in clients.Players)
             {
-                players.Add(k.Value.Name);
+                if (!k.Value.Name.Equals("Local", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    players.Add(k.Value.Name);
+                }
             }
             playerskindownloader.Update(players.ToArray(), playertextures, playertexturedefault);
             string playername;
