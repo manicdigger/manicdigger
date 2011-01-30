@@ -35,6 +35,8 @@ namespace GameModeFortress
         public INetworkPacketReceived NetworkPacketReceived;
         [Inject]
         public ICompression compression;
+        [Inject]
+        public InfiniteHeightCache heightmap;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -385,6 +387,20 @@ namespace GameModeFortress
                         }
                         Map.Map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
                         ReceivedMapLength += lengthPrefixLength + packetLength;
+                    }
+                    break;
+                case ServerPacketId.HeightmapChunk:
+                    {
+                        var p = packet.HeightmapChunk;
+                        byte[] decompressedchunk = compression.Decompress(p.CompressedHeightmap);
+                        for (int xx = 0; xx < p.SizeX; xx++)
+                        {
+                            for (int yy = 0; yy < p.SizeY; yy++)
+                            {
+                                int height = decompressedchunk[MapUtil.Index2d(xx, yy, p.SizeX)];
+                                heightmap.SetBlock(p.X + xx, p.Y + yy, height);
+                            }
+                        }
                     }
                     break;
                 default:

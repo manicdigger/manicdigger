@@ -26,10 +26,12 @@ namespace ManicDiggerServer
             var generator = new WorldGenerator();
             map.generator = generator;
             server.chunksize = 32;
+            map.heightmap = new InfiniteHeightCache() { chunksize = 32 };
             map.Reset(10000, 10000, 128);
             server.map = map;
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();
+            map.data = server.data;
             server.craftingtabletool = new CraftingTableTool() { map = map };
             bool singleplayer = false;
             foreach (string arg in args)

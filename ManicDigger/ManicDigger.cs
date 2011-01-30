@@ -124,6 +124,10 @@ namespace ManicDigger
     }
     public static class MapUtil
     {
+        public static int Index2d(int x, int y, int sizex)
+        {
+            return x + y * sizex;
+        }
         public static Vector3i Pos(int index, int sizex, int sizey)
         {
             int x = index % sizex;

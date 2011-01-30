@@ -137,9 +137,24 @@ namespace GameModeFortress
             this.clientgame = clientgame;
             this.map = map;
             w.currentshadows = this;
-            shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
-                localplayerposition = localplayerposition, config3d = config3d, ischunkready = dirtychunks };
-            shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };
+            var heightmap = new InfiniteHeightCache();
+            network.heightmap = heightmap;
+            shadowsfull = new Shadows()
+            {
+                data = gamedata,
+                map = clientgame,
+                terrain = terrainDrawer,
+                localplayerposition = localplayerposition,
+                config3d = config3d,
+                ischunkready = dirtychunks
+            };
+            shadowssimple = new ShadowsSimple()
+            {
+                data = gamedata,
+                map = clientgame,
+                ischunkdirty = dirtychunks,
+                heightmap = heightmap
+            };
             if (fullshadows)
             {
                 UseShadowsFull();
@@ -265,6 +280,7 @@ namespace GameModeFortress
             var generator = new WorldGenerator();
             map.generator = generator;
             server.chunksize = 32;
+            map.heightmap = new InfiniteHeightCache() { chunksize = server.chunksize };
             map.Reset(10000, 10000, 128);
             server.map = map;
             server.generator = generator;
@@ -278,6 +294,7 @@ namespace GameModeFortress
             server.chunkdb = chunkdb;
             map.chunkdb = chunkdb;
             server.networkcompression = networkcompression;
+            map.data = server.data;
             server.Start();
             for (; ; )
             {

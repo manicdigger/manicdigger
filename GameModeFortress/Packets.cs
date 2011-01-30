@@ -212,6 +212,8 @@ namespace GameModeFortress
         public PacketServerBlobPart BlobPart;
         [ProtoMember(16, IsRequired = false)]
         public PacketServerBlobFinalize BlobFinalize;
+        [ProtoMember(17, IsRequired = false)]
+        public PacketServerHeightmapChunk HeightmapChunk;
     }
     [ProtoContract]
     public class PacketClient
@@ -248,6 +250,22 @@ namespace GameModeFortress
         public int SizeZ;
         [ProtoMember(7, IsRequired = false)]
         public byte[] CompressedChunk;
+    }
+    //needed for drawing shadows.
+    //sent before any chunks or blocks in the column.
+    [ProtoContract]
+    public class PacketServerHeightmapChunk
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        [ProtoMember(3, IsRequired = false)]
+        public int SizeX;
+        [ProtoMember(4, IsRequired = false)]
+        public int SizeY;
+        [ProtoMember(5, IsRequired = false)]
+        public byte[] CompressedHeightmap;
     }
     [ProtoContract]
     public class PacketServerFiniteInventory
@@ -314,6 +332,7 @@ namespace GameModeFortress
         BlobInitialize = 18,
         BlobPart = 19,
         BlobFinalize = 20,
+        HeightmapChunk = 21,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

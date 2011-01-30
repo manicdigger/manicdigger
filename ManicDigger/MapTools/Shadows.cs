@@ -21,6 +21,11 @@ namespace ManicDigger
         public IGameData data;
         [Inject]
         public IMapStorage map;
+        [Inject]
+        public IIsChunkReady ischunkdirty;
+        [Inject]
+        public InfiniteHeightCache heightmap;
+        public int chunksize = 16;
         int defaultshadow = 11;
         #region IShadows Members
         public void OnLocalBuild(int x, int y, int z)
@@ -28,6 +33,33 @@ namespace ManicDigger
         }
         public void OnSetBlock(int x, int y, int z)
         {
+            int oldheight = heightmap.GetBlock(x, y);
+            UpdateColumnHeight(x, y);
+            //update shadows in all chunks below
+            int newheight = heightmap.GetBlock(x, y);
+            int min = Math.Min(oldheight, newheight);
+            int max = Math.Max(oldheight, newheight);
+            for (int i = min; i < max; i++)
+            {
+                if (i / chunksize != z / chunksize)
+                {
+                    ischunkdirty.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true);
+                }
+            }
+        }
+        private void UpdateColumnHeight(int x, int y)
+        {
+            //todo faster
+            int height = map.MapSizeZ - 1;
+            for (int i = map.MapSizeZ - 1; i >= 0; i--)
+            {
+                height = i;
+                if (!data.GrassGrowsUnder(map.GetBlock(x, y, i)))
+                {
+                    break;
+                }
+            }
+            heightmap.SetBlock(x, y, height);
         }
         public void ResetShadows()
         {
@@ -46,14 +78,8 @@ namespace ManicDigger
         #endregion
         private bool IsShadow(int x, int y, int z)
         {
-            for (int i = 1; i < 10; i++)
-            {
-                if (MapUtil.IsValidPos(map, x, y, z + i) && !data.GrassGrowsUnder(map.GetBlock(x, y, z + i)))
-                {
-                    return true;
-                }
-            }
-            return false;
+            int height = heightmap.GetBlock(x, y);
+            return z < height;
         }
         #region IShadows Members
         public int? MaybeGetLight(int x, int y, int z)
@@ -588,9 +614,9 @@ namespace ManicDigger
         }
         #endregion
     }
-    class InfiniteHeightCache
+    public class InfiniteHeightCache
     {
-        int chunksize = 16;
+        public int chunksize = 16;
         Dictionary<Point, byte[,]> gencache = new Dictionary<Point, byte[,]>();
         public int GetBlock(int x, int y)
         {

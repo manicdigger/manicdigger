@@ -758,6 +758,21 @@ namespace ManicDiggerServer
                 }
                 byte[] chunk = map.GetChunk(v.x, v.y, v.z);
                 byte[] compressedchunk = CompressChunkNetwork(chunk);
+                if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
+                {
+                    byte[] heightmapchunk = map.GetHeightmapChunk(v.x, v.y);
+                    byte[] compressedHeightmapChunk = networkcompression.Compress(heightmapchunk);
+                    PacketServerHeightmapChunk p1 = new PacketServerHeightmapChunk()
+                    {
+                        X = v.x,
+                        Y = v.y,
+                        SizeX = chunksize,
+                        SizeY = chunksize,
+                        CompressedHeightmap = compressedHeightmapChunk,
+                    };
+                    SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.HeightmapChunk, HeightmapChunk = p1 }));
+                    c.heightmapchunksseen.Add(new Vector2i(v.x, v.y), (int)simulationcurrentframe);
+                }
                 PacketServerChunk p = new PacketServerChunk()
                 {
                     X = v.x,
@@ -1643,6 +1658,7 @@ namespace ManicDiggerServer
             public int positionheading;
             public int positionpitch;
             public Dictionary<Vector3i, int> chunksseen = new Dictionary<Vector3i, int>();
+            public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public List<byte[]> blobstosend = new List<byte[]>();
