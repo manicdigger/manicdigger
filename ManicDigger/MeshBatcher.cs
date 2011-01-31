@@ -13,7 +13,7 @@ namespace ManicDigger
         public MeshBatcher()
         {
         }
-        private void genlists()
+        private void GenLists()
         {
             int lists = GL.GenLists(listincrease);
             if (lists == 0)
@@ -37,7 +37,6 @@ namespace ManicDigger
                 }
             }
         }
-        //int lists = -1;
         List<int> lists = new List<int>();
         int count = 0;
         public void Remove(int p)
@@ -56,7 +55,10 @@ namespace ManicDigger
             public float radius;
         }
         Queue<ToAdd> toadd = new Queue<ToAdd>();
-        public int Add(ushort[] p, VertexPositionTexture[] vertexPositionTexture, bool transparent, int texture, Vector3 center, float radius)
+
+        //Just saves provided arguments.
+        //Display lists are created later, in Draw() called from the main thread.
+        public int Add(ushort[] indices, VertexPositionTexture[] vertices, bool transparent, int texture, Vector3 center, float radius)
         {
             int id;
             lock (toadd)
@@ -73,8 +75,8 @@ namespace ManicDigger
                 }
                 toadd.Enqueue(new ToAdd()
                 {
-                    indices = p,
-                    vertices = vertexPositionTexture,
+                    indices = indices,
+                    vertices = vertices,
                     id = id,
                     transparent = transparent,
                     texture = texture,
@@ -88,7 +90,7 @@ namespace ManicDigger
         {
             while (count >= lists.Count * listincrease)
             {
-                genlists();
+                GenLists();
             }
             while (count >= listinfoCount)
             {
@@ -108,8 +110,13 @@ namespace ManicDigger
         {
             this.playerpos = playerpos;
             AllocateLists();
+            //Create display lists, which were saved with Add() call
+            //in another thread.
             lock (toadd)
             {
+                //The addcounter prevents slowdown caused by creating
+                //too many display lists in a single frame.
+                //It's disabled because it's probably not needed.
                 addcounter += addperframe;
                 while (//addcounter >= 1 &&
                     toadd.Count > 0)
@@ -117,8 +124,10 @@ namespace ManicDigger
                     addcounter -= 1;
                     ToAdd t = toadd.Dequeue();
                     GL.NewList(GetList(t.id), ListMode.Compile);
+                    
+                    //We can't bind texture inside display list
+                    //because it doesn't work on Linux and some on graphics cards.
 
-                    GL.BindTexture(TextureTarget.Texture2D, t.texture);
                     GL.EnableClientState(EnableCap.TextureCoordArray);
                     GL.EnableClientState(EnableCap.VertexArray);
                     GL.EnableClientState(EnableCap.ColorArray);
@@ -143,32 +152,87 @@ namespace ManicDigger
                     li.radius = t.radius;
                     li.transparent = t.transparent;
                     li.empty = false;
+                    li.texture = GetTextureId(t.texture);
                 }
                 if (toadd.Count == 0)
                 {
                     addcounter = 0;
                 }
             }
-            if (tocall == null)
-            {
-                tocall = new int[MAX_DISPLAY_LISTS];
-            }
-            if (tocall2 == null)
-            {
-                tocall2 = new int[MAX_DISPLAY_LISTS];
-            }
             UpdateCulling();
-            int tocallpos = 0;
-            int tocallpos2 = 0;
-            PrepareToCall(ref tocallpos, ref tocallpos2);
-            GL.CallLists(tocallpos, ListNameType.Int, tocall);
-            tocallpos = 0;
+            
+            //Group display lists by used texture to minimize
+            //number of GL.BindTexture() calls.
+            SortListsByTexture();
+
+            //Need to first render all solid lists (to fill z-buffer), then transparent.
+            for (int i = 0; i < texturesCount; i++)
+            {
+                if (tocallSolid[i].Count == 0) { continue; }
+                GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                GL.CallLists(tocallSolid[i].Count, ListNameType.Int, tocallSolid[i].Lists);
+            }
             GL.Disable(EnableCap.CullFace);//for water.
-            GL.CallLists(tocallpos2, ListNameType.Int, tocall2);
+            for (int i = 0; i < texturesCount; i++)
+            {
+                if (tocallTransparent[i].Count == 0) { continue; }
+                GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                GL.CallLists(tocallTransparent[i].Count, ListNameType.Int, tocallTransparent[i].Lists);
+            }
             GL.Enable(EnableCap.CullFace);
         }
-        private void PrepareToCall(ref int tocallpos, ref int tocallpos2)
+        //Finds an index in glTextures array.
+        private int GetTextureId(int glTexture)
         {
+            int id = Array.IndexOf(glTextures, glTexture);
+            if (id != -1)
+            {
+                return id;
+            }
+            id = Array.IndexOf(glTextures, 0);
+            if (id != -1)
+            {
+                glTextures[id] = glTexture;
+                return id;
+            }
+            int increase = 10;
+            Array.Resize(ref glTextures, glTextures.Length + increase);
+            glTextures[glTextures.Length - increase] = glTexture;
+            return glTextures.Length - increase;
+        }
+        //Maps from our inner texture id to real opengl texture id.
+        int[] glTextures = new int[10];
+        ToCall[] tocallSolid;
+        ToCall[] tocallTransparent;
+        class ToCall
+        {
+            public int[] Lists;
+            public int Count;
+        }
+        //todo dynamic
+        public int texturesCount = 10;
+        private void SortListsByTexture()
+        {
+            if (tocallSolid == null)
+            {
+                tocallSolid = new ToCall[texturesCount];
+                tocallTransparent = new ToCall[texturesCount];
+                for (int i = 0; i < texturesCount; i++)
+                {
+                    tocallSolid[i] = new ToCall();
+                    tocallTransparent[i] = new ToCall();
+                }
+                for (int i = 0; i < texturesCount; i++)
+                {
+                    tocallSolid[i].Lists = new int[MAX_DISPLAY_LISTS];
+                    tocallTransparent[i].Lists = new int[MAX_DISPLAY_LISTS];
+                }
+            }
+            for (int i = 0; i < texturesCount; i++)
+            {
+                tocallSolid[i].Count = 0;
+                tocallTransparent[i].Count = 0;
+            }
             for (int i = 0; i < count; i++)
             {
                 ListInfo li = listinfo[i];
@@ -182,16 +246,20 @@ namespace ManicDigger
                 }
                 if (!li.transparent)
                 {
-                    tocall[tocallpos] = GetList(i);
-                    tocallpos++;
+                    ToCall tocall = tocallSolid[li.texture];
+                    tocall.Lists[tocall.Count] = GetList(i);
+                    tocall.Count++;
                 }
                 else
                 {
-                    tocall2[tocallpos2] = GetList(i);
-                    tocallpos2++;
+                    ToCall tocall = tocallTransparent[li.texture];
+                    tocall.Lists[tocall.Count] = GetList(i);
+                    tocall.Count++;
                 }
             }
         }
+        //Not really needed because display lists perform (at least on some computers)
+        //their own frustum culling automatically.
         private void UpdateCulling()
         {
             int licount = this.count;
@@ -203,8 +271,6 @@ namespace ManicDigger
             }
         }
         public int MAX_DISPLAY_LISTS = 32 * 1024;
-        int[] tocall;
-        int[] tocall2;
         int strideofvertices = -1;
         int StrideOfVertices
         {
@@ -222,6 +288,7 @@ namespace ManicDigger
             public float radius;
             public bool transparent;
             public bool render = true;
+            public int texture;
         }
         ListInfo[] listinfo = new ListInfo[0];
         int listinfoCount = 0;
