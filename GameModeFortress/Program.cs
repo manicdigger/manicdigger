@@ -146,7 +146,8 @@ namespace GameModeFortress
                 terrain = terrainDrawer,
                 localplayerposition = localplayerposition,
                 config3d = config3d,
-                ischunkready = dirtychunks
+                ischunkready = dirtychunks,
+                heightmap = heightmap,
             };
             shadowssimple = new ShadowsSimple()
             {
@@ -155,6 +156,7 @@ namespace GameModeFortress
                 ischunkdirty = dirtychunks,
                 heightmap = heightmap
             };
+            this.terrainchunkrenderer = terrainChunkDrawer;
             if (fullshadows)
             {
                 UseShadowsFull();
@@ -184,18 +186,21 @@ namespace GameModeFortress
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
+        TerrainChunkRenderer terrainchunkrenderer;
         public bool fullshadows = false;
         void UseShadowsSimple()
         {
             clientgame.shadows = shadowssimple;
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
+            terrainchunkrenderer.shadows = clientgame.shadows;
         }
         void UseShadowsFull()
         {
             clientgame.shadows = shadowsfull;
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
+            terrainchunkrenderer.shadows = clientgame.shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull

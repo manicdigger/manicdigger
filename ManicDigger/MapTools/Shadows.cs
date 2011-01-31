@@ -102,6 +102,8 @@ namespace ManicDigger
         public Config3d config3d;
         [Inject]
         public IIsChunkReady ischunkready;
+        [Inject]
+        public InfiniteHeightCache heightmap;
 
         const int chunksize = 16;
         Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();
@@ -133,11 +135,6 @@ namespace ManicDigger
                     light.ClearChunk(x, y - chunksize, zz);
                     light.ClearChunk(x, y + chunksize, zz);
                 }
-                lightheight.ClearChunk(x, y);
-                lightheight.ClearChunk(x - chunksize, y);
-                lightheight.ClearChunk(x + chunksize, y);
-                lightheight.ClearChunk(x, y - chunksize);
-                lightheight.ClearChunk(x, y - chunksize);
                 return;
             }
 
@@ -168,8 +165,6 @@ namespace ManicDigger
         public void ResetShadows()
         {
             light = null;
-            lightheight = null;
-            lightheight = new InfiniteHeightCache();
             chunklighted = null;
             UpdateHeightCache();
             loaded = true;
@@ -179,39 +174,37 @@ namespace ManicDigger
             light = new InfiniteMapCache();
             UpdateHeightCache();
         }
-        private void UpdateStartSunlight(int x, int y)
-        {
-            int height = GetLightHeight(x, y);
-            for (int z = 0; z < map.MapSizeZ; z++)
-            {
-                if (z >= height)
-                {
-                    LightSetBlock(x, y, z, (byte)maxlight);
-                }
-                else
-                {
-                    LightSetBlock(x, y, z, (byte)minlight);
-                }
-            }
-        }
         int LightGetBlock(int x, int y, int z)
         {
             int block = light.GetBlock(x, y, z);
             if (block == 0)//unknown
             {
-                UpdateStartSunlightChunk(x, y);
+                return 15;
+                //UpdateStartSunlightChunk(x, y, z);
             }
             return block - 1;
         }
-        private void UpdateStartSunlightChunk(int x, int y)
+        private void UpdateStartSunlightChunk(int x, int y, int z)
         {
             int startx = (x / chunksize) * chunksize;
             int starty = (y / chunksize) * chunksize;
+            int startz = (z / chunksize) * chunksize;
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
-                    UpdateStartSunlight(startx + xx, starty + yy);
+                    int height = GetLightHeight(startx + xx, starty + yy);
+                    for (int zz = 0; zz < chunksize; zz++)
+                    {
+                        if (startz + zz >= height)
+                        {
+                            LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)maxlight);
+                        }
+                        else
+                        {
+                            LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)minlight);
+                        }
+                    }
                 }
             }
         }
@@ -221,10 +214,12 @@ namespace ManicDigger
         }
         private void UpdateHeightCache()
         {
+            /*
             if (lightheight != null)
             {
                 lightheight.Clear();
             }
+            */
         }
         private int GetRealLightHeightAt(int x, int y)
         {
@@ -243,29 +238,31 @@ namespace ManicDigger
             }
             return height;
         }
-        //Dictionary<Point, int> lightheight = new Dictionary<Point, int>();
-        InfiniteHeightCache lightheight = new InfiniteHeightCache();
         int GetLightHeight(int x, int y)
         {
-            var p = new Point(x, y);
-            var height = lightheight.GetBlock(x, y);
-            if (height == 0)
-            {
-                UpdateLightHeightmapAt(x, y);
-                height = lightheight.GetBlock(x, y);
-            }
-            return height - 1;
+            return heightmap.GetBlock(x, y);
         }
         void UpdateLightHeightmapAt(int x, int y)
         {
-            lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);
+            //todo faster
+            int height = map.MapSizeZ - 1;
+            for (int i = map.MapSizeZ - 1; i >= 0; i--)
+            {
+                height = i;
+                if (!data.GrassGrowsUnder(map.GetBlock(x, y, i)))
+                {
+                    break;
+                }
+            }
+            heightmap.SetBlock(x, y, height);
+            /*lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);*/
         }
         InfiniteMapCache light = new InfiniteMapCache();
         int minlight = 0;
         public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
         {
-            if (lightheight == null) { ResetShadows(); }
+            /* if (lightheight == null) { ResetShadows(); } */
             int oldheight = GetLightHeight(x, y);
             if (oldheight < 0) { oldheight = 0; }
             if (oldheight >= map.MapSizeZ) { oldheight = map.MapSizeZ - 1; }
@@ -459,7 +456,8 @@ namespace ManicDigger
                 int block = currentlightchunk[x % chunksize, y % chunksize, z % chunksize];
                 if (block == 0)//unknown
                 {
-                    UpdateStartSunlightChunk(x, y);
+                    UpdateStartSunlightChunk(x, y, z);
+                    //throw new Exception();
                 }
                 return block - 1;
             }
