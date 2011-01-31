@@ -69,16 +69,15 @@ namespace GameModeFortress
         {
             try
             {
-                using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
-                {
-                    e.SetBuffer(packet, 0, packet.Length);
-                    main.SendAsync(e);
-                }
+                main.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
             }
             catch
             {
                 Console.WriteLine("SendPacket error");
             }
+        }
+        void EmptyCallback(IAsyncResult result)
+        {
         }
         public void Disconnect()
         {

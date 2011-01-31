@@ -1476,16 +1476,15 @@ namespace ManicDiggerServer
         {
             try
             {
-                using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
-                {
-                    e.SetBuffer(packet, 0, packet.Length);
-                    clients[clientid].socket.SendAsync(e);
-                }
+                clients[clientid].socket.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
             }
             catch (Exception e)
             {
                 KillPlayer(clientid);
             }
+        }
+        void EmptyCallback(IAsyncResult result)
+        {
         }
         int drawdistance = 192;
         public int chunksize = 32;
