@@ -40,7 +40,7 @@ namespace ManicDigger
                     if (light == null) { light = shadows.maxlight; }
                     return (float)light.Value / shadows.maxlight;
                 }
-                return 1;
+                return 1f / shadows.maxlight;
             }
         }
         public bool IsTorch() { return viewport.MaterialSlots[viewport.activematerial] == data.TileIdTorch; }

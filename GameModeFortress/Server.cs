@@ -366,7 +366,8 @@ namespace ManicDiggerServer
                         }
                     }
                     */
-                    if (GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
+                    if ((GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
+                        || GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
                     {
                         foreach (var c in clients)
                         {
@@ -487,7 +488,12 @@ namespace ManicDiggerServer
         }
         private void NotifySeason(int clientid)
         {
-            PacketServerSeason p = new PacketServerSeason() { Season = GetSeason(simulationcurrentframe) };
+            PacketServerSeason p = new PacketServerSeason()
+            {
+                Season = GetSeason(simulationcurrentframe),
+                Hour = GetHour(simulationcurrentframe),
+                Moon = GetMoon(simulationcurrentframe),
+            };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season = p }));
         }
         int SEASON_EVERY_SECONDS = 60 * 60;//1 hour
@@ -495,6 +501,17 @@ namespace ManicDiggerServer
         {
             long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * SEASON_EVERY_SECONDS;
             return (int)((frame / everyframes) % 4);
+        }
+        int DAY_EVERY_SECONDS = 60 * 60;//1 hour
+        int GetHour(long frame)
+        {
+            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / 24;
+            return (int)((frame / everyframes) % 24);
+        }
+        int GetMoon(long frame)
+        {
+            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS * 4;
+            return (int)((frame / everyframes) % 2);
         }
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes

@@ -200,6 +200,10 @@ namespace GameModeFortress
         public bool fullshadows = false;
         void UseShadowsSimple()
         {
+            if (clientgame.shadows != null)
+            {
+                shadowssimple.sunlight = clientgame.shadows.sunlight;
+            }
             clientgame.shadows = shadowssimple;
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
@@ -207,6 +211,10 @@ namespace GameModeFortress
         }
         void UseShadowsFull()
         {
+            if (clientgame.shadows != null)
+            {
+                shadowsfull.sunlight = clientgame.shadows.sunlight;
+            }
             clientgame.shadows = shadowsfull;
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;

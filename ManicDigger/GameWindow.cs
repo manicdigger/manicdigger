@@ -344,6 +344,7 @@ namespace ManicDigger
         void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
         int SelectedModelId { get; }
         bool ENABLE_FINITEINVENTORY { get; set; }
+        bool SkySphereNight { get; set; }
     }
     public class AnimationHint
     {
@@ -417,6 +418,9 @@ namespace ManicDigger
         #region IViewportSize Members
         public int Width { get { return 1; } }
         public int Height { get { return 1; } }
+        #endregion
+        #region IViewport3d Members
+        public bool SkySphereNight { get; set; }
         #endregion
     }
     public interface IModelToDraw
@@ -511,6 +515,8 @@ namespace ManicDigger
         public FpsHistoryGraphRenderer fpshistorygraphrenderer;
         [Inject]
         public MapManipulator mapManipulator;
+
+        public bool SkySphereNight { get; set; }
 
         bool IsMono = Type.GetType("Mono.Runtime") != null;
 
@@ -2192,7 +2198,15 @@ namespace ManicDigger
         {
             float density = 0.3f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
-            float[] fogColor = new[] { (float)clearcolor.R / 256, (float)clearcolor.G / 256, (float)clearcolor.B / 256, (float)clearcolor.A / 256 };
+            float[] fogColor;
+            if (SkySphereNight)
+            {
+                fogColor = new[] { 0f, 0f, 0f, 1.0f };
+            }
+            else
+            {
+                fogColor = new[] { (float)clearcolor.R / 256, (float)clearcolor.G / 256, (float)clearcolor.B / 256, (float)clearcolor.A / 256 };
+            }
             GL.Enable(EnableCap.Fog);
             GL.Hint(HintTarget.FogHint, HintMode.Nicest);
             GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
@@ -2251,7 +2265,8 @@ namespace ManicDigger
         public bool ENABLE_TPP_VIEW = false;
         AnimationState a = new AnimationState();
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
-        int skyspheretexture = -1;        
+        int skyspheretexture = -1;
+        int skyspherenighttexture = -1;
         ushort[] skysphereelements;
         ManicDigger.SkySphere.VertexP3N3T2[] skyspherevertices;
         private void DrawSkySphere()
@@ -2259,6 +2274,7 @@ namespace ManicDigger
             if (skyspheretexture == -1)
             {
                 skyspheretexture = LoadTexture(getfile.GetFile("skysphere.png"));
+                skyspherenighttexture = LoadTexture(getfile.GetFile("skyspherenight.png"));
             }
 
             SkySphere skysphere = new SkySphere();
@@ -2275,7 +2291,7 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.Translate(LocalPlayerPosition);
             GL.Color3(Color.White);
-            GL.BindTexture(TextureTarget.Texture2D, skyspheretexture);
+            GL.BindTexture(TextureTarget.Texture2D, SkySphereNight ? skyspherenighttexture : skyspheretexture);
 
             GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.EnableClientState(ArrayCap.VertexArray);

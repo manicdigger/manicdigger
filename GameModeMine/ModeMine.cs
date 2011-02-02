@@ -555,7 +555,7 @@ namespace ManicDigger
             switch (blocktype)
             {
                 case (int)TileTypeMinecraft.Torch:
-                    return 10;
+                    return 15;
                 case (int)TileTypeMinecraft.GoldBlock:
                 case (int)TileTypeMinecraft.Lava:
                 case (int)TileTypeMinecraft.StationaryLava:

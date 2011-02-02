@@ -703,9 +703,29 @@ namespace GameModeFortress
                     return true;
                 case ServerPacketId.Season:
                     {
-                        CurrentSeason = packet.Season.Season;
-                        if (CurrentSeason == 0 || CurrentSeason == 3)
+                        if (packet.Season.Season != CurrentSeason)
                         {
+                            CurrentSeason = packet.Season.Season;
+                            if (CurrentSeason == 0 || CurrentSeason == 3)
+                            {
+                                terrain.UpdateAllTiles();
+                            }
+                        }
+                        int sunlight;
+                        if (packet.Season.Hour >= 6 && packet.Season.Hour < 18)
+                        {
+                            sunlight = shadows.maxlight;
+                            viewport.SkySphereNight = false;
+                        }
+                        else
+                        {
+                            sunlight = packet.Season.Moon == 0 ? 0 : 1;
+                            viewport.SkySphereNight = shadows.GetType() == typeof(ShadowsSimple) ? false : true;
+                        }
+                        if (shadows.sunlight != sunlight)
+                        {
+                            shadows.sunlight = sunlight;
+                            shadows.ResetShadows();
                             terrain.UpdateAllTiles();
                         }
                     }
@@ -769,8 +789,5 @@ namespace GameModeFortress
             return map.GetChunk(x, y, z);
         }
         #endregion
-
-
-        
     }
 }

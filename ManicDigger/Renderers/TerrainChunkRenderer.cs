@@ -68,6 +68,7 @@ namespace ManicDigger
             GetExtendedChunk(x, y, z);
             if (IsSolidChunk(currentChunk)) { yield break; }
             ResetCurrentShadows();
+            shadows.OnMakeChunk(x, y, z);
             CalculateVisibleFaces(currentChunk);
             CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
             CalculateBlockPolygons(x, y, z);

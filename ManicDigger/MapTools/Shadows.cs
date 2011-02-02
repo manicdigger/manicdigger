@@ -14,6 +14,8 @@ namespace ManicDigger
         int maxlight { get; }
         void OnGetTerrainBlock(int x, int y, int z);
         int? MaybeGetLight(int x, int y, int z);
+        void OnMakeChunk(int chunkx, int chunky, int chunkz);
+        int sunlight { get; set; }
     }
     public class ShadowsSimple : IShadows
     {
@@ -87,6 +89,15 @@ namespace ManicDigger
             return null;
         }
         #endregion
+        #region IShadows Members
+        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
+        {
+        }
+        #endregion
+        #region IShadows Members
+        int sunlight_ = 16;
+        public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
+        #endregion
     }
     public class Shadows : IShadows
     {
@@ -104,8 +115,14 @@ namespace ManicDigger
         public IIsChunkReady ischunkready;
         [Inject]
         public InfiniteHeightCache heightmap;
+        public InfiniteMapCache light = new InfiniteMapCache();
+        
+        public int chunksize = 16;
+        int minlight = 0;
+        public int maxlight { get { return 16; } }
+        int sunlight_ = 16;
+        public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
 
-        const int chunksize = 16;
         Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();
         public void OnLocalBuild(int x, int y, int z)
         {
@@ -153,10 +170,17 @@ namespace ManicDigger
             {
                 DefloodLight(near);
             }
+            SetChangedChunksDirty();
+        }
+        private void SetChangedChunksDirty()
+        {
             foreach (var k in lighttoupdate)
             {
-                terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
-                ischunkready.SetChunkDirty(k.Key.x/chunksize, k.Key.y/chunksize, k.Key.z / chunksize, true);
+                if (MapUtil.IsValidPos(map, k.Key.x, k.Key.y, k.Key.z))
+                {
+                    terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                    ischunkready.SetChunkDirty(k.Key.x / chunksize, k.Key.y / chunksize, k.Key.z / chunksize, true);
+                }
             }
         }
         Dictionary<Vector3i, bool> lighttoupdate = new Dictionary<Vector3i, bool>();
@@ -164,8 +188,8 @@ namespace ManicDigger
         public bool loaded = true;
         public void ResetShadows()
         {
-            light = null;
-            chunklighted = null;
+            light = new InfiniteMapCache();
+            chunklighted = new bool[map.MapSizeX / chunksize, map.MapSizeY / chunksize, map.MapSizeZ / chunksize];
             UpdateHeightCache();
             loaded = true;
         }
@@ -176,13 +200,28 @@ namespace ManicDigger
         }
         int LightGetBlock(int x, int y, int z)
         {
+            retry:
             int block = light.GetBlock(x, y, z);
             if (block == 0)//unknown
             {
-                return 15;
-                //UpdateStartSunlightChunk(x, y, z);
+                UpdateStartSunlight(x, y, z);
+                goto retry;
             }
             return block - 1;
+        }
+        private void UpdateStartSunlight(int x, int y, int z)
+        {
+            int height = GetLightHeight(x,y);
+            int light;
+            if (z >= height)
+            {
+                light = sunlight;
+            }
+            else
+            {
+                light = minlight;
+            }
+            SetLight(x, y, z, (byte)light);
         }
         private void UpdateStartSunlightChunk(int x, int y, int z)
         {
@@ -196,17 +235,20 @@ namespace ManicDigger
                     int height = GetLightHeight(startx + xx, starty + yy);
                     for (int zz = 0; zz < chunksize; zz++)
                     {
+                        int light;
                         if (startz + zz >= height)
                         {
-                            LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)maxlight);
+                            light = sunlight;
                         }
                         else
                         {
-                            LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)minlight);
+                            light = minlight;
                         }
+                        LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)light);
                     }
                 }
             }
+            chunklighted[x / chunksize, y / chunksize, z / chunksize] = true;
         }
         void LightSetBlock(int x, int y, int z, int block)
         {
@@ -257,9 +299,6 @@ namespace ManicDigger
             heightmap.SetBlock(x, y, height);
             /*lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);*/
         }
-        InfiniteMapCache light = new InfiniteMapCache();
-        int minlight = 0;
-        public int maxlight { get { return 16; } }
         void UpdateSunlight(int x, int y, int z)
         {
             /* if (lightheight == null) { ResetShadows(); } */
@@ -274,7 +313,7 @@ namespace ManicDigger
                 //make white
                 for (int i = newheight; i <= oldheight; i++)
                 {
-                    SetLight(x, y, i, maxlight);
+                    SetLight(x, y, i, sunlight);
                     currentlightchunk = null;
                     FloodLight(x, y, i);
                 }
@@ -318,6 +357,10 @@ namespace ManicDigger
                     }
                 }
             }
+        }
+        bool IsSunlighted(int x, int y, int z)
+        {
+            return z > heightmap.GetBlock(x, y);
         }
         private void DefloodLight(IEnumerable<Vector3i> start)
         {
@@ -366,7 +409,7 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    if (LightGetBlock(n.x, n.y, n.z) <= vlight)
+                    if (LightGetBlock(n.x, n.y, n.z) < vlight)
                     {
                         q.Enqueue(n);
                     }
@@ -432,18 +475,23 @@ namespace ManicDigger
                 }
                 foreach (var n in BlocksNear(v.x, v.y, v.z))
                 {
-                    if (!MapUtil.IsValidPos(map, n.x, n.y, n.z)
-                        //Bad fix, breaks flooding of torches.
-                        //Fixes flooding into not yet ready (hence empty) chunks, which would cause
-                        //UpdateStartSunlight() to mark a whole column of chunks as fully-lighted.
-        //                || !ischunkready.IsChunkReady(n.x, n.y, n.z))
-                        )
+                    if (!MapUtil.IsValidPos(map, n.x, n.y, n.z))
                     {
                         continue;
                     }
                     if (LightGetBlockFast(n.x, n.y, n.z) < vlight - 1)
                     {
-                        SetLight(n.x, n.y, n.z, (byte)(vlight - 1));
+                        //this is for reflooding sunlight.
+                        if (IsSunlighted(n.x, n.y, n.z)
+                            && (LightGetBlock(n.x, n.y, n.z) < sunlight)
+                            && (vlight - 1 <= sunlight))
+                        {
+                            LightSetBlock(n.x, n.y, n.z, sunlight);
+                        }
+                        else
+                        {
+                            SetLight(n.x, n.y, n.z, (byte)(vlight - 1));
+                        }
                         q.Enqueue(n);
                     }
                 }
@@ -451,6 +499,7 @@ namespace ManicDigger
         }
         int LightGetBlockFast(int x, int y, int z)
         {
+            /*
             if (currentlightchunk != null && InSameChunk(x, y, z, startx, starty, startz))
             {
                 int block = currentlightchunk[x % chunksize, y % chunksize, z % chunksize];
@@ -460,7 +509,7 @@ namespace ManicDigger
                     //throw new Exception();
                 }
                 return block - 1;
-            }
+            }*/
             return LightGetBlock(x, y, z);
         }
         bool InSameChunk(int x1, int y1, int z1, int x2, int y2, int z2)
@@ -498,7 +547,7 @@ namespace ManicDigger
             this.startx = x;
             this.starty = y;
             this.startz = z;
-            if (IsSolidChunk(currentlightchunk, (byte)(maxlight + 1)))
+            if (IsSolidChunk(currentlightchunk, (byte)(sunlight + 1)))
             {
                 //solidmax++;
                 return;
@@ -510,19 +559,20 @@ namespace ManicDigger
             //}
             //if (IsSolidChunk(currentlightchunk, 0)) { solidunknown++; }
             //else { notsolid++; }
-            Dictionary<Vector3i, bool> lighttoupdatecopy = lighttoupdate;
-            lighttoupdate = null;
+        //    Dictionary<Vector3i, bool> lighttoupdatecopy = lighttoupdate;
+    //        lighttoupdate = null;
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
                     for (int zz = 0; zz < chunksize; zz++)
                     {
+                        if(MapUtil.IsValidPos(map,x + xx, y + yy, z + zz))
                         FloodLight(x + xx, y + yy, z + zz);
                     }
                 }
             }
-            lighttoupdate = lighttoupdatecopy;
+       //     lighttoupdate = lighttoupdatecopy;
         }
         bool IsSolidChunk(byte[, ,] chunk, byte value)
         {
@@ -567,31 +617,6 @@ namespace ManicDigger
         }
         public void OnGetTerrainBlock(int x, int y, int z)
         {
-            if (chunklighted == null)
-            {
-                chunklighted = new bool[map.MapSizeX / chunksize, map.MapSizeY / chunksize, map.MapSizeZ / chunksize];
-            }
-
-            //Commented out: no need to flood light from chunks around, 
-            //because TerrainDrawer calls this function for blocks in all 9 chunks around
-            //when drawing single terrain chunk to draw its boundaries anyway.
-
-            //foreach (var k in BlocksNear(x / chunksize, y / chunksize, z / chunksize))
-            var k = new Vector3i(x / chunksize, y / chunksize, z / chunksize);
-            {
-                if (!IsValidChunkPos(k.x, k.y, k.z))
-                {
-                    //continue;
-                }
-                if (!chunklighted[k.x, k.y, k.z])
-                {
-                    lock (lighttoupdate_lock)
-                    {
-                        FloodLightChunk(k.x * chunksize, k.y * chunksize, k.z * chunksize);
-                        chunklighted[k.x, k.y, k.z] = true;
-                    }
-                }
-            }
         }
         #region IShadows Members
         public int? MaybeGetLight(int x, int y, int z)
@@ -609,6 +634,21 @@ namespace ManicDigger
             {
                 return l - 1;
             }
+        }
+        #endregion
+        #region IShadows Members
+        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
+        {
+            if (chunklighted == null)
+            {
+                chunklighted = new bool[map.MapSizeX / chunksize, map.MapSizeY / chunksize, map.MapSizeZ / chunksize];
+            }
+            if (!chunklighted[chunkx, chunky, chunkz])
+            FloodLightChunk(chunkx * chunksize, chunky * chunksize, chunkz * chunksize);
+            chunklighted[chunkx, chunky, chunkz] = true;
+            lighttoupdate.Remove(new Vector3i(chunkx + 5, chunky + 5, chunkz + 5));
+            SetChangedChunksDirty();
+            lighttoupdate.Clear();
         }
         #endregion
     }
@@ -647,7 +687,7 @@ namespace ManicDigger
             gencache.Remove(new Point(px, py));
         }
     }
-    class InfiniteMapCache
+    public class InfiniteMapCache
     {
         int chunksize = 16;
         Dictionary<ulong, byte[, ,]> gencache = new Dictionary<ulong, byte[, ,]>();

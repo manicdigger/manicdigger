@@ -282,6 +282,12 @@ namespace GameModeFortress
     {
         [ProtoMember(1, IsRequired = false)]
         public int Season;
+        [ProtoMember(2, IsRequired = false)]
+        public int Hour = 12; //0-23
+        [ProtoMember(3, IsRequired = false)]
+        public int HoursInRealHour = 24; //used for predicting sun speed.
+        [ProtoMember(4, IsRequired = false)]
+        public int Moon;
     }
     [ProtoContract]
     public class PacketClientCraft
