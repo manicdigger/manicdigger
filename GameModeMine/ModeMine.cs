@@ -493,7 +493,8 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeMinecraft.RedMushroom
                 || blocktype == (int)TileTypeMinecraft.RedRoseDecorations
                 || blocktype == (int)TileTypeMinecraft.Sapling
-                || blocktype == (int)TileTypeMinecraft.YellowFlowerDecorations;
+                || blocktype == (int)TileTypeMinecraft.YellowFlowerDecorations
+                || blocktype == (int)TileTypeMinecraft.Torch;
         }
         #endregion
         #region IGameData Members
