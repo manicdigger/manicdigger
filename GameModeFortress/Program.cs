@@ -137,6 +137,16 @@ namespace GameModeFortress
             this.clientgame = clientgame;
             this.map = map;
             w.currentshadows = this;
+            bool IsMono = Type.GetType("Mono.Runtime") != null;
+            terrainDrawer.textureatlasconverter = new TextureAtlasConverter();
+            if (IsMono)
+            {
+                terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmapDummy(); };
+            }
+            else
+            {
+                terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
+            }
             var heightmap = new InfiniteHeightCache();
             network.heightmap = heightmap;
             shadowsfull = new Shadows()

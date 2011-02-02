@@ -478,6 +478,8 @@ namespace ManicDigger
         public IFrustumCulling frustumculling;
         [Inject]
         public DirtyChunks ischunkready;
+        [Inject]
+        public TextureAtlasConverter textureatlasconverter;
         public event EventHandler<ExceptionEventArgs> OnCrash;
         
         public int chunksize = 16;
@@ -537,7 +539,7 @@ namespace ManicDigger
             List<int> terrainTextures1d = new List<int>();
             {
                 terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
-                List<Bitmap> atlases1d = new TextureAtlasConverter().Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
+                List<Bitmap> atlases1d = textureatlasconverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
                 foreach (Bitmap bmp in atlases1d)
                 {
                     terrainTextures1d.Add(the3d.LoadTexture(bmp));

@@ -226,9 +226,37 @@ namespace ManicDigger
             return ms.ToArray();
         }
     }
-    public class FastBitmap
+    public interface IFastBitmap
     {
-        public Bitmap bmp;
+        Bitmap bmp { get; set; }
+        void Lock();
+        void Unlock();
+        int GetPixel(int x, int y);
+        void SetPixel(int x, int y, int color);
+    }
+    public class FastBitmapDummy : IFastBitmap
+    {
+        #region IFastBitmap Members
+        public Bitmap bmp { get; set; }
+        public void Lock()
+        {
+        }
+        public void Unlock()
+        {
+        }
+        public int GetPixel(int x, int y)
+        {
+            return bmp.GetPixel(x, y).ToArgb();
+        }
+        public void SetPixel(int x, int y, int color)
+        {
+            bmp.SetPixel(x, y, Color.FromArgb(color));
+        }
+        #endregion
+    }
+    public class FastBitmap : IFastBitmap
+    {
+        public Bitmap bmp { get; set; }
         BitmapData bmd;
         public void Lock()
         {

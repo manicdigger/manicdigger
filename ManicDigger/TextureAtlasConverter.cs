@@ -7,10 +7,13 @@ namespace ManicDigger
 {
     public class TextureAtlasConverter
     {
+        public delegate T Factory<T>();
+        [Inject]
+        public Factory<IFastBitmap> fastbitmapfactory { get; set; }
         //tiles = 16 means 16 x 16 atlas
         public List<Bitmap> Atlas2dInto1d(Bitmap atlas2d, int tiles, int atlassizezlimit)
         {
-            FastBitmap orig = new FastBitmap();
+            IFastBitmap orig = fastbitmapfactory();
             orig.bmp = atlas2d;
 
             int tilesize = atlas2d.Width / tiles;
@@ -21,7 +24,7 @@ namespace ManicDigger
             orig.Lock();
 
             //256 x 1
-            FastBitmap atlas1d = null;
+            IFastBitmap atlas1d = null;
 
             for (int i = 0; i < tiles * tiles; i++)
             {
@@ -35,7 +38,7 @@ namespace ManicDigger
                         atlas1d.Unlock();
                         atlases.Add(atlas1d.bmp);
                     }
-                    atlas1d = new FastBitmap();
+                    atlas1d = fastbitmapfactory();
                     atlas1d.bmp = new Bitmap(tilesize, atlassizezlimit);
                     atlas1d.Lock();
                 }
