@@ -654,8 +654,10 @@ namespace ManicDigger
     }
     public class InfiniteHeightCache
     {
+        [Inject]
+        public IMapStorage map;
         public int chunksize = 16;
-        Dictionary<Point, byte[,]> gencache = new Dictionary<Point, byte[,]>();
+        byte[,][,] gencache;
         public int GetBlock(int x, int y)
         {
             byte[,] chunk = GetChunk(x, y);
@@ -664,12 +666,14 @@ namespace ManicDigger
         public byte[,] GetChunk(int x, int y)
         {
             byte[,] chunk = null;
-            var k = new Point(x / chunksize, y / chunksize);
-            if (!gencache.TryGetValue(k, out chunk))
+            int kx = x / chunksize;
+            int ky = y / chunksize;
+            if (gencache[kx, ky] == null)
             {
                 chunk = new byte[chunksize, chunksize];
-                gencache[k] = chunk;
+                gencache[kx, ky] = chunk;
             }
+            chunk = gencache[kx, ky];
             return chunk;
         }
         public void SetBlock(int x, int y, int blocktype)
@@ -678,13 +682,13 @@ namespace ManicDigger
         }
         public void Clear()
         {
-            gencache = new Dictionary<Point, byte[,]>();
+            gencache = new byte[map.MapSizeX / chunksize, map.MapSizeY / chunksize][,];
         }
         public void ClearChunk(int x, int y)
         {
             int px = (x / chunksize) * chunksize;
             int py = (y / chunksize) * chunksize;
-            gencache.Remove(new Point(px, py));
+            gencache[px, py] = null;
         }
     }
     public class InfiniteMapCache

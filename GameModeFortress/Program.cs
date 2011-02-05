@@ -147,7 +147,8 @@ namespace GameModeFortress
             {
                 terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
             }
-            var heightmap = new InfiniteHeightCache();
+            var heightmap = new InfiniteHeightCache() { map = map };
+            heightmap.Clear();
             network.heightmap = heightmap;
             shadowsfull = new Shadows()
             {
@@ -303,7 +304,7 @@ namespace GameModeFortress
             var generator = new WorldGenerator();
             map.generator = generator;
             server.chunksize = 32;
-            map.heightmap = new InfiniteHeightCache() { chunksize = server.chunksize };
+            map.heightmap = new InfiniteHeightCache() { chunksize = server.chunksize, map = map };
             map.Reset(10000, 10000, 128);
             server.map = map;
             server.generator = generator;
