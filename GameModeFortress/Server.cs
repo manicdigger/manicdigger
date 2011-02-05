@@ -60,6 +60,7 @@ namespace ManicDiggerServer
         public int singleplayerport = 25570;
         public Random rnd = new Random();
         public int SpawnPositionRandomizationRange = 96;
+        public bool IsMono = Type.GetType("Mono.Runtime") != null;
         public void Start()
         {
             LoadConfig();
@@ -1498,7 +1499,18 @@ namespace ManicDiggerServer
         {
             try
             {
-                clients[clientid].socket.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
+                if (IsMono)
+                {
+                    clients[clientid].socket.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
+                }
+                else
+                {
+                    using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
+                    {
+                        e.SetBuffer(packet, 0, packet.Length);
+                        clients[clientid].socket.SendAsync(e);
+                    }
+                }
             }
             catch (Exception e)
             {
