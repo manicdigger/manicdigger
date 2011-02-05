@@ -221,7 +221,7 @@ namespace ManicDigger
             {
                 light = minlight;
             }
-            SetLight(x, y, z, (byte)light);
+            LightSetBlock(x, y, z, (byte)light);
         }
         private void UpdateStartSunlightChunk(int x, int y, int z)
         {
