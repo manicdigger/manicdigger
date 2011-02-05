@@ -26,7 +26,7 @@ namespace ManicDiggerServer
             var generator = new WorldGenerator();
             map.generator = generator;
             server.chunksize = 32;
-            map.heightmap = new InfiniteHeightCache() { chunksize = 32, map = map };
+            map.heightmap = new InfiniteMapChunked2d() { chunksize = 32, map = map };
             map.Reset(10000, 10000, 128);
             server.map = map;
             server.generator = generator;

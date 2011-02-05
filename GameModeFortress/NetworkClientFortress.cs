@@ -36,7 +36,9 @@ namespace GameModeFortress
         [Inject]
         public ICompression compression;
         [Inject]
-        public InfiniteHeightCache heightmap;
+        public InfiniteMapChunked2d heightmap;
+        [Inject]
+        public IShadows shadows;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -385,6 +387,16 @@ namespace GameModeFortress
                             }
                         }
                         Map.Map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
+                        for (int xx = 0; xx < 2; xx++)
+                        {
+                            for (int yy = 0; yy < 2; yy++)
+                            {
+                                for (int zz = 0; zz < 2; zz++)
+                                {
+                                    shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                }
+                            }
+                        }
                         ReceivedMapLength += lengthPrefixLength + packetLength;
                     }
                     break;

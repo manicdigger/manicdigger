@@ -784,7 +784,8 @@ namespace ManicDigger
         }
         public void UpdateAllTiles()
         {
-            foreach (Vector3i v in batchedchunkspositions.dictionary.Keys)
+            //foreach (Vector3i v in batchedchunkspositions.dictionary.Keys)
+            foreach (var v in batchedchunkspositions.Iterate(batchedchunkspositions.dictionary.Keys.Count))
             {
                 ischunkready.SetChunkDirty(v.x, v.y, v.z, true);
             }

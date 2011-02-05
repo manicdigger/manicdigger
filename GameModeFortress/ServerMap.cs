@@ -150,7 +150,7 @@ namespace ManicDiggerServer
             MapSizeY = sizey;
             MapSizeZ = sizez;
             chunks = new Chunk[sizex / chunksize, sizey / chunksize, sizez / chunksize];
-            heightmap.Clear();
+            heightmap.Restart();
         }
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
@@ -206,7 +206,7 @@ namespace ManicDiggerServer
         }
         #endregion
         [Inject]
-        public InfiniteHeightCache heightmap;
+        public InfiniteMapChunked2d heightmap;
         public byte[] GetHeightmapChunk(int x, int y)
         {
             //todo don't copy

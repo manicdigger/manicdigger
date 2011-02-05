@@ -147,9 +147,11 @@ namespace GameModeFortress
             {
                 terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
             }
-            var heightmap = new InfiniteHeightCache() { map = map };
-            heightmap.Clear();
+            var heightmap = new InfiniteMapChunked2d() { map = map };            
+            heightmap.Restart();
             network.heightmap = heightmap;
+            var light = new InfiniteMapChunkedSimple() { map = map };
+            light.Restart();
             shadowsfull = new Shadows()
             {
                 data = gamedata,
@@ -159,6 +161,7 @@ namespace GameModeFortress
                 config3d = config3d,
                 ischunkready = dirtychunks,
                 heightmap = heightmap,
+                light = light,
             };
             shadowssimple = new ShadowsSimple()
             {
@@ -168,6 +171,7 @@ namespace GameModeFortress
                 heightmap = heightmap
             };
             this.terrainchunkrenderer = terrainChunkDrawer;
+            this.network = network;
             if (fullshadows)
             {
                 UseShadowsFull();
@@ -199,6 +203,7 @@ namespace GameModeFortress
         WeaponBlockInfo weapon;
         TerrainChunkRenderer terrainchunkrenderer;
         public bool fullshadows = false;
+        NetworkClientFortress network;
         void UseShadowsSimple()
         {
             if (clientgame.shadows != null)
@@ -209,6 +214,7 @@ namespace GameModeFortress
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
             terrainchunkrenderer.shadows = clientgame.shadows;
+            network.shadows = clientgame.shadows;
         }
         void UseShadowsFull()
         {
@@ -220,6 +226,7 @@ namespace GameModeFortress
             //map.shadows = clientgame.shadows;
             weapon.shadows = clientgame.shadows;
             terrainchunkrenderer.shadows = clientgame.shadows;
+            network.shadows = clientgame.shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull
@@ -304,7 +311,7 @@ namespace GameModeFortress
             var generator = new WorldGenerator();
             map.generator = generator;
             server.chunksize = 32;
-            map.heightmap = new InfiniteHeightCache() { chunksize = server.chunksize, map = map };
+            map.heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, map = map };
             map.Reset(10000, 10000, 128);
             server.map = map;
             server.generator = generator;

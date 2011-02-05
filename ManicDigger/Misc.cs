@@ -480,4 +480,31 @@ namespace ManicDigger
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
     }
+    class FastStack<T>
+    {
+        public void Initialize(int maxCount)
+        {
+            values = new T[maxCount];
+        }
+        T[] values;
+        public int Count;
+        public void Push(T value)
+        {
+            if (Count >= values.Length)
+            {
+                Array.Resize(ref values, values.Length * 2);
+            }
+            values[Count] = value;
+            Count++;
+        }
+        public T Pop()
+        {
+            Count--;
+            return values[Count];
+        }
+        public void Clear()
+        {
+            Count = 0;
+        }
+    }
 }
