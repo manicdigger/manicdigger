@@ -112,7 +112,7 @@ namespace GameModeFortress
             clientgame.audio = audio;
             clientgame.railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame };
             clientgame.minecartrenderer = new MinecartRenderer() { getfile = getfile, the3d = the3d };
-            InfiniteMapChunked map = new InfiniteMapChunked() { generator = new WorldGeneratorDummy() };
+            InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
             var dirtychunks = new DirtyChunks() { mapstorage = map };
             terrainDrawer.ischunkready = dirtychunks;
             map.ischunkready = dirtychunks;

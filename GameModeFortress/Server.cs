@@ -774,6 +774,13 @@ namespace ManicDiggerServer
                     break;
                 }
                 byte[] chunk = map.GetChunk(v.x, v.y, v.z);
+                c.chunksseen[v] = (int)simulationcurrentframe;
+                sent++;
+                if (MapUtil.IsSolidChunk(chunk) && chunk[0] == 0)
+                {
+                    //don't send empty chunk.
+                    continue;
+                }
                 byte[] compressedchunk = CompressChunkNetwork(chunk);
                 if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
                 {
@@ -801,8 +808,6 @@ namespace ManicDiggerServer
                     CompressedChunk = compressedchunk,
                 };
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
-                c.chunksseen[v] = (int)simulationcurrentframe;
-                sent++;
             }
             return sent;
         }

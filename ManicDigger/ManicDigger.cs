@@ -213,6 +213,34 @@ namespace ManicDigger
         {
             return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
         }
+        public static bool IsSolidChunk(byte[] chunk)
+        {
+            for (int i = 0; i <= chunk.GetUpperBound(0); i++)
+            {
+                if (chunk[i] != chunk[0])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public static bool IsSolidChunk(byte[, ,] chunk)
+        {
+            for (int x = 0; x <= chunk.GetUpperBound(0); x++)
+            {
+                for (int y = 0; y <= chunk.GetUpperBound(1); y++)
+                {
+                    for (int z = 0; z <= chunk.GetUpperBound(2); z++)
+                    {
+                        if (chunk[x, y, z] != chunk[0, 0, 0])
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
     }
     public class MapStorage : IMapStorage
     {

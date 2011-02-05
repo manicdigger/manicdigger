@@ -14,8 +14,8 @@ namespace GameModeFortress
             public bool IsPopulated;
             public int LastChange;
         }
-        [Inject]
-        public IWorldGenerator generator;
+        //[Inject]
+        //public IWorldGenerator generator;
         [Inject]
         public IIsChunkReady ischunkready;
         public Chunk[, ,] chunks;
@@ -25,8 +25,15 @@ namespace GameModeFortress
         public int MapSizeZ { get; set; }
         public int GetBlock(int x, int y, int z)
         {
-            byte[] chunk = GetChunk(x, y, z);
-            return chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            int cx = x / chunksize;
+            int cy = y / chunksize;
+            int cz = z / chunksize;
+            Chunk chunk = chunks[cx, cy, cz];
+            if (chunk == null)
+            {
+                return 0;
+            }
+            return chunk.data[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
@@ -51,12 +58,12 @@ namespace GameModeFortress
             if (chunk == null)
             {
                 //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
-                byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
-                if (newchunk != null)
-                {
-                    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
-                }
-                else
+                //byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
+                //if (newchunk != null)
+                //{
+                //    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                //}
+                //else
                 {
                     chunks[x, y, z] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
                 }
