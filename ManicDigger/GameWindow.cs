@@ -1091,17 +1091,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
-                    int[] drawDistances = { 32, 64, 128, 256, 512 };
-                    for (int i = 0; i < drawDistances.Length; i++)
-                    {
-                        if (terrain.DrawDistance == drawDistances[i])
-                        {
-                            terrain.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
-                            goto done;
-                        }
-                    }
-                    terrain.DrawDistance = drawDistances[0];
-                done:
+                    ToggleFog();
                     Log("Fog distance: " + terrain.DrawDistance);
                     OnResize(new EventArgs());
                 }
@@ -1160,6 +1150,19 @@ namespace ManicDigger
                 }
             }
             else throw new Exception();
+        }
+        public int[] drawDistances = { 32, 64, 128, 256, 512 };
+        private void ToggleFog()
+        {
+            for (int i = 0; i < drawDistances.Length; i++)
+            {
+                if (terrain.DrawDistance == drawDistances[i])
+                {
+                    terrain.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
+                    return;
+                }
+            }
+            terrain.DrawDistance = drawDistances[0];
         }
         enum CameraType
         {

@@ -11,6 +11,7 @@ namespace ManicDigger
     {
         public bool Shadows;
         public int Font;
+        public int DrawDistance = 256;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }
     partial class ManicDiggerGameWindow
@@ -76,6 +77,11 @@ namespace ManicDigger
                     {
                         textdrawer.NewFont = !textdrawer.NewFont;
                         cachedTextTextures.Clear();
+                    });
+                AddButton("View distance: " + (terrain.DrawDistance),
+                    (a, b) =>
+                    {
+                        ToggleFog();
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -251,11 +257,13 @@ namespace ManicDigger
             currentshadows.ShadowsFull = options.Shadows;
             shadows.ResetShadows();
             terrain.UpdateAllTiles();
+            terrain.DrawDistance = options.DrawDistance;
         }
         void SaveOptions()
         {
             options.Font = textdrawer.NewFont ? 0 : 1;
             options.Shadows = currentshadows.ShadowsFull;
+            options.DrawDistance = terrain.DrawDistance;
             
             string path = Path.Combine(gamepathconfig, filename);
             MemoryStream ms = new MemoryStream();
