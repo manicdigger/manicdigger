@@ -341,7 +341,7 @@ namespace ManicDigger
         AnimationHint LocalPlayerAnimationHint { get; set; }
         Vector3 PickCubePos { get; }
         string LocalPlayerName { get; }
-        void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
+        void CraftingRecipesStart(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected);
         int SelectedModelId { get; }
         bool ENABLE_FINITEINVENTORY { get; set; }
         bool SkySphereNight { get; set; }
@@ -396,7 +396,7 @@ namespace ManicDigger
         public string LocalPlayerName { get; set; }
         #endregion
         #region IViewport3d Members
-        public void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
+        public void CraftingRecipesStart(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
         {
         }
         #endregion
@@ -478,7 +478,7 @@ namespace ManicDigger
     /// <remarks>
     /// Requires OpenTK.
     /// </remarks>
-    public class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d, IDraw2d
+    public partial class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d, IDraw2d
     {
         [Inject]
         public ITerrainRenderer terrain;
@@ -560,7 +560,7 @@ namespace ManicDigger
         protected override void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
-            { GuiStateEscapeMenu(); }
+            { EscapeMenuStart(); }
             else if (guistate == GuiState.MainMenu || guistate == GuiState.EscapeMenu)
             { }
             else if (guistate == GuiState.Inventory)
@@ -1103,40 +1103,17 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.B)
                 {
-                    //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
-                    guistate = GuiState.Inventory;
-                    menustate = new MenuState();
-                    FreeMouse = true;
+                    InventoryStart();
                 }
                 HandleMaterialKeys(e);
                 if (e.Key == OpenTK.Input.Key.Escape)
                 {
-                    GuiStateEscapeMenu();
+                    EscapeMenuStart();
                 }
             }
             else if (guistate == GuiState.EscapeMenu)
             {
-                int menuelements = 3;
-                if (e.Key == OpenTK.Input.Key.Escape)
-                {
-                    escapemenuOptions = false;
-                    GuiStateBackToGame();
-                }
-                if (e.Key == OpenTK.Input.Key.Up)
-                {
-                    menustate.selected--;
-                    menustate.selected = Math.Max(0, menustate.selected);
-                }
-                if (e.Key == OpenTK.Input.Key.Down)
-                {
-                    menustate.selected++;
-                    menustate.selected = Math.Min(menuelements - 1, menustate.selected);
-                }
-                if (menustate.selected != -1
-                    && (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter))
-                {
-                    EscapeMenuAction();
-                }
+                EscapeMenuKeyDown(e);
                 return;
             }
             else if (guistate == GuiState.MainMenu)
@@ -1165,29 +1142,7 @@ namespace ManicDigger
             }
             else if (guistate == GuiState.Inventory)
             {
-                if (e.Key == OpenTK.Input.Key.Escape)
-                {
-                    GuiStateBackToGame();
-                }
-                Direction4? dir = null;
-                if (e.Key == OpenTK.Input.Key.Left) { dir = Direction4.Left; }
-                if (e.Key == OpenTK.Input.Key.Right) { dir = Direction4.Right; }
-                if (e.Key == OpenTK.Input.Key.Up) { dir = Direction4.Up; }
-                if (e.Key == OpenTK.Input.Key.Down) { dir = Direction4.Down; }
-                if (dir != null)
-                {
-                    InventorySelectionMove(dir.Value);
-                }
-                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
-                {
-                    var sel = InventoryGetSelected();
-                    if (sel != null)
-                    {
-                        materialSlots[activematerial] = sel.Value;
-                        GuiStateBackToGame();
-                    }
-                }
-                HandleMaterialKeys(e);
+                InventoryKeyDown(e);
                 return;
             }
             else if (guistate == GuiState.MapLoading)
@@ -1243,23 +1198,14 @@ namespace ManicDigger
         }
         List<string> typinglog = new List<string>();
         int typinglogpos = 0;
-        private void GuiStateEscapeMenu()
-        {
-            guistate = GuiState.EscapeMenu;
-            menustate = new MenuState();
-            FreeMouse = true;
-            //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
-        }
         private void GuiActionLoadGame()
         {
             mapManipulator.LoadMap(map, mapManipulator.defaultminesave);
         }
-        //bool EscapeMenuWasFreemove;
         private void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
             FreeMouse = false;
-            //ENABLE_FREEMOVE = EscapeMenuWasFreemove;
             freemousejustdisabled = true;
         }
         private void GuiActionGenerateNewMap()
@@ -1359,17 +1305,11 @@ namespace ManicDigger
                     }
                 );
             }).BeginInvoke(null, null);
-            GuiStateSetMapLoading();
+            MapLoadingStart();
         }
         void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
         {
             this.maploadingprogress = e;
-        }
-        private void GuiStateSetMapLoading()
-        {
-            guistate = GuiState.MapLoading;
-            freemouse = true;
-            maploadingprogress = new MapLoadingProgressEventArgs();
         }
         List<MethodInvoker> frametickmainthreadtodo = new List<MethodInvoker>();
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
@@ -1714,25 +1654,6 @@ namespace ManicDigger
         private float VectorAngleGet(Vector3 q)
         {
             return (float)(Math.Acos(q.X / q.Length) * Math.Sign(q.Z));
-        }
-        bool escapemenuOptions = false;
-        private void EscapeMenuMouse()
-        {
-            int textheight = 50;
-            int starty = ycenter(3 * textheight);
-            if (mouse_current.Y >= starty && mouse_current.Y < starty + 3 * textheight)
-            {
-                menustate.selected = (mouse_current.Y - starty) / textheight;
-            }
-            else
-            {
-                menustate.selected = -1;
-            }
-            if (mouseleftclick && menustate.selected != -1)
-            {
-                EscapeMenuAction();
-                mouseleftclick = false;
-            }
         }
         private float MoveSpeedNow()
         {
@@ -2468,48 +2389,6 @@ namespace ManicDigger
         {
             characterdrawer.SetAnimation("walk");
             characterdrawer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
-        }        
-        void EscapeMenuAction()
-        {
-            if (!escapemenuOptions) { EscapeMenuActionMain(); }
-            else { EscapeMenuActionOptions(); }
-        }
-        private void EscapeMenuActionOptions()
-        {
-            switch (menustate.selected)
-            {
-                case 0:
-                    currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
-                    terrain.UpdateAllTiles();
-                    break;
-                case 1:
-                    textdrawer.NewFont = !textdrawer.NewFont;
-                    cachedTextTextures.Clear();
-                    break;
-                case 2:
-                    escapemenuOptions = false;
-                    break;
-                default:
-                    throw new Exception();
-            }
-        }
-        private void EscapeMenuActionMain()
-        {
-            switch (menustate.selected)
-            {
-                case 0:
-                    GuiStateBackToGame();
-                    break;
-                case 1:
-                    escapemenuOptions = true;
-                    break;
-                case 2:
-                    exit = true;
-                    this.Exit();
-                    break;
-                default:
-                    throw new Exception();
-            }
         }
         private void GuiActionSaveGame()
         {
@@ -2536,33 +2415,6 @@ namespace ManicDigger
                 this.Exit();
             }
             else throw new Exception();
-        }
-        void DrawEscapeMenu()
-        {
-            List<string> items = new List<string>();
-            if (!escapemenuOptions)
-            {
-                items.Add("Return to game");
-                items.Add("Options");
-                items.Add("Exit");
-            }
-            else
-            {
-                items.Add("Shadows: " + (currentshadows.ShadowsFull ? "ON" : "OFF"));
-                items.Add("Font: " + (textdrawer.NewFont ? "2" : "1"));
-                items.Add("Return to main menu");
-            }
-            int textheight = 50;
-            int fontsize = 20;
-            int starty = ycenter(3 * textheight);
-            if (guistate == GuiState.EscapeMenu)
-            {
-                for (int i = 0; i < items.Count; i++)
-                {
-                    string s = items[i];
-                    Draw2dText(s, xcenter(TextSize(s, fontsize).Width), starty + textheight * i, fontsize, menustate.selected == i ? Color.Red : Color.White);
-                }
-            }
         }
         bool SaveGameExists()
         {
@@ -2641,7 +2493,7 @@ namespace ManicDigger
                     break;
                 case GuiState.EscapeMenu:
                     {
-                        DrawEscapeMenu();
+                        EscapeMenuDraw();
                     }
                     break;
                 case GuiState.MainMenu:
@@ -2656,7 +2508,7 @@ namespace ManicDigger
                     break;
                 case GuiState.MapLoading:
                     {
-                        DrawMapLoading();
+                        MapLoadingDraw();
                     }
                     break;
                 case GuiState.CraftingRecipes:
@@ -2776,129 +2628,7 @@ namespace ManicDigger
             }
         }
         bool drawblockinfo = false;
-        MapLoadingProgressEventArgs maploadingprogress;
-        private void DrawMapLoading()
-        {
-            string connecting = "Connecting...";
-            if (maploadingprogress.ProgressStatus != null)
-            {
-                connecting = maploadingprogress.ProgressStatus;
-            }
-            string progress = string.Format("{0}%\n", maploadingprogress.ProgressPercent);
-            string progress1 = string.Format("{0} KB", (maploadingprogress.ProgressBytes / 1024));
-            Draw2dText(network.ServerName, xcenter(TextSize(network.ServerName, 14).Width), Height / 2 - 150, 14, Color.White);
-            Draw2dText(network.ServerMotd, xcenter(TextSize(network.ServerMotd, 14).Width), Height / 2 - 100, 14, Color.White);
-            Draw2dText(connecting, xcenter(TextSize(connecting, 14).Width), Height / 2 - 50, 14, Color.White);
-            if (maploadingprogress.ProgressPercent > 0)
-            {
-                Draw2dText(progress, xcenter(TextSize(progress, 14).Width), Height / 2 - 20, 14, Color.White);
-                Draw2dText(progress1, xcenter(TextSize(progress1, 14).Width), Height / 2 + 10, 14, Color.White);
-                //float progressratio = (float)maploadingprogress.ProgressBytes
-                //    / ((float)maploadingprogress.ProgressBytes / ((float)maploadingprogress.ProgressPercent / 100));
-                float progressratio = (float)maploadingprogress.ProgressPercent / 100;
-                int sizex = 400;
-                int sizey = 40;
-                Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, Color.Black);
-                Color c = Interpolation.InterpolateColor(progressratio, new FastColor(Color.Red), new FastColor(Color.Yellow), new FastColor(Color.Green)).ToColor();
-                Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, c);
-            }
-        }
-        int inventoryselectedx;
-        int inventoryselectedy;
-        void InventorySelectionMove(Direction4 dir)
-        {
-            if (dir == Direction4.Left) { inventoryselectedx--; }
-            if (dir == Direction4.Right) { inventoryselectedx++; }
-            if (dir == Direction4.Up) { inventoryselectedy--; }
-            if (dir == Direction4.Down) { inventoryselectedy++; }
-            inventoryselectedx = MyMath.Clamp(inventoryselectedx, 0, inventorysize - 1);
-            inventoryselectedy = MyMath.Clamp(inventoryselectedy, 0, inventorysize - 1);
-        }
-        int inventorysize;
-        int? InventoryGetSelected()
-        {
-            int id = inventoryselectedx + (inventoryselectedy * inventorysize);
-            if (id >= Buildable.Count)
-            {
-                return null;
-            }
-            return Buildable[id];
-        }
-        List<int> Buildable
-        {
-            get
-            {
-                List<int> buildable = new List<int>();
-                for (int i = 0; i < 256; i++)
-                {
-                    if (data.IsValidTileType((byte)i) && data.IsBuildableTile((byte)i))
-                    {
-                        buildable.Add(i);
-                    }
-                }
-                return buildable;
-            }
-        }
-        int inventorysinglesize = 40;
-        void DrawInventory()
-        {
-            List<int> buildable = Buildable;
-            inventorysize = (int)Math.Ceiling(Math.Sqrt(buildable.Count));
-
-            int x = 0;
-            int y = 0;
-            for (int ii = 0; ii < buildable.Count; ii++)
-            {
-                int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
-                int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
-                Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
-                    data.GetTileTextureIdForInventory(buildable[ii]));
-
-                if (ENABLE_FINITEINVENTORY)
-                {
-                    int amount = game.FiniteInventoryAmount(buildable[ii]);
-                    Draw2dText("" + amount, xx, yy, 8, null);
-                }
-                x++;
-                if (x >= inventorysize)
-                {
-                    x = 0;
-                    y++;
-                }
-            }
-            if (inventoryselectedx + inventoryselectedy * inventorysize < buildable.Count)
-            {
-                Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
-                    xcenter(inventorysinglesize * inventorysize) + inventoryselectedx * inventorysinglesize,
-                    ycenter(inventorysinglesize * inventorysize) + inventoryselectedy * inventorysinglesize,
-                    NextPowerOfTwo((uint)inventorysinglesize), NextPowerOfTwo((uint)inventorysinglesize));
-            }
-            DrawMaterialSelector();
-        }
         int whitetexture = -1;
-        void InventoryMouse()
-        {
-            int invstartx = xcenter(inventorysinglesize * inventorysize);
-            int invstarty = ycenter(inventorysinglesize * inventorysize);
-            if (mouse_current.X > invstartx && mouse_current.X < invstartx + inventorysinglesize * inventorysize)
-            {
-                if (mouse_current.Y > invstarty && mouse_current.Y < invstarty + inventorysinglesize * inventorysize)
-                {
-                    inventoryselectedx = (mouse_current.X - invstartx) / inventorysinglesize;
-                    inventoryselectedy = (mouse_current.Y - invstarty) / inventorysinglesize;
-                }
-            }
-            if (mouseleftclick)
-            {
-                var sel = InventoryGetSelected();
-                if (sel != null)
-                {
-                    materialSlots[activematerial] = sel.Value;
-                    GuiStateBackToGame();
-                }
-                mouseleftclick = false;
-            }
-        }
         void CraftingMouse()
         {
             if (okrecipes == null)
@@ -2923,54 +2653,6 @@ namespace ManicDigger
                 }
                 mouseleftclick = false;
                 GuiStateBackToGame();
-            }
-        }
-        int craftingselectedrecipe = 0;
-        List<int> okrecipes;
-        private void DrawCraftingRecipes()
-        {
-            List<int> okrecipes = new List<int>();
-            this.okrecipes = okrecipes;
-            for (int i = 0; i < craftingrecipes.Count; i++)
-            {
-                CraftingRecipe r = craftingrecipes[i];
-                //can apply recipe?
-                foreach (Ingredient ingredient in r.ingredients)
-                {
-                    if (craftingblocks.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
-                    {
-                        goto next;
-                    }
-                }
-                okrecipes.Add(i);
-            next:
-                ;
-            }
-            int menustartx = xcenter(600);
-            int menustarty = ycenter(okrecipes.Count * 80);
-            if (okrecipes.Count == 0)
-            {
-                Draw2dText("No materials for crafting.", xcenter(200), ycenter(20), 12, Color.White);
-                return;
-            }
-            for (int i = 0; i < okrecipes.Count; i++)
-            {
-                CraftingRecipe r = craftingrecipes[okrecipes[i]];
-                for (int ii = 0; ii < r.ingredients.Count; ii++)
-                {
-                    int xx = menustartx + 20 + ii * 130;
-                    int yy = menustarty + i * 80;
-                    Draw2dTexture(terrain.terrainTexture, xx, yy, 30, 30, data.GetTileTextureIdForInventory(r.ingredients[ii].Type));
-                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, data.BlockName(r.ingredients[ii].Type)), xx + 50, yy, 12,
-                        i == craftingselectedrecipe ? Color.Red : Color.White);
-                }
-                {
-                    int xx = menustartx + 20 + 400;
-                    int yy = menustarty + i * 80;
-                    Draw2dTexture(terrain.terrainTexture, xx, yy, 40, 40, data.GetTileTextureIdForInventory(r.output.Type));
-                    Draw2dText(string.Format("{0} {1}", r.output.Amount, data.BlockName(r.output.Type)), xx + 50, yy, 12,
-                        i == craftingselectedrecipe ? Color.Red : Color.White);
-                }
             }
         }
         private void DrawMaterialSelector()
@@ -3516,21 +3198,6 @@ namespace ManicDigger
         #region IViewport3d Members
         public string LocalPlayerName { get { return username; } }
         #endregion
-        #region IViewport3d Members
-        public void GuiStateCraft(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
-        {
-            this.craftingrecipes = recipes;
-            this.craftingblocks = blocks;
-            this.craftingrecipeselected = craftingRecipeSelected;
-            guistate = GuiState.CraftingRecipes;
-            //EscapeMenuWasFreemove = ENABLE_FREEMOVE;
-            menustate = new MenuState();
-            FreeMouse = true;
-        }
-        #endregion
-        List<CraftingRecipe> craftingrecipes;
-        List<int> craftingblocks;
-        Action<int?> craftingrecipeselected;
         #region IMap Members
         public void UpdateAllTiles()
         {
@@ -3547,15 +3214,5 @@ namespace ManicDigger
             get { return m_projectionMatrix; }
         }
         #endregion
-    }
-    public class Ingredient
-    {
-        public int Type;
-        public int Amount;
-    }
-    public class CraftingRecipe
-    {
-        public List<Ingredient> ingredients = new List<Ingredient>();
-        public Ingredient output = new Ingredient();
     }
 }

@@ -359,7 +359,7 @@ namespace GameModeFortress
                         == (int)TileTypeManicDigger.CraftingTable)
                     {
                         //draw crafting recipes list.
-                        viewport.GuiStateCraft(craftingrecipes.craftingrecipes, craftingtabletool.GetOnTable(craftingtabletool.GetTable(pos)),
+                        viewport.CraftingRecipesStart(craftingrecipes.craftingrecipes, craftingtabletool.GetOnTable(craftingtabletool.GetTable(pos)),
                         (recipe) => { CraftingRecipeSelected(pos, recipe); });
                     }
                 }
