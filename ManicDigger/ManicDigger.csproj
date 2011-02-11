@@ -79,6 +79,7 @@
     <Compile Include="MapTools\Shadows.cs" />
     <Compile Include="Renderers\ParticleEffectBlockBreak.cs" />
     <Compile Include="Renderers\SkySphere.cs" />
+    <Compile Include="Renderers\SunMoonRenderer.cs" />
     <Compile Include="Renderers\TerrainChunkRenderer.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />

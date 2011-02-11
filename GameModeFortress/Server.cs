@@ -493,7 +493,9 @@ namespace ManicDiggerServer
             {
                 Season = GetSeason(simulationcurrentframe),
                 Hour = GetHour(simulationcurrentframe),
-                Moon = GetMoon(simulationcurrentframe),
+                DayNightCycleSpeedup = (60 * 60 * 24) / DAY_EVERY_SECONDS,
+                //Moon = GetMoon(simulationcurrentframe),
+                Moon = 0,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season = p }));
         }
@@ -509,11 +511,13 @@ namespace ManicDiggerServer
             long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / 24;
             return (int)((frame / everyframes) % 24);
         }
+        /*
         int GetMoon(long frame)
         {
             long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS * 4;
             return (int)((frame / everyframes) % 2);
         }
+        */
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
         void ChunkSimulation()

@@ -137,6 +137,9 @@ namespace GameModeFortress
             this.clientgame = clientgame;
             this.map = map;
             w.currentshadows = this;
+            var sunmoonrenderer = new SunMoonRenderer() { draw2d = w, player = w, getfile = getfile, the3d = the3d };
+            w.sunmoonrenderer = sunmoonrenderer;
+            clientgame.sunmoonrenderer = sunmoonrenderer;
             bool IsMono = Type.GetType("Mono.Runtime") != null;
             terrainDrawer.textureatlasconverter = new TextureAtlasConverter();
             if (IsMono)
@@ -210,11 +213,13 @@ namespace GameModeFortress
             {
                 shadowssimple.sunlight = clientgame.shadows.sunlight;
             }
-            clientgame.shadows = shadowssimple;
-            //map.shadows = clientgame.shadows;
-            weapon.shadows = clientgame.shadows;
-            terrainchunkrenderer.shadows = clientgame.shadows;
-            network.shadows = clientgame.shadows;
+            var shadows = shadowssimple;
+            clientgame.shadows = shadows;
+            //map.shadows = shadows;
+            weapon.shadows = shadows;
+            terrainchunkrenderer.shadows = shadows;
+            network.shadows = shadows;
+            w.shadows = shadows;
         }
         void UseShadowsFull()
         {
@@ -222,11 +227,13 @@ namespace GameModeFortress
             {
                 shadowsfull.sunlight = clientgame.shadows.sunlight;
             }
-            clientgame.shadows = shadowsfull;
-            //map.shadows = clientgame.shadows;
-            weapon.shadows = clientgame.shadows;
-            terrainchunkrenderer.shadows = clientgame.shadows;
-            network.shadows = clientgame.shadows;
+            var shadows = shadowsfull;
+            clientgame.shadows = shadows;
+            //map.shadows = shadows;
+            weapon.shadows = shadows;
+            terrainchunkrenderer.shadows = shadows;
+            network.shadows = shadows;
+            w.shadows = shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull

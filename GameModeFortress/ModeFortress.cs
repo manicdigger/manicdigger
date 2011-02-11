@@ -91,6 +91,8 @@ namespace GameModeFortress
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         [Inject]
         public CraftingTableTool craftingtabletool;
+        [Inject]
+        public ManicDigger.Renderers.SunMoonRenderer sunmoonrenderer;
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
@@ -711,6 +713,22 @@ namespace GameModeFortress
                                 terrain.UpdateAllTiles();
                             }
                         }
+                        if (packet.Season.Hour == int.MinValue)
+                        {
+                            //why this happens?
+                            //server never sents this value but it gets received here anyway.
+                            //default was 12 but it caused a 1-hour long day at hour 23.
+                            //fix: changed default value to int.MinValue to at least detect this.
+                            if (!received_sun)
+                            {
+                                packet.Season.Hour = 6;
+                                received_sun = true;
+                            }
+                            else
+                            {
+                                packet.Season.Hour = sunmoonrenderer.Hour;
+                            }
+                        }
                         int sunlight;
                         if (packet.Season.Hour >= 6 && packet.Season.Hour < 18)
                         {
@@ -720,8 +738,11 @@ namespace GameModeFortress
                         else
                         {
                             sunlight = packet.Season.Moon == 0 ? 0 : 1;
-                            viewport.SkySphereNight = shadows.GetType() == typeof(ShadowsSimple) ? false : true;
+                            viewport.SkySphereNight = true;
                         }
+                        sunmoonrenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
+                        sunmoonrenderer.Hour = packet.Season.Hour;
+
                         if (shadows.sunlight != sunlight)
                         {
                             shadows.sunlight = sunlight;
@@ -769,6 +790,7 @@ namespace GameModeFortress
                     return false;
             }
         }
+        bool received_sun = false;
         public bool ENABLE_PER_SERVER_TEXTURES = false;
         string serverterraintexture;
         #endregion

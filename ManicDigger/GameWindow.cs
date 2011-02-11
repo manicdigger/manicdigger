@@ -515,6 +515,10 @@ namespace ManicDigger
         public FpsHistoryGraphRenderer fpshistorygraphrenderer;
         [Inject]
         public MapManipulator mapManipulator;
+        [Inject]
+        public SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
+        [Inject]
+        public IShadows shadows;
 
         public bool SkySphereNight { get; set; }
 
@@ -2151,6 +2155,7 @@ namespace ManicDigger
             if (drawgame)
             {
                 DrawSkySphere();
+                sunmoonrenderer.Draw((float)e.Time);
                 terrain.Draw();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
@@ -2191,6 +2196,7 @@ namespace ManicDigger
             SetAmbientLight(Color.White);
             Draw2d();
             DrawPlayerNames();
+            
             //OnResize(new EventArgs());
             SwapBuffers();
         }
@@ -2291,7 +2297,12 @@ namespace ManicDigger
             GL.PushMatrix();
             GL.Translate(LocalPlayerPosition);
             GL.Color3(Color.White);
-            GL.BindTexture(TextureTarget.Texture2D, SkySphereNight ? skyspherenighttexture : skyspheretexture);
+            int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
+            if (shadows.GetType() == typeof(ShadowsSimple))
+            {
+                texture = skyspheretexture;
+            }
+            GL.BindTexture(TextureTarget.Texture2D,texture );
 
             GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.EnableClientState(ArrayCap.VertexArray);
