@@ -38,20 +38,20 @@ namespace ManicDigger
         }
         private void InventoryKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            if (e.Key == OpenTK.Input.Key.Escape)
+            if (e.Key == GetKey(OpenTK.Input.Key.Escape))
             {
                 GuiStateBackToGame();
             }
             Direction4? dir = null;
-            if (e.Key == OpenTK.Input.Key.Left) { dir = Direction4.Left; }
-            if (e.Key == OpenTK.Input.Key.Right) { dir = Direction4.Right; }
-            if (e.Key == OpenTK.Input.Key.Up) { dir = Direction4.Up; }
-            if (e.Key == OpenTK.Input.Key.Down) { dir = Direction4.Down; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Left)) { dir = Direction4.Left; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Right)) { dir = Direction4.Right; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Up)) { dir = Direction4.Up; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Down)) { dir = Direction4.Down; }
             if (dir != null)
             {
                 InventorySelectionMove(dir.Value);
             }
-            if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
+            if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
             {
                 var sel = InventoryGetSelected();
                 if (sel != null)

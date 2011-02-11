@@ -345,6 +345,7 @@ namespace ManicDigger
         int SelectedModelId { get; }
         bool ENABLE_FINITEINVENTORY { get; set; }
         bool SkySphereNight { get; set; }
+        OpenTK.Input.Key GetKey(OpenTK.Input.Key key);
     }
     public class AnimationHint
     {
@@ -422,6 +423,10 @@ namespace ManicDigger
         #region IViewport3d Members
         public bool SkySphereNight { get; set; }
         #endregion
+        public OpenTK.Input.Key GetKey(OpenTK.Input.Key key)
+        {
+            return key;
+        }
     }
     public interface IModelToDraw
     {
@@ -659,7 +664,7 @@ namespace ManicDigger
         float tppcameradistance = 3;
         void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
         {
-            if (keyboardstate[OpenTK.Input.Key.LControl])
+            if (keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
             {
                 if (cameratype == CameraType.Overhead)
                 {
@@ -894,7 +899,7 @@ namespace ManicDigger
         }
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            if (e.Key == OpenTK.Input.Key.F11)
+            if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
                 if (WindowState == WindowState.Fullscreen)
                 {
@@ -911,13 +916,13 @@ namespace ManicDigger
             }
             if (guistate == GuiState.Normal)
             {
-                if (Keyboard[OpenTK.Input.Key.Escape])
+                if (Keyboard[GetKey(OpenTK.Input.Key.Escape)])
                 {
                     guistate = GuiState.EscapeMenu;
                     menustate = new MenuState();
                     FreeMouse = true;
                 }
-                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
+                if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
@@ -942,7 +947,7 @@ namespace ManicDigger
                 {
                     var key = e.Key;
                     string c = "";
-                    if (key == OpenTK.Input.Key.BackSpace)
+                    if (key == GetKey(OpenTK.Input.Key.BackSpace))
                     {
                         if (GuiTypingBuffer.Length > 0)
                         {
@@ -950,9 +955,9 @@ namespace ManicDigger
                         }
                         return;
                     }
-                    if (Keyboard[OpenTK.Input.Key.ControlLeft] || Keyboard[OpenTK.Input.Key.ControlRight])
+                    if (Keyboard[GetKey(OpenTK.Input.Key.ControlLeft)] || Keyboard[GetKey(OpenTK.Input.Key.ControlRight)])
                     {
-                        if (key == OpenTK.Input.Key.V)
+                        if (key == GetKey(OpenTK.Input.Key.V))
                         {
                             if (Clipboard.ContainsText())
                             {
@@ -961,7 +966,7 @@ namespace ManicDigger
                             return;
                         }
                     }
-                    if (key == OpenTK.Input.Key.Up)
+                    if (key == GetKey(OpenTK.Input.Key.Up))
                     {
                         typinglogpos--;
                         if (typinglogpos < 0) { typinglogpos = 0; }
@@ -970,7 +975,7 @@ namespace ManicDigger
                             GuiTypingBuffer = typinglog[typinglogpos];
                         }
                     }
-                    if (key == OpenTK.Input.Key.Down)
+                    if (key == GetKey(OpenTK.Input.Key.Down))
                     {
                         typinglogpos++;
                         if (typinglogpos > typinglog.Count) { typinglogpos = typinglog.Count; }
@@ -985,17 +990,17 @@ namespace ManicDigger
                     }
                     return;
                 }
-                if (e.Key == OpenTK.Input.Key.F1)
+                if (e.Key == GetKey(OpenTK.Input.Key.F1))
                 {
                     movespeed = basemovespeed * 1;
                     Log("Move speed: 1x.");
                 }
-                if (e.Key == OpenTK.Input.Key.F2)
+                if (e.Key == GetKey(OpenTK.Input.Key.F2))
                 {
                     movespeed = basemovespeed * 10;
                     Log("Move speed: 10x.");
                 }
-                if (e.Key == OpenTK.Input.Key.F9)
+                if (e.Key == GetKey(OpenTK.Input.Key.F9))
                 {
                     string defaultserverfile = "defaultserver.txt";
                     if (File.Exists(defaultserverfile))
@@ -1008,23 +1013,23 @@ namespace ManicDigger
                         Log(string.Format("File {0} not found.", defaultserverfile));
                     }
                 }
-                if (e.Key == OpenTK.Input.Key.F3)
+                if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
                     if (ENABLE_FREEMOVE) { Log("Freemove enabled."); }
                     else { Log("Freemove disabled."); }
                 }
-                if (e.Key == OpenTK.Input.Key.F4)
+                if (e.Key == GetKey(OpenTK.Input.Key.F4))
                 {
                     ENABLE_NOCLIP = !ENABLE_NOCLIP;
                     if (ENABLE_NOCLIP) { Log("Noclip enabled."); }
                     else { Log("Noclip disabled."); }
                 }
-                if (e.Key == OpenTK.Input.Key.I)
+                if (e.Key == GetKey(OpenTK.Input.Key.I))
                 {
                     drawblockinfo = !drawblockinfo;
                 }
-                if (e.Key == OpenTK.Input.Key.F5)
+                if (e.Key == GetKey(OpenTK.Input.Key.F5))
                 {
                     if (cameratype == CameraType.Fpp)
                     {
@@ -1046,11 +1051,11 @@ namespace ManicDigger
                     }
                     else throw new Exception();
                 }
-                if (e.Key == OpenTK.Input.Key.F6)
+                if (e.Key == GetKey(OpenTK.Input.Key.F6))
                 {
                     terrain.UpdateAllTiles();
                 }
-                if (e.Key == OpenTK.Input.Key.F7)
+                if (e.Key == GetKey(OpenTK.Input.Key.F7))
                 {
                     if (ENABLE_DRAWFPSHISTORY)
                     {
@@ -1061,7 +1066,7 @@ namespace ManicDigger
                         ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = true;
                     }
                 }
-                if (e.Key == OpenTK.Input.Key.F12)
+                if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     using (Bitmap bmp = GrabScreenshot())
                     {
@@ -1072,19 +1077,19 @@ namespace ManicDigger
                         screenshotflash = 5;
                     }
                 }
-                if (e.Key == OpenTK.Input.Key.R)
+                if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
                     player.playerposition = game.PlayerPositionSpawn;
                     player.movedz = 0;
                     Log("Respawn.");
                 }
-                if (e.Key == OpenTK.Input.Key.P)
+                if (e.Key == GetKey(OpenTK.Input.Key.P))
                 {
                     game.PlayerPositionSpawn = player.playerposition;
                     player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
                     Log("Spawn position set.");
                 }
-                if (e.Key == OpenTK.Input.Key.F)
+                if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
                     int[] drawDistances = { 32, 64, 128, 256, 512 };
                     for (int i = 0; i < drawDistances.Length; i++)
@@ -1100,12 +1105,12 @@ namespace ManicDigger
                     Log("Fog distance: " + terrain.DrawDistance);
                     OnResize(new EventArgs());
                 }
-                if (e.Key == OpenTK.Input.Key.B)
+                if (e.Key == GetKey(OpenTK.Input.Key.B))
                 {
                     InventoryStart();
                 }
                 HandleMaterialKeys(e);
-                if (e.Key == OpenTK.Input.Key.Escape)
+                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
                     EscapeMenuStart();
                 }
@@ -1118,22 +1123,22 @@ namespace ManicDigger
             else if (guistate == GuiState.MainMenu)
             {
                 int menuelements = 3;
-                if (e.Key == OpenTK.Input.Key.Escape)
+                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
                     exit = true;
                     Exit();
                 }
-                if (e.Key == OpenTK.Input.Key.Up)
+                if (e.Key == GetKey(OpenTK.Input.Key.Up))
                 {
                     menustate.selected--;
                     menustate.selected = Math.Max(0, menustate.selected);
                 }
-                if (e.Key == OpenTK.Input.Key.Down)
+                if (e.Key == GetKey(OpenTK.Input.Key.Down))
                 {
                     menustate.selected++;
                     menustate.selected = Math.Min(menuelements - 1, menustate.selected);
                 }
-                if (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter)
+                if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     MainMenuAction();
                 }
@@ -1149,7 +1154,7 @@ namespace ManicDigger
             }
             else if (guistate == GuiState.CraftingRecipes)
             {
-                if (e.Key == OpenTK.Input.Key.Escape)
+                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
                     GuiStateBackToGame();
                 }
@@ -1184,16 +1189,16 @@ namespace ManicDigger
         }
         private void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            if (e.Key == OpenTK.Input.Key.Number1) { activematerial = 0; }
-            if (e.Key == OpenTK.Input.Key.Number2) { activematerial = 1; }
-            if (e.Key == OpenTK.Input.Key.Number3) { activematerial = 2; }
-            if (e.Key == OpenTK.Input.Key.Number4) { activematerial = 3; }
-            if (e.Key == OpenTK.Input.Key.Number5) { activematerial = 4; }
-            if (e.Key == OpenTK.Input.Key.Number6) { activematerial = 5; }
-            if (e.Key == OpenTK.Input.Key.Number7) { activematerial = 6; }
-            if (e.Key == OpenTK.Input.Key.Number8) { activematerial = 7; }
-            if (e.Key == OpenTK.Input.Key.Number9) { activematerial = 8; }
-            if (e.Key == OpenTK.Input.Key.Number0) { activematerial = 9; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number1)) { activematerial = 0; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number2)) { activematerial = 1; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number3)) { activematerial = 2; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number4)) { activematerial = 3; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number5)) { activematerial = 4; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number6)) { activematerial = 5; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number7)) { activematerial = 6; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number8)) { activematerial = 7; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number9)) { activematerial = 8; }
+            if (e.Key == GetKey(OpenTK.Input.Key.Number0)) { activematerial = 9; }
         }
         List<string> typinglog = new List<string>();
         int typinglogpos = 0;
@@ -1519,7 +1524,7 @@ namespace ManicDigger
                     angleup = true;
                 }
             }
-            bool wantsjump = GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space];
+            bool wantsjump = GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)];
             int movedx = 0;
             int movedy = 0;
             bool moveup = false;
@@ -1530,10 +1535,10 @@ namespace ManicDigger
                     if (overheadcamera)
                     {
                         CameraMove m = new CameraMove();
-                        if (Keyboard[OpenTK.Input.Key.A]) { overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed); }
-                        if (Keyboard[OpenTK.Input.Key.D]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
-                        if (Keyboard[OpenTK.Input.Key.W]) { angleup = true; }
-                        if (Keyboard[OpenTK.Input.Key.S]) { angledown = true; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.A)]) { overheadcameraK.TurnRight((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.W)]) { angleup = true; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.S)]) { angledown = true; }
                         overheadcameraK.Center = player.playerposition;
                         m.Distance = overheadcameradistance;
                         m.AngleUp = angleup;
@@ -1555,15 +1560,15 @@ namespace ManicDigger
                     }
                     else if (ENABLE_MOVE)
                     {
-                        if (Keyboard[OpenTK.Input.Key.W]) { movedy += 1; }
-                        if (Keyboard[OpenTK.Input.Key.S]) { movedy += -1; }
-                        if (Keyboard[OpenTK.Input.Key.A]) { movedx += -1; }
-                        if (Keyboard[OpenTK.Input.Key.D]) { movedx += 1; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.W)]) { movedy += 1; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.S)]) { movedy += -1; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.A)]) { movedx += -1; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { movedx += 1; }
                     }
                 }
                 if (ENABLE_FREEMOVE || Swimming)
                 {
-                    if (GuiTyping == TypingState.None && Keyboard[OpenTK.Input.Key.Space])
+                    if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)])
                     {
                         moveup = true;
                     }
@@ -1641,7 +1646,7 @@ namespace ManicDigger
             }
             if (guistate == GuiState.EscapeMenu)
             {
-                EscapeMenuMouse();
+                //EscapeMenuMouse();
             }
             if (guistate == GuiState.Normal)
             {
@@ -1650,6 +1655,14 @@ namespace ManicDigger
             //must be here because frametick can be called more than once per render frame.
             keyevent = null;
             keyeventup = null;
+        }
+        public OpenTK.Input.Key GetKey(OpenTK.Input.Key key)
+        {
+            if (options.Keys.ContainsKey((int)key))
+            {
+                return (OpenTK.Input.Key)options.Keys[(int)key];
+            }
+            return key;
         }
         private float VectorAngleGet(Vector3 q)
         {
@@ -1666,7 +1679,7 @@ namespace ManicDigger
                     movespeednow *= data.BlockWalkSpeed(blockunderplayer.Value);
                 }
             }
-            if (Keyboard[OpenTK.Input.Key.ShiftLeft])
+            if (Keyboard[GetKey(OpenTK.Input.Key.ShiftLeft)])
             {
                 //enable_acceleration = false;
                 movespeednow *= 0.2f;
@@ -2040,7 +2053,7 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
-            if (!keyboardstate[OpenTK.Input.Key.LControl])
+            if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
             {
                 activematerial -= Mouse.WheelDelta;
                 activematerial = activematerial % 10;
@@ -2485,7 +2498,7 @@ namespace ManicDigger
                         {
                             DrawTypingBuffer();
                         }
-                        if (Keyboard[OpenTK.Input.Key.Tab])
+                        if (Keyboard[GetKey(OpenTK.Input.Key.Tab)])
                         {
                             DrawConnectedPlayersList();
                         }
@@ -2603,7 +2616,7 @@ namespace ManicDigger
                 }
                 //todo if picking
                 if (((LocalPlayerPosition - k.Value.Position).Length < 20)
-                    || Keyboard[OpenTK.Input.Key.AltLeft] || Keyboard[OpenTK.Input.Key.AltRight])
+                    || Keyboard[GetKey(OpenTK.Input.Key.AltLeft)] || Keyboard[GetKey(OpenTK.Input.Key.AltRight)])
                 {
                     string name = k.Value.Name;
                     var ppos = playerdrawinfo[k.Key].interpolation.InterpolatedState(totaltime);

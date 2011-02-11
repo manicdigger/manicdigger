@@ -20,118 +20,217 @@ namespace ManicDigger
             guistate = GuiState.EscapeMenu;
             menustate = new MenuState();
             FreeMouse = true;
+            SetEscapeMenuState(EscapeMenuState.Main);
         }
-        bool escapemenuOptions = false;
-        private void EscapeMenuMouse()
+        enum EscapeMenuState
         {
-            int textheight = 50;
-            int starty = ycenter(3 * textheight);
-            if (mouse_current.Y >= starty && mouse_current.Y < starty + 3 * textheight)
-            {
-                menustate.selected = (mouse_current.Y - starty) / textheight;
-            }
-            else
-            {
-                menustate.selected = -1;
-            }
-            if (mouseleftclick && menustate.selected != -1)
-            {
-                EscapeMenuAction();
-                mouseleftclick = false;
-            }
+            Main,
+            Options,
+            Graphics,
+            Keys,
         }
-        void EscapeMenuAction()
+        EscapeMenuState escapemenustate;
+        private void EscapeMenuMouse1()
         {
-            if (!escapemenuOptions) { EscapeMenuActionMain(); }
-            else { EscapeMenuActionOptions(); }
-            SaveOptions();
-        }
-        private void EscapeMenuActionOptions()
-        {
-            switch (menustate.selected)
+            foreach (var w in new List<Button>(widgets))
             {
-                case 0:
-                    currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
-                    terrain.UpdateAllTiles();
-                    break;
-                case 1:
-                    textdrawer.NewFont = !textdrawer.NewFont;
-                    cachedTextTextures.Clear();
-                    break;
-                case 2:
-                    escapemenuOptions = false;
-                    break;
-                default:
-                    throw new Exception();
+                w.selected = w.Rect.Contains(mouse_current);
+                if (w.selected && mouseleftclick)
+                {
+                    w.InvokeOnClick();
+                }
             }
         }
-        private void EscapeMenuActionMain()
+        void SetEscapeMenuState(EscapeMenuState state)
         {
-            switch (menustate.selected)
+            escapemenustate = state;
+            widgets.Clear();
+            if (state == EscapeMenuState.Main)
             {
-                case 0:
-                    GuiStateBackToGame();
-                    break;
-                case 1:
-                    escapemenuOptions = true;
-                    break;
-                case 2:
+                AddButton("Return to game",(a, b) => { GuiStateBackToGame(); });
+                AddButton("Options", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton("Exit", (a, b) =>
+                {
                     exit = true;
                     this.Exit();
-                    break;
-                default:
-                    throw new Exception();
+                });
+                MakeSimpleOptions(20, 50);
+            }
+            else if (state == EscapeMenuState.Options)
+            {
+                AddButton("Graphics", (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
+                AddButton("Keys", (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
+                AddButton("Return to main menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Main); });
+                MakeSimpleOptions(20, 50);
+            }
+            else if (state == EscapeMenuState.Graphics)
+            {
+                AddButton("Shadows: " + (currentshadows.ShadowsFull ? "ON" : "OFF"),
+                    (a, b) =>
+                    {
+                        currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
+                        terrain.UpdateAllTiles();
+                    });
+                AddButton("Font: " + (textdrawer.NewFont ? "2" : "1"),
+                    (a, b) =>
+                    {
+                        textdrawer.NewFont = !textdrawer.NewFont;
+                        cachedTextTextures.Clear();
+                    });
+                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                MakeSimpleOptions(20, 50);
+            }
+            else if (state == EscapeMenuState.Keys)
+            {
+                int fontsize = 12;
+                int textheight = 20;
+                for (int i = 0; i < keyhelps.Length; i++)
+                {
+                    int defaultkey = keyhelps[i].DefaultKey;
+                    int key = defaultkey;
+                    if (options.Keys.ContainsKey(defaultkey))
+                    {
+                        key = options.Keys[defaultkey];
+                    }
+                    AddButton(keyhelps[i].Text + ": " + KeyName(key), (a, b) => { keyselectid = i; });
+                }
+                AddButton("Default keys", (a, b) => { options.Keys.Clear(); });
+                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                MakeSimpleOptions(fontsize, textheight);
+            }
+            SaveOptions();
+        }
+        private string KeyName(int key)
+        {
+            if (Enum.IsDefined(typeof(OpenTK.Input.Key), key))
+            {
+                string s = Enum.GetName(typeof(OpenTK.Input.Key), key);
+                return s;
+            }
+            if (Enum.IsDefined(typeof(SpecialKey), key))
+            {
+                string s = Enum.GetName(typeof(SpecialKey), key);
+                return s;
+            }
+            return key.ToString();
+        }
+        void AddButton(string text, EventHandler e)
+        {
+            Button b = new Button();
+            b.Text = text;
+            b.OnClick += e;
+            widgets.Add(b);
+        }
+        void MakeSimpleOptions(int fontsize, int textheight)
+        {
+            int starty = ycenter(widgets.Count * textheight);
+            for (int i = 0; i < widgets.Count; i++)
+            {
+                string s = widgets[i].Text;
+                Rectangle rect = new Rectangle();
+                SizeF size = TextSize(s, fontsize);
+                rect.Width = (int)size.Width + 10;
+                rect.Height = (int)size.Height;
+                rect.X = xcenter(size.Width);
+                rect.Y = starty + textheight * i;
+                widgets[i].Rect = rect;
+                widgets[i].fontsize = fontsize;
+                if (i == keyselectid)
+                {
+                    widgets[i].fontcolor = Color.Green;
+                    widgets[i].fontcolorselected = Color.Green;
+                }
             }
         }
         void EscapeMenuDraw()
         {
-            List<string> items = new List<string>();
-            if (!escapemenuOptions)
+            SetEscapeMenuState(escapemenustate);
+            EscapeMenuMouse1();
+            foreach (var w in widgets)
             {
-                items.Add("Return to game");
-                items.Add("Options");
-                items.Add("Exit");
-            }
-            else
-            {
-                items.Add("Shadows: " + (currentshadows.ShadowsFull ? "ON" : "OFF"));
-                items.Add("Font: " + (textdrawer.NewFont ? "2" : "1"));
-                items.Add("Return to main menu");
-            }
-            int textheight = 50;
-            int fontsize = 20;
-            int starty = ycenter(3 * textheight);
-            if (guistate == GuiState.EscapeMenu)
-            {
-                for (int i = 0; i < items.Count; i++)
-                {
-                    string s = items[i];
-                    Draw2dText(s, xcenter(TextSize(s, fontsize).Width), starty + textheight * i, fontsize, menustate.selected == i ? Color.Red : Color.White);
-                }
+                Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
+        List<Button> widgets = new List<Button>();
+        class Button
+        {
+            public Rectangle Rect;
+            public string Text;
+            public event EventHandler OnClick;
+            public bool selected;
+            public int fontsize = 20;
+            public Color fontcolor = Color.White;
+            public Color fontcolorselected = Color.Red;
+            public void InvokeOnClick()
+            {
+                OnClick(this, new EventArgs());
+            }
+        }
+        class KeyHelp
+        {
+            public string Text;
+            public int DefaultKey;
+        }
+        enum SpecialKey
+        {
+            MouseLeftClick = 200,
+            MouseRightClick = 201,
+        }
+        KeyHelp[] keyhelps = new KeyHelp[]
+        {
+            new KeyHelp(){Text="Move foward", DefaultKey=(int)OpenTK.Input.Key.W},
+            new KeyHelp(){Text="Move back", DefaultKey=(int)OpenTK.Input.Key.S},
+            new KeyHelp(){Text="Move left", DefaultKey=(int)OpenTK.Input.Key.A},
+            new KeyHelp(){Text="Move right", DefaultKey=(int)OpenTK.Input.Key.D},
+            new KeyHelp(){Text="Jump", DefaultKey=(int)OpenTK.Input.Key.Space},
+            //new KeyHelp(){Text="Remove block", DefaultKey=(int)SpecialKey.MouseLeftClick},
+            //new KeyHelp(){Text="Place block", DefaultKey=(int)SpecialKey.MouseRightClick},
+            new KeyHelp(){Text="Show material selector", DefaultKey=(int)OpenTK.Input.Key.B},
+            new KeyHelp(){Text="Set spawn position", DefaultKey=(int)OpenTK.Input.Key.P},
+            new KeyHelp(){Text="Respawn", DefaultKey=(int)OpenTK.Input.Key.R},
+            new KeyHelp(){Text="Toggle fog distance", DefaultKey=(int)OpenTK.Input.Key.F},
+            new KeyHelp(){Text="1x move speed", DefaultKey=(int)OpenTK.Input.Key.F1},
+            new KeyHelp(){Text="10x move speed", DefaultKey=(int)OpenTK.Input.Key.F2},
+            new KeyHelp(){Text="Free move", DefaultKey=(int)OpenTK.Input.Key.F3},
+            new KeyHelp(){Text="Noclip", DefaultKey=(int)OpenTK.Input.Key.F4},
+            new KeyHelp(){Text="Third-person camera", DefaultKey=(int)OpenTK.Input.Key.F5},
+            new KeyHelp(){Text="Fullscreen", DefaultKey=(int)OpenTK.Input.Key.F11},
+            new KeyHelp(){Text="Screenshot", DefaultKey=(int)OpenTK.Input.Key.F12},
+            new KeyHelp(){Text="Players list", DefaultKey=(int)OpenTK.Input.Key.Tab},
+            new KeyHelp(){Text="Chat", DefaultKey=(int)OpenTK.Input.Key.Enter},
+            new KeyHelp(){Text="Unload blocks", DefaultKey=(int)OpenTK.Input.Key.U},
+            new KeyHelp(){Text="Craft", DefaultKey=(int)OpenTK.Input.Key.C},
+            new KeyHelp(){Text="Load blocks", DefaultKey=(int)OpenTK.Input.Key.L},
+            new KeyHelp(){Text="Enter/leave minecart", DefaultKey=(int)OpenTK.Input.Key.V},
+            new KeyHelp(){Text="Reverse minecart", DefaultKey=(int)OpenTK.Input.Key.Q},
+            //new KeyHelp(){Text="Swap mouse up-down", BoolId="SwapMouseUpDown"},
+        };
+        int keyselectid = -1;
         private void EscapeMenuKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            int menuelements = 3;
-            if (e.Key == OpenTK.Input.Key.Escape)
+            if (e.Key == GetKey(OpenTK.Input.Key.Escape))
             {
-                escapemenuOptions = false;
-                GuiStateBackToGame();
+                if (escapemenustate == EscapeMenuState.Graphics || escapemenustate == EscapeMenuState.Keys)
+                {
+                    SetEscapeMenuState(EscapeMenuState.Options);
+                }
+                else if (escapemenustate == EscapeMenuState.Options)
+                {
+                    SetEscapeMenuState(EscapeMenuState.Main);
+                }
+                else
+                {
+                    SetEscapeMenuState(EscapeMenuState.Main);
+                    GuiStateBackToGame();
+                }
             }
-            if (e.Key == OpenTK.Input.Key.Up)
+            if (escapemenustate == EscapeMenuState.Keys)
             {
-                menustate.selected--;
-                menustate.selected = Math.Max(0, menustate.selected);
-            }
-            if (e.Key == OpenTK.Input.Key.Down)
-            {
-                menustate.selected++;
-                menustate.selected = Math.Min(menuelements - 1, menustate.selected);
-            }
-            if (menustate.selected != -1
-                && (e.Key == OpenTK.Input.Key.Enter || e.Key == OpenTK.Input.Key.KeypadEnter))
-            {
-                EscapeMenuAction();
+                if (keyselectid != -1)
+                {
+                    options.Keys[keyhelps[keyselectid].DefaultKey] = (int)e.Key;
+                    keyselectid = -1;
+                }
             }
         }
         Options options = new Options();

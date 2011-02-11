@@ -350,7 +350,7 @@ namespace GameModeFortress
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
-            if (KeyPressed(OpenTK.Input.Key.C))
+            if (KeyPressed(viewport.GetKey(OpenTK.Input.Key.C)))
             {
                 if (viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
@@ -364,7 +364,7 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (KeyPressed(OpenTK.Input.Key.U) || KeyPressed(OpenTK.Input.Key.L))
+            if (KeyPressed(viewport.GetKey(OpenTK.Input.Key.U)) || KeyPressed(viewport.GetKey(OpenTK.Input.Key.L)))
             {
                 if (viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
@@ -372,7 +372,7 @@ namespace GameModeFortress
                         (int)viewport.PickCubePos.Z,
                         (int)viewport.PickCubePos.Y);
                     {
-                        DoCommandDumpOrLoad(pos.x,pos.y,pos.z,KeyPressed(OpenTK.Input.Key.U),
+                        DoCommandDumpOrLoad(pos.x,pos.y,pos.z,KeyPressed(viewport.GetKey(OpenTK.Input.Key.U)),
                             viewport.MaterialSlots[viewport.activematerial]);
                     }
                 }

@@ -21,8 +21,8 @@ namespace GameModeFortress
             viewport.LocalPlayerAnimationHint.InVehicle = railriding;
             viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
 
-            bool turnright = viewport.keyboardstate[OpenTK.Input.Key.D];
-            bool turnleft = viewport.keyboardstate[OpenTK.Input.Key.A];
+            bool turnright = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.D)];
+            bool turnleft = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.A)];
             RailSound();
             if (railriding)
             {
@@ -62,11 +62,11 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.W])
+            if (viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.W)])
             {
                 currentvehiclespeed += 1f * (float)dt;
             }
-            if (viewport.keyboardstate[OpenTK.Input.Key.S])
+            if (viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.S)])
             {
                 currentvehiclespeed -= 5f * (float)dt;
             }
@@ -76,12 +76,12 @@ namespace GameModeFortress
             }
             //todo fix
             //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
-            if (!wasqpressed && viewport.keyboardstate[OpenTK.Input.Key.Q])
+            if (!wasqpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.Q)])
             {
                 Reverse();
             }
 
-            if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && !railriding)
+            if (!wasvpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)] && !railriding)
             {
                 currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
                     (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
@@ -127,13 +127,13 @@ namespace GameModeFortress
                     lastdirection = currentdirection;
                 }
             }
-            else if (!wasvpressed && viewport.keyboardstate[OpenTK.Input.Key.V] && railriding)
+            else if (!wasvpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)] && railriding)
             {
                 ExitVehicle();
                 viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
-            wasqpressed = viewport.keyboardstate[OpenTK.Input.Key.Q];
-            wasvpressed = viewport.keyboardstate[OpenTK.Input.Key.V];
+            wasqpressed = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.Q)];
+            wasvpressed = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)];
         }
         private void ExitVehicle()
         {
