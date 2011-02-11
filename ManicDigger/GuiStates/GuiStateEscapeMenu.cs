@@ -2,9 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
+using System.Xml.Serialization;
+using System.IO;
 
 namespace ManicDigger
 {
+    public class Options
+    {
+        public bool Shadows;
+        public int Font;
+        public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
+    }
     partial class ManicDiggerGameWindow
     {
         private void EscapeMenuStart()
@@ -36,6 +44,7 @@ namespace ManicDigger
         {
             if (!escapemenuOptions) { EscapeMenuActionMain(); }
             else { EscapeMenuActionOptions(); }
+            SaveOptions();
         }
         private void EscapeMenuActionOptions()
         {
@@ -124,6 +133,36 @@ namespace ManicDigger
             {
                 EscapeMenuAction();
             }
+        }
+        Options options = new Options();
+        XmlSerializer x = new XmlSerializer(typeof(Options));
+        public string gamepathconfig = GameStorePath.GetStorePath();
+        string filename = "ClientConfig.xml";
+        void LoadOptions()
+        {
+            string path = Path.Combine(gamepathconfig, filename);
+            if (!File.Exists(path))
+            {
+                return;
+            }
+            string s = File.ReadAllText(path);
+            this.options = (Options)x.Deserialize(new System.IO.StringReader(s));
+
+            textdrawer.NewFont = options.Font != 1;
+            currentshadows.ShadowsFull = options.Shadows;
+            shadows.ResetShadows();
+            terrain.UpdateAllTiles();
+        }
+        void SaveOptions()
+        {
+            options.Font = textdrawer.NewFont ? 0 : 1;
+            options.Shadows = currentshadows.ShadowsFull;
+            
+            string path = Path.Combine(gamepathconfig, filename);
+            MemoryStream ms = new MemoryStream();
+            x.Serialize(ms, options);
+            string xml = Encoding.UTF8.GetString(ms.ToArray());
+            File.WriteAllText(path, xml);
         }
     }
 }

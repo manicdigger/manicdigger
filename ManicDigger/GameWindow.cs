@@ -575,7 +575,6 @@ namespace ManicDigger
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-
             string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
             int minor = (int)version[2];
@@ -1232,6 +1231,7 @@ namespace ManicDigger
             var oldnetwork = network;
             var oldterrain = terrain;
             internetgamefactory.NewInternetGame();
+            LoadOptions();
             //.newclientgame = internetgamefactory.GetClientGame();
             //.newnetwork = internetgamefactory.GetNetwork();
             //.newterrain = internetgamefactory.GetTerrain();
