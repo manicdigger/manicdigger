@@ -901,7 +901,7 @@ namespace ManicDiggerServer
         Vector3i DefaultSpawnPosition()
         {
             int x = map.MapSizeX / 2;
-            int y = map.MapSizeY / 2;
+            int y = map.MapSizeY / 2 - 1;//antivandal side
             //spawn position randomization disabled.
             //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
