@@ -160,7 +160,14 @@ namespace GameModeFortress
                         {
                             if (p.Value)
                             {
-                                SendSetBlock(new Vector3(p.Key.x, p.Key.y, p.Key.z), BlockSetMode.Create, activematerial);
+                                if (activematerial == (int)TileTypeManicDigger.FillArea)
+                                {
+                                    SendSetBlock(new Vector3(p.Key.x, p.Key.y, p.Key.z), BlockSetMode.Destroy, activematerial);
+                                }
+                                else
+                                {
+                                    SendSetBlock(new Vector3(p.Key.x, p.Key.y, p.Key.z), BlockSetMode.Create, activematerial);
+                                }
                             }
                         }
                         ClearFillArea();
@@ -240,7 +247,7 @@ namespace GameModeFortress
         Dictionary<Vector3i, bool> fillarea = new Dictionary<Vector3i, bool>();
         Vector3i? fillstart;
         Vector3i? fillend;
-        int MAXFILL = 100;
+        int MAXFILL = 200;
         private void FillFill(Vector3i a, Vector3i b)
         {
             int startx = Math.Min(a.x, b.x);
