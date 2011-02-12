@@ -660,6 +660,7 @@ namespace ManicDigger
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
+        public bool AllowFreemove { get; set; }
     }
     /// <summary>
     /// Client -> Server packet id.

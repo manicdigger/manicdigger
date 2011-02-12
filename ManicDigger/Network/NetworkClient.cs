@@ -23,6 +23,7 @@ namespace ManicDigger
         Dictionary<int, bool> EnablePlayerUpdatePosition { get; set; }
         string ServerName { get; }
         string ServerMotd { get; }
+        bool AllowFreemove { get; }
     }
     public class MapLoadingProgressEventArgs : EventArgs
     {
@@ -203,6 +204,7 @@ namespace ManicDigger
             get { return "ServerMotd"; }
         }
         #endregion
+        public bool AllowFreemove { get; set; }
     }
     public class MapLoadedEventArgs : EventArgs
     {

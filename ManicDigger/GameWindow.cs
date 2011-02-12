@@ -1001,13 +1001,24 @@ namespace ManicDigger
                     }
                     return;
                 }
+                string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
                 if (e.Key == GetKey(OpenTK.Input.Key.F1))
                 {
+                    if (!network.AllowFreemove)
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
                     movespeed = basemovespeed * 1;
                     Log("Move speed: 1x.");
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F2))
                 {
+                    if (!network.AllowFreemove)
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
                     movespeed = basemovespeed * 10;
                     Log("Move speed: 10x.");
                 }
@@ -1026,12 +1037,22 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
+                    if (!network.AllowFreemove)
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
                     if (ENABLE_FREEMOVE) { Log("Freemove enabled."); }
                     else { Log("Freemove disabled."); }
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F4))
                 {
+                    if (!network.AllowFreemove)
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
                     ENABLE_NOCLIP = !ENABLE_NOCLIP;
                     if (ENABLE_NOCLIP) { Log("Noclip enabled."); }
                     else { Log("Noclip disabled."); }

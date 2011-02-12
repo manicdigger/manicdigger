@@ -70,6 +70,8 @@ namespace GameModeFortress
         public List<byte[]> UsedBlobsMd5;
         [ProtoMember(5, IsRequired = false)]
         public byte[] TerrainTextureMd5;
+        [ProtoMember(6, IsRequired = false)]
+        public bool DisallowFreemove;
     }
     //public class PacketServerPing
     [ProtoContract]

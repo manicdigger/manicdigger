@@ -220,6 +220,8 @@ namespace GameModeFortress
         string serverMotd = "";
         public string ServerName { get { return serverName; } set { serverName = value; } }
         public string ServerMotd { get { return serverMotd; } set { serverMotd = value; } }
+        public bool allowfreemove = true;
+        public bool AllowFreemove { get { return allowfreemove; } set { allowfreemove = value; } }
         public int LocalPlayerId = 255;
         Stopwatch stopwatch = new Stopwatch();
         public int maxMiliseconds = 3;
@@ -280,6 +282,7 @@ namespace GameModeFortress
                         }
                         this.serverName = packet.Identification.ServerName;
                         this.ServerMotd = packet.Identification.ServerMotd;
+                        this.AllowFreemove = !packet.Identification.DisallowFreemove;
                         ChatLog("---Connected---");
                         List<byte[]> needed = new List<byte[]>();
                         foreach (byte[] b in packet.Identification.UsedBlobsMd5)

@@ -205,6 +205,10 @@ namespace ManicDiggerServer
                 cfgcreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
                 cfgpublic = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
                 cfgbuildpassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildPassword");
+                if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
+                {
+                    cfgallowfreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
+                }
             }
             Console.WriteLine("Server configuration loaded.");
         }
@@ -221,6 +225,7 @@ namespace ManicDiggerServer
             }
         }
         bool cfgcreative = true;
+        bool cfgallowfreemove = true;
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
@@ -231,6 +236,7 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("MaxClients", cfgmaxclients.ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
             s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
+            s += "  " + XmlTool.X("AllowFreemove", cfgallowfreemove ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("BuildPassword", cfgbuildpassword) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
@@ -1649,6 +1655,7 @@ namespace ManicDiggerServer
                 ServerMotd = cfgmotd,
                 UsedBlobsMd5 = UsedBlobs(),
                 TerrainTextureMd5 = GetTerrainTextureMd5(),
+                DisallowFreemove = !cfgallowfreemove,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }
