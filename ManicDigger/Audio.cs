@@ -10,6 +10,7 @@ namespace ManicDigger
 {
     public interface IAudio
     {
+        bool Enabled { get; set; }
         void Play(string filename);
         void PlayAudioLoop(string filename, bool play);
     }
@@ -21,6 +22,8 @@ namespace ManicDigger
         public void PlayAudioLoop(string filename, bool play)
         {
         }
+        bool enabled = true;
+        public bool Enabled { get { return enabled; } set { enabled = value; } }
     }
     public class AudioOpenAl : IAudio
     {
@@ -218,6 +221,10 @@ namespace ManicDigger
         }
         public void Play(string filename)
         {
+            if (!enabled)
+            {
+                return;
+            }
             if (context == null)
             {
                 return;
@@ -227,6 +234,10 @@ namespace ManicDigger
         Dictionary<string, X> soundsplaying = new Dictionary<string, X>();
         public void PlayAudioLoop(string filename, bool play)
         {
+            if (!enabled)
+            {
+                return;
+            }
             if (context == null)
             {
                 return;
@@ -252,5 +263,7 @@ namespace ManicDigger
                 }
             }
         }
+        bool enabled = true;
+        public bool Enabled { get { return enabled; } set { enabled = value; } }
     }
 }

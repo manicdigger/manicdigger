@@ -13,6 +13,7 @@ namespace ManicDigger
         public int Font;
         public int DrawDistance = 256;
         public bool UseServerTextures = true;
+        public bool EnableSound = true;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }
     partial class ManicDiggerGameWindow
@@ -30,6 +31,7 @@ namespace ManicDigger
             Options,
             Graphics,
             Keys,
+            Other,
         }
         EscapeMenuState escapemenustate;
         private void EscapeMenuMouse1()
@@ -62,6 +64,7 @@ namespace ManicDigger
             {
                 AddButton("Graphics", (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
                 AddButton("Keys", (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
+                AddButton("Other", (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
                 AddButton("Return to main menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Main); });
                 MakeSimpleOptions(20, 50);
             }
@@ -88,6 +91,16 @@ namespace ManicDigger
                     {
                         textdrawer.NewFont = !textdrawer.NewFont;
                         cachedTextTextures.Clear();
+                    });
+                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                MakeSimpleOptions(20, 50);
+            }
+            else if (state == EscapeMenuState.Other)
+            {
+                AddButton("Sound: " + (audio.Enabled ? "ON" : "OFF"),
+                    (a, b) =>
+                    {
+                        audio.Enabled = !audio.Enabled;
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -223,7 +236,9 @@ namespace ManicDigger
         {
             if (e.Key == GetKey(OpenTK.Input.Key.Escape))
             {
-                if (escapemenustate == EscapeMenuState.Graphics || escapemenustate == EscapeMenuState.Keys)
+                if (escapemenustate == EscapeMenuState.Graphics
+                    || escapemenustate == EscapeMenuState.Keys
+                    || escapemenustate == EscapeMenuState.Other)
                 {
                     SetEscapeMenuState(EscapeMenuState.Options);
                 }
@@ -265,12 +280,14 @@ namespace ManicDigger
             shadows.ResetShadows();
             terrain.UpdateAllTiles();
             terrain.DrawDistance = options.DrawDistance;
+            audio.Enabled = options.EnableSound;
         }
         void SaveOptions()
         {
             options.Font = textdrawer.NewFont ? 0 : 1;
             options.Shadows = currentshadows.ShadowsFull;
             options.DrawDistance = terrain.DrawDistance;
+            options.EnableSound = audio.Enabled;
             
             string path = Path.Combine(gamepathconfig, filename);
             MemoryStream ms = new MemoryStream();
