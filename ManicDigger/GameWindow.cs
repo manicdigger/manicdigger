@@ -924,6 +924,15 @@ namespace ManicDigger
                     menustate = new MenuState();
                     FreeMouse = true;
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
+                {
+                    ChatPageScroll++;
+                }                
+                if (e.Key == GetKey(OpenTK.Input.Key.PageDown) && GuiTyping == TypingState.Typing)
+                {
+                    ChatPageScroll--;
+                }
+                ChatPageScroll = MyMath.Clamp(ChatPageScroll, 0, chatlines.Count / ChatLinesMaxToDraw);
                 if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     if (GuiTyping == TypingState.Typing)
@@ -1166,6 +1175,7 @@ namespace ManicDigger
             }
             terrain.DrawDistance = drawDistances[0];
         }
+        int ChatPageScroll;
         enum CameraType
         {
             Fpp,
@@ -2735,7 +2745,8 @@ namespace ManicDigger
         {
             return (int)(Height / 2 - height / 2);
         }
-        int ChatScreenExpireTimeSeconds = 20;
+        public int ChatScreenExpireTimeSeconds = 20;
+        public int ChatLinesMaxToDraw = 10;
         private void DrawChatLines(bool all)
         {
             /*
@@ -2757,16 +2768,15 @@ namespace ManicDigger
             }
             else
             {
-                int maxtodraw = 10;
-                int first = chatlines.Count - maxtodraw;
+                int first = chatlines.Count - ChatLinesMaxToDraw * (ChatPageScroll + 1);
                 if (first < 0)
                 {
                     first = 0;
                 }
                 int count = chatlines.Count;
-                if (count > maxtodraw)
+                if (count > ChatLinesMaxToDraw)
                 {
-                    count = maxtodraw;
+                    count = ChatLinesMaxToDraw;
                 }
                 for (int i = first; i < first + count; i++)
                 {
@@ -2776,6 +2786,10 @@ namespace ManicDigger
             for (int i = 0; i < chatlines2.Count; i++)
             {
                 Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
+            }
+            if (ChatPageScroll != 0)
+            {
+                Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, chatfontsize, Color.Gray);
             }
         }
         struct TextAndSize
