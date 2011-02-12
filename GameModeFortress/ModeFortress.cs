@@ -769,7 +769,7 @@ namespace GameModeFortress
                     {
                         blobs[blobdownloadhash] = blobdownload.ToArray();
                         blobdownload = null;
-                        if (ENABLE_PER_SERVER_TEXTURES)
+                        if (ENABLE_PER_SERVER_TEXTURES || viewport.Options.UseServerTextures)
                         {
                             if (blobdownloadhash == serverterraintexture)
                             {

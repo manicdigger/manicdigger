@@ -12,6 +12,7 @@ namespace ManicDigger
         public bool Shadows;
         public int Font;
         public int DrawDistance = 256;
+        public bool UseServerTextures = true;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }
     partial class ManicDiggerGameWindow
@@ -72,16 +73,21 @@ namespace ManicDigger
                         currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
                         terrain.UpdateAllTiles();
                     });
+                AddButton("View distance: " + (terrain.DrawDistance),
+                    (a, b) =>
+                    {
+                        ToggleFog();
+                    });
+                AddButton("Use server textures (restart): " + (options.UseServerTextures ? "ON" : "OFF"),
+                    (a, b) =>
+                    {
+                        options.UseServerTextures = !options.UseServerTextures;
+                    });
                 AddButton("Font: " + (textdrawer.NewFont ? "2" : "1"),
                     (a, b) =>
                     {
                         textdrawer.NewFont = !textdrawer.NewFont;
                         cachedTextTextures.Clear();
-                    });
-                AddButton("View distance: " + (terrain.DrawDistance),
-                    (a, b) =>
-                    {
-                        ToggleFog();
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);

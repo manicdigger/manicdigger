@@ -346,6 +346,7 @@ namespace ManicDigger
         bool ENABLE_FINITEINVENTORY { get; set; }
         bool SkySphereNight { get; set; }
         OpenTK.Input.Key GetKey(OpenTK.Input.Key key);
+        Options Options { get; set; }
     }
     public class AnimationHint
     {
@@ -427,6 +428,7 @@ namespace ManicDigger
         {
             return key;
         }
+        public Options Options { get; set; }
     }
     public interface IModelToDraw
     {
@@ -3230,5 +3232,6 @@ namespace ManicDigger
             get { return m_projectionMatrix; }
         }
         #endregion
+        public Options Options { get { return options; } set { options = value; } }
     }
 }
