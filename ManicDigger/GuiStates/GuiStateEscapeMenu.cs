@@ -98,13 +98,14 @@ namespace ManicDigger
                 int textheight = 20;
                 for (int i = 0; i < keyhelps.Length; i++)
                 {
+                    int ii = i; //a copy for closure
                     int defaultkey = keyhelps[i].DefaultKey;
                     int key = defaultkey;
                     if (options.Keys.ContainsKey(defaultkey))
                     {
                         key = options.Keys[defaultkey];
                     }
-                    AddButton(keyhelps[i].Text + ": " + KeyName(key), (a, b) => { keyselectid = i; });
+                    AddButton(keyhelps[i].Text + ": " + KeyName(key), (a, b) => { keyselectid = ii; });
                 }
                 AddButton("Default keys", (a, b) => { options.Keys.Clear(); });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
