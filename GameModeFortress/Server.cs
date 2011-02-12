@@ -169,7 +169,7 @@ namespace ManicDiggerServer
             }
         }
         DateTime lastsave = DateTime.Now;
-        void LoadConfig()
+        public void LoadConfig()
         {
             string filename = "ServerConfig.xml";
             if (!File.Exists(Path.Combine(gamepathconfig, filename)))
@@ -209,6 +209,12 @@ namespace ManicDiggerServer
                 {
                     cfgallowfreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
                 }
+                if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
+                {
+                    cfgmapsizex = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
+                    cfgmapsizey = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
+                    cfgmapsizez = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
+                }
             }
             Console.WriteLine("Server configuration loaded.");
         }
@@ -224,8 +230,11 @@ namespace ManicDiggerServer
                     && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
             }
         }
-        bool cfgcreative = true;
-        bool cfgallowfreemove = true;
+        public int cfgmapsizex = 10000;
+        public int cfgmapsizey = 10000;
+        public int cfgmapsizez = 128;
+        public bool cfgcreative = true;
+        public bool cfgallowfreemove = true;
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
@@ -239,6 +248,9 @@ namespace ManicDiggerServer
             s += "  " + XmlTool.X("AllowFreemove", cfgallowfreemove ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
             s += "  " + XmlTool.X("BuildPassword", cfgbuildpassword) + Environment.NewLine;
+            s += "  " + XmlTool.X("MapSizeX", cfgmapsizex.ToString()) + Environment.NewLine;
+            s += "  " + XmlTool.X("MapSizeY", cfgmapsizey.ToString()) + Environment.NewLine;
+            s += "  " + XmlTool.X("MapSizeZ", cfgmapsizez.ToString()) + Environment.NewLine;
             s += "</ManicDiggerServerConfig>";
             if (!Directory.Exists(gamepathconfig))
             {
@@ -1656,6 +1668,9 @@ namespace ManicDiggerServer
                 UsedBlobsMd5 = UsedBlobs(),
                 TerrainTextureMd5 = GetTerrainTextureMd5(),
                 DisallowFreemove = !cfgallowfreemove,
+                MapSizeX = map.MapSizeX,
+                MapSizeY = map.MapSizeY,
+                MapSizeZ = map.MapSizeZ,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }

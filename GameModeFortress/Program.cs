@@ -13,7 +13,7 @@ using ManicDiggerServer;
 
 namespace GameModeFortress
 {
-    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows
+    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows, IResetMap
     {
         public string GameUrl = null;
         public string User;
@@ -61,6 +61,7 @@ namespace GameModeFortress
             network.ENABLE_FORTRESS = true;
             network.NetworkPacketReceived = clientgame;
             network.compression = compression;
+            network.resetmap = this;
             terrainDrawer.the3d = the3d;
             terrainDrawer.getfile = getfile;
             terrainDrawer.config3d = config3d;
@@ -113,7 +114,7 @@ namespace GameModeFortress
             clientgame.railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame };
             clientgame.minecartrenderer = new MinecartRenderer() { getfile = getfile, the3d = the3d };
             InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
-            var dirtychunks = new DirtyChunks() { mapstorage = map };
+            this.dirtychunks = new DirtyChunks() { mapstorage = map };
             terrainDrawer.ischunkready = dirtychunks;
             map.ischunkready = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
@@ -150,10 +151,10 @@ namespace GameModeFortress
             {
                 terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
             }
-            var heightmap = new InfiniteMapChunked2d() { map = map };            
+            this.heightmap = new InfiniteMapChunked2d() { map = map };
             heightmap.Restart();
             network.heightmap = heightmap;
-            var light = new InfiniteMapChunkedSimple() { map = map };
+            this.light = new InfiniteMapChunkedSimple() { map = map };
             light.Restart();
             shadowsfull = new Shadows()
             {
@@ -193,6 +194,9 @@ namespace GameModeFortress
                     map, w.login, shadowsfull, shadowssimple, terrainChunkDrawer);
             }
         }
+        InfiniteMapChunked2d heightmap;
+        InfiniteMapChunkedSimple light;
+        DirtyChunks dirtychunks;
         #region IInternetGameFactory Members
         public void NewInternetGame()
         {
@@ -256,6 +260,17 @@ namespace GameModeFortress
             }
         }
         #endregion
+        public void Reset(int sizex, int sizey, int sizez)
+        {
+            map.Reset(sizex, sizey, sizez);
+            light.Restart();
+            heightmap.Restart();
+            dirtychunks.Start();
+        }
+    }
+    public interface IResetMap
+    {
+        void Reset(int sizex, int sizey, int sizez);
     }
     public class ManicDiggerProgram
     {
@@ -312,6 +327,7 @@ namespace GameModeFortress
         static void ServerThread()
         {
             Server server = new Server();
+            server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
             map.currenttime = server;
             map.chunksize = 32;
@@ -319,7 +335,7 @@ namespace GameModeFortress
             map.generator = generator;
             server.chunksize = 32;
             map.heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, map = map };
-            map.Reset(10000, 10000, 128);
+            map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
             server.map = map;
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();

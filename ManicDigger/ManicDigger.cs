@@ -288,6 +288,9 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
         #endregion
+        public void Reset(int sizex, int sizey, int sizez)
+        {
+        }
     }
     public class XmlTool
     {

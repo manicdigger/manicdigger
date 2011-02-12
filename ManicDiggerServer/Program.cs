@@ -20,6 +20,7 @@ namespace ManicDiggerServer
         static void Main(string[] args)
         {
             Server server = new Server();
+            server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
             map.currenttime = server;
             map.chunksize = 32;
@@ -27,7 +28,7 @@ namespace ManicDiggerServer
             map.generator = generator;
             server.chunksize = 32;
             map.heightmap = new InfiniteMapChunked2d() { chunksize = 32, map = map };
-            map.Reset(10000, 10000, 128);
+            map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
             server.map = map;
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();

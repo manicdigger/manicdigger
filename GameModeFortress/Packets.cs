@@ -72,6 +72,12 @@ namespace GameModeFortress
         public byte[] TerrainTextureMd5;
         [ProtoMember(6, IsRequired = false)]
         public bool DisallowFreemove;
+        [ProtoMember(7, IsRequired = false)]
+        public int MapSizeX = 10000;
+        [ProtoMember(8, IsRequired = false)]
+        public int MapSizeY = 10000;
+        [ProtoMember(9, IsRequired = false)]
+        public int MapSizeZ = 128;
     }
     //public class PacketServerPing
     [ProtoContract]

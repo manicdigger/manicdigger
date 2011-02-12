@@ -39,6 +39,8 @@ namespace GameModeFortress
         public InfiniteMapChunked2d heightmap;
         [Inject]
         public IShadows shadows;
+        [Inject]
+        public IResetMap resetmap;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -290,6 +292,14 @@ namespace GameModeFortress
                             if (!IsBlob(b)) { needed.Add(b); }
                         }
                         SendRequestBlob(needed);
+                        if (packet.Identification.MapSizeX != Map.Map.MapSizeX
+                            || packet.Identification.MapSizeY != Map.Map.MapSizeY
+                            || packet.Identification.MapSizeZ != Map.Map.MapSizeZ)
+                        {
+                            resetmap.Reset(packet.Identification.MapSizeX,
+                                packet.Identification.MapSizeY,
+                                packet.Identification.MapSizeZ);
+                        }
                     }
                     break;
                 case ServerPacketId.Ping:

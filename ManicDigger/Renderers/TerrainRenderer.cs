@@ -519,13 +519,17 @@ namespace ManicDigger
                 UseTerrainTextureAtlas2d(atlas2d);
             }
             updateThreadRunning++;
+            Start2();
+            new Thread(UpdateThreadStart).Start();
+        }
+        private void Start2()
+        {
             this.mapsizex = mapstorage.MapSizeX;
             this.mapsizey = mapstorage.MapSizeY;
             this.mapsizez = mapstorage.MapSizeZ;
             this.mapsizexchunks = mapstorage.MapSizeX / chunksize;
             this.mapsizeychunks = mapstorage.MapSizeY / chunksize;
             this.mapsizezchunks = mapstorage.MapSizeZ / chunksize;
-            new Thread(UpdateThreadStart).Start();
         }
         int mapsizex;//cache
         int mapsizey;
@@ -586,14 +590,24 @@ namespace ManicDigger
             {
                 throw new Exception("Update thread is running already.");
             }
-            BatchedBlocksClear();
-            for (; ; )
+            restart:
+            try
             {
-                Thread.Sleep(1);
-                if (exit.exit || exit2) { break; }
-                DeleteChunksAway();
-                UpdateChunksNear();
+                Start2();
+                BatchedBlocksClear();
+                for (; ; )
+                {
+                    Thread.Sleep(1);
+                    if (exit.exit || exit2) { goto exit; }
+                    DeleteChunksAway();
+                    UpdateChunksNear();
+                }
             }
+            catch
+            {
+                goto restart;
+            }
+            exit:
             updateThreadRunning--;
         }
         int sometimes_update_behind_counter;

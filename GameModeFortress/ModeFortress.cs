@@ -818,5 +818,9 @@ namespace GameModeFortress
             return map.GetChunk(x, y, z);
         }
         #endregion
+        public void Reset(int sizex, int sizey, int sizez)
+        {
+            map.Reset(sizex, sizey, sizez);
+        }
     }
 }
