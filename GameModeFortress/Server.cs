@@ -499,12 +499,21 @@ namespace ManicDiggerServer
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyFiniteInventory(k.Key);
             }
+            pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
             UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
                 ChunkSimulation();
             }
         }
+        private void SendPing(int clientid)
+        {
+            PacketServerPing p = new PacketServerPing()
+            {
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ping, Ping = p }));
+        }
+        Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
             PacketServerSeason p = new PacketServerSeason()

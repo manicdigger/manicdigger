@@ -222,6 +222,8 @@ namespace GameModeFortress
         public PacketServerBlobFinalize BlobFinalize;
         [ProtoMember(17, IsRequired = false)]
         public PacketServerHeightmapChunk HeightmapChunk;
+        [ProtoMember(18, IsRequired = false)]
+        public PacketServerPing Ping;
     }
     [ProtoContract]
     public class PacketClient
@@ -296,6 +298,10 @@ namespace GameModeFortress
         public int DayNightCycleSpeedup = 24; //used for predicting sun speed.
         [ProtoMember(4, IsRequired = false)]
         public int Moon;
+    }
+    [ProtoContract]
+    public class PacketServerPing
+    {
     }
     [ProtoContract]
     public class PacketClientCraft

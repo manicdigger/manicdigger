@@ -122,6 +122,7 @@ namespace GameModeFortress
         /// </summary>
         public void Process()
         {
+            currentTime = DateTime.UtcNow;
             stopwatch.Reset();
             stopwatch.Start();
             if (main == null)
@@ -249,7 +250,8 @@ namespace GameModeFortress
                 && packet.PacketId != ServerPacketId.OrientationUpdate
                 && packet.PacketId != ServerPacketId.PlayerPositionAndOrientation
                 && packet.PacketId != ServerPacketId.ExtendedPacketTick
-                && packet.PacketId != ServerPacketId.Chunk)
+                && packet.PacketId != ServerPacketId.Chunk
+                && packet.PacketId != ServerPacketId.Ping)
             {
                 Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
             }
@@ -437,8 +439,10 @@ namespace GameModeFortress
                     //Console.WriteLine("Invalid packet id: " + packet.PacketId);
                 }
             }
+            LastReceived = currentTime;
             return lengthPrefixLength + packetLength;
         }
+        DateTime currentTime;
         private void SendRequestBlob(List<byte[]> needed)
         {
             PacketClientRequestBlob p = new PacketClientRequestBlob() { RequestBlobMd5 = needed };
@@ -591,5 +595,6 @@ namespace GameModeFortress
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
+        public DateTime LastReceived { get; set; }
     }
 }

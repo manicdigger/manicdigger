@@ -661,6 +661,7 @@ namespace ManicDigger
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
         public bool AllowFreemove { get; set; }
+        public DateTime LastReceived { get { return DateTime.UtcNow; } }
     }
     /// <summary>
     /// Client -> Server packet id.

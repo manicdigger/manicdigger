@@ -2589,8 +2589,15 @@ namespace ManicDigger
                 DrawScreenshotFlash();
                 screenshotflash--;
             }
+            double lagSeconds = (DateTime.UtcNow - network.LastReceived).TotalSeconds;
+            if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
+            {
+                Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
+                Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
+            }
             PerspectiveMode();
         }
+        public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
             Draw2dTexture(WhiteTexture(), 0, 0, Width, Height, null, Color.White);

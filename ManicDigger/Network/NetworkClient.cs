@@ -24,6 +24,7 @@ namespace ManicDigger
         string ServerName { get; }
         string ServerMotd { get; }
         bool AllowFreemove { get; }
+        DateTime LastReceived { get; }
     }
     public class MapLoadingProgressEventArgs : EventArgs
     {
@@ -205,6 +206,7 @@ namespace ManicDigger
         }
         #endregion
         public bool AllowFreemove { get; set; }
+        public DateTime LastReceived { get { return DateTime.UtcNow; } }
     }
     public class MapLoadedEventArgs : EventArgs
     {
