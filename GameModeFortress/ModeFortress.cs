@@ -137,11 +137,24 @@ namespace GameModeFortress
                     if (activematerial == (int)TileTypeManicDigger.Cuboid)
                     {
                         ClearFillArea();
+
                         if (fillstart != null)
                         {
-                            //todo! check distance
+                            Vector3i f = fillstart.Value;
+                            if (!IsFillBlock(map.GetBlock(f.x, f.y, f.z)))
+                            {
+                                fillarea[f] = map.GetBlock(f.x, f.y, f.z);
+                            }
+                            map.SetBlock(f.x, f.y, f.z, (int)TileTypeManicDigger.FillStart);
+
+
                             FillFill(v, fillstart.Value);
                         }
+                        if (!IsFillBlock(map.GetBlock(v.x, v.y, v.z)))
+                        {
+                            fillarea[v] = map.GetBlock(v.x, v.y, v.z);
+                        }
+                        map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.Cuboid);
                         fillend = v;
                         terrain.UpdateTile(v.x, v.y, v.z);
                         return;
@@ -149,16 +162,21 @@ namespace GameModeFortress
                     if (activematerial == (int)TileTypeManicDigger.FillStart)
                     {
                         ClearFillArea();
+                        if (!IsFillBlock(map.GetBlock(v.x, v.y, v.z)))
+                        {
+                            fillarea[v] = map.GetBlock(v.x, v.y, v.z);
+                        }
+                        map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.FillStart);
                         fillstart = v;
                         fillend = null;
                         terrain.UpdateTile(v.x, v.y, v.z);
                         return;
                     }
-                    if (fillarea.ContainsKey(v) && fillarea[v])
+                    if (fillarea.ContainsKey(v))// && fillarea[v])
                     {
                         foreach (var p in fillarea)
                         {
-                            if (p.Value)
+                            //if (p.Value)
                             {
                                 if (activematerial == (int)TileTypeManicDigger.FillArea)
                                 {
@@ -216,35 +234,23 @@ namespace GameModeFortress
             {
                 activematerial = data.TileIdEmpty;
             }
-            speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = activematerial, time = DateTime.Now };
+            speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = map.GetBlock(x, y, z), time = DateTime.UtcNow };
+            map.SetBlock(x, y, z, activematerial);
             terrain.UpdateTile(x, y, z);
             shadows.OnLocalBuild(x, y, z);
         }
         private void ClearFillArea()
         {
-            var oldfillstart = fillstart;
-            fillstart = null;
-            if (oldfillstart != null)
+            foreach (var k in fillarea)
             {
-                terrain.UpdateTile(oldfillstart.Value.x, oldfillstart.Value.y, oldfillstart.Value.z);
-            }
-            fillstart = oldfillstart;
-            var oldfillend = fillend;
-            fillend = null;
-            if (oldfillend != null)
-            {
-                terrain.UpdateTile(oldfillend.Value.x, oldfillend.Value.y, oldfillend.Value.z);
-            }
-            fillend = oldfillend;
-
-            var oldfillarea = fillarea.Keys;
-            fillarea.Clear();
-            foreach (Vector3i vv in oldfillarea)
-            {
+                var vv = k.Key;
+                map.SetBlock(vv.x, vv.y, vv.z, k.Value);
                 terrain.UpdateTile(vv.x, vv.y, vv.z);
             }
+            fillarea.Clear();
         }
-        Dictionary<Vector3i, bool> fillarea = new Dictionary<Vector3i, bool>();
+        //value is original block.
+        Dictionary<Vector3i, int> fillarea = new Dictionary<Vector3i, int>();
         Vector3i? fillstart;
         Vector3i? fillend;
         int MAXFILL = 200;
@@ -264,24 +270,24 @@ namespace GameModeFortress
                     {
                         if (fillarea.Count > MAXFILL)
                         {
-                            List<Vector3i> toclear = new List<Vector3i>();
-                            foreach (var v in fillarea.Keys)
-                            {
-                                toclear.Add(v);
-                            }
-                            foreach (var v in toclear)
-                            {
-                                fillarea[v] = false;
-                                terrain.UpdateTile(v.x, v.y, v.z);
-                            }
-                            fillarea.Clear();
+                            ClearFillArea();
                             return;
                         }
-                        fillarea[new Vector3i(x, y, z)] = true;
-                        terrain.UpdateTile(x, y, z);
+                        if(!IsFillBlock(map.GetBlock(x,y,z)))
+                        {
+                            fillarea[new Vector3i(x, y, z)] = map.GetBlock(x, y, z);
+                            map.SetBlock(x, y, z, (int)TileTypeManicDigger.FillArea);
+                            terrain.UpdateTile(x, y, z);
+                        }
                     }
                 }
             }
+        }
+        bool IsFillBlock(int blocktype)
+        {
+            return blocktype == (int)TileTypeManicDigger.FillArea
+                || blocktype == (int)TileTypeManicDigger.FillStart
+                || blocktype == (int)TileTypeManicDigger.Cuboid;
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
         {
@@ -351,7 +357,7 @@ namespace GameModeFortress
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
             {
-                if ((DateTime.Now - k.Value.time).TotalSeconds > 2)
+                if ((DateTime.UtcNow - k.Value.time).TotalSeconds > 2)
                 {
                     speculative.Remove(k.Key);
                     terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
@@ -599,17 +605,6 @@ namespace GameModeFortress
         #region IMapStorage Members
         public int GetBlock(int x, int y, int z)
         {
-            Vector3i v = new Vector3i(x, y, z);
-            if (speculative.ContainsKey(v))
-            {
-                return speculative[v].blocktype;
-            }
-            if (fillstart != null && v == fillstart) { return (int)TileTypeManicDigger.FillStart; }
-            if (fillend != null && v == fillend) { return (int)TileTypeManicDigger.Cuboid; }
-            if (fillarea.ContainsKey(v) && fillarea[v])
-            {
-                return (int)TileTypeManicDigger.FillArea;
-            }
             return map.GetBlock(x, y, z);
         }
         #endregion
