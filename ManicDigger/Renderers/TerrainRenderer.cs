@@ -77,10 +77,6 @@ namespace ManicDigger
             r.Height =  1.0f / texturesPacked;
             return r;
         }
-        public static RectangleF TextureCoords1d(int textureId, int texturesPerAtlas)
-        {
-            return TextureCoords1d(textureId, texturesPerAtlas, 1);
-        }
         public static RectangleF TextureCoords1d(int textureId, int texturesPerAtlas, int tilecount)
         {
             RectangleF r = new RectangleF();
@@ -712,7 +708,7 @@ namespace ManicDigger
                         {
                             Vector3 center = new Vector3(v.position.X + chunksize / 2, v.position.Z + chunksize / 2, v.position.Y + chunksize / 2);
                             float radius = chunksize;
-                            ids.Add(batcher.Add(v.indices, v.vertices, v.transparent, v.texture, center, radius));
+                            ids.Add(batcher.Add(v.indices, v.indicesCount, v.vertices, v.verticesCount, v.transparent, v.texture, center, radius));
                         }
                     }
                     if (ids.Count > 0)

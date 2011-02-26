@@ -47,7 +47,9 @@ namespace ManicDigger
         struct ToAdd
         {
             public ushort[] indices;
+            public int indicesCount;
             public VertexPositionTexture[] vertices;
+            public int verticesCount;
             public int id;
             public bool transparent;
             public int texture;
@@ -58,7 +60,7 @@ namespace ManicDigger
 
         //Just saves provided arguments.
         //Display lists are created later, in Draw() called from the main thread.
-        public int Add(ushort[] indices, VertexPositionTexture[] vertices, bool transparent, int texture, Vector3 center, float radius)
+        public int Add(ushort[] indices, int indicesCount, VertexPositionTexture[] vertices, int verticesCount, bool transparent, int texture, Vector3 center, float radius)
         {
             int id;
             lock (toadd)
@@ -76,7 +78,9 @@ namespace ManicDigger
                 toadd.Enqueue(new ToAdd()
                 {
                     indices = indices,
+                    indicesCount = indicesCount,
                     vertices = vertices,
+                    verticesCount = verticesCount,
                     id = id,
                     transparent = transparent,
                     texture = texture,
@@ -138,7 +142,7 @@ namespace ManicDigger
                             GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, (IntPtr)(0 + (byte*)p));
                             GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, (IntPtr)(12 + (byte*)p));
                             GL.ColorPointer(4, ColorPointerType.UnsignedByte, StrideOfVertices, (IntPtr)(20 + (byte*)p));
-                            GL.DrawElements(BeginMode.Triangles, t.indices.Length, DrawElementsType.UnsignedShort, t.indices);
+                            GL.DrawElements(BeginMode.Triangles, t.indicesCount, DrawElementsType.UnsignedShort, t.indices);
                         }
                     }
                     GL.DisableClientState(EnableCap.TextureCoordArray);
@@ -147,7 +151,7 @@ namespace ManicDigger
 
                     GL.EndList();
                     ListInfo li = GetListInfo(t.id);
-                    li.indicescount = t.indices.Length;
+                    li.indicescount = t.indicesCount;
                     li.center = t.center;
                     li.radius = t.radius;
                     li.transparent = t.transparent;
