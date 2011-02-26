@@ -1439,15 +1439,10 @@ namespace ManicDigger
 
                 mouse_delta = new Point(mouse_current.X - mouse_previous.X,
                     mouse_current.Y - mouse_previous.Y);
-                mouse_previous = mouse_current;
 
-                if ((Math.Abs(System.Windows.Forms.Cursor.Position.X - centerx) > 100)
-                    || (Math.Abs(System.Windows.Forms.Cursor.Position.Y - centery) > 100))
-                {
-                    System.Windows.Forms.Cursor.Position =
-                        new Point(centerx, centery);
-                    mouse_previous = new Point(centerx, centery);
-                }
+                System.Windows.Forms.Cursor.Position =
+                    new Point(centerx, centery);
+                mouse_previous = new Point(centerx, centery);
             }
         }
         float rotationspeed = 0.15f;
