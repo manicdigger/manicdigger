@@ -1400,6 +1400,19 @@ namespace ManicDigger
         Point mouse_delta;
         bool freemouse;
         bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
+        void UpdateMouseButtons()
+        {
+            if (!Focused)
+            {
+                return;
+            }
+            mouseleftclick = (!wasmouseleft) && Mouse[OpenTK.Input.MouseButton.Left];
+            mouserightclick = (!wasmouseright) && Mouse[OpenTK.Input.MouseButton.Right];
+            mouseleftdeclick = wasmouseleft && (!Mouse[OpenTK.Input.MouseButton.Left]);
+            mouserightdeclick = wasmouseright && (!Mouse[OpenTK.Input.MouseButton.Right]);
+            wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
+            wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
+        }
         void UpdateMousePosition()
         {
             mouse_current = System.Windows.Forms.Cursor.Position;
@@ -1414,12 +1427,6 @@ namespace ManicDigger
             {
                 return;
             }
-            mouseleftclick = (!wasmouseleft) && Mouse[OpenTK.Input.MouseButton.Left];
-            mouserightclick = (!wasmouseright) && Mouse[OpenTK.Input.MouseButton.Right];
-            mouseleftdeclick = wasmouseleft && (!Mouse[OpenTK.Input.MouseButton.Left]);
-            mouserightdeclick = wasmouseright && (!Mouse[OpenTK.Input.MouseButton.Right]);
-            wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
-            wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
             if (freemousejustdisabled)
             {
                 mouse_previous = mouse_current;
@@ -2080,6 +2087,7 @@ namespace ManicDigger
                 Application.DoEvents();
                 Thread.Sleep(0);
             }
+            UpdateMouseButtons();
 
             var deltaTime = e.Time;
 
