@@ -468,6 +468,7 @@ namespace ManicDigger
         public float interp;
         public int frame;
         public object data;
+        public float slowdownTimer;
     }
     public interface ICurrentShadows
     {

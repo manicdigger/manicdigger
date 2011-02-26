@@ -74,6 +74,7 @@ namespace ManicDigger
         List<VertexPositionTexture> myvertices;
         int oldMaterial;
         float oldLight;
+        float slowdownTimer;
         public void DrawWeapon(float dt)
         {
             int light;
@@ -130,11 +131,16 @@ namespace ManicDigger
             if (move)
             {
                 t += dt;
+                slowdownTimer = float.MaxValue;
             }
             else
             {
-                float f = CharacterRendererMonsterCode.Normalize(t, (float)animperiod / 2);
-                if (Math.Abs(f) < 0.02f)
+                if (slowdownTimer == float.MaxValue)
+                {
+                    slowdownTimer = (float)(animperiod / 2 - (t % (animperiod / 2)));
+                }
+                slowdownTimer -= dt;
+                if (slowdownTimer < 0)
                 {
                     t = 0;
                 }

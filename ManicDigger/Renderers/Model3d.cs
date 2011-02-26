@@ -61,11 +61,16 @@ namespace ManicDigger
             if (moves)
             {
                 animstate.interp += dt;
+                animstate.slowdownTimer = float.MaxValue;
             }
             else
             {
-                float f = Normalize(animstate.interp, (float)animperiod / 2);
-                if (Math.Abs(f) < 0.02f)
+                if (animstate.slowdownTimer == float.MaxValue)
+                {
+                    animstate.slowdownTimer = (float)(animperiod / 2 - (animstate.interp % (animperiod / 2)));
+                }
+                animstate.slowdownTimer -= dt;
+                if (animstate.slowdownTimer < 0)
                 {
                     animstate.interp = 0;
                 }
