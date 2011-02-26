@@ -65,7 +65,7 @@ namespace ManicDigger
                 AddButton("Graphics", (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
                 AddButton("Keys", (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
                 AddButton("Other", (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
-                AddButton("Return to main menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Main); });
+                AddButton("Return to main menu", (a, b) => { SaveOptions(); SetEscapeMenuState(EscapeMenuState.Main); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Graphics)
@@ -124,7 +124,6 @@ namespace ManicDigger
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(fontsize, textheight);
             }
-            SaveOptions();
         }
         private string KeyName(int key)
         {
