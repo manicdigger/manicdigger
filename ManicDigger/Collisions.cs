@@ -145,6 +145,16 @@ namespace ManicDigger.Collisions
         Left,
         Right,
     }
+    public enum TileSideFlags
+    {
+        None = 0,
+        Top = 1,
+        Bottom = 2,
+        Front = 4,
+        Back = 8,
+        Left = 16,
+        Right = 32,
+    }
     public struct BlockPosSide
     {
         public BlockPosSide(int x, int y, int z, TileSide side)

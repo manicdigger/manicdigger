@@ -710,6 +710,7 @@ namespace GameModeFortress
                         if (packet.Season.Season != CurrentSeason)
                         {
                             CurrentSeason = packet.Season.Season;
+                            data.Update();
                             if (CurrentSeason == 0 || CurrentSeason == 3)
                             {
                                 terrain.UpdateAllTiles();

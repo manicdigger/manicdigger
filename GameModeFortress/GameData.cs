@@ -41,6 +41,7 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Cuboid] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 11 };
             datanew[(int)TileTypeManicDigger.FillArea] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 12 };
             datanew[(int)TileTypeMinecraft.Torch] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 13, TextureTop = (7 * 16) + 14 }; //50
+            Update();
         }
         #region IGameData Members
         public int GetTileTextureId(int tileType, TileSide side)
@@ -145,7 +146,7 @@ namespace GameModeFortress
         }
         public bool IsWaterTile(int tiletype)
         {
-            if (CurrentSeason.CurrentSeason == 3)
+            if (CurrentSeason != null && CurrentSeason.CurrentSeason == 3)
             {
                 if (IsRealWater(tiletype))
                 {
@@ -187,13 +188,7 @@ namespace GameModeFortress
         }
         public bool IsTransparentTile(int tiletype)
         {
-            if (tiletype == (int)TileTypeManicDigger.Crops1) { return true; }
-            if (tiletype == (int)TileTypeManicDigger.Crops2) { return true; }
-            if (tiletype == (int)TileTypeManicDigger.Crops3) { return true; }
-            if (tiletype == (int)TileTypeManicDigger.Crops4) { return true; }
-            if (IsRailTile(tiletype)) { return true; }
-            if (tiletype == (int)TileTypeManicDigger.FillArea) { return true; }
-            return data.IsTransparentTile(tiletype);
+            return data.IsTransparentTile(tiletype) || istransparent[tiletype];
         }
         public int PlayerBuildableMaterialType(int p)
         {
@@ -336,6 +331,40 @@ namespace GameModeFortress
             return data.IsTransparentTileFully(blocktype);
         }
         #endregion
+        const int Count = 256;
+        bool[] iswater = new bool[Count];
+        public bool[] IsWater { get { return iswater; } }
+        bool[] istransparent = new bool[Count];
+        public bool[] IsTransparent { get { return istransparent; } }
+        bool[] isvalid = new bool[Count];
+        public bool[] IsValid { get { return isvalid; } }
+        public void Update()
+        {
+            istransparent[(int)TileTypeManicDigger.Crops1] = true;
+            istransparent[(int)TileTypeManicDigger.Crops2] = true;
+            istransparent[(int)TileTypeManicDigger.Crops3] = true;
+            istransparent[(int)TileTypeManicDigger.Crops4] = true;
+            for (int i = 0; i < 256; i++)
+            {
+                if (IsRailTile(i))
+                {
+                    istransparent[i] = true;
+                }
+                if (IsValidTileType(i))
+                {
+                    isvalid[i] = true;
+                }
+                if (IsWaterTile(i))
+                {
+                    iswater[i] = true;
+                }
+                if (data.IsTransparent[i])
+                {
+                    istransparent[i] = true;
+                }
+            }
+            istransparent[(int)TileTypeManicDigger.FillArea] = true;
+        }
     }
     public enum TileTypeManicDigger
     {

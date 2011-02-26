@@ -580,6 +580,10 @@ namespace ManicDigger
         byte TileIdTorch { get; }
         int GetLightRadius(int blocktype);
         bool IsTransparentTileFully(byte blocktype);
+        bool[] IsWater { get; }
+        bool[] IsTransparent { get; }
+        bool[] IsValid { get; }
+        void Update();
     }
     public class GameDataDummy : IGameData
     {
@@ -711,6 +715,22 @@ namespace ManicDigger
             return false;
         }
         #endregion
+        public bool[] IsWater
+        {
+            get { throw new NotImplementedException(); }
+        }
+        public bool[] IsTransparent
+        {
+            get { throw new NotImplementedException(); }
+        }
+        public bool[] IsValid
+        {
+            get { throw new NotImplementedException(); }
+        }
+        public void Update()
+        {
+            throw new NotImplementedException();
+        }
     }
     public interface IMapGenerator
     {

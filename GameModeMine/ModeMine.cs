@@ -224,6 +224,26 @@ namespace ManicDigger
         public GameDataTilesMinecraft()
         {
             MakeData();
+            MakeTransparent();
+        }
+        private void MakeTransparent()
+        {
+            istransparent[(int)TileTypeMinecraft.Empty] = true;
+            istransparent[(int)TileTypeMinecraft.Sapling] = true;
+            istransparent[(int)TileTypeMinecraft.Crops] = true;
+            //|| tileType == (byte)TileTypeMinecraft.Water
+            //|| tileType == (byte)TileTypeMinecraft.StationaryWater
+            //|| tileType == (byte)TileTypeMinecraft.Lava
+            //|| tileType == (byte)TileTypeMinecraft.StationaryLava
+            istransparent[(int)TileTypeMinecraft.YellowFlowerDecorations] = true;
+            istransparent[(int)TileTypeMinecraft.RedRoseDecorations] = true;
+            //|| tileType == (byte)TileTypeMinecraft.Leaves
+            istransparent[(int)TileTypeMinecraft.Glass] = true;
+            istransparent[(int)TileTypeMinecraft.RedMushroom] = true;
+            istransparent[(int)TileTypeMinecraft.BrownMushroom] = true;
+            istransparent[(int)TileTypeMinecraft.Stair] = true; // transparent on side
+            istransparent[(int)TileTypeMinecraft.InfiniteWaterSource] = true;
+            istransparent[(int)TileTypeMinecraft.Torch] = true;
         }
         public byte TileIdEmpty
         {
@@ -410,23 +430,7 @@ namespace ManicDigger
         */
         public bool IsTransparentTile(int tileType)
         {
-            return
-                tileType == (byte)TileTypeMinecraft.Empty
-                || tileType == (byte)TileTypeMinecraft.Sapling
-                || tileType == (byte)TileTypeMinecraft.Crops
-                //|| tileType == (byte)TileTypeMinecraft.Water
-                //|| tileType == (byte)TileTypeMinecraft.StationaryWater
-                //|| tileType == (byte)TileTypeMinecraft.Lava
-                //|| tileType == (byte)TileTypeMinecraft.StationaryLava
-                || tileType == (byte)TileTypeMinecraft.YellowFlowerDecorations
-                || tileType == (byte)TileTypeMinecraft.RedRoseDecorations
-                //|| tileType == (byte)TileTypeMinecraft.Leaves
-                || tileType == (byte)TileTypeMinecraft.Glass
-                || tileType == (byte)TileTypeMinecraft.RedMushroom
-                || tileType == (byte)TileTypeMinecraft.BrownMushroom
-                || tileType == (byte)TileTypeMinecraft.Stair // transparent on side
-                || tileType == (byte)TileTypeMinecraft.InfiniteWaterSource
-                || tileType == (byte)TileTypeMinecraft.Torch;
+            return istransparent[tileType];
         }
         public bool IsTransparentTileTexture(int tileType)
         {
@@ -573,6 +577,16 @@ namespace ManicDigger
             return IsWaterTile(blocktype);
         }
         #endregion
+        const int Count = 256;
+        bool[] iswater = new bool[Count];
+        public bool[] IsWater { get { return iswater; } }
+        bool[] istransparent = new bool[Count];
+        public bool[] IsTransparent { get { return istransparent; } }
+        bool[] isvalid = new bool[Count];
+        public bool[] IsValid { get { return isvalid; } }
+        public void Update()
+        {
+        }
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte
