@@ -674,15 +674,19 @@ namespace ManicDigger
                 if (cameratype == CameraType.Overhead)
                 {
                     overheadcameradistance -= e.DeltaPrecise;
-                    if (overheadcameradistance < 1) { overheadcameradistance = 1; }
+                    if (overheadcameradistance < TPP_CAMERA_DISTANCE_MIN) { overheadcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                    if (overheadcameradistance > TPP_CAMERA_DISTANCE_MAX) { overheadcameradistance = TPP_CAMERA_DISTANCE_MAX; }
                 }
                 if (cameratype == CameraType.Tpp)
                 {
                     tppcameradistance -= e.DeltaPrecise;
-                    if (tppcameradistance < 1) { tppcameradistance = 1; }
+                    if (tppcameradistance < TPP_CAMERA_DISTANCE_MIN) { tppcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                    if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
                 }
             }
         }
+        public int TPP_CAMERA_DISTANCE_MIN = 1;
+        public int TPP_CAMERA_DISTANCE_MAX = 10;
         public bool ENABLE_MAINMENU = false;
         private static void SetAmbientLight(Color c)
         {
@@ -1825,6 +1829,10 @@ namespace ManicDigger
                 }
             }
 
+            float pick_distance = PICK_DISTANCE;
+            if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
+            if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
+            
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
@@ -1855,7 +1863,7 @@ namespace ManicDigger
             Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
             pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
-            pick.End = ray + Vector3.Multiply(raydir, PICK_DISTANCE * 2);
+            pick.End = ray + Vector3.Multiply(raydir, pick_distance * 2);
 
             //pick models
             selectedmodelid = -1;
@@ -1867,7 +1875,7 @@ namespace ManicDigger
                     Vector3 intersection;
                     if (Collisions.Intersection.RayTriangle(pick, t, out intersection) == 1)
                     {
-                        if ((pick.Start - intersection).Length > PICK_DISTANCE)
+                        if ((pick.Start - intersection).Length > pick_distance)
                         {
                             continue;
                         }
@@ -1917,7 +1925,7 @@ namespace ManicDigger
                 //if not picked any object, and mouse button is pressed, then walk to destination.
                 playerdestination = pick2[0].pos;
             }
-            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= PICK_DISTANCE;
+            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= pick_distance;
             bool playertileempty = IsTileEmptyForPhysics(
                         (int)ToMapPos(player.playerposition).X,
                         (int)ToMapPos(player.playerposition).Y,
@@ -2121,7 +2129,9 @@ namespace ManicDigger
                 camera = OverheadCamera();
             }
             else
+            {
                 camera = FppCamera();
+            }
             GL.LoadMatrix(ref camera);
             m_theModelView = camera;
 
@@ -2405,12 +2415,46 @@ namespace ManicDigger
         {
             Vector3 forward = VectorTool.toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
             Vector3 tpp = new Vector3();
+            var playercam = player.playerposition + new Vector3(0, CharacterHeight, 0);
+
             if (ENABLE_TPP_VIEW)
             {
                 tpp = Vector3.Multiply(forward, -tppcameradistance);
             }
-            return Matrix4.LookAt(player.playerposition + new Vector3(0, CharacterHeight, 0) + tpp,
-                player.playerposition + new Vector3(0, CharacterHeight, 0) + forward, up);
+            var eye = playercam + tpp;
+            float curtppcameradistance = tppcameradistance;
+            if (ENABLE_TPP_VIEW)
+            {
+                var ray_start_point = playercam;
+                var raytarget = eye;
+
+                var pick = new Line3D();
+                var raydir = (raytarget - ray_start_point);
+                raydir.Normalize();
+                raydir = Vector3.Multiply(raydir, tppcameradistance + 1);
+                pick.Start = ray_start_point;
+                pick.End = ray_start_point + raydir;
+
+                //pick terrain
+                var s = new BlockOctreeSearcher();
+                s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
+                List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
+                pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
+                if (pick2.Count > 0)
+                {
+                    var pickdistance = (pick2[0].pos - playercam).Length;
+                    curtppcameradistance = Math.Min(pickdistance - 1, curtppcameradistance);
+                    if (curtppcameradistance < 0.3f) { curtppcameradistance = 0.3f; }
+                }
+            }
+            if (ENABLE_TPP_VIEW)
+            {
+                tpp = Vector3.Multiply(forward, -curtppcameradistance);
+            }
+            eye = playercam + tpp;
+            var target = player.playerposition + new Vector3(0, CharacterHeight, 0) + forward;
+
+            return Matrix4.LookAt(eye, target, up);
         }
         //Vector3 overheadCameraPosition = new Vector3(5, 32 + 20, 5);
         //Vector3 overheadCameraDestination = new Vector3(5, 32, 0);
