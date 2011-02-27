@@ -11,6 +11,7 @@ using System.Collections;
 using OpenTK;
 using System.Security.Cryptography;
 using GameModeFortress;
+using ManicDigger.MapTools;
 
 namespace ManicDiggerServer
 {
@@ -56,6 +57,8 @@ namespace ManicDiggerServer
         public WorldGenerator generator;
         [Inject]
         public ICompression networkcompression;
+        [Inject]
+        public WaterFinite water { get; set; }
         public bool LocalConnectionsOnly { get; set; }
         public int singleplayerport = 25570;
         public Random rnd = new Random();
@@ -505,6 +508,40 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
+            UpdateWater();
+        }
+        private void UpdateWater()
+        {
+            water.Update();
+            try
+            {
+                foreach (var v in water.tosetwater)
+                {
+                    byte watertype = (byte)(TileTypeManicDigger.Water1 + v.level - 1);
+                    map.SetBlock((int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, watertype);
+                    foreach (var k in clients)
+                    {
+                        SendSetBlock(k.Key, (int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, watertype);
+                        //SendSetBlock(k.Key, x, z, y, watertype);
+                    }
+                }
+                foreach (var v in water.tosetempty)
+                {
+                    byte emptytype = (byte)TileTypeMinecraft.Empty;
+                    map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, emptytype);
+                    foreach (var k in clients)
+                    {
+                        SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, emptytype);
+                        //SendSetBlock(k.Key, x, z, y, watertype);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            water.tosetwater.Clear();
+            water.tosetempty.Clear();
         }
         private void SendPing(int clientid)
         {
@@ -1069,6 +1106,7 @@ namespace ManicDiggerServer
                     //todo check block type.
                     //map.SetBlock(x, y, z, blocktype);
                     DoCommandBuild(clientid, true, packet.SetBlock);
+                    water.BlockChange(map, x, y, z);
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {

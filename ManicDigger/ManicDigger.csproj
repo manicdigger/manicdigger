@@ -64,6 +64,7 @@
     <Compile Include="IterableSet.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
+    <Compile Include="MapTools\WaterFinite.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
     <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />

@@ -10,6 +10,7 @@ using ManicDigger.Network;
 using ManicDigger.Renderers;
 using System.Threading;
 using ManicDiggerServer;
+using ManicDigger.MapTools;
 
 namespace GameModeFortress
 {
@@ -349,6 +350,7 @@ namespace GameModeFortress
             map.chunkdb = chunkdb;
             server.networkcompression = networkcompression;
             map.data = server.data;
+            server.water = new WaterFinite() { data = server.data };
             server.Start();
             for (; ; )
             {

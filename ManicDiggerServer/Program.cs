@@ -12,6 +12,7 @@ using System.Xml;
 using System.Diagnostics;
 using GameModeFortress;
 using ProtoBuf;
+using ManicDigger.MapTools;
 
 namespace ManicDiggerServer
 {
@@ -49,6 +50,7 @@ namespace ManicDiggerServer
             server.chunkdb = chunkdb;
             map.chunkdb = chunkdb;
             server.networkcompression = compression;
+            server.water = new WaterFinite() { data = server.data };
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(

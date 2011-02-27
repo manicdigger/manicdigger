@@ -41,6 +41,14 @@ namespace GameModeFortress
             datanew[(int)TileTypeManicDigger.Cuboid] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 11 };
             datanew[(int)TileTypeManicDigger.FillArea] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 12 };
             datanew[(int)TileTypeMinecraft.Torch] = new TileTypeData() { Buildable = true, AllTextures = (7 * 16) + 13, TextureTop = (7 * 16) + 14 }; //50
+            datanew[(int)TileTypeManicDigger.Water0] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water1] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water2] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water3] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water4] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water5] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water6] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
+            datanew[(int)TileTypeManicDigger.Water7] = new TileTypeData() { Buildable = false, AllTextures = (7 * 16) + 15 };
             Update();
         }
         #region IGameData Members
@@ -154,6 +162,7 @@ namespace GameModeFortress
                 }
             }
             if (tiletype == (int)TileTypeManicDigger.FillArea) { return true; }
+            if (iswater[tiletype]) { return true; }
             return data.IsWaterTile(tiletype);
         }
         private static bool IsRealWater(int tiletype)
@@ -173,7 +182,7 @@ namespace GameModeFortress
             if (tiletype == railstart + (int)(RailDirectionFlags.UpLeft | RailDirectionFlags.UpRight |
                 RailDirectionFlags.DownLeft | RailDirectionFlags.DownRight)) { return true; }
             if (IsRailTile(tiletype)) { return false; }
-            if (datanew[tiletype] != null) { return true; }
+            if (datanew[tiletype] != null && datanew[tiletype].Buildable) { return true; }
             return data.IsValidTileType(tiletype)
                 && tiletype != (int)TileTypeMinecraft.Water
                 && tiletype != (int)TileTypeMinecraft.InfiniteWaterSource
@@ -363,6 +372,10 @@ namespace GameModeFortress
                     istransparent[i] = true;
                 }
             }
+            for (int i = 0; i < 8; i++)
+            {
+                iswater[(int)TileTypeManicDigger.Water0 + i] = true;
+            }
             istransparent[(int)TileTypeManicDigger.FillArea] = true;
         }
     }
@@ -386,5 +399,13 @@ namespace GameModeFortress
         FillStart,
         Cuboid,
         FillArea,
+        Water0,
+        Water1,
+        Water2,
+        Water3,
+        Water4,
+        Water5,
+        Water6,
+        Water7,
     }
 }
