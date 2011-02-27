@@ -1568,18 +1568,21 @@ namespace ManicDiggerServer
         {
             try
             {
-                if (IsMono)
+                //if (IsMono)
                 {
                     clients[clientid].socket.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
                 }
-                else
-                {
-                    using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
-                    {
-                        e.SetBuffer(packet, 0, packet.Length);
-                        clients[clientid].socket.SendAsync(e);
-                    }
-                }
+                //commented out because SocketAsyncEventArgs
+                //doesn't work on Mono and .NET Framework 2.0 without Service Pack
+                //is Socket.SendAsync() better than BeginSend()?
+                //else
+                //{
+                //    using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
+                //    {
+                //        e.SetBuffer(packet, 0, packet.Length);
+                //        clients[clientid].socket.SendAsync(e);
+                //    }
+                //}
             }
             catch (Exception e)
             {
