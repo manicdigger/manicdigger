@@ -463,32 +463,32 @@ namespace ManicDigger
                         if ((draw & (int)TileSideFlags.Top) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
                         }
                         if ((draw & (int)TileSideFlags.Bottom) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
                         }
                         if ((draw & (int)TileSideFlags.Front) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
                         }
                         if ((draw & (int)TileSideFlags.Back) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
                         }
                         if ((draw & (int)TileSideFlags.Left) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
                         }
                         if ((draw & (int)TileSideFlags.Right) != 0)
                         {
                             int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right);
+                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
                         }
                     }
                 }
@@ -867,7 +867,7 @@ namespace ManicDigger
             }
             return -1;
         }
-        private int GetTilingCount(byte[] currentChunk, int xx, int yy, int zz, byte tt, int x, int y, int z, int shadowratio, TileSide dir)
+        private int GetTilingCount(byte[] currentChunk, int xx, int yy, int zz, byte tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
             //fixes tree Z-fighting
             if (istransparent[currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)]]
@@ -882,8 +882,9 @@ namespace ManicDigger
                     if (currentChunk[MapUtil.Index(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
                     if (shadowratio != shadowratio2) { break; }
-                    if (currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                    if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                     currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] = 0;
+                    currentChunkDraw[newxx - 1, yy - 1, zz - 1] &= (byte)~dirflags;
                     newxx++;
                 }
                 return newxx - xx;
@@ -898,8 +899,9 @@ namespace ManicDigger
                     if (currentChunk[MapUtil.Index(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
                     if (shadowratio != shadowratio2) { break; }
-                    if (currentChunkDrawCount[xx - 1, newyy - 1, zz - 1, (int)dir] == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                    if ((currentChunkDraw[xx - 1, newyy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                     currentChunkDrawCount[xx - 1, newyy - 1, zz - 1, (int)dir] = 0;
+                    currentChunkDraw[xx - 1, newyy - 1, zz - 1] &= (byte)~dirflags;
                     newyy++;
                 }
                 return newyy - yy;
@@ -914,8 +916,9 @@ namespace ManicDigger
                     if (currentChunk[MapUtil.Index(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
                     if (shadowratio != shadowratio2) { break; }
-                    if (currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                    if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
                     currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] = 0;
+                    currentChunkDraw[newxx - 1, yy - 1, zz - 1] &= (byte)~dirflags;
                     newxx++;
                 }
                 return newxx - xx;
