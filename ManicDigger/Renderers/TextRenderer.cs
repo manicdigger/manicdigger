@@ -37,12 +37,24 @@ namespace ManicDigger
         public Bitmap MakeTextTexture(Text t)
         {
             Font font;
+        retry:
             if (NewFont)
             {
                 //outlined font looks smaller
+                float oldfontsize = t.fontsize;
                 t.fontsize = Math.Max(t.fontsize, 9);
                 t.fontsize *= 1.65f;
-                font = new Font("Arial", t.fontsize, FontStyle.Bold);
+                try
+                {
+                    font = new Font("Arial", t.fontsize, FontStyle.Bold);
+                }
+                catch
+                {
+                    //fixes crash: System.ArgumentException: Font ‘Arial’ does not support style ‘Bold’.
+                    NewFont = false;
+                    t.fontsize = oldfontsize;
+                    goto retry;
+                }
             }
             else
             {
