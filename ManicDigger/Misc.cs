@@ -129,7 +129,7 @@ namespace ManicDigger
                     gameversion = "unknown";
                     if (File.Exists("version.txt"))
                     {
-                        gameversion = File.ReadAllText("version.txt");
+                        gameversion = File.ReadAllText("version.txt").Trim();
                     }
                 }
                 return gameversion;
