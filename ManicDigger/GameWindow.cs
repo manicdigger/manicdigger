@@ -625,6 +625,8 @@ namespace ManicDigger
             {
                 ClientCommand(".server " + GameUrl);
             }
+            Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
+            Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
             Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
             Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
             if (config3d.ENABLE_BACKFACECULLING)
@@ -645,6 +647,44 @@ namespace ManicDigger
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
             System.Windows.Forms.Cursor.Hide();
+        }
+        void Mouse_ButtonUp(object sender, OpenTK.Input.MouseButtonEventArgs e)
+        {
+            if (!Focused)
+            {
+                return;
+            }
+            if (e.Button == OpenTK.Input.MouseButton.Left)
+            {
+                mouseleftdeclick = true;
+            }
+            if (e.Button == OpenTK.Input.MouseButton.Right)
+            {
+                mouserightdeclick = true;
+            }
+            if (guistate == GuiState.Normal)
+            {
+                UpdatePicking();
+            }
+        }
+        void Mouse_ButtonDown(object sender, OpenTK.Input.MouseButtonEventArgs e)
+        {
+            if (!Focused)
+            {
+                return;
+            }
+            if (e.Button == OpenTK.Input.MouseButton.Left)
+            {
+                mouseleftclick = true;
+            }
+            if (e.Button == OpenTK.Input.MouseButton.Right)
+            {
+                mouserightclick = true;
+            }
+            if (guistate == GuiState.Normal)
+            {
+                UpdatePicking();
+            }
         }
         void ManicDiggerGameWindow_KeyPress(object sender, OpenTK.KeyPressEventArgs e)
         {
@@ -1105,6 +1145,15 @@ namespace ManicDigger
                         ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = true;
                     }
                 }
+                if (e.Key == OpenTK.Input.Key.F8)
+                {
+                    ENABLE_LAG++;
+                    ENABLE_LAG = ENABLE_LAG % 3;
+                    VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+                    if (ENABLE_LAG == 0) { Log("Frame rate: vsync."); }
+                    if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
+                    if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
+                }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     using (Bitmap bmp = GrabScreenshot())
@@ -1539,12 +1588,16 @@ namespace ManicDigger
                 }
                 frametickmainthreadtodo.Clear();
             }
+            UpdateMousePosition();
+            if (guistate == GuiState.Normal)
+            {
+                UpdateMouseViewportControl(e);
+            }
             network.Process();
             if (newnetwork != null)
             {
                 newnetwork.Process();
             }
-            UpdateMousePosition();
 
             bool angleup = false;
             bool angledown = false;
@@ -1695,7 +1748,7 @@ namespace ManicDigger
             }
             if (guistate == GuiState.Normal)
             {
-                UpdateMouseViewportControl(e);
+                UpdatePicking();
             }
             //must be here because frametick can be called more than once per render frame.
             keyevent = null;
@@ -1756,7 +1809,6 @@ namespace ManicDigger
                 player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
                 player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.015f, (float)(Math.PI / 2 + Math.PI - 0.015f));
             }
-            UpdatePicking();
         }
         int iii = 0;
         bool IsTileEmptyForPhysics(int x, int y, int z)
@@ -1908,10 +1960,10 @@ namespace ManicDigger
                 weapon.SetAttack(true, true);
             }
 
-            if (iii++ % 2 == 0)
+            //if (iii++ % 2 == 0)
             {
                 //To improve speed, update picking only every second frame.
-                return;
+                //return;
             }
 
             //pick terrain
@@ -2075,6 +2127,7 @@ namespace ManicDigger
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
+            if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             base.OnRenderFrame(e);
             if (terrain.DrawDistance < 256)
             {
@@ -2090,8 +2143,6 @@ namespace ManicDigger
                 Application.DoEvents();
                 Thread.Sleep(0);
             }
-            UpdateMouseButtons();
-
             var deltaTime = e.Time;
 
             accumulator += deltaTime;
@@ -2185,6 +2236,8 @@ namespace ManicDigger
             
             //OnResize(new EventArgs());
             SwapBuffers();
+            mouseleftclick = mouserightclick = false;
+            mouseleftdeclick = mouserightdeclick = false;
         }
         private void SetFog()
         {
@@ -2969,6 +3022,7 @@ namespace ManicDigger
             GL.Enable(EnableCap.AlphaTest);
             DeleteUnusedCachedTextTextures();
         }
+        int ENABLE_LAG = 0;
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
         void Draw2dBitmapFile(string filename, float x1, float y1, float width, float height)
