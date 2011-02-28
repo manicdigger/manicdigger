@@ -252,6 +252,10 @@ namespace ManicDigger
                     }
                 }
             }
+            CopyBorders(x, y, z, chunksize);
+        }
+        private void CopyBorders(int x, int y, int z, int chunksize)
+        {
             //copy borders of this chunk
 
             //z-1
@@ -360,88 +364,96 @@ namespace ManicDigger
         byte[, ,] currentChunkShadows;
         byte[, ,] currentChunkDraw;
         byte[, , ,] currentChunkDrawCount;
-        byte[] currentChunk1d;
         void CalculateVisibleFaces(byte[] currentChunk)
         {
             int chunksize = this.chunksize;
-            currentChunk1d = currentChunk;
-            for (int xx = 1; xx < chunksize + 1; xx++)
+            int movez = (chunksize + 2) * (chunksize + 2);
+            unsafe
             {
-                for (int yy = 1; yy < chunksize + 1; yy++)
+                fixed (byte* currentChunk_ = currentChunk )
+                fixed (bool* iswater_ = iswater)
+                fixed (bool* istransparent_ = istransparent)
                 {
                     for (int zz = 1; zz < chunksize + 1; zz++)
                     {
-                        int pos = MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2);
-                        byte tt = currentChunk[pos];
-                        if (tt == 0) { continue; }
-                        int draw = (int)TileSideFlags.None;
-                        //z+1
+                        for (int yy = 1; yy < chunksize + 1; yy++)
                         {
-                            int pos2 = pos + (chunksize + 2) * (chunksize + 2);
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
+                            int posstart = MapUtil.Index(0, yy, zz, chunksize + 2, chunksize + 2);
+                            for (int xx = 1; xx < chunksize + 1; xx++)
                             {
-                                draw |= (int)TileSideFlags.Top;
+                                int pos = posstart + xx;
+                                byte tt = currentChunk_[pos];
+                                if (tt == 0) { continue; }
+                                int draw = (int)TileSideFlags.None;
+                                //z+1
+                                {
+                                    int pos2 = pos + movez;
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Top;
+                                    }
+                                }
+                                //z-1
+                                {
+                                    int pos2 = pos - movez;
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Bottom;
+                                    }
+                                }
+                                //x-1
+                                {
+                                    int pos2 = pos - 1;
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Front;
+                                    }
+                                }
+                                //x+1
+                                {
+                                    int pos2 = pos + 1;
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Back;
+                                    }
+                                }
+                                //y-1
+                                {
+                                    int pos2 = pos - (chunksize + 2);
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Left;
+                                    }
+                                }
+                                //y-1
+                                {
+                                    int pos2 = pos + (chunksize + 2);
+                                    byte tt2 = currentChunk_[pos2];
+                                    if (tt2 == 0
+                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || istransparent_[tt2])
+                                    {
+                                        draw |= (int)TileSideFlags.Right;
+                                    }
+                                }
+                                currentChunkDraw[xx - 1, yy - 1, zz - 1] = (byte)draw;
                             }
                         }
-                        //z-1
-                        {
-                            int pos2 = pos - (chunksize + 2) * (chunksize + 2);
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
-                            {
-                                draw |= (int)TileSideFlags.Bottom;
-                            }
-                        }
-                        //x-1
-                        {
-                            int pos2 = pos - 1;
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
-                            {
-                                draw |= (int)TileSideFlags.Front;
-                            }
-                        }
-                        //x+1
-                        {
-                            int pos2 = pos + 1;
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
-                            {
-                                draw |= (int)TileSideFlags.Back;
-                            }
-                        }
-                        //y-1
-                        {
-                            int pos2 = pos - (chunksize + 2);
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
-                            {
-                                draw |= (int)TileSideFlags.Left;
-                            }
-                        }
-                        //y-1
-                        {
-                            int pos2 = pos + (chunksize + 2);
-                            byte tt2 = currentChunk1d[pos2];
-                            if (tt2 == 0
-                                || (iswater[tt2] && (!iswater[tt]))
-                                || istransparent[tt2])
-                            {
-                                draw |= (int)TileSideFlags.Right;
-                            }
-                        }
-                        currentChunkDraw[xx - 1, yy - 1, zz - 1] = (byte)draw;
                     }
                 }
             }
@@ -449,46 +461,53 @@ namespace ManicDigger
         private void CalculateTilingCount(byte[] currentChunk, int startx, int starty, int startz)
         {
             Array.Clear(currentChunkDrawCount, 0, currentChunkDrawCount.Length);
-            for (int xx = 1; xx < chunksize + 1; xx++)
+            unsafe
             {
-                for (int yy = 1; yy < chunksize + 1; yy++)
+                fixed(byte* currentChunk_ = currentChunk)
+                for (int zz = 1; zz < chunksize + 1; zz++)
                 {
-                    for (int zz = 1; zz < chunksize + 1; zz++)
+                    for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        byte tt = currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)];
-                        int x = startx + xx - 1;
-                        int y = starty + yy - 1;
-                        int z = startz + zz - 1;
-                        int draw = currentChunkDraw[xx - 1, yy - 1, zz - 1];
-                        if ((draw & (int)TileSideFlags.Top) != 0)
+                        int pos = MapUtil.Index(0, yy, zz, chunksize + 2, chunksize + 2);
+                        for (int xx = 1; xx < chunksize + 1; xx++)
                         {
-                            int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
-                        }
-                        if ((draw & (int)TileSideFlags.Bottom) != 0)
-                        {
-                            int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
-                        }
-                        if ((draw & (int)TileSideFlags.Front) != 0)
-                        {
-                            int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
-                        }
-                        if ((draw & (int)TileSideFlags.Back) != 0)
-                        {
-                            int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
-                        }
-                        if ((draw & (int)TileSideFlags.Left) != 0)
-                        {
-                            int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
-                        }
-                        if ((draw & (int)TileSideFlags.Right) != 0)
-                        {
-                            int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                            currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
+                            byte tt = currentChunk_[pos + xx];
+                            if (tt == 0) { continue; } //faster
+                            int x = startx + xx - 1;
+                            int y = starty + yy - 1;
+                            int z = startz + zz - 1;
+                            int draw = currentChunkDraw[xx - 1, yy - 1, zz - 1];
+                            if (draw == 0) { continue; } //faster
+                            if ((draw & (int)TileSideFlags.Top) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
+                            }
+                            if ((draw & (int)TileSideFlags.Bottom) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
+                            }
+                            if ((draw & (int)TileSideFlags.Front) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
+                            }
+                            if ((draw & (int)TileSideFlags.Back) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
+                            }
+                            if ((draw & (int)TileSideFlags.Left) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
+                            }
+                            if ((draw & (int)TileSideFlags.Right) != 0)
+                            {
+                                int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
+                                currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
+                            }
                         }
                     }
                 }
