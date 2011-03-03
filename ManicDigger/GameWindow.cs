@@ -1570,6 +1570,7 @@ namespace ManicDigger
         bool mouserightclick = false;
         bool mouserightdeclick = false;
         bool wasmouseright = false;
+        public float PlayerPushDistance = 2f;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -1711,6 +1712,21 @@ namespace ManicDigger
                 wantsjump = true;
                 jumpstartacceleration = 5f * physics.gravity;
             }
+            Vector3 push = new Vector3();
+            foreach (var k in clients.Players)
+            {
+                if ((k.Key == 255) ||
+                    (k.Value.Position == LocalPlayerPosition)
+                     || (float.IsNaN(LocalPlayerPosition.X)))
+                {
+                    continue;
+                }
+                if ((k.Value.Position - LocalPlayerPosition).Length < PlayerPushDistance)
+                {
+                    Vector3 diff = LocalPlayerPosition - k.Value.Position;
+                    push += diff;
+                }
+            }
             var move = new CharacterPhysics.MoveInfo()
             {
                 movedx = movedx,
@@ -1725,7 +1741,7 @@ namespace ManicDigger
                 wantsjump = wantsjump,
             };
             bool soundnow;
-            physics.Move(player, move, e.Time, out soundnow);
+            physics.Move(player, move, e.Time, out soundnow, push);
             if (soundnow)
             {
                 UpdateWalkSound(-1);

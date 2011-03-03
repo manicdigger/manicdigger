@@ -67,13 +67,19 @@ namespace ManicDigger
             public bool moveup;
             public float jumpstartacceleration;
         }
-        public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow)
+        public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push)
         {
             soundnow = false;
             var diff1 = VectorTool.toVectorInFixedSystem1
                 (move.movedx * move.movespeednow * (float)dt,
                 0,
                 move.movedy * move.movespeednow * (float)dt, state.playerorientation.X, state.playerorientation.Y);
+            if (push.Length > 0.01f)
+            {
+                push.Normalize();
+                push *= 5;
+            }
+            diff1 += push * (float)dt;
             if (!(move.ENABLE_FREEMOVE))
             {
                 if (!move.Swimming)
