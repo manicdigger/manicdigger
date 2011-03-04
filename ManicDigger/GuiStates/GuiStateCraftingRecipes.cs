@@ -47,7 +47,7 @@ namespace ManicDigger
             int menustarty = ycenter(okrecipes.Count * 80);
             if (okrecipes.Count == 0)
             {
-                Draw2dText("No materials for crafting.", xcenter(200), ycenter(20), 12, Color.White);
+                the3d.Draw2dText("No materials for crafting.", xcenter(200), ycenter(20), 12, Color.White);
                 return;
             }
             for (int i = 0; i < okrecipes.Count; i++)
@@ -57,15 +57,15 @@ namespace ManicDigger
                 {
                     int xx = menustartx + 20 + ii * 130;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture(terrain.terrainTexture, xx, yy, 30, 30, data.GetTileTextureIdForInventory(r.ingredients[ii].Type));
-                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, data.BlockName(r.ingredients[ii].Type)), xx + 50, yy, 12,
+                    the3d.Draw2dTexture(terrain.terrainTexture, xx, yy, 30, 30, data.GetTileTextureIdForInventory(r.ingredients[ii].Type));
+                    the3d.Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, data.BlockName(r.ingredients[ii].Type)), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
                 {
                     int xx = menustartx + 20 + 400;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture(terrain.terrainTexture, xx, yy, 40, 40, data.GetTileTextureIdForInventory(r.output.Type));
-                    Draw2dText(string.Format("{0} {1}", r.output.Amount, data.BlockName(r.output.Type)), xx + 50, yy, 12,
+                    the3d.Draw2dTexture(terrain.terrainTexture, xx, yy, 40, 40, data.GetTileTextureIdForInventory(r.output.Type));
+                    the3d.Draw2dText(string.Format("{0} {1}", r.output.Amount, data.BlockName(r.output.Type)), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
             }

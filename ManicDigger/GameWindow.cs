@@ -233,93 +233,6 @@ namespace ManicDigger
         Up,
         Down,
     }
-    public class The3d : IThe3d
-    {
-        [Inject]
-        public Config3d config3d { get; set; }
-        public bool ALLOW_NON_POWER_OF_TWO = false;
-        public int LoadTexture(string filename)
-        {
-            Bitmap bmp = new Bitmap(filename);
-            return LoadTexture(bmp);
-        }
-        bool IsPowerOfTwo(uint x)
-        {
-            return (
-              x == 1 || x == 2 || x == 4 || x == 8 || x == 16 || x == 32 ||
-              x == 64 || x == 128 || x == 256 || x == 512 || x == 1024 ||
-              x == 2048 || x == 4096 || x == 8192 || x == 16384 ||
-              x == 32768 || x == 65536 || x == 131072 || x == 262144 ||
-              x == 524288 || x == 1048576 || x == 2097152 ||
-              x == 4194304 || x == 8388608 || x == 16777216 ||
-              x == 33554432 || x == 67108864 || x == 134217728 ||
-              x == 268435456 || x == 536870912 || x == 1073741824 ||
-              x == 2147483648);
-        }        
-        //http://www.opentk.com/doc/graphics/textures/loading
-        public int LoadTexture(Bitmap bmp)
-        {
-            if ((!ALLOW_NON_POWER_OF_TWO) &&
-                (!(IsPowerOfTwo((uint)bmp.Width) && IsPowerOfTwo((uint)bmp.Height))))
-            {
-                throw new ArgumentException("Non-power-of-two.");
-            }
-            GL.Enable(EnableCap.Texture2D);
-            int id = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, id);
-            if (!config3d.ENABLE_MIPMAPS)
-            {
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            }
-            else
-            {
-                //GL.GenerateMipmap(GenerateMipmapTarget.Texture2D); //DOES NOT WORK ON ATI GRAPHIC CARDS
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1); //DOES NOT WORK ON ???
-                int[] MipMapCount = new int[1];
-                GL.GetTexParameter(TextureTarget.Texture2D, GetTextureParameter.TextureMaxLevel, out MipMapCount[0]);
-                if (MipMapCount[0] == 0)
-                {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-                }
-                else
-                {
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapLinear);
-                }
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 4);
-            }
-            BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp_data.Width, bmp_data.Height, 0,
-                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bmp_data.Scan0);
-
-            bmp.UnlockBits(bmp_data);
-
-            GL.Enable(EnableCap.DepthTest);
-
-            if (config3d.ENABLE_TRANSPARENCY)
-            {
-                GL.Enable(EnableCap.AlphaTest);
-                GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
-            }
-
-
-            if (config3d.ENABLE_TRANSPARENCY)
-            {
-                GL.Enable(EnableCap.Blend);
-                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Blend);
-                //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvColor, new Color4(0, 0, 0, byte.MaxValue));
-            }
-
-            return id;
-        }
-        #region IThe3d Members
-        public Matrix4 ModelViewMatrix { get; set; }
-        public Matrix4 ProjectionMatrix { get; set; }
-        #endregion
-    }
     public interface IKeyboard
     {
         OpenTK.Input.KeyboardDevice keyboardstate { get; }
@@ -483,13 +396,12 @@ namespace ManicDigger
         public int? inAtlasId;
         public FastColor color;
     }
-    /// <summary>
-    /// </summary>
-    /// <remarks>
-    /// Requires OpenTK.
-    /// </remarks>
-    public partial class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IThe3d, IGui, IViewport3d, IDraw2d
+    public partial class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IGui, IViewport3d
     {
+        [Inject]
+        public The3d the3d;
+        [Inject]
+        public TextRenderer textrenderer;
         [Inject]
         public ITerrainRenderer terrain;
         [Inject]
@@ -556,7 +468,6 @@ namespace ManicDigger
         public ManicDiggerGameWindow()
             : base(800, 600, GraphicsMode.Default, "",
                 ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { }
-        The3d the3d = new The3d();
         public int LoadTexture(string filename)
         {
             the3d.config3d = config3d;
@@ -590,8 +501,8 @@ namespace ManicDigger
             int minor = (int)version[2];
             if (major <= 1 && minor < 5)
             {
-                //System.Windows.Forms.MessageBox.Show("You need at least OpenGL 1.5 to run this example. Aborting.", "VBOs not supported",
-                //System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                System.Windows.Forms.MessageBox.Show("You need at least OpenGL 1.5 to run this example. Aborting.", "VBOs not supported",
+                System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
                 this.Exit();
             }
             if (!config3d.ENABLE_VSYNC)
@@ -2538,7 +2449,6 @@ namespace ManicDigger
             public DateTime time;
         }
         List<Chatline> chatlines = new List<Chatline>();
-        Dictionary<string, int> textures = new Dictionary<string, int>();
         AnimationState v0anim = new AnimationState();
         void DrawCharacters(float dt)
         {
@@ -2600,13 +2510,13 @@ namespace ManicDigger
             if (savegameexists == null) { savegameexists = SaveGameExists(); }
             if (guistate == GuiState.MainMenu)
             {
-                Draw2dBitmapFile("manicdigger.png", xcenter(565), 50, 565, 119);
-                Draw2dText(newgame, xcenter(TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
-                Draw2dText(loadgame, xcenter(TextSize(loadgame, fontsize).Width), starty + textheight * 1, fontsize,
+                the3d.Draw2dBitmapFile("manicdigger.png", xcenter(565), 50, 565, 119);
+                the3d.Draw2dText(newgame, xcenter(the3d.TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
+                the3d.Draw2dText(loadgame, xcenter(the3d.TextSize(loadgame, fontsize).Width), starty + textheight * 1, fontsize,
                     savegameexists.Value ?
                     (menustate.selected == 1 ? Color.Red : Color.White)
                     : (menustate.selected == 1 ? Color.Red : Color.Gray));
-                Draw2dText(exitstr, xcenter(TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
+                the3d.Draw2dText(exitstr, xcenter(the3d.TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
                 //DrawMouseCursor();
             }
         }
@@ -2622,7 +2532,7 @@ namespace ManicDigger
         }
         private void DrawMouseCursor()
         {
-            Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
+            the3d.Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
         int chatfontsize = 12;
         Size? aimsize;
@@ -2689,7 +2599,7 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWFPS)
             {
-                Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
+                the3d.Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
             }
             if (ENABLE_DRAWFPSHISTORY)
             {
@@ -2711,18 +2621,18 @@ namespace ManicDigger
             double lagSeconds = (DateTime.UtcNow - network.LastReceived).TotalSeconds;
             if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
             {
-                Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
-                Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
+                the3d.Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
+                the3d.Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
             }
             PerspectiveMode();
         }
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
-            Draw2dTexture(WhiteTexture(), 0, 0, Width, Height, null, Color.White);
+            the3d.Draw2dTexture(the3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
             string screenshottext = "Screenshot";
-            Draw2dText(screenshottext, xcenter(TextSize(screenshottext, 50).Width),
-                ycenter(TextSize(screenshottext, 50).Height), 50, Color.White);
+            the3d.Draw2dText(screenshottext, xcenter(the3d.TextSize(screenshottext, 50).Width),
+                ycenter(the3d.TextSize(screenshottext, 50).Height), 50, Color.White);
         }
         private void DrawBlockInfo()
         {
@@ -2738,19 +2648,19 @@ namespace ManicDigger
                     info = data.BlockName(blocktype);
                 }
             }
-            Draw2dText(info, Width * 0.5f - TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+            the3d.Draw2dText(info, Width * 0.5f - the3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
         }
         private void DrawConnectedPlayersList()
         {
             List<string> l = new List<string>(network.ConnectedPlayers());
             for (int i = 0; i < l.Count; i++)
             {
-                Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, chatfontsize, Color.White);
+                the3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, chatfontsize, Color.White);
             }
         }
         private void DrawTypingBuffer()
         {
-            Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
+            the3d.Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
         }
         private void DrawAim()
         {
@@ -2764,7 +2674,7 @@ namespace ManicDigger
             float aimwidth = aimsize.Value.Width;
             float aimheight = aimsize.Value.Height;
 
-            Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+            the3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
         }
         private void DrawPlayerNames()
         {
@@ -2795,15 +2705,14 @@ namespace ManicDigger
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
-                        GL.Translate(-TextSize(name, 14).Width / 2, 0, 0);
-                        Draw2dText(name, 0, 0, 14, Color.White);
+                        GL.Translate(-the3d.TextSize(name, 14).Width / 2, 0, 0);
+                        the3d.Draw2dText(name, 0, 0, 14, Color.White);
                         GL.PopMatrix();
                     }
                 }
             }
         }
         bool drawblockinfo = false;
-        int whitetexture = -1;
         void CraftingMouse()
         {
             if (okrecipes == null)
@@ -2837,16 +2746,16 @@ namespace ManicDigger
             {
                 int x = xcenter(singlesize * 10) + i * singlesize;
                 int y = Height - 100;
-                Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
+                the3d.Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
                         data.GetTileTextureIdForInventory((int)materialSlots[i]));
 
                 if (ENABLE_FINITEINVENTORY)
                 {
                     int amount = game.FiniteInventoryAmount((int)materialSlots[i]);
-                    Draw2dText("" + amount, x, y, 8, null);
+                    the3d.Draw2dText("" + amount, x, y, 8, null);
                 }
             }
-            Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+            the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                 xcenter(singlesize * 10) + activematerial * singlesize, Height - 100,
                 NextPowerOfTwo((uint)singlesize), NextPowerOfTwo((uint)singlesize));
             if (ENABLE_FINITEINVENTORY)
@@ -2857,7 +2766,7 @@ namespace ManicDigger
                     inventoryload += k.Value;
                 }
                 float inventoryloadratio = (float)inventoryload / game.FiniteInventoryMax;
-                Draw2dTexture(WhiteTexture(), xcenter(100), Height - 120, 100, 10, null, Color.Black);
+                the3d.Draw2dTexture(the3d.WhiteTexture(), xcenter(100), Height - 120, 100, 10, null, Color.Black);
                 Color c;
                 if (inventoryloadratio < 0.5)
                 {
@@ -2871,18 +2780,8 @@ namespace ManicDigger
                 {
                     c = Color.Red;
                 }
-                Draw2dTexture(WhiteTexture(), xcenter(100), Height - 120, inventoryloadratio * 100, 10, null, c);
+                the3d.Draw2dTexture(the3d.WhiteTexture(), xcenter(100), Height - 120, inventoryloadratio * 100, 10, null, c);
             }
-        }
-        public int WhiteTexture()
-        {
-            if (whitetexture == -1)
-            {
-                var bmp = new Bitmap(1, 1);
-                bmp.SetPixel(0, 0, Color.White);
-                whitetexture = LoadTexture(bmp);
-            }
-            return whitetexture;
         }
         private int xcenter(float width)
         {
@@ -2932,234 +2831,16 @@ namespace ManicDigger
             }
             for (int i = 0; i < chatlines2.Count; i++)
             {
-                Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
+                the3d.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
             }
             if (ChatPageScroll != 0)
             {
-                Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, chatfontsize, Color.Gray);
+                the3d.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, chatfontsize, Color.Gray);
             }
-        }
-        struct TextAndSize
-        {
-            public string text;
-            public float size;
-            public override int GetHashCode()
-            {
-                return text.GetHashCode() % size.GetHashCode();
-            }
-            public override bool Equals(object obj)
-            {
-                if (obj is TextAndSize)
-                {
-                    TextAndSize other = (TextAndSize)obj;
-                    return this.text == other.text && this.size == other.size;
-                }
-                return base.Equals(obj);
-            }
-        }
-        Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
-        SizeF TextSize(string text, float fontsize)
-        {
-            SizeF size;
-            if (textsizes.TryGetValue(new TextAndSize() { text = text, size = fontsize }, out size))
-            {
-                return size;
-            }
-            using (Font font = new Font("Verdana", fontsize))
-            {
-                using (Bitmap bmp = new Bitmap(1, 1))
-                {
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    {
-                        size = g.MeasureString(text, font);
-                    }
-                }
-            }
-            textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
-            return size;
-        }
-        class CachedTexture
-        {
-            public int textureId;
-            public SizeF size;
-            public DateTime lastuse;
-        }
-        Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
-        TextRenderer textdrawer = new TextRenderer();
-        CachedTexture MakeTextTexture(Text t)
-        {
-            Bitmap bmp = textdrawer.MakeTextTexture(t);
-            int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, size = bmp.Size };
-        }
-        void DeleteUnusedCachedTextTextures()
-        {
-            List<Text> toremove = new List<Text>();
-            DateTime now = DateTime.UtcNow;
-            foreach (var k in cachedTextTextures)
-            {
-                var ct = k.Value;
-                if ((now - ct.lastuse).TotalSeconds > 1)
-                {
-                    GL.DeleteTexture(ct.textureId);
-                    toremove.Add(k.Key);
-                }
-            }
-            foreach (var k in toremove)
-            {
-                cachedTextTextures.Remove(k);
-            }
-        }
-        public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
-        {
-            if (text == null || text.Trim() == "")
-            {
-                return;
-            }
-            if (color == null) { color = Color.White; }
-            var t = new Text();
-            t.text = text;
-            t.color = color.Value;
-            t.fontsize = fontsize;
-            CachedTexture ct;
-            if (!cachedTextTextures.ContainsKey(t))
-            {
-                ct = MakeTextTexture(t);
-                if (ct == null)
-                {
-                    return;
-                }
-                cachedTextTextures.Add(t, ct);
-            }
-            ct = cachedTextTextures[t];
-            ct.lastuse = DateTime.UtcNow;
-            GL.Disable(EnableCap.AlphaTest);
-            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
-            GL.Enable(EnableCap.AlphaTest);
-            DeleteUnusedCachedTextTextures();
         }
         int ENABLE_LAG = 0;
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
-        void Draw2dBitmapFile(string filename, float x1, float y1, float width, float height)
-        {
-            if (!textures.ContainsKey(filename))
-            {
-                textures[filename] = LoadTexture(getfile.GetFile(filename));
-            }
-            Draw2dTexture(textures[filename], x1, y1, width, height, null);
-        }
-        void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
-        {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
-        }
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
-        {
-            RectangleF rect;
-            if (inAtlasId == null)
-            {
-                rect = new RectangleF(0, 0, 1, 1);
-            }
-            else
-            {
-                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, terrain.texturesPacked);
-            }
-            GL.PushAttrib(AttribMask.ColorBufferBit);
-            GL.Color3(color);
-            GL.BindTexture(TextureTarget.Texture2D, textureid);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Disable(EnableCap.DepthTest);
-            GL.Begin(BeginMode.Quads);
-            float x2 = x1 + width;
-            float y2 = y1 + height;
-            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex2(x2, y2);
-            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex2(x2, y1);
-            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
-            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex2(x1, y2);
-            GL.End();
-            GL.Enable(EnableCap.DepthTest);
-            GL.PopAttrib();
-        }
-        VertexPositionTexture[] draw2dtexturesVertices;
-        ushort[] draw2dtexturesIndices;
-        int draw2dtexturesMAX = 512;
-        public void Draw2dTextures(Draw2dData[] todraw, int textureid)
-        {
-            GL.PushAttrib(AttribMask.ColorBufferBit);
-            GL.BindTexture(TextureTarget.Texture2D, textureid);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Disable(EnableCap.DepthTest);
-
-            VertexPositionTexture[] vertices;
-            ushort[] indices;
-            if (todraw.Length >= draw2dtexturesMAX)
-            {
-                vertices = new VertexPositionTexture[todraw.Length * 4];
-                indices = new ushort[todraw.Length * 4];
-            }
-            else
-            {
-                if (draw2dtexturesVertices == null)
-                {
-                    draw2dtexturesVertices = new VertexPositionTexture[draw2dtexturesMAX * 4];
-                    draw2dtexturesIndices = new ushort[draw2dtexturesMAX * 4];
-                }
-                vertices = draw2dtexturesVertices;
-                indices = draw2dtexturesIndices;
-            }
-            ushort i = 0;
-            foreach (Draw2dData v in todraw)
-            {
-                RectangleF rect;
-                if (v.inAtlasId == null)
-                {
-                    rect = new RectangleF(0, 0, 1, 1);
-                }
-                else
-                {
-                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, terrain.texturesPacked);
-                }
-                float x2 = v.x1 + v.width;
-                float y2 = v.y1 + v.height;
-                vertices[i] = new VertexPositionTexture(x2, y2, 0, rect.Right, rect.Bottom, v.color);
-                vertices[i + 1] = new VertexPositionTexture(x2, v.y1, 0, rect.Right, rect.Top, v.color);
-                vertices[i + 2] = new VertexPositionTexture(v.x1, v.y1, 0, rect.Left, rect.Top, v.color);
-                vertices[i + 3] = new VertexPositionTexture(v.x1, y2, 0, rect.Left, rect.Bottom, v.color);
-                indices[i] = i;
-                indices[i + 1] = (ushort)(i + 1);
-                indices[i + 2] = (ushort)(i + 2);
-                indices[i + 3] = (ushort)(i + 3);
-                i += 4;
-            }
-            GL.EnableClientState(ArrayCap.TextureCoordArray);
-            GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableClientState(ArrayCap.ColorArray);
-            unsafe
-            {
-                fixed (VertexPositionTexture* p = vertices)
-                {
-                    GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, (IntPtr)(0 + (byte*)p));
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, (IntPtr)(12 + (byte*)p));
-                    GL.ColorPointer(4, ColorPointerType.UnsignedByte, StrideOfVertices, (IntPtr)(20 + (byte*)p));
-                    GL.DrawElements(BeginMode.Quads, i, DrawElementsType.UnsignedShort, indices);
-                }
-            }
-            GL.DisableClientState(ArrayCap.TextureCoordArray);
-            GL.DisableClientState(ArrayCap.VertexArray);
-            GL.DisableClientState(ArrayCap.ColorArray);
-
-            GL.Enable(EnableCap.DepthTest);
-            GL.PopAttrib();
-        }
-        int strideofvertices = -1;
-        int StrideOfVertices
-        {
-            get
-            {
-                if (strideofvertices == -1) strideofvertices = BlittableValueType.StrideOf(new VertexPositionTexture());
-                return strideofvertices;
-            }
-        }
         void OrthoMode()
         {
             //GL.Disable(EnableCap.DepthTest);

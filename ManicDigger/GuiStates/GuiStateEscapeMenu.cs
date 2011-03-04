@@ -86,11 +86,11 @@ namespace ManicDigger
                     {
                         options.UseServerTextures = !options.UseServerTextures;
                     });
-                AddButton("Font: " + (textdrawer.NewFont ? "2" : "1"),
+                AddButton("Font: " + (textrenderer.NewFont ? "2" : "1"),
                     (a, b) =>
                     {
-                        textdrawer.NewFont = !textdrawer.NewFont;
-                        cachedTextTextures.Clear();
+                        textrenderer.NewFont = !textrenderer.NewFont;
+                        the3d.cachedTextTextures.Clear();
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -153,7 +153,7 @@ namespace ManicDigger
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = TextSize(s, fontsize);
+                SizeF size = the3d.TextSize(s, fontsize);
                 rect.Width = (int)size.Width + 10;
                 rect.Height = (int)size.Height;
                 rect.X = xcenter(size.Width);
@@ -173,7 +173,7 @@ namespace ManicDigger
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                the3d.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
         List<Button> widgets = new List<Button>();
@@ -274,7 +274,7 @@ namespace ManicDigger
             string s = File.ReadAllText(path);
             this.options = (Options)x.Deserialize(new System.IO.StringReader(s));
 
-            textdrawer.NewFont = options.Font != 1;
+            textrenderer.NewFont = options.Font != 1;
             currentshadows.ShadowsFull = options.Shadows;
             shadows.ResetShadows();
             terrain.UpdateAllTiles();
@@ -283,7 +283,7 @@ namespace ManicDigger
         }
         void SaveOptions()
         {
-            options.Font = textdrawer.NewFont ? 0 : 1;
+            options.Font = textrenderer.NewFont ? 0 : 1;
             options.Shadows = currentshadows.ShadowsFull;
             options.DrawDistance = terrain.DrawDistance;
             options.EnableSound = audio.Enabled;

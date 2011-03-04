@@ -47,7 +47,10 @@ namespace GameModeFortress
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var terrainDrawer = new TerrainRenderer();
-            var the3d = w;
+            var the3d = new The3d();
+            the3d.getfile = getfile;
+            the3d.config3d = config3d;
+            w.the3d = the3d;
             var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawerDummy();
@@ -99,6 +102,8 @@ namespace GameModeFortress
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
+            var textrenderer = new ManicDigger.TextRenderer();
+            w.textrenderer = textrenderer;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
             w.weapon = new WeaponRenderer() { info = weapon, blockdrawertorch = blockdrawertorch, playerpos = w };
             var playerdrawer = new CharacterRendererMonsterCode();
@@ -130,7 +135,7 @@ namespace GameModeFortress
             playerskindownloader.the3d = the3d;
             playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
             w.playerskindownloader = playerskindownloader;
-            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = w, viewportsize = w };
+            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             mapgenerator.data = gamedata;
@@ -138,8 +143,10 @@ namespace GameModeFortress
             audio.gameexit = w;
             this.clientgame = clientgame;
             this.map = map;
+            the3d.terrain = terrainDrawer;
+            the3d.textdrawer = textrenderer;
             w.currentshadows = this;
-            var sunmoonrenderer = new SunMoonRenderer() { draw2d = w, player = w, getfile = getfile, the3d = the3d };
+            var sunmoonrenderer = new SunMoonRenderer() { draw2d = the3d, player = w, getfile = getfile, the3d = the3d };
             w.sunmoonrenderer = sunmoonrenderer;
             clientgame.sunmoonrenderer = sunmoonrenderer;
             bool IsMono = Type.GetType("Mono.Runtime") != null;

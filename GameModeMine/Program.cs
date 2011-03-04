@@ -49,14 +49,14 @@ namespace ManicDigger
                 network = new NetworkClientMinecraft();
             }
             clientgame = new GameMinecraft();
+            var the3d = new The3d();
             /* fix for crash */
-            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = w, viewportsize = w };
+            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
             var mapstorage = clientgame;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var terrainDrawer = new TerrainRenderer();
-            var the3d = w;
             var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawer();

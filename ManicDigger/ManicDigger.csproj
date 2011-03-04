@@ -89,6 +89,7 @@
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
+    <Compile Include="The3d.cs" />
     <Compile Include="Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
     <Compile Include="Renderers\WeaponRenderer.cs" />

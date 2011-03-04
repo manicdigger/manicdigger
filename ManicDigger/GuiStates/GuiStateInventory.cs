@@ -110,13 +110,13 @@ namespace ManicDigger
             {
                 int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
                 int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
-                Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
+                the3d.Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
                     data.GetTileTextureIdForInventory(buildable[ii]));
 
                 if (ENABLE_FINITEINVENTORY)
                 {
                     int amount = game.FiniteInventoryAmount(buildable[ii]);
-                    Draw2dText("" + amount, xx, yy, 8, null);
+                    the3d.Draw2dText("" + amount, xx, yy, 8, null);
                 }
                 x++;
                 if (x >= inventorysize)
@@ -127,7 +127,7 @@ namespace ManicDigger
             }
             if (inventoryselectedx + inventoryselectedy * inventorysize < buildable.Count)
             {
-                Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+                the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                     xcenter(inventorysinglesize * inventorysize) + inventoryselectedx * inventorysinglesize,
                     ycenter(inventorysinglesize * inventorysize) + inventoryselectedy * inventorysinglesize,
                     NextPowerOfTwo((uint)inventorysinglesize), NextPowerOfTwo((uint)inventorysinglesize));
