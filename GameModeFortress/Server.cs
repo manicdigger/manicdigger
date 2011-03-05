@@ -1621,6 +1621,10 @@ namespace ManicDiggerServer
         }
         private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
         {
+            if (!clients[clientid].chunksseen.ContainsKey(new Vector3i(x / chunksize, y / chunksize, z / chunksize)))
+            {
+                return;
+            }
             PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
         }
