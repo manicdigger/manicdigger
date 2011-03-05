@@ -48,13 +48,18 @@ using ManicDigger;
                     heightcache[xx, yy] = GetHeight(x + xx, y + yy);
                 }
             }
+            // chance of get hay fields
+            bool IsHay = rnd.NextDouble() < 0.005 ? false : true;
+
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
                     for (int zz = 0; zz < chunksize; zz++)
                     {
-                        chunk[xx, yy, zz] = (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy]);
+                        chunk[xx, yy, zz] = IsHay
+                        ? (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 0)
+                        : (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 1);
                     }
                 }
             }
@@ -75,6 +80,7 @@ using ManicDigger;
         int TileIdDirt = 3;
         int TileIdWater = 8;
         int TileIdSand = 12;
+        int TileIdGravel = 13;
         int TileIdTreeTrunk = 17;
         int TileIdLeaves = 18;
         int TileIdStone = 1;
@@ -82,13 +88,30 @@ using ManicDigger;
         int TileIdIronOre = 15;
         int TileIdCoalOre = 16;
         int TileIdLava = 11;
+        int TileIdYellowFlower = 37;
+        int TileIdRedFlower = 38;
+        int TileIdApples = 106;
+        int TileIdHay = 107;
         float treedensity = 0.008f;
-        int GetBlock(int x, int y, int z, int height)
+        // if param 'special' is equal to 1 then hay fields grows
+        int GetBlock(int x, int y, int z, int height, int special)
         {
+            int spec = special;
+            int tile = TileIdStone;
+
             if (z > waterlevel)
             {
-                if (z > height) { return TileIdEmpty; }
-                if (z == height) { return TileIdGrass; }
+                if (spec == 0)
+                {
+                    if (z > height) { return TileIdEmpty; }
+                    if (z == height) { return TileIdGrass; }
+                }
+                else
+                {
+                    if (z > height + 1) { return TileIdEmpty; }
+                    if (z == height) { return TileIdHay; }
+                    if (z == height + 1) { return TileIdHay; }
+                }
                 if (z > height - 5) { return TileIdDirt; }
                 return TileIdStone;
             }
@@ -96,7 +119,6 @@ using ManicDigger;
             {
                 if (z > height) { return TileIdWater; }
                 if (z == height) { return TileIdSand; }
-                if (z > height - 5) { return TileIdDirt; }
                 return TileIdStone;
             }
         }
@@ -165,6 +187,8 @@ using ManicDigger;
         int goldorelength = 50;
         int ironorelength = 50;
         int coalorelength = 50;
+        int gravellength = 50;
+        int dirtlength = 40;
         #region IWorldGenerator Members
         public void PopulateChunk(IMapStorage map, int x, int y, int z, int chunksize)
         {
@@ -194,7 +218,7 @@ using ManicDigger;
             double curx = x;
             double cury = y;
             double curz = z;
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 2; i++)
             {
                 curx = x + rnd.Next(chunksize);
                 cury = y + rnd.Next(chunksize);
@@ -208,14 +232,17 @@ using ManicDigger;
         ok:
             int blocktype = TileIdEmpty;
             int length = 200;
-            if (rnd.NextDouble() < 0.5)
+            if (rnd.NextDouble() < 0.85)
             {
-                int oretype = rnd.Next(3);
-                if (oretype == 0) { length = goldorelength; }
-                if (oretype == 1) { length = ironorelength; }
-                if (oretype == 2) { length = coalorelength; }
+                int oretype = rnd.Next(5);
+                if (oretype == 0) { length = gravellength; }
+                if (oretype == 1) { length = goldorelength; }
+                if (oretype == 2) { length = ironorelength; }
+                if (oretype == 3) { length = coalorelength; }
+                if (oretype == 4) { length = dirtlength; }
+
                 length = rnd.Next(length);
-                blocktype = TileIdGoldOre + oretype;
+                blocktype = oretype != 4 ? TileIdGravel + oretype : TileIdDirt;
             }
             if (blocktype == TileIdEmpty && (!EnableCaves))
             {
@@ -229,13 +256,13 @@ using ManicDigger;
             double curspeedz = rnd.NextDouble() * 0.5 * dirz;
             for (int i = 0; i < length; i++)
             {
-                if (rnd.NextDouble() < 0.05)
+                if (rnd.NextDouble() < 0.06)
                 {
                     curspeedx = rnd.NextDouble() * dirx;
                 }
-                if (rnd.NextDouble() < 0.05)
+                if (rnd.NextDouble() < 0.06)
                 {
-                    curspeedy = rnd.NextDouble();
+                    curspeedy = rnd.NextDouble() * dirx;
                 }
                 if (rnd.NextDouble() < 0.02)
                 {
@@ -250,60 +277,252 @@ using ManicDigger;
                 }
                 for (int ii = 0; ii < 3; ii++)
                 {
-                    int sizex = rnd.Next(3, 5);
-                    int sizey = rnd.Next(3, 5);
-                    int sizez = rnd.Next(3, 5);
-                    int dx = rnd.Next(-sizex / 1, sizex / 1);
-                    int dy = rnd.Next(-sizey / 1, sizey / 1);
-                    int dz = rnd.Next(-sizez / 2, sizez / 2);
-                    int[] allowin = blocktype == TileIdEmpty
-                        ? new int[] { TileIdStone, TileIdDirt, TileIdGrass, TileIdGoldOre, TileIdIronOre, TileIdCoalOre }
-                        : new int[] { TileIdStone };
-                    double density = blocktype == TileIdEmpty ? 1 : rnd.NextDouble() * 0.4;
+                    int sizex = rnd.Next(3, 6);
+                    int sizey = rnd.Next(3, 6);
+                    int sizez = rnd.Next(2, 3);
+                    int dx = rnd.Next(-sizex / 2, sizex / 2);
+                    int dy = rnd.Next(-sizey / 2, sizey / 2);
+                    int dz = rnd.Next(-sizez / 1, sizez / 1);
+
+                    int[] allowin = new int[] { TileIdStone };
+                    double density = blocktype == TileIdEmpty ? 1 : rnd.NextDouble() * 0.90;
+                    if (blocktype == TileIdEmpty)
+                    {
+                        allowin = new int[] { TileIdStone, TileIdDirt, TileIdGrass, TileIdGoldOre, TileIdIronOre, TileIdCoalOre };
+                    }
+                    if (blocktype == TileIdGravel)
+                    {
+                        density = 1;
+                        allowin = new int[] { TileIdDirt, TileIdStone, TileIdSand, TileIdGoldOre, TileIdIronOre, TileIdCoalOre };
+                    }
+
                     MakeCuboid(map, (int)curx - sizex / 2 + dx, (int)cury - sizey / 2 + dy, (int)curz - sizez / 2 + dz, sizex, sizey, sizez, blocktype, allowin, density);
                 }
             }
         }
         private void MakeSmallTrees(IMapStorage map, int cx, int cy, int cz, int chunksize)
         {
-            for (int i = 0; i < 100; i++)
+            int chooseTreeType;
+            for (int i = 0; i < 30; i++)
             {
                 int x = cx + rnd.Next(chunksize);
                 int y = cy + rnd.Next(chunksize);
                 int z = cz + rnd.Next(chunksize);
-                if (!MapUtil.IsValidPos(map, x, y, z))
+                if (!MapUtil.IsValidPos(map, x, y, z) || map.GetBlock(x, y, z) != TileIdGrass)
                 {
                     continue;
                 }
-                if (map.GetBlock(x, y, z) != TileIdGrass)
+                chooseTreeType = rnd.Next(0, 3);
+                switch (chooseTreeType)
+                {
+                    case 0: MakeTreeType1(map, x, y, z); break;
+                    case 1: MakeTreeType2(map, x, y, z); break;
+                    case 2: MakeTreeType3(map, x, y, z); break;
+                };
+            }
+        }
+        #region MakeTreeTypes
+        private void MakeTreeType1(IMapStorage map, int x, int y, int z)
+        {
+            int treeHeight = rnd.Next(8, 12);
+            int xx = 0;
+            int yy = 0;
+            int dir = 0;
+
+            for (int i = 0; i < treeHeight; i++)
+            {
+                SetBlock(map, x, y, z + i, TileIdTreeTrunk);
+                if (i == treeHeight - 4)
+                {
+                    SetBlock(map, x + 1, y, z + i, TileIdTreeTrunk);
+                    SetBlock(map, x - 1, y, z + i, TileIdTreeTrunk);
+                    SetBlock(map, x, y + 1, z + i, TileIdTreeTrunk);
+                    SetBlock(map, x, y - 1, z + i, TileIdTreeTrunk);
+                }
+
+                if (i == treeHeight - 3)
+                {
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 4; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            SetBlock(map, x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, TileIdLeaves);
+
+                            SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, TileIdLeaves);
+                        }
+                    }
+                }
+                if (i == treeHeight - 1)
+                {
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 3; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            SetBlock(map, x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, TileIdLeaves);
+
+                            SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, TileIdLeaves);
+                        }
+                    }
+                }
+            }
+        }
+        private void MakeTreeType2(IMapStorage map, int x, int y, int z)
+        {
+            int treeHeight = rnd.Next(4, 6);
+            int xx = 0;
+            int yy = 0;
+            int dir = 0;
+            float chanceToAppleTree = 0.1f;
+            for (int i = 0; i < treeHeight; i++)
+            {
+                SetBlock(map, x, y, z + i, TileIdTreeTrunk);
+                if (i == treeHeight - 1)
+                {
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 2; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            SetBlock(map, x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            if (chanceToAppleTree < rnd.NextDouble())
+                            {
+                                SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, TileIdLeaves);
+                                SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, TileIdLeaves);
+                                SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, TileIdLeaves);
+                                SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, TileIdLeaves);
+                                SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, TileIdLeaves);
+                            }
+                            else
+                            {
+                                float appleChance = 0.4f;
+                                int tile;
+                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, tile);
+                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, tile);
+                                tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, tile);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void MakeTreeType3(IMapStorage map, int x, int y, int z)
+        {
+            int treeHeight = rnd.Next(6, 9);
+            int xx = 0;
+            int yy = 0;
+            int dir = 0;
+            for (int i = 0; i < treeHeight; i++)
+            {
+                SetBlock(map, x, y, z + i, TileIdTreeTrunk);
+                if (i % 3 == 0 && i > 3)
+                {
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 2; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            SetBlock(map, x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, TileIdLeaves);
+
+                            SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, TileIdLeaves);
+                        }
+                    }
+                }
+                if (i % 3 == 2 && i > 3)
+                {
+                    dir = 45;
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 3; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            SetBlock(map, x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            SetBlockIfEmpty(map, x + xx, y + yy, z + i + 1, TileIdLeaves);
+
+                            SetBlockIfEmpty(map, x + xx + 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx - 1, y + yy, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy + 1, z + i, TileIdLeaves);
+                            SetBlockIfEmpty(map, x + xx, y + yy - 1, z + i, TileIdLeaves);
+                        }
+                    }
+                }
+                SetBlockIfEmpty(map, x, y, z + treeHeight, TileIdLeaves);
+            }
+        }
+        #endregion
+        private void MakeFlowers(IMapStorage map, int cx, int cy, int cz, int chunksize)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                int x = cx + rnd.Next(chunksize);
+                int y = cy + rnd.Next(chunksize);
+                int z = cz + rnd.Next(chunksize);
+                if (!MapUtil.IsValidPos(map, x, y, z) || map.GetBlock(x, y, z) != TileIdGrass)
                 {
                     continue;
                 }
-                SetBlock(map, x, y, z + 1, TileIdTreeTrunk);
-                SetBlock(map, x, y, z + 2, TileIdTreeTrunk);
-                SetBlock(map, x, y, z + 3, TileIdTreeTrunk);
+                int xx; int yy; int zz;
+                int tile = rnd.NextDouble() < 0.75 ? TileIdYellowFlower : TileIdRedFlower;
+                int count = rnd.Next(50, 80);
+                for (int j = 0; j < count; j++)
+                {
+                    xx = x + rnd.Next(-6, 6);
+                    yy = y + rnd.Next(-6, 6);
+                    zz = z + rnd.Next(-2, 2);
+                    if (!MapUtil.IsValidPos(map, xx, yy, zz) || map.GetBlock(xx, yy, zz) != TileIdGrass)
+                    {
+                        continue;
+                    }
+                    SetBlock(map, xx, yy, zz + 1, tile);
+                }
 
-                SetBlock(map, x + 1, y, z + 3, TileIdLeaves);
-                SetBlock(map, x - 1, y, z + 3, TileIdLeaves);
-                SetBlock(map, x, y + 1, z + 3, TileIdLeaves);
-                SetBlock(map, x, y - 1, z + 3, TileIdLeaves);
-
-                SetBlock(map, x + 1, y + 1, z + 3, TileIdLeaves);
-                SetBlock(map, x + 1, y - 1, z + 3, TileIdLeaves);
-                SetBlock(map, x - 1, y + 1, z + 3, TileIdLeaves);
-                SetBlock(map, x - 1, y - 1, z + 3, TileIdLeaves);
-
-                SetBlock(map, x + 1, y, z + 4, TileIdLeaves);
-                SetBlock(map, x - 1, y, z + 4, TileIdLeaves);
-                SetBlock(map, x, y + 1, z + 4, TileIdLeaves);
-                SetBlock(map, x, y - 1, z + 4, TileIdLeaves);
-
-                SetBlock(map, x, y, z + 4, TileIdLeaves);
             }
         }
         private void SetBlock(IMapStorage map, int x, int y, int z, int blocktype)
         {
             if (MapUtil.IsValidPos(map, x, y, z))
+            {
+                map.SetBlock(x, y, z, blocktype);
+            }
+        }
+        private void SetBlockIfEmpty(IMapStorage map, int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == TileIdEmpty)
             {
                 map.SetBlock(x, y, z, blocktype);
             }

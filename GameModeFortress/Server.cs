@@ -633,6 +633,7 @@ namespace ManicDiggerServer
                     for (int zz = 0; zz < chunksize; zz++)
                     {
                         int block = chunk[MapUtil.Index(xx, yy, zz, chunksize, chunksize)];
+
                         if (block == (int)TileTypeManicDigger.DirtForFarming)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
@@ -642,6 +643,16 @@ namespace ManicDiggerServer
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickSapling(pos);
+                        }
+                        if (block == (int)TileTypeMinecraft.BrownMushroom || block == (int)TileTypeMinecraft.RedMushroom)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickMushroom(pos);
+                        }
+                        if (block == (int)TileTypeMinecraft.YellowFlowerDecorations || block == (int)TileTypeMinecraft.RedRoseDecorations)
+                        {
+                            Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
+                            BlockTickFlower(pos);
                         }
                         if (block == (int)TileTypeMinecraft.Dirt)
                         {
@@ -684,7 +695,7 @@ namespace ManicDiggerServer
                 {
                     return;
                 }
-                PlaceTree(pos.x, pos.y, pos.z - 1);
+                MakeAppleTree(pos.x, pos.y, pos.z - 1);
             }
         }
         void PlaceTree(int x, int y, int z)
@@ -724,9 +735,21 @@ namespace ManicDiggerServer
             if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
             {
                 int block2 = map.GetBlock(pos.x, pos.y, pos.z + 1);
-                if (data.GrassGrowsUnder(block2) && !IsShadow(pos.x, pos.y, pos.z))
+                if (data.GrassGrowsUnder(block2))
                 {
-                    SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
+                    if (!IsShadow(pos.x, pos.y, pos.z))
+                    {
+                        SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
+                    }
+                    else
+                    {
+                        // if 1% chance happens then 1 mushroom will grow up 
+                        if (rnd.NextDouble() < 0.01)
+                        {
+                            int tile = rnd.NextDouble() < 0.6 ? (int)TileTypeMinecraft.RedMushroom : (int)TileTypeMinecraft.BrownMushroom;
+                            SetBlockAndNotify(pos.x, pos.y, pos.z + 1, tile);
+                        }
+                    }
                 }
             }
         }
@@ -735,6 +758,85 @@ namespace ManicDiggerServer
             if (IsShadow(pos.x, pos.y, pos.z))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Dirt);
+            }
+        }
+        private void MakeAppleTree(int cx, int cy, int cz)
+        {
+            int x = cx;
+            int y = cy;
+            int z = cz;
+            int TileIdLeaves = (int)TileTypeMinecraft.Leaves;
+            int TileIdApples = (int)TileTypeManicDigger.Apples;
+            int TileIdTreeTrunk = (int)TileTypeMinecraft.TreeTrunk;
+            int treeHeight = rnd.Next(4, 6);
+            int xx = 0;
+            int yy = 0;
+            int dir = 0;
+
+            for (int i = 0; i < treeHeight; i++)
+            {
+                Place(x, y, z + i, TileIdTreeTrunk);
+                if (i == treeHeight - 1)
+                {
+                    for (int j = 1; j < 9; j++)
+                    {
+                        dir += 45;
+                        for (int k = 1; k < 2; k++)
+                        {
+                            int length = dir % 90 == 0 ? k : (int)(k / 2);
+                            xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
+                            yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
+
+                            Place(x + xx, y + yy, z + i, TileIdTreeTrunk);
+                            float appleChance = 0.45f;
+                            int tile;
+                            tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; PlaceIfEmpty(x + xx, y + yy, z + i + 1, tile);
+                            tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; PlaceIfEmpty(x + xx + 1, y + yy, z + i, tile);
+                            tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; PlaceIfEmpty(x + xx - 1, y + yy, z + i, tile);
+                            tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; PlaceIfEmpty(x + xx, y + yy + 1, z + i, tile);
+                            tile = rnd.NextDouble() < appleChance ? TileIdApples : TileIdLeaves; PlaceIfEmpty(x + xx, y + yy - 1, z + i, tile);
+                        }
+                    }
+                }
+            }
+        }
+        private void PlaceIfEmpty(int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == 0)
+            {
+                SetBlockAndNotify(x, y, z, blocktype);
+            }
+        }
+        // mushrooms will die when they have not shadow or dirt, or 20% chance happens
+        private void BlockTickMushroom(Vector3i pos)
+        {
+            if (!MapUtil.IsValidPos(map, pos.x, pos.y, pos.z)) return;
+            if (rnd.NextDouble() < 0.2) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (!IsShadow(pos.x, pos.y, pos.z - 1))
+            {
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+            }
+            else
+            {
+                if (map.GetBlock(pos.x, pos.y, pos.z - 1) == (int)TileTypeMinecraft.Dirt) return;
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+            }
+        }
+        // floowers will die when they have not light, dirt or grass, or 25% chance happens
+        private void BlockTickFlower(Vector3i pos)
+        {
+            if (!MapUtil.IsValidPos(map, pos.x, pos.y, pos.z)) return;
+            if (rnd.NextDouble() < 0.25) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (IsShadow(pos.x, pos.y, pos.z - 1))
+            {
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+            }
+            else
+            {
+                int under = map.GetBlock(pos.x, pos.y, pos.z - 1);
+                if ((under == (int)TileTypeMinecraft.Dirt
+                      || under == (int)TileTypeMinecraft.Grass)) return;
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
             }
         }
         private bool IsShadow(int x, int y, int z)
