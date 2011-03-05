@@ -444,7 +444,8 @@ namespace ManicDigger
 
         public bool SkySphereNight { get; set; }
 
-        bool IsMono = Type.GetType("Mono.Runtime") != null;
+        public bool IsMono = Type.GetType("Mono.Runtime") != null;
+        public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
@@ -557,7 +558,14 @@ namespace ManicDigger
             GL.Enable(EnableCap.ColorMaterial);
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
-            System.Windows.Forms.Cursor.Hide();
+            if (!IsMac)
+            {
+                System.Windows.Forms.Cursor.Hide();
+            }
+            else
+            {
+                CursorVisible = false;
+            }
         }
         void Mouse_ButtonUp(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
@@ -1030,12 +1038,14 @@ namespace ManicDigger
                     {
                         cameratype = CameraType.Overhead;
                         overheadcamera = true;
+                        FreeMouse = true;
                         ENABLE_TPP_VIEW = true;
                         playerdestination = player.playerposition;
                     }
                     else if (cameratype == CameraType.Overhead)
                     {
                         cameratype = CameraType.Fpp;
+                        FreeMouse = false;
                         ENABLE_TPP_VIEW = false;
                         overheadcamera = false;
                     }
@@ -1361,9 +1371,28 @@ namespace ManicDigger
         float zfar { get { return ENABLE_ZFAR ? terrain.DrawDistance : 99999; } }
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
-        Point mouse_delta;
+        PointF mouse_delta;
         bool freemouse;
-        bool FreeMouse { get { if (overheadcamera) { return true; } return freemouse; } set { freemouse = value; } }
+        bool FreeMouse
+        {
+            get
+            {
+                if (overheadcamera)
+                {
+                    return true;
+                }
+                return freemouse;
+            }
+            set
+            {
+                if (IsMac)
+                {
+                    CursorVisible = value;
+                    System.Windows.Forms.Cursor.Hide();
+                }
+                freemouse = value;
+            }
+        }
         void UpdateMouseButtons()
         {
             if (!Focused)
@@ -1382,10 +1411,8 @@ namespace ManicDigger
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (FreeMouse)
             {
-                //System.Windows.Forms.Cursor.Hide();
                 mouse_current.Offset(-X, -Y);
                 mouse_current.Offset(0, -20);
-                //System.Windows.Forms.Cursor.Show();
             }
             if (!Focused)
             {
@@ -1398,17 +1425,57 @@ namespace ManicDigger
             }
             if (!FreeMouse)
             {
-                int centerx = Bounds.Left + (Bounds.Width / 2);
-                int centery = Bounds.Top + (Bounds.Height / 2);
+                //There are two versions:
 
-                mouse_delta = new Point(mouse_current.X - mouse_previous.X,
-                    mouse_current.Y - mouse_previous.Y);
+                //a) System.Windows.Forms.Cursor and GameWindow.CursorVisible = true.
+                //It works by centering global mouse cursor every frame.
+                //*Windows:
+                //   *OK.
+                //   *On a few YouTube videos mouse cursor is not hiding properly.
+                //    That could be just a problem with video recording software.
+                //*Ubuntu: Broken, mouse cursor doesn't hide.
+                //*Mac: Broken, mouse doesn't move at all.
 
-                System.Windows.Forms.Cursor.Position =
-                    new Point(centerx, centery);
-                mouse_previous = new Point(centerx, centery);
+                //b) OpenTk.Input.Mouse and GameWindow.CursorVisible = false.
+                //Uses raw mouse coordinates, movement is not accelerated.
+                //*Windows:
+                //  *OK.
+                //  *Worse than a), because this doesn't use system-wide mouse acceleration.
+                //*Ubuntu: Broken, crashes with "libxi" library missing.
+                //*Mac: OK.
+
+                if (!IsMac)
+                {
+                    //a)
+                    int centerx = Bounds.Left + (Bounds.Width / 2);
+                    int centery = Bounds.Top + (Bounds.Height / 2);
+
+                    mouse_delta = new Point(mouse_current.X - mouse_previous.X,
+                        mouse_current.Y - mouse_previous.Y);
+
+                    System.Windows.Forms.Cursor.Position =
+                        new Point(centerx, centery);
+                    mouse_previous = new Point(centerx, centery);
+                }
+                else
+                {
+                    //b)
+                    var state = OpenTK.Input.Mouse.GetState();
+                    float dx = state.X - mouse_previous_state.X;
+                    float dy = state.Y - mouse_previous_state.Y;
+                    mouse_previous_state = state;
+                    //These are raw coordinates, so need to apply acceleration manually.
+                    float dx2 = (dx * Math.Abs(dx) * MouseAcceleration1);
+                    float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
+                    dx2 += dx * MouseAcceleration2;
+                    dy2 += dy * MouseAcceleration2;
+                    mouse_delta = new PointF(dx2, dy2);
+                }
             }
         }
+        public float MouseAcceleration1 = 0.12f;
+        public float MouseAcceleration2 = 0.7f;
+        OpenTK.Input.MouseState mouse_previous_state;
         float rotationspeed = 0.15f;
         float movespeed = basemovespeed;
         float fallspeed { get { return movespeed / 10; } }

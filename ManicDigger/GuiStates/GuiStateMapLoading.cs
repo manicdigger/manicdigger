@@ -11,7 +11,7 @@ namespace ManicDigger
         private void MapLoadingStart()
         {
             guistate = GuiState.MapLoading;
-            freemouse = true;
+            FreeMouse = true;
             maploadingprogress = new MapLoadingProgressEventArgs();
         }
         private void MapLoadingDraw()
