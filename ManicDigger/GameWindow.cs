@@ -1008,6 +1008,7 @@ namespace ManicDigger
                         Log(strFreemoveNotAllowed);
                         return;
                     }
+                    player.movedz = 0;
                     ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
                     if (ENABLE_FREEMOVE) { Log("Freemove enabled."); }
                     else { Log("Freemove disabled."); }
