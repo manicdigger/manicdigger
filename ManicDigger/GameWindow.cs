@@ -1362,7 +1362,7 @@ namespace ManicDigger
         {
             float aspect_ratio = Width / (float)Height;
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
-            this.m_projectionMatrix = perpective;
+            the3d.ProjectionMatrix = perpective;
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref perpective);
@@ -1844,8 +1844,6 @@ namespace ManicDigger
         }
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
-        Matrix4 m_theModelView;
-        Matrix4 m_projectionMatrix;
         bool leftpressedpicking = false;
         public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
         int selectedmodelid = -1;
@@ -1898,8 +1896,8 @@ namespace ManicDigger
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
-            if (m_theModelView.Equals(new Matrix4())) { return; }
-            Matrix4 theModelView = m_theModelView;
+            if (the3d.ModelViewMatrix.Equals(new Matrix4())) { return; }
+            Matrix4 theModelView = the3d.ModelViewMatrix;
             theModelView.Invert();
             //the_modelview = new Matrix4();
             ray = Vector3.Transform(ray, theModelView);
@@ -2178,7 +2176,7 @@ namespace ManicDigger
                 camera = FppCamera();
             }
             GL.LoadMatrix(ref camera);
-            m_theModelView = camera;
+            the3d.ModelViewMatrix = camera;
 
             if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
 
@@ -3130,16 +3128,6 @@ namespace ManicDigger
         public void UpdateAllTiles()
         {
             terrain.UpdateAllTiles();
-        }
-        #endregion
-        #region IThe3d Members
-        public Matrix4 ModelViewMatrix
-        {
-            get { return m_theModelView; }
-        }
-        public Matrix4 ProjectionMatrix
-        {
-            get { return m_projectionMatrix; }
         }
         #endregion
         public Options Options { get { return options; } set { options = value; } }
