@@ -1621,7 +1621,8 @@ namespace ManicDiggerServer
         }
         private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
         {
-            if (!clients[clientid].chunksseen.ContainsKey(new Vector3i(x / chunksize, y / chunksize, z / chunksize)))
+            if (!clients[clientid].chunksseen.ContainsKey(new Vector3i((x / chunksize) * chunksize,
+                (y / chunksize) * chunksize, (z / chunksize) * chunksize)))
             {
                 return;
             }
