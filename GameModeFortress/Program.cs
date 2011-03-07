@@ -11,10 +11,12 @@ using ManicDigger.Renderers;
 using System.Threading;
 using ManicDiggerServer;
 using ManicDigger.MapTools;
+using GameMenu;
+using System.Net;
 
 namespace GameModeFortress
 {
-    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows, IResetMap
+    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows, IResetMap, Game
     {
         public string GameUrl = null;
         public string User;
@@ -23,7 +25,19 @@ namespace GameModeFortress
         bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
+            ManicDiggerProgram.exit = exit;
+            StartMenu();
+            //if (exit.exit) { return; }
+            //StartGame();
+        }
+        private void StartGame()
+        {
             w = new ManicDiggerGameWindow();
+            //maingamewindow = new MainGameWindow(w);  //done in StartMenu()
+            maingamewindow.mywindow = w;
+
+            w.mainwindow = maingamewindow;
+            w.exit = exit;
             audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
@@ -32,9 +46,49 @@ namespace GameModeFortress
             {
                 w.username = User;
             }
-            ManicDiggerProgram.exit = w;
             w.Run();
         }
+        GetFilePath getfile = new GetFilePath(new[] { "mine", "minecraft" });
+        private void StartMenu()
+        {
+            var ww = new GameMenu.MenuWindow();
+            maingamewindow = new MainGameWindow(ww);
+            ww.mainwindow = maingamewindow;
+
+            ww.the3d = new The3d();
+            ww.the3d.getfile = getfile;
+            ww.the3d.config3d = new Config3d();
+            ww.the3d.terrain = new TerrainDrawerDummy();
+            ww.the3d.textdrawer = new ManicDigger.TextRenderer();
+            var game = this;
+            ww.game = game;
+            ww.textrenderer = new ManicDigger.TextRenderer();
+            ww.exit = exit;
+            
+            ww.formMainMenu = new FormMainMenu();
+            ww.formMainMenu.menu = ww;
+            ww.formMainMenu.Initialize();
+            ww.formJoinMultiplayer = new FormJoinMultiplayer();
+            ww.formJoinMultiplayer.menu = ww;
+            ww.formJoinMultiplayer.game = game;
+            ww.formJoinMultiplayer.Initialize();
+            ww.formLogin = new FormLogin();
+            ww.formLogin.menu = ww;
+            ww.formLogin.game = game;
+            ww.formLogin.Initialize();
+            ww.formSelectWorld = new FormSelectWorld();
+            ww.formSelectWorld.menu = ww;
+            ww.formSelectWorld.game = game;
+            ww.formSelectWorld.Initialize();
+            ww.formWorldOptions = new FormWorldOptions();
+            ww.formWorldOptions.menu = ww;
+            ww.formWorldOptions.game = game;
+            ww.formWorldOptions.Initialize();
+
+            maingamewindow.Run();
+        }
+        MainGameWindow maingamewindow;
+        IGameExit exit = new GameExitDummy();
         private void MakeGame(bool singleplayer)
         {
             var gamedata = new GameDataTilesManicDigger();
@@ -43,7 +97,7 @@ namespace GameModeFortress
             gamedata.CurrentSeason = currentseason;
             var network = new NetworkClientFortress();
             var mapstorage = clientgame;
-            var getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var getfile = this.getfile;
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var terrainDrawer = new TerrainRenderer();
@@ -51,7 +105,6 @@ namespace GameModeFortress
             the3d.getfile = getfile;
             the3d.config3d = config3d;
             w.the3d = the3d;
-            var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawerDummy();
             var physics = new CharacterPhysics();
@@ -131,7 +184,7 @@ namespace GameModeFortress
             w.login = new LoginClientDummy();
             w.internetgamefactory = internetgamefactory;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
-            playerskindownloader.exit = w;
+            playerskindownloader.exit = exit;
             playerskindownloader.the3d = the3d;
             playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
             w.playerskindownloader = playerskindownloader;
@@ -140,7 +193,7 @@ namespace GameModeFortress
             physics.data = gamedata;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
-            audio.gameexit = w;
+            audio.gameexit = exit;
             this.clientgame = clientgame;
             this.map = map;
             the3d.terrain = terrainDrawer;
@@ -275,6 +328,86 @@ namespace GameModeFortress
             heightmap.Restart();
             dirtychunks.Start();
         }
+        public GameMenu.ServerInfo[] GetServers()
+        {
+            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error in future connections
+            WebClient c = new WebClient();
+            string xml = c.DownloadString(ServerListAddress);
+            XmlDocument d = new XmlDocument();
+            d.LoadXml(xml);
+            string[] allHash = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Hash")).ToArray();
+            string[] allName = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Name")).ToArray();
+            string[] allMotd = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/MOTD")).ToArray();
+            string[] allPort = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Port")).ToArray();
+            string[] allIp = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/IP")).ToArray();
+            string[] allVersion = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Version")).ToArray();
+            string[] allUsers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Users")).ToArray();
+            string[] allMax = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Max")).ToArray();
+            string[] allGameMode = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/GameMode")).ToArray();
+            string[] allPlayers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Players")).ToArray();
+            List<GameMenu.ServerInfo> l = new List<GameMenu.ServerInfo>();
+            for (int i = 0; i < allHash.Length; i++)
+            {
+                GameMenu.ServerInfo info = new GameMenu.ServerInfo();
+                info.Hash = allHash[i];
+                info.Name = allName[i];
+                info.Motd = allMotd[i];
+                info.Port = int.Parse(allPort[i]);
+                info.Ip = allIp[i];
+                info.Version = allVersion[i];
+                info.Users = int.Parse(allUsers[i]);
+                info.Max = int.Parse(allMax[i]);
+                info.GameMode = allGameMode[i];
+                info.Players = allPlayers[i];
+                l.Add(info);
+            }
+            return l.ToArray();
+        }
+        public string ServerListAddress = "http://fragmer.net/md/xml.php";
+        string[] worlds = new string[8];
+        public string[] GetWorlds()
+        {
+            worlds[0] = "Castle";
+            return worlds;
+        }
+        public void LoginGuest(string guestlogin)
+        {
+            this.LoginName = guestlogin;
+            IsLoggedIn = false;
+        }
+        public bool LoginAccount(string login, string password)
+        {
+            if (string.IsNullOrEmpty(password))
+            {
+                return false;
+            }
+            var data = new MdLogin().Login(login, "" + password, "a");
+            if (!data.PasswordCorrect)
+            {
+                return false;
+            }
+            IsLoggedIn = true;
+            this.LoginName = login;
+            return true;
+        }
+        public void CreateAccountLogin(string createlogin, string createpassword)
+        {
+            this.User = createlogin;
+        }
+        public void StartSinglePlayer(int worldId)
+        {
+            StartGame();
+        }
+        public void JoinMultiplayer(string ip, int port)
+        {
+            GameUrl = ip + ":" + port;
+            StartGame();
+        }
+        public void SetWorldOptions(int worldId, string name)
+        {
+        }
+        public bool IsLoggedIn { get; set; }
+        public string LoginName { get { return User; } set { User = value; } }
     }
     public interface IResetMap
     {

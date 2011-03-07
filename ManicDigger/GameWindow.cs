@@ -396,8 +396,53 @@ namespace ManicDigger
         public int? inAtlasId;
         public FastColor color;
     }
-    public partial class ManicDiggerGameWindow : GameWindow, IGameExit, ILocalPlayerPosition, IMap, IGui, IViewport3d
+    public interface IMyGameWindow
     {
+        void OnLoad(EventArgs e);
+        void OnFocusedChanged(EventArgs e);
+        void OnClosed(EventArgs e);
+        void OnResize(EventArgs e);
+        void OnUpdateFrame(FrameEventArgs e);
+        void OnRenderFrame(FrameEventArgs e);
+        void OnKeyPress(OpenTK.KeyPressEventArgs e);
+    }
+    public class MainGameWindow : GameWindow
+    {
+        public IMyGameWindow mywindow;
+        const bool ENABLE_FULLSCREEN = false;
+        public MainGameWindow(IMyGameWindow mywindow)
+            : base(800, 600, GraphicsMode.Default, "",
+                ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { this.mywindow = mywindow; }
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            mywindow.OnLoad(e);
+        }
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            mywindow.OnResize(e);
+        }
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+            mywindow.OnUpdateFrame(e);
+        }
+        protected override void OnRenderFrame(FrameEventArgs e)
+        {
+            base.OnRenderFrame(e);
+            mywindow.OnRenderFrame(e);
+        }
+        protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
+        {
+            base.OnKeyPress(e);
+            mywindow.OnKeyPress(e);
+        }
+    }
+    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IGui, IViewport3d
+    {
+        [Inject]
+        public MainGameWindow mainwindow;
         [Inject]
         public The3d the3d;
         [Inject]
@@ -441,6 +486,8 @@ namespace ManicDigger
         public SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
         [Inject]
         public IShadows shadows;
+        [Inject]
+        public IGameExit exit;
 
         public bool SkySphereNight { get; set; }
 
@@ -465,10 +512,6 @@ namespace ManicDigger
             terrain.UpdateTile(x, y, z);
             //          });
         }
-        const bool ENABLE_FULLSCREEN = false;
-        public ManicDiggerGameWindow()
-            : base(800, 600, GraphicsMode.Default, "",
-                ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { }
         public int LoadTexture(string filename)
         {
             the3d.config3d = config3d;
@@ -479,7 +522,7 @@ namespace ManicDigger
             the3d.config3d = config3d;
             return the3d.LoadTexture(bmp);
         }
-        protected override void OnFocusedChanged(EventArgs e)
+        public void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
             { EscapeMenuStart(); }
@@ -492,11 +535,11 @@ namespace ManicDigger
             else if (guistate == GuiState.CraftingRecipes)
             { }
             else { throw new Exception(); }
-            base.OnFocusedChanged(e);
+            //..base.OnFocusedChanged(e);
         }
-        protected override void OnLoad(EventArgs e)
+        public void OnLoad(EventArgs e)
         {
-            base.OnLoad(e);
+            //..base.OnLoad(e);
             string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
             int minor = (int)version[2];
@@ -504,11 +547,11 @@ namespace ManicDigger
             {
                 System.Windows.Forms.MessageBox.Show("You need at least OpenGL 1.5 to run this example. Aborting.", "VBOs not supported",
                 System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
-                this.Exit();
+                mainwindow.Exit();
             }
             if (!config3d.ENABLE_VSYNC)
             {
-                TargetRenderFrequency = 0;
+                mainwindow.TargetRenderFrequency = 0;
             }
             GL.ClearColor(Color.Black);
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
@@ -537,10 +580,10 @@ namespace ManicDigger
             {
                 ClientCommand(".server " + GameUrl);
             }
-            Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
-            Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
-            Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
-            Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
+            mainwindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
+            mainwindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
+            mainwindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
+            mainwindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
             if (config3d.ENABLE_BACKFACECULLING)
             {
                 GL.DepthMask(true);
@@ -548,10 +591,10 @@ namespace ManicDigger
                 GL.CullFace(CullFaceMode.Back);
                 GL.Enable(EnableCap.CullFace);
             }
-            Keyboard.KeyRepeat = true;
-            KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
-            Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
-            Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
+            mainwindow.Keyboard.KeyRepeat = true;
+            mainwindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
+            mainwindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
+            mainwindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
             materialSlots = data.DefaultMaterialSlots;
             GL.Enable(EnableCap.Lighting);
             SetAmbientLight(terraincolor);
@@ -564,12 +607,12 @@ namespace ManicDigger
             }
             else
             {
-                CursorVisible = false;
+                mainwindow.CursorVisible = false;
             }
         }
         void Mouse_ButtonUp(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!Focused)
+            if (!mainwindow.Focused)
             {
                 return;
             }
@@ -588,7 +631,7 @@ namespace ManicDigger
         }
         void Mouse_ButtonDown(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!Focused)
+            if (!mainwindow.Focused)
             {
                 return;
             }
@@ -653,10 +696,10 @@ namespace ManicDigger
             float[] global_ambient = new float[] { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
             GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
         }
-        protected override void OnClosed(EventArgs e)
+        public void OnClosed(EventArgs e)
         {
-            exit = true;
-            base.OnClosed(e);
+            exit.exit = true;
+            //..base.OnClosed(e);
         }
         string soundbuild = "build.wav";
         string sounddestruct = "destruct.wav";
@@ -869,13 +912,13 @@ namespace ManicDigger
         {
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
-                if (WindowState == WindowState.Fullscreen)
+                if (mainwindow.WindowState == WindowState.Fullscreen)
                 {
-                    WindowState = WindowState.Normal;
+                    mainwindow.WindowState = WindowState.Normal;
                 }
                 else
                 {
-                    WindowState = WindowState.Fullscreen;
+                    mainwindow.WindowState = WindowState.Fullscreen;
                 }
             }
             if (GuiTyping == TypingState.None)
@@ -1071,7 +1114,7 @@ namespace ManicDigger
                 {
                     ENABLE_LAG++;
                     ENABLE_LAG = ENABLE_LAG % 3;
-                    VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+                    mainwindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
                     if (ENABLE_LAG == 0) { Log("Frame rate: vsync."); }
                     if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
                     if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
@@ -1125,8 +1168,8 @@ namespace ManicDigger
                 int menuelements = 3;
                 if (e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
-                    exit = true;
-                    Exit();
+                    exit.exit = true;
+                    mainwindow.Exit();
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.Up))
                 {
@@ -1188,10 +1231,10 @@ namespace ManicDigger
             if (GraphicsContext.CurrentContext == null)
                 throw new GraphicsContextMissingException();
 
-            Bitmap bmp = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+            Bitmap bmp = new Bitmap(this.mainwindow.ClientSize.Width, this.mainwindow.ClientSize.Height);
             System.Drawing.Imaging.BitmapData data =
-                bmp.LockBits(this.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, this.ClientSize.Width, this.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+                bmp.LockBits(this.mainwindow.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            GL.ReadPixels(0, 0, this.mainwindow.ClientSize.Width, this.mainwindow.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
             bmp.UnlockBits(data);
 
             bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
@@ -1347,9 +1390,9 @@ namespace ManicDigger
         public bool enable_finiteinventory = false;
         public bool ENABLE_FINITEINVENTORY { get { return enable_finiteinventory; } set { enable_finiteinventory = value; } }
         bool ENABLE_ZFAR = true;
-        protected override void OnResize(EventArgs e)
+        public void OnResize(EventArgs e)
         {
-            base.OnResize(e);
+            //.mainwindow.OnResize(e);
 
             GL.Viewport(0, 0, Width, Height);
             Set3dProjection();
@@ -1388,7 +1431,7 @@ namespace ManicDigger
             {
                 if (IsMac)
                 {
-                    CursorVisible = value;
+                    mainwindow.CursorVisible = value;
                     System.Windows.Forms.Cursor.Hide();
                 }
                 freemouse = value;
@@ -1396,7 +1439,7 @@ namespace ManicDigger
         }
         void UpdateMouseButtons()
         {
-            if (!Focused)
+            if (!mainwindow.Focused)
             {
                 return;
             }
@@ -1412,10 +1455,10 @@ namespace ManicDigger
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (FreeMouse)
             {
-                mouse_current.Offset(-X, -Y);
+                mouse_current.Offset(-mainwindow.X, -mainwindow.Y);
                 mouse_current.Offset(0, -20);
             }
-            if (!Focused)
+            if (!mainwindow.Focused)
             {
                 return;
             }
@@ -1448,8 +1491,8 @@ namespace ManicDigger
                 if (!IsMac)
                 {
                     //a)
-                    int centerx = Bounds.Left + (Bounds.Width / 2);
-                    int centery = Bounds.Top + (Bounds.Height / 2);
+                    int centerx = mainwindow.Bounds.Left + (mainwindow.Bounds.Width / 2);
+                    int centery = mainwindow.Bounds.Top + (mainwindow.Bounds.Height / 2);
 
                     mouse_delta = new Point(mouse_current.X - mouse_previous.X,
                         mouse_current.Y - mouse_previous.Y);
@@ -1482,7 +1525,6 @@ namespace ManicDigger
         float fallspeed { get { return movespeed / 10; } }
         public const float basemovespeed = 5f;
         DateTime lastbuild = new DateTime();
-        public bool exit { get; set; }
         float walksoundtimer = 0;
         int lastwalksound = 0;
         float stepsoundduration = 0.4f;
@@ -1531,9 +1573,9 @@ namespace ManicDigger
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
         bool ENABLE_NOCLIP = false;
-        protected override void OnUpdateFrame(FrameEventArgs e)
+        public void OnUpdateFrame(FrameEventArgs e)
         {
-            base.OnUpdateFrame(e);
+            //..base.OnUpdateFrame(e);
             //UpdateFrame(e);
         }
         public enum LockY
@@ -1583,7 +1625,7 @@ namespace ManicDigger
             bool angledown = false;
             float overheadcameraanglemovearea = 0.05f;
             float overheadcameraspeed = 3;
-            if (guistate == GuiState.Normal && Focused && cameratype == CameraType.Overhead)
+            if (guistate == GuiState.Normal && mainwindow.Focused && cameratype == CameraType.Overhead)
             {
                 if (mouse_current.X > Width - Width * overheadcameraanglemovearea)
                 {
@@ -2117,11 +2159,11 @@ namespace ManicDigger
         //Vector3 oldplayerposition;
         public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
-        protected override void OnRenderFrame(FrameEventArgs e)
+        public void OnRenderFrame(FrameEventArgs e)
         {
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
-            base.OnRenderFrame(e);
+            //..base.OnRenderFrame(e);
             if (terrain.DrawDistance < 256)
             {
                 SetFog();
@@ -2228,7 +2270,7 @@ namespace ManicDigger
             DrawPlayerNames();
             
             //OnResize(new EventArgs());
-            SwapBuffers();
+            mainwindow.SwapBuffers();
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
         }
@@ -2555,8 +2597,8 @@ namespace ManicDigger
             }
             else if (menustate.selected == 2)
             {
-                exit = true;
-                this.Exit();
+                exit.exit = true;
+                this.mainwindow.Exit();
             }
             else throw new Exception();
         }
@@ -3061,7 +3103,7 @@ namespace ManicDigger
             }
             if (!titleset)
             {
-                Title = applicationname;
+                mainwindow.Title = applicationname;
                 titleset = true;
             }
         }
@@ -3132,5 +3174,16 @@ namespace ManicDigger
         }
         #endregion
         public Options Options { get { return options; } set { options = value; } }
+        public int Height { get { return mainwindow.Height; } }
+        public int Width { get { return mainwindow.Width; } }
+        public OpenTK.Input.KeyboardDevice Keyboard { get { return mainwindow.Keyboard; } }
+        public OpenTK.Input.MouseDevice Mouse { get { return mainwindow.Mouse; } }
+        public void Run()
+        {
+            mainwindow.Run();
+        }
+        public void OnKeyPress(OpenTK.KeyPressEventArgs e)
+        {
+        }
     }
 }

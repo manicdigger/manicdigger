@@ -65,6 +65,15 @@
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
     <Compile Include="MapTools\WaterFinite.cs" />
+    <Compile Include="Menu\FormGameOptions.cs" />
+    <Compile Include="Menu\FormJoinMultiplayer.cs" />
+    <Compile Include="Menu\FormLogin.cs" />
+    <Compile Include="Menu\FormMainMenu.cs" />
+    <Compile Include="Menu\FormSelectWorld.cs" />
+    <Compile Include="Menu\FormStartServer.cs" />
+    <Compile Include="Menu\FormWorldOptions.cs" />
+    <Compile Include="Menu\Game.cs" />
+    <Compile Include="Menu\GameMenu.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
     <Compile Include="Renderers\FpsHistoryGraphRenderer.cs" />

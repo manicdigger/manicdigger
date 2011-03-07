@@ -34,6 +34,7 @@ namespace ManicDigger
             }
             w.Run();
         }
+        IGameExit exit = new GameExitDummy();
         GameMinecraft clientgame;
         private void MakeGame(bool singleplayer)
         {
@@ -57,7 +58,6 @@ namespace ManicDigger
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var terrainDrawer = new TerrainRenderer();
-            var exit = w;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawer();
             var physics = new CharacterPhysics();
@@ -132,7 +132,7 @@ namespace ManicDigger
             w.login = new LoginClientMinecraft();
             w.internetgamefactory = internetgamefactory;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
-            playerskindownloader.exit = w;
+            playerskindownloader.exit = exit;
             playerskindownloader.the3d = the3d;
             playerskindownloader.skinserver = "http://minecraft.net/skin/";
             w.playerskindownloader = playerskindownloader;
@@ -140,7 +140,7 @@ namespace ManicDigger
             physics.data = gamedata;
             mapgenerator.data = gamedata;
             audio.getfile = getfile;
-            audio.gameexit = w;
+            audio.gameexit = exit;
             shadowsfull = new Shadows() { data = gamedata, map = clientgame, terrain = terrainDrawer,
                 localplayerposition = localplayerposition, config3d = config3d };
             shadowssimple = new ShadowsSimple() { data = gamedata, map = clientgame };

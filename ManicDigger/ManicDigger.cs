@@ -32,7 +32,7 @@ namespace ManicDigger
 {
     public interface IGameExit
     {
-        bool exit { get; }
+        bool exit { get; set; }
     }
     public class GameExitDummy : IGameExit
     {

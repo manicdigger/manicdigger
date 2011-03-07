@@ -55,8 +55,8 @@ namespace ManicDigger
                 AddButton("Options", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 AddButton("Exit", (a, b) =>
                 {
-                    exit = true;
-                    this.Exit();
+                    exit.exit = true;
+                    this.mainwindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);
             }
