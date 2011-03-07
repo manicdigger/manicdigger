@@ -7,6 +7,10 @@ using ManicDigger.Collisions;
 
 namespace ManicDigger
 {
+    //Generates triangles for a single 16x16x16 chunk.
+    //Needs to know the surrounding of the chunk (18x18x18 blocks total).
+    //This class is heavily inlined and unrolled for performance.
+    //Special-shape (rare) blocks don't need as much performance.
     public class TerrainChunkRenderer
     {
         [Inject]
@@ -81,6 +85,7 @@ namespace ManicDigger
                 toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
                 for (int i = 0; i < toreturnatlas1d.Length; i++)
                 {
+                    //Manual memory allocation for performance - reuse arrays.
                     toreturnatlas1d[i] = allvi.Pop();
                     toreturnatlas1d[i].verticesCount = 0;
                     toreturnatlas1d[i].indicesCount = 0;
@@ -210,6 +215,7 @@ namespace ManicDigger
                         int xxx = x * chunksize + xx;
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
+                        //Most blocks aren't rendered at all, quickly reject them.
                         if (currentChunkDraw[xx, yy, zz] != 0)
                         {
                             BlockPolygons(xxx, yyy, zzz, currentChunk);
@@ -234,6 +240,10 @@ namespace ManicDigger
             }
             return true;
         }
+        //For performance, make a local copy of chunk and its surrounding.
+        //To render one chunk, we need to know all blocks that touch chunk boundaries.
+        //(because to render a single block we need to know all 6 blocks around it).
+        //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
         private void GetExtendedChunk(int x, int y, int z)
         {
             int chunksize = this.chunksize;
@@ -247,6 +257,7 @@ namespace ManicDigger
                     for (int xx = 0; xx < chunksize; xx++)
                     {
                         currentChunk[pos] = mapchunk[pos2];
+                        //Don't calculate index in inner loop: move across whole row with just pos++;
                         pos++;
                         pos2++;
                     }
@@ -385,6 +396,9 @@ namespace ManicDigger
                                 byte tt = currentChunk_[pos];
                                 if (tt == 0) { continue; }
                                 int draw = (int)TileSideFlags.None;
+                                //Instead of calculating position index with MapUtil.Index(),
+                                //relative moves are used
+                                //(just addition instead of multiplication - 1.5x - 2x faster)
                                 //z+1
                                 {
                                     int pos2 = pos + movez;
@@ -545,14 +559,13 @@ namespace ManicDigger
                 (int)(color.B * BlockShadow));
             if (DONOTDRAWEDGES)
             {
-                //if the game is fillrate limited, then this makes it much faster.
-                //(39fps vs vsync 75fps)
-                //bbb.
+                //On finite map don't draw borders:
+                //they can't be seen without freemove cheat.
                 if (z == 0) { drawbottom = 0; }
                 if (x == 0) { drawfront = 0; }
-                if (x == 256 - 1) { drawback = 0; }
+                if (x == mapsizex - 1) { drawback = 0; }
                 if (y == 0) { drawleft = 0; }
-                if (y == 256 - 1) { drawright = 0; }
+                if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
             if (data.IsBlockFlower(tiletype))
@@ -886,6 +899,7 @@ namespace ManicDigger
             }
             return -1;
         }
+        //Texture tiling in one direction.
         private int GetTilingCount(byte[] currentChunk, int xx, int yy, int zz, byte tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
             //fixes tree Z-fighting
@@ -968,6 +982,7 @@ namespace ManicDigger
                 }
             }
         }
+        //Calculate shadows lazily, many blocks don't need them.
         int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
         {
             if (currentChunkShadows[xx, yy, zz] == 0)

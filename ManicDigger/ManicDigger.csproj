@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
+    <Compile Include="DirtyChunks.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />

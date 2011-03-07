@@ -165,13 +165,13 @@ namespace ManicDigger
                             break;
                         case "makecoords":
                             {
-                                RectangleF[] coords = MakeCoords(
+                                RectangleF[] coords = CuboidNet(
                                    (float)getval(ss[2], variables),
                                    (float)getval(ss[3], variables),
                                    (float)getval(ss[4], variables),
                                    (float)getval(ss[5], variables),
                                    (float)getval(ss[6], variables));
-                                MakeTextureCoords(coords, skinsizex, skinsizey);
+                                CuboidNetNormalize(coords, skinsizex, skinsizey);
                                 variables[(string)ss[1]] = coords;
                             }
                             break;
@@ -284,7 +284,13 @@ namespace ManicDigger
             return double.Parse(s, NumberStyles.Number, CultureInfo.InvariantCulture);
         }
         #endregion
-        public RectangleF[] MakeCoords(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
+        //Maps description of position of 6 faces
+        //of a single cuboid in texture file to UV coordinates (in pixels)
+        //(one RectangleF in texture file for each 3d face of cuboid).
+        //Arguments:
+        // Size (in pixels) in 2d cuboid net.
+        // Start position of 2d cuboid net in texture file.
+        public RectangleF[] CuboidNet(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
         {
             RectangleF[] coords = new[]
             {
@@ -297,7 +303,8 @@ namespace ManicDigger
             };
             return coords;
         }
-        public static void MakeTextureCoords(RectangleF[] coords, float texturewidth, float textureheight)
+        //Divides CuboidNet() result by texture size, to get relative coordinates. (0-1, not 0-32 pixels).
+        public static void CuboidNetNormalize(RectangleF[] coords, float texturewidth, float textureheight)
         {
             for (int i = 0; i < coords.Length; i++)
             {
@@ -307,6 +314,8 @@ namespace ManicDigger
         }
         public void DrawCuboid(Vector3 pos, Vector3 size, int textureid, RectangleF[] texturecoords)
         {
+            //Todo: Immediate mode is slow. Maybe use display list or vertex array?
+
             //front
             //GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, textureid);

@@ -172,6 +172,7 @@ namespace ManicDiggerServer
             }
         }
         DateTime lastsave = DateTime.Now;
+        //Todo xml serialization
         public void LoadConfig()
         {
             string filename = "ServerConfig.xml";
@@ -238,6 +239,7 @@ namespace ManicDiggerServer
         public int cfgmapsizez = 128;
         public bool cfgcreative = true;
         public bool cfgallowfreemove = true;
+        //Todo xml serialization
         void SaveConfig()
         {
             string s = "<ManicDiggerServerConfig>" + Environment.NewLine;

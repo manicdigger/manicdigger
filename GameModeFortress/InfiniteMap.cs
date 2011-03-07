@@ -17,7 +17,7 @@ namespace GameModeFortress
         //[Inject]
         //public IWorldGenerator generator;
         [Inject]
-        public IIsChunkReady ischunkready;
+        public IIsChunkDirty ischunkready;
         public Chunk[, ,] chunks;
         #region IMapStorage Members
         public int MapSizeX { get; set; }

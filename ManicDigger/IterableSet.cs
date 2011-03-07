@@ -4,6 +4,10 @@ using System.Text;
 
 namespace ManicDigger
 {
+    //It's possible to iterate N items per frame in a big array (i++ N times).
+    //But it's not possible to iterate over a Set or Dictionary
+    //when its contents change ("Collection was modified" enumerator exception),
+    //so this class solves this problem by keeping an additional list of items.
     public class IterableSet<T>
     {
         public Dictionary<T, int> dictionary = new Dictionary<T, int>();

@@ -26,6 +26,10 @@ namespace ManicDigger
     }
     //This is from Mark Morley's tutorial on frustum culling.
     //http://www.crownandcutlass.com/features/technicaldetails/frustum.html
+    //"This page and its contents are Copyright 2000 by Mark Morley
+    //Unless otherwise noted, you may use any and all code examples provided herein in any way you want.
+    //All other content, including but not limited to text and images, may not be reproduced without consent.
+    //This file was last edited on Wednesday, 24-Jan-2001 13:24:38 PST"
     public class FrustumCulling : IFrustumCulling
     {
         [Inject]

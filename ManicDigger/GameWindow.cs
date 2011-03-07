@@ -1286,7 +1286,8 @@ namespace ManicDigger
         public string username = "gamer1";
         string pass = "12345";
         public string mppassword;
-
+        //This was used for changing server during game.
+        //Todo: move this to Program.cs.
         private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
             var oldclientgame = map;

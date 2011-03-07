@@ -548,7 +548,7 @@ namespace ManicDigger
             mapgenerator.GenerateMap(map);
         }
     }
-    
+    //Todo: Replace methods with arrays.
     public interface IGameData
     {
         int GetTileTextureId(int tileType, TileSide side);

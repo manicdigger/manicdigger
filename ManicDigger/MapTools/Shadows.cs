@@ -25,7 +25,7 @@ namespace ManicDigger
         [Inject]
         public IMapStorage map;
         [Inject]
-        public IIsChunkReady ischunkdirty;
+        public IIsChunkDirty ischunkdirty;
         [Inject]
         public InfiniteMapChunked2d heightmap;
         public int chunksize = 16;
@@ -118,7 +118,7 @@ namespace ManicDigger
         [Inject]
         public Config3d config3d;
         [Inject]
-        public IIsChunkReady ischunkready;
+        public IIsChunkDirty ischunkready;
         [Inject]
         public InfiniteMapChunked2d heightmap;
         [Inject]
