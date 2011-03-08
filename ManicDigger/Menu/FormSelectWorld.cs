@@ -13,6 +13,7 @@ namespace GameMenu
         public void Initialize()
         {
             widgets.Clear();
+            worldbuttons.Clear();
             menu.AddBackground(widgets);
             menu.AddCaption(this, "Select world");
             string[] w = new List<string>(game.GetWorlds()).ToArray();
