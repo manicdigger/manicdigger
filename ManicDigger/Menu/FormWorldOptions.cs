@@ -59,7 +59,7 @@ namespace GameMenu
                 IsTextbox = true,
             };
             widgets.Add(nameTextbox);
-            menu.AddOkCancel(this, delegate { game.SetWorldOptions(worldId, nameTextbox.Text); menu.afterWorldOptions(); }, delegate { menu.FormSelectWorld(); });
+            menu.AddOkCancel(this, delegate { game.SetWorldOptions(worldId, nameTextbox.Text); menu.afterWorldOptions(); }, delegate { menu.currentForm = menu.formSelectWorld; });
         }
         public void Render()
         {

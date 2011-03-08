@@ -55,9 +55,10 @@ namespace GameMenu
         public FormSelectWorld formSelectWorld;
         public FormWorldOptions formWorldOptions;
         public FormMessageBox formMessageBox;
+        public FormStartServer formStartServer;
         public Game game;
         public ManicDigger.TextRenderer textrenderer;
-        IForm currentForm;
+        public IForm currentForm;
         public int typingfield = -1;
         public ThreadStart OnFinishedTyping;
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
@@ -365,7 +366,7 @@ namespace GameMenu
         {
             currentForm = formMainMenu;
         }
-        public void FormSelectWorld()
+        public void FormSelectSinglePlayerWorld()
         {
             afterSelectWorld = delegate
             {
@@ -384,6 +385,30 @@ namespace GameMenu
                 }
             };
             currentForm = formSelectWorld;
+        }
+        public void FormSelectWorld(ThreadStart a)
+        {
+            afterSelectWorld = delegate
+            {
+                int id = formSelectWorld.selectedWorld.Value;
+                if (string.IsNullOrEmpty(game.GetWorlds()[id]))
+                {
+                    FormWorldOptions(id);
+                    afterWorldOptions = delegate
+                    {
+                        a();
+                    };
+                }
+                else
+                {
+                    a();
+                }
+            };
+            currentForm = formSelectWorld;
+        }
+        public void FormStartServer()
+        {
+            currentForm = formStartServer;
         }
         private void FormWorldOptions(int id)
         {

@@ -32,6 +32,7 @@ namespace GameMenu
         bool LoginAccount(string p, string p_2);
         void StartSinglePlayer(int id);
         void DeleteWorld(int p);
+        void StartAndJoinLocalServer(int worldId);
     }
     public class MdLoginData
     {

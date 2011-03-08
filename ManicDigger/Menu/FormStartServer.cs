@@ -5,35 +5,38 @@ using System.Drawing;
 
 namespace GameMenu
 {
-    public partial class MenuWindow
+    public class FormStartServer : IForm
     {
-        public void FormStartMultiplayerServer()
+        public MenuWindow menu;
+        public Game game;
+        Widget selectedWorldWidget;
+        public void Initialize()
         {
-            /*
             widgets.Clear();
-            AddBackground();
-            AddCaption("Start server");
-            widgets.Add(new Button()
+            menu.AddBackground(widgets);
+            menu.AddCaption(this, "Start server");
+            selectedWorldWidget = new Widget()
             {
                 BackgroundImage = null,
                 BackgroundImageSelected = null,
                 Rect = new RectangleF(200, 200, 400, 90),
-                Text = "World: " + (selectedWorld == null ? "none" : game.GetWorlds()[selectedWorld.Value]),
-                Click = delegate { afterSelectWorld = FormStartMultiplayerServer; FormSelectWorld(); },
+                Text = "",//Render()
+                Click = delegate { menu.FormSelectWorld(menu.FormStartServer); },
                 FontSize = 20,
-            });
-            widgets.Add(new Button()
+            };
+            widgets.Add(selectedWorldWidget);
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 200, 300, 90),
                 Text = "Select",
-                Click = delegate { afterSelectWorld = FormStartMultiplayerServer; FormSelectWorld(); },
+                Click = delegate { menu.FormSelectWorld(delegate { menu.FormStartServer(); }); },
                 FontSize = 20,
             });
 
             //Connection options
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
                 BackgroundImage = null,
                 BackgroundImageSelected = null,
@@ -42,22 +45,16 @@ namespace GameMenu
                 Click = delegate { },
                 FontSize = 20,
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 300, 600, 90),
-                Text = typingfield == 0 ? typingbuffer : servername,
-                Click = delegate
-                {
-                    typingfield = 0;
-                    typingbuffer = servername;
-                    OnFinishedTyping = delegate { servername = typingbuffer; };
-                    FormStartMultiplayerServer();
-                },
+                IsTextbox = true,
                 FontSize = 20,
+                Text = "My server",
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
                 BackgroundImage = null,
                 BackgroundImageSelected = null,
@@ -66,70 +63,58 @@ namespace GameMenu
                 Click = delegate { },
                 FontSize = 20,
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 400, 600, 90),
-                Text = typingfield == 99 ? typingbuffer : maxplayers.ToString(),
-                Click = delegate
-                {
-                    typingfield = 99;
-                    typingbuffer = maxplayers.ToString();
-                    OnFinishedTyping = delegate { try { maxplayers = int.Parse(typingbuffer); } catch { maxplayers = 16; } };
-                    FormStartMultiplayerServer();
-                },
+                IsTextbox = true,
+                IsNumeric = true,
                 FontSize = 20,
+                Text = "16",
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
                 BackgroundImage = null,
                 BackgroundImageSelected = null,
-                Rect = new RectangleF(200,500, 400, 90),
+                Rect = new RectangleF(200, 500, 400, 90),
                 Text = "Password: ",
-                Click = delegate {  },
+                Click = delegate { },
                 FontSize = 20,
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 500, 600, 90),
-                Text = typingfield == 1 ? PassString(typingbuffer) : PassString(serverpassword),
-                Click = delegate
-                {
-                    typingfield = 1;
-                    typingbuffer = serverpassword;
-                    OnFinishedTyping = delegate { serverpassword = typingbuffer; };
-                    FormStartMultiplayerServer();
-                },
+                IsTextbox = true,
+                IsPassword = true,
                 FontSize = 20,
             });
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
                 BackgroundImage = null,
                 BackgroundImageSelected = null,
                 Rect = new RectangleF(200, 600, 400, 90),
                 Text = "Public: ",
-                Click = delegate {  },
+                Click = delegate { },
                 FontSize = 20,
             });
-            widgets.Add(new Button()
+            publicWidget = new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 600, 200, 90),
-                Text = serverpublic ? "Yes" : "No",
-                Click = delegate { serverpublic = !serverpublic; FormStartMultiplayerServer(); }, //todo textbox
+                Text = "",//Render()
+                Click = delegate { serverpublic = !serverpublic; },
                 FontSize = 20,
-            });
+            };
+            widgets.Add(publicWidget);
 
-
-
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(1200, 200, 300, 90),
                 Text = "Show my IP",
                 Click = delegate { },
@@ -137,14 +122,14 @@ namespace GameMenu
             });
 
             //Bottom buttons
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(200, 1000, 400, 128),
                 Text = serverstarted ? "Stop" : "Start",
                 //Click = delegate { serverstarted = !serverstarted; FormStartMultiplayerServer(); },
-                Click = delegate { typingfield = -1; FormGame(); }
+                Click = delegate { game.StartAndJoinLocalServer(menu.formSelectWorld.selectedWorld.Value); }
             });
             //widgets.Add(new Button()
             //{
@@ -154,20 +139,34 @@ namespace GameMenu
             //    Text = "Play",
             //    Click = delegate { FormGame(); },
             //});
-            widgets.Add(new Button()
+            widgets.Add(new Widget()
             {
-                BackgroundImage = "button4.png",
-                BackgroundImageSelected = "button4_sel.png",
+                BackgroundImage = menu.button4,
+                BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(1000, 1000, 400, 128),
                 Text = "Cancel",
-                Click = delegate { typingfield = -1; FormMainMenu(); }
+                Click = delegate { menu.FormMainMenu(); }
             });
-            */
         }
+        public void Render()
+        {
+            string worldname = (menu.formSelectWorld.selectedWorld == null
+                ? "none" : game.GetWorlds()[menu.formSelectWorld.selectedWorld.Value]);
+            if (string.IsNullOrEmpty(worldname))
+            {
+                worldname = "none";
+            }
+            selectedWorldWidget.Text = "World: " + worldname;
+
+            publicWidget.Text = serverpublic ? "Yes" : "No";
+        }
+        Widget publicWidget;
         string servername = "My server";
         int maxplayers = 16;
         bool serverpublic = true;
         string serverpassword = "***";
         bool serverstarted;
+        List<Widget> widgets = new List<Widget>();
+        public List<Widget> Widgets { get { return widgets; } set { widgets = value; } }
     }
 }

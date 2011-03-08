@@ -88,6 +88,10 @@ namespace GameModeFortress
             ww.formMessageBox = new FormMessageBox();
             ww.formMessageBox.menu = ww;
             ww.formMessageBox.game = game;
+            ww.formStartServer = new FormStartServer();
+            ww.formStartServer.menu = ww;
+            ww.formStartServer.game = game;
+            ww.formStartServer.Initialize();
 
             maingamewindow.Run();
         }
@@ -410,7 +414,6 @@ namespace GameModeFortress
         }
         public void StartSinglePlayer(int worldId)
         {
-            new Thread(ManicDiggerProgram.ServerThreadStart).Start();
             GameUrl = "127.0.0.1:25570";
             User = "Local";
             string name = "default";
@@ -419,6 +422,22 @@ namespace GameModeFortress
                 name += worldId;
             }
             ManicDiggerProgram.SaveFilenameWithoutExtension = name;
+            new Thread(ManicDiggerProgram.ServerThreadStart).Start();
+            StartGame();
+        }
+        public void StartAndJoinLocalServer(int worldId)
+        {
+            //todo login and config
+            GameUrl = "127.0.0.1:25565";
+            User = "Local";
+            string name = "default";
+            if (worldId != 0)
+            {
+                name += worldId;
+            }
+            ManicDiggerProgram.SaveFilenameWithoutExtension = name;
+            ManicDiggerProgram.Public = true;
+            new Thread(ManicDiggerProgram.ServerThreadStart).Start();
             StartGame();
         }
         public void JoinMultiplayer(string ip, int port)
@@ -505,6 +524,7 @@ namespace GameModeFortress
             }
         }
         public static string SaveFilenameWithoutExtension = "default";
+        public static bool Public = false;
         static void ServerThread()
         {
             Server server = new Server();
@@ -521,7 +541,7 @@ namespace GameModeFortress
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();
             server.craftingtabletool = new CraftingTableTool() { map = map };
-            server.LocalConnectionsOnly = true;
+            server.LocalConnectionsOnly = !Public;
             server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var networkcompression = new CompressionGzip();
             var diskcompression = new CompressionGzip();
@@ -533,6 +553,10 @@ namespace GameModeFortress
             server.water = new WaterFinite() { data = server.data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             server.Start();
+            if ((Public) && (server.cfgpublic))
+            {
+                new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+            }
             for (; ; )
             {
                 server.Process();

@@ -18,9 +18,9 @@ namespace GameMenu
             string[] text = new string[] { "Single-player", "Join multiplayer", "Start multiplayer server", "Game options", "Exit" };
             ThreadStart[] actions = new ThreadStart[]
                 {
-                    menu.FormSelectWorld,
+                    menu.FormSelectSinglePlayerWorld,
                     menu.FormJoinMultiplayer,
-                    menu.FormStartMultiplayerServer,
+                    menu.FormStartServer,
                     menu.FormGameOptions,
                     menu.Exit,
                 };
