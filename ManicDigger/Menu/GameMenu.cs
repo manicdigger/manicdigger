@@ -49,6 +49,8 @@ namespace GameMenu
             mainwindow.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
         }
         public The3d the3d;
+        public IAudio audio;
+        public IGetFilePath getfile;
         public FormMainMenu formMainMenu;
         public FormJoinMultiplayer formJoinMultiplayer;
         public FormLogin formLogin;
@@ -213,6 +215,7 @@ namespace GameMenu
                 if (w.Click != null)
                 {
                     w.Click();
+                    audio.Play(getfile.GetFile("destruct.wav"));
                 }
                 if (w.IsTextbox)
                 {

@@ -22,7 +22,7 @@ namespace GameModeFortress
         public string GameUrl = null;
         public string User = "gamer";
         ManicDiggerGameWindow w;
-        AudioOpenAl audio;
+        AudioOpenAl audio = new AudioOpenAl();
         bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
@@ -39,7 +39,6 @@ namespace GameModeFortress
 
             w.mainwindow = maingamewindow;
             w.exit = exit;
-            audio = new AudioOpenAl();
             w.audio = audio;
             MakeGame(true);
             w.GameUrl = GameUrl;
@@ -65,6 +64,11 @@ namespace GameModeFortress
             ww.game = game;
             ww.textrenderer = new ManicDigger.TextRenderer();
             ww.exit = exit;
+            ww.audio = audio;
+            ww.getfile = getfile;
+
+            audio.getfile = getfile;
+            audio.gameexit = exit;
             
             ww.formMainMenu = new FormMainMenu();
             ww.formMainMenu.menu = ww;
