@@ -346,38 +346,45 @@ namespace GameModeFortress
         }
         public GameMenu.ServerInfo[] GetServers()
         {
-            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error in future connections
-            WebClient c = new WebClient();
-            string xml = c.DownloadString(ServerListAddress);
-            XmlDocument d = new XmlDocument();
-            d.LoadXml(xml);
-            string[] allHash = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Hash")).ToArray();
-            string[] allName = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Name")).ToArray();
-            string[] allMotd = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/MOTD")).ToArray();
-            string[] allPort = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Port")).ToArray();
-            string[] allIp = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/IP")).ToArray();
-            string[] allVersion = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Version")).ToArray();
-            string[] allUsers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Users")).ToArray();
-            string[] allMax = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Max")).ToArray();
-            string[] allGameMode = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/GameMode")).ToArray();
-            string[] allPlayers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Players")).ToArray();
-            List<GameMenu.ServerInfo> l = new List<GameMenu.ServerInfo>();
-            for (int i = 0; i < allHash.Length; i++)
+            try
             {
-                GameMenu.ServerInfo info = new GameMenu.ServerInfo();
-                info.Hash = allHash[i];
-                info.Name = allName[i];
-                info.Motd = allMotd[i];
-                info.Port = int.Parse(allPort[i]);
-                info.Ip = allIp[i];
-                info.Version = allVersion[i];
-                info.Users = int.Parse(allUsers[i]);
-                info.Max = int.Parse(allMax[i]);
-                info.GameMode = allGameMode[i];
-                info.Players = allPlayers[i];
-                l.Add(info);
+                System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error in future connections
+                WebClient c = new WebClient();
+                string xml = c.DownloadString(ServerListAddress);
+                XmlDocument d = new XmlDocument();
+                d.LoadXml(xml);
+                string[] allHash = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Hash")).ToArray();
+                string[] allName = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Name")).ToArray();
+                string[] allMotd = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/MOTD")).ToArray();
+                string[] allPort = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Port")).ToArray();
+                string[] allIp = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/IP")).ToArray();
+                string[] allVersion = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Version")).ToArray();
+                string[] allUsers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Users")).ToArray();
+                string[] allMax = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Max")).ToArray();
+                string[] allGameMode = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/GameMode")).ToArray();
+                string[] allPlayers = new List<string>(ManicDigger.XmlTool.XmlVals(d, "/ServerList/Server/Players")).ToArray();
+                List<GameMenu.ServerInfo> l = new List<GameMenu.ServerInfo>();
+                for (int i = 0; i < allHash.Length; i++)
+                {
+                    GameMenu.ServerInfo info = new GameMenu.ServerInfo();
+                    info.Hash = allHash[i];
+                    info.Name = allName[i];
+                    info.Motd = allMotd[i];
+                    info.Port = int.Parse(allPort[i]);
+                    info.Ip = allIp[i];
+                    info.Version = allVersion[i];
+                    info.Users = int.Parse(allUsers[i]);
+                    info.Max = int.Parse(allMax[i]);
+                    info.GameMode = allGameMode[i];
+                    info.Players = allPlayers[i];
+                    l.Add(info);
+                }
+                return l.ToArray();
             }
-            return l.ToArray();
+            catch
+            {
+                return null;
+            }
         }
         public string ServerListAddress = "http://fragmer.net/md/xml.php";
         public string[] GetWorlds()

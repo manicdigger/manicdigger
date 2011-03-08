@@ -51,7 +51,7 @@ namespace GameMenu
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(100, 150, 300, 128),
                 Text = "Refresh",
-                Click = delegate { StartRefreshing(); },
+                Click = delegate { serverlisterror = false; StartRefreshing(); },
                 selected = false,
                 FontSize = 24,
             });
@@ -66,6 +66,19 @@ namespace GameMenu
                 FontSize = 24,
             };
             widgets.Add(refreshingLabel);
+            serverListErrorWidget = new Widget()
+            {
+                BackgroundImage = null,
+                BackgroundImageSelected = null,
+                Rect = new RectangleF(400, 150, 300, 128),
+                Text = "Can't connect to server list.",
+                Click = delegate { StartRefreshing(); },
+                selected = false,
+                FontSize = 24,
+                Visible = serverlisterror,
+                TextColor = Color.Red,
+            };
+            widgets.Add(serverListErrorWidget);            
             widgets.Add(new Widget()
             {
                 BackgroundImage = menu.button4,
@@ -105,6 +118,7 @@ namespace GameMenu
             });
         }
         Widget refreshingLabel;
+        Widget serverListErrorWidget;
         public void StartRefreshing()
         {
             if (!refreshing)
@@ -123,6 +137,7 @@ namespace GameMenu
             //    servers_refresh = false;
             //}
         }
+        bool serverlisterror = false;
         int selectedServer = 0;
         List<Widget> serverlistitems = new List<Widget>();
         private void AddListboxRow(string[] text, int x, int y, int[] columnwidths, int id)
@@ -150,7 +165,9 @@ namespace GameMenu
         bool refreshing = false;
         void refreshjoin()
         {
-            servers = game.GetServers();
+            var newservers = game.GetServers();
+            serverlisterror = newservers == null;
+            servers = newservers;
             refreshing = false;
             //FormJoinMultiplayer();
         }
