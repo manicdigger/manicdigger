@@ -130,6 +130,10 @@ namespace ManicDigger.MapTools
                     continue;
                 }
                 var type = map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z);
+                if (!MapUtil.IsValidPos(map, (int)vv.X, (int)vv.Y, (int)vv.Z - 1))
+                {
+                    continue;
+                }
                 int under = map.GetBlock((int)v.X, (int)v.Y, (int)v.Z - 1);
                 int nextlevel;
                 //is ground under, then can flow to sides
