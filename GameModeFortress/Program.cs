@@ -20,7 +20,7 @@ namespace GameModeFortress
     public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows, IResetMap, Game
     {
         public string GameUrl = null;
-        public string User;
+        public string User = "gamer";
         ManicDiggerGameWindow w;
         AudioOpenAl audio;
         bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
