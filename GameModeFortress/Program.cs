@@ -92,6 +92,10 @@ namespace GameModeFortress
             ww.formStartServer.menu = ww;
             ww.formStartServer.game = game;
             ww.formStartServer.Initialize();
+            ww.formGameOptions = new FormGameOptions();
+            ww.formGameOptions.menu = ww;
+            ww.formGameOptions.game = game;
+            ww.formGameOptions.Initialize();
 
             maingamewindow.Run();
         }

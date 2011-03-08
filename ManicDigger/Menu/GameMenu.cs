@@ -56,6 +56,7 @@ namespace GameMenu
         public FormWorldOptions formWorldOptions;
         public FormMessageBox formMessageBox;
         public FormStartServer formStartServer;
+        public FormGameOptions formGameOptions;
         public Game game;
         public ManicDigger.TextRenderer textrenderer;
         public IForm currentForm;
@@ -296,48 +297,11 @@ namespace GameMenu
             formMessageBox.Visible = true;
         }
         List<Widget> optionswidgets = new List<Widget>();
-        void FormGameOptionsGraphics()
-        {
-            gameoptionstype = 0;
-            FormGameOptions();
-        }
-        void FormGameOptionsKeys()
-        {
-            gameoptionstype = 1;
-            FormGameOptions();
-        }
-        void FormGameOptionsOther()
-        {
-            gameoptionstype = 2;
-            FormGameOptions();
-        }
-        public class Options
-        {
-            public bool Shadows;
-            public int Font;
-            public int DrawDistance = 256;
-            public bool UseServerTextures = true;
-            public bool EnableSound = true;
-            public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
-        }
-        Options options = new Options();
+
         //List<Button> widgets = new List<Button>();
         int? selectedWidget;
         public int ConstWidth = 1600;
         public int ConstHeight = 1200;
-        public int[] drawDistances = { 32, 64, 128, 256, 512 };
-        private void ToggleFog()
-        {
-            for (int i = 0; i < drawDistances.Length; i++)
-            {
-                if (options.DrawDistance == drawDistances[i])
-                {
-                    options.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
-                    return;
-                }
-            }
-            options.DrawDistance = drawDistances[0];
-        }
         void OrthoMode()
         {
             //GL.Disable(EnableCap.DepthTest);
@@ -423,6 +387,10 @@ namespace GameMenu
         public void FormLogin()
         {
             currentForm = formLogin;
+        }
+        public void FormGameOptions()
+        {
+            currentForm = formGameOptions;
         }
         public ThreadStart afterSelectWorld = delegate { };
         public ThreadStart afterWorldOptions = delegate { };

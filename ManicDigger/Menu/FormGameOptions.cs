@@ -3,17 +3,20 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Drawing;
+using ManicDigger;
 
 namespace GameMenu
 {
-    public partial class MenuWindow
+    public class FormGameOptions : IForm
     {
-        public void FormGameOptions()
+        public MenuWindow menu;
+        public Game game;
+        //public Options options;
+        public void Initialize()
         {
-            /*
             widgets.Clear();
-            AddBackground(widgets);
-            AddCaption("Game options");
+            menu.AddBackground(widgets);
+            menu.AddCaption(this, "Game options");
             string[] text = new string[] { "Graphics", "Keys", "Other" };
             ThreadStart[] actions = new ThreadStart[]
                 {
@@ -23,10 +26,10 @@ namespace GameMenu
                 };
             for (int i = 0; i < 3; i++)
             {
-                widgets.Add(new Button()
+                widgets.Add(new Widget()
                 {
-                    BackgroundImage = "button4.png",
-                    BackgroundImageSelected = "button4_sel.png",
+                    BackgroundImage = menu.button4,
+                    BackgroundImageSelected = menu.button4sel,
                     Rect = new RectangleF(100 + 500 * i, 200, 400, 128),
                     Text = text[i],
                     Click = actions[i],
@@ -44,18 +47,18 @@ namespace GameMenu
                 };
                 ThreadStart[] actions1 = new ThreadStart[]
                 {
-                    delegate{options.Shadows=!options.Shadows;FormGameOptions();},
-                    delegate{ToggleFog();FormGameOptions();},
-                    delegate{options.UseServerTextures=!options.UseServerTextures;FormGameOptions();},
-                    delegate{if(options.Font==0){options.Font=1;}else{options.Font=0;FormGameOptions();}},
+                    delegate{options.Shadows=!options.Shadows;Initialize();},
+                    delegate{ToggleFog();Initialize();},
+                    delegate{options.UseServerTextures=!options.UseServerTextures;Initialize();},
+                    delegate{if(options.Font==0){options.Font=1;}else{options.Font=0;Initialize();}},
                 };
                 for (int i = 0; i < 3; i++)
                 {
-                    widgets.Add(new Button()
+                    widgets.Add(new Widget()
                     {
-                        BackgroundImage = "button4.png",
-                        BackgroundImageSelected = "button4_sel.png",
-                        Rect = new RectangleF(ConstWidth / 2 - 800 / 2, 460 + i * 140, 800, 128),
+                        BackgroundImage = menu.button4,
+                        BackgroundImageSelected = menu.button4sel,
+                        Rect = new RectangleF(menu.ConstWidth / 2 - 800 / 2, 460 + i * 140, 800, 128),
                         Text = text1[i],
                         Click = actions1[i],
                     });
@@ -74,10 +77,10 @@ namespace GameMenu
                     {
                         key = options.Keys[defaultkey];
                     }
-                    widgets.Add(new Button()
+                    widgets.Add(new Widget()
                     {
-                        BackgroundImage = "button4.png",
-                        BackgroundImageSelected = "button4_sel.png",
+                        BackgroundImage = menu.button4,
+                        BackgroundImageSelected = menu.button4sel,
                         Rect = new RectangleF(80 + column * 360, 350 + i * 100 - minus, 340, 90),
                         Text = keyhelps[i].Text + ": " + KeyName(key),
                         FontSize = 15,
@@ -86,8 +89,7 @@ namespace GameMenu
                     if ((i + 1) % 6 == 0) { column++; minus += 100 * 6; }
                 }
             }
-            AddOkCancel(FormMainMenu, FormMainMenu);
-            */
+            menu.AddOkCancel(this, menu.FormMainMenu, menu.FormMainMenu);
         }
         private string KeyName(int key)
         {
@@ -144,5 +146,48 @@ namespace GameMenu
         };
         int keyselectid = -1;
         int gameoptionstype = 0;
+        void FormGameOptionsGraphics()
+        {
+            gameoptionstype = 0;
+            Initialize();
+        }
+        void FormGameOptionsKeys()
+        {
+            gameoptionstype = 1;
+            Initialize();
+        }
+        void FormGameOptionsOther()
+        {
+            gameoptionstype = 2;
+            Initialize();
+        }
+        public class Options
+        {
+            public bool Shadows;
+            public int Font;
+            public int DrawDistance = 256;
+            public bool UseServerTextures = true;
+            public bool EnableSound = true;
+            public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
+        }
+        Options options = new Options();
+        public int[] drawDistances = { 32, 64, 128, 256, 512 };
+        public void ToggleFog()
+        {
+            for (int i = 0; i < drawDistances.Length; i++)
+            {
+                if (options.DrawDistance == drawDistances[i])
+                {
+                    options.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
+                    return;
+                }
+            }
+            options.DrawDistance = drawDistances[0];
+        }
+        public void Render()
+        {
+        }
+        List<Widget> widgets = new List<Widget>();
+        public List<Widget> Widgets { get { return widgets; } set { widgets = value; } }
     }
 }
