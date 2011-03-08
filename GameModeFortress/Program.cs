@@ -364,10 +364,20 @@ namespace GameModeFortress
             return l.ToArray();
         }
         public string ServerListAddress = "http://fragmer.net/md/xml.php";
-        string[] worlds = new string[8];
         public string[] GetWorlds()
         {
-            worlds[0] = "Castle";
+            //Todo: replace fixed slots with ability to load any files, for easy
+            //copying of saves. Identify world names by filename instead of slot.txt.
+            string[] w = new string[0];
+            if (File.Exists(slotspath))
+            {
+                w = File.ReadAllLines(slotspath);
+            }
+            string[] worlds = new string[8];
+            for (int i = 0; i < w.Length; i++)
+            {
+                worlds[i] = w[i];
+            }
             return worlds;
         }
         public void LoginGuest(string guestlogin)
@@ -396,6 +406,15 @@ namespace GameModeFortress
         }
         public void StartSinglePlayer(int worldId)
         {
+            new Thread(ManicDiggerProgram.ServerThreadStart).Start();
+            GameUrl = "127.0.0.1:25570";
+            User = "Local";
+            string name = "default";
+            if (worldId != 0)
+            {
+                name += worldId;
+            }
+            ManicDiggerProgram.SaveFilenameWithoutExtension = name;
             StartGame();
         }
         public void JoinMultiplayer(string ip, int port)
@@ -403,8 +422,12 @@ namespace GameModeFortress
             GameUrl = ip + ":" + port;
             StartGame();
         }
+        string slotspath = Path.Combine(Path.Combine(GameStorePath.GetStorePath(), "Saves"), "slots.txt");
         public void SetWorldOptions(int worldId, string name)
         {
+            string[] worlds = GetWorlds();
+            worlds[worldId] = name;
+            File.WriteAllLines(slotspath, worlds);
         }
         public bool IsLoggedIn { get; set; }
         public string LoginName { get { return User; } set { User = value; } }
@@ -447,14 +470,14 @@ namespace GameModeFortress
             }
             else
             {
-                new Thread(ServerThreadStart).Start();
-                p.GameUrl = "127.0.0.1:25570";
-                p.User = "Local";
+                //new Thread(ServerThreadStart).Start();
+                //p.GameUrl = "127.0.0.1:25570";
+                //p.User = "Local";
             }
             p.Start();
         }
         public static IGameExit exit;
-        static void ServerThreadStart()
+        public static void ServerThreadStart()
         {
             try
             {
@@ -465,6 +488,7 @@ namespace GameModeFortress
                 MessageBox.Show(e.ToString());
             }
         }
+        public static string SaveFilenameWithoutExtension = "default";
         static void ServerThread()
         {
             Server server = new Server();
@@ -491,6 +515,7 @@ namespace GameModeFortress
             server.networkcompression = networkcompression;
             map.data = server.data;
             server.water = new WaterFinite() { data = server.data };
+            server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             server.Start();
             for (; ; )
             {

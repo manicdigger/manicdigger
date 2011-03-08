@@ -13,7 +13,7 @@ namespace GameMenu
         {
             widgets.Clear();
             menu.AddBackground(this.widgets);
-            menu.AddCaption(this, "World options");
+            menu.AddCaption(this, "New world");
             /*
             widgets.Add(new Widget()
             {
@@ -43,18 +43,23 @@ namespace GameMenu
                 Click = delegate { },
                 FontSize = 20,
             });
+            string name = game.GetWorlds()[worldId];
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "World " + (worldId + 1);
+            }
             var nameTextbox = new Widget()
             {
                 BackgroundImage = menu.button4,
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 300, 600, 90),
-                Text = game.GetWorlds()[worldId],
+                Text = name,
                 Click = delegate { }, //todo textbox
                 FontSize = 20,
                 IsTextbox = true,
             };
             widgets.Add(nameTextbox);
-            menu.AddOkCancel(this, delegate { game.SetWorldOptions(worldId, nameTextbox.Text); }, delegate { menu.FormSelectWorld(); });
+            menu.AddOkCancel(this, delegate { game.SetWorldOptions(worldId, nameTextbox.Text); menu.afterWorldOptions(); }, delegate { menu.FormSelectWorld(); });
         }
         public void Render()
         {

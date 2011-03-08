@@ -42,12 +42,6 @@ namespace GameMenu
         public IGameExit exit;
         public void OnLoad(EventArgs e)
         {
-            formMainMenu.Initialize();
-            formJoinMultiplayer.Initialize();
-            formLogin.Initialize();
-            formSelectWorld.Initialize();
-            formWorldOptions.Initialize();
-
             mainwindow.VSync = VSyncMode.On;
             mainwindow.WindowState = WindowState.Normal;
             FormMainMenu();
@@ -350,14 +344,16 @@ namespace GameMenu
         }
         public void FormSelectWorld()
         {
-            //todo.
-            //game.StartSinglePlayer();
             afterSelectWorld = delegate
             {
                 int id = formSelectWorld.selectedWorld.Value;
-                if (game.GetWorlds()[id] == null)
+                if (string.IsNullOrEmpty(game.GetWorlds()[id]))
                 {
                     FormWorldOptions(id);
+                    afterWorldOptions = delegate
+                    {
+                        game.StartSinglePlayer(id);
+                    };
                 }
                 else
                 {
@@ -370,6 +366,7 @@ namespace GameMenu
         {
             currentForm = formWorldOptions;
             formWorldOptions.worldId = id;
+            formWorldOptions.Initialize(); //after worldId set.
         }
         public void FormJoinMultiplayer()
         {
@@ -380,6 +377,7 @@ namespace GameMenu
             currentForm = formLogin;
         }
         public ThreadStart afterSelectWorld = delegate { };
+        public ThreadStart afterWorldOptions = delegate { };
         public void OnFocusedChanged(EventArgs e)
         {
         }

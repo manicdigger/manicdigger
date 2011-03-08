@@ -153,9 +153,10 @@ namespace ManicDiggerServer
         MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
         public string gamepathconfig = GameStorePath.GetStorePath();
         public string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
+        public string SaveFilenameWithoutExtension = "default";
         string GetSaveFilename()
         {
-            return Path.Combine(gamepathsaves, "default" + MapManipulator.BinSaveExtension);
+            return Path.Combine(gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
         }
         public void Process11()
         {

@@ -18,7 +18,7 @@ namespace GameMenu
             string[] w = new List<string>(game.GetWorlds()).ToArray();
             for (int i = 0; i < w.Length; i++)
             {
-                if (w[i] == null)
+                if (string.IsNullOrEmpty(w[i]))
                 {
                     w[i] = "Empty";
                 }
