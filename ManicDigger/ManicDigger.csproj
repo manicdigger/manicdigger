@@ -66,6 +66,7 @@
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
     <Compile Include="MapTools\WaterFinite.cs" />
+    <Compile Include="Menu\FormConnectToIp.cs" />
     <Compile Include="Menu\FormGameOptions.cs" />
     <Compile Include="Menu\FormJoinMultiplayer.cs" />
     <Compile Include="Menu\FormLogin.cs" />

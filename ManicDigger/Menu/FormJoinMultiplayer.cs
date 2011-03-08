@@ -92,7 +92,7 @@ namespace GameMenu
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(600, 1000, 400, 128),
                 Text = "Connect to IP",
-                //Click = FormMainMenu,
+                Click = menu.FormConnectToIp,
             });
 
             widgets.Add(new Widget()

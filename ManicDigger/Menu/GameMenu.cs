@@ -57,6 +57,7 @@ namespace GameMenu
         public FormMessageBox formMessageBox;
         public FormStartServer formStartServer;
         public FormGameOptions formGameOptions;
+        public FormConnectToIp formConnectToIp;
         public Game game;
         public ManicDigger.TextRenderer textrenderer;
         public IForm currentForm;
@@ -391,6 +392,10 @@ namespace GameMenu
         public void FormGameOptions()
         {
             currentForm = formGameOptions;
+        }
+        public void FormConnectToIp()
+        {
+            currentForm = formConnectToIp;
         }
         public ThreadStart afterSelectWorld = delegate { };
         public ThreadStart afterWorldOptions = delegate { };

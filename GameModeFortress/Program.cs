@@ -96,6 +96,10 @@ namespace GameModeFortress
             ww.formGameOptions.menu = ww;
             ww.formGameOptions.game = game;
             ww.formGameOptions.Initialize();
+            ww.formConnectToIp = new FormConnectToIp();
+            ww.formConnectToIp.menu = ww;
+            ww.formConnectToIp.game = game;
+            ww.formConnectToIp.Initialize();
 
             maingamewindow.Run();
         }
