@@ -13,6 +13,7 @@ using ManicDiggerServer;
 using ManicDigger.MapTools;
 using GameMenu;
 using System.Net;
+using ManicDigger.Menu;
 
 namespace GameModeFortress
 {
@@ -84,6 +85,9 @@ namespace GameModeFortress
             ww.formWorldOptions.menu = ww;
             ww.formWorldOptions.game = game;
             ww.formWorldOptions.Initialize();
+            ww.formMessageBox = new FormMessageBox();
+            ww.formMessageBox.menu = ww;
+            ww.formMessageBox.game = game;
 
             maingamewindow.Run();
         }
@@ -422,6 +426,7 @@ namespace GameModeFortress
             GameUrl = ip + ":" + port;
             StartGame();
         }
+        string slotsdirpath = Path.Combine(GameStorePath.GetStorePath(), "Saves");
         string slotspath = Path.Combine(Path.Combine(GameStorePath.GetStorePath(), "Saves"), "slots.txt");
         public void SetWorldOptions(int worldId, string name)
         {
@@ -431,6 +436,17 @@ namespace GameModeFortress
         }
         public bool IsLoggedIn { get; set; }
         public string LoginName { get { return User; } set { User = value; } }
+        public void DeleteWorld(int worldId)
+        {
+            string name = "default";
+            if (worldId != 0)
+            {
+                name += worldId;
+            }
+            name += MapManipulator.BinSaveExtension;
+            File.Delete(Path.Combine(slotsdirpath, name));
+            SetWorldOptions(worldId, "");
+        }
     }
     public interface IResetMap
     {

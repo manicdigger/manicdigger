@@ -70,6 +70,7 @@
     <Compile Include="Menu\FormJoinMultiplayer.cs" />
     <Compile Include="Menu\FormLogin.cs" />
     <Compile Include="Menu\FormMainMenu.cs" />
+    <Compile Include="Menu\FormMessageBox.cs" />
     <Compile Include="Menu\FormSelectWorld.cs" />
     <Compile Include="Menu\FormStartServer.cs" />
     <Compile Include="Menu\FormWorldOptions.cs" />

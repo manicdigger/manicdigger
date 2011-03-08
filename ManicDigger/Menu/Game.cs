@@ -31,6 +31,7 @@ namespace GameMenu
         void LoginGuest(string p);
         bool LoginAccount(string p, string p_2);
         void StartSinglePlayer(int id);
+        void DeleteWorld(int p);
     }
     public class MdLoginData
     {

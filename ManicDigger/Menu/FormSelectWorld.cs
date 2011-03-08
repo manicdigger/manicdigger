@@ -45,7 +45,15 @@ namespace GameMenu
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(650, 900, 300, 90),//500
                 Text = "Delete",
-                Click = delegate { },
+                Click = delegate
+                {
+                    string name = game.GetWorlds()[selectedWorld.Value];
+                    if(!string.IsNullOrEmpty(name))
+                    {
+                        menu.MessageBoxYesNo(string.Format("Are you sure you want to delete world \"{0}\"?", name)
+                            , delegate { game.DeleteWorld(selectedWorld.Value); Initialize(); }, delegate { });
+                    }
+                },
                 FontSize = 20,
             });/*
             widgets.Add(new Widget()

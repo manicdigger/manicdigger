@@ -12,6 +12,7 @@ using System.Net;
 using System.Xml;
 using System.Windows.Forms;
 using System.IO;
+using ManicDigger.Menu;
 
 namespace GameMenu
 {
@@ -53,6 +54,7 @@ namespace GameMenu
         public FormLogin formLogin;
         public FormSelectWorld formSelectWorld;
         public FormWorldOptions formWorldOptions;
+        public FormMessageBox formMessageBox;
         public Game game;
         public ManicDigger.TextRenderer textrenderer;
         IForm currentForm;
@@ -148,7 +150,14 @@ namespace GameMenu
             //background
             UpdateMouse();
             DrawWidgets(currentForm);
-            currentForm.Render();
+            if (formMessageBox.Visible)
+            {
+                DrawWidgets(formMessageBox);
+            }
+            else
+            {
+                currentForm.Render();
+            }
             //PerspectiveMode();
             try
             {
@@ -174,8 +183,15 @@ namespace GameMenu
             mouserightdeclick = wasmouseright && (!Mouse[OpenTK.Input.MouseButton.Right]);
             wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
             wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
-            
-            UpdateWidgetsMouse(currentForm);
+
+            if (formMessageBox.Visible)
+            {
+                UpdateWidgetsMouse(formMessageBox);
+            }
+            else
+            {
+                UpdateWidgetsMouse(currentForm);
+            }
         }
         private void UpdateWidgetsMouse(IForm form)
         {
@@ -270,6 +286,13 @@ namespace GameMenu
                 Text = "Cancel",
                 Click = cancel,
             });
+        }
+        public void MessageBoxYesNo(string text, ThreadStart yes, ThreadStart no)
+        {
+            formMessageBox.MessageBoxYesNo(text,
+                delegate { yes(); formMessageBox.Visible = false; },
+                delegate { no(); formMessageBox.Visible = false; });
+            formMessageBox.Visible = true;
         }
         List<Widget> optionswidgets = new List<Widget>();
         void FormGameOptionsGraphics()
