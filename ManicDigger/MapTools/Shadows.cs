@@ -57,7 +57,7 @@ namespace ManicDigger
             for (int i = map.MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.GrassGrowsUnder(map.GetBlock(x, y, i)))
+                if (!data.TransparentForLight[map.GetBlock(x, y, i)])
                 {
                     break;
                 }
@@ -283,7 +283,7 @@ namespace ManicDigger
             int height = map.MapSizeZ - 1;
             for (int z = map.MapSizeZ - 1; z >= 0; z--)
             {
-                if (data.GrassGrowsUnder(map.GetBlock(x, y, z)))
+                if (data.TransparentForLight[map.GetBlock(x, y, z)])
                 {
                     height--;
                 }
@@ -305,7 +305,7 @@ namespace ManicDigger
             for (int i = map.MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.GrassGrowsUnder(map.GetBlock(x, y, i)))
+                if (!data.TransparentForLight[map.GetBlock(x, y, i)])
                 {
                     break;
                 }
@@ -403,7 +403,7 @@ namespace ManicDigger
                     continue;
                 }
                 int vblock = map.GetBlock(v.x, v.y, v.z);
-                if (!data.GrassGrowsUnder(vblock)
+                if (!data.TransparentForLight[vblock]
                     && data.GetLightRadius(vblock) == 0)
                 {
                     continue;
@@ -485,7 +485,7 @@ namespace ManicDigger
                     continue;
                 }
                 int vblock = map.GetBlock(v.x, v.y, v.z);
-                if (!data.GrassGrowsUnder(vblock)
+                if (!data.TransparentForLight[vblock]
                     && data.GetLightRadius(vblock) == 0)
                 {
                     continue;

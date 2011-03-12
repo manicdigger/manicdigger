@@ -587,6 +587,8 @@ namespace ManicDigger
         public void Update()
         {
         }
+        bool[] transparentForLight = new bool[Count];
+        public bool[] TransparentForLight { get { return transparentForLight; } }
     }
     //http://www.minecraftwiki.net/wiki/Blocks,Items_%26_Data_values
     public enum TileTypeMinecraft : byte

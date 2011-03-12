@@ -371,6 +371,10 @@ namespace GameModeFortress
                 {
                     istransparent[i] = true;
                 }
+                if (data.TransparentForLight[i] || GrassGrowsUnder(i) || iswater[i])
+                {
+                    transparentForLight[i] = true;
+                }
             }
             for (int i = 0; i < 8; i++)
             {
@@ -378,6 +382,8 @@ namespace GameModeFortress
             }
             istransparent[(int)TileTypeManicDigger.FillArea] = true;
         }
+        bool[] transparentForLight = new bool[Count];
+        public bool[] TransparentForLight { get { return transparentForLight; } }
     }
     public enum TileTypeManicDigger
     {

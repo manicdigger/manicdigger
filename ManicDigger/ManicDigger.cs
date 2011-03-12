@@ -583,6 +583,7 @@ namespace ManicDigger
         bool[] IsWater { get; }
         bool[] IsTransparent { get; }
         bool[] IsValid { get; }
+        bool[] TransparentForLight { get; }
         void Update();
     }
     public class GameDataDummy : IGameData
@@ -730,6 +731,10 @@ namespace ManicDigger
         public void Update()
         {
             throw new NotImplementedException();
+        }
+        public bool[] TransparentForLight
+        {
+            get { throw new NotImplementedException(); }
         }
     }
     public interface IMapGenerator
