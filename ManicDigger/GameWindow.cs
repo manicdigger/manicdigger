@@ -1522,13 +1522,17 @@ namespace ManicDigger
         float stepsoundduration = 0.4f;
         void UpdateWalkSound(double dt)
         {
+            if (dt == -1)
+            {
+                dt = stepsoundduration / 2;
+            }
             walksoundtimer += (float)dt;
             string[] soundwalk = soundwalkcurrent();
             if (soundwalk.Length == 0)
             {
                 return;
             }
-            if (walksoundtimer >= stepsoundduration || dt == -1)
+            if (walksoundtimer >= stepsoundduration)
             {
                 walksoundtimer = 0;
                 lastwalksound++;
@@ -1536,7 +1540,7 @@ namespace ManicDigger
                 {
                     lastwalksound = 0;
                 }
-                if (rnd.Next(100) > 30)
+                if (rnd.Next(100) < 40)
                 {
                     lastwalksound = rnd.Next(soundwalk.Length);
                 }
