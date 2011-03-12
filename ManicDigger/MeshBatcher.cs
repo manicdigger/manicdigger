@@ -57,7 +57,7 @@ namespace ManicDigger
             public float radius;
         }
         Queue<ToAdd> toadd = new Queue<ToAdd>();
-
+        public bool BindTexture = true;
         //Just saves provided arguments.
         //Display lists are created later, in Draw() called from the main thread.
         public int Add(ushort[] indices, int indicesCount, VertexPositionTexture[] vertices, int verticesCount, bool transparent, int texture, Vector3 center, float radius)
@@ -173,14 +173,20 @@ namespace ManicDigger
             for (int i = 0; i < texturesCount; i++)
             {
                 if (tocallSolid[i].Count == 0) { continue; }
-                GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                if (BindTexture)
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                }
                 GL.CallLists(tocallSolid[i].Count, ListNameType.Int, tocallSolid[i].Lists);
             }
             GL.Disable(EnableCap.CullFace);//for water.
             for (int i = 0; i < texturesCount; i++)
             {
                 if (tocallTransparent[i].Count == 0) { continue; }
-                GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                if (BindTexture)
+                {
+                    GL.BindTexture(TextureTarget.Texture2D, glTextures[i]);
+                }
                 GL.CallLists(tocallTransparent[i].Count, ListNameType.Int, tocallTransparent[i].Lists);
             }
             GL.Enable(EnableCap.CullFace);

@@ -152,7 +152,7 @@ namespace ManicDigger
         {
             if ((localplayerposition.LocalPlayerPosition
                 - new OpenTK.Vector3(x, z, y)).Length
-                > terrain.DrawDistance * 1.5f)
+                > config3d.viewdistance * 1.5f)
             {
                 //do not update shadow info outside of fog range
                 // - clear shadow information there.

@@ -124,6 +124,7 @@ namespace GameModeFortress
             var the3d = new The3d();
             the3d.getfile = getfile;
             the3d.config3d = config3d;
+            the3d.viewportsize = w;
             w.the3d = the3d;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesDrawerDummy();
@@ -175,6 +176,11 @@ namespace GameModeFortress
             w.mapManipulator = mapManipulator;
             w.terrain = terrainDrawer;
             w.PickDistance = 4.5f;
+            var skysphere = new SkySphere();
+            skysphere.meshbatcher = new MeshBatcher() { frustumculling = new FrustumCullingDummy() };
+            skysphere.playerpos = localplayerposition;
+            skysphere.the3d = the3d;
+            w.skysphere = skysphere;
             var textrenderer = new ManicDigger.TextRenderer();
             w.textrenderer = textrenderer;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };

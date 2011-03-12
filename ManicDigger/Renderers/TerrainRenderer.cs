@@ -24,7 +24,6 @@ namespace ManicDigger
         int TrianglesCount();
         int texturesPacked { get; }
         int terrainTexture { get; }
-        int DrawDistance { get; set; }
         int ChunkUpdates { get; }
         int[] terrainTextures1d { get; }
         int terrainTexturesPerAtlas { get; }

@@ -21,6 +21,8 @@ namespace ManicDigger
         public TextRenderer textdrawer;
         [Inject]
         public IGetFilePath getfile;
+        [Inject]
+        public IViewportSize viewportsize;
         public bool ALLOW_NON_POWER_OF_TWO = false;
         public int LoadTexture(string filename)
         {
@@ -332,5 +334,22 @@ namespace ManicDigger
         }
         int whitetexture = -1;
         Dictionary<string, int> textures = new Dictionary<string, int>();
+        public float fov = MathHelper.PiOver3;
+        public void Set3dProjection()
+        {
+            Set3dProjection(zfar);
+        }
+        public void Set3dProjection(float zfar)
+        {
+            float aspect_ratio = viewportsize.Width / (float)viewportsize.Height;
+            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
+            ProjectionMatrix = perpective;
+            //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref perpective);
+        }
+        public float znear = 0.1f;
+        float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance : 99999; } }
+        public bool ENABLE_ZFAR = true;
     }
 }

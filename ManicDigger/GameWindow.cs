@@ -88,6 +88,8 @@ namespace ManicDigger
         int LoadTexture(Bitmap bmp);
         Matrix4 ModelViewMatrix { get; }
         Matrix4 ProjectionMatrix { get; }
+        void Set3dProjection(float zfar);
+        void Set3dProjection();
     }
     public class The3dDummy : IThe3d
     {
@@ -118,6 +120,12 @@ namespace ManicDigger
             get { return new Matrix4(); }
         }
         #endregion
+        public void Set3dProjection(float zfar)
+        {
+        }
+        public void Set3dProjection()
+        {
+        }
     }
     public class CameraMove
     {
@@ -824,7 +832,7 @@ namespace ManicDigger
                             {
                                 foglevel2--;
                             }
-                            terrain.DrawDistance = foglevel2;
+                            config3d.viewdistance = foglevel2;
                             //terrain.UpdateAllTiles();
                         }
                         OnResize(new EventArgs());
@@ -847,7 +855,7 @@ namespace ManicDigger
                             throw new Exception(string.Format("Valid field of view: {0}-{1}", minfov, maxfov));
                         }
                         float fov = (float)(2 * Math.PI * ((float)arg / 360));
-                        this.fov = fov;
+                        the3d.fov = fov;
                         OnResize(new EventArgs());
                     }
                     else if (cmd == "tp" || cmd == "teleport")
@@ -1145,7 +1153,7 @@ namespace ManicDigger
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
                     ToggleFog();
-                    Log("Fog distance: " + terrain.DrawDistance);
+                    Log("Fog distance: " + config3d.viewdistance);
                     OnResize(new EventArgs());
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.B))
@@ -1209,13 +1217,13 @@ namespace ManicDigger
         {
             for (int i = 0; i < drawDistances.Length; i++)
             {
-                if (terrain.DrawDistance == drawDistances[i])
+                if (config3d.viewdistance == drawDistances[i])
                 {
-                    terrain.DrawDistance = drawDistances[(i + 1) % drawDistances.Length];
+                    config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Length];
                     return;
                 }
             }
-            terrain.DrawDistance = drawDistances[0];
+            config3d.viewdistance = drawDistances[0];
         }
         int ChatPageScroll;
         enum CameraType
@@ -1390,30 +1398,13 @@ namespace ManicDigger
         public Dictionary<int, int> FiniteInventory { get { return finiteinventory; } set { finiteinventory = value; } }
         public bool enable_finiteinventory = false;
         public bool ENABLE_FINITEINVENTORY { get { return enable_finiteinventory; } set { enable_finiteinventory = value; } }
-        bool ENABLE_ZFAR = true;
         public void OnResize(EventArgs e)
         {
             //.mainwindow.OnResize(e);
 
             GL.Viewport(0, 0, Width, Height);
-            Set3dProjection();
+            the3d.Set3dProjection();
         }
-        public float fov = MathHelper.PiOver3;
-        private void Set3dProjection()
-        {
-            Set3dProjection(zfar);
-        }
-        private void Set3dProjection(float zfar)
-        {
-            float aspect_ratio = Width / (float)Height;
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
-            the3d.ProjectionMatrix = perpective;
-            //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref perpective);
-        }
-        float znear = 0.1f;
-        float zfar { get { return ENABLE_ZFAR ? terrain.DrawDistance : 99999; } }
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
         PointF mouse_delta;
@@ -2165,7 +2156,7 @@ namespace ManicDigger
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
-            if (terrain.DrawDistance < 256)
+            if (config3d.viewdistance < 256)
             {
                 SetFog();
             }
@@ -2294,11 +2285,11 @@ namespace ManicDigger
             GL.Fog(FogParameter.FogColor, fogColor);
             GL.Fog(FogParameter.FogDensity, density);
             float fogsize = 10;
-            if (terrain.DrawDistance <= 64)
+            if (config3d.viewdistance <= 64)
             {
                 fogsize = 5;
             }
-            float fogstart = terrain.DrawDistance - fogsize;
+            float fogstart = config3d.viewdistance - fogsize;
             GL.Fog(FogParameter.FogStart, fogstart);
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
         }
@@ -2348,8 +2339,7 @@ namespace ManicDigger
         public bool ENABLE_DRAW_TEST_CHARACTER = false;
         int skyspheretexture = -1;
         int skyspherenighttexture = -1;
-        ushort[] skysphereelements;
-        ManicDigger.SkySphere.VertexP3N3T2[] skyspherevertices;
+        public SkySphere skysphere = new SkySphere();
         private void DrawSkySphere()
         {
             if (skyspheretexture == -1)
@@ -2357,48 +2347,13 @@ namespace ManicDigger
                 skyspheretexture = LoadTexture(getfile.GetFile("skysphere.png"));
                 skyspherenighttexture = LoadTexture(getfile.GetFile("skyspherenight.png"));
             }
-
-            SkySphere skysphere = new SkySphere();
-
-            if (skysphereelements == null)
-            {
-                int size = 1000;
-                skysphereelements = skysphere.CalculateElements(size, size, 20, 20);
-                skyspherevertices = skysphere.CalculateVertices(size, size, 20, 20);
-            }
-            Set3dProjection(1000 * 2);
-            GL.MatrixMode(MatrixMode.Modelview);
-
-            GL.PushMatrix();
-            GL.Translate(LocalPlayerPosition);
-            GL.Color3(Color.White);
             int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
             if (shadows.GetType() == typeof(ShadowsSimple))
             {
                 texture = skyspheretexture;
             }
-            GL.BindTexture(TextureTarget.Texture2D,texture );
-
-            GL.EnableClientState(ArrayCap.TextureCoordArray);
-            GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableClientState(ArrayCap.NormalArray);
-            //int stride = BlittableValueType.StrideOf(new SkySphere.VertexP3N3T2());
-            int stride = 32;
-            unsafe
-            {
-                fixed (SkySphere.VertexP3N3T2 * p = skyspherevertices)
-                {
-                    GL.VertexPointer(3, VertexPointerType.Float, stride, (IntPtr)(0 + (byte*)p));
-                    GL.NormalPointer(NormalPointerType.Float, stride, (IntPtr)(12 + (byte*)p));
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, stride, (IntPtr)(24 + (byte*)p));
-                    GL.DrawElements(BeginMode.Triangles, skysphereelements.Length, DrawElementsType.UnsignedShort, skysphereelements);
-                }
-            }
-            GL.DisableClientState(ArrayCap.TextureCoordArray);
-            GL.DisableClientState(ArrayCap.VertexArray);
-            GL.DisableClientState(ArrayCap.NormalArray);
-            GL.PopMatrix();
-            Set3dProjection();
+            skysphere.SkyTexture = texture;
+            skysphere.Draw();
             return;
         }
         NetworkInterpolation interpolation = new NetworkInterpolation();

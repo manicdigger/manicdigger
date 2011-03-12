@@ -76,7 +76,7 @@ namespace ManicDigger
                         currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
                         terrain.UpdateAllTiles();
                     });
-                AddButton("View distance: " + (terrain.DrawDistance),
+                AddButton("View distance: " + (config3d.viewdistance),
                     (a, b) =>
                     {
                         ToggleFog();
@@ -278,14 +278,14 @@ namespace ManicDigger
             currentshadows.ShadowsFull = options.Shadows;
             shadows.ResetShadows();
             terrain.UpdateAllTiles();
-            terrain.DrawDistance = options.DrawDistance;
+            config3d.viewdistance = options.DrawDistance;
             audio.Enabled = options.EnableSound;
         }
         void SaveOptions()
         {
             options.Font = textrenderer.NewFont ? 0 : 1;
             options.Shadows = currentshadows.ShadowsFull;
-            options.DrawDistance = terrain.DrawDistance;
+            options.DrawDistance = (int)config3d.viewdistance;
             options.EnableSound = audio.Enabled;
             
             string path = Path.Combine(gamepathconfig, filename);

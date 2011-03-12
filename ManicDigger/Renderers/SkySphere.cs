@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using System.Drawing;
 
 namespace ManicDigger
 {
@@ -11,17 +13,44 @@ namespace ManicDigger
     //Posted Sunday, 22 March, 2009 - 23:50 by the Fiddler
     public class SkySphere
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct VertexP3N3T2
+        [Inject]
+        public MeshBatcher meshbatcher;
+        [Inject]
+        public ILocalPlayerPosition playerpos;
+        [Inject]
+        public IThe3d the3d;
+        public int SkyTexture = -1;
+        int SkyMeshId = -1;
+        public void Draw()
         {
-            public Vector3 Position, Normal;
-            public Vector2 TexCoord;
+            if (SkyTexture == -1)
+            {
+                throw new InvalidOperationException();
+            }
+            int size = 1000;
+            if (SkyMeshId == -1)
+            {
+                ushort[] indices = CalculateElements(size, size, 20, 20);
+                VertexPositionTexture[] vertices = CalculateVertices(size, size, 20, 20);
+                SkyMeshId = meshbatcher.Add(indices, indices.Length, vertices, vertices.Length
+                    , false, SkyTexture, new Vector3(0, 0, 0), size * 2);
+            }
+            the3d.Set3dProjection(size * 2);
+            GL.MatrixMode(MatrixMode.Modelview);
+            meshbatcher.BindTexture = false;
+            GL.PushMatrix();
+            GL.Translate(playerpos.LocalPlayerPosition);
+            GL.Color3(Color.White);
+            GL.BindTexture(TextureTarget.Texture2D, SkyTexture);
+            meshbatcher.Draw(playerpos.LocalPlayerPosition);
+            GL.PopMatrix();
+            the3d.Set3dProjection();
         }
-        public VertexP3N3T2[] CalculateVertices(float radius, float height, int segments, int rings)
+        public VertexPositionTexture[] CalculateVertices(float radius, float height, int segments, int rings)
         {
             int i = 0;
             // Load data into a vertex buffer or a display list afterwards.
-            var data = new VertexP3N3T2[rings * segments];
+            var data = new VertexPositionTexture[rings * segments];
 
             for (double y = 0; y < rings; y++)
             {
@@ -36,7 +65,7 @@ namespace ManicDigger
                         Y = (float)(height * Math.Cos(phi)),
                         Z = (float)(radius * Math.Sin(phi) * Math.Sin(theta)),
                     };
-                    Vector3 n = Vector3.Normalize(v);
+                    //Vector3 n = Vector3.Normalize(v);
                     // Horizontal texture projection
                     Vector2 uv = new Vector2()
                     {
@@ -44,7 +73,17 @@ namespace ManicDigger
                         Y = (float)(y / (rings - 1))
                     };
                     // Using data[i++] causes i to be incremented multiple times in Mono 2.2 (bug #479506).
-                    data[i] = new VertexP3N3T2() { Position = v, Normal = n, TexCoord = uv };
+                    data[i] = new VertexPositionTexture()
+                    {
+                        Position = v,
+                        //Normal = n,
+                        u = uv.X,
+                        v = uv.Y,
+                        a = byte.MaxValue,
+                        r = byte.MaxValue,
+                        g = byte.MaxValue,
+                        b = byte.MaxValue,
+                    };
                     i++;
 
                     // Top - down texture projection.
