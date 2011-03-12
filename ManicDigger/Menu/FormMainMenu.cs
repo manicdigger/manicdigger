@@ -15,22 +15,29 @@ namespace GameMenu
             widgets.Clear();
             menu.AddBackground(widgets);
             widgets.Add(new Widget() { BackgroundImage = Path.Combine("gui", "logo.png"), Rect = new RectangleF(menu.ConstWidth / 2 - 780 * 1.5f / 2, 10, 1024 * 1.5f, 512 * 1.5f) });
-            string[] text = new string[] { "Single-player", "Join multiplayer", "Start multiplayer server", "Game options", "Exit" };
+            string[] text = new string[]
+            {
+                "Single-player",
+                "Join multiplayer",
+                "Start multiplayer server",
+                //"Game options",
+                "Exit",
+            };
             ThreadStart[] actions = new ThreadStart[]
                 {
                     menu.FormSelectSinglePlayerWorld,
                     menu.FormJoinMultiplayer,
                     menu.FormStartServer,
-                    menu.FormGameOptions,
+                    //menu.FormGameOptions,
                     menu.Exit,
                 };
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < text.Length; i++)
             {
                 widgets.Add(new Widget()
                 {
                     BackgroundImage = Path.Combine("gui", "button4.png"),
                     BackgroundImageSelected = Path.Combine("gui", "button4_sel.png"),
-                    Rect = new RectangleF(menu.ConstWidth / 2 - 600 / 2, 460 + i * 140, 600, 128),
+                    Rect = new RectangleF(menu.ConstWidth / 2 - 600 / 2, 100 + 460 + i * 140, 600, 128),
                     Text = text[i],
                     Click = actions[i],
                 });
