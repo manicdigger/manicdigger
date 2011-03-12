@@ -86,16 +86,14 @@ namespace ManicDigger.MapTools
                 && IsWater(map.GetBlock(x, y, z)))
             {
                 Flood(new Vector3(x, y, z));
-                return;
             }
             //water around
-            foreach (var vv in BlocksAround(new Vector3(x, y, z)))
+            foreach (var vv in BlocksAroundAll(new Vector3(x, y, z)))
             {
                 if (MapUtil.IsValidPos(map, (int)vv.X, (int)vv.Y, (int)vv.Z) &&
                     IsWater(map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z)))
                 {
                     Flood(vv);
-                    return;
                 }
             }
         }
@@ -197,6 +195,15 @@ namespace ManicDigger.MapTools
             yield return pos + new Vector3(0, 1, 0);
             yield return pos + new Vector3(0, 0, -1);
             //yield return pos + new Vector3(0, 0, 1); //water does not flow up.
+        }
+        IEnumerable<Vector3> BlocksAroundAll(Vector3 pos)
+        {
+            yield return pos + new Vector3(-1, 0, 0);
+            yield return pos + new Vector3(1, 0, 0);
+            yield return pos + new Vector3(0, -1, 0);
+            yield return pos + new Vector3(0, 1, 0);
+            yield return pos + new Vector3(0, 0, -1);
+            yield return pos + new Vector3(0, 0, 1);
         }
     }
 }
