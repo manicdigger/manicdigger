@@ -19,19 +19,27 @@ namespace GameMenu
             InitializeWidgets();
             StartRefreshing();
         }
+        int serversPerScreen = 6;
         private void InitializeWidgets()
         {
             widgets.Clear();
             menu.AddBackground(widgets);
-            int[] columnWidths = new int[] { 600, 130, 100, 250, 200, 100 };
-            AddListboxRow(new[] { "Name", "Players", "Max", "Ip", "Version", "Names" }, 50, 300, columnWidths, -1);
-            if (servers != null)
+            int[] columnWidths = new int[] { 600, 130, 100, 250, 200};
+            AddListboxRow(new[] { "Name", "Players", "Max", "Ip", "Version" }, 50, 290, columnWidths, -1, Color.White);
+            if (servers != null && scrollbar != null)
             {
-                for (int i = 0; i < servers.Length; i++)
+                for (int i = 0; i < serversPerScreen; i++)
                 {
-                    var s = servers[i];
-                    AddListboxRow(new string[] { s.Name, s.Users.ToString(), s.Max.ToString(), s.Ip, s.Version, s.Players },
-                        50, 300 + (i + 1) * 50, columnWidths, i);
+                    int serverid = scrollbar.ScrollbarValue * serversPerScreen + i;
+                    if (serverid >= servers.Length)
+                    {
+                        break;
+                    }
+                    var s = servers[serverid];
+                    AddListboxRow(new string[] { s.Name, s.Users.ToString(), s.Max.ToString(), s.Ip, s.Version },
+                        50, 350 + i * 100, columnWidths, i, Color.White);
+                    AddListboxRow(new string[] { s.Players },
+                        50, 350 + i * 100 + 50, columnWidths, i, Color.Gray);
                 }
             }
             menu.AddCaption(this, "Multiplayer");
@@ -89,7 +97,30 @@ namespace GameMenu
                 selected = false,
                 FontSize = 24,
             });
+            if (servers != null)
+            {
+                int screensCount = (int)Math.Ceiling((float)servers.Length / serversPerScreen);
 
+                //scrollbar
+                if (scrollbar == null)
+                {
+                    scrollbar = new Widget()
+                    {
+                        //BackgroundImage = menu.button4,
+                        //BackgroundImageSelected = menu.button4sel,
+                        Rect = new RectangleF(1400, 350, 40, 600),
+                        Click = delegate { },
+                        selected = false,
+                        IsScrollbar = true,
+
+                    };
+                }
+                scrollbar.ScrollbarMax = screensCount - 1;
+            }
+            if (scrollbar != null)
+            {
+                widgets.Add(scrollbar);
+            }
 
             widgets.Add(new Widget()
             {
@@ -119,6 +150,7 @@ namespace GameMenu
         }
         Widget refreshingLabel;
         Widget serverListErrorWidget;
+        Widget scrollbar;
         public void StartRefreshing()
         {
             if (!refreshing)
@@ -140,7 +172,7 @@ namespace GameMenu
         bool serverlisterror = false;
         int selectedServer = 0;
         List<Widget> serverlistitems = new List<Widget>();
-        private void AddListboxRow(string[] text, int x, int y, int[] columnwidths, int id)
+        private void AddListboxRow(string[] text, int x, int y, int[] columnwidths, int id, Color color)
         {
             serverlistitems.Clear();
             for (int i = 0; i < text.Length; i++)
@@ -150,11 +182,12 @@ namespace GameMenu
                 {
                     BackgroundImage = null,
                     BackgroundImageSelected = null,
-                    Rect = new RectangleF(x, y, 400, 128),
+                    Rect = new RectangleF(x, y, 400, 90),
                     Text = text[i],
                     Click = delegate { if (id2 != -1) { selectedServer = id2; } },
                     selected = selectedServer == id,
                     FontSize = 20,
+                    TextColor = color,
                 };
                 serverlistitems.Add(b);
                 Widgets.Add(b);

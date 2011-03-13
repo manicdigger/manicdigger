@@ -36,6 +36,11 @@ namespace GameMenu
         public bool Visible = true;
         public bool IsPassword = false;
         public Color TextColor = Color.White;
+
+        public bool IsScrollbar = false;
+        public int ScrollbarValue = 0;
+        public int ScrollbarMax = 0;
+        public Color? BackgroundSingleColor;
     }
     public partial class MenuWindow : IMyGameWindow
     {
@@ -201,10 +206,12 @@ namespace GameMenu
         private void UpdateWidgetsMouse(IForm form)
         {
             selectedWidget = null;
+            float mousex = ((float)Mouse.X / mainwindow.Width) * ConstWidth;
+            float mousey = ((float)Mouse.Y / mainwindow.Height) * ConstHeight;
             for (int i = 0; i < form.Widgets.Count; i++)
             {
                 Widget b = form.Widgets[i];
-                if (b.Rect.Contains(((float)Mouse.X / mainwindow.Width) * ConstWidth, ((float)Mouse.Y / mainwindow.Height) * ConstHeight))
+                if (b.Rect.Contains(mousex, mousey))
                 {
                     selectedWidget = i;
                 }
@@ -221,6 +228,28 @@ namespace GameMenu
                 {
                     typingfield = selectedWidget.Value;
                 }
+                if (w.IsScrollbar)
+                {
+                    Widget b = form.Widgets[selectedWidget.Value];
+                    float scrollheight=(b.Rect.Height - (40 * 2)) / (b.ScrollbarMax + 1);
+                    float scrollpos = b.Rect.Y + ((float)b.ScrollbarValue / (b.ScrollbarMax + 1)) * (b.Rect.Height - 40 * 2) + 40;
+                    if (mousey > scrollpos + scrollheight)
+                    {
+                        b.ScrollbarValue++;
+                        if (b.ScrollbarValue > b.ScrollbarMax)
+                        {
+                            b.ScrollbarValue = b.ScrollbarMax;
+                        }
+                    }
+                    if (mousey < scrollpos)
+                    {
+                        b.ScrollbarValue--;
+                        if (b.ScrollbarValue < 0)
+                        {
+                            b.ScrollbarValue = 0;
+                        }
+                    }
+                }
             }
         }
         void DrawWidgets(IForm form)
@@ -231,6 +260,22 @@ namespace GameMenu
                 if (!b.Visible)
                 {
                     continue;
+                }
+                if (b.BackgroundSingleColor != null)
+                {
+                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
+                        null, b.BackgroundSingleColor.Value);
+                }
+                if (b.IsScrollbar)
+                {
+                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
+                        null, Color.Gray);
+                    float scrollpos = b.Rect.Y + ((float)b.ScrollbarValue / (b.ScrollbarMax + 1)) * (b.Rect.Height - 40 * 2) + 40;
+                    float scrollheight = (b.Rect.Height - (40 * 2)) / (b.ScrollbarMax + 1);
+                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, scrollpos,
+                        b.Rect.Width, scrollheight, null, Color.Black);
+                    the3d.Draw2dText("^", b.Rect.X, b.Rect.Y, b.FontSize, Color.White);
+                    the3d.Draw2dText("v", b.Rect.X, b.Rect.Y + b.Rect.Height - 40, b.FontSize, Color.White);
                 }
                 string img = ((selectedWidget == i || b.selected)
                     && b.BackgroundImageSelected != null)
