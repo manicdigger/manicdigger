@@ -556,10 +556,17 @@ namespace ManicDigger
         }
         public void UpdateAllTiles()
         {
-            //foreach (Vector3i v in batchedchunkspositions.dictionary.Keys)
-            foreach (var v in batchedchunkspositions.Iterate(batchedchunkspositions.dictionary.Keys.Count))
+            //Problem: Some chunks are not being updated
+            //- random winter chunks stay in summer, and can only be fixed by placing a block
+            //or by calling this function second or third time (F6 key).
+            //Bad fix: do it 10 times.
+            //Locking whole terrain thread doesn't help.
+            for (int i = 0; i < 10; i++)
             {
-                ischunkready.SetChunkDirty(v.x, v.y, v.z, true);
+                foreach (var v in batchedchunkspositions.Iterate(batchedchunkspositions.dictionary.Keys.Count))
+                {
+                    ischunkready.SetChunkDirty(v.x, v.y, v.z, true);
+                }
             }
             return;
         }

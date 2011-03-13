@@ -131,7 +131,7 @@ namespace ManicDigger
                         }
                     }
                     if (TerrainRenderer.DistanceSquared(nearest.x, nearest.y, nearest.z, x, y, z)
-                        > (chunkdrawdistance) * (chunkdrawdistance))
+                        > sqrt3 * (chunkdrawdistance) * (chunkdrawdistance))
                     {
                         if (!must_be_in_frustum)
                         {
@@ -148,19 +148,20 @@ namespace ManicDigger
             }
             return null;
         }
+        static float sqrt3 = (float)Math.Sqrt(3);
         private bool IsSmallChunkInFrustum(int x, int y, int z)
         {
             return frustum.SphereInFrustum(x * chunksize + chunksize / 2,
                            z * chunksize + chunksize / 2,
                            y * chunksize + chunksize / 2,
-                           bigchunksize);
+                           (chunksize / 2) * sqrt3);
         }
         private bool IsBigChunkInFrustum(int vx, int vy, int vz)
         {
             return frustum.SphereInFrustum(vx * bigchunksize * chunksize + chunksize * bigchunksize / 2,
                                     vz * bigchunksize * chunksize + chunksize * bigchunksize / 2,
                                     vy * bigchunksize * chunksize + chunksize * bigchunksize / 2,
-                                    bigchunksize * chunksize);
+                                    (bigchunksize * chunksize / 2) * sqrt3);
         }
         private bool IsValidBigChunkPosition(int xx, int yy, int zz)
         {
