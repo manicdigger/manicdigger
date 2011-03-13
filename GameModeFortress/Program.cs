@@ -476,6 +476,7 @@ namespace GameModeFortress
         {
             string[] worlds = GetWorlds();
             worlds[worldId] = name;
+            Directory.CreateDirectory(slotsdirpath);
             File.WriteAllLines(slotspath, worlds);
         }
         public bool IsLoggedIn { get; set; }
