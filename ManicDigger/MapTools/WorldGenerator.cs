@@ -48,6 +48,8 @@ using ManicDigger;
                     heightcache[xx, yy] = GetHeight(x + xx, y + yy);
                 }
             }
+            interpolatednoise = InterpolateNoise3d(x, y, z, chunksize);
+
             // chance of get hay fields
             bool IsHay = rnd.NextDouble() < 0.005 ? false : true;
 
@@ -58,9 +60,45 @@ using ManicDigger;
                     for (int zz = 0; zz < chunksize; zz++)
                     {
                         chunk[xx, yy, zz] = IsHay
-                        ? (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 0)
-                        : (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 1);
+                        ? (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 0, xx, yy, zz)
+                        : (byte)GetBlock(x + xx, y + yy, z + zz, heightcache[xx, yy], 1, xx, yy, zz);
                     }
+                }
+            }
+            for (int xx = 0; xx < chunksize; xx++)
+            {
+                for (int yy = 0; yy < chunksize; yy++)
+                {/*
+                    for (int zz = 0; zz < chunksize - 1; zz++)
+                    {
+                        if (chunk[xx, yy, zz + 1] == TileIdGrass
+                            && chunk[xx, yy, zz] == TileIdGrass)
+                        {
+                            chunk[xx, yy, zz] = (byte)TileIdDirt;
+                        }
+                    }*/
+                    
+                    int v = 1;
+                    for (int zz = chunksize - 2; zz >= 0; zz--)
+                    {
+                        if (chunk[xx, yy, zz] == TileIdEmpty) { v = 0; }
+                        if (chunk[xx, yy, zz] == TileIdGrass)
+                        {
+                            if (v == 0)
+                            {
+                            }
+                            else if (v < 4)
+                            {
+                                chunk[xx, yy, zz] = (byte)TileIdDirt;
+                            }
+                            else
+                            {
+                                chunk[xx, yy, zz] = (byte)TileIdStone;
+                            }
+                            v++;
+                        }
+                    }
+                    
                 }
             }
             if (z == 0)
@@ -93,9 +131,81 @@ using ManicDigger;
         int TileIdApples = 106;
         int TileIdHay = 107;
         float treedensity = 0.008f;
-        // if param 'special' is equal to 1 then hay fields grows
-        int GetBlock(int x, int y, int z, int height, int special)
+        //Ken Perlin, Noise hardware. In Real-Time Shading SIGGRAPH Course Notes (2001), Olano M., (Ed.).
+        //http://www.csee.umbc.edu/~olano/s2002c36/ch02.pdf
+        public class Noise3
         {
+            static int i, j, k;
+            static int[] A = new[] { 0, 0, 0 };
+            static double u, v, w;
+            public static double noise(double x, double y, double z)
+            {
+                double s = (x + y + z) / 3;
+                i = (int)Math.Floor(x + s); j = (int)Math.Floor(y + s); k = (int)Math.Floor(z + s);
+                s = (i + j + k) / 6.0; u = x - i + s; v = y - j + s; w = z - k + s;
+                A[0] = A[1] = A[2] = 0;
+                int hi = u >= w ? u >= v ? 0 : 1 : v >= w ? 1 : 2;
+                int lo = u < w ? u < v ? 0 : 1 : v < w ? 1 : 2;
+                return K(hi) + K(3 - hi - lo) + K(lo) + K(0);
+            }
+            static double K(int a)
+            {
+                double s = (A[0] + A[1] + A[2]) / 6.0;
+                double x = u - A[0] + s, y = v - A[1] + s, z = w - A[2] + s, t = .6 - x * x - y * y - z * z;
+                int h = shuffle(i + A[0], j + A[1], k + A[2]);
+                A[a]++;
+                if (t < 0)
+                    return 0;
+                int b5 = h >> 5 & 1, b4 = h >> 4 & 1, b3 = h >> 3 & 1, b2 = h >> 2 & 1, b = h & 3;
+                double p = b == 1 ? x : b == 2 ? y : z, q = b == 1 ? y : b == 2 ? z : x, r = b == 1 ? z : b == 2 ? x : y;
+                p = (b5 == b3 ? -p : p); q = (b5 == b4 ? -q : q); r = (b5 != (b4 ^ b3) ? -r : r);
+                t *= t;
+                return 8 * t * t * (p + (b == 0 ? q + r : b2 == 0 ? q : r));
+            }
+            static int shuffle(int i, int j, int k)
+            {
+                return b(i, j, k, 0) + b(j, k, i, 1) + b(k, i, j, 2) + b(i, j, k, 3) +
+                       b(j, k, i, 4) + b(k, i, j, 5) + b(i, j, k, 6) + b(j, k, i, 7);
+            }
+            static int b(int i, int j, int k, int B) { return T[b(i, B) << 2 | b(j, B) << 1 | b(k, B)]; }
+            static int b(int N, int B) { return N >> B & 1; }
+            static int[] T = new[] { 0x15, 0x38, 0x32, 0x2c, 0x0d, 0x13, 0x07, 0x2a };
+        }
+        double maxnoise = 0.32549166667822577;
+        double[, ,] interpolatednoise;
+        // if param 'special' is equal to 1 then hay fields grows
+        int GetBlock(int x, int y, int z, int height, int special, int xx,int yy,int zz)
+        {
+            //if (z < 32)
+            {
+                double d = interpolatednoise[xx, yy, zz];
+                //double d = Noise3.noise((double)(x) / 50, (double)(y) / 50, (double)(z) / 50);
+                //double d2 = Noise3.noise((double)(x + 1000) / 100, (double)(y + 1000) / 100, (double)(z + 1000) / 100);
+                //if ((d2 + maxnoise) > ((double)z / 64) * (maxnoise * 2))
+                //{
+                //    return TileIdStone;
+                //}
+                if ((d + maxnoise) > ((double)z / 128) * (maxnoise * 2))
+                {
+                    return TileIdGrass;
+                }
+                /*
+                if (z < height)
+                {
+                    if (d > -0.25)
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (d > 0.25)
+                    {
+                        return 1;
+                    }
+                }*/
+            }
+            return 0;
             int spec = special;
             int tile = TileIdStone;
 
@@ -121,6 +231,79 @@ using ManicDigger;
                 if (z == height) { return TileIdSand; }
                 return TileIdStone;
             }
+        }
+        double[, ,] InterpolateNoise3d(double x, double y, double z, int chunksize)
+        {
+            double[, ,] noise = new double[chunksize, chunksize, chunksize];/*
+            for (int xx = 0; xx < chunksize; xx += 1)
+            {
+                for (int yy = 0; yy < chunksize; yy += 1)
+                {
+                    for (int zz = 0; zz < chunksize; zz += 1)
+                    {
+                        noise[xx, yy, zz] = GetNoise(x + xx, y + yy, z + zz);
+                    }
+                }
+            }
+            return noise;*/
+            int n = 8;
+            for (int xx = 0; xx < chunksize; xx += n)
+            {
+                for (int yy = 0; yy < chunksize; yy += n)
+                {
+                    for (int zz = 0; zz < chunksize; zz += n)
+                    {
+                        double f000 = GetNoise(x + xx, y + yy, z + zz);
+                        double f100 = GetNoise(x + xx + (n-1), y + yy, z + zz);
+                        double f010 = GetNoise(x + xx, y + yy + (n - 1), z + zz);
+                        double f110 = GetNoise(x + xx + (n - 1), y + yy + (n - 1), z + zz);
+                        double f001 = GetNoise(x + xx, y + yy, z + zz + (n - 1));
+                        double f101 = GetNoise(x + xx + (n - 1), y + yy, z + zz + (n - 1));
+                        double f011 = GetNoise(x + xx, y + yy + (n - 1), z + zz + (n - 1));
+                        double f111 = GetNoise(x + xx + (n - 1), y + yy + (n - 1), z + zz + (n - 1));
+                        for (int ix = 0; ix < n; ix++)
+                        {
+                            for (int iy = 0; iy < n; iy++)
+                            {
+                                for (int iz = 0; iz < n; iz++)
+                                {
+                                    noise[xx + ix, yy + iy, zz + iz] = Trilinear((double)ix / (n - 1), (double)iy / (n - 1), (double)iz / (n - 1),
+                                        f000, f010, f100, f110, f001, f011, f101, f111);
+                                    
+                                    //noise[xx + ix, yy + iy, zz + iz] = f000;
+                                }
+                            }
+                        }/*
+                        noise[xx + 0, yy + 0, zz + 0] = f000;
+                        noise[xx + 1, yy + 0, zz + 0] = f100;
+                        noise[xx + 0, yy + 1, zz + 0] = f010;
+                        noise[xx + 1, yy + 1, zz + 0] = f110;
+                        noise[xx + 0, yy + 0, zz + 1] = f001;
+                        noise[xx + 1, yy + 0, zz + 1] = f101;
+                        noise[xx + 0, yy + 1, zz + 1] = f011;
+                        noise[xx + 1, yy + 1, zz + 1] = f111;*/
+                    }
+                }
+            }
+            return noise;
+        }
+        private double GetNoise(double x, double y, double z)
+        {
+            return Noise3.noise((double)(x) / 50, (double)(y) / 50, (double)(z) / 50);
+        }
+        double Trilinear(double x, double y, double z,
+            double f000, double f010, double f100, double f110,
+            double f001, double f011, double f101, double f111)
+        {
+            double up0 = (f100 - f000) * x + f000;
+            double down0 = (f110 - f010) * x + f010;
+            double all0 = (down0 - up0) * y + up0;
+
+            double up1 = (f101 - f001) * x + f001;
+            double down1 = (f111 - f011) * x + f011;
+            double all1 = (down1 - up1) * y + up1;
+
+            return (all1 - all0) * z + all0;
         }
         bool IsTree(int x, int y, int height)
         {
