@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ProtoBuf;
-using ManicDigger;
-using System.IO;
-using System.Net.Sockets;
-using System.Net;
-using System.Xml;
 using System.Collections;
-using OpenTK;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
+using System.Xml;
 using GameModeFortress;
+using ManicDigger;
 using ManicDigger.MapTools;
+using OpenTK;
+using ProtoBuf;
 
 namespace ManicDiggerServer
 {
@@ -54,7 +54,7 @@ namespace ManicDiggerServer
         [Inject]
         public IChunkDb chunkdb;
         [Inject]
-        public WorldGenerator generator;
+        public IWorldGenerator generator;
         [Inject]
         public ICompression networkcompression;
         [Inject]
@@ -624,7 +624,7 @@ namespace ManicDiggerServer
         }
         private void PopulateChunk(Vector3i p)
         {
-            generator.PopulateChunk(map, p.x / chunksize, p.y / chunksize, p.z / chunksize, chunksize);
+            generator.PopulateChunk(map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
         }
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {

@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
+    <Compile Include="Core\SafeDictionary.cs" />
     <Compile Include="DirtyChunks.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
@@ -65,7 +66,16 @@
     <Compile Include="IterableSet.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
+    <Compile Include="MapTools\Generators\ExperimentalWorldGenerator.cs" />
+    <Compile Include="MapTools\Generators\GenerationOption.cs" />
+    <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
+    <Compile Include="MapTools\Generators\Noise3DWorldGenerator.cs" />
+    <Compile Include="MapTools\Generators\WorldGeneratorBase.cs" />
+    <Compile Include="MapTools\IWorldGenerator.cs" />
+    <Compile Include="MapTools\NoiseTools.cs" />
+    <Compile Include="MapTools\PopulationTools.cs" />
     <Compile Include="MapTools\WaterFinite.cs" />
+    <Compile Include="MapTools\WorldGeneratorTools.cs" />
     <Compile Include="Menu\FormConnectToIp.cs" />
     <Compile Include="Menu\FormGameOptions.cs" />
     <Compile Include="Menu\FormJoinMultiplayer.cs" />
@@ -105,7 +115,6 @@
     <Compile Include="Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
     <Compile Include="Renderers\WeaponRenderer.cs" />
-    <Compile Include="MapTools\WorldGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

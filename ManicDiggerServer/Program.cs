@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Sockets;
-using System.Net;
-using System.IO;
-using System.Collections;
-using ManicDigger;
-using System.Threading;
-using OpenTK;
-using System.Xml;
+﻿#region Using Statements
+using System;
 using System.Diagnostics;
+using System.Threading;
 using GameModeFortress;
-using ProtoBuf;
+using ManicDigger;
 using ManicDigger.MapTools;
+using ManicDigger.MapTools.Generators;
+#endregion
 
 namespace ManicDiggerServer
 {
@@ -25,9 +19,13 @@ namespace ManicDiggerServer
             var map = new ManicDiggerServer.ServerMap();
             map.currenttime = server;
             map.chunksize = 32;
-            var generator = new WorldGenerator();
+
+            // TODO: make it possible to change the world generator at run-time!
+            var generator = new Noise3DWorldGenerator();
+            generator.ChunkSize = map.chunksize;
+            // apply chunk size to generator
             map.generator = generator;
-            server.chunksize = 32;
+
             map.heightmap = new InfiniteMapChunked2d() { chunksize = 32, map = map };
             map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
             server.map = map;

@@ -1,19 +1,21 @@
-﻿using System;
+﻿#region Using Statements
+using System;
 using System.Collections.Generic;
-using System.Text;
-using ManicDigger;
-using System.IO;
-using System.Xml;
-using System.Windows.Forms;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Threading;
+using System.Windows.Forms;
+using System.Xml;
+using GameMenu;
+using ManicDigger;
+using ManicDigger.MapTools;
+using ManicDigger.MapTools.Generators;
+using ManicDigger.Menu;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
-using System.Threading;
 using ManicDiggerServer;
-using ManicDigger.MapTools;
-using GameMenu;
-using System.Net;
-using ManicDigger.Menu;
+#endregion
 
 namespace GameModeFortress
 {
@@ -558,9 +560,14 @@ namespace GameModeFortress
             var map = new ManicDiggerServer.ServerMap();
             map.currenttime = server;
             map.chunksize = 32;
-            var generator = new WorldGenerator();
+
+            // TODO: make it possible to change the world generator at run-time!
+            var generator = new Noise3DWorldGenerator();
+            generator.ChunkSize = map.chunksize;
+            // apply chunk size to generator
             map.generator = generator;
             server.chunksize = 32;
+
             map.heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, map = map };
             map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
             server.map = map;

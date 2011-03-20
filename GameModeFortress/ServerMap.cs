@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ManicDigger;
-using GameModeFortress;
-using ProtoBuf;
+﻿#region Using Statements
+using System;
 using System.IO;
+using GameModeFortress;
+using ManicDigger;
+using ManicDigger.MapTools;
+using ProtoBuf;
+#endregion
 
 namespace ManicDiggerServer
 {
@@ -94,7 +95,10 @@ namespace ManicDiggerServer
                     UpdateChunkHeight(x, y, z);
                     return chunks[x, y, z].data;
                 }
-                byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
+
+                // update chunk size and get chunk
+                generator.ChunkSize = chunksize;
+                byte[, ,] newchunk = generator.GetChunk(x, y, z);
                 if (newchunk != null)
                 {
                     chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
