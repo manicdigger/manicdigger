@@ -569,7 +569,7 @@ namespace GameModeFortress
             server.chunksize = 32;
 
             map.heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, map = map };
-            map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
+            map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();
@@ -586,7 +586,7 @@ namespace GameModeFortress
             server.water = new WaterFinite() { data = server.data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             server.Start();
-            if ((Public) && (server.cfgpublic))
+            if ((Public) && (server.config.Public))
             {
                 new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             }

@@ -27,7 +27,7 @@ namespace ManicDiggerServer
             map.generator = generator;
 
             map.heightmap = new InfiniteMapChunked2d() { chunksize = 32, map = map };
-            map.Reset(server.cfgmapsizex, server.cfgmapsizey, server.cfgmapsizez);
+            map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
             server.data = new GameDataTilesManicDigger();
@@ -55,7 +55,7 @@ namespace ManicDiggerServer
                     server, generator, map);
             }
             server.Start();
-            if ((!singleplayer) && (server.cfgpublic))
+            if ((!singleplayer) && (server.config.Public))
             {
                 new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             }

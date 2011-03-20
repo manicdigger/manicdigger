@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +12,7 @@ using ManicDigger;
 using ManicDigger.MapTools;
 using OpenTK;
 using ProtoBuf;
+using System.Xml.Serialization;
 
 namespace ManicDiggerServer
 {
@@ -82,9 +83,9 @@ namespace ManicDiggerServer
             }
             if (LocalConnectionsOnly)
             {
-                cfgport = singleplayerport;
+                config.Port = singleplayerport;
             }
-            Start(cfgport);
+            Start(config.Port);
         }
         int Seed;
         private void LoadGame(string filename)
@@ -173,7 +174,7 @@ namespace ManicDiggerServer
             }
         }
         DateTime lastsave = DateTime.Now;
-        //Todo xml serialization
+
         public void LoadConfig()
         {
             string filename = "ServerConfig.xml";
@@ -183,43 +184,54 @@ namespace ManicDiggerServer
                 SaveConfig();
                 return;
             }
-            using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
+            try
             {
-                StreamReader sr = new StreamReader(s);
-                XmlDocument d = new XmlDocument();
-                d.Load(sr);
-                int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/FormatVersion"));
-                cfgname = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
-                cfgmotd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
-                cfgport = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
-                string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
-                if (maxclients != null)
+                using (TextReader textReader = new StreamReader(Path.Combine(gamepathconfig, filename)))
                 {
-                    cfgmaxclients = int.Parse(maxclients);
+                    XmlSerializer deserializer = new XmlSerializer(typeof(ServerConfig));
+                    config = (ServerConfig)deserializer.Deserialize(textReader);
+                    textReader.Close();
                 }
-                string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
-                if (key != null)
+            }
+            catch //This if for the original format
+            {
+                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
                 {
-                    cfgkey = key;
+                    config = new ServerConfig();
+                    StreamReader sr = new StreamReader(s);
+                    XmlDocument d = new XmlDocument();
+                    d.Load(sr);
+                    int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/FormatVersion"));
+                    config.Name = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
+                    config.Motd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
+                    config.Port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
+                    string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
+                    if (maxclients != null)
+                    {
+                        config.MaxClients = int.Parse(maxclients);
+                    }
+                    string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
+                    if (key != null)
+                    {
+                        config.Key = key;
+                    }
+                    config.IsCreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
+                    config.Public = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
+                    config.BuildPassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildPassword");
+                    config.AdminPassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AdminPassword");
+                    if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
+                    {
+                        config.AllowFreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
+                    }
+                    if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
+                    {
+                        config.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
+                        config.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
+                        config.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
+                    }
                 }
-                else
-                {
-                    cfgkey = Guid.NewGuid().ToString();
-                    SaveConfig();
-                }
-                cfgcreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
-                cfgpublic = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-                cfgbuildpassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildPassword");
-                if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
-                {
-                    cfgallowfreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
-                }
-                if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
-                {
-                    cfgmapsizex = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
-                    cfgmapsizey = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
-                    cfgmapsizez = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
-                }
+                //Save with new version.
+                SaveConfig();
             }
             Console.WriteLine("Server configuration loaded.");
         }
@@ -235,42 +247,30 @@ namespace ManicDiggerServer
                     && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
             }
         }
-        public int cfgmapsizex = 10000;
-        public int cfgmapsizey = 10000;
-        public int cfgmapsizez = 128;
-        public bool cfgcreative = true;
-        public bool cfgallowfreemove = true;
-        //Todo xml serialization
+
+        public ServerConfig config;
+
         void SaveConfig()
         {
-            string s = "<ManicDiggerServerConfig>" + Environment.NewLine;
-            s += "  " + XmlTool.X("FormatVersion", "1") + Environment.NewLine;
-            s += "  " + XmlTool.X("Name", cfgname) + Environment.NewLine;
-            s += "  " + XmlTool.X("Motd", cfgmotd) + Environment.NewLine;
-            s += "  " + XmlTool.X("Port", cfgport.ToString()) + Environment.NewLine;
-            s += "  " + XmlTool.X("MaxClients", cfgmaxclients.ToString()) + Environment.NewLine;
-            s += "  " + XmlTool.X("Key", Guid.NewGuid().ToString()) + Environment.NewLine;
-            s += "  " + XmlTool.X("Creative", cfgcreative ? bool.TrueString : bool.FalseString) + Environment.NewLine;
-            s += "  " + XmlTool.X("AllowFreemove", cfgallowfreemove ? bool.TrueString : bool.FalseString) + Environment.NewLine;
-            s += "  " + XmlTool.X("Public", cfgpublic ? bool.TrueString : bool.FalseString) + Environment.NewLine;
-            s += "  " + XmlTool.X("BuildPassword", cfgbuildpassword) + Environment.NewLine;
-            s += "  " + XmlTool.X("MapSizeX", cfgmapsizex.ToString()) + Environment.NewLine;
-            s += "  " + XmlTool.X("MapSizeY", cfgmapsizey.ToString()) + Environment.NewLine;
-            s += "  " + XmlTool.X("MapSizeZ", cfgmapsizez.ToString()) + Environment.NewLine;
-            s += "</ManicDiggerServerConfig>";
+            //Verify that we have a directory to place the file into.
             if (!Directory.Exists(gamepathconfig))
             {
                 Directory.CreateDirectory(gamepathconfig);
             }
-            File.WriteAllText(Path.Combine(gamepathconfig, "ServerConfig.xml"), s);
+
+            XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
+            TextWriter textWriter = new StreamWriter(Path.Combine(gamepathconfig, "ServerConfig.xml"));
+
+            //Check to see if config has been initialized
+            if (config == null)
+                config = new ServerConfig();
+
+            //Serialize the ServerConfig class to XML
+            serializer.Serialize(textWriter, config);
+            textWriter.Close();
+
         }
-        string cfgname = "Manic Digger server";
-        string cfgmotd = "MOTD";
-        public int cfgport = 25565;
-        public int cfgmaxclients = 16;
-        string cfgkey;
-        public bool cfgpublic = true;
-        public string cfgbuildpassword;
+
         Socket main;
         IPEndPoint iep;
         string fListUrl = "http://fragmer.net/md/heartbeat.php";
@@ -278,14 +278,14 @@ namespace ManicDiggerServer
         {
             try
             {
-                if (cfgkey == null)
+                if (config.Key == null)
                 {
                     return;
                 }
                 StringWriter sw = new StringWriter();//&salt={4}
                 string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
-                    , System.Web.HttpUtility.UrlEncode(cfgname),
-                    cfgmaxclients, "true", cfgport, GameVersion.Version, cfgkey.Replace("-", ""));
+                    , System.Web.HttpUtility.UrlEncode(config.Name),
+                    config.MaxClients, "true", config.Port, GameVersion.Version, config.Key.Replace("-", ""));
 
                 List<string> playernames = new List<string>();
                 lock (clients)
@@ -297,7 +297,7 @@ namespace ManicDiggerServer
                 }
                 string requestString = staticData +
                                         "&users=" + clients.Count +
-                                        "&motd=" + System.Web.HttpUtility.UrlEncode(cfgmotd) +
+                                        "&motd=" + System.Web.HttpUtility.UrlEncode(config.Motd) +
                                         "&gamemode=Fortress" +
                                         "&players=" + string.Join(",", playernames.ToArray());
 
@@ -421,7 +421,7 @@ namespace ManicDiggerServer
                 {
                     INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
                 };
-                if (clients.Count > cfgmaxclients)
+                if (clients.Count > config.MaxClients)
                 {
                     SendDisconnectPlayer(lastclient - 1, "Too many players! Try to connect later.");
                     KillPlayer(lastclient - 1);
@@ -992,7 +992,7 @@ namespace ManicDiggerServer
             if (c.IsInventoryDirty && c.playername != invalidplayername)
             {
                 PacketServerFiniteInventory p;
-                if (cfgcreative)
+                if (config.IsCreative)
                 {
                     p = new PacketServerFiniteInventory()
                     {
@@ -1192,7 +1192,7 @@ namespace ManicDiggerServer
                     int x = packet.SetBlock.X;
                     int y = packet.SetBlock.Y;
                     int z = packet.SetBlock.Z;
-                    if ((!string.IsNullOrEmpty(cfgbuildpassword))
+                    if ((!string.IsNullOrEmpty(config.BuildPassword))
                         && (!clients[clientid].CanBuild))
                     {
                         if (y > map.MapSizeY / 2)
@@ -1270,19 +1270,19 @@ namespace ManicDiggerServer
                             {
                                 k.Value.CanBuild = true;
                                 SendMessageToAll(colorSuccess + k.Value.playername + " can now build.");
-                                SendMessage(k.Key, colorSuccess + "To build, type /login " + cfgbuildpassword);
+                                SendMessage(k.Key, colorSuccess + "To build, type /login " + config.BuildPassword);
                             }
                         }
                         break;
                     }
                     else if (packet.Message.Message.StartsWith("/login"))
                     {
-                        if (string.IsNullOrEmpty(cfgbuildpassword))
+                        if (string.IsNullOrEmpty(config.BuildPassword))
                         {
                             break;
                         }
                         if (packet.Message.Message.Replace("/login ", "")
-                            .Equals(cfgbuildpassword, StringComparison.InvariantCultureIgnoreCase))
+                            .Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
                         {
                             clients[clientid].CanBuild = true;
                             SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
@@ -1292,11 +1292,56 @@ namespace ManicDiggerServer
                             SendMessage(clientid, colorError + "Invalid password.");
                         }
                     }
+                    else if (packet.Message.Message.StartsWith("/admin"))
+                    {
+                        if (string.IsNullOrEmpty(config.AdminPassword))
+                        {
+                            break;
+                        }
+                        if (packet.Message.Message.Replace("/admin ", "")
+                            .Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            clients[clientid].IsAdmin = true;
+                            clients[clientid].CanBuild = true;
+                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
+                            SendMessage(clientid, "Type /help to see additional commands for administrators.");
+                        }
+                        else
+                        {
+                            SendMessage(clientid, colorError + "Invalid password.");
+                        }
+                    }
+                    else if (packet.Message.Message.StartsWith("/kick"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot kick other players.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            foreach (var k in clients)
+                            {
+                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    SendDisconnectPlayer(clientid, "You were kicked by an administrator.");
+                                    //k.Value.socket.Disconnect(true); //Is this needed?
+                                    SendMessageToAll(colorError + k.Value.playername + " was kicked by" + clients[clientid].playername);
+                                }
+                            }
+                            break;
+                        }
+                    }
                     else if (packet.Message.Message.StartsWith("/help"))
                     {
-                        SendMessage(clientid, colorHelp + "/login [serverpassword]");
+                        SendMessage(clientid, colorHelp + "/login [buildpassword]");
+                        SendMessage(clientid, colorHelp + "/admin [adminpassword]");
                         SendMessage(clientid, colorHelp + "/op [username]");
                         SendMessage(clientid, colorHelp + "/msg [username] text");
+                        if (clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, colorHelp + "/kick [username]");
+                        }
                     }
                     else if (packet.Message.Message.StartsWith("."))
                     {
@@ -1347,7 +1392,7 @@ namespace ManicDiggerServer
                 SendSetBlock(k.Key, x, y, z, blocktype);
             }
         }
-        bool ENABLE_FINITEINVENTORY { get { return !cfgcreative; } }
+        bool ENABLE_FINITEINVENTORY { get { return !config.IsCreative; } }
         private bool DoCommandCraft(bool execute, PacketClientCraft cmd)
         {
             if (map.GetBlock(cmd.X, cmd.Y, cmd.Z) != (int)TileTypeManicDigger.CraftingTable)
@@ -1823,11 +1868,11 @@ namespace ManicDiggerServer
             PacketServerIdentification p = new PacketServerIdentification()
             {
                 MdProtocolVersion = GameVersion.Version,
-                ServerName = cfgname,
-                ServerMotd = cfgmotd,
+                ServerName = config.Name,
+                ServerMotd = config.Motd,
                 UsedBlobsMd5 = UsedBlobs(),
                 TerrainTextureMd5 = GetTerrainTextureMd5(),
-                DisallowFreemove = !cfgallowfreemove,
+                DisallowFreemove = !config.AllowFreemove,
                 MapSizeX = map.MapSizeX,
                 MapSizeY = map.MapSizeY,
                 MapSizeZ = map.MapSizeZ,
@@ -1881,7 +1926,8 @@ namespace ManicDiggerServer
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public List<byte[]> blobstosend = new List<byte[]>();
-            public bool CanBuild;
+            public bool CanBuild = false;
+            public bool IsAdmin = false; //Does this user have the server password and can ban users?
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
