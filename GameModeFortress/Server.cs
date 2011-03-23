@@ -1354,10 +1354,13 @@ namespace ManicDiggerServer
                             {
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
+                                    string targetName = k.Value.playername;
+                                    string sourcename = clients[clientid].playername;
                                     SendDisconnectPlayer(k.Key, "You were kicked by an administrator.");
                                     KillPlayer(k.Key);
 
-                                    SendMessageToAll(colorError + k.Value.playername + " was kicked by " + clients[clientid].playername);
+                                    SendMessageToAll(colorError + targetName + " was kicked by " + sourcename);
+                                    break;
                                 }
                             }
                             break;
@@ -1377,12 +1380,15 @@ namespace ManicDiggerServer
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     //TODO: Confirm player is not a guest account.
+                                    string targetName = k.Value.playername;
+                                    string sourcename = clients[clientid].playername;
                                     config.BannedUsers.Add(k.Value.playername);
                                     SaveConfig();
-                                    SendMessageToAll(colorError + k.Value.playername + " was banned by " + clients[clientid].playername);
+                                    SendMessageToAll(colorError + targetName + " was banned by " + sourcename);
 
                                     SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
                                     KillPlayer(k.Key);
+                                    break;
                                 }
                             }
                             break;
@@ -1401,6 +1407,8 @@ namespace ManicDiggerServer
                             {
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
+                                    string targetName = k.Value.playername;
+                                    string sourcename = clients[clientid].playername;
                                     config.BannedIPs.Add(((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
                                     SaveConfig();
 
@@ -1409,7 +1417,7 @@ namespace ManicDiggerServer
 
                                     KillPlayer(k.Key);
 
-                                    SendMessageToAll(colorError + k.Value.playername + " was banned by" + clients[clientid].playername);
+                                    SendMessageToAll(colorError + targetName + " was banned by " + sourcename);
                                 }
                             }
                             break;
