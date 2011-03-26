@@ -113,7 +113,7 @@ namespace GameModeFortress
         IGameExit exit = new GameExitDummy();
         private void MakeGame(bool singleplayer)
         {
-            var gamedata = new GameDataTilesManicDigger();
+            var gamedata = new GameDataManicDigger();
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
@@ -572,7 +572,7 @@ namespace GameModeFortress
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
-            server.data = new GameDataTilesManicDigger();
+            server.data = new GameDataManicDigger();
             server.craftingtabletool = new CraftingTableTool() { map = map };
             server.LocalConnectionsOnly = !Public;
             server.getfile = new GetFilePath(new[] { "mine", "minecraft" });

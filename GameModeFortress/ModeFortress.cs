@@ -98,7 +98,7 @@ namespace GameModeFortress
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
             int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
-            int railstart = GameDataTilesManicDigger.railstart;
+            int railstart = GameDataManicDigger.railstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
             {

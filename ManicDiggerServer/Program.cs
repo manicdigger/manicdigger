@@ -30,7 +30,7 @@ namespace ManicDiggerServer
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
-            server.data = new GameDataTilesManicDigger();
+            server.data = new GameDataManicDigger();
             map.data = server.data;
             server.craftingtabletool = new CraftingTableTool() { map = map };
             bool singleplayer = false;

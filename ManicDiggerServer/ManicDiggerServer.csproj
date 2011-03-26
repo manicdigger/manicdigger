@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -60,10 +60,6 @@
     <ProjectReference Include="..\GameModeFortress\GameModeFortress.csproj">
       <Project>{650BC108-C744-4DA1-AEFD-CD8F011483B3}</Project>
       <Name>GameModeFortress</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\GameModeMine\GameModeMine.csproj">
-      <Project>{DC97B0FF-28D8-44AC-B218-6A3F72CF1683}</Project>
-      <Name>GameModeMine</Name>
     </ProjectReference>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>

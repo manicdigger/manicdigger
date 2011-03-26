@@ -16,11 +16,11 @@ namespace GameModeFortress
     {
         int CurrentSeason { get; }
     }
-    public class GameDataTilesManicDigger : IGameData
+    public class GameDataManicDigger : IGameData
     {
         public ICurrentSeason CurrentSeason { get; set; }
-        public GameDataTilesMinecraft data = new GameDataTilesMinecraft();
-        public GameDataTilesManicDigger()
+        public GameDataMinecraft data = new GameDataMinecraft();
+        public GameDataManicDigger()
         {
             datanew[(int)TileTypeManicDigger.BrushedMetal] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 0 };
             datanew[(int)TileTypeManicDigger.ChemicalGreen] = new TileTypeData() { Buildable = true, AllTextures = (5 * 16) + 1 };

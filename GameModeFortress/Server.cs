@@ -1474,24 +1474,24 @@ namespace ManicDiggerServer
                 {
                     int oldblock = map.GetBlock(cmd.X, cmd.Y, cmd.Z);
                     int blockstoput = 1;
-                    if (GameDataTilesManicDigger.IsRailTile(cmd.BlockType))
+                    if (GameDataManicDigger.IsRailTile(cmd.BlockType))
                     {
                         if (!(oldblock == data.TileIdEmpty
-                            || GameDataTilesManicDigger.IsRailTile(oldblock)))
+                            || GameDataManicDigger.IsRailTile(oldblock)))
                         {
                             return false;
                         }
                         //count how many rails will be created
                         int oldrailcount = 0;
-                        if (GameDataTilesManicDigger.IsRailTile(oldblock))
+                        if (GameDataManicDigger.IsRailTile(oldblock))
                         {
                             oldrailcount = MyLinq.Count(
                                 DirectionUtils.ToRailDirections(
-                                (RailDirectionFlags)(oldblock - GameDataTilesManicDigger.railstart)));
+                                (RailDirectionFlags)(oldblock - GameDataManicDigger.railstart)));
                         }
                         int newrailcount = MyLinq.Count(
                             DirectionUtils.ToRailDirections(
-                            (RailDirectionFlags)(cmd.BlockType - GameDataTilesManicDigger.railstart)));
+                            (RailDirectionFlags)(cmd.BlockType - GameDataManicDigger.railstart)));
                         blockstoput = newrailcount - oldrailcount;
                         //check if player has that many rails
                         int inventoryrail = GetEquivalentCount(inventory, cmd.BlockType);
@@ -1542,11 +1542,11 @@ namespace ManicDiggerServer
                         return false;
                     }
                     int blockstopick = 1;
-                    if (GameDataTilesManicDigger.IsRailTile(blocktype))
+                    if (GameDataManicDigger.IsRailTile(blocktype))
                     {
                         blockstopick = MyLinq.Count(
                             DirectionUtils.ToRailDirections(
-                            (RailDirectionFlags)(blocktype - GameDataTilesManicDigger.railstart)));
+                            (RailDirectionFlags)(blocktype - GameDataManicDigger.railstart)));
                     }
                     if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
                     {
@@ -1625,7 +1625,7 @@ namespace ManicDiggerServer
         }
         bool EquivalentBlock(int blocktypea, int blocktypeb)
         {
-            if (GameDataTilesManicDigger.IsRailTile(blocktypea) && GameDataTilesManicDigger.IsRailTile(blocktypeb))
+            if (GameDataManicDigger.IsRailTile(blocktypea) && GameDataManicDigger.IsRailTile(blocktypeb))
             {
                 return true;
             }
