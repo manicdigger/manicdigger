@@ -426,6 +426,11 @@ namespace ManicDiggerServer
                     SendDisconnectPlayer(lastclient - 1, "Too many players! Try to connect later.");
                     KillPlayer(lastclient - 1);
                 }
+                else if (config.IsIPBanned(iep1.Address.ToString()))
+                {
+                    SendDisconnectPlayer(lastclient - 1, "Your IP has been banned from this server.");
+                    KillPlayer(lastclient - 1);
+                }
             }
             ArrayList copyList = new ArrayList();
             foreach (var k in clients)
@@ -1096,6 +1101,13 @@ namespace ManicDiggerServer
                 case ClientPacketId.PlayerIdentification:
                     SendServerIdentification(clientid);
                     string username = packet.Identification.Username;
+
+                    if (config.IsUserBanned(username))
+                    {
+                        SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                        KillPlayer(clientid);                        
+                    }
+
                     foreach (var k in clients)
                     {
                         if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
@@ -1342,10 +1354,79 @@ namespace ManicDiggerServer
                             {
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
-                                    SendDisconnectPlayer(clientid, "You were kicked by an administrator.");
-                                    //k.Value.socket.Disconnect(true); //Is this needed?
-                                    SendMessageToAll(colorError + k.Value.playername + " was kicked by" + clients[clientid].playername);
+                                    SendDisconnectPlayer(k.Key, "You were kicked by an administrator.");
+                                    KillPlayer(k.Key);
+
+                                    SendMessageToAll(colorError + k.Value.playername + " was kicked by " + clients[clientid].playername);
                                 }
+                            }
+                            break;
+                        }
+                    }
+                    else if (packet.Message.Message.StartsWith("/ban "))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            foreach (var k in clients)
+                            {
+                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    //TODO: Confirm player is not a guest account.
+                                    config.BannedUsers.Add(k.Value.playername);
+                                    SaveConfig();
+                                    SendMessageToAll(colorError + k.Value.playername + " was banned by " + clients[clientid].playername);
+
+                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
+                                    KillPlayer(k.Key);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    else if (packet.Message.Message.StartsWith("/banip"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            foreach (var k in clients)
+                            {
+                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    config.BannedIPs.Add(((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
+                                    SaveConfig();
+
+                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
+                                    k.Value.socket.Disconnect(true);
+
+                                    KillPlayer(k.Key);
+
+                                    SendMessageToAll(colorError + k.Value.playername + " was banned by" + clients[clientid].playername);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    else if (packet.Message.Message.StartsWith("/list"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                        }
+                        else
+                        {
+                            SendMessage(clientid, colorHelp + "List of Players:");
+                            foreach (var k in clients)
+                            {
+                                SendMessage(clientid, k.Value.playername.ToString() + " " + ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
                             }
                             break;
                         }
@@ -1360,6 +1441,9 @@ namespace ManicDiggerServer
                         {
                             SendMessage(clientid, colorHelp + "/kick [username]");
                             SendMessage(clientid, colorHelp + "/welcome [login motd message]");
+                            SendMessage(clientid, colorHelp + "/ban [username]");
+                            SendMessage(clientid, colorHelp + "/banip [username]");
+                            SendMessage(clientid, colorHelp + "/list");
                         }
                     }
                     else if (packet.Message.Message.StartsWith("."))

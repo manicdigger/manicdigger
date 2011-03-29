@@ -21,7 +21,7 @@ namespace GameModeFortress
         public int MaxClients { get; set; }
         public string Key { get; set; }             //GUID to uniquely identify the server
         [XmlElement(ElementName="Creative")]
-        public bool IsCreative { get; set; }          //Is this a free build server?
+        public bool IsCreative { get; set; }        //Is this a free build server?
         public bool Public { get; set; }            //Advertise this server?
         [XmlElement(IsNullable = true)] //Forces element to appear -
         public string BuildPassword { get; set; }   //Password for Anti-Vandal building
@@ -31,7 +31,36 @@ namespace GameModeFortress
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
-        
+        [XmlArrayItem(ElementName = "User")]
+        public List<string> BannedUsers { get; set; }
+        [XmlArrayItem(ElementName = "IP")]
+        public List<string> BannedIPs { get; set; }
+
+        /// <summary>
+        /// Determines if an ip address has been banned
+        /// </summary>
+        /// <param name="ipAddress">Use toString() on IPAddress created by using getAddressBytes()</param>
+        /// <returns>True means that this address has been banned</returns>
+        public bool IsIPBanned(string ipAddress)
+        {
+            foreach (string bannedip in this.BannedIPs)
+            {
+                if(bannedip == ipAddress)
+                    return true;
+            }
+            return false;
+        }
+
+        public bool IsUserBanned(string username)
+        {
+            foreach (string banneduser in this.BannedUsers)
+            {
+                if (username.Equals(banneduser, StringComparison.InvariantCulture))
+                    return true;
+            }
+            return false;
+        }
+
         public ServerConfig()
         {
             //Set Defaults
@@ -44,12 +73,14 @@ namespace GameModeFortress
             this.Key = Guid.NewGuid().ToString();
             this.IsCreative = true;
             this.Public = true;
-            this.BuildPassword = null;
-            this.AdminPassword = null;
+            this.BuildPassword = "";
+            this.AdminPassword = "";
             this.AllowFreemove = true;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;
             this.MapSizeZ = 128;
+            this.BannedIPs = new List<string>();
+            this.BannedUsers = new List<string>();
         }
     }
 }
