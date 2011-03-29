@@ -45,7 +45,7 @@ namespace ManicDigger
             if (data.IsWater[map.GetBlock(x, y, z)] &&
                 !data.IsWater[map.GetBlock(x, y, z + 1)]) { return true; }
             return map.GetBlock(x, y, z) == 0
-                || map.GetBlock(x, y, z) == data.BlockIdSingleStairs
+                || (map.GetBlock(x, y, z) == data.BlockIdSingleStairs && map.GetBlock(x, y, z+2) == 0 && map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
                 || (data.IsWater[map.GetBlock(x, y, z)] && (!swimmingtop))
                 || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
         }
@@ -238,11 +238,21 @@ namespace ManicDigger
                     }
                     else
                     {
-                        if (!newempty)
-                        {
-                            playerposition.Y += 0.5f;
-                            goto ok;
-                        }
+                        bool aboveempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
+					    && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
+						// if the new coord isnt passable stop the player from moving
+						if (aboveempty && !IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y)))
+						{
+							playerposition.Y += 0.5f;
+                        	goto ok;
+						}
+						if (!aboveempty)
+						{
+                        	reachedwall = true;
+                        	playerposition.Z = oldposition.Z;
+						}
+                        
+						
                     }
                 }
             }
@@ -264,11 +274,21 @@ namespace ManicDigger
                     }
                     else
                     {
-                        if (!newempty)
-                        {
-                            playerposition.Y += 0.5f;
-                            goto ok;
+                        bool aboveempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
+					    && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
+						// if the new coord isnt passable stop the player from moving
+						if (aboveempty && !IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y)))
+						{
+							playerposition.Y += 0.5f;
+                        	goto ok;
+						}
+						if (!aboveempty)
+						{
+                        	reachedwall = true;
+                        	playerposition.X = oldposition.X;
                         }
+                        
+						
                     }
                 }
             }
@@ -309,11 +329,21 @@ namespace ManicDigger
                     }
                     else
                     {
-                        if (!newempty)
-                        {
-                            playerposition.Y += 0.5f;
-                            goto ok;
+                        bool aboveempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
+					    && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
+						// if the new coord isnt passable stop the player from moving
+						if (aboveempty && !IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y)))
+						{
+							playerposition.Y += 0.5f;
+                        	goto ok;
+						}
+						if (!aboveempty)
+						{
+                        	reachedwall = true;
+                        	playerposition.Z = oldposition.Z;
                         }
+                        
+						
                     }
                 }
             }
@@ -334,11 +364,21 @@ namespace ManicDigger
                     }
                     else
                     {
-                        if (!newempty)
-                        {
-                            playerposition.Y += 0.5f;
-                            goto ok;
-                        }
+                        bool aboveempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1)
+					    && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 2);
+						// if the new coord isnt passable stop the player from moving
+						if (aboveempty && !IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y)))
+						{
+							playerposition.Y += 0.5f;
+                        	goto ok;
+						}
+						if (!aboveempty)
+						{
+                        	reachedwall = true;
+                        	playerposition.X = oldposition.X;
+						}
+                        
+						
                     }
                 }
             }
@@ -363,6 +403,7 @@ namespace ManicDigger
             {
                 isonstairs = map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == data.BlockIdSingleStairs;
             }
+			
             if (isonstairs)
             {
                 playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
