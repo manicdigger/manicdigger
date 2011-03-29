@@ -1132,6 +1132,7 @@ namespace ManicDiggerServer
                     ChunkSimulation();
                     string username1 = clients[clientid].playername;
                     SendMessageToAll(string.Format("Player {0} joins.", username1));
+                    SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                     SendLevel(clientid);
 
                     //.players.Players[clientid] = new Player() { Name = username };
@@ -1311,6 +1312,23 @@ namespace ManicDiggerServer
                             SendMessage(clientid, colorError + "Invalid password.");
                         }
                     }
+                   
+                    else if (packet.Message.Message.StartsWith("/welcome"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot change the Welcome Message.");
+                        }
+                        else
+                        {
+                            //Monaiz
+                            int messageStart = packet.Message.Message.IndexOf(" ");
+                            config.WelcomeMessage = packet.Message.Message.Substring(messageStart);
+                            SendMessageToAll("New Welcome Message Set: " + colorSuccess + config.WelcomeMessage); 
+                            SaveConfig();
+                            break;
+                        }
+                    }
                     else if (packet.Message.Message.StartsWith("/kick"))
                     {
                         if (!clients[clientid].IsAdmin)
@@ -1341,6 +1359,7 @@ namespace ManicDiggerServer
                         if (clients[clientid].IsAdmin)
                         {
                             SendMessage(clientid, colorHelp + "/kick [username]");
+                            SendMessage(clientid, colorHelp + "/welcome [login motd message]");
                         }
                     }
                     else if (packet.Message.Message.StartsWith("."))

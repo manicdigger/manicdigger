@@ -16,6 +16,7 @@ namespace GameModeFortress
         public int Format { get; set; }             //XML Format Version Number
         public string Name { get; set; }
         public string Motd { get; set; }            //Message of the day
+        public string WelcomeMessage { get; set; }  //Displays when the user logs in.
         public int Port { get; set; }               //Port the server runs on
         public int MaxClients { get; set; }
         public string Key { get; set; }             //GUID to uniquely identify the server
@@ -37,6 +38,7 @@ namespace GameModeFortress
             this.Format = 1;
             this.Name = "Manic Digger server";
             this.Motd = "MOTD";
+            this.WelcomeMessage = "Welcome to my Manic Digger server!"; //This is just the default when nothing has been set.
             this.Port = 25565;
             this.MaxClients = 16;
             this.Key = Guid.NewGuid().ToString();
