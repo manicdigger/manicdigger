@@ -33,6 +33,9 @@ namespace ManicDigger
         float[] WalkSpeed { get; }
         bool[] IsSlipperyWalk { get; }
         string[][] WalkSound { get; }
+        string[][] BreakSound { get; }
+        string[][] BuildSound { get; }
+        string[][] CloneSound { get; }
         int[] DefaultMaterialSlots { get; }
 
         //Special blocks
@@ -81,6 +84,9 @@ namespace ManicDigger
             mWalkSpeed = new float[count];
             mIsSlipperyWalk = new bool[count];
             mWalkSound = new string[count][];
+            mBreakSound = new string[count][];
+            mBuildSound = new string[count][];
+            mCloneSound = new string[count][];
             mLightRadius = new int[count];
             mDefaultMaterialSlots = new int[10];
         }
@@ -105,6 +111,9 @@ namespace ManicDigger
         public float[] WalkSpeed { get { return mWalkSpeed; } }
         public bool[] IsSlipperyWalk { get { return mIsSlipperyWalk; } }
         public string[][] WalkSound { get { return mWalkSound; } }
+        public string[][] BreakSound { get { return mBreakSound; ; } }
+        public string[][] BuildSound { get { return mBuildSound; } }
+        public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
 
@@ -135,6 +144,9 @@ namespace ManicDigger
         private float[] mWalkSpeed;
         private bool[] mIsSlipperyWalk;
         private string[][] mWalkSound;
+        private string[][] mBreakSound;
+        private string[][] mBuildSound;
+        private string[][] mCloneSound;
         private int[] mLightRadius;
         private int[] mDefaultMaterialSlots;
     }
@@ -193,22 +205,29 @@ namespace ManicDigger
                 mWalkSpeed[id] = (float)intParse(Get(block, "WalkSpeed"));
                 mIsTransparentForLight[id] = BoolParse(block[Column("IsTransparentForLight").Value]);
                 mIsSlipperyWalk[id] = BoolParse(block[Column("IsSlipperyWalk").Value]);
-                mWalkSound[id] = Get(block, "WalkSound").Split(new char[] { ' ' });
-                if (mWalkSound[id].Length == 1 && mWalkSound[id][0].Length == 0)
-                {
-                    mWalkSound[id] = new string[0];
-                }
-                for (int k = 0; k < mWalkSound[id].Length; k++)
-                {
-                    if (!mWalkSound[id][k].Contains("."))
-                    {
-                        mWalkSound[id][k] += ".wav";
-                    }
-                }
+                LoadSound(mWalkSound, "WalkSound", block, id);
+                LoadSound(mBreakSound, "BreakSound", block, id);
+                LoadSound(mBuildSound, "BuildSound", block, id);
+                LoadSound(mCloneSound, "CloneSound", block, id);
                 mIsWater[id] = BoolParse(block[Column("IsFluid").Value]);
                 mIsTransparent[id] = BoolParse(block[Column("IsTransparent").Value]);
                 mIsTransparentFully[id] = BoolParse(block[Column("IsTransparentFully").Value]);
                 mIsEmptyForPhysics[id] = BoolParse(block[Column("IsEmptyForPhysics").Value]);
+            }
+        }
+        private void LoadSound(string[][] t, string s, string[] block, int id)
+        {
+            t[id] = Get(block, s).Split(new char[] { ' ' });
+            if (t[id].Length == 1 && t[id][0].Length == 0)
+            {
+                t[id] = new string[0];
+            }
+            for (int k = 0; k < t[id].Length; k++)
+            {
+                if (!t[id][k].Contains("."))
+                {
+                    t[id][k] += ".wav";
+                }
             }
         }
         private string[][] LoadCsv(string[] csv)
@@ -280,6 +299,21 @@ namespace ManicDigger
             {
                 mWalkSound[i] = new string[0];
             }
+            mBreakSound = new string[count][];
+            for (int i = 0; i < count; i++)
+            {
+                mBreakSound[i] = new string[0];
+            }
+            mBuildSound = new string[count][];
+            for (int i = 0; i < count; i++)
+            {
+                mBuildSound[i] = new string[0];
+            }
+            mCloneSound = new string[count][];
+            for (int i = 0; i < count; i++)
+            {
+                mCloneSound[i] = new string[0];
+            }
             mLightRadius = new int[count];
             mDefaultMaterialSlots = new int[10];
             mIsValid[0] = true;
@@ -302,6 +336,9 @@ namespace ManicDigger
         public float[] WalkSpeed { get { return mWalkSpeed; } }
         public bool[] IsSlipperyWalk { get { return mIsSlipperyWalk; } }
         public string[][] WalkSound { get { return mWalkSound; } }
+        public string[][] BreakSound { get { return mBreakSound; } }
+        public string[][] BuildSound { get { return mBuildSound; } }
+        public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
 
@@ -333,6 +370,9 @@ namespace ManicDigger
         private float[] mWalkSpeed;
         private bool[] mIsSlipperyWalk;
         private string[][] mWalkSound;
+        private string[][] mBreakSound;
+        private string[][] mBuildSound;
+        private string[][] mCloneSound;
         private int[] mLightRadius;
         private int[] mDefaultMaterialSlots;
 

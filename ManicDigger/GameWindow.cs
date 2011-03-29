@@ -709,10 +709,6 @@ namespace ManicDigger
             exit.exit = true;
             //..base.OnClosed(e);
         }
-        string soundbuild = "build.wav";
-        string sounddestruct = "destruct.wav";
-        string soundclone = "clone.wav";
-        //ISoundPlayer soundplayer = new SoundPlayerDummy();
         void ClientCommand(string s)
         {
             if (s == "")
@@ -2060,18 +2056,18 @@ namespace ManicDigger
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                            clonesource = (int)data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
+                            int clonesource2 = (int)data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
                             for (int i = 0; i < materialSlots.Length; i++)
                             {
-                                if ((int)materialSlots[i] == clonesource)
+                                if ((int)materialSlots[i] == clonesource2)
                                 {
                                     activematerial = i;
                                     goto done;
                                 }
                             }
-                            materialSlots[activematerial] = clonesource;
+                            materialSlots[activematerial] = clonesource2;
                         done:
-                            audio.Play(soundclone);
+                            audio.Play(data.CloneSound[clonesource][0]); //todo sound cycle
                         }
                     }
                     if (left || right)
@@ -2084,7 +2080,10 @@ namespace ManicDigger
                             Console.WriteLine(". newtile:" + newtile + " type: " + map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
                             if (pick0.pos != new Vector3(-1, -1, -1))
                             {
-                                audio.Play(left ? sounddestruct : soundbuild);
+                                int blocktype;
+                                if (left) { blocktype = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
+                                else { blocktype = materialSlots[activematerial]; }
+                                audio.Play(left ? data.BreakSound[blocktype][0] : data.BuildSound[blocktype][0]); //todo sound cycle
                             }
                             if (!right)
                             {
