@@ -77,11 +77,11 @@ namespace ManicDigger.Renderers
                 return;
             }
             int tiletype = map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
-            if (!data.IsValidTileType(tiletype))
+            if (!data.IsValid[tiletype])
             {
                 return;
             }
-            p.textureid = data.GetTileTextureId(tiletype, TileSide.Top);
+            p.textureid = data.TextureId[tiletype, (int)TileSide.Top];
             for (int i = 0; i < particlecount; i++)
             {
                 Particle pp = new Particle();

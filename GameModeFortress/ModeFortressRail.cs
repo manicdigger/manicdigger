@@ -91,8 +91,8 @@ namespace GameModeFortress
                 }
                 else
                 {
-                    var railunderplayer = data.GetRail(
-                        map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z));
+                    var railunderplayer = data.Rail[
+                        map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
                     viewport.CharacterHeight = minecartheight;
                     currentvehiclespeed = 0;
@@ -271,8 +271,8 @@ namespace GameModeFortress
             VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
             if (MapUtil.IsValidPos(map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
-                RailDirectionFlags newpositionrail = data.GetRail(
-                    map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z));
+                RailDirectionFlags newpositionrail = data.Rail[
+                    map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
                 List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
                 foreach (var z in DirectionUtils.PossibleNewRails(enter.EnterDirection))
                 {

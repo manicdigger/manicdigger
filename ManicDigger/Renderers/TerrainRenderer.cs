@@ -164,13 +164,13 @@ namespace ManicDigger
         public RailSlope GetRailSlope(int x, int y, int z)
         {
             int tiletype = mapstorage.GetTerrainBlock(x, y, z);
-            RailDirectionFlags rail = data.GetRail(tiletype);
+            RailDirectionFlags rail = data.Rail[tiletype];
             int blocknear;
             if (x < mapstorage.MapSizeX - 1)
             {
                 blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
                 if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                     blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
                     return RailSlope.TwoRightRaised;
                 }
@@ -179,7 +179,7 @@ namespace ManicDigger
             {
                 blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
                 if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                     blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
                     return RailSlope.TwoLeftRaised;
 
@@ -189,7 +189,7 @@ namespace ManicDigger
             {
                 blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
                 if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
                     return RailSlope.TwoUpRaised;
                 }
@@ -198,7 +198,7 @@ namespace ManicDigger
             {
                 blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
                 if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != data.TileIdEmpty && data.GetRail(blocknear) == RailDirectionFlags.None)
+                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
                     return RailSlope.TwoDownRaised;
                 }
@@ -640,7 +640,7 @@ namespace ManicDigger
         public ITerrainRenderer terraindrawer;
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
-            int tiletype = data.TileIdTorch;
+            int tiletype = data.BlockIdTorch;
             Color curcolor = Color.White;
             float torchsizexy = 0.2f;
             float topx = 1f / 2f - torchsizexy / 2f;
@@ -665,7 +665,7 @@ namespace ManicDigger
             Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
             //top
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Top];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
@@ -681,7 +681,7 @@ namespace ManicDigger
             }
             //bottom - same as top, but z is 1 less.
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Bottom];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
@@ -697,7 +697,7 @@ namespace ManicDigger
             }
             //front
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Front];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -713,7 +713,7 @@ namespace ManicDigger
             }
             //back - same as front, but x is 1 greater.
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Back];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -728,7 +728,7 @@ namespace ManicDigger
                 myelements.Add((ushort)(lastelement + 2));
             }
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Left];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -744,7 +744,7 @@ namespace ManicDigger
             }
             //right - same as left, but y is 1 greater.
             {
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Right];
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));

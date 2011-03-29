@@ -62,7 +62,7 @@ namespace ManicDigger
         {
             if (mode == BlockSetMode.Destroy)
             {
-                type = Data.TileIdEmpty;
+                type = 0;
             }
             //block update not needed - client does speculative block update.
             //Map1.SetTileAndUpdate(position, (byte)type);
@@ -105,12 +105,12 @@ namespace ManicDigger
                         {
                             for (int k = 1; k < Map.MapSizeZ / 2 - 1; k++)
                             {
-                                if (!hollow) Map.SetBlock(i, j, k, Data.TileIdDirt);
+                                if (!hollow) Map.SetBlock(i, j, k, Data.BlockIdDirt);
                             }
-                            Map.SetBlock(i, j, Map.MapSizeZ / 2 - 1, Data.TileIdGrass);
+                            Map.SetBlock(i, j, Map.MapSizeZ / 2 - 1, Data.BlockIdGrass);
                             for (int k = Map.MapSizeZ / 2; k < Map.MapSizeZ; k++)
                             {
-                                if (!hollow) Map.SetBlock(i, j, k, Data.TileIdEmpty);
+                                if (!hollow) Map.SetBlock(i, j, k, 0);
                             }
                         }
                         if (i > Map.MapSizeX / 2 && !reportedProgress)

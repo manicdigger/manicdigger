@@ -24,7 +24,7 @@ namespace ManicDigger
         public int texturesPacked { get { return terrain.texturesPacked; } }
         public int GetWeaponTextureId(TileSide side)
         {
-            return data.GetTileTextureId(viewport.MaterialSlots[viewport.activematerial], side);
+            return data.TextureId[viewport.MaterialSlots[viewport.activematerial], (int)side];
         }
         public float Light
         {
@@ -43,7 +43,7 @@ namespace ManicDigger
                 return 1f / shadows.maxlight;
             }
         }
-        public bool IsTorch() { return viewport.MaterialSlots[viewport.activematerial] == data.TileIdTorch; }
+        public bool IsTorch() { return viewport.MaterialSlots[viewport.activematerial] == data.BlockIdTorch; }
     }
     public class WeaponRenderer
     {

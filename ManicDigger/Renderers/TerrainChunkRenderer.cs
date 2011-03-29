@@ -568,13 +568,13 @@ namespace ManicDigger
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (data.IsBlockFlower(tiletype))
+            if (data.IsFlower[tiletype])
             {
                 drawtop = 0;
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            RailDirectionFlags rail = data.GetRail(tiletype);
+            RailDirectionFlags rail = data.Rail[tiletype];
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
             if (rail != RailDirectionFlags.None)
             {
@@ -584,11 +584,11 @@ namespace ManicDigger
                 return;
                 */
             }
-            if (tt == data.TileIdSingleStairs)
+            if (tt == data.BlockIdSingleStairs)
             {
                 blockheight = 0.5f;
             }
-            if (tt == data.TileIdTorch)
+            if (tt == data.BlockIdTorch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -696,7 +696,7 @@ namespace ManicDigger
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Top);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Top];
                 int tilecount = drawtop;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -728,7 +728,7 @@ namespace ManicDigger
                         (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Bottom);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Bottom];
                 int tilecount = drawbottom;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -760,7 +760,7 @@ namespace ManicDigger
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Front);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Front];
                 int tilecount = drawfront;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -792,7 +792,7 @@ namespace ManicDigger
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Back);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Back];
                 int tilecount = drawback;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -824,7 +824,7 @@ namespace ManicDigger
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
 
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Left);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Left];
                 int tilecount = drawleft;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -857,7 +857,7 @@ namespace ManicDigger
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
 
-                int sidetexture = data.GetTileTextureId(tiletype, TileSide.Right);
+                int sidetexture = data.TextureId[tiletype, (int)TileSide.Right];
                 int tilecount = drawright;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -904,7 +904,7 @@ namespace ManicDigger
         {
             //fixes tree Z-fighting
             if (istransparent[currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)]]
-                && !data.IsTransparentTileFully(currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)])) { return 1; }
+                && !data.IsTransparentFully[currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
             if (dir == TileSide.Top || dir == TileSide.Bottom)
             {
                 int shadowz = dir == TileSide.Top ? 1 : -1;
@@ -1000,8 +1000,8 @@ namespace ManicDigger
         }
         private bool CanSupportTorch(byte blocktype)
         {
-            return blocktype != data.TileIdEmpty
-                && blocktype != data.TileIdTorch;
+            return blocktype != SpecialBlockId.Empty
+                && blocktype != data.BlockIdTorch;
         }
     }
 }

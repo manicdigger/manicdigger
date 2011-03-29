@@ -738,7 +738,7 @@ namespace ManicDiggerServer
             if (MapUtil.IsValidPos(map, pos.x, pos.y, pos.z + 1))
             {
                 int block2 = map.GetBlock(pos.x, pos.y, pos.z + 1);
-                if (data.GrassGrowsUnder(block2))
+                if (data.IsTransparentForLight[block2])
                 {
                     if (!IsShadow(pos.x, pos.y, pos.z))
                     {
@@ -846,7 +846,7 @@ namespace ManicDiggerServer
         {
             for (int i = 1; i < 10; i++)
             {
-                if (MapUtil.IsValidPos(map, x, y, z + i) && !data.GrassGrowsUnder(map.GetBlock(x, y, z + i)))
+                if (MapUtil.IsValidPos(map, x, y, z + i) && !data.IsTransparentForLight[map.GetBlock(x, y, z + i)])
                 {
                     return true;
                 }
@@ -1476,7 +1476,7 @@ namespace ManicDiggerServer
                     int blockstoput = 1;
                     if (GameDataManicDigger.IsRailTile(cmd.BlockType))
                     {
-                        if (!(oldblock == data.TileIdEmpty
+                        if (!(oldblock == SpecialBlockId.Empty
                             || GameDataManicDigger.IsRailTile(oldblock)))
                         {
                             return false;
@@ -1507,7 +1507,7 @@ namespace ManicDiggerServer
                     else
                     {
                         //todo when removing rail under minecart, make minecart block in place of removed rail.
-                        if (oldblock != data.TileIdEmpty)
+                        if (oldblock != SpecialBlockId.Empty)
                         {
                             return false;
                         }
@@ -1535,9 +1535,9 @@ namespace ManicDiggerServer
                 {
                     //add to inventory
                     int blocktype = map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                    blocktype = data.PlayerBuildableMaterialType(blocktype);
-                    if ((!data.IsValidTileType(blocktype))
-                        || blocktype == data.TileIdEmpty)
+                    blocktype = data.WhenPlayerPlacesGetsConvertedTo[blocktype];
+                    if ((!data.IsValid[blocktype])
+                        || blocktype == SpecialBlockId.Empty)
                     {
                         return false;
                     }
@@ -1569,7 +1569,7 @@ namespace ManicDiggerServer
             if (execute)
             {
                 int tiletype = cmd.Mode == (int)BlockSetMode.Create ?
-                    (byte)cmd.BlockType : data.TileIdEmpty;
+                    (byte)cmd.BlockType : SpecialBlockId.Empty;
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, tiletype);
             }
             return true;

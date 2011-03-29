@@ -1552,9 +1552,9 @@ namespace ManicDigger
             int? b = BlockUnderPlayer();
             if (b != null)
             {
-                return data.WalkSound(b.Value);
+                return data.WalkSound[b.Value];
             }
-            return data.WalkSound(data.TileIdEmpty);
+            return data.WalkSound[0];
         }
         bool IsInLeft(Vector3 player_yy, Vector3 tile_yy)
         {
@@ -1712,7 +1712,7 @@ namespace ManicDigger
             int? blockunderplayer = BlockUnderPlayer();
             {
                 //slippery walk on ice and when swimming
-                if ((blockunderplayer != null && data.IsSlipperyWalk(blockunderplayer.Value)) || Swimming)
+                if ((blockunderplayer != null && data.IsSlipperyWalk[blockunderplayer.Value]) || Swimming)
                 {
                     acceleration = new Acceleration()
                     {
@@ -1723,7 +1723,7 @@ namespace ManicDigger
                 }
             }
             float jumpstartacceleration = 2.1f * physics.gravity;
-            if (blockunderplayer != null && blockunderplayer == data.TileIdTrampoline
+            if (blockunderplayer != null && blockunderplayer == data.BlockIdTrampoline
                 && (!player.isplayeronground))
             {
                 wantsjump = true;
@@ -1807,7 +1807,7 @@ namespace ManicDigger
                 int? blockunderplayer = BlockUnderPlayer();
                 if (blockunderplayer != null)
                 {
-                    movespeednow *= data.BlockWalkSpeed(blockunderplayer.Value);
+                    movespeednow *= data.WalkSpeed[blockunderplayer.Value];
                 }
             }
             if (Keyboard[GetKey(OpenTK.Input.Key.ShiftLeft)])
@@ -1858,8 +1858,8 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || data.IsWaterTile(map.GetBlock(x, y, z));
+            return map.GetBlock(x, y, z) == SpecialBlockId.Empty
+                || data.IsWater[map.GetBlock(x, y, z)];
         }
 
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
@@ -1876,10 +1876,10 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || map.GetBlock(x, y, z) == data.TileIdSingleStairs
-                || data.IsWaterTile(map.GetBlock(x, y, z))
-                || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
+            return map.GetBlock(x, y, z) == SpecialBlockId.Empty
+                || map.GetBlock(x, y, z) == data.BlockIdSingleStairs
+                || data.IsWater[map.GetBlock(x, y, z)]
+                || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
         }
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
@@ -2060,7 +2060,7 @@ namespace ManicDigger
                         if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                            clonesource = (int)data.PlayerBuildableMaterialType((int)clonesource);
+                            clonesource = (int)data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
                             for (int i = 0; i < materialSlots.Length; i++)
                             {
                                 if ((int)materialSlots[i] == clonesource)
@@ -2117,11 +2117,11 @@ namespace ManicDigger
             {
                 return 1;
             }
-            if (data.GetRail(map.GetBlock(x, y, z)) != RailDirectionFlags.None)
+            if (data.Rail[map.GetBlock(x, y, z)] != RailDirectionFlags.None)
             {
                 return RailHeight;
             }
-            if (map.GetBlock(x, y, z) == data.TileIdSingleStairs)
+            if (map.GetBlock(x, y, z) == data.BlockIdSingleStairs)
             {
                 return 0.5f;
             }
@@ -2711,9 +2711,9 @@ namespace ManicDigger
             if (MapUtil.IsValidPos(map, x, y, z))
             {
                 var blocktype = map.GetBlock(x, y, z);
-                if (data.IsValidTileType(blocktype))
+                if (data.IsValid[blocktype])
                 {
-                    info = data.BlockName(blocktype);
+                    info = data.Name[blocktype];
                 }
             }
             the3d.Draw2dText(info, Width * 0.5f - the3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
@@ -2815,7 +2815,7 @@ namespace ManicDigger
                 int x = xcenter(singlesize * 10) + i * singlesize;
                 int y = Height - 100;
                 the3d.Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
-                        data.GetTileTextureIdForInventory((int)materialSlots[i]));
+                        data.TextureIdForInventory[(int)materialSlots[i]]);
 
                 if (ENABLE_FINITEINVENTORY)
                 {
@@ -3088,7 +3088,7 @@ namespace ManicDigger
                 {
                     return p.Y < map.WaterLevel;
                 }
-                return data.IsWaterTile(map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
+                return data.IsWater[map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
         #endregion

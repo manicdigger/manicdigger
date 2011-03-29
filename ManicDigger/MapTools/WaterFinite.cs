@@ -31,7 +31,7 @@ namespace ManicDigger.MapTools
                 {
                     for (int zz = z - spongerange; zz <= z + spongerange; zz++)
                     {
-                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdSponge)
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.BlockIdSponge)
                         {
                             return true;
                         }
@@ -45,7 +45,7 @@ namespace ManicDigger.MapTools
             this.flooded = new Dictionary<Vector3, Vector3>();
             this.map = map;
             //sponge just built.
-            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == data.TileIdSponge)
+            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == data.BlockIdSponge)
             {
                 for (int xx = x - spongerange; xx <= x + spongerange; xx++)
                 {
@@ -68,7 +68,7 @@ namespace ManicDigger.MapTools
                 {
                     for (int zz = z - spongerange; zz <= z + spongerange; zz++)
                     {
-                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdEmpty)
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == SpecialBlockId.Empty)
                         {
                             BlockChangeFlood(map, xx, yy, zz);
                         }
@@ -157,7 +157,7 @@ namespace ManicDigger.MapTools
                     //already higher water level
                     continue;
                 }
-                if (type == data.TileIdEmpty && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
+                if (type == SpecialBlockId.Empty && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
                 {
                     tosetwater.Add(new ToSet() { pos = vv, level = nextlevel });
                     toflood[vv] = vv;
@@ -166,10 +166,11 @@ namespace ManicDigger.MapTools
         }
         int waterLevelsCount = 8;
         int PartialWaterBlock = 118;
+        int blockidFillArea = 117;
         bool IsWater(int tt)
         {
-            return (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
-            || data.IsWater[tt];
+            return ((tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
+            || data.IsWater[tt]) && (tt != blockidFillArea);
         }
         private int GetWaterLevel(int tt)
         {

@@ -57,7 +57,7 @@ namespace ManicDiggerServer
             for (int i = MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (MapUtil.IsValidPos(this, x, y, i) && !data.GrassGrowsUnder(GetBlock(x, y, i)))
+                if (MapUtil.IsValidPos(this, x, y, i) && !data.IsTransparentForLight[GetBlock(x, y, i)])
                 {
                     break;
                 }
@@ -136,7 +136,7 @@ namespace ManicDiggerServer
             for (int i = chunksize - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.GrassGrowsUnder(chunk[MapUtil.Index(xx, yy, i, chunksize, chunksize)]))
+                if (!data.IsTransparentForLight[chunk[MapUtil.Index(xx, yy, i, chunksize, chunksize)]])
                 {
                     break;
                 }

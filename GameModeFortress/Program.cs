@@ -113,13 +113,15 @@ namespace GameModeFortress
         IGameExit exit = new GameExitDummy();
         private void MakeGame(bool singleplayer)
         {
-            var gamedata = new GameDataManicDigger();
+            var getfile = this.getfile;
+            var gamedata = new GameDataCsv();
+            gamedata.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
+                File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
             var network = new NetworkClientFortress();
             var mapstorage = clientgame;
-            var getfile = this.getfile;
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var terrainDrawer = new TerrainRenderer();
@@ -572,10 +574,14 @@ namespace GameModeFortress
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
-            server.data = new GameDataManicDigger();
+            var getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var data = new GameDataCsv();
+            data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
+                File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
+            server.data = data;
             server.craftingtabletool = new CraftingTableTool() { map = map };
             server.LocalConnectionsOnly = !Public;
-            server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            server.getfile = getfile;
             var networkcompression = new CompressionGzip();
             var diskcompression = new CompressionGzip();
             var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = diskcompression };

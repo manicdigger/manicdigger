@@ -21,7 +21,7 @@ namespace ManicDigger
     public class ShadowsSimple : IShadows
     {
         [Inject]
-        public IGameData data;
+        public IGameDataLight data;
         [Inject]
         public IMapStorage map;
         [Inject]
@@ -57,7 +57,7 @@ namespace ManicDigger
             for (int i = map.MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.TransparentForLight[map.GetBlock(x, y, i)])
+                if (!data.IsTransparentForLight[map.GetBlock(x, y, i)])
                 {
                     break;
                 }
@@ -110,7 +110,7 @@ namespace ManicDigger
         [Inject]
         public IMapStorage map;
         [Inject]
-        public IGameData data;
+        public IGameDataLight data;
         [Inject]
         public ITerrainRenderer terrain;
         [Inject]
@@ -283,7 +283,7 @@ namespace ManicDigger
             int height = map.MapSizeZ - 1;
             for (int z = map.MapSizeZ - 1; z >= 0; z--)
             {
-                if (data.TransparentForLight[map.GetBlock(x, y, z)])
+                if (data.IsTransparentForLight[map.GetBlock(x, y, z)])
                 {
                     height--;
                 }
@@ -305,7 +305,7 @@ namespace ManicDigger
             for (int i = map.MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.TransparentForLight[map.GetBlock(x, y, i)])
+                if (!data.IsTransparentForLight[map.GetBlock(x, y, i)])
                 {
                     break;
                 }
@@ -403,14 +403,14 @@ namespace ManicDigger
                     continue;
                 }
                 int vblock = map.GetBlock(v.x, v.y, v.z);
-                if (!data.TransparentForLight[vblock]
-                    && data.GetLightRadius(vblock) == 0)
+                if (!data.IsTransparentForLight[vblock]
+                    && data.LightRadius[vblock] == 0)
                 {
                     continue;
                 }
                 int vlight = LightGetBlock(v.x, v.y, v.z);
                 if (vlight == maxlight
-                    || data.GetLightRadius(vblock) != 0)
+                    || data.LightRadius[vblock] != 0)
                 {
                     reflood[v] = true;
                     continue;
@@ -461,7 +461,7 @@ namespace ManicDigger
             {
                 UpdateLight();
             }
-            int lightradius = data.GetLightRadius(map.GetBlock(x, y, z));
+            int lightradius = data.LightRadius[map.GetBlock(x, y, z)];
             if (lightradius != 0)
             {
                 LightSetBlock(x, y, z, (byte)(lightradius));
@@ -485,8 +485,8 @@ namespace ManicDigger
                     continue;
                 }
                 int vblock = map.GetBlock(v.x, v.y, v.z);
-                if (!data.TransparentForLight[vblock]
-                    && data.GetLightRadius(vblock) == 0)
+                if (!data.IsTransparentForLight[vblock]
+                    && data.LightRadius[vblock] == 0)
                 {
                     continue;
                 }

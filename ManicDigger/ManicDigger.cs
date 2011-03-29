@@ -68,7 +68,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ; z++)
                     {
-                        map.SetBlock(x, y, z, data.TileIdEmpty);
+                        map.SetBlock(x, y, z, 0);
                     }
                 }
             }
@@ -78,9 +78,9 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < map.MapSizeZ / 2 - 1; z++)
                     {
-                        map.SetBlock(x, y, z, data.TileIdDirt);
+                        map.SetBlock(x, y, z, data.BlockIdDirt);
                     }
-                    map.SetBlock(x, y, map.MapSizeZ / 2 - 1, data.TileIdGrass);
+                    map.SetBlock(x, y, map.MapSizeZ / 2 - 1, data.BlockIdGrass);
                 }
             }
             for (int x = 0; x < 100; x++)
@@ -93,13 +93,13 @@ namespace ManicDigger
                 int x = rnd.Next(map.MapSizeX);
                 int y = rnd.Next(map.MapSizeY);
                 int z = rnd.Next(map.MapSizeZ);
-                if (map.GetBlock(x, y, z) == data.TileIdDirt)
+                if (map.GetBlock(x, y, z) == data.BlockIdDirt)
                 {
-                    map.SetBlock(x, y, z, data.GoldTileId);
+                    map.SetBlock(x, y, z, data.BlockIdGold);
                 }
             }
             //debug
-            map.SetBlock(10, 10, map.MapSizeZ / 2, data.GoldTileId);
+            map.SetBlock(10, 10, map.MapSizeZ / 2, data.BlockIdGold);
         }
     }
     public interface IMapStorage
@@ -546,195 +546,6 @@ namespace ManicDigger
         public void GeneratePlainMap(IMapStorage map)
         {
             mapgenerator.GenerateMap(map);
-        }
-    }
-    //Todo: Replace methods with arrays.
-    public interface IGameData
-    {
-        int GetTileTextureId(int tileType, TileSide side);
-        int GetTileTextureIdForInventory(int tileType);
-        byte TileIdEmpty { get; }
-        byte TileIdGrass { get; }
-        byte TileIdDirt { get; }
-        int[] DefaultMaterialSlots { get; }
-        byte GoldTileId { get; }
-        int TileIdStone { get; }
-        int TileIdWater { get; }
-        int TileIdSand { get; }
-        int TileIdSingleStairs { get; }
-        int TileIdSponge { get; }
-        bool IsWaterTile(int tiletype);
-        bool IsBuildableTile(int tiletype);
-        bool IsValidTileType(int tiletype);
-        bool IsTransparentTile(int tiletype);
-        int PlayerBuildableMaterialType(int p);
-        bool IsBlockFlower(int tiletype);
-        RailDirectionFlags GetRail(int tiletype);
-        string BlockName(int blocktype);
-        bool IsEmptyForPhysics(int blocktype);
-        float BlockWalkSpeed(int blocktype);
-        bool GrassGrowsUnder(int blocktype);
-        bool IsSlipperyWalk(int blocktype);
-        string[] WalkSound(int blocktype);
-        int TileIdTrampoline { get; }
-        byte TileIdTorch { get; }
-        int GetLightRadius(int blocktype);
-        bool IsTransparentTileFully(byte blocktype);
-        bool[] IsWater { get; }
-        bool[] IsTransparent { get; }
-        bool[] IsValid { get; }
-        bool[] TransparentForLight { get; }
-        void Update();
-    }
-    public class GameDataDummy : IGameData
-    {
-        public struct TileTypeSide
-        {
-            public int tiletype;
-            public TileSide side;
-        }
-        public Dictionary<TileTypeSide, int> TileTextureIds { get; set; }
-        #region IGameData Members
-        public int GetTileTextureId(int tileType, TileSide side)
-        {
-            return TileTextureIds[new TileTypeSide() { tiletype = tileType, side = side }];
-        }
-        public byte TileIdEmpty { get; set; }
-        public byte TileIdGrass { get; set; }
-        public byte TileIdDirt { get; set; }
-        public int[] DefaultMaterialSlots { get; set; }
-        public byte GoldTileId { get; set; }
-        public int TileIdStone { get; set; }
-        public int TileIdWater { get; set; }
-        public int TileIdSand { get; set; }
-        public List<int> watertiles = new List<int>();
-        public bool IsWaterTile(int tiletype)
-        {
-            return watertiles.Contains(tiletype);
-        }
-        public List<int> buildabletiles = new List<int>();
-        public bool IsBuildableTile(int tiletype)
-        {
-            return buildabletiles.Contains(tiletype);
-        }
-        #endregion
-        #region IGameData Members
-        public bool IsValidTileType(int tiletype)
-        {
-            return true;
-        }
-        #endregion
-        public bool IsTransparentTile(int p)
-        {
-            return false;
-        }
-        public int PlayerBuildableMaterialType(int p)
-        {
-            return p;
-        }
-        #region IGameData Members
-        public bool IsBlockFlower(int tiletype)
-        {
-            return false;
-        }
-        #endregion
-        #region IGameData Members
-        public RailDirectionFlags GetRail(int tiletype)
-        {
-            return RailDirectionFlags.None;
-        }
-        #endregion
-        #region IGameData Members
-        public int TileIdSingleStairs { get; set; }
-        #endregion
-        #region IGameData Members
-        public int TileIdSponge { get; set; }
-        #endregion
-        #region IGameData Members
-        public int GetTileTextureIdForInventory(int tileType)
-        {
-            return GetTileTextureId(tileType, TileSide.Front);
-        }
-        #endregion
-        #region IGameData Members
-        public string BlockName(int blocktype)
-        {
-            return blocktype.ToString();
-        }
-        #endregion
-        #region IGameData Members
-        public bool IsEmptyForPhysics(int blocktype)
-        {
-            return false;
-        }
-        #endregion
-        #region IGameData Members
-        public float BlockWalkSpeed(int blocktype)
-        {
-            return 1;
-        }
-        #endregion
-        #region IGameData Members
-        public bool GrassGrowsUnder(int blocktype)
-        {
-            return false;
-        }
-        #endregion
-        #region IGameData Members
-        public bool IsSlipperyWalk(int blocktype)
-        {
-            return false;
-        }
-        #endregion
-        #region IGameData Members
-        public string[] WalkSound(int blocktype)
-        {
-            return new[] { "walk1.wav" };
-        }
-        #endregion
-        #region IGameData Members
-        public int TileIdTrampoline
-        {
-            get { throw new NotImplementedException(); }
-        }
-        #endregion
-        #region IGameData Members
-        public byte TileIdTorch
-        {
-            get { throw new NotImplementedException(); }
-        }
-        #endregion
-        #region IGameData Members
-        public int GetLightRadius(int blocktype)
-        {
-            return 0;
-        }
-        #endregion
-        #region IGameData Members
-        public bool IsTransparentTileFully(byte blocktype)
-        {
-            return false;
-        }
-        #endregion
-        public bool[] IsWater
-        {
-            get { throw new NotImplementedException(); }
-        }
-        public bool[] IsTransparent
-        {
-            get { throw new NotImplementedException(); }
-        }
-        public bool[] IsValid
-        {
-            get { throw new NotImplementedException(); }
-        }
-        public void Update()
-        {
-            throw new NotImplementedException();
-        }
-        public bool[] TransparentForLight
-        {
-            get { throw new NotImplementedException(); }
         }
     }
     public interface IMapGenerator

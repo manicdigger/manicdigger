@@ -98,7 +98,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < MapSizeZ; z++)
                     {
-                        map.SetBlock(x, y, z, data.TileIdEmpty);
+                        map.SetBlock(x, y, z, 0);
                     }
                 }
             }
@@ -356,18 +356,18 @@ namespace fCraft
                     if (level > parameters.water)
                     {
                         level = (level - parameters.water) * parameters.smoothingOver + parameters.water;
-                        map.SetBlock(x, y, levelQuantized, data.TileIdGrass);
+                        map.SetBlock(x, y, levelQuantized, data.BlockIdGrass);
                         if (!parameters.hollow)
                         {
                             for (int i = levelQuantized - 1; i > 0; i--)
                             {
                                 if (levelQuantized - i < 5)
                                 {
-                                    map.SetBlock(x, y, i, data.TileIdDirt);
+                                    map.SetBlock(x, y, i, data.BlockIdDirt);
                                 }
                                 else
                                 {
-                                    map.SetBlock(x, y, i, data.TileIdStone);
+                                    map.SetBlock(x, y, i, data.BlockIdStone);
                                 }
                             }
                         }
@@ -376,20 +376,20 @@ namespace fCraft
                     {
                         level = (level - parameters.water) * parameters.smoothingUnder + parameters.water;
 
-                        map.SetBlock(x, y, waterQuantized, data.TileIdWater);
+                        map.SetBlock(x, y, waterQuantized, data.BlockIdWater);
                         if (!parameters.hollow)
                         {
                             for (int i = waterQuantized - 1; i >= levelQuantized; i--)
                             {
-                                map.SetBlock(x, y, i, data.TileIdWater);
+                                map.SetBlock(x, y, i, data.BlockIdWater);
                             }
                         }
-                        map.SetBlock(x, y, levelQuantized, data.TileIdSand);
+                        map.SetBlock(x, y, levelQuantized, data.BlockIdSand);
                         if (!parameters.hollow)
                         {
                             for (int i = levelQuantized - 1; i > 0; i--)
                             {
-                                map.SetBlock(x, y, i, data.TileIdStone);
+                                map.SetBlock(x, y, i, data.BlockIdStone);
                             }
                         }
                     }

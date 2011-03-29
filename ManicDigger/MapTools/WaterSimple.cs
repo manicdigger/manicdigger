@@ -32,7 +32,7 @@ namespace ManicDigger
                 {
                     for (int zz = z - spongerange; zz <= z + spongerange; zz++)
                     {
-                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdSponge)
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.BlockIdSponge)
                         {
                             return true;
                         }
@@ -46,7 +46,7 @@ namespace ManicDigger
             this.flooded = new Dictionary<Vector3, Vector3>();
             this.map = map;
             //sponge just built.
-            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == data.TileIdSponge)
+            if (MapUtil.IsValidPos(map, x, y, z) && map.GetBlock(x, y, z) == data.BlockIdSponge)
             {
                 for (int xx = x - spongerange; xx <= x + spongerange; xx++)
                 {
@@ -54,7 +54,7 @@ namespace ManicDigger
                     {
                         for (int zz = z - spongerange; zz <= z + spongerange; zz++)
                         {
-                            if (MapUtil.IsValidPos(map, xx, yy, zz) && data.IsWaterTile(map.GetBlock(xx, yy, zz)))
+                            if (MapUtil.IsValidPos(map, xx, yy, zz) && data.IsWater[map.GetBlock(xx, yy, zz)])
                             {
                                 tosetempty.Add(new Vector3(xx, yy, zz));
                             }
@@ -69,7 +69,7 @@ namespace ManicDigger
                 {
                     for (int zz = z - spongerange; zz <= z + spongerange; zz++)
                     {
-                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == data.TileIdEmpty)
+                        if (MapUtil.IsValidPos(map, xx, yy, zz) && map.GetBlock(xx, yy, zz) == 0)
                         {
                             BlockChangeFlood(map, xx, yy, zz);
                         }
@@ -84,7 +84,7 @@ namespace ManicDigger
         {
             //water here
             if (MapUtil.IsValidPos(map, x, y, z)
-                && data.IsWaterTile(map.GetBlock(x, y, z)))
+                && data.IsWater[map.GetBlock(x, y, z)])
             {
                 Flood(new Vector3(x, y, z));
                 return;
@@ -93,7 +93,7 @@ namespace ManicDigger
             foreach (var vv in BlocksAround(new Vector3(x, y, z)))
             {
                 if (MapUtil.IsValidPos(map, (int)vv.X, (int)vv.Y, (int)vv.Z) &&
-                    data.IsWaterTile(map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z)))
+                    data.IsWater[map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z)])
                 {
                     Flood(vv);
                     return;
@@ -124,7 +124,7 @@ namespace ManicDigger
                     continue;
                 }
                 var type = map.GetBlock((int)vv.X, (int)vv.Y, (int)vv.Z);
-                if (type == data.TileIdEmpty && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
+                if (type == 0 && (!IsSpongeNear((int)vv.X, (int)vv.Y, (int)vv.Z)))
                 {
                     tosetwater.Add(vv);
                     toflood[vv] = vv;

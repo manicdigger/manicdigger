@@ -6,6 +6,7 @@ using GameModeFortress;
 using ManicDigger;
 using ManicDigger.MapTools;
 using ManicDigger.MapTools.Generators;
+using System.IO;
 #endregion
 
 namespace ManicDiggerServer
@@ -30,7 +31,11 @@ namespace ManicDiggerServer
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.map = map;
             server.generator = generator;
-            server.data = new GameDataManicDigger();
+            var getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            var data = new GameDataCsv();
+            data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
+                File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
+            server.data = data;
             map.data = server.data;
             server.craftingtabletool = new CraftingTableTool() { map = map };
             bool singleplayer = false;
@@ -42,7 +47,7 @@ namespace ManicDiggerServer
                 }
             }
             server.LocalConnectionsOnly = singleplayer;
-            server.getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            server.getfile = getfile;
             var compression = new CompressionGzip();
             var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = compression };
             server.chunkdb = chunkdb;

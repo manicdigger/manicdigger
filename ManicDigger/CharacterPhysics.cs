@@ -25,7 +25,7 @@ namespace ManicDigger
         [Inject]
         public IMapStorage map;
         [Inject]
-        public IGameData data;
+        public IGameDataPhysics data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
             if (z >= map.MapSizeZ)
@@ -42,12 +42,12 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (data.IsWaterTile(map.GetBlock(x, y, z)) &&
-                !data.IsWaterTile(map.GetBlock(x, y, z + 1))) { return true; }
-            return map.GetBlock(x, y, z) == data.TileIdEmpty
-                || map.GetBlock(x, y, z) == data.TileIdSingleStairs
-                || (data.IsWaterTile(map.GetBlock(x, y, z)) && (!swimmingtop))
-                || data.IsEmptyForPhysics(map.GetBlock(x, y, z));
+            if (data.IsWater[map.GetBlock(x, y, z)] &&
+                !data.IsWater[map.GetBlock(x, y, z + 1)]) { return true; }
+            return map.GetBlock(x, y, z) == 0
+                || map.GetBlock(x, y, z) == data.BlockIdSingleStairs
+                || (data.IsWater[map.GetBlock(x, y, z)] && (!swimmingtop))
+                || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
         }
         public static float walldistance = 0.3f;
         public static float characterheight = 1.5f;
@@ -218,7 +218,7 @@ namespace ManicDigger
             bool wasonstairs = false;
             if (MapUtil.IsValidPos(map, oldpositioni.x, oldpositioni.y, oldpositioni.z))
             {
-                wasonstairs = map.GetBlock(oldpositioni.x, oldpositioni.y, oldpositioni.z) == data.TileIdSingleStairs;
+                wasonstairs = map.GetBlock(oldpositioni.x, oldpositioni.y, oldpositioni.z) == data.BlockIdSingleStairs;
             }
             Vector3 playerposition = newposition;
             //left
@@ -361,7 +361,7 @@ namespace ManicDigger
                  (int)Math.Floor(playerposition.Y));
             if (MapUtil.IsValidPos(map, playerpositioni.x, playerpositioni.y, playerpositioni.z))
             {
-                isonstairs = map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == data.TileIdSingleStairs;
+                isonstairs = map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == data.BlockIdSingleStairs;
             }
             if (isonstairs)
             {

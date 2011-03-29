@@ -111,7 +111,7 @@ namespace GameModeFortress
                 {
                     dirnew = PickCorners(xfract, zfract);
                 }
-                RailDirectionFlags dir = data.GetRail(GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z));
+                RailDirectionFlags dir = data.Rail[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
                 if (dir != RailDirectionFlags.None)
                 {
                     blockpos = blockposold;
@@ -232,7 +232,7 @@ namespace GameModeFortress
             network.SendSetBlock(new Vector3(x, y, z), mode, activematerial);
             if (mode == BlockSetMode.Destroy)
             {
-                activematerial = data.TileIdEmpty;
+                activematerial = SpecialBlockId.Empty;
             }
             speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = map.GetBlock(x, y, z), time = DateTime.UtcNow };
             map.SetBlock(x, y, z, activematerial);
@@ -423,7 +423,7 @@ namespace GameModeFortress
                             {
                                 break;
                             }
-                            if (GetBlock(v.x, v.y, v.z + 1) == data.TileIdEmpty)
+                            if (GetBlock(v.x, v.y, v.z + 1) == SpecialBlockId.Empty)
                             {
                                 SendSetBlockAndUpdateSpeculative(blocktype, v.x, v.y, v.z + 1, BlockSetMode.Create);
                                 dumped++;
@@ -439,7 +439,7 @@ namespace GameModeFortress
                                 break;
                             }
                             int b = GetBlock(v.x, v.y, v.z + 1);
-                            if (b != data.TileIdEmpty)
+                            if (b != SpecialBlockId.Empty)
                             {
                                 SendSetBlockAndUpdateSpeculative(0, v.x, v.y, v.z + 1, BlockSetMode.Destroy);
                             }
@@ -479,8 +479,8 @@ namespace GameModeFortress
                         {
                             continue;
                         }
-                        if (GetBlock(xx, yy, zz) == data.TileIdEmpty
-                            && GetBlock(xx, yy, zz - 1) != data.TileIdEmpty)
+                        if (GetBlock(xx, yy, zz) == SpecialBlockId.Empty
+                            && GetBlock(xx, yy, zz - 1) != SpecialBlockId.Empty)
                         {
                             bool playernear = false;
                             if (players != null)
@@ -599,7 +599,7 @@ namespace GameModeFortress
         {
             int x = map.MapSizeX / 2;
             int y = map.MapSizeY / 2;
-            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, data.TileIdEmpty, x, y), y + 0.5f);
+            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, SpecialBlockId.Empty, x, y), y + 0.5f);
         }
         #endregion
         #region IMapStorage Members

@@ -90,7 +90,7 @@ namespace ManicDigger
                 List<int> buildable = new List<int>();
                 for (int i = 0; i < 256; i++)
                 {
-                    if (data.IsValidTileType((byte)i) && data.IsBuildableTile((byte)i))
+                    if (data.IsValid[(byte)i] && data.IsBuildable[(byte)i])
                     {
                         buildable.Add(i);
                     }
@@ -111,7 +111,7 @@ namespace ManicDigger
                 int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
                 int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
                 the3d.Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
-                    data.GetTileTextureIdForInventory(buildable[ii]));
+                    data.TextureIdForInventory[buildable[ii]]);
 
                 if (ENABLE_FINITEINVENTORY)
                 {
