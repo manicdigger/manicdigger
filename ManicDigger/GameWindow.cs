@@ -2094,7 +2094,11 @@ namespace ManicDigger
                                 int blocktype;
                                 if (left) { blocktype = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
                                 else { blocktype = materialSlots[activematerial]; }
-                                audio.Play(left ? data.BreakSound[blocktype][0] : data.BuildSound[blocktype][0]); //todo sound cycle
+                                string[] sound = left ? data.BreakSound[blocktype] : data.BuildSound[blocktype];
+                                if (sound != null && sound.Length > 0)
+                                {
+                                    audio.Play(sound[0]); //todo sound cycle
+                                }
                             }
                             if (!right)
                             {
