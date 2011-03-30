@@ -218,7 +218,7 @@ namespace GameModeFortress
             playerskindownloader.the3d = the3d;
             playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
             w.playerskindownloader = playerskindownloader;
-            w.fpshistorygraphrenderer = new FpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
+            w.fpshistorygraphrenderer = new HudFpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
             mapgenerator.data = gamedata;
@@ -275,6 +275,9 @@ namespace GameModeFortress
             {
                 UseShadowsSimple();
             }
+            w.hudchat = new ManicDigger.Gui.HudChat() { draw2d = the3d, viewportsize = w };
+            w.hudinventory = new ManicDigger.Gui.HudInventory() { data = gamedata, w = w, viewportsize = w };
+            w.hudmaterialselector = new ManicDigger.Gui.HudMaterialSelector() { gameWindow = w, viewportsize = w };
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(

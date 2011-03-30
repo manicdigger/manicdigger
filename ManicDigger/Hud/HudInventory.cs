@@ -1,69 +1,82 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
 using System.IO;
 
-namespace ManicDigger
+namespace ManicDigger.Gui
 {
-    public partial class ManicDiggerGameWindow
+    public class HudInventory
     {
-        void InventoryStart()
-        {
-            guistate = GuiState.Inventory;
-            menustate = new MenuState();
-            FreeMouse = true;
-        }
-        void InventoryMouse()
+        [Inject]
+        public ManicDiggerGameWindow w;
+        [Inject]
+        public IViewportSize viewportsize;
+        [Inject]
+        public IGameData data;
+
+        private int inventoryselectedx;
+        private int inventoryselectedy;
+        private int inventorysize;
+        private int inventorysinglesize = 40;
+
+        public void InventoryMouse(Point mouse, ref bool isLMB)
         {
             int invstartx = xcenter(inventorysinglesize * inventorysize);
             int invstarty = ycenter(inventorysinglesize * inventorysize);
-            if (mouse_current.X > invstartx && mouse_current.X < invstartx + inventorysinglesize * inventorysize)
+            if (mouse.X > invstartx && mouse.X < invstartx + inventorysinglesize * inventorysize)
             {
-                if (mouse_current.Y > invstarty && mouse_current.Y < invstarty + inventorysinglesize * inventorysize)
+                if (mouse.Y > invstarty && mouse.Y < invstarty + inventorysinglesize * inventorysize)
                 {
-                    inventoryselectedx = (mouse_current.X - invstartx) / inventorysinglesize;
-                    inventoryselectedy = (mouse_current.Y - invstarty) / inventorysinglesize;
+                    inventoryselectedx = (mouse.X - invstartx) / inventorysinglesize;
+                    inventoryselectedy = (mouse.Y - invstarty) / inventorysinglesize;
                 }
             }
-            if (mouseleftclick)
+            if (isLMB)
             {
                 var sel = InventoryGetSelected();
                 if (sel != null)
                 {
-                    materialSlots[activematerial] = sel.Value;
-                    GuiStateBackToGame();
+                    w.MaterialSlots[w.activematerial] = sel.Value;
+                    w.GuiStateBackToGame();
                 }
-                mouseleftclick = false;
+                isLMB = false;
             }
         }
-        private void InventoryKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
+        private int xcenter(float width)
         {
-            if (e.Key == GetKey(OpenTK.Input.Key.Escape))
+            return (int)(viewportsize.Width / 2 - width / 2);
+        }
+        private int ycenter(float height)
+        {
+            return (int)(viewportsize.Height / 2 - height / 2);
+        }
+        public void InventoryKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
+        {
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Escape))
             {
-                GuiStateBackToGame();
+                w.GuiStateBackToGame();
             }
             Direction4? dir = null;
-            if (e.Key == GetKey(OpenTK.Input.Key.Left)) { dir = Direction4.Left; }
-            if (e.Key == GetKey(OpenTK.Input.Key.Right)) { dir = Direction4.Right; }
-            if (e.Key == GetKey(OpenTK.Input.Key.Up)) { dir = Direction4.Up; }
-            if (e.Key == GetKey(OpenTK.Input.Key.Down)) { dir = Direction4.Down; }
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Left)) { dir = Direction4.Left; }
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Right)) { dir = Direction4.Right; }
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Up)) { dir = Direction4.Up; }
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Down)) { dir = Direction4.Down; }
             if (dir != null)
             {
                 InventorySelectionMove(dir.Value);
             }
-            if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
+            if (e.Key == w.GetKey(OpenTK.Input.Key.Enter) || e.Key == w.GetKey(OpenTK.Input.Key.KeypadEnter))
             {
                 var sel = InventoryGetSelected();
                 if (sel != null)
                 {
-                    materialSlots[activematerial] = sel.Value;
-                    GuiStateBackToGame();
+                    w.MaterialSlots[w.activematerial] = sel.Value;
+                    w.GuiStateBackToGame();
                 }
             }
-            HandleMaterialKeys(e);
+            w.HandleMaterialKeys(e);
         }
-        int inventoryselectedx;
-        int inventoryselectedy;
         void InventorySelectionMove(Direction4 dir)
         {
             if (dir == Direction4.Left) { inventoryselectedx--; }
@@ -73,7 +86,6 @@ namespace ManicDigger
             inventoryselectedx = MyMath.Clamp(inventoryselectedx, 0, inventorysize - 1);
             inventoryselectedy = MyMath.Clamp(inventoryselectedy, 0, inventorysize - 1);
         }
-        int inventorysize;
         int? InventoryGetSelected()
         {
             int id = inventoryselectedx + (inventoryselectedy * inventorysize);
@@ -98,8 +110,7 @@ namespace ManicDigger
                 return buildable;
             }
         }
-        int inventorysinglesize = 40;
-        void DrawInventory()
+        public void DrawInventory()
         {
             List<int> buildable = Buildable;
             inventorysize = (int)Math.Ceiling(Math.Sqrt(buildable.Count));
@@ -110,13 +121,13 @@ namespace ManicDigger
             {
                 int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
                 int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
-                the3d.Draw2dTexture(terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
+                w.the3d.Draw2dTexture(w.terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
                     data.TextureIdForInventory[buildable[ii]]);
 
-                if (ENABLE_FINITEINVENTORY)
+                if (w.ENABLE_FINITEINVENTORY)
                 {
-                    int amount = game.FiniteInventoryAmount(buildable[ii]);
-                    the3d.Draw2dText("" + amount, xx, yy, 8, null);
+                    int amount = w.game.FiniteInventoryAmount(buildable[ii]);
+                    w.the3d.Draw2dText("" + amount, xx, yy, 8, null);
                 }
                 x++;
                 if (x >= inventorysize)
@@ -127,12 +138,12 @@ namespace ManicDigger
             }
             if (inventoryselectedx + inventoryselectedy * inventorysize < buildable.Count)
             {
-                the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+                w.the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                     xcenter(inventorysinglesize * inventorysize) + inventoryselectedx * inventorysinglesize,
                     ycenter(inventorysinglesize * inventorysize) + inventoryselectedy * inventorysinglesize,
-                    NextPowerOfTwo((uint)inventorysinglesize), NextPowerOfTwo((uint)inventorysinglesize));
+                    w.NextPowerOfTwo((uint)inventorysinglesize), w.NextPowerOfTwo((uint)inventorysinglesize));
             }
-            DrawMaterialSelector();
+            w.DrawMaterialSelector();
         }
     }
 }

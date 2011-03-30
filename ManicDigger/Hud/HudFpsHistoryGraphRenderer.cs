@@ -12,7 +12,7 @@ namespace ManicDigger.Renderers
         void Draw2dText(string text, float x, float y, float fontsize, Color? color);
         void Draw2dTextures(Draw2dData[] todraw, int textureid);
     }
-    public class FpsHistoryGraphRenderer
+    public class HudFpsHistoryGraphRenderer
     {
         [Inject]
         public IViewportSize viewportsize;

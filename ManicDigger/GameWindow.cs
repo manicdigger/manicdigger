@@ -15,6 +15,7 @@ using System.Net;
 using System.Drawing.Drawing2D;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
+using ManicDigger.Gui;
 
 namespace ManicDigger
 {
@@ -487,7 +488,7 @@ namespace ManicDigger
         [Inject]
         public ICurrentShadows currentshadows;
         [Inject]
-        public FpsHistoryGraphRenderer fpshistorygraphrenderer;
+        public HudFpsHistoryGraphRenderer fpshistorygraphrenderer;
         [Inject]
         public MapManipulator mapManipulator;
         [Inject]
@@ -496,6 +497,12 @@ namespace ManicDigger
         public IShadows shadows;
         [Inject]
         public IGameExit exit;
+        [Inject]
+        public HudChat hudchat;
+        [Inject]
+        public HudInventory hudinventory;
+        [Inject]
+        public HudMaterialSelector hudmaterialselector;
 
         public bool SkySphereNight { get; set; }
 
@@ -661,7 +668,7 @@ namespace ManicDigger
             if ((e.KeyChar == 't' || e.KeyChar=='T') && GuiTyping == TypingState.None)
             {
                 GuiTyping = TypingState.Typing;
-                GuiTypingBuffer = "";
+                hudchat.GuiTypingBuffer = "";
                 return;
             }
             if (GuiTyping == TypingState.Typing)
@@ -671,7 +678,7 @@ namespace ManicDigger
                     || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
                     && c != '\r')
                 {
-                    GuiTypingBuffer += e.KeyChar;
+                    hudchat.GuiTypingBuffer += e.KeyChar;
                 }
             }
         }
@@ -885,7 +892,7 @@ namespace ManicDigger
                     }
                     else
                     {
-                        string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
+                        string chatline = hudchat.GuiTypingBuffer.Substring(0, Math.Min(hudchat.GuiTypingBuffer.Length, 64));
                         network.SendChat(chatline);
                     }
                 }
@@ -893,7 +900,7 @@ namespace ManicDigger
             }
             else
             {
-                string chatline = GuiTypingBuffer.Substring(0, Math.Min(GuiTypingBuffer.Length, 64));
+                string chatline = hudchat.GuiTypingBuffer.Substring(0, Math.Min(hudchat.GuiTypingBuffer.Length, 64));
                 network.SendChat(chatline);
             }
         }
@@ -939,27 +946,31 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
                 {
-                    ChatPageScroll++;
+                    hudchat.ChatPageScroll++;
                 }                
                 if (e.Key == GetKey(OpenTK.Input.Key.PageDown) && GuiTyping == TypingState.Typing)
                 {
-                    ChatPageScroll--;
+                    hudchat.ChatPageScroll--;
                 }
-                ChatPageScroll = MyMath.Clamp(ChatPageScroll, 0, chatlines.Count / ChatLinesMaxToDraw);
+                hudchat.ChatPageScroll = MyMath.Clamp(hudchat.ChatPageScroll, 0, hudchat.ChatLines.Count / hudchat.ChatLinesMaxToDraw);
                 if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
-                        typinglog.Add(GuiTypingBuffer);
+                        typinglog.Add(hudchat.GuiTypingBuffer);
                         typinglogpos = typinglog.Count;
-                        ClientCommand(GuiTypingBuffer);
-                        GuiTypingBuffer = "";
+                        ClientCommand(hudchat.GuiTypingBuffer);
+                        
+                        hudchat.GuiTypingBuffer = "";
+                        hudchat.IsTyping = false;
+
                         GuiTyping = TypingState.None;
                     }
                     else if (GuiTyping == TypingState.None)
                     {
                         GuiTyping = TypingState.Typing;
-                        GuiTypingBuffer = "";
+                        hudchat.IsTyping = true;
+                        hudchat.GuiTypingBuffer = "";
                     }
                     else if (GuiTyping == TypingState.Ready)
                     {
@@ -973,9 +984,9 @@ namespace ManicDigger
                     string c = "";
                     if (key == GetKey(OpenTK.Input.Key.BackSpace))
                     {
-                        if (GuiTypingBuffer.Length > 0)
+                        if (hudchat.GuiTypingBuffer.Length > 0)
                         {
-                            GuiTypingBuffer = GuiTypingBuffer.Substring(0, GuiTypingBuffer.Length - 1);
+                            hudchat.GuiTypingBuffer = hudchat.GuiTypingBuffer.Substring(0, hudchat.GuiTypingBuffer.Length - 1);
                         }
                         return;
                     }
@@ -985,7 +996,7 @@ namespace ManicDigger
                         {
                             if (Clipboard.ContainsText())
                             {
-                                GuiTypingBuffer += Clipboard.GetText();
+                                hudchat.GuiTypingBuffer += Clipboard.GetText();
                             }
                             return;
                         }
@@ -996,7 +1007,7 @@ namespace ManicDigger
                         if (typinglogpos < 0) { typinglogpos = 0; }
                         if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
                         {
-                            GuiTypingBuffer = typinglog[typinglogpos];
+                            hudchat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
                     }
                     if (key == GetKey(OpenTK.Input.Key.Down))
@@ -1005,11 +1016,11 @@ namespace ManicDigger
                         if (typinglogpos > typinglog.Count) { typinglogpos = typinglog.Count; }
                         if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
                         {
-                            GuiTypingBuffer = typinglog[typinglogpos];
+                            hudchat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
                         if (typinglogpos == typinglog.Count)
                         {
-                            GuiTypingBuffer = "";
+                            hudchat.GuiTypingBuffer = "";
                         }
                     }
                     return;
@@ -1154,7 +1165,9 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.B))
                 {
-                    InventoryStart();
+                    guistate = GuiState.Inventory;
+                    menustate = new MenuState();
+                    FreeMouse = true;
                 }
                 HandleMaterialKeys(e);
                 if (e.Key == GetKey(OpenTK.Input.Key.Escape))
@@ -1193,7 +1206,7 @@ namespace ManicDigger
             }
             else if (guistate == GuiState.Inventory)
             {
-                InventoryKeyDown(e);
+                hudinventory.InventoryKeyDown(e);
                 return;
             }
             else if (guistate == GuiState.MapLoading)
@@ -1221,7 +1234,6 @@ namespace ManicDigger
             }
             config3d.viewdistance = drawDistances[0];
         }
-        int ChatPageScroll;
         enum CameraType
         {
             Fpp,
@@ -1248,7 +1260,7 @@ namespace ManicDigger
         {
             AddChatline(p);
         }
-        private void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
+        public void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
         {
             if (e.Key == GetKey(OpenTK.Input.Key.Number1)) { activematerial = 0; }
             if (e.Key == GetKey(OpenTK.Input.Key.Number2)) { activematerial = 1; }
@@ -1267,7 +1279,7 @@ namespace ManicDigger
         {
             mapManipulator.LoadMap(map, mapManipulator.defaultminesave);
         }
-        private void GuiStateBackToGame()
+        public void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
             FreeMouse = false;
@@ -1283,7 +1295,6 @@ namespace ManicDigger
         bool freemousejustdisabled;
         enum TypingState { None, Typing, Ready };
         TypingState GuiTyping = TypingState.None;
-        string GuiTypingBuffer = "";
         INetworkClient newnetwork;
         ITerrainRenderer newterrain;
 
@@ -1765,7 +1776,7 @@ namespace ManicDigger
             }
             if (guistate == GuiState.Inventory)
             {
-                InventoryMouse();
+                hudinventory.InventoryMouse(mouse_current, ref mouseleftclick);
             }
             if (guistate == GuiState.CraftingRecipes)
             {
@@ -2126,7 +2137,7 @@ namespace ManicDigger
             }
             return 1;
         }
-        private uint NextPowerOfTwo(uint x)
+        public uint NextPowerOfTwo(uint x)
         {
             x--;
             x |= x >> 1;  // handle  2 bit numbers
@@ -2510,12 +2521,6 @@ namespace ManicDigger
             //return Matrix4.LookAt(overheadCameraPosition, overheadCameraDestination, up);
             return Matrix4.LookAt(overheadcameraK.Position, overheadcameraK.Center, up);
         }
-        class Chatline
-        {
-            public string text;
-            public DateTime time;
-        }
-        List<Chatline> chatlines = new List<Chatline>();
         AnimationState v0anim = new AnimationState();
         void DrawCharacters(float dt)
         {
@@ -2601,7 +2606,6 @@ namespace ManicDigger
         {
             the3d.Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
-        int chatfontsize = 12;
         Size? aimsize;
         private void Draw2d()
         {
@@ -2614,8 +2618,8 @@ namespace ManicDigger
                         {
                             if (GuiTyping == TypingState.Typing)
                             {
-                                DrawChatLines(true);
-                                DrawTypingBuffer();
+                                hudchat.DrawChatLines(true);
+                                hudchat.DrawTypingBuffer();
                             }
                             PerspectiveMode();
                             return;
@@ -2625,10 +2629,10 @@ namespace ManicDigger
                             DrawAim();
                         }
                         DrawMaterialSelector();
-                        DrawChatLines(GuiTyping == TypingState.Typing);
+                        hudchat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
                         {
-                            DrawTypingBuffer();
+                            hudchat.DrawTypingBuffer();
                         }
                         if (Keyboard[GetKey(OpenTK.Input.Key.Tab)])
                         {
@@ -2648,7 +2652,7 @@ namespace ManicDigger
                     break;
                 case GuiState.Inventory:
                     {
-                        DrawInventory();
+                        hudinventory.DrawInventory();
                     }
                     break;
                 case GuiState.MapLoading:
@@ -2666,7 +2670,7 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWFPS)
             {
-                the3d.Draw2dText(fpstext, 20f, 20f, chatfontsize, Color.White);
+                the3d.Draw2dText(fpstext, 20f, 20f, hudchat.ChatFontSize, Color.White);
             }
             if (ENABLE_DRAWFPSHISTORY)
             {
@@ -2722,12 +2726,8 @@ namespace ManicDigger
             List<string> l = new List<string>(network.ConnectedPlayers());
             for (int i = 0; i < l.Count; i++)
             {
-                the3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, chatfontsize, Color.White);
+                the3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, hudchat.ChatFontSize, Color.White);
             }
-        }
-        private void DrawTypingBuffer()
-        {
-            the3d.Draw2dText(GuiTypingBuffer + "_", 50, Height - 100, chatfontsize, Color.White);
         }
         private void DrawAim()
         {
@@ -2806,50 +2806,6 @@ namespace ManicDigger
                 GuiStateBackToGame();
             }
         }
-        private void DrawMaterialSelector()
-        {
-            int singlesize = 40;
-            for (int i = 0; i < 10; i++)
-            {
-                int x = xcenter(singlesize * 10) + i * singlesize;
-                int y = Height - 100;
-                the3d.Draw2dTexture(terrain.terrainTexture, x, y, singlesize, singlesize,
-                        data.TextureIdForInventory[(int)materialSlots[i]]);
-
-                if (ENABLE_FINITEINVENTORY)
-                {
-                    int amount = game.FiniteInventoryAmount((int)materialSlots[i]);
-                    the3d.Draw2dText("" + amount, x, y, 8, null);
-                }
-            }
-            the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
-                xcenter(singlesize * 10) + activematerial * singlesize, Height - 100,
-                NextPowerOfTwo((uint)singlesize), NextPowerOfTwo((uint)singlesize));
-            if (ENABLE_FINITEINVENTORY)
-            {
-                int inventoryload = 0;
-                foreach (var k in FiniteInventory)
-                {
-                    inventoryload += k.Value;
-                }
-                float inventoryloadratio = (float)inventoryload / game.FiniteInventoryMax;
-                the3d.Draw2dTexture(the3d.WhiteTexture(), xcenter(100), Height - 120, 100, 10, null, Color.Black);
-                Color c;
-                if (inventoryloadratio < 0.5)
-                {
-                    c = Color.Green;
-                }
-                else if (inventoryloadratio < 0.75)
-                {
-                    c = Color.Yellow;
-                }
-                else
-                {
-                    c = Color.Red;
-                }
-                the3d.Draw2dTexture(the3d.WhiteTexture(), xcenter(100), Height - 120, inventoryloadratio * 100, 10, null, c);
-            }
-        }
         private int xcenter(float width)
         {
             return (int)(Width / 2 - width / 2);
@@ -2857,53 +2813,6 @@ namespace ManicDigger
         private int ycenter(float height)
         {
             return (int)(Height / 2 - height / 2);
-        }
-        public int ChatScreenExpireTimeSeconds = 20;
-        public int ChatLinesMaxToDraw = 10;
-        private void DrawChatLines(bool all)
-        {
-            /*
-            if (chatlines.Count>0 && (DateTime.Now - chatlines[0].time).TotalSeconds > 10)
-            {
-                chatlines.RemoveAt(0);
-            }
-            */
-            List<Chatline> chatlines2 = new List<Chatline>();
-            if (!all)
-            {
-                foreach (Chatline c in chatlines)
-                {
-                    if ((DateTime.Now - c.time).TotalSeconds < ChatScreenExpireTimeSeconds)
-                    {
-                        chatlines2.Add(c);
-                    }
-                }
-            }
-            else
-            {
-                int first = chatlines.Count - ChatLinesMaxToDraw * (ChatPageScroll + 1);
-                if (first < 0)
-                {
-                    first = 0;
-                }
-                int count = chatlines.Count;
-                if (count > ChatLinesMaxToDraw)
-                {
-                    count = ChatLinesMaxToDraw;
-                }
-                for (int i = first; i < first + count; i++)
-                {
-                    chatlines2.Add(chatlines[i]);
-                }
-            }
-            for (int i = 0; i < chatlines2.Count; i++)
-            {
-                the3d.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, chatfontsize, Color.White);
-            }
-            if (ChatPageScroll != 0)
-            {
-                the3d.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, chatfontsize, Color.Gray);
-            }
         }
         int ENABLE_LAG = 0;
         bool ENABLE_DRAWFPS = false;
@@ -3074,7 +2983,7 @@ namespace ManicDigger
         #endregion
         public void AddChatline(string s)
         {
-            chatlines.Add(new Chatline() { text = s, time = DateTime.Now });
+            hudchat.AddChatline(s);
         }
         #region ILocalPlayerPosition Members
         public bool Swimming
@@ -3143,6 +3052,10 @@ namespace ManicDigger
         }
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
+        }
+        public void DrawMaterialSelector()
+        {
+            hudmaterialselector.DrawMaterialSelector();
         }
     }
 }
