@@ -160,7 +160,7 @@ namespace GameModeFortress
             terrainchunktesselator.data = gamedata;
             terrainchunktesselator.mapstorage = clientgame;
             terrainRenderer.terrainchunktesselator = terrainchunktesselator;
-            var frustumculling = new FrustumCulling() { the3d = the3d };
+            var frustumculling = new FrustumCulling() { getCameraMatrix = the3d };
             terrainRenderer.batcher = new MeshBatcher() { frustumculling = frustumculling };
             terrainRenderer.frustumculling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };

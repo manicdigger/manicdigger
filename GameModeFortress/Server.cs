@@ -639,7 +639,7 @@ namespace ManicDiggerServer
                 {
                     for (int zz = 0; zz < chunksize; zz++)
                     {
-                        int block = chunk[MapUtil.Index(xx, yy, zz, chunksize, chunksize)];
+                        int block = chunk[MapUtil.Index3d(xx, yy, zz, chunksize, chunksize)];
 
                         if (block == (int)TileTypeManicDigger.DirtForFarming)
                         {

@@ -255,6 +255,7 @@ namespace ManicDigger
         }
         #endregion
     }
+    //Doesn't work on Ubuntu - pointer access crashes.
     public class FastBitmap : IFastBitmap
     {
         public Bitmap bmp { get; set; }

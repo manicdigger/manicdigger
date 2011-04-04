@@ -40,12 +40,12 @@ namespace ManicDiggerServer
         public int GetBlock(int x, int y, int z)
         {
             byte[] chunk = GetChunk(x, y, z);
-            return chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            return chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
             byte[] chunk = GetChunk(x, y, z);
-            chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunks[x / chunksize, y / chunksize, z / chunksize].LastChange = currenttime.SimulationCurrentFrame;
             chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
             UpdateColumnHeight(x, y);
@@ -67,7 +67,7 @@ namespace ManicDiggerServer
         public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
         {
             byte[] chunk = GetChunk(x, y, z);
-            chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
             UpdateColumnHeight(x, y);
         }
@@ -136,7 +136,7 @@ namespace ManicDiggerServer
             for (int i = chunksize - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.IsTransparentForLight[chunk[MapUtil.Index(xx, yy, i, chunksize, chunksize)]])
+                if (!data.IsTransparentForLight[chunk[MapUtil.Index3d(xx, yy, i, chunksize, chunksize)]])
                 {
                     break;
                 }
@@ -201,7 +201,7 @@ namespace ManicDiggerServer
                         //    && y + sourcey < source.GetUpperBound(1) + 1
                         //    && z + sourcez < source.GetUpperBound(2) + 1)
                         {
-                            destination[MapUtil.Index(x, y, z, destinationchunksize, destinationchunksize)]
+                            destination[MapUtil.Index3d(x, y, z, destinationchunksize, destinationchunksize)]
                                 = source[x + sourcex, y + sourcey, z + sourcez];
                         }
                     }

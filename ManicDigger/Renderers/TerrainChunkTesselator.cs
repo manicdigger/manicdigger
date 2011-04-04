@@ -252,8 +252,8 @@ namespace ManicDigger.Renderers
             {
                 for (int zz = 1; zz < chunksize + 1; zz++)
                 {
-                    int pos = MapUtil.Index(1, yy, zz, chunksize + 2, chunksize + 2);
-                    int pos2 = MapUtil.Index(1 - 1, yy - 1, zz - 1, chunksize, chunksize);
+                    int pos = MapUtil.Index3d(1, yy, zz, chunksize + 2, chunksize + 2);
+                    int pos2 = MapUtil.Index3d(1 - 1, yy - 1, zz - 1, chunksize, chunksize);
                     for (int xx = 0; xx < chunksize; xx++)
                     {
                         currentChunk[pos] = mapchunk[pos2];
@@ -277,8 +277,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        currentChunk[MapUtil.Index(xx, yy, 0, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(xx - 1, yy - 1, chunksize - 1, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(xx, yy, 0, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(xx - 1, yy - 1, chunksize - 1, chunksize, chunksize)];
                     }
                 }
             }
@@ -290,8 +290,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        currentChunk[MapUtil.Index(xx, yy, chunksize + 1, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(xx - 1, yy - 1, 0, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(xx, yy, chunksize + 1, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(xx - 1, yy - 1, 0, chunksize, chunksize)];
                     }
                 }
             }
@@ -303,8 +303,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        currentChunk[MapUtil.Index(0, yy, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(chunksize - 1, yy - 1, zz - 1, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(chunksize - 1, yy - 1, zz - 1, chunksize, chunksize)];
                     }
                 }
             }
@@ -316,8 +316,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        currentChunk[MapUtil.Index(chunksize + 1, yy, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(0, yy - 1, zz - 1, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(chunksize + 1, yy, zz, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(0, yy - 1, zz - 1, chunksize, chunksize)];
                     }
                 }
             }
@@ -329,8 +329,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int zz = 1; zz < chunksize + 1; zz++)
                     {
-                        currentChunk[MapUtil.Index(xx, 0, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(xx - 1, chunksize - 1, zz - 1, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(xx, 0, zz, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(xx - 1, chunksize - 1, zz - 1, chunksize, chunksize)];
                     }
                 }
             }
@@ -342,8 +342,8 @@ namespace ManicDigger.Renderers
                 {
                     for (int zz = 1; zz < chunksize + 1; zz++)
                     {
-                        currentChunk[MapUtil.Index(xx, chunksize + 1, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index(xx - 1, 0, zz - 1, chunksize, chunksize)];
+                        currentChunk[MapUtil.Index3d(xx, chunksize + 1, zz, chunksize + 2, chunksize + 2)]
+                            = mapchunk_[MapUtil.Index3d(xx - 1, 0, zz - 1, chunksize, chunksize)];
                     }
                 }
             }
@@ -389,7 +389,7 @@ namespace ManicDigger.Renderers
                     {
                         for (int yy = 1; yy < chunksize + 1; yy++)
                         {
-                            int posstart = MapUtil.Index(0, yy, zz, chunksize + 2, chunksize + 2);
+                            int posstart = MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
                             for (int xx = 1; xx < chunksize + 1; xx++)
                             {
                                 int pos = posstart + xx;
@@ -482,7 +482,7 @@ namespace ManicDigger.Renderers
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        int pos = MapUtil.Index(0, yy, zz, chunksize + 2, chunksize + 2);
+                        int pos = MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
                         for (int xx = 1; xx < chunksize + 1; xx++)
                         {
                             byte tt = currentChunk_[pos + xx];
@@ -536,7 +536,7 @@ namespace ManicDigger.Renderers
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
             int zz = z % chunksize + 1;
-            var tt = currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)];
+            var tt = currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
             if (!isvalid[tt])
             {
                 return;
@@ -591,10 +591,10 @@ namespace ManicDigger.Renderers
             if (tt == data.BlockIdTorch)
             {
                 TorchType type = TorchType.Normal;
-                if (CanSupportTorch(currentChunk[MapUtil.Index(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
-                if (CanSupportTorch(currentChunk[MapUtil.Index(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
-                if (CanSupportTorch(currentChunk[MapUtil.Index(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
-                if (CanSupportTorch(currentChunk[MapUtil.Index(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
+                if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
+                if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
+                if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
+                if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
                 List<ushort> torchelements = new List<ushort>();
                 List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
                 blockrenderertorch.AddTorch(torchelements, torchvertices, x, y, z, type);
@@ -647,24 +647,24 @@ namespace ManicDigger.Renderers
                 int waterlevel = tt - PartialWaterBlock;
 
                 int[] wl = new int[9];
-                wl[0] = GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[1] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[2] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[3] = GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[4] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[5] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[6] = GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[7] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[8] = GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[0] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[1] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[2] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[3] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[4] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[5] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[6] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[7] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[8] = waterLevelsCount - 1; }
+                wl[0] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
+                wl[1] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)]);
+                wl[2] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
+                wl[3] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
+                wl[4] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz, chunksize + 2, chunksize + 2)]);
+                wl[5] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
+                wl[6] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
+                wl[7] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)]);
+                wl[8] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[0] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[1] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[2] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[3] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[4] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[5] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[6] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[7] = waterLevelsCount - 1; }
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[8] = waterLevelsCount - 1; }
                 
                 //00: maximum of (-1,-1), (0,-1), (-1,0)
                 blockheight00 = ((float)Max(waterlevel, wl[0], wl[1], wl[3]) + 1) / waterLevelsCount;
@@ -672,7 +672,7 @@ namespace ManicDigger.Renderers
                 blockheight10 = ((float)Max(waterlevel, wl[1], wl[2], wl[5]) + 1) / waterLevelsCount;
                 blockheight11 = ((float)Max(waterlevel, wl[5], wl[7], wl[8]) + 1) / waterLevelsCount;
                 
-                if (GetWaterLevel(currentChunk[MapUtil.Index(xx, yy, zz + 1, chunksize + 2, chunksize + 2)]) > 0)
+                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx, yy, zz + 1, chunksize + 2, chunksize + 2)]) > 0)
                 {
                     blockheight00 = 1;
                     blockheight01 = 1;
@@ -903,8 +903,8 @@ namespace ManicDigger.Renderers
         private int GetTilingCount(byte[] currentChunk, int xx, int yy, int zz, byte tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
             //fixes tree Z-fighting
-            if (istransparent[currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)]]
-                && !data.IsTransparentFully[currentChunk[MapUtil.Index(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
+            if (istransparent[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
+                && !data.IsTransparentFully[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
             if (dir == TileSide.Top || dir == TileSide.Bottom)
             {
                 int shadowz = dir == TileSide.Top ? 1 : -1;
@@ -912,7 +912,7 @@ namespace ManicDigger.Renderers
                 for (; ; )
                 {
                     if (newxx >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                    if (currentChunk[MapUtil.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
                     if (shadowratio != shadowratio2) { break; }
                     if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
@@ -929,7 +929,7 @@ namespace ManicDigger.Renderers
                 for (; ; )
                 {
                     if (newyy >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                    if (currentChunk[MapUtil.Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
                     if (shadowratio != shadowratio2) { break; }
                     if ((currentChunkDraw[xx - 1, newyy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
@@ -946,7 +946,7 @@ namespace ManicDigger.Renderers
                 for (; ; )
                 {
                     if (newxx >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                    if (currentChunk[MapUtil.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                     int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
                     if (shadowratio != shadowratio2) { break; }
                     if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)

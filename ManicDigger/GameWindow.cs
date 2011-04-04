@@ -83,12 +83,15 @@ namespace ManicDigger
         public bool ENABLE_VISIBILITY_CULLING = false;
         public float viewdistance = 256;
     }
+    public interface IGetCameraMatrix
+    {
+        Matrix4 ModelViewMatrix { get; }
+        Matrix4 ProjectionMatrix { get; }
+    }
     public interface IThe3d
     {
         int LoadTexture(string filename);
         int LoadTexture(Bitmap bmp);
-        Matrix4 ModelViewMatrix { get; }
-        Matrix4 ProjectionMatrix { get; }
         void Set3dProjection(float zfar);
         void Set3dProjection();
     }
@@ -446,7 +449,7 @@ namespace ManicDigger
             mywindow.OnKeyPress(e);
         }
     }
-    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IGui, IViewport3d
+    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IAddChatLine, IViewport3d
     {
         [Inject]
         public MainGameWindow mainwindow;
@@ -510,10 +513,6 @@ namespace ManicDigger
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
 
-        public void DrawMap()
-        {
-            terrain.UpdateAllTiles();
-        }
         public void SetTileAndUpdate(Vector3 pos, int type)
         {
             //            frametickmainthreadtodo.Add(() =>
@@ -576,7 +575,7 @@ namespace ManicDigger
                     GuiActionGenerateNewMap();
                     GuiStateBackToGame();
                 }
-                DrawMap();
+                terrain.UpdateAllTiles();
                 terrain.Start();
             }
             else
@@ -1190,7 +1189,7 @@ namespace ManicDigger
             //mapManipulator.GeneratePlainMap(map);
             network.Connect("", 0, "", "");
             game.OnNewMap();
-            DrawMap();
+            terrain.UpdateAllTiles();
         }
         bool freemousejustdisabled;
         enum TypingState { None, Typing, Ready };
@@ -1294,10 +1293,7 @@ namespace ManicDigger
         {
             GuiStateBackToGame();
             game.OnNewMap();
-            DrawMap();
-        }
-        void maploaded()
-        {
+            terrain.UpdateAllTiles();
         }
         int[] materialSlots;
         public int[] MaterialSlots { get { return materialSlots; } set { materialSlots = value; } }
@@ -1747,7 +1743,6 @@ namespace ManicDigger
                 player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.015f, (float)(Math.PI / 2 + Math.PI - 0.015f));
             }
         }
-        int iii = 0;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
             if (z >= map.MapSizeZ)
@@ -1765,24 +1760,10 @@ namespace ManicDigger
             return map.GetBlock(x, y, z) == SpecialBlockId.Empty
                 || data.IsWater[map.GetBlock(x, y, z)];
         }
-
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
-            if (z >= map.MapSizeZ)
-            {
-                return true;
-            }
-            if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
-            {
-                return ENABLE_FREEMOVE;
-            }
-            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
-            {
-                return ENABLE_FREEMOVE;
-            }
-            return map.GetBlock(x, y, z) == SpecialBlockId.Empty
+            return IsTileEmptyForPhysics(x, y, z)
                 || map.GetBlock(x, y, z) == data.BlockIdSingleStairs
-                || data.IsWater[map.GetBlock(x, y, z)]
                 || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
         }
         public float PICK_DISTANCE = 3.5f;
@@ -2415,11 +2396,8 @@ namespace ManicDigger
 
             return Matrix4.LookAt(eye, target, up);
         }
-        //Vector3 overheadCameraPosition = new Vector3(5, 32 + 20, 5);
-        //Vector3 overheadCameraDestination = new Vector3(5, 32, 0);
         Matrix4 OverheadCamera()
         {
-            //return Matrix4.LookAt(overheadCameraPosition, overheadCameraDestination, up);
             return Matrix4.LookAt(overheadcameraK.Position, overheadcameraK.Center, up);
         }
         AnimationState v0anim = new AnimationState();
@@ -2427,15 +2405,9 @@ namespace ManicDigger
         {
             foreach (ICharacterToDraw v0 in game.Characters)
             {
-                //DrawCharacter(v0anim, v0.Pos3d + new Vector3(0, 0.9f, 0), v0.Dir3d, v0.Moves, dt, 255,);
                 v0.Draw(dt);
             }
         }
-        //private void DrawCharacter(AnimationState animstate, Vector3 pos, Vector3 dir, bool moves, float dt, int playertexture)
-        //{
-        //    DrawCharacter(animstate, pos,
-        //        (byte)(((Vector3.CalculateAngle(new Vector3(1, 0, 0), dir) + 90) / (2 * (float)Math.PI)) * 256), 0, moves, dt, playertexture);
-        //}
         private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
             characterrenderer.SetAnimation("walk");

@@ -33,12 +33,12 @@ namespace GameModeFortress
             {
                 return 0;
             }
-            return chunk.data[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            return chunk.data[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
             byte[] chunk = GetChunk(x, y, z);
-            chunk[MapUtil.Index(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
         }
         public float WaterLevel { get; set; }
@@ -143,7 +143,7 @@ namespace GameModeFortress
                         //    && y + sourcey < source.GetUpperBound(1) + 1
                         //    && z + sourcez < source.GetUpperBound(2) + 1)
                         {
-                            destination[MapUtil.Index(x, y, z, destinationchunksize, destinationchunksize)]
+                            destination[MapUtil.Index3d(x, y, z, destinationchunksize, destinationchunksize)]
                                 = source[x + sourcex, y + sourcey, z + sourcez];
                         }
                     }

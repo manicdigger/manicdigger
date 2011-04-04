@@ -17,7 +17,7 @@ namespace ManicDigger
         [Inject]
         public IClients Clients;
         [Inject]
-        public IGui Chatlines;
+        public IAddChatLine Chatlines;
         [Inject]
         public ILocalPlayerPosition Position;
         [Inject]

@@ -33,7 +33,7 @@ namespace ManicDigger
     public class FrustumCulling : IFrustumCulling
     {
         [Inject]
-        public IThe3d the3d;
+        public IGetCameraMatrix getCameraMatrix;
         float frustum00;
         float frustum01;
         float frustum02;
@@ -101,8 +101,8 @@ namespace ManicDigger
             float t;
 
             // Retrieve matrices from OpenGL
-            Matrix4 matModelView = the3d.ModelViewMatrix;
-            Matrix4 matProjection = the3d.ProjectionMatrix;
+            Matrix4 matModelView = getCameraMatrix.ModelViewMatrix;
+            Matrix4 matProjection = getCameraMatrix.ProjectionMatrix;
             Matrix4 matFrustum = matProjection;
             Matrix4.Mult(ref matModelView, ref matProjection, out matFrustum);
 

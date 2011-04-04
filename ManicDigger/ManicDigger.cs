@@ -40,18 +40,14 @@ namespace ManicDigger
         public bool exit { get; set; }
         #endregion
     }
-    public interface IGui
+    public interface IAddChatLine
     {
-        void DrawMap();
         void AddChatline(string s);
     }
-    public class GuiDummy : ManicDigger.IGui
+    public class AddChatLineDummy : ManicDigger.IAddChatLine
     {
         #region IGui Members
         public void AddChatline(string s)
-        {
-        }
-        public void DrawMap()
         {
         }
         #endregion
@@ -82,16 +78,16 @@ namespace ManicDigger
         {
             return x + y * sizex;
         }
+        public static int Index3d(int x, int y, int h, int sizex, int sizey)
+        {
+            return (h * sizey + y) * sizex + x;
+        }
         public static Vector3i Pos(int index, int sizex, int sizey)
         {
             int x = index % sizex;
             int y = (index / sizex) % sizey;
             int h = index / (sizex * sizey);
             return new Vector3i(x, y, h);
-        }
-        public static int Index(int x, int y, int h, int sizex, int sizey)
-        {
-            return (h * sizey + y) * sizex + x;
         }
         public static bool IsValidPos(IMapStorage map, int x, int y, int z)
         {
@@ -146,7 +142,7 @@ namespace ManicDigger
                 {
                     for (int z = 0; z < sizez; z++)
                     {
-                        flatmap[Index(x, y, z, sizex, sizey)] = map[x, y, z];
+                        flatmap[Index3d(x, y, z, sizex, sizey)] = map[x, y, z];
                     }
                 }
             }

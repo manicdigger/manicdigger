@@ -107,8 +107,6 @@ namespace ManicDigger
             }
         }
         Dictionary<int, int> empty = new Dictionary<int, int>();
-        float addperframe = 0.5f;
-        float addcounter = 0;
         Vector3 playerpos;
         public void Draw(Vector3 playerpos)
         {
@@ -118,20 +116,11 @@ namespace ManicDigger
             //in another thread.
             lock (toadd)
             {
-                //The addcounter prevents slowdown caused by creating
-                //too many display lists in a single frame.
-                //It's disabled because it's probably not needed.
-                addcounter += addperframe;
-                while (//addcounter >= 1 &&
-                    toadd.Count > 0)
+                while (toadd.Count > 0)
                 {
-                    addcounter -= 1;
                     ToAdd t = toadd.Dequeue();
                     GL.NewList(GetList(t.id), ListMode.Compile);
                     
-                    //We can't bind texture inside display list
-                    //because it doesn't work on Linux and some on graphics cards.
-
                     GL.EnableClientState(EnableCap.TextureCoordArray);
                     GL.EnableClientState(EnableCap.VertexArray);
                     GL.EnableClientState(EnableCap.ColorArray);
@@ -157,10 +146,6 @@ namespace ManicDigger
                     li.transparent = t.transparent;
                     li.empty = false;
                     li.texture = GetTextureId(t.texture);
-                }
-                if (toadd.Count == 0)
-                {
-                    addcounter = 0;
                 }
             }
             UpdateCulling();
