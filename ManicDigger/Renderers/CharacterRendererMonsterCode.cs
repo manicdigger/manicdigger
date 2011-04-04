@@ -6,7 +6,7 @@ using System.Drawing;
 using OpenTK.Graphics.OpenGL;
 using System.Globalization;
 
-namespace ManicDigger
+namespace ManicDigger.Renderers
 {
     public interface ICharacterRenderer
     {

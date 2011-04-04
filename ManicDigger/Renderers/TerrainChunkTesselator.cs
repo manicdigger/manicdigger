@@ -5,13 +5,13 @@ using OpenTK;
 using System.Drawing;
 using ManicDigger.Collisions;
 
-namespace ManicDigger
+namespace ManicDigger.Renderers
 {
     //Generates triangles for a single 16x16x16 chunk.
     //Needs to know the surrounding of the chunk (18x18x18 blocks total).
     //This class is heavily inlined and unrolled for performance.
     //Special-shape (rare) blocks don't need as much performance.
-    public class TerrainChunkRenderer
+    public class TerrainChunkTesselator
     {
         [Inject]
         public ITerrainInfo mapstorage;

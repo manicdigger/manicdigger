@@ -6,7 +6,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
 
-namespace ManicDigger
+namespace ManicDigger.Renderers
 {
     //http://www.opentk.com/node/732
     //Re: [SL Multitexturing] - Only one texture with gluSphere

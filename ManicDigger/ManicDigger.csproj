@@ -93,8 +93,8 @@
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="MeshBatcher.cs" />
     <Compile Include="Hud\HudFpsHistoryGraphRenderer.cs" />
+    <Compile Include="Renderers\CharacterRendererMonsterCode.cs" />
     <Compile Include="Renderers\MinecartRenderer.cs" />
-    <Compile Include="Renderers\Model3d.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
     <Compile Include="FCraft.cs" />
@@ -110,7 +110,7 @@
     <Compile Include="Renderers\ParticleEffectBlockBreak.cs" />
     <Compile Include="Renderers\SkySphere.cs" />
     <Compile Include="Renderers\SunMoonRenderer.cs" />
-    <Compile Include="Renderers\TerrainChunkRenderer.cs" />
+    <Compile Include="Renderers\TerrainChunkTesselator.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="TextureAtlasConverter.cs" />

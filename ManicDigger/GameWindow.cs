@@ -455,7 +455,7 @@ namespace ManicDigger
         [Inject]
         public The3d the3d;
         [Inject]
-        public TextRenderer textrenderer;
+        public ManicDigger.Renderers.TextRenderer textrenderer;
         [Inject]
         public ITerrainRenderer terrain;
         [Inject]

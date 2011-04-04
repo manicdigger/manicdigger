@@ -5,6 +5,7 @@ using ManicDigger;
 using OpenTK;
 using System.IO;
 using System.Drawing;
+using ManicDigger.Renderers;
 
 namespace GameModeFortress
 {

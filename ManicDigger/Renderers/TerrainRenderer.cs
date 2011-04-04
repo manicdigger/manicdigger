@@ -8,7 +8,7 @@ using System.Threading;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
 
-namespace ManicDigger
+namespace ManicDigger.Renderers
 {
     public class TextureAtlasRef
     {
@@ -86,60 +86,7 @@ namespace ManicDigger
             return r;
         }
     }
-    public enum TodoAction
-    {
-        Add,
-        Delete,
-        Clear,
-    }
-    public struct TodoItem
-    {
-        public TodoAction action;
-        public Point position;
-    }
-    public class Vbo
-    {
-        public int VboID, EboID, NumElements;
-        public Box3D box;
-        public int realindicescount = 0;
-        public int realverticescount = 0;
-        public bool valid;
-    }
-    public class MyLinq
-    {
-        public static bool Any<T>(IEnumerable<T> l)
-        {
-            return l.GetEnumerator().MoveNext();
-        }
-        public static T First<T>(IEnumerable<T> l)
-        {
-            var e = l.GetEnumerator();
-            e.MoveNext();
-            return e.Current;
-        }
-        public static int Count<T>(IEnumerable<T> l)
-        {
-            int count = 0;
-            foreach (T v in l)
-            {
-                count++;
-            }
-            return count;
-        }
-        public static IEnumerable<T> Take<T>(IEnumerable<T> l, int n)
-        {
-            int i = 0;
-            foreach (var v in l)
-            {
-                if (i >= n)
-                {
-                    yield break;
-                }
-                yield return v;
-                i++;
-            }
-        }
-    }
+    //Todo replace with IMapStorage.
     public interface ITerrainInfo
     {
         int GetTerrainBlock(int x, int y, int z);
@@ -151,63 +98,8 @@ namespace ManicDigger
         float LightMaxValue();
         byte[] GetChunk(int x, int y, int z);
     }
-    public enum RailSlope
-    {
-        Flat, TwoLeftRaised, TwoRightRaised, TwoUpRaised, TwoDownRaised
-    }
-    public class RailMapUtil
-    {
-        [Inject]
-        public ITerrainInfo mapstorage;
-        [Inject]
-        public IGameData data;
-        public RailSlope GetRailSlope(int x, int y, int z)
-        {
-            int tiletype = mapstorage.GetTerrainBlock(x, y, z);
-            RailDirectionFlags rail = data.Rail[tiletype];
-            int blocknear;
-            if (x < mapstorage.MapSizeX - 1)
-            {
-                blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoRightRaised;
-                }
-            }
-            if (x > 0)
-            {
-                blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoLeftRaised;
-
-                }
-            }
-            if (y > 0)
-            {
-                blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoUpRaised;
-                }
-            }
-            if (y < mapstorage.MapSizeY - 1)
-            {
-                blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoDownRaised;
-                }
-            }
-            return RailSlope.Flat;
-        }
-    }
     //Finds chunks near player that should be updated,
-    //and calls TerrainChunkRenderer to generate them,
+    //and calls TerrainChunkTesselator to generate them,
     //and sends ready triangles to MeshBatcher.
     //It makes sure only chunks in view distance are kept in MeshBatcher.
     public class TerrainRenderer : ITerrainRenderer, IDisposable
@@ -231,7 +123,7 @@ namespace ManicDigger
         [Inject]
         public IWorldFeaturesRenderer worldfeatures;
         [Inject]
-        public TerrainChunkRenderer terrainchunkrenderer;
+        public TerrainChunkTesselator terrainchunktesselator;
         [Inject]
         public IFrustumCulling frustumculling;
         [Inject]
@@ -530,7 +422,7 @@ namespace ManicDigger
         private IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             chunkupdates++;
-            return terrainchunkrenderer.MakeChunk(x, y, z);
+            return terrainchunktesselator.MakeChunk(x, y, z);
         }
         int chunkupdates = 0;
         public int ChunkUpdates { get { return chunkupdates; } }

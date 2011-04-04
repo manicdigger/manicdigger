@@ -66,7 +66,7 @@ namespace GameMenu
         public FormGameOptions formGameOptions;
         public FormConnectToIp formConnectToIp;
         public Game game;
-        public ManicDigger.TextRenderer textrenderer;
+        public ManicDigger.Renderers.TextRenderer textrenderer;
         public IForm currentForm;
         public int typingfield = -1;
         public ThreadStart OnFinishedTyping;

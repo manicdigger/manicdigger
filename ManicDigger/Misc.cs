@@ -508,6 +508,41 @@ namespace ManicDigger
             Count = 0;
         }
     }
+    public class MyLinq
+    {
+        public static bool Any<T>(IEnumerable<T> l)
+        {
+            return l.GetEnumerator().MoveNext();
+        }
+        public static T First<T>(IEnumerable<T> l)
+        {
+            var e = l.GetEnumerator();
+            e.MoveNext();
+            return e.Current;
+        }
+        public static int Count<T>(IEnumerable<T> l)
+        {
+            int count = 0;
+            foreach (T v in l)
+            {
+                count++;
+            }
+            return count;
+        }
+        public static IEnumerable<T> Take<T>(IEnumerable<T> l, int n)
+        {
+            int i = 0;
+            foreach (var v in l)
+            {
+                if (i >= n)
+                {
+                    yield break;
+                }
+                yield return v;
+                i++;
+            }
+        }
+    }
     [XmlRoot("dictionary")]
     public class SerializableDictionary<TKey, TValue>
 

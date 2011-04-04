@@ -61,10 +61,10 @@ namespace GameModeFortress
             ww.the3d.getfile = getfile;
             ww.the3d.config3d = new Config3d();
             ww.the3d.terrain = new TerrainRendererDummy();
-            ww.the3d.textrenderer = new ManicDigger.TextRenderer();
+            ww.the3d.textrenderer = new ManicDigger.Renderers.TextRenderer();
             var game = this;
             ww.game = game;
-            ww.textrenderer = new ManicDigger.TextRenderer();
+            ww.textrenderer = new ManicDigger.Renderers.TextRenderer();
             ww.exit = exit;
             ww.audio = audio;
             ww.getfile = getfile;
@@ -156,17 +156,17 @@ namespace GameModeFortress
             var blockrenderertorch = new BlockRendererTorch();
             blockrenderertorch.terrainrenderer = terrainRenderer;
             blockrenderertorch.data = gamedata;
-            var terrainChunkRenderer = new TerrainChunkRenderer();
-            terrainChunkRenderer.config3d = config3d;
-            terrainChunkRenderer.data = gamedata;
-            terrainChunkRenderer.mapstorage = clientgame;
-            terrainRenderer.terrainchunkrenderer = terrainChunkRenderer;
+            var terrainchunktesselator = new TerrainChunkTesselator();
+            terrainchunktesselator.config3d = config3d;
+            terrainchunktesselator.data = gamedata;
+            terrainchunktesselator.mapstorage = clientgame;
+            terrainRenderer.terrainchunktesselator = terrainchunktesselator;
             var frustumculling = new FrustumCulling() { the3d = the3d };
             terrainRenderer.batcher = new MeshBatcher() { frustumculling = frustumculling };
             terrainRenderer.frustumculling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
-            terrainChunkRenderer.blockrenderertorch = blockrenderertorch;
-            terrainChunkRenderer.terrainrenderer = terrainRenderer;
+            terrainchunktesselator.blockrenderertorch = blockrenderertorch;
+            terrainchunktesselator.terrainrenderer = terrainRenderer;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
             mapManipulator.compression = compression;
@@ -185,7 +185,7 @@ namespace GameModeFortress
             skysphere.playerpos = localplayerposition;
             skysphere.the3d = the3d;
             w.skysphere = skysphere;
-            var textrenderer = new ManicDigger.TextRenderer();
+            var textrenderer = new ManicDigger.Renderers.TextRenderer();
             w.textrenderer = textrenderer;
             weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainRenderer, viewport = w, map = clientgame, shadows = shadowssimple };
             w.weapon = new WeaponRenderer() { info = weapon, blockrenderertorch = blockrenderertorch, playerpos = w };
@@ -265,7 +265,7 @@ namespace GameModeFortress
                 ischunkdirty = dirtychunks,
                 heightmap = heightmap
             };
-            this.terrainchunkrenderer = terrainChunkRenderer;
+            this.terrainchunktesselator = terrainchunktesselator;
             this.network = network;
             if (fullshadows)
             {
@@ -285,7 +285,7 @@ namespace GameModeFortress
                     config3d, mapManipulator, terrainRenderer, the3d, exit,
                     localplayerposition, worldfeatures, physics, mapgenerator,
                     internetgamefactory, blockrenderertorch, playerrenderer,
-                    map, w.login, shadowsfull, shadowssimple, terrainChunkRenderer);
+                    map, w.login, shadowsfull, shadowssimple, terrainchunktesselator);
             }
         }
         InfiniteMapChunked2d heightmap;
@@ -302,7 +302,7 @@ namespace GameModeFortress
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
-        TerrainChunkRenderer terrainchunkrenderer;
+        TerrainChunkTesselator terrainchunktesselator;
         public bool fullshadows = false;
         NetworkClientFortress network;
         void UseShadowsSimple()
@@ -315,7 +315,7 @@ namespace GameModeFortress
             clientgame.shadows = shadows;
             //map.shadows = shadows;
             weapon.shadows = shadows;
-            terrainchunkrenderer.shadows = shadows;
+            terrainchunktesselator.shadows = shadows;
             network.shadows = shadows;
             w.shadows = shadows;
         }
@@ -329,7 +329,7 @@ namespace GameModeFortress
             clientgame.shadows = shadows;
             //map.shadows = shadows;
             weapon.shadows = shadows;
-            terrainchunkrenderer.shadows = shadows;
+            terrainchunktesselator.shadows = shadows;
             network.shadows = shadows;
             w.shadows = shadows;
         }

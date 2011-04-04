@@ -6,7 +6,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Drawing;
 using ManicDigger.Collisions;
 
-namespace ManicDigger
+namespace ManicDigger.Renderers
 {
     public class WeaponBlockInfo
     {
