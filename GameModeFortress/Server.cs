@@ -151,7 +151,6 @@ namespace ManicDiggerServer
             }
             chunkdb.SetChunks(tosave);
         }
-        MapManipulator manipulator = new MapManipulator() { getfile = new GetFilePathDummy() };
         public string gamepathconfig = GameStorePath.GetStorePath();
         public string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
         public string SaveFilenameWithoutExtension = "default";

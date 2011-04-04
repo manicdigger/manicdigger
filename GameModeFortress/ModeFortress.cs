@@ -75,7 +75,7 @@ namespace GameModeFortress
         public int SimulationCurrentFrame { get { return 0; } }
         #endregion
     }
-    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, IGameWorld, INetworkPacketReceived, ICurrentSeason
+    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, INetworkPacketReceived, ICurrentSeason
     {
         [Inject]
         public ITerrainRenderer terrain;
@@ -619,18 +619,6 @@ namespace GameModeFortress
             MapSizeZ = map.GetUpperBound(2) + 1;
             shadows.ResetShadows();
             */
-        }
-        #endregion
-        MapManipulator mapmanipulator = new MapManipulator();
-        #region IGameMode Members
-        public byte[] SaveState()
-        {
-            return mapmanipulator.SaveMap(map);
-        }
-        public void LoadState(byte[] savegame)
-        {
-            mapmanipulator.LoadMap(map, savegame);
-            shadows.ResetShadows();
         }
         #endregion
         #region IGameMode Members

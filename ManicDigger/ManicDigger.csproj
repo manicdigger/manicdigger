@@ -97,7 +97,6 @@
     <Compile Include="Renderers\MinecartRenderer.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
-    <Compile Include="FCraft.cs" />
     <Compile Include="GameWindow.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />
@@ -115,7 +114,6 @@
     <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
     <Compile Include="The3d.cs" />
-    <Compile Include="Ticks.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
     <Compile Include="Renderers\WeaponRenderer.cs" />
   </ItemGroup>

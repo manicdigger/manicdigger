@@ -370,8 +370,6 @@ namespace ManicDigger
         Vector3 PlayerPositionSpawn { get; set; }
         Vector3 PlayerOrientationSpawn { get; }
         void OnNewMap();
-        byte[] SaveState();
-        void LoadState(byte[] savegame);
         int FiniteInventoryAmount(int blocktype);
         int FiniteInventoryMax { get; }
         double SIMULATIONLAG_SECONDS { get; set; }
@@ -541,7 +539,7 @@ namespace ManicDigger
         {
             if (guistate == GuiState.Normal)
             { EscapeMenuStart(); }
-            else if (guistate == GuiState.MainMenu || guistate == GuiState.EscapeMenu)
+            else if (guistate == GuiState.EscapeMenu)
             { }
             else if (guistate == GuiState.Inventory)
             { }
@@ -574,16 +572,6 @@ namespace ManicDigger
             //clientgame.LoadMapMinecraft();
             if (GameUrl == null)
             {
-                if (ENABLE_MAINMENU)
-                {
-                    guistate = GuiState.MainMenu;
-                    FreeMouse = true;
-                    mapManipulator.LoadMap(map, getfile.GetFile("menu" + MapManipulator.XmlSaveExtension));
-                    ENABLE_FREEMOVE = true;
-                    player.playerposition = new Vector3(4.691565f, 45.2253f, 2.52523f);
-                    player.playerorientation = new Vector3(3.897586f, 2.385999f, 0f);
-                }
-                else
                 {
                     GuiActionGenerateNewMap();
                     GuiStateBackToGame();
@@ -704,7 +692,6 @@ namespace ManicDigger
         }
         public int TPP_CAMERA_DISTANCE_MIN = 1;
         public int TPP_CAMERA_DISTANCE_MAX = 10;
-        public bool ENABLE_MAINMENU = false;
         private static void SetAmbientLight(Color c)
         {
             float mult = 1f;
@@ -752,69 +739,10 @@ namespace ManicDigger
                     {
                         pass = arguments;
                     }
-                    else if (cmd == "load")
-                    {
-                        if (arguments == "")
-                        {
-                            AddChatline("error: missing arg1 - savename");
-                        }
-                        string filename = arguments;
-                        //if no extension given, then add default
-                        if (filename.IndexOf(".") == -1)
-                        {
-                            filename += MapManipulator.XmlSaveExtension;
-                        }
-                        //mapManipulator.LoadMap(map, filename);
-                        game.LoadState(File.ReadAllBytes(filename));
-                        terrain.UpdateAllTiles();
-                    }
-                    else if (cmd == "save")
-                    {
-                        if (arguments == "")
-                        {
-                            AddChatline("error: missing arg1 - savename");
-                            return;
-                        }
-                        File.WriteAllBytes(arguments + MapManipulator.XmlSaveExtension, game.SaveState());
-                        //mapManipulator.SaveMap(map, arguments + MapManipulator.XmlSaveExtension);
-                    }
                     else if (cmd == "fps")
                     {
                         ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
                         ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
-                    }
-                    else if (cmd == "savefeature")
-                    {
-                        string[] ss1 = arguments.Split(new[] { ' ' });
-                        int size = int.Parse(ss1[0]);
-                        string filename = ss1[1];
-                        MapStorage m = new MapStorage();
-                        m.Map = new byte[size, size, size];
-                        m.MapSizeX = size;
-                        m.MapSizeY = size;
-                        m.MapSizeZ = size;
-                        for (int x = 0; x < size; x++)
-                        {
-                            for (int y = 0; y < size; y++)
-                            {
-                                for (int z = 0; z < size; z++)
-                                {
-                                    int xx = (int)player.playerposition.X + 1 + x;
-                                    int yy = (int)player.playerposition.Z + 1 + y;
-                                    int zz = (int)player.playerposition.Y + z;
-                                    if (MapUtil.IsValidPos(map, xx, yy, zz)
-                                        && MapUtil.IsValidPos(m, x, y, z))
-                                    {
-                                        m.Map[x, y, z] = (byte)map.GetBlock(xx, yy, zz);
-                                    }
-                                }
-                            }
-                        }
-                        if (!filename.Contains("."))
-                        {
-                            filename += MapManipulator.XmlSaveExtension;
-                        }
-                        mapManipulator.SaveMap(m, filename);
                     }
                     else if (cmd == "fog")
                     {
@@ -1180,30 +1108,6 @@ namespace ManicDigger
                 EscapeMenuKeyDown(e);
                 return;
             }
-            else if (guistate == GuiState.MainMenu)
-            {
-                int menuelements = 3;
-                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
-                {
-                    exit.exit = true;
-                    mainwindow.Exit();
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.Up))
-                {
-                    menustate.selected--;
-                    menustate.selected = Math.Max(0, menustate.selected);
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.Down))
-                {
-                    menustate.selected++;
-                    menustate.selected = Math.Min(menuelements - 1, menustate.selected);
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
-                {
-                    MainMenuAction();
-                }
-                return;
-            }
             else if (guistate == GuiState.Inventory)
             {
                 hudinventory.InventoryKeyDown(e);
@@ -1275,10 +1179,6 @@ namespace ManicDigger
         }
         List<string> typinglog = new List<string>();
         int typinglogpos = 0;
-        private void GuiActionLoadGame()
-        {
-            mapManipulator.LoadMap(map, mapManipulator.defaultminesave);
-        }
         public void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
@@ -1698,9 +1598,6 @@ namespace ManicDigger
                 }
             }
             else if (guistate == GuiState.EscapeMenu)
-            {
-            }
-            else if (guistate == GuiState.MainMenu)
             {
             }
             else if (guistate == GuiState.Inventory)
@@ -2544,64 +2441,11 @@ namespace ManicDigger
             characterrenderer.SetAnimation("walk");
             characterrenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
         }
-        private void GuiActionSaveGame()
-        {
-            mapManipulator.SaveMap(map, mapManipulator.defaultminesave);
-        }
-        void MainMenuAction()
-        {
-            if (menustate.selected == 0)
-            {
-                GuiActionGenerateNewMap();
-                GuiStateBackToGame();
-            }
-            else if (menustate.selected == 1)
-            {
-                if (SaveGameExists())
-                {
-                    GuiActionLoadGame();
-                    GuiStateBackToGame();
-                }
-            }
-            else if (menustate.selected == 2)
-            {
-                exit.exit = true;
-                this.mainwindow.Exit();
-            }
-            else throw new Exception();
-        }
-        bool SaveGameExists()
-        {
-            return File.Exists(mapManipulator.defaultminesave);
-        }
-        bool? savegameexists;
-        void DrawMainMenu()
-        {
-            string newgame = "New single-player game";
-            string loadgame = "Load game";
-            string exitstr = "Exit";
-            int fontsize = 20;
-            int starty = 300;
-            int textheight = 50;
-            if (savegameexists == null) { savegameexists = SaveGameExists(); }
-            if (guistate == GuiState.MainMenu)
-            {
-                the3d.Draw2dBitmapFile("manicdigger.png", xcenter(565), 50, 565, 119);
-                the3d.Draw2dText(newgame, xcenter(the3d.TextSize(newgame, fontsize).Width), starty, fontsize, menustate.selected == 0 ? Color.Red : Color.White);
-                the3d.Draw2dText(loadgame, xcenter(the3d.TextSize(loadgame, fontsize).Width), starty + textheight * 1, fontsize,
-                    savegameexists.Value ?
-                    (menustate.selected == 1 ? Color.Red : Color.White)
-                    : (menustate.selected == 1 ? Color.Red : Color.Gray));
-                the3d.Draw2dText(exitstr, xcenter(the3d.TextSize(exitstr, fontsize).Width), starty + textheight * 2, 20, menustate.selected == 2 ? Color.Red : Color.White);
-                //DrawMouseCursor();
-            }
-        }
         GuiState guistate;
         enum GuiState
         {
             Normal,
             EscapeMenu,
-            MainMenu,
             Inventory,
             MapLoading,
             CraftingRecipes,
@@ -2647,11 +2491,6 @@ namespace ManicDigger
                 case GuiState.EscapeMenu:
                     {
                         EscapeMenuDraw();
-                    }
-                    break;
-                case GuiState.MainMenu:
-                    {
-                        DrawMainMenu();
                     }
                     break;
                 case GuiState.Inventory:

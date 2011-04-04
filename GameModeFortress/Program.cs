@@ -133,7 +133,6 @@ namespace GameModeFortress
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesRendererDummy();
             var physics = new CharacterPhysics();
-            var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
             ICompression compression = IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
             network.Map = w;
@@ -167,9 +166,6 @@ namespace GameModeFortress
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             terrainchunktesselator.blockrenderertorch = blockrenderertorch;
             terrainchunktesselator.terrainrenderer = terrainRenderer;
-            mapManipulator.getfile = getfile;
-            mapManipulator.mapgenerator = mapgenerator;
-            mapManipulator.compression = compression;
             w.map = clientgame.mapforphysics;
             w.physics = physics;
             w.clients = clientgame;
@@ -221,7 +217,6 @@ namespace GameModeFortress
             w.fpshistorygraphrenderer = new HudFpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
             physics.map = clientgame.mapforphysics;
             physics.data = gamedata;
-            mapgenerator.data = gamedata;
             audio.getfile = getfile;
             audio.gameexit = exit;
             this.clientgame = clientgame;
@@ -283,7 +278,7 @@ namespace GameModeFortress
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
                     w, audio, gamedata, clientgame, network, mapstorage, getfile,
                     config3d, mapManipulator, terrainRenderer, the3d, exit,
-                    localplayerposition, worldfeatures, physics, mapgenerator,
+                    localplayerposition, worldfeatures, physics,
                     internetgamefactory, blockrenderertorch, playerrenderer,
                     map, w.login, shadowsfull, shadowssimple, terrainchunktesselator);
             }
