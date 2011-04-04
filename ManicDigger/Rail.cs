@@ -126,149 +126,6 @@ namespace ManicDigger
     public static class DirectionUtils
     {
         /// <summary>
-        /// TileExitDirection.Left => TileEnterDirection.Left
-        /// </summary>
-        /// <param name="exit"></param>
-        /// <returns></returns>
-        public static TileEnterDirection ToEnter(TileExitDirection exit)
-        {
-            switch (exit)
-            {
-                case TileExitDirection.Down:
-                    return TileEnterDirection.Down;
-                case TileExitDirection.Left:
-                    return TileEnterDirection.Left;
-                case TileExitDirection.Right:
-                    return TileEnterDirection.Right;
-                case TileExitDirection.Up:
-                    return TileEnterDirection.Up;
-                default:
-                    throw new Exception();
-            }
-        }
-        public static bool IsDisjoint(SignalDirection18 a, SignalDirection18 b)
-        {
-            return AreTwoDisjointRailTracks((ToRailDirectionFlags(RailDirectionUnderSignals(a))
-                | ToRailDirectionFlags(RailDirectionUnderSignals(b)))
-                );
-        }
-        public static RailConfiguration GetRailConfiguration(RailDirectionFlags rail_direction)
-        {
-            if (rail_direction == RailDirectionFlags.None)
-            {
-                return RailConfiguration.NoRail;
-            }
-            int rail_count = 0;
-            foreach (RailDirection dir in DirectionUtils.AllRailDirections)
-            {
-                if ((rail_direction & ToRailDirectionFlags(dir)) != 0)
-                {
-                    rail_count++;
-                }
-            }
-            if (rail_count == 1)
-            {
-                return RailConfiguration.SingleRail;
-            }
-            if (AreTwoDisjointRailTracks(rail_direction))
-            {
-                return RailConfiguration.TwoDisjointRailTracks;
-            }
-            return RailConfiguration.JoinedTracks;
-        }
-        public static bool AreTwoDisjointRailTracks(RailDirectionFlags rail_direction)
-        {
-            return (
-                (rail_direction == (RailDirectionFlags.UpLeft | RailDirectionFlags.DownRight))
-                || (rail_direction == (RailDirectionFlags.DownLeft | RailDirectionFlags.UpRight))
-                );
-        }
-        public static RailDirection RailDirectionUnderSignals(SignalDirection18 signalDirection)
-        {
-            switch (signalDirection)
-            {
-                case SignalDirection18.HorizontalBoth:
-                    return RailDirection.Horizontal;
-                case SignalDirection18.HorizontalLeft:
-                    return RailDirection.Horizontal;
-                case SignalDirection18.HorizontalRight:
-                    return RailDirection.Horizontal;
-
-                case SignalDirection18.VerticalBoth:
-                    return RailDirection.Vertical;
-                case SignalDirection18.VerticalDown:
-                    return RailDirection.Vertical;
-                case SignalDirection18.VerticalUp:
-                    return RailDirection.Vertical;
-
-                case SignalDirection18.UpLeftBoth:
-                    return RailDirection.UpLeft;
-                case SignalDirection18.UpLeftLeft:
-                    return RailDirection.UpLeft;
-                case SignalDirection18.UpLeftUp:
-                    return RailDirection.UpLeft;
-
-                case SignalDirection18.UpRightBoth:
-                    return RailDirection.UpRight;
-                case SignalDirection18.UpRightRight:
-                    return RailDirection.UpRight;
-                case SignalDirection18.UpRightUp:
-                    return RailDirection.UpRight;
-
-                case SignalDirection18.DownLeftBoth:
-                    return RailDirection.DownLeft;
-                case SignalDirection18.DownLeftDown:
-                    return RailDirection.DownLeft;
-                case SignalDirection18.DownLeftLeft:
-                    return RailDirection.DownLeft;
-
-                case SignalDirection18.DownRightBoth:
-                    return RailDirection.DownRight;
-                case SignalDirection18.DownRightDown:
-                    return RailDirection.DownRight;
-                case SignalDirection18.DownRightRight:
-                    return RailDirection.DownRight;
-                default:
-                    throw new ArgumentOutOfRangeException("signalDirection");
-            }
-        }
-        static SignalDirection18[] SignalsCycleHorizontal = new SignalDirection18[]
-        {
-            SignalDirection18.HorizontalBoth,
-            SignalDirection18.HorizontalLeft,
-            SignalDirection18.HorizontalRight,
-        };
-        static SignalDirection18[] SignalsCycleVertical = new SignalDirection18[]
-        {
-            SignalDirection18.VerticalBoth,
-            SignalDirection18.VerticalDown,
-            SignalDirection18.VerticalUp,
-        };
-        static SignalDirection18[] SignalsCycleUpLeft = new SignalDirection18[]
-        {
-            SignalDirection18.UpLeftBoth,
-            SignalDirection18.UpLeftLeft,
-            SignalDirection18.UpLeftUp,
-        };
-        static SignalDirection18[] SignalsCycleUpRight = new SignalDirection18[]
-        {
-            SignalDirection18.UpRightBoth,
-            SignalDirection18.UpRightRight,
-            SignalDirection18.UpRightUp,
-        };
-        static SignalDirection18[] SignalsCycleDownLeft = new SignalDirection18[]
-        {
-            SignalDirection18.DownLeftBoth,
-            SignalDirection18.DownLeftDown,
-            SignalDirection18.DownLeftLeft,
-        };
-        static SignalDirection18[] SignalsCycleDownRight = new SignalDirection18[]
-        {
-            SignalDirection18.DownRightBoth,
-            SignalDirection18.DownRightDown,
-            SignalDirection18.DownRightRight,
-        };
-        /// <summary>
         /// VehicleDirection12.UpRightRight -> returns Direction4.Right
         /// </summary>
         /// <param name="direction"></param>
@@ -341,52 +198,6 @@ namespace ManicDigger
                     throw new ArgumentOutOfRangeException("direction");
             }
         }
-        /// <summary>
-        /// Get vehicle direction not including information
-        /// about RailDirection. (for graphical image)
-        /// </summary>
-        /// <remarks>
-        /// Can be helpful because out of 12 VehicleDirections,
-        /// there are 4 vehicle image duplicates:
-        /// VehicleDirection12.UpLeftUp and VehicleDirection12.DownRightRight
-        /// use the same Direction8.UpRight vehicle image.
-        /// </remarks>
-        /// <param name="direction"></param>
-        /// <returns></returns>
-        public static Direction8 ToDirection8(VehicleDirection12 direction)
-        {
-            switch (direction)
-            {
-                case VehicleDirection12.HorizontalLeft:
-                    return Direction8.Left;
-                case VehicleDirection12.HorizontalRight:
-                    return Direction8.Right;
-                case VehicleDirection12.VerticalUp:
-                    return Direction8.Up;
-                case VehicleDirection12.VerticalDown:
-                    return Direction8.Down;
-
-                case VehicleDirection12.UpLeftUp:
-                    return Direction8.UpRight;
-                case VehicleDirection12.UpLeftLeft:
-                    return Direction8.DownLeft;
-                case VehicleDirection12.UpRightUp:
-                    return Direction8.UpLeft;
-                case VehicleDirection12.UpRightRight:
-                    return Direction8.DownRight;
-
-                case VehicleDirection12.DownLeftDown:
-                    return Direction8.DownRight;
-                case VehicleDirection12.DownLeftLeft:
-                    return Direction8.UpLeft;
-                case VehicleDirection12.DownRightDown:
-                    return Direction8.DownLeft;
-                case VehicleDirection12.DownRightRight:
-                    return Direction8.UpRight;
-                default:
-                    throw new ArgumentOutOfRangeException("direction");
-            }
-        }
         public static RailDirectionFlags ToRailDirectionFlags(RailDirection direction)
         {
             switch (direction)
@@ -415,41 +226,6 @@ namespace ManicDigger
                 {
                     yield return d;
                 }
-            }
-        }
-        public static TileEnterDirection StartEnter(VehicleDirection12 direction)
-        {
-            switch (direction)
-            {
-                case VehicleDirection12.HorizontalLeft:
-                    return TileEnterDirection.Right;
-                case VehicleDirection12.HorizontalRight:
-                    return TileEnterDirection.Left;
-                case VehicleDirection12.VerticalUp:
-                    return TileEnterDirection.Down;
-                case VehicleDirection12.VerticalDown:
-                    return TileEnterDirection.Up;
-
-                case VehicleDirection12.DownLeftDown:
-                    return TileEnterDirection.Left;
-                case VehicleDirection12.DownLeftLeft:
-                    return TileEnterDirection.Down;
-                case VehicleDirection12.DownRightDown:
-                    return TileEnterDirection.Right;
-                case VehicleDirection12.DownRightRight:
-                    return TileEnterDirection.Down;
-
-                case VehicleDirection12.UpLeftLeft:
-                    return TileEnterDirection.Up;
-                case VehicleDirection12.UpLeftUp:
-                    return TileEnterDirection.Left;
-                case VehicleDirection12.UpRightRight:
-                    return TileEnterDirection.Up;
-                case VehicleDirection12.UpRightUp:
-                    return TileEnterDirection.Right;
-
-                default:
-                    throw new Exception();
             }
         }
         public static VehicleDirection12 Reverse(VehicleDirection12 direction)
@@ -482,22 +258,6 @@ namespace ManicDigger
                     return VehicleDirection12.DownRightRight;
                 case VehicleDirection12.DownRightRight:
                     return VehicleDirection12.DownRightDown;
-                default:
-                    throw new ArgumentOutOfRangeException("direction");
-            }
-        }
-        public static VehicleDirection12 ToVehicleDirection12(Direction4 direction)
-        {
-            switch (direction)
-            {
-                case Direction4.Up:
-                    return VehicleDirection12.VerticalUp;
-                case Direction4.Down:
-                    return VehicleDirection12.VerticalDown;
-                case Direction4.Left:
-                    return VehicleDirection12.HorizontalLeft;
-                case Direction4.Right:
-                    return VehicleDirection12.HorizontalRight;
                 default:
                     throw new ArgumentOutOfRangeException("direction");
             }
@@ -576,70 +336,6 @@ namespace ManicDigger
             }
             return rail;
         }
-        public static IEnumerable<VehicleDirection12> ToVehicleDirections(RailDirection direction)
-        {
-            switch (direction)
-            {
-                case RailDirection.DownLeft:
-                    yield return VehicleDirection12.DownLeftDown;
-                    yield return VehicleDirection12.DownLeftLeft;
-                    break;
-                case RailDirection.DownRight:
-                    yield return VehicleDirection12.DownRightDown;
-                    yield return VehicleDirection12.DownRightRight;
-                    break;
-                case RailDirection.Horizontal:
-                    yield return VehicleDirection12.HorizontalLeft;
-                    yield return VehicleDirection12.HorizontalRight;
-                    break;
-                case RailDirection.UpLeft:
-                    yield return VehicleDirection12.UpLeftLeft;
-                    yield return VehicleDirection12.UpLeftUp;
-                    break;
-                case RailDirection.UpRight:
-                    yield return VehicleDirection12.UpRightRight;
-                    yield return VehicleDirection12.UpRightUp;
-                    break;
-                case RailDirection.Vertical:
-                    yield return VehicleDirection12.VerticalDown;
-                    yield return VehicleDirection12.VerticalUp;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("direction");
-            }
-        }
-        public static IEnumerable<TileEnterDirection> ToTileEnterDirections(RailDirection rail_direction)
-        {
-            switch (rail_direction)
-            {
-                case RailDirection.Horizontal:
-                    yield return TileEnterDirection.Left;
-                    yield return TileEnterDirection.Right;
-                    break;
-                case RailDirection.Vertical:
-                    yield return TileEnterDirection.Left;
-                    yield return TileEnterDirection.Right;
-                    break;
-                case RailDirection.DownLeft:
-                    yield return TileEnterDirection.Down;
-                    yield return TileEnterDirection.Left;
-                    break;
-                case RailDirection.DownRight:
-                    yield return TileEnterDirection.Down;
-                    yield return TileEnterDirection.Right;
-                    break;
-                case RailDirection.UpLeft:
-                    yield return TileEnterDirection.Up;
-                    yield return TileEnterDirection.Left;
-                    break;
-                case RailDirection.UpRight:
-                    yield return TileEnterDirection.Up;
-                    yield return TileEnterDirection.Right;
-                    break;
-                default:
-                    throw new Exception();
-            }
-        }
         /// <summary>
         /// Enter at TileEnterDirection.Left -> yields VehicleDirection12.UpLeftUp,
         /// VehicleDirection12.HorizontalRight,
@@ -693,59 +389,6 @@ namespace ManicDigger
                 yield return VehicleDirection12.DownRightRight;
             }
         }
-        public static VehicleDirection12 StraightToVehicleDirection12(TileExitDirection direction)
-        {
-            switch (direction)
-            {
-                case TileExitDirection.Up:
-                    return VehicleDirection12.VerticalUp;
-                case TileExitDirection.Down:
-                    return VehicleDirection12.VerticalDown;
-                case TileExitDirection.Left:
-                    return VehicleDirection12.HorizontalLeft;
-                case TileExitDirection.Right:
-                    return VehicleDirection12.HorizontalRight;
-                default:
-                    throw new Exception();
-            }
-        }
-        /// <summary>
-        /// TileEnterDirection.Left -> TileEnterDirection.Right
-        /// </summary>
-        /// <param name="direction"></param>
-        /// <returns></returns>
-        public static TileEnterDirection BackEnter(TileEnterDirection direction)
-        {
-            switch (direction)
-            {
-                case TileEnterDirection.Down:
-                    return TileEnterDirection.Up;
-                case TileEnterDirection.Left:
-                    return TileEnterDirection.Right;
-                case TileEnterDirection.Right:
-                    return TileEnterDirection.Left;
-                case TileEnterDirection.Up:
-                    return TileEnterDirection.Down;
-                default:
-                    throw new Exception();
-            }
-        }
-        public static TileExitDirection BackExit(TileEnterDirection direction)
-        {
-            switch (direction)
-            {
-                case TileEnterDirection.Down:
-                    return TileExitDirection.Up;
-                case TileEnterDirection.Up:
-                    return TileExitDirection.Down;
-                case TileEnterDirection.Left:
-                    return TileExitDirection.Right;
-                case TileEnterDirection.Right:
-                    return TileExitDirection.Left;
-                default:
-                    throw new ArgumentException("direction");
-            }
-        }
         public static TileEnterDirection ResultEnter(TileExitDirection direction)
         {
             switch (direction)
@@ -762,23 +405,6 @@ namespace ManicDigger
                     throw new Exception();
             }
         }
-        public static IEnumerable<TileEnterDirection> AllTileEnterDirections
-        {
-            get
-            {
-                yield return TileEnterDirection.Down;
-                yield return TileEnterDirection.Left;
-                yield return TileEnterDirection.Right;
-                yield return TileEnterDirection.Up;
-            }
-        }
-    }
-    public enum RailConfiguration : byte
-    {
-        NoRail,
-        SingleRail,
-        TwoDisjointRailTracks,
-        JoinedTracks,
     }
     public enum TileExitDirection : byte
     {
@@ -793,38 +419,6 @@ namespace ManicDigger
         Down,
         Left,
         Right,
-    }
-    /// <summary>
-    /// Green HorizontalLeft signal allows train of VehicleDirection12.HorizontalRight to move.
-    /// 18 directions because in addition to 12 one-way signals (same as vehicle directions)
-    /// there are 6 two-way signals.
-    /// </summary>
-    /// <remarks>
-    /// Sygnały na jednym tile można zapisać jako SignalDirection18 a, b;
-    /// tylko wtedy None trzeba dodać?
-    /// </remarks>
-    public enum SignalDirection18 : byte
-    {
-        HorizontalLeft,
-        HorizontalRight,
-        HorizontalBoth,
-        VerticalUp,
-        VerticalDown,
-        VerticalBoth,
-
-        UpLeftUp,
-        UpLeftLeft,
-        UpLeftBoth,
-        UpRightUp,
-        UpRightRight,
-        UpRightBoth,
-
-        DownLeftDown,
-        DownLeftLeft,
-        DownLeftBoth,
-        DownRightDown,
-        DownRightRight,
-        DownRightBoth,
     }
     /// <summary>
     /// Each RailDirection on tile can be traversed by train in two directions.
@@ -849,17 +443,6 @@ namespace ManicDigger
         DownLeftLeft,
         DownRightDown,
         DownRightRight,
-    }
-    public enum Direction8
-    {
-        Up = 0,
-        Down = 1,
-        Left = 2,
-        Right = 3,
-        UpRight = 4,
-        DownRight = 5,
-        DownLeft = 6,
-        UpLeft = 7,
     }
     public enum VehicleDirection12Flags
     {
