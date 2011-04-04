@@ -12,11 +12,11 @@ namespace ManicDigger.Renderers
         public VehicleDirection12 direction;
         public VehicleDirection12 lastdirection;
         public double progress;
-        public MinecartRenderer drawer;
+        public MinecartRenderer renderer;
         #region IModelToDraw Members
         public void Draw(float dt)
         {
-            drawer.Draw(position, direction, lastdirection, progress);
+            renderer.Draw(position, direction, lastdirection, progress);
         }
         public IEnumerable<ManicDigger.Collisions.Triangle3D> TrianglesForPicking
         {

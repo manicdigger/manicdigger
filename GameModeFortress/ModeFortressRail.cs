@@ -411,7 +411,7 @@ namespace GameModeFortress
                 if (railriding)
                 {
                     var m = new Minecart();
-                    m.drawer = minecartrenderer;
+                    m.renderer = minecartrenderer;
                     m.position = viewport.LocalPlayerPosition;
                     m.direction = currentdirection;
                     m.lastdirection = lastdirection;

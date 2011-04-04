@@ -29,9 +29,9 @@ namespace ManicDigger
         int terrainTexturesPerAtlas { get; }
         void UseTerrainTextureAtlas2d(Bitmap atlas2d);
     }
-    public class TerrainDrawerDummy : ITerrainRenderer
+    public class TerrainRendererDummy : ITerrainRenderer
     {
-        #region ITerrainDrawer Members
+        #region ITerrainRenderer Members
         public void Start()
         {
         }
@@ -52,7 +52,7 @@ namespace ManicDigger
         public int terrainTexture { get; set; }
         public int DrawDistance { get; set; }
         #endregion
-        #region ITerrainDrawer Members
+        #region ITerrainRenderer Members
         public int ChunkUpdates { get; set; }
         #endregion
         #region ITerrainRenderer Members
@@ -229,9 +229,9 @@ namespace ManicDigger
         [Inject]
         public ILocalPlayerPosition localplayerposition;
         [Inject]
-        public IWorldFeaturesDrawer worldfeatures;
+        public IWorldFeaturesRenderer worldfeatures;
         [Inject]
-        public TerrainChunkRenderer terrainchunkdrawer;
+        public TerrainChunkRenderer terrainchunkrenderer;
         [Inject]
         public IFrustumCulling frustumculling;
         [Inject]
@@ -263,7 +263,7 @@ namespace ManicDigger
         int drawdistance = 256;
         public int DrawDistance { get { return drawdistance; } set { drawdistance = value; } }
         bool started = false;
-        #region ITerrainDrawer Members
+        #region ITerrainRenderer Members
         public void Start()
         {
             if (started)
@@ -530,7 +530,7 @@ namespace ManicDigger
         private IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             chunkupdates++;
-            return terrainchunkdrawer.MakeChunk(x, y, z);
+            return terrainchunkrenderer.MakeChunk(x, y, z);
         }
         int chunkupdates = 0;
         public int ChunkUpdates { get { return chunkupdates; } }
@@ -620,24 +620,24 @@ namespace ManicDigger
     {
         Normal, Left, Right, Front, Back
     }
-    public interface IBlockDrawerTorch
+    public interface IBlockRendererTorch
     {
         void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type);
     }
-    public class BlockDrawerTorchDummy : IBlockDrawerTorch
+    public class BlockRendererTorchDummy : IBlockRendererTorch
     {
-        #region IBlockDrawerTorch Members
+        #region IBlockRendererTorch Members
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
         }
         #endregion
     }
-    public class BlockDrawerTorch : IBlockDrawerTorch
+    public class BlockRendererTorch : IBlockRendererTorch
     {
         [Inject]
         public IGameData data;
         [Inject]
-        public ITerrainRenderer terraindrawer;
+        public ITerrainRenderer terrainrenderer;
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
             int tiletype = data.BlockIdTorch;
@@ -666,7 +666,7 @@ namespace ManicDigger
             //top
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Top];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -682,7 +682,7 @@ namespace ManicDigger
             //bottom - same as top, but z is 1 less.
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Bottom];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -698,7 +698,7 @@ namespace ManicDigger
             //front
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Front];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -714,7 +714,7 @@ namespace ManicDigger
             //back - same as front, but x is 1 greater.
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Back];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -729,7 +729,7 @@ namespace ManicDigger
             }
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Left];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Right, texrec.Top, curcolor));
@@ -745,7 +745,7 @@ namespace ManicDigger
             //right - same as left, but y is 1 greater.
             {
                 int sidetexture = data.TextureId[tiletype, (int)TileSide.Right];
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terraindrawer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, terrainrenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Top, curcolor));
@@ -760,20 +760,20 @@ namespace ManicDigger
             }
         }
     }
-    public interface IWorldFeaturesDrawer
+    public interface IWorldFeaturesRenderer
     {
         void DrawWorldFeatures();
     }
-    public class WorldFeaturesDrawerDummy : IWorldFeaturesDrawer
+    public class WorldFeaturesRendererDummy : IWorldFeaturesRenderer
     {
-        #region IWorldFeaturesDrawer Members
+        #region IWorldFeaturesRenderer Members
         public void DrawWorldFeatures()
         {
         }
         #endregion
     }
     //Old class for tiling water and bedrock around finite map.
-    public class WorldFeaturesDrawer : IWorldFeaturesDrawer
+    public class WorldFeaturesRenderer : IWorldFeaturesRenderer
     {
         [Inject]
         public IThe3d the3d;

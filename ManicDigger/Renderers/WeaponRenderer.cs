@@ -50,7 +50,7 @@ namespace ManicDigger
         [Inject]
         public WeaponBlockInfo info;
         [Inject]
-        public IBlockDrawerTorch blockdrawertorch;
+        public IBlockRendererTorch blockrenderertorch;
         [Inject]
         public ILocalPlayerPosition playerpos;
         public void SetAttack(bool isattack, bool build)
@@ -102,7 +102,7 @@ namespace ManicDigger
                 int z = 0;
                 if (info.IsTorch())
                 {
-                    blockdrawertorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
+                    blockrenderertorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
                 }
                 else
                 {

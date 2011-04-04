@@ -18,7 +18,7 @@ namespace ManicDigger
         [Inject]
         public Config3d config3d;
         [Inject]
-        public TextRenderer textdrawer;
+        public TextRenderer textrenderer;
         [Inject]
         public IGetFilePath getfile;
         [Inject]
@@ -153,7 +153,7 @@ namespace ManicDigger
         public Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
         CachedTexture MakeTextTexture(Text t)
         {
-            Bitmap bmp = textdrawer.MakeTextTexture(t);
+            Bitmap bmp = textrenderer.MakeTextTexture(t);
             int texture = LoadTexture(bmp);
             return new CachedTexture() { textureId = texture, size = bmp.Size };
         }

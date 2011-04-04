@@ -44,7 +44,7 @@ namespace ManicDigger
         List<object[]> code = new List<object[]>();
         double animperiod = 0.8;
         public double AnimPeriod { get { return animperiod; } set { animperiod = value; } }
-        #region ICharacterDrawer Members
+        #region ICharacterRenderer Members
         public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
             if (animationhint.InVehicle)

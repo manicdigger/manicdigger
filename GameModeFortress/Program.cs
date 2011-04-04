@@ -60,8 +60,8 @@ namespace GameModeFortress
             ww.the3d = new The3d();
             ww.the3d.getfile = getfile;
             ww.the3d.config3d = new Config3d();
-            ww.the3d.terrain = new TerrainDrawerDummy();
-            ww.the3d.textdrawer = new ManicDigger.TextRenderer();
+            ww.the3d.terrain = new TerrainRendererDummy();
+            ww.the3d.textrenderer = new ManicDigger.TextRenderer();
             var game = this;
             ww.game = game;
             ww.textrenderer = new ManicDigger.TextRenderer();
@@ -124,14 +124,14 @@ namespace GameModeFortress
             var mapstorage = clientgame;
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainDrawer = new TerrainRenderer();
+            var terrainRenderer = new TerrainRenderer();
             var the3d = new The3d();
             the3d.getfile = getfile;
             the3d.config3d = config3d;
             the3d.viewportsize = w;
             w.the3d = the3d;
             var localplayerposition = w;
-            var worldfeatures = new WorldFeaturesDrawerDummy();
+            var worldfeatures = new WorldFeaturesRendererDummy();
             var physics = new CharacterPhysics();
             var mapgenerator = new MapGeneratorPlain();
             var internetgamefactory = this;
@@ -144,29 +144,29 @@ namespace GameModeFortress
             network.NetworkPacketReceived = clientgame;
             network.compression = compression;
             network.resetmap = this;
-            terrainDrawer.the3d = the3d;
-            terrainDrawer.getfile = getfile;
-            terrainDrawer.config3d = config3d;
-            terrainDrawer.mapstorage = clientgame;
-            terrainDrawer.data = gamedata;
-            terrainDrawer.exit = exit;
-            terrainDrawer.localplayerposition = localplayerposition;
-            terrainDrawer.worldfeatures = worldfeatures;
-            terrainDrawer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
-            var blockdrawertorch = new BlockDrawerTorch();
-            blockdrawertorch.terraindrawer = terrainDrawer;
-            blockdrawertorch.data = gamedata;
-            var terrainChunkDrawer = new TerrainChunkRenderer();
-            terrainChunkDrawer.config3d = config3d;
-            terrainChunkDrawer.data = gamedata;
-            terrainChunkDrawer.mapstorage = clientgame;
-            terrainDrawer.terrainchunkdrawer = terrainChunkDrawer;
+            terrainRenderer.the3d = the3d;
+            terrainRenderer.getfile = getfile;
+            terrainRenderer.config3d = config3d;
+            terrainRenderer.mapstorage = clientgame;
+            terrainRenderer.data = gamedata;
+            terrainRenderer.exit = exit;
+            terrainRenderer.localplayerposition = localplayerposition;
+            terrainRenderer.worldfeatures = worldfeatures;
+            terrainRenderer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
+            var blockrenderertorch = new BlockRendererTorch();
+            blockrenderertorch.terrainrenderer = terrainRenderer;
+            blockrenderertorch.data = gamedata;
+            var terrainChunkRenderer = new TerrainChunkRenderer();
+            terrainChunkRenderer.config3d = config3d;
+            terrainChunkRenderer.data = gamedata;
+            terrainChunkRenderer.mapstorage = clientgame;
+            terrainRenderer.terrainchunkrenderer = terrainChunkRenderer;
             var frustumculling = new FrustumCulling() { the3d = the3d };
-            terrainDrawer.batcher = new MeshBatcher() { frustumculling = frustumculling };
-            terrainDrawer.frustumculling = frustumculling;
+            terrainRenderer.batcher = new MeshBatcher() { frustumculling = frustumculling };
+            terrainRenderer.frustumculling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
-            terrainChunkDrawer.blockdrawertorch = blockdrawertorch;
-            terrainChunkDrawer.terrainrenderer = terrainDrawer;
+            terrainChunkRenderer.blockrenderertorch = blockrenderertorch;
+            terrainChunkRenderer.terrainrenderer = terrainRenderer;
             mapManipulator.getfile = getfile;
             mapManipulator.mapgenerator = mapgenerator;
             mapManipulator.compression = compression;
@@ -178,7 +178,7 @@ namespace GameModeFortress
             w.getfile = getfile;
             w.config3d = config3d;
             w.mapManipulator = mapManipulator;
-            w.terrain = terrainDrawer;
+            w.terrain = terrainRenderer;
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
             skysphere.meshbatcher = new MeshBatcher() { frustumculling = new FrustumCullingDummy() };
@@ -187,14 +187,14 @@ namespace GameModeFortress
             w.skysphere = skysphere;
             var textrenderer = new ManicDigger.TextRenderer();
             w.textrenderer = textrenderer;
-            weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainDrawer, viewport = w, map = clientgame, shadows = shadowssimple };
-            w.weapon = new WeaponRenderer() { info = weapon, blockdrawertorch = blockdrawertorch, playerpos = w };
-            var playerdrawer = new CharacterRendererMonsterCode();
-            playerdrawer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
-            w.characterdrawer = playerdrawer;
-            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainDrawer };
+            weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainRenderer, viewport = w, map = clientgame, shadows = shadowssimple };
+            w.weapon = new WeaponRenderer() { info = weapon, blockrenderertorch = blockrenderertorch, playerpos = w };
+            var playerrenderer = new CharacterRendererMonsterCode();
+            playerrenderer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
+            w.characterrenderer = playerrenderer;
+            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainRenderer };
             w.ENABLE_FINITEINVENTORY = false;
-            clientgame.terrain = terrainDrawer;
+            clientgame.terrain = terrainRenderer;
             clientgame.viewport = w;
             clientgame.data = gamedata;
             clientgame.network = network;
@@ -204,7 +204,7 @@ namespace GameModeFortress
             clientgame.minecartrenderer = new MinecartRenderer() { getfile = getfile, the3d = the3d };
             InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
             this.dirtychunks = new DirtyChunks() { mapstorage = map };
-            terrainDrawer.ischunkready = dirtychunks;
+            terrainRenderer.ischunkready = dirtychunks;
             map.ischunkready = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
             dirtychunks.Start();
@@ -226,21 +226,21 @@ namespace GameModeFortress
             audio.gameexit = exit;
             this.clientgame = clientgame;
             this.map = map;
-            the3d.terrain = terrainDrawer;
-            the3d.textdrawer = textrenderer;
+            the3d.terrain = terrainRenderer;
+            the3d.textrenderer = textrenderer;
             w.currentshadows = this;
             var sunmoonrenderer = new SunMoonRenderer() { draw2d = the3d, player = w, getfile = getfile, the3d = the3d };
             w.sunmoonrenderer = sunmoonrenderer;
             clientgame.sunmoonrenderer = sunmoonrenderer;
             bool IsMono = Type.GetType("Mono.Runtime") != null;
-            terrainDrawer.textureatlasconverter = new TextureAtlasConverter();
+            terrainRenderer.textureatlasconverter = new TextureAtlasConverter();
             if (IsMono)
             {
-                terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmapDummy(); };
+                terrainRenderer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmapDummy(); };
             }
             else
             {
-                terrainDrawer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
+                terrainRenderer.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
             }
             this.heightmap = new InfiniteMapChunked2d() { map = map };
             heightmap.Restart();
@@ -251,7 +251,7 @@ namespace GameModeFortress
             {
                 data = gamedata,
                 map = clientgame,
-                terrain = terrainDrawer,
+                terrain = terrainRenderer,
                 localplayerposition = localplayerposition,
                 config3d = config3d,
                 ischunkready = dirtychunks,
@@ -265,7 +265,7 @@ namespace GameModeFortress
                 ischunkdirty = dirtychunks,
                 heightmap = heightmap
             };
-            this.terrainchunkrenderer = terrainChunkDrawer;
+            this.terrainchunkrenderer = terrainChunkRenderer;
             this.network = network;
             if (fullshadows)
             {
@@ -282,10 +282,10 @@ namespace GameModeFortress
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
                     w, audio, gamedata, clientgame, network, mapstorage, getfile,
-                    config3d, mapManipulator, terrainDrawer, the3d, exit,
+                    config3d, mapManipulator, terrainRenderer, the3d, exit,
                     localplayerposition, worldfeatures, physics, mapgenerator,
-                    internetgamefactory, blockdrawertorch, playerdrawer,
-                    map, w.login, shadowsfull, shadowssimple, terrainChunkDrawer);
+                    internetgamefactory, blockrenderertorch, playerrenderer,
+                    map, w.login, shadowsfull, shadowssimple, terrainChunkRenderer);
             }
         }
         InfiniteMapChunked2d heightmap;

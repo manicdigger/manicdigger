@@ -18,7 +18,7 @@ namespace ManicDigger
         [Inject]
         public IGameData data;
         [Inject]
-        public IBlockDrawerTorch blockdrawertorch;
+        public IBlockRendererTorch blockrenderertorch;
         [Inject]
         public Config3d config3d;
         [Inject]
@@ -597,7 +597,7 @@ namespace ManicDigger
                 if (CanSupportTorch(currentChunk[MapUtil.Index(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
                 List<ushort> torchelements = new List<ushort>();
                 List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
-                blockdrawertorch.AddTorch(torchelements, torchvertices, x, y, z, type);
+                blockrenderertorch.AddTorch(torchelements, torchvertices, x, y, z, type);
                 int oldverticescount=toreturnmain.verticesCount;
                 for (int i = 0; i < torchelements.Count; i++)
                 {

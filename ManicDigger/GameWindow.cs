@@ -484,7 +484,7 @@ namespace ManicDigger
         [Inject]
         public WeaponRenderer weapon;
         [Inject]
-        public ICharacterRenderer characterdrawer;
+        public ICharacterRenderer characterrenderer;
         [Inject]
         public ICurrentShadows currentshadows;
         [Inject]
@@ -2248,7 +2248,7 @@ namespace ManicDigger
                 DrawCharacters((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    characterdrawer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
+                    characterrenderer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
                 }
                 DrawPlayers((float)e.Time);
                 foreach (IModelToDraw m in game.Models)
@@ -2541,8 +2541,8 @@ namespace ManicDigger
         //}
         private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
-            characterdrawer.SetAnimation("walk");
-            characterdrawer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
+            characterrenderer.SetAnimation("walk");
+            characterrenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
         }
         private void GuiActionSaveGame()
         {
