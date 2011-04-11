@@ -674,6 +674,8 @@ namespace ManicDigger.Renderers
         [Inject]
         public IMapStorage mapstorage;
         [Inject]
+        public IWaterLevel waterlevel;
+        [Inject]
         public ILocalPlayerPosition localplayerposition;
         public void DrawWorldFeatures()
         {
@@ -709,7 +711,7 @@ namespace ManicDigger.Renderers
             foreach (Rectangle r in AroundMap())
             {
                 DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
-                    mapstorage.WaterLevel);
+                    waterlevel.WaterLevel);
             }
             GL.End();
         }
@@ -734,12 +736,12 @@ namespace ManicDigger.Renderers
             {
                 List<Point> rr = new List<Point>(r);
                 DrawRockQuad(rr[0].X, rr[0].Y, rr[1].X, rr[1].Y,
-                    mapstorage.WaterLevel - 2);
+                    waterlevel.WaterLevel - 2);
             }
             foreach (Rectangle r in AroundMap())
             {
                 DrawWaterQuad(r.X, r.Y, r.Width, r.Height,
-                    mapstorage.WaterLevel - 2);
+                    waterlevel.WaterLevel - 2);
             }
             DrawWaterQuad(0, 0, mapstorage.MapSizeX, mapstorage.MapSizeY, 0);
             GL.End();

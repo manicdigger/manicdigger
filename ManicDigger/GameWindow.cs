@@ -449,7 +449,7 @@ namespace ManicDigger
             mywindow.OnKeyPress(e);
         }
     }
-    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IAddChatLine, IViewport3d
+    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IAddChatLine, IViewport3d, IWaterLevel
     {
         [Inject]
         public MainGameWindow mainwindow;
@@ -1218,7 +1218,6 @@ namespace ManicDigger
             if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
             newterrain.Start();
 
-            oldclientgame.Dispose();
             newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
             newnetwork.MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
 
@@ -2809,12 +2808,13 @@ namespace ManicDigger
                 p += new Vector3(0, CharacterPhysics.characterheight, 0);
                 if (!MapUtil.IsValidPos(map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
-                    return p.Y < map.WaterLevel;
+                    return p.Y < WaterLevel;
                 }
                 return data.IsWater[map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
         #endregion
+        public float WaterLevel { get { return map.MapSizeZ / 2; } set { } }
         public string GameUrl;
         Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members

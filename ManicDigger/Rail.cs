@@ -12,17 +12,17 @@ namespace ManicDigger
     public class RailMapUtil
     {
         [Inject]
-        public ITerrainInfo mapstorage;
+        public IMapStorage mapstorage;
         [Inject]
         public IGameData data;
         public RailSlope GetRailSlope(int x, int y, int z)
         {
-            int tiletype = mapstorage.GetTerrainBlock(x, y, z);
+            int tiletype = mapstorage.GetBlock(x, y, z);
             RailDirectionFlags rail = data.Rail[tiletype];
             int blocknear;
             if (x < mapstorage.MapSizeX - 1)
             {
-                blocknear = mapstorage.GetTerrainBlock(x + 1, y, z);
+                blocknear = mapstorage.GetBlock(x + 1, y, z);
                 if (rail == RailDirectionFlags.Horizontal &&
                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
@@ -31,7 +31,7 @@ namespace ManicDigger
             }
             if (x > 0)
             {
-                blocknear = mapstorage.GetTerrainBlock(x - 1, y, z);
+                blocknear = mapstorage.GetBlock(x - 1, y, z);
                 if (rail == RailDirectionFlags.Horizontal &&
                      blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
@@ -41,7 +41,7 @@ namespace ManicDigger
             }
             if (y > 0)
             {
-                blocknear = mapstorage.GetTerrainBlock(x, y - 1, z);
+                blocknear = mapstorage.GetBlock(x, y - 1, z);
                 if (rail == RailDirectionFlags.Vertical &&
                       blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {
@@ -50,7 +50,7 @@ namespace ManicDigger
             }
             if (y < mapstorage.MapSizeY - 1)
             {
-                blocknear = mapstorage.GetTerrainBlock(x, y + 1, z);
+                blocknear = mapstorage.GetBlock(x, y + 1, z);
                 if (rail == RailDirectionFlags.Vertical &&
                       blocknear != 0 && data.Rail[blocknear] == RailDirectionFlags.None)
                 {

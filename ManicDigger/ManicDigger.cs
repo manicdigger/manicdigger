@@ -59,10 +59,20 @@ namespace ManicDigger
         int MapSizeZ { get; set; }
         int GetBlock(int x, int y, int z);
         void SetBlock(int x, int y, int z, int tileType);
-        float WaterLevel { get; set; }
-        void Dispose();
+    }
+    public interface IMapStoragePortion
+    {
+        void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
+        void SetMapPortion(int x, int y, int z, byte[, ,] chunk);
         void UseMap(byte[, ,] map);
-        void SetChunk(int x, int y, int z, byte[, ,] chunk);
+    }
+    public interface IMapStorageLight
+    {
+        int GetLight(int x, int y, int z);
+    }
+    public interface IWaterLevel
+    {
+        float WaterLevel { get; set; }
     }
     public class Player
     {
@@ -192,7 +202,7 @@ namespace ManicDigger
             return true;
         }
     }
-    public class MapStorage : IMapStorage
+    public class MapStorage : IMapStorage, IMapStoragePortion
     {
         byte[, ,] map;
         public object mapupdate = new object();
@@ -204,20 +214,6 @@ namespace ManicDigger
         public void SetBlock(int x, int y, int z, int tileType)
         {
             map[x, y, z] = (byte)tileType;
-        }
-        public float WaterLevel
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-        public void Dispose()
-        {
         }
         #endregion
         #region IMapStorage Members
@@ -233,13 +229,17 @@ namespace ManicDigger
         }
         #endregion
         #region IMapStorage Members
-        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        public void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
         {
             throw new NotImplementedException();
         }
         #endregion
         public void Reset(int sizex, int sizey, int sizez)
         {
+        }
+        public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+        {
+            throw new NotImplementedException();
         }
     }
     public class XmlTool

@@ -75,7 +75,7 @@ namespace GameModeFortress
         public int SimulationCurrentFrame { get { return 0; } }
         #endregion
     }
-    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, INetworkPacketReceived, ICurrentSeason
+    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, INetworkPacketReceived, ICurrentSeason, IMapStorageLight
     {
         [Inject]
         public ITerrainRenderer terrain;
@@ -576,24 +576,14 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
         {
-            map.SetChunk(x, y, z, chunk);
+            map.SetMapPortion(x, y, z, chunk);
         }
-        #endregion
-        //float waterlevel = 32;
-        #region IMapStorage Members
-        //public float WaterLevel { get { return waterlevel; } set { waterlevel = value; } }
-        public float WaterLevel { get { return MapSizeZ / 2; } set { } }
         #endregion
         #region IMapStorage Members
         public byte[, ,] Map { get { throw new NotImplementedException(); } set { throw new NotImplementedException(); } }
         public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
         public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
         public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
-        #endregion
-        #region IMapStorage Members
-        public void Dispose()
-        {
-        }
         #endregion
         #region IGameMode Members
         public void OnNewMap()

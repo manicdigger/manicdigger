@@ -72,9 +72,6 @@ namespace ManicDiggerServer
             UpdateColumnHeight(x, y);
         }
         public float WaterLevel { get; set; }
-        public void Dispose()
-        {
-        }
         public void UseMap(byte[, ,] map)
         {
         }

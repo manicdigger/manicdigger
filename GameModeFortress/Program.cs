@@ -155,10 +155,14 @@ namespace GameModeFortress
             var blockrenderertorch = new BlockRendererTorch();
             blockrenderertorch.terrainrenderer = terrainRenderer;
             blockrenderertorch.data = gamedata;
+            InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
+            this.dirtychunks = new DirtyChunks() { mapstorage = map };
             var terrainchunktesselator = new TerrainChunkTesselator();
             terrainchunktesselator.config3d = config3d;
             terrainchunktesselator.data = gamedata;
             terrainchunktesselator.mapstorage = clientgame;
+            terrainchunktesselator.mapstorageportion = map;
+            terrainchunktesselator.mapstoragelight = clientgame;
             terrainRenderer.terrainchunktesselator = terrainchunktesselator;
             var frustumculling = new FrustumCulling() { getCameraMatrix = the3d };
             terrainRenderer.batcher = new MeshBatcher() { frustumculling = frustumculling };
@@ -198,9 +202,8 @@ namespace GameModeFortress
             clientgame.audio = audio;
             clientgame.railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame };
             clientgame.minecartrenderer = new MinecartRenderer() { getfile = getfile, the3d = the3d };
-            InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
-            this.dirtychunks = new DirtyChunks() { mapstorage = map };
             terrainRenderer.ischunkready = dirtychunks;
+            network.MapStoragePortion = map;
             map.ischunkready = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
             dirtychunks.Start();

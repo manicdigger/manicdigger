@@ -15,6 +15,8 @@ namespace ManicDigger
         [Inject]
         public IMap Map;
         [Inject]
+        public IMapStoragePortion MapStoragePortion;
+        [Inject]
         public IClients Clients;
         [Inject]
         public IAddChatLine Chatlines;
@@ -316,7 +318,7 @@ namespace ManicDigger
                                     }
                                 }
                             }
-                            Map.Map.UseMap(receivedmap);
+                            MapStoragePortion.UseMap(receivedmap);
                             Map.Map.MapSizeX = receivedmap.GetUpperBound(0) + 1;
                             Map.Map.MapSizeY = receivedmap.GetUpperBound(1) + 1;
                             Map.Map.MapSizeZ = receivedmap.GetUpperBound(2) + 1;

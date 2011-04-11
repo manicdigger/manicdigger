@@ -14,7 +14,11 @@ namespace ManicDigger.Renderers
     public class TerrainChunkTesselator
     {
         [Inject]
-        public ITerrainInfo mapstorage;
+        public IMapStorage mapstorage;
+        [Inject]
+        public IMapStoragePortion mapstorageportion;
+        [Inject]
+        public IMapStorageLight mapstoragelight;
         [Inject]
         public IGameData data;
         [Inject]
@@ -246,107 +250,8 @@ namespace ManicDigger.Renderers
         //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
         private void GetExtendedChunk(int x, int y, int z)
         {
-            int chunksize = this.chunksize;
-            byte[] mapchunk = mapstorage.GetChunk(x * chunksize, y * chunksize, z * chunksize);
-            for (int yy = 1; yy < chunksize + 1; yy++)
-            {
-                for (int zz = 1; zz < chunksize + 1; zz++)
-                {
-                    int pos = MapUtil.Index3d(1, yy, zz, chunksize + 2, chunksize + 2);
-                    int pos2 = MapUtil.Index3d(1 - 1, yy - 1, zz - 1, chunksize, chunksize);
-                    for (int xx = 0; xx < chunksize; xx++)
-                    {
-                        currentChunk[pos] = mapchunk[pos2];
-                        //Don't calculate index in inner loop: move across whole row with just pos++;
-                        pos++;
-                        pos2++;
-                    }
-                }
-            }
-            CopyBorders(x, y, z, chunksize);
-        }
-        private void CopyBorders(int x, int y, int z, int chunksize)
-        {
-            //copy borders of this chunk
-
-            //z-1
-            if (z > 0)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk(x * chunksize, y * chunksize, (z - 1) * chunksize);
-                for (int xx = 1; xx < chunksize + 1; xx++)
-                {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        currentChunk[MapUtil.Index3d(xx, yy, 0, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(xx - 1, yy - 1, chunksize - 1, chunksize, chunksize)];
-                    }
-                }
-            }
-            //z+1
-            if ((z + 1) < mapsizez / chunksize)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk(x * chunksize, y * chunksize, (z + 1) * chunksize);
-                for (int xx = 1; xx < chunksize + 1; xx++)
-                {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        currentChunk[MapUtil.Index3d(xx, yy, chunksize + 1, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(xx - 1, yy - 1, 0, chunksize, chunksize)];
-                    }
-                }
-            }
-            //x - 1
-            if (x > 0)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk((x - 1) * chunksize, y * chunksize, z * chunksize);
-                for (int zz = 1; zz < chunksize + 1; zz++)
-                {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        currentChunk[MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(chunksize - 1, yy - 1, zz - 1, chunksize, chunksize)];
-                    }
-                }
-            }
-            //x + 1
-            if ((x + 1) < mapsizex / chunksize)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk((x + 1) * chunksize, y * chunksize, z * chunksize);
-                for (int zz = 1; zz < chunksize + 1; zz++)
-                {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        currentChunk[MapUtil.Index3d(chunksize + 1, yy, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(0, yy - 1, zz - 1, chunksize, chunksize)];
-                    }
-                }
-            }
-            //y - 1
-            if (y > 0)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk(x * chunksize, (y - 1) * chunksize, z * chunksize);
-                for (int xx = 1; xx < chunksize + 1; xx++)
-                {
-                    for (int zz = 1; zz < chunksize + 1; zz++)
-                    {
-                        currentChunk[MapUtil.Index3d(xx, 0, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(xx - 1, chunksize - 1, zz - 1, chunksize, chunksize)];
-                    }
-                }
-            }
-            //y + 1
-            if (y > 0)
-            {
-                byte[] mapchunk_ = mapstorage.GetChunk(x * chunksize, (y + 1) * chunksize, z * chunksize);
-                for (int xx = 1; xx < chunksize + 1; xx++)
-                {
-                    for (int zz = 1; zz < chunksize + 1; zz++)
-                    {
-                        currentChunk[MapUtil.Index3d(xx, chunksize + 1, zz, chunksize + 2, chunksize + 2)]
-                            = mapchunk_[MapUtil.Index3d(xx - 1, 0, zz - 1, chunksize, chunksize)];
-                    }
-                }
-            }
+            mapstorageportion.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
+                chunksize + 2, chunksize + 2, chunksize + 2);
         }
         VerticesIndices toreturnmain;
         VerticesIndices toreturntransparent;
@@ -531,6 +436,7 @@ namespace ManicDigger.Renderers
         float texrecTop;
         float texrecWidth;
         float texrecHeight;
+        FastColor ColorWhite = new FastColor(Color.White);
         private void BlockPolygons(int x, int y, int z, byte[] currentChunk)
         {
             int xx = x % chunksize + 1;
@@ -552,7 +458,7 @@ namespace ManicDigger.Renderers
             {
                 return;
             }
-            FastColor color = mapstorage.GetTerrainBlockColor(x, y, z);
+            FastColor color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
             FastColor colorShadowSide = new FastColor(color.A,
                 (int)(color.R * BlockShadow),
                 (int)(color.G * BlockShadow),
@@ -989,7 +895,7 @@ namespace ManicDigger.Renderers
             {
                 if (IsValidPos(globalx, globaly, globalz))
                 {
-                    currentChunkShadows[xx, yy, zz] = (byte)(mapstorage.GetLight(globalx, globaly, globalz) + 1);
+                    currentChunkShadows[xx, yy, zz] = (byte)(mapstoragelight.GetLight(globalx, globaly, globalz) + 1);
                 }
                 else
                 {

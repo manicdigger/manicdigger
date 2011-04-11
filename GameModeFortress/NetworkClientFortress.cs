@@ -25,6 +25,7 @@ namespace GameModeFortress
     {
         [Inject]
         public IMap Map;
+        public IMapStoragePortion MapStoragePortion;
         [Inject]
         public IClients Clients;
         [Inject]
@@ -401,7 +402,7 @@ namespace GameModeFortress
                                 }
                             }
                         }
-                        Map.Map.SetChunk(p.X, p.Y, p.Z, receivedchunk);
+                        MapStoragePortion.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
                         for (int xx = 0; xx < 2; xx++)
                         {
                             for (int yy = 0; yy < 2; yy++)
