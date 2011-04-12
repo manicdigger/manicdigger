@@ -85,7 +85,7 @@ namespace ManicDigger
     }
     public static class VectorTool
     {
-        public static Vector3 toVectorInFixedSystem1(float dx, float dy, float dz, double orientationx, double orientationy)
+        public static Vector3 ToVectorInFixedSystem(float dx, float dy, float dz, double orientationx, double orientationy)
         {
             //Don't calculate for nothing ...
             if (dx == 0.0f & dy == 0.0f && dz == 0.0f)

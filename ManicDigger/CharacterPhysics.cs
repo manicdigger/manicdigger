@@ -70,7 +70,7 @@ namespace ManicDigger
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push)
         {
             soundnow = false;
-            var diff1 = VectorTool.toVectorInFixedSystem1
+            Vector3 diff1 = VectorTool.ToVectorInFixedSystem
                 (move.movedx * move.movespeednow * (float)dt,
                 0,
                 move.movedy * move.movespeednow * (float)dt, state.playerorientation.X, state.playerorientation.Y);

@@ -2354,52 +2354,60 @@ namespace ManicDigger
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
-            Vector3 forward = VectorTool.toVectorInFixedSystem1(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
-            Vector3 tpp = new Vector3();
-            var playercam = player.playerposition + new Vector3(0, CharacterHeight, 0);
-
-            if (ENABLE_TPP_VIEW)
+            Vector3 forward = VectorTool.ToVectorInFixedSystem(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
+            Vector3 cameraEye;
+            Vector3 cameraTarget;
+            Vector3 playerEye = player.playerposition + new Vector3(0, CharacterHeight, 0);
+            if (!ENABLE_TPP_VIEW)
             {
-                tpp = Vector3.Multiply(forward, -tppcameradistance);
+                cameraEye = playerEye;
+                cameraTarget = playerEye + forward;
             }
-            var eye = playercam + tpp;
-            float curtppcameradistance = tppcameradistance;
-            if (ENABLE_TPP_VIEW)
+            else
             {
-                var ray_start_point = playercam;
-                var raytarget = eye;
-
-                var pick = new Line3D();
-                var raydir = (raytarget - ray_start_point);
-                raydir.Normalize();
-                raydir = Vector3.Multiply(raydir, tppcameradistance + 1);
-                pick.Start = ray_start_point;
-                pick.End = ray_start_point + raydir;
-
-                //pick terrain
-                var s = new BlockOctreeSearcher();
-                s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
-                List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
-                pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
-                if (pick2.Count > 0)
-                {
-                    var pickdistance = (pick2[0].pos - playercam).Length;
-                    curtppcameradistance = Math.Min(pickdistance - 1, curtppcameradistance);
-                    if (curtppcameradistance < 0.3f) { curtppcameradistance = 0.3f; }
-                }
+                cameraEye = playerEye + Vector3.Multiply(forward, -tppcameradistance);
+                cameraTarget = playerEye;
+                float currentTppcameradistance = tppcameradistance;
+                LimitThirdPersonCameraToWalls(ref cameraEye, cameraTarget, ref currentTppcameradistance);
             }
-            if (ENABLE_TPP_VIEW)
-            {
-                tpp = Vector3.Multiply(forward, -curtppcameradistance);
-            }
-            eye = playercam + tpp;
-            var target = player.playerposition + new Vector3(0, CharacterHeight, 0) + forward;
-
-            return Matrix4.LookAt(eye, target, up);
+            return Matrix4.LookAt(cameraEye, cameraTarget, up);
         }
         Matrix4 OverheadCamera()
         {
-            return Matrix4.LookAt(overheadcameraK.Position, overheadcameraK.Center, up);
+            Vector3 cameraEye = overheadcameraK.Position;
+            Vector3 cameraTarget = overheadcameraK.Center + new Vector3(0, CharacterHeight, 0);
+            float currentOverheadcameradistance = overheadcameradistance;
+            LimitThirdPersonCameraToWalls(ref cameraEye, cameraTarget, ref currentOverheadcameradistance);
+            return Matrix4.LookAt(cameraEye, cameraTarget, up);
+        }
+        //Don't allow to look through walls.
+        private void LimitThirdPersonCameraToWalls(ref Vector3 eye, Vector3 target, ref float curtppcameradistance)
+        {
+            var ray_start_point = target;
+            var raytarget = eye;
+
+            var pick = new Line3D();
+            var raydir = (raytarget - ray_start_point);
+            raydir.Normalize();
+            raydir = Vector3.Multiply(raydir, tppcameradistance + 1);
+            pick.Start = ray_start_point;
+            pick.End = ray_start_point + raydir;
+
+            //pick terrain
+            var s = new BlockOctreeSearcher();
+            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
+            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
+            pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
+            if (pick2.Count > 0)
+            {
+                var pickdistance = (pick2[0].pos - target).Length;
+                curtppcameradistance = Math.Min(pickdistance - 1, curtppcameradistance);
+                if (curtppcameradistance < 0.3f) { curtppcameradistance = 0.3f; }
+            }
+
+            Vector3 cameraDirection = target - eye;
+            raydir.Normalize();
+            eye = target + Vector3.Multiply(raydir, curtppcameradistance);
         }
         AnimationState v0anim = new AnimationState();
         void DrawCharacters(float dt)
