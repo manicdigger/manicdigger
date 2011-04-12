@@ -213,6 +213,7 @@ namespace ManicDigger
                 mIsTransparent[id] = BoolParse(block[Column("IsTransparent").Value]);
                 mIsTransparentFully[id] = BoolParse(block[Column("IsTransparentFully").Value]);
                 mIsEmptyForPhysics[id] = BoolParse(block[Column("IsEmptyForPhysics").Value]);
+                mLightRadius[id] = (int)intParse(Get(block, "LightRadius"));
             }
         }
         private void LoadSound(string[][] t, string s, string[] block, int id)
