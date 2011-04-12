@@ -18,7 +18,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IMapStorage map;
         [Inject]
-        public ITerrainRenderer terrain;
+        public ITerrainTextures terrain;
         [Inject]
         public IGameData data;
         public void DrawImmediateParticleEffects(double deltaTime)

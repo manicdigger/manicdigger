@@ -15,6 +15,52 @@ namespace ManicDigger.Renderers
         public int TextureId;
         public int TextureInAtlasId;
     }
+    public interface ITerrainTextures
+    {
+        int texturesPacked { get; }
+        int terrainTexture { get; }
+        int[] terrainTextures1d { get; }
+        int terrainTexturesPerAtlas { get; }
+        void UseTerrainTextureAtlas2d(Bitmap atlas2d);
+    }
+    public class TerrainTextures : ITerrainTextures
+    {
+        [Inject]
+        public IThe3d the3d;
+        [Inject]
+        public TextureAtlasConverter textureatlasconverter;
+        [Inject]
+        public IGetFilePath getfile;
+        public int texturesPacked { get { return 16; } } //16x16
+        public int terrainTexture { get; set; }
+        public void Start()
+        {
+            GL.Enable(EnableCap.Texture2D);
+            using (var atlas2d = new Bitmap(getfile.GetFile("terrain.png")))
+            {
+                UseTerrainTextureAtlas2d(atlas2d);
+            }
+        }
+        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
+        {
+            terrainTexture = the3d.LoadTexture(atlas2d);
+            List<int> terrainTextures1d = new List<int>();
+            {
+                terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
+                List<Bitmap> atlases1d = textureatlasconverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
+                foreach (Bitmap bmp in atlases1d)
+                {
+                    terrainTextures1d.Add(the3d.LoadTexture(bmp));
+                    bmp.Dispose();
+                }
+            }
+            this.terrainTextures1d = terrainTextures1d.ToArray();
+        }
+        public int atlas1dheight = 2048;
+        public int atlas2dtiles = 16; // 16x16
+        public int[] terrainTextures1d { get; set; }
+        public int terrainTexturesPerAtlas { get; set; }
+    }
     public interface ITerrainRenderer
     {
         void Start();
@@ -22,12 +68,7 @@ namespace ManicDigger.Renderers
         void UpdateAllTiles();
         void UpdateTile(int x, int y, int z);
         int TrianglesCount();
-        int texturesPacked { get; }
-        int terrainTexture { get; }
         int ChunkUpdates { get; }
-        int[] terrainTextures1d { get; }
-        int terrainTexturesPerAtlas { get; }
-        void UseTerrainTextureAtlas2d(Bitmap atlas2d);
     }
     public class TerrainRendererDummy : ITerrainRenderer
     {
@@ -48,21 +89,10 @@ namespace ManicDigger.Renderers
         {
             return 0;
         }
-        public int texturesPacked { get; set; }
-        public int terrainTexture { get; set; }
         public int DrawDistance { get; set; }
         #endregion
         #region ITerrainRenderer Members
         public int ChunkUpdates { get; set; }
-        #endregion
-        #region ITerrainRenderer Members
-        public int[] terrainTextures1d { get; set; }
-        public int terrainTexturesPerAtlas { get; set; }
-        #endregion
-        #region ITerrainRenderer Members
-        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
-        {
-        }
         #endregion
     }
     public class TextureAtlas
@@ -128,14 +158,9 @@ namespace ManicDigger.Renderers
         public IFrustumCulling frustumculling;
         [Inject]
         public DirtyChunks ischunkready;
-        [Inject]
-        public TextureAtlasConverter textureatlasconverter;
         public event EventHandler<ExceptionEventArgs> OnCrash;
         
         public int chunksize = 16;
-        public bool DONOTDRAWEDGES = true;
-        public int texturesPacked { get { return 16; } } //16x16
-        public int terrainTexture { get; set; }
 
         public int chunkdrawdistance
         {
@@ -164,10 +189,6 @@ namespace ManicDigger.Renderers
             }
             started = true;
             GL.Enable(EnableCap.Texture2D);
-            using (var atlas2d = new Bitmap(getfile.GetFile("terrain.png")))
-            {
-                UseTerrainTextureAtlas2d(atlas2d);
-            }
             updateThreadRunning++;
             Start2();
             new Thread(UpdateThreadStart).Start();
@@ -187,25 +208,6 @@ namespace ManicDigger.Renderers
         int mapsizexchunks;
         int mapsizeychunks;
         int mapsizezchunks;
-        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
-        {
-            terrainTexture = the3d.LoadTexture(atlas2d);
-            List<int> terrainTextures1d = new List<int>();
-            {
-                terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
-                List<Bitmap> atlases1d = textureatlasconverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
-                foreach (Bitmap bmp in atlases1d)
-                {
-                    terrainTextures1d.Add(the3d.LoadTexture(bmp));
-                    bmp.Dispose();
-                }
-            }
-            this.terrainTextures1d = terrainTextures1d.ToArray();
-        }
-        public int atlas1dheight = 2048;
-        public int atlas2dtiles = 16; // 16x16
-        public int[] terrainTextures1d { get; set; }
-        public int terrainTexturesPerAtlas { get; set; }
         bool exit2;
         void UpdateThreadStart()
         {
@@ -433,7 +435,7 @@ namespace ManicDigger.Renderers
             worldfeatures.DrawWorldFeatures();
             lock (terrainlock)            
             {
-                GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
+                //GL.BindTexture(TextureTarget.Texture2D, terrainTexture);
                 //must be drawn last, for transparent blocks.
                 batcher.Draw(localplayerposition.LocalPlayerPosition);
             }
@@ -529,7 +531,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IGameData data;
         [Inject]
-        public ITerrainRenderer terrainrenderer;
+        public ITerrainTextures terrainrenderer;
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
             int tiletype = data.BlockIdTorch;

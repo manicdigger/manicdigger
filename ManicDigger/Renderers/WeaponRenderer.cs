@@ -11,7 +11,7 @@ namespace ManicDigger.Renderers
     public class WeaponBlockInfo
     {
         [Inject]
-        public ITerrainRenderer terrain;
+        public ITerrainTextures terrain;
         [Inject]
         public IViewport3d viewport;
         [Inject]

@@ -26,7 +26,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public Config3d config3d;
         [Inject]
-        public ITerrainRenderer terrainrenderer; //textures
+        public ITerrainTextures terrainrenderer; //textures
         [Inject]
         public IShadows shadows;
         RailMapUtil railmaputil;

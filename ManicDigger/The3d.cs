@@ -14,7 +14,7 @@ namespace ManicDigger
     public class The3d : IThe3d, IDraw2d, IGetCameraMatrix
     {
         [Inject]
-        public ITerrainRenderer terrain;
+        public ITerrainTextures terrain;
         [Inject]
         public Config3d config3d;
         [Inject]

@@ -20,7 +20,7 @@ namespace ManicDigger.Gui
             {
                 int x = xcenter(singlesize * 10) + i * singlesize;
                 int y = viewportsize.Height - 100;
-                gameWindow.the3d.Draw2dTexture(gameWindow.terrain.terrainTexture, x, y, singlesize, singlesize,
+                gameWindow.the3d.Draw2dTexture(gameWindow.terrainTextures.terrainTexture, x, y, singlesize, singlesize,
                         gameWindow.data.TextureIdForInventory[(int)gameWindow.MaterialSlots[i]]);
 
                 if (gameWindow.ENABLE_FINITEINVENTORY)

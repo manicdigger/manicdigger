@@ -499,6 +499,8 @@ namespace ManicDigger
         [Inject]
         public IGameExit exit;
         [Inject]
+        public ITerrainTextures terrainTextures;
+        [Inject]
         public HudChat hudchat;
         [Inject]
         public HudInventory hudinventory;
@@ -2092,7 +2094,7 @@ namespace ManicDigger
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, terrainTextures.terrainTexture);
 
             GL.MatrixMode(MatrixMode.Modelview);
 

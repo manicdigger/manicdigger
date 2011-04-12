@@ -121,7 +121,7 @@ namespace ManicDigger.Gui
             {
                 int xx = xcenter(inventorysinglesize * inventorysize) + x * inventorysinglesize;
                 int yy = ycenter(inventorysinglesize * inventorysize) + y * inventorysinglesize;
-                w.the3d.Draw2dTexture(w.terrain.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
+                w.the3d.Draw2dTexture(w.terrainTextures.terrainTexture, xx, yy, inventorysinglesize, inventorysinglesize,
                     data.TextureIdForInventory[buildable[ii]]);
 
                 if (w.ENABLE_FINITEINVENTORY)

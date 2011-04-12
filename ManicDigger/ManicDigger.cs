@@ -239,7 +239,21 @@ namespace ManicDigger
         }
         public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {
-            throw new NotImplementedException();
+            Array.Clear(outPortion, 0, outPortion.Length);
+            for (int xx = 0; xx < portionsizex; xx++)
+            {
+                for (int yy = 0; yy < portionsizey; yy++)
+                {
+                    for (int zz = 0; zz < portionsizez; zz++)
+                    {
+                        if (MapUtil.IsValidPos(this, x + xx, y + yy, z + zz))
+                        {
+                            int pos = MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey);
+                            outPortion[pos] = map[x + xx, y + yy, z + zz];
+                        }
+                    }
+                }
+            }
         }
     }
     public class XmlTool

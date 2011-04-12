@@ -80,6 +80,8 @@ namespace GameModeFortress
         [Inject]
         public ITerrainRenderer terrain;
         [Inject]
+        public ITerrainTextures terrainTextures;
+        [Inject]
         public IViewport3d viewport;
         [Inject]
         public INetworkClientFortress network;
@@ -757,7 +759,7 @@ namespace GameModeFortress
                             {
                                 using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
                                 {
-                                    terrain.UseTerrainTextureAtlas2d(bmp);
+                                    terrainTextures.UseTerrainTextureAtlas2d(bmp);
                                 }
                             }
                         }
