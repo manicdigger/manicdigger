@@ -37,9 +37,9 @@ namespace GameMenu
                     }
                     var s = servers[serverid];
                     AddListboxRow(new string[] { s.Name, s.Users.ToString(), s.Max.ToString(), s.Ip, s.Version },
-                        50, 350 + i * 100, columnWidths, i, Color.White);
+                        50, 350 + i * 100, columnWidths, serverid, Color.White);
                     AddListboxRow(new string[] { s.Players },
-                        50, 350 + i * 100 + 50, columnWidths, i, Color.Gray);
+                        50, 350 + i * 100 + 50, columnWidths, serverid, Color.Gray);
                 }
             }
             menu.AddCaption(this, "Multiplayer");
