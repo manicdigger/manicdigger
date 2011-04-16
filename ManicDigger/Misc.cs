@@ -8,6 +8,9 @@ using System.Drawing.Imaging;
 using OpenTK;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using System.Reflection;
+using System.Diagnostics;
+using System.ComponentModel.Design;
 
 namespace ManicDigger
 {
@@ -610,5 +613,317 @@ namespace ManicDigger
             }
         }
         #endregion
+    }
+    public static class Extensions
+    {
+        public static string GetWorkingDirectory(Assembly assembly)
+        {
+            return Path.GetDirectoryName(assembly.Location);
+        }
+        public static string GetRelativePath(Assembly assembly, string absolute)
+        {
+            return absolute.Replace(GetWorkingDirectory(assembly), "");
+        }
+        public static string GetAbsolutePath(Assembly assembly, string relative)
+        {
+            return Path.Combine(GetWorkingDirectory(assembly), relative);
+        }
+    }
+    public static class Serializers
+    {
+        public static void XmlSerialize(Stream stream, object value)
+        {
+            XmlSerializer serializer = new XmlSerializer(value.GetType());
+            serializer.Serialize(stream, value);
+        }
+        public static void XmlSerialize(string fileName, object value)
+        {
+            using (Stream s = File.Create(fileName))
+            {
+                XmlSerializer serializer = new XmlSerializer(value.GetType());
+                serializer.Serialize(s, value);
+            }
+        }
+        public static object XmlDeserialize(string fileName, Type type)
+        {
+            using (Stream stream = File.OpenRead(fileName))
+            {
+                XmlSerializer serializer = new XmlSerializer(type);
+                return serializer.Deserialize(stream);
+            }
+        }
+        public static object XmlDeserialize(Stream stream, Type type)
+        {
+            XmlSerializer serializer = new XmlSerializer(type);
+            return serializer.Deserialize(stream);
+        }
+    }
+    /// <summary>
+    /// Provides an application-wide point for services.
+    /// </summary>
+    public sealed class Container : IServiceContainer
+    {
+        private static volatile Container _instance;
+
+        public static Container Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new Container();
+                }
+                return _instance;
+            }
+        }
+        private ServiceContainer _serviceContainer = new ServiceContainer();
+        public void AddService(Type serviceType, ServiceCreatorCallback callback, bool promote)
+        {
+            _serviceContainer.AddService(serviceType, callback, promote);
+        }
+        public void AddService(Type serviceType, ServiceCreatorCallback callback)
+        {
+            _serviceContainer.AddService(serviceType, callback);
+        }
+        public void AddService(Type serviceType, object serviceInstance, bool promote)
+        {
+            _serviceContainer.AddService(serviceType, serviceInstance, promote);
+        }
+        public void AddService(Type serviceType, object serviceInstance)
+        {
+            _serviceContainer.AddService(serviceType, serviceInstance);
+        }
+        public void RemoveService(Type serviceType, bool promote)
+        {
+            _serviceContainer.RemoveService(serviceType, promote);
+        }
+        public void RemoveService(Type serviceType)
+        {
+            _serviceContainer.RemoveService(serviceType);
+        }
+        public object GetService(Type serviceType)
+        {
+            return _serviceContainer.GetService(serviceType);
+        }
+    }
+    /// <summary>
+    /// Caches types in a big library to avoid having multiple classes scan multiple times.
+    /// Any class can retrieve types from here to use them in whichever way they want.
+    /// </summary>
+    public sealed class TypeManager
+    {
+        /// <summary>
+        /// The default capacity amount.
+        /// See documentation for further information.
+        /// </summary>
+        /// <remarks>A greater value means more memory consumption, but increases scanning speed.
+        /// A lower value means less memory consumption, but decreases scanning speed.</remarks>
+        public const int DefaultAmount = 256;
+
+        private static volatile TypeManager _instance;
+
+        public static TypeManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new TypeManager();
+                    _instance.Initialize(null);
+                }
+                return _instance;
+            }
+        }
+
+        public bool IsInitialized { get; private set; }
+        public IList<Type> FoundTypes { get; private set; }
+
+        private TypeManager()
+        {
+            IsInitialized = false;
+            FoundTypes = new List<Type>(DefaultAmount);
+        }
+        private void Initialize(IList<string> assembliesToScan)
+        {
+            if (IsInitialized)
+            {
+                throw new InvalidOperationException();
+            }
+
+            Stopwatch sw = Stopwatch.StartNew();
+
+            // if there are no desired assemblies then we take all assemblies we can find in the working directory
+            if (assembliesToScan == null)
+            {
+                string workingDirectory = Extensions.GetWorkingDirectory(Assembly.GetExecutingAssembly());
+                List<string> tmp = new List<string>(2);
+                // alright, lets scan all assemblies in the working directory
+                tmp.AddRange(Directory.GetFiles(workingDirectory, "*.exe", SearchOption.TopDirectoryOnly));
+                tmp.AddRange(Directory.GetFiles(workingDirectory, "*.dll", SearchOption.TopDirectoryOnly));
+                assembliesToScan = tmp;
+            }
+
+            // load and check each assembly's types
+            foreach (string file in assembliesToScan)
+            {
+                Assembly assembly = null;
+
+                try
+                {
+                    assembly = Assembly.Load(AssemblyName.GetAssemblyName(file));
+
+                    ScanAssembly(assembly);
+
+                }
+                catch (FileLoadException)
+                {
+                    // this exception can be ignored here
+                    continue;
+                }
+                catch (ReflectionTypeLoadException)
+                {
+                    // this exception can be ignored here
+                    continue;
+                }
+                catch (TypeLoadException)
+                {
+                    // this exception can be ignored here
+                    continue;
+                }
+                catch (BadImageFormatException)
+                {
+                    // this exception can be ignored here
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    // other exceptions may be interesting though
+                    sw.Stop();
+                    throw ex;
+                }
+            }
+
+            sw.Stop();
+            System.Diagnostics.Debug.WriteLine(string.Format("Scanned {0} assemblies in {1} milliseconds (collected a total of {2} types).", assembliesToScan.Count, sw.ElapsedMilliseconds, FoundTypes.Count));
+
+            IsInitialized = true;
+        }
+        private void ScanAssembly(Assembly assembly)
+        {
+            int amount = 0;
+
+            // process all types (even private ones)
+            Type[] types = assembly.GetTypes();
+            for (int i = 0; i < types.Length; i++)
+            {
+                Type t = types[i];
+
+                // add it
+                FoundTypes.Add(t);
+                amount++;
+            }
+        }
+        public Type[] FindAll(Predicate<Type> predicate)
+        {
+            List<Type> tmp = new List<Type>(16);
+
+            for (int i = 0; i < FoundTypes.Count; i++)
+            {
+                Type t = FoundTypes[i];
+                if (predicate(t))
+                {
+                    tmp.Add(t);
+                }
+            }
+
+            return tmp.ToArray();
+        }
+        public IList<Type> FindDescendants(Type superclass, bool includeAbstracts)
+        {
+            List<Type> tmp = new List<Type>(16);
+
+            for (int i = 0; i < FoundTypes.Count; i++)
+            {
+                Type t = FoundTypes[i];
+                if (t.IsSubclassOf(superclass))
+                {
+                    if (!includeAbstracts && t.IsAbstract)
+                    {
+                        continue;
+                    }
+                    tmp.Add(t);
+                }
+            }
+
+            if (tmp.Count == 0)
+            {
+                return new Type[0];
+            }
+
+            return tmp.ToArray();
+        }
+
+        public IList<Type> FindImplementers(Type interfaceType, bool includeAbstracts)
+        {
+            List<Type> tmp = new List<Type>(16);
+
+            for (int i = 0; i < FoundTypes.Count; i++)
+            {
+                Type t = FoundTypes[i];
+
+                Type[] interfaces = t.GetInterfaces();
+                for (int j = 0; j < interfaces.Length; j++)
+                {
+                    Type iface = interfaces[j];
+
+                    if (iface == interfaceType)
+                    {
+                        if (!includeAbstracts && t.IsAbstract)
+                        {
+                            continue;
+                        }
+
+                        tmp.Add(t);
+                    }
+                }
+            }
+
+            return tmp;
+        }
+        public Type FindByAssemblyQualifiedName(string assemblyQualifiedName)
+        {
+            for (int i = 0; i < FoundTypes.Count; i++)
+            {
+                Type t = FoundTypes[i];
+                if (t.AssemblyQualifiedName == assemblyQualifiedName)
+                {
+                    return t;
+                }
+            }
+
+            return null;
+        }
+        public Type FindByFullName(string fullName)
+        {
+            for (int i = 0; i < FoundTypes.Count; i++)
+            {
+                Type t = FoundTypes[i];
+
+                if (t.FullName == fullName)
+                {
+                    return t;
+                }
+            }
+
+            return null;
+        }
+        public object CreateInstance(Type type, params object[] args)
+        {
+            return Activator.CreateInstance(type, args);
+        }
+        public T CreateInstance<T>(params object[] args)
+        {
+            return (T)CreateInstance(typeof(T), args);
+        }
     }
 }

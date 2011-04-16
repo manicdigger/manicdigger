@@ -62,6 +62,7 @@
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
     <Compile Include="GuiStates\GuiStateMapLoading.cs" />
+    <Compile Include="Hud\Hud.cs" />
     <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
     <Compile Include="Hud\HudMaterialSelector.cs" />
