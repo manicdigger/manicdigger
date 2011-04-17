@@ -996,20 +996,22 @@ namespace ManicDigger
                         return;
                     }
                     player.movedz = 0;
-                    ENABLE_FREEMOVE = !ENABLE_FREEMOVE;
-                    if (ENABLE_FREEMOVE) { Log("Freemove enabled."); }
-                    else { Log("Freemove disabled."); }
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.F4))
-                {
-                    if (!d_Network.AllowFreemove)
+                    if (!ENABLE_FREEMOVE)
                     {
-                        Log(strFreemoveNotAllowed);
-                        return;
+                        ENABLE_FREEMOVE = true;
+                        Log("Move: Free.");
                     }
-                    ENABLE_NOCLIP = !ENABLE_NOCLIP;
-                    if (ENABLE_NOCLIP) { Log("Noclip enabled."); }
-                    else { Log("Noclip disabled."); }
+                    else if (ENABLE_FREEMOVE && (!ENABLE_NOCLIP))
+                    {
+                        ENABLE_NOCLIP = true;
+                        Log("Move: Free, Noclip.");
+                    }
+                    else if (ENABLE_FREEMOVE && ENABLE_NOCLIP)
+                    {
+                        ENABLE_FREEMOVE = false;
+                        ENABLE_NOCLIP = false;
+                        Log("Move: Normal.");
+                    }
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.I))
                 {
