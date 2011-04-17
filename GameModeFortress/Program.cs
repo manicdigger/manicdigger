@@ -15,6 +15,7 @@ using ManicDigger.Menu;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
 using ManicDiggerServer;
+using System.Text;
 #endregion
 
 namespace GameModeFortress
@@ -51,6 +52,7 @@ namespace GameModeFortress
             w.Run();
         }
         GetFilePath getfile = new GetFilePath(new[] { "mine", "minecraft" });
+        LoginDataFile logindatafile = new LoginDataFile();
         private void StartMenu()
         {
             var ww = new GameMenu.MenuWindow();
@@ -82,6 +84,7 @@ namespace GameModeFortress
             ww.d_FormLogin = new FormLogin();
             ww.d_FormLogin.menu = ww;
             ww.d_FormLogin.game = game;
+            ww.d_FormLogin.logindatafile = logindatafile;
             ww.d_FormLogin.Initialize();
             ww.d_FormSelectWorld = new FormSelectWorld();
             ww.d_FormSelectWorld.menu = ww;

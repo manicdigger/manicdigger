@@ -23,7 +23,7 @@ namespace GameMenu
     }
     public class Widget
     {
-        public string Text;
+        public string Text = "";
         public RectangleF Rect;
         public string BackgroundImage;
         public string BackgroundImageSelected;
