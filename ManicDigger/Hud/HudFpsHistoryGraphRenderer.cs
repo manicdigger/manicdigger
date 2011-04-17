@@ -15,9 +15,9 @@ namespace ManicDigger.Renderers
     public class HudFpsHistoryGraphRenderer
     {
         [Inject]
-        public IViewportSize viewportsize;
+        public IViewportSize d_ViewportSize;
         [Inject]
-        public IDraw2d draw;
+        public IDraw2d d_Draw;
         List<float> m_fpshistory = new List<float>();
         List<float> fpshistory
         {
@@ -44,7 +44,7 @@ namespace ManicDigger.Renderers
             }
             float historyheight = 80;
             int posx = 25;
-            int posy = viewportsize.Height - (int)historyheight - 20;
+            int posy = d_ViewportSize.Height - (int)historyheight - 20;
             FastColor[] colors = new[] { new FastColor(Color.Black), new FastColor(Color.Red) };
             Color linecolor = Color.White;
 
@@ -64,16 +64,16 @@ namespace ManicDigger.Renderers
                 todraw[i].inAtlasId = null;
                 todraw[i].color = c;
             }
-            draw.Draw2dTextures(todraw, draw.WhiteTexture());
+            d_Draw.Draw2dTextures(todraw, d_Draw.WhiteTexture());
 
-            draw.Draw2dTexture(draw.WhiteTexture(), posx, posy - historyheight, fpshistory.Count, 1, null, linecolor);
-            draw.Draw2dTexture(draw.WhiteTexture(), posx, posy - historyheight * (60f / 75), fpshistory.Count, 1, null, linecolor);
-            draw.Draw2dTexture(draw.WhiteTexture(), posx, posy - historyheight * (60f / 30), fpshistory.Count, 1, null, linecolor);
-            draw.Draw2dTexture(draw.WhiteTexture(), posx, posy - historyheight * (60f / 150), fpshistory.Count, 1, null, linecolor);
-            draw.Draw2dText("60", posx, posy - historyheight * (60f / 60), 6, null);
-            draw.Draw2dText("75", posx, posy - historyheight * (60f / 75), 6, null);
-            draw.Draw2dText("30", posx, posy - historyheight * (60f / 30), 6, null);
-            draw.Draw2dText("150", posx, posy - historyheight * (60f / 150), 6, null);
+            d_Draw.Draw2dTexture(d_Draw.WhiteTexture(), posx, posy - historyheight, fpshistory.Count, 1, null, linecolor);
+            d_Draw.Draw2dTexture(d_Draw.WhiteTexture(), posx, posy - historyheight * (60f / 75), fpshistory.Count, 1, null, linecolor);
+            d_Draw.Draw2dTexture(d_Draw.WhiteTexture(), posx, posy - historyheight * (60f / 30), fpshistory.Count, 1, null, linecolor);
+            d_Draw.Draw2dTexture(d_Draw.WhiteTexture(), posx, posy - historyheight * (60f / 150), fpshistory.Count, 1, null, linecolor);
+            d_Draw.Draw2dText("60", posx, posy - historyheight * (60f / 60), 6, null);
+            d_Draw.Draw2dText("75", posx, posy - historyheight * (60f / 75), 6, null);
+            d_Draw.Draw2dText("30", posx, posy - historyheight * (60f / 30), 6, null);
+            d_Draw.Draw2dText("150", posx, posy - historyheight * (60f / 150), 6, null);
         }
         public void Update(float dt)
         {

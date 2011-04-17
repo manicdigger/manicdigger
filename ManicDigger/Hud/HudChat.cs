@@ -9,9 +9,9 @@ namespace ManicDigger.Gui
     public class HudChat
     {
         [Inject]
-        public IDraw2d draw2d;
+        public IDraw2d d_Draw2d;
         [Inject]
-        public IViewportSize viewportsize;
+        public IViewportSize d_ViewportSize;
 
         public bool IsTyping;
         public string GuiTypingBuffer;
@@ -24,7 +24,7 @@ namespace ManicDigger.Gui
 
         public void Render()
         {
-            if (draw2d != null)
+            if (d_Draw2d != null)
             {
                 DrawChatLines(IsTyping);
                 if (IsTyping)
@@ -75,16 +75,16 @@ namespace ManicDigger.Gui
             }
             for (int i = 0; i < chatlines2.Count; i++)
             {
-                draw2d.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, ChatFontSize, Color.White);
+                d_Draw2d.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, ChatFontSize, Color.White);
             }
             if (ChatPageScroll != 0)
             {
-                draw2d.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, ChatFontSize, Color.Gray);
+                d_Draw2d.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, ChatFontSize, Color.Gray);
             }
         }
         public void DrawTypingBuffer()
         {
-            draw2d.Draw2dText(GuiTypingBuffer + "_", 50, viewportsize.Height - 100, ChatFontSize, Color.White);
+            d_Draw2d.Draw2dText(GuiTypingBuffer + "_", 50, d_ViewportSize.Height - 100, ChatFontSize, Color.White);
         }
     }
     public class Chatline

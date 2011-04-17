@@ -390,17 +390,17 @@ namespace ManicDigger
     public class DependencyChecker
     {
         [Inject]
-        public Type[] InjectAttributes;
+        public Type[] d_InjectAttributes;
         public DependencyChecker()
         {
         }
         public DependencyChecker(params Type[] injectAttributes)
         {
-            this.InjectAttributes = injectAttributes;
+            this.d_InjectAttributes = injectAttributes;
         }
         public void CheckDependencies(params object[] components)
         {
-            if (InjectAttributes == null || InjectAttributes.Length == 0)
+            if (d_InjectAttributes == null || d_InjectAttributes.Length == 0)
             {
                 throw new Exception("Inject attributes list is null.");
             }

@@ -14,15 +14,15 @@ namespace ManicDigger
     public class The3d : IThe3d, IDraw2d, IGetCameraMatrix
     {
         [Inject]
-        public ITerrainTextures terrain;
+        public ITerrainTextures d_Terrain;
         [Inject]
-        public Config3d config3d;
+        public Config3d d_Config3d;
         [Inject]
-        public TextRenderer textrenderer;
+        public TextRenderer d_TextRenderer;
         [Inject]
-        public IGetFilePath getfile;
+        public IGetFilePath d_GetFile;
         [Inject]
-        public IViewportSize viewportsize;
+        public IViewportSize d_ViewportSize;
         public bool ALLOW_NON_POWER_OF_TWO = false;
         public int LoadTexture(string filename)
         {
@@ -53,7 +53,7 @@ namespace ManicDigger
             GL.Enable(EnableCap.Texture2D);
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
-            if (!config3d.ENABLE_MIPMAPS)
+            if (!d_Config3d.ENABLE_MIPMAPS)
             {
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
@@ -84,14 +84,14 @@ namespace ManicDigger
 
             GL.Enable(EnableCap.DepthTest);
 
-            if (config3d.ENABLE_TRANSPARENCY)
+            if (d_Config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.AlphaTest);
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
 
 
-            if (config3d.ENABLE_TRANSPARENCY)
+            if (d_Config3d.ENABLE_TRANSPARENCY)
             {
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
@@ -153,7 +153,7 @@ namespace ManicDigger
         public Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
         CachedTexture MakeTextTexture(Text t)
         {
-            Bitmap bmp = textrenderer.MakeTextTexture(t);
+            Bitmap bmp = d_TextRenderer.MakeTextTexture(t);
             int texture = LoadTexture(bmp);
             return new CachedTexture() { textureId = texture, size = bmp.Size };
         }
@@ -207,7 +207,7 @@ namespace ManicDigger
         {
             if (!textures.ContainsKey(filename))
             {
-                textures[filename] = LoadTexture(getfile.GetFile(filename));
+                textures[filename] = LoadTexture(d_GetFile.GetFile(filename));
             }
             Draw2dTexture(textures[filename], x1, y1, width, height, null);
         }
@@ -224,7 +224,7 @@ namespace ManicDigger
             }
             else
             {
-                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, terrain.texturesPacked);
+                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, d_Terrain.texturesPacked);
             }
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.Color3(color);
@@ -279,7 +279,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, terrain.texturesPacked);
+                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, d_Terrain.texturesPacked);
                 }
                 float x2 = v.x1 + v.width;
                 float y2 = v.y1 + v.height;
@@ -341,7 +341,7 @@ namespace ManicDigger
         }
         public void Set3dProjection(float zfar)
         {
-            float aspect_ratio = viewportsize.Width / (float)viewportsize.Height;
+            float aspect_ratio = d_ViewportSize.Width / (float)d_ViewportSize.Height;
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
             ProjectionMatrix = perpective;
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
@@ -349,7 +349,7 @@ namespace ManicDigger
             GL.LoadMatrix(ref perpective);
         }
         public float znear = 0.1f;
-        float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance : 99999; } }
+        float zfar { get { return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999; } }
         public bool ENABLE_ZFAR = true;
     }
 }

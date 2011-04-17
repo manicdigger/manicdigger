@@ -86,7 +86,7 @@ namespace fCraft
         class NormalTree : StickTree
         {
             [Inject]
-            public IGameData data;
+            public IGameData d_Data;
             public override void MakeFoliage()
             {
                 int topy = pos[1] + height - 1;

@@ -9,9 +9,9 @@ namespace ManicDigger.Gui
     public class HudMaterialSelector
     {
         [Inject]
-        public IViewportSize viewportsize;
+        public IViewportSize d_ViewportSize;
         [Inject]
-        public ManicDiggerGameWindow gameWindow;
+        public ManicDiggerGameWindow d_GameWindow;
 
         public void DrawMaterialSelector()
         {
@@ -19,28 +19,28 @@ namespace ManicDigger.Gui
             for (int i = 0; i < 10; i++)
             {
                 int x = xcenter(singlesize * 10) + i * singlesize;
-                int y = viewportsize.Height - 100;
-                gameWindow.the3d.Draw2dTexture(gameWindow.terrainTextures.terrainTexture, x, y, singlesize, singlesize,
-                        gameWindow.data.TextureIdForInventory[(int)gameWindow.MaterialSlots[i]]);
+                int y = d_ViewportSize.Height - 100;
+                d_GameWindow.d_The3d.Draw2dTexture(d_GameWindow.d_TerrainTextures.terrainTexture, x, y, singlesize, singlesize,
+                        d_GameWindow.d_Data.TextureIdForInventory[(int)d_GameWindow.MaterialSlots[i]]);
 
-                if (gameWindow.ENABLE_FINITEINVENTORY)
+                if (d_GameWindow.ENABLE_FINITEINVENTORY)
                 {
-                    int amount = gameWindow.game.FiniteInventoryAmount((int)gameWindow.MaterialSlots[i]);
-                    gameWindow.the3d.Draw2dText("" + amount, x, y, 8, null);
+                    int amount = d_GameWindow.d_Game.FiniteInventoryAmount((int)d_GameWindow.MaterialSlots[i]);
+                    d_GameWindow.d_The3d.Draw2dText("" + amount, x, y, 8, null);
                 }
             }
-            gameWindow.the3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
-                xcenter(singlesize * 10) + gameWindow.activematerial * singlesize, viewportsize.Height - 100,
-                gameWindow.NextPowerOfTwo((uint)singlesize), gameWindow.NextPowerOfTwo((uint)singlesize));
-            if (gameWindow.ENABLE_FINITEINVENTORY)
+            d_GameWindow.d_The3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
+                xcenter(singlesize * 10) + d_GameWindow.activematerial * singlesize, d_ViewportSize.Height - 100,
+                d_GameWindow.NextPowerOfTwo((uint)singlesize), d_GameWindow.NextPowerOfTwo((uint)singlesize));
+            if (d_GameWindow.ENABLE_FINITEINVENTORY)
             {
                 int inventoryload = 0;
-                foreach (var k in gameWindow.FiniteInventory)
+                foreach (var k in d_GameWindow.FiniteInventory)
                 {
                     inventoryload += k.Value;
                 }
-                float inventoryloadratio = (float)inventoryload / gameWindow.game.FiniteInventoryMax;
-                gameWindow.the3d.Draw2dTexture(gameWindow.the3d.WhiteTexture(), xcenter(100), viewportsize.Height - 120, 100, 10, null, Color.Black);
+                float inventoryloadratio = (float)inventoryload / d_GameWindow.d_Game.FiniteInventoryMax;
+                d_GameWindow.d_The3d.Draw2dTexture(d_GameWindow.d_The3d.WhiteTexture(), xcenter(100), d_ViewportSize.Height - 120, 100, 10, null, Color.Black);
                 Color c;
                 if (inventoryloadratio < 0.5)
                 {
@@ -54,17 +54,17 @@ namespace ManicDigger.Gui
                 {
                     c = Color.Red;
                 }
-                gameWindow.the3d.Draw2dTexture(gameWindow.the3d.WhiteTexture(), xcenter(100), viewportsize.Height - 120, inventoryloadratio * 100, 10, null, c);
+                d_GameWindow.d_The3d.Draw2dTexture(d_GameWindow.d_The3d.WhiteTexture(), xcenter(100), d_ViewportSize.Height - 120, inventoryloadratio * 100, 10, null, c);
             }
         }
 
         private int xcenter(float width)
         {
-            return (int)(viewportsize.Width / 2 - width / 2);
+            return (int)(d_ViewportSize.Width / 2 - width / 2);
         }
         private int ycenter(float height)
         {
-            return (int)(viewportsize.Height / 2 - height / 2);
+            return (int)(d_ViewportSize.Height / 2 - height / 2);
         }
     }
 }

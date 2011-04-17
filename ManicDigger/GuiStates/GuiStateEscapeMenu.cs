@@ -55,8 +55,8 @@ namespace ManicDigger
                 AddButton("Options", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 AddButton("Exit", (a, b) =>
                 {
-                    exit.exit = true;
-                    this.mainwindow.Exit();
+                    d_Exit.exit = true;
+                    this.d_MainWindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);
             }
@@ -70,13 +70,13 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Graphics)
             {
-                AddButton("Shadows: " + (currentshadows.ShadowsFull ? "ON" : "OFF"),
+                AddButton("Shadows: " + (d_CurrentShadows.ShadowsFull ? "ON" : "OFF"),
                     (a, b) =>
                     {
-                        currentshadows.ShadowsFull = !currentshadows.ShadowsFull;
-                        terrain.UpdateAllTiles();
+                        d_CurrentShadows.ShadowsFull = !d_CurrentShadows.ShadowsFull;
+                        d_Terrain.UpdateAllTiles();
                     });
-                AddButton("View distance: " + (config3d.viewdistance),
+                AddButton("View distance: " + (d_Config3d.viewdistance),
                     (a, b) =>
                     {
                         ToggleFog();
@@ -86,21 +86,21 @@ namespace ManicDigger
                     {
                         options.UseServerTextures = !options.UseServerTextures;
                     });
-                AddButton("Font: " + (textrenderer.NewFont ? "2" : "1"),
+                AddButton("Font: " + (d_TextRenderer.NewFont ? "2" : "1"),
                     (a, b) =>
                     {
-                        textrenderer.NewFont = !textrenderer.NewFont;
-                        the3d.cachedTextTextures.Clear();
+                        d_TextRenderer.NewFont = !d_TextRenderer.NewFont;
+                        d_The3d.cachedTextTextures.Clear();
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Other)
             {
-                AddButton("Sound: " + (audio.Enabled ? "ON" : "OFF"),
+                AddButton("Sound: " + (d_Audio.Enabled ? "ON" : "OFF"),
                     (a, b) =>
                     {
-                        audio.Enabled = !audio.Enabled;
+                        d_Audio.Enabled = !d_Audio.Enabled;
                     });
                 AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -153,7 +153,7 @@ namespace ManicDigger
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = the3d.TextSize(s, fontsize);
+                SizeF size = d_The3d.TextSize(s, fontsize);
                 rect.Width = (int)size.Width + 10;
                 rect.Height = (int)size.Height;
                 rect.X = xcenter(size.Width);
@@ -173,7 +173,7 @@ namespace ManicDigger
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                the3d.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                d_The3d.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
         List<Button> widgets = new List<Button>();
@@ -274,19 +274,19 @@ namespace ManicDigger
             string s = File.ReadAllText(path);
             this.options = (Options)x.Deserialize(new System.IO.StringReader(s));
 
-            textrenderer.NewFont = options.Font != 1;
-            currentshadows.ShadowsFull = options.Shadows;
-            shadows.ResetShadows();
-            terrain.UpdateAllTiles();
-            config3d.viewdistance = options.DrawDistance;
-            audio.Enabled = options.EnableSound;
+            d_TextRenderer.NewFont = options.Font != 1;
+            d_CurrentShadows.ShadowsFull = options.Shadows;
+            d_Shadows.ResetShadows();
+            d_Terrain.UpdateAllTiles();
+            d_Config3d.viewdistance = options.DrawDistance;
+            d_Audio.Enabled = options.EnableSound;
         }
         void SaveOptions()
         {
-            options.Font = textrenderer.NewFont ? 0 : 1;
-            options.Shadows = currentshadows.ShadowsFull;
-            options.DrawDistance = (int)config3d.viewdistance;
-            options.EnableSound = audio.Enabled;
+            options.Font = d_TextRenderer.NewFont ? 0 : 1;
+            options.Shadows = d_CurrentShadows.ShadowsFull;
+            options.DrawDistance = (int)d_Config3d.viewdistance;
+            options.EnableSound = d_Audio.Enabled;
             
             string path = Path.Combine(gamepathconfig, filename);
             MemoryStream ms = new MemoryStream();

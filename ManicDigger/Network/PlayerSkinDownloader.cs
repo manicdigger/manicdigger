@@ -11,9 +11,9 @@ namespace ManicDigger.Network
     public class PlayerSkinDownloader
     {
         [Inject]
-        public IGameExit exit;
+        public IGameExit d_Exit;
         [Inject]
-        public IThe3d the3d;
+        public IThe3d d_The3d;
         public string skinserver;
         Dictionary<string, byte[]> texturestoload = new Dictionary<string, byte[]>();
         Queue<string> texturestodownload = new Queue<string>();
@@ -46,7 +46,7 @@ namespace ManicDigger.Network
                     {
                         using (Bitmap bmp = new Bitmap(new MemoryStream(k.Value)))
                         {
-                            playertextures[k.Key] = the3d.LoadTexture(bmp);
+                            playertextures[k.Key] = d_The3d.LoadTexture(bmp);
                             Console.WriteLine("Player skin loaded: {0}", k.Key);
                         }
                     }
@@ -69,7 +69,7 @@ namespace ManicDigger.Network
             WebClient c = new WebClient();
             for (; ; )
             {
-                if (exit.exit) { return; }
+                if (d_Exit.exit) { return; }
                 for (; ; )
                 {
                     string name;

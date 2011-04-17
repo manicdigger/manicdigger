@@ -68,7 +68,7 @@ namespace ManicDigger.Menu
             };
             widgets.Add(invalidHostWidget);
 
-            menu.AddOkCancel(this, delegate { game.JoinMultiplayer(ipTextboxWidget.Text, int.Parse(portTextbox.Text)); }, delegate { menu.currentForm = menu.formJoinMultiplayer; });
+            menu.AddOkCancel(this, delegate { game.JoinMultiplayer(ipTextboxWidget.Text, int.Parse(portTextbox.Text)); }, delegate { menu.currentForm = menu.d_FormJoinMultiplayer; });
         }
         Widget ipTextboxWidget;
         Widget invalidHostWidget;

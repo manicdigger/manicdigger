@@ -17,7 +17,7 @@ namespace GameModeFortress
         //[Inject]
         //public IWorldGenerator generator;
         [Inject]
-        public IIsChunkDirty ischunkready;
+        public IIsChunkDirty d_IsChunkReady;
         public Chunk[] chunks;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
@@ -158,16 +158,16 @@ namespace GameModeFortress
         #region IIsChunkReady Members
         public bool IsChunkDirty(int x, int y, int z)
         {
-            return ischunkready.IsChunkDirty(x, y, z);
+            return d_IsChunkReady.IsChunkDirty(x, y, z);
         }
         public void SetChunkDirty(int x, int y, int z, bool dirty)
         {
-            ischunkready.SetChunkDirty(x, y, z, dirty);
+            d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
         }
         #endregion
         public void SetAllChunksNotDirty()
         {
-            ischunkready.SetAllChunksNotDirty();
+            d_IsChunkReady.SetAllChunksNotDirty();
         }
         public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {

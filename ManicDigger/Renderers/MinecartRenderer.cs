@@ -31,16 +31,16 @@ namespace ManicDigger.Renderers
     public class MinecartRenderer
     {
         [Inject]
-        public IGetFilePath getfile { get; set; }
+        public IGetFilePath d_GetFile { get; set; }
         [Inject]
-        public IThe3d the3d { get; set; }
+        public IThe3d d_The3d { get; set; }
         int minecarttexture = -1;
         #region IModelToDraw Members
         public void Draw(Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
         {
             if (minecarttexture == -1)
             {
-                minecarttexture = the3d.LoadTexture(getfile.GetFile("minecart.png"));
+                minecarttexture = d_The3d.LoadTexture(d_GetFile.GetFile("minecart.png"));
             }
             GL.PushMatrix();
             GL.Translate(position + new Vector3(0, -0.7f, 0));

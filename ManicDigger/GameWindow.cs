@@ -452,60 +452,60 @@ namespace ManicDigger
     public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IAddChatLine, IViewport3d, IWaterLevel
     {
         [Inject]
-        public MainGameWindow mainwindow;
+        public MainGameWindow d_MainWindow;
         [Inject]
-        public The3d the3d;
+        public The3d d_The3d;
         [Inject]
-        public ManicDigger.Renderers.TextRenderer textrenderer;
+        public ManicDigger.Renderers.TextRenderer d_TextRenderer;
         [Inject]
-        public ITerrainRenderer terrain;
+        public ITerrainRenderer d_Terrain;
         [Inject]
-        public IGameMode game;
+        public IGameMode d_Game;
         [Inject]
-        public IMapStorage map;
+        public IMapStorage d_Map;
         [Inject]
-        public IClients clients;
+        public IClients d_Clients;
         [Inject]
-        public CharacterPhysics physics;
+        public CharacterPhysics d_Physics;
         [Inject]
-        public INetworkClient network;
+        public INetworkClient d_Network;
         [Inject]
-        public IInternetGameFactory internetgamefactory;
+        public IInternetGameFactory d_InternetGameFactory;
 
         [Inject]
-        public IAudio audio;
+        public IAudio d_Audio;
         [Inject]
-        public IGetFilePath getfile;
+        public IGetFilePath d_GetFile;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         [Inject]
-        public ILoginClient login;
+        public ILoginClient d_Login;
         [Inject]
-        public Config3d config3d;
+        public Config3d d_Config3d;
         [Inject]
-        public WeaponRenderer weapon;
+        public WeaponRenderer d_Weapon;
         [Inject]
-        public ICharacterRenderer characterrenderer;
+        public ICharacterRenderer d_CharacterRenderer;
         [Inject]
-        public ICurrentShadows currentshadows;
+        public ICurrentShadows d_CurrentShadows;
         [Inject]
-        public HudFpsHistoryGraphRenderer fpshistorygraphrenderer;
+        public HudFpsHistoryGraphRenderer d_FpsHistoryGraphRenderer;
         [Inject]
-        public MapManipulator mapManipulator;
+        public MapManipulator d_MapManipulator;
         [Inject]
-        public SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
+        public SunMoonRenderer d_SunMoonRenderer;
         [Inject]
-        public IShadows shadows;
+        public IShadows d_Shadows;
         [Inject]
-        public IGameExit exit;
+        public IGameExit d_Exit;
         [Inject]
-        public ITerrainTextures terrainTextures;
+        public ITerrainTextures d_TerrainTextures;
         [Inject]
-        public HudChat hudchat;
+        public HudChat d_HudChat;
         [Inject]
-        public HudInventory hudinventory;
+        public HudInventory d_HudInventory;
         [Inject]
-        public HudMaterialSelector hudmaterialselector;
+        public HudMaterialSelector d_HudMaterialSelector;
 
         public bool SkySphereNight { get; set; }
 
@@ -522,19 +522,19 @@ namespace ManicDigger
             int x = (int)pos.X;
             int y = (int)pos.Y;
             int z = (int)pos.Z;
-            map.SetBlock(x, y, z, type);
-            terrain.UpdateTile(x, y, z);
+            d_Map.SetBlock(x, y, z, type);
+            d_Terrain.UpdateTile(x, y, z);
             //          });
         }
         public int LoadTexture(string filename)
         {
-            the3d.config3d = config3d;
-            return the3d.LoadTexture(filename);
+            d_The3d.d_Config3d = d_Config3d;
+            return d_The3d.LoadTexture(filename);
         }
         public int LoadTexture(Bitmap bmp)
         {
-            the3d.config3d = config3d;
-            return the3d.LoadTexture(bmp);
+            d_The3d.d_Config3d = d_Config3d;
+            return d_The3d.LoadTexture(bmp);
         }
         public void OnFocusedChanged(EventArgs e)
         {
@@ -561,11 +561,11 @@ namespace ManicDigger
             {
                 System.Windows.Forms.MessageBox.Show("You need at least OpenGL 1.5 to run this example. Aborting.", "VBOs not supported",
                 System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
-                mainwindow.Exit();
+                d_MainWindow.Exit();
             }
-            if (!config3d.ENABLE_VSYNC)
+            if (!d_Config3d.ENABLE_VSYNC)
             {
-                mainwindow.TargetRenderFrequency = 0;
+                d_MainWindow.TargetRenderFrequency = 0;
             }
             GL.ClearColor(Color.Black);
             //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
@@ -577,29 +577,29 @@ namespace ManicDigger
                     GuiActionGenerateNewMap();
                     GuiStateBackToGame();
                 }
-                terrain.UpdateAllTiles();
-                terrain.Start();
+                d_Terrain.UpdateAllTiles();
+                d_Terrain.Start();
             }
             else
             {
                 ClientCommand(".server " + GameUrl);
             }
-            mainwindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
-            mainwindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
-            mainwindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
-            mainwindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
-            if (config3d.ENABLE_BACKFACECULLING)
+            d_MainWindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
+            d_MainWindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
+            d_MainWindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
+            d_MainWindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
+            if (d_Config3d.ENABLE_BACKFACECULLING)
             {
                 GL.DepthMask(true);
                 GL.Enable(EnableCap.DepthTest);
                 GL.CullFace(CullFaceMode.Back);
                 GL.Enable(EnableCap.CullFace);
             }
-            mainwindow.Keyboard.KeyRepeat = true;
-            mainwindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
-            mainwindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
-            mainwindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
-            materialSlots = data.DefaultMaterialSlots;
+            d_MainWindow.Keyboard.KeyRepeat = true;
+            d_MainWindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
+            d_MainWindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
+            d_MainWindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
+            materialSlots = d_Data.DefaultMaterialSlots;
             GL.Enable(EnableCap.Lighting);
             SetAmbientLight(terraincolor);
             GL.Enable(EnableCap.ColorMaterial);
@@ -611,12 +611,12 @@ namespace ManicDigger
             }
             else
             {
-                mainwindow.CursorVisible = false;
+                d_MainWindow.CursorVisible = false;
             }
         }
         void Mouse_ButtonUp(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!mainwindow.Focused)
+            if (!d_MainWindow.Focused)
             {
                 return;
             }
@@ -635,7 +635,7 @@ namespace ManicDigger
         }
         void Mouse_ButtonDown(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!mainwindow.Focused)
+            if (!d_MainWindow.Focused)
             {
                 return;
             }
@@ -657,7 +657,7 @@ namespace ManicDigger
             if ((e.KeyChar == 't' || e.KeyChar=='T') && GuiTyping == TypingState.None)
             {
                 GuiTyping = TypingState.Typing;
-                hudchat.GuiTypingBuffer = "";
+                d_HudChat.GuiTypingBuffer = "";
                 return;
             }
             if (GuiTyping == TypingState.Typing)
@@ -667,7 +667,7 @@ namespace ManicDigger
                     || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
                     && c != '\r')
                 {
-                    hudchat.GuiTypingBuffer += e.KeyChar;
+                    d_HudChat.GuiTypingBuffer += e.KeyChar;
                 }
             }
         }
@@ -701,7 +701,7 @@ namespace ManicDigger
         }
         public void OnClosed(EventArgs e)
         {
-            exit.exit = true;
+            d_Exit.exit = true;
             //..base.OnClosed(e);
         }
         void ClientCommand(string s)
@@ -764,7 +764,7 @@ namespace ManicDigger
                             {
                                 foglevel2--;
                             }
-                            config3d.viewdistance = foglevel2;
+                            d_Config3d.viewdistance = foglevel2;
                             //terrain.UpdateAllTiles();
                         }
                         OnResize(new EventArgs());
@@ -787,14 +787,14 @@ namespace ManicDigger
                             throw new Exception(string.Format("Valid field of view: {0}-{1}", minfov, maxfov));
                         }
                         float fov = (float)(2 * Math.PI * ((float)arg / 360));
-                        the3d.fov = fov;
+                        d_The3d.fov = fov;
                         OnResize(new EventArgs());
                     }
                     else if (cmd == "tp" || cmd == "teleport")
                     {
                         string arg = arguments;
                         bool tp = false;
-                        foreach (var k in clients.Players)
+                        foreach (var k in d_Clients.Players)
                         {
                             if (k.Value.Name.Equals(arg, StringComparison.InvariantCultureIgnoreCase))
                             {
@@ -813,7 +813,7 @@ namespace ManicDigger
                     }
                     else if (cmd == "simulationlag")
                     {
-                        game.SIMULATIONLAG_SECONDS = double.Parse(arguments);
+                        d_Game.SIMULATIONLAG_SECONDS = double.Parse(arguments);
                     }
                     else if (cmd == "gui")
                     {
@@ -821,16 +821,16 @@ namespace ManicDigger
                     }
                     else
                     {
-                        string chatline = hudchat.GuiTypingBuffer.Substring(0, Math.Min(hudchat.GuiTypingBuffer.Length, 64));
-                        network.SendChat(chatline);
+                        string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 64));
+                        d_Network.SendChat(chatline);
                     }
                 }
                 catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
             }
             else
             {
-                string chatline = hudchat.GuiTypingBuffer.Substring(0, Math.Min(hudchat.GuiTypingBuffer.Length, 64));
-                network.SendChat(chatline);
+                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 64));
+                d_Network.SendChat(chatline);
             }
         }
         private static bool BoolCommandArgument(string arguments)
@@ -852,13 +852,13 @@ namespace ManicDigger
         {
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
-                if (mainwindow.WindowState == WindowState.Fullscreen)
+                if (d_MainWindow.WindowState == WindowState.Fullscreen)
                 {
-                    mainwindow.WindowState = WindowState.Normal;
+                    d_MainWindow.WindowState = WindowState.Normal;
                 }
                 else
                 {
-                    mainwindow.WindowState = WindowState.Fullscreen;
+                    d_MainWindow.WindowState = WindowState.Fullscreen;
                 }
             }
             if (GuiTyping == TypingState.None)
@@ -875,31 +875,31 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
                 {
-                    hudchat.ChatPageScroll++;
+                    d_HudChat.ChatPageScroll++;
                 }                
                 if (e.Key == GetKey(OpenTK.Input.Key.PageDown) && GuiTyping == TypingState.Typing)
                 {
-                    hudchat.ChatPageScroll--;
+                    d_HudChat.ChatPageScroll--;
                 }
-                hudchat.ChatPageScroll = MyMath.Clamp(hudchat.ChatPageScroll, 0, hudchat.ChatLines.Count / hudchat.ChatLinesMaxToDraw);
+                d_HudChat.ChatPageScroll = MyMath.Clamp(d_HudChat.ChatPageScroll, 0, d_HudChat.ChatLines.Count / d_HudChat.ChatLinesMaxToDraw);
                 if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
-                        typinglog.Add(hudchat.GuiTypingBuffer);
+                        typinglog.Add(d_HudChat.GuiTypingBuffer);
                         typinglogpos = typinglog.Count;
-                        ClientCommand(hudchat.GuiTypingBuffer);
+                        ClientCommand(d_HudChat.GuiTypingBuffer);
                         
-                        hudchat.GuiTypingBuffer = "";
-                        hudchat.IsTyping = false;
+                        d_HudChat.GuiTypingBuffer = "";
+                        d_HudChat.IsTyping = false;
 
                         GuiTyping = TypingState.None;
                     }
                     else if (GuiTyping == TypingState.None)
                     {
                         GuiTyping = TypingState.Typing;
-                        hudchat.IsTyping = true;
-                        hudchat.GuiTypingBuffer = "";
+                        d_HudChat.IsTyping = true;
+                        d_HudChat.GuiTypingBuffer = "";
                     }
                     else if (GuiTyping == TypingState.Ready)
                     {
@@ -913,9 +913,9 @@ namespace ManicDigger
                     string c = "";
                     if (key == GetKey(OpenTK.Input.Key.BackSpace))
                     {
-                        if (hudchat.GuiTypingBuffer.Length > 0)
+                        if (d_HudChat.GuiTypingBuffer.Length > 0)
                         {
-                            hudchat.GuiTypingBuffer = hudchat.GuiTypingBuffer.Substring(0, hudchat.GuiTypingBuffer.Length - 1);
+                            d_HudChat.GuiTypingBuffer = d_HudChat.GuiTypingBuffer.Substring(0, d_HudChat.GuiTypingBuffer.Length - 1);
                         }
                         return;
                     }
@@ -925,7 +925,7 @@ namespace ManicDigger
                         {
                             if (Clipboard.ContainsText())
                             {
-                                hudchat.GuiTypingBuffer += Clipboard.GetText();
+                                d_HudChat.GuiTypingBuffer += Clipboard.GetText();
                             }
                             return;
                         }
@@ -936,7 +936,7 @@ namespace ManicDigger
                         if (typinglogpos < 0) { typinglogpos = 0; }
                         if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
                         {
-                            hudchat.GuiTypingBuffer = typinglog[typinglogpos];
+                            d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
                     }
                     if (key == GetKey(OpenTK.Input.Key.Down))
@@ -945,11 +945,11 @@ namespace ManicDigger
                         if (typinglogpos > typinglog.Count) { typinglogpos = typinglog.Count; }
                         if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
                         {
-                            hudchat.GuiTypingBuffer = typinglog[typinglogpos];
+                            d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
                         if (typinglogpos == typinglog.Count)
                         {
-                            hudchat.GuiTypingBuffer = "";
+                            d_HudChat.GuiTypingBuffer = "";
                         }
                     }
                     return;
@@ -957,7 +957,7 @@ namespace ManicDigger
                 string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
                 if (e.Key == GetKey(OpenTK.Input.Key.F1))
                 {
-                    if (!network.AllowFreemove)
+                    if (!d_Network.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -967,7 +967,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F2))
                 {
-                    if (!network.AllowFreemove)
+                    if (!d_Network.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -990,7 +990,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
-                    if (!network.AllowFreemove)
+                    if (!d_Network.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -1002,7 +1002,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F4))
                 {
-                    if (!network.AllowFreemove)
+                    if (!d_Network.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -1041,7 +1041,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F6))
                 {
-                    terrain.UpdateAllTiles();
+                    d_Terrain.UpdateAllTiles();
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F7))
                 {
@@ -1058,7 +1058,7 @@ namespace ManicDigger
                 {
                     ENABLE_LAG++;
                     ENABLE_LAG = ENABLE_LAG % 3;
-                    mainwindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+                    d_MainWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
                     if (ENABLE_LAG == 0) { Log("Frame rate: vsync."); }
                     if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
                     if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
@@ -1076,20 +1076,20 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
-                    player.playerposition = game.PlayerPositionSpawn;
+                    player.playerposition = d_Game.PlayerPositionSpawn;
                     player.movedz = 0;
                     Log("Respawn.");
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.P))
                 {
-                    game.PlayerPositionSpawn = player.playerposition;
+                    d_Game.PlayerPositionSpawn = player.playerposition;
                     player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
                     Log("Spawn position set.");
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
                     ToggleFog();
-                    Log("Fog distance: " + config3d.viewdistance);
+                    Log("Fog distance: " + d_Config3d.viewdistance);
                     OnResize(new EventArgs());
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.B))
@@ -1111,7 +1111,7 @@ namespace ManicDigger
             }
             else if (guistate == GuiState.Inventory)
             {
-                hudinventory.InventoryKeyDown(e);
+                d_HudInventory.InventoryKeyDown(e);
                 return;
             }
             else if (guistate == GuiState.MapLoading)
@@ -1131,13 +1131,13 @@ namespace ManicDigger
         {
             for (int i = 0; i < drawDistances.Length; i++)
             {
-                if (config3d.viewdistance == drawDistances[i])
+                if (d_Config3d.viewdistance == drawDistances[i])
                 {
-                    config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Length];
+                    d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Length];
                     return;
                 }
             }
-            config3d.viewdistance = drawDistances[0];
+            d_Config3d.viewdistance = drawDistances[0];
         }
         enum CameraType
         {
@@ -1152,10 +1152,10 @@ namespace ManicDigger
             if (GraphicsContext.CurrentContext == null)
                 throw new GraphicsContextMissingException();
 
-            Bitmap bmp = new Bitmap(this.mainwindow.ClientSize.Width, this.mainwindow.ClientSize.Height);
+            Bitmap bmp = new Bitmap(this.d_MainWindow.ClientSize.Width, this.d_MainWindow.ClientSize.Height);
             System.Drawing.Imaging.BitmapData data =
-                bmp.LockBits(this.mainwindow.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, this.mainwindow.ClientSize.Width, this.mainwindow.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+                bmp.LockBits(this.d_MainWindow.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            GL.ReadPixels(0, 0, this.d_MainWindow.ClientSize.Width, this.d_MainWindow.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
             bmp.UnlockBits(data);
 
             bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
@@ -1189,9 +1189,9 @@ namespace ManicDigger
         private void GuiActionGenerateNewMap()
         {
             //mapManipulator.GeneratePlainMap(map);
-            network.Connect("", 0, "", "");
-            game.OnNewMap();
-            terrain.UpdateAllTiles();
+            d_Network.Connect("", 0, "", "");
+            d_Game.OnNewMap();
+            d_Terrain.UpdateAllTiles();
         }
         bool freemousejustdisabled;
         enum TypingState { None, Typing, Ready };
@@ -1206,17 +1206,17 @@ namespace ManicDigger
         //Todo: move this to Program.cs.
         private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
         {
-            var oldclientgame = map;
-            var oldnetwork = network;
-            var oldterrain = terrain;
-            internetgamefactory.NewInternetGame();
+            var oldclientgame = d_Map;
+            var oldnetwork = d_Network;
+            var oldterrain = d_Terrain;
+            d_InternetGameFactory.NewInternetGame();
             LoadOptions();
             //.newclientgame = internetgamefactory.GetClientGame();
             //.newnetwork = internetgamefactory.GetNetwork();
             //.newterrain = internetgamefactory.GetTerrain();
             //.newterrain.Start();
-            var newnetwork = network;
-            var newterrain = terrain;
+            var newnetwork = d_Network;
+            var newterrain = d_Terrain;
             if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
             newterrain.Start();
 
@@ -1246,7 +1246,7 @@ namespace ManicDigger
                     System.Net.IPAddress server2 = null;
                     try
                     {
-                        logindata = login.Login(qusername, qpass, qgameurl);
+                        logindata = d_Login.Login(qusername, qpass, qgameurl);
                     }
                     catch (Exception e)
                     {
@@ -1293,8 +1293,8 @@ namespace ManicDigger
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
             GuiStateBackToGame();
-            game.OnNewMap();
-            terrain.UpdateAllTiles();
+            d_Game.OnNewMap();
+            d_Terrain.UpdateAllTiles();
         }
         int[] materialSlots;
         public int[] MaterialSlots { get { return materialSlots; } set { materialSlots = value; } }
@@ -1307,7 +1307,7 @@ namespace ManicDigger
             //.mainwindow.OnResize(e);
 
             GL.Viewport(0, 0, Width, Height);
-            the3d.Set3dProjection();
+            d_The3d.Set3dProjection();
         }
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
@@ -1327,7 +1327,7 @@ namespace ManicDigger
             {
                 if (IsMac)
                 {
-                    mainwindow.CursorVisible = value;
+                    d_MainWindow.CursorVisible = value;
                     System.Windows.Forms.Cursor.Hide();
                 }
                 freemouse = value;
@@ -1335,7 +1335,7 @@ namespace ManicDigger
         }
         void UpdateMouseButtons()
         {
-            if (!mainwindow.Focused)
+            if (!d_MainWindow.Focused)
             {
                 return;
             }
@@ -1351,10 +1351,10 @@ namespace ManicDigger
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (FreeMouse)
             {
-                mouse_current.Offset(-mainwindow.X, -mainwindow.Y);
+                mouse_current.Offset(-d_MainWindow.X, -d_MainWindow.Y);
                 mouse_current.Offset(0, -20);
             }
-            if (!mainwindow.Focused)
+            if (!d_MainWindow.Focused)
             {
                 return;
             }
@@ -1387,8 +1387,8 @@ namespace ManicDigger
                 if (!IsMac)
                 {
                     //a)
-                    int centerx = mainwindow.Bounds.Left + (mainwindow.Bounds.Width / 2);
-                    int centery = mainwindow.Bounds.Top + (mainwindow.Bounds.Height / 2);
+                    int centerx = d_MainWindow.Bounds.Left + (d_MainWindow.Bounds.Width / 2);
+                    int centery = d_MainWindow.Bounds.Top + (d_MainWindow.Bounds.Height / 2);
 
                     mouse_delta = new Point(mouse_current.X - mouse_previous.X,
                         mouse_current.Y - mouse_previous.Y);
@@ -1448,7 +1448,7 @@ namespace ManicDigger
                 {
                     lastwalksound = rnd.Next(soundwalk.Length);
                 }
-                audio.Play(soundwalk[lastwalksound]);
+                d_Audio.Play(soundwalk[lastwalksound]);
             }
         }
         string[] soundwalkcurrent()
@@ -1456,9 +1456,9 @@ namespace ManicDigger
             int? b = BlockUnderPlayer();
             if (b != null)
             {
-                return data.WalkSound[b.Value];
+                return d_Data.WalkSound[b.Value];
             }
-            return data.WalkSound[0];
+            return d_Data.WalkSound[0];
         }
         bool IsInLeft(Vector3 player_yy, Vector3 tile_yy)
         {
@@ -1495,7 +1495,7 @@ namespace ManicDigger
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
-            game.OnNewFrame(e.Time);
+            d_Game.OnNewFrame(e.Time);
             while (todo.Count > 0)
             {
                 lasttodo = DateTime.Now;
@@ -1515,7 +1515,7 @@ namespace ManicDigger
             {
                 UpdateMouseViewportControl(e);
             }
-            network.Process();
+            d_Network.Process();
             if (newnetwork != null)
             {
                 newnetwork.Process();
@@ -1525,7 +1525,7 @@ namespace ManicDigger
             bool angledown = false;
             float overheadcameraanglemovearea = 0.05f;
             float overheadcameraspeed = 3;
-            if (guistate == GuiState.Normal && mainwindow.Focused && cameratype == CameraType.Overhead)
+            if (guistate == GuiState.Normal && d_MainWindow.Focused && cameratype == CameraType.Overhead)
             {
                 if (mouse_current.X > Width - Width * overheadcameraanglemovearea)
                 {
@@ -1567,7 +1567,7 @@ namespace ManicDigger
                         if ((player.playerposition - playerdestination).Length >= 1f)
                         {
                             movedy += 1;
-                            if (physics.reachedwall)
+                            if (d_Physics.reachedwall)
                             {
                                 wantsjump = true;
                             }
@@ -1613,7 +1613,7 @@ namespace ManicDigger
             int? blockunderplayer = BlockUnderPlayer();
             {
                 //slippery walk on ice and when swimming
-                if ((blockunderplayer != null && data.IsSlipperyWalk[blockunderplayer.Value]) || Swimming)
+                if ((blockunderplayer != null && d_Data.IsSlipperyWalk[blockunderplayer.Value]) || Swimming)
                 {
                     acceleration = new Acceleration()
                     {
@@ -1623,15 +1623,15 @@ namespace ManicDigger
                     };
                 }
             }
-            float jumpstartacceleration = 2.1f * physics.gravity;
-            if (blockunderplayer != null && blockunderplayer == data.BlockIdTrampoline
+            float jumpstartacceleration = 2.1f * d_Physics.gravity;
+            if (blockunderplayer != null && blockunderplayer == d_Data.BlockIdTrampoline
                 && (!player.isplayeronground))
             {
                 wantsjump = true;
-                jumpstartacceleration = 5f * physics.gravity;
+                jumpstartacceleration = 5f * d_Physics.gravity;
             }
             Vector3 push = new Vector3();
-            foreach (var k in clients.Players)
+            foreach (var k in d_Clients.Players)
             {
                 if ((k.Key == 255) ||
                     (k.Value.Position == LocalPlayerPosition)
@@ -1659,7 +1659,7 @@ namespace ManicDigger
                 wantsjump = wantsjump,
             };
             bool soundnow;
-            physics.Move(player, move, e.Time, out soundnow, push);
+            d_Physics.Move(player, move, e.Time, out soundnow, push);
             if (soundnow)
             {
                 UpdateWalkSound(-1);
@@ -1670,7 +1670,7 @@ namespace ManicDigger
             }
             if (guistate == GuiState.Inventory)
             {
-                hudinventory.InventoryMouse(mouse_current, ref mouseleftclick);
+                d_HudInventory.InventoryMouse(mouse_current, ref mouseleftclick);
             }
             if (guistate == GuiState.CraftingRecipes)
             {
@@ -1708,7 +1708,7 @@ namespace ManicDigger
                 int? blockunderplayer = BlockUnderPlayer();
                 if (blockunderplayer != null)
                 {
-                    movespeednow *= data.WalkSpeed[blockunderplayer.Value];
+                    movespeednow *= d_Data.WalkSpeed[blockunderplayer.Value];
                 }
             }
             if (Keyboard[GetKey(OpenTK.Input.Key.ShiftLeft)])
@@ -1720,12 +1720,12 @@ namespace ManicDigger
         }
         int? BlockUnderPlayer()
         {
-            if (!MapUtil.IsValidPos(map, (int)player.playerposition.X,
+            if (!MapUtil.IsValidPos(d_Map, (int)player.playerposition.X,
                  (int)player.playerposition.Z, (int)player.playerposition.Y - 1))
             {
                 return null;
             }
-            int blockunderplayer = map.GetBlock((int)player.playerposition.X,
+            int blockunderplayer = d_Map.GetBlock((int)player.playerposition.X,
                 (int)player.playerposition.Z, (int)player.playerposition.Y - 1);
             return blockunderplayer;
         }
@@ -1746,7 +1746,7 @@ namespace ManicDigger
         }
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
-            if (z >= map.MapSizeZ)
+            if (z >= d_Map.MapSizeZ)
             {
                 return true;
             }
@@ -1754,18 +1754,18 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
+            if (x >= d_Map.MapSizeX || y >= d_Map.MapSizeY)// || z >= mapsizez)
             {
                 return ENABLE_FREEMOVE;
             }
-            return map.GetBlock(x, y, z) == SpecialBlockId.Empty
-                || data.IsWater[map.GetBlock(x, y, z)];
+            return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
+                || d_Data.IsWater[d_Map.GetBlock(x, y, z)];
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || map.GetBlock(x, y, z) == data.BlockIdSingleStairs
-                || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
+                || d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs
+                || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
         }
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
@@ -1821,8 +1821,8 @@ namespace ManicDigger
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
-            if (the3d.ModelViewMatrix.Equals(new Matrix4())) { return; }
-            Matrix4 theModelView = the3d.ModelViewMatrix;
+            if (d_The3d.ModelViewMatrix.Equals(new Matrix4())) { return; }
+            Matrix4 theModelView = d_The3d.ModelViewMatrix;
             theModelView.Invert();
             //the_modelview = new Matrix4();
             ray = Vector3.Transform(ray, theModelView);
@@ -1836,7 +1836,7 @@ namespace ManicDigger
 
             //pick models
             selectedmodelid = -1;
-            foreach (var m in game.Models)
+            foreach (var m in d_Game.Models)
             {
                 Vector3 closestmodelpos = new Vector3(int.MaxValue,int.MaxValue,int.MaxValue);
                 foreach (var t in m.TrianglesForPicking)
@@ -1861,7 +1861,7 @@ namespace ManicDigger
                 pickcubepos = new Vector3(-1, -1, -1);
                 if (mouseleftclick)
                 {
-                    game.ModelClick(selectedmodelid);
+                    d_Game.ModelClick(selectedmodelid);
                 }
                 mouseleftclick = false;
                 leftpressedpicking = false;
@@ -1870,11 +1870,11 @@ namespace ManicDigger
 
             if (left)
             {
-                weapon.SetAttack(true, false);
+                d_Weapon.SetAttack(true, false);
             }
             else if (right)
             {
-                weapon.SetAttack(true, true);
+                d_Weapon.SetAttack(true, true);
             }
 
             //if (iii++ % 2 == 0)
@@ -1885,7 +1885,7 @@ namespace ManicDigger
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
+            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
 
@@ -1943,10 +1943,10 @@ namespace ManicDigger
                     if (middle)
                     {
                         var newtile = pick0.Current();
-                        if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            int clonesource = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                            int clonesource2 = (int)data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
+                            int clonesource = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
+                            int clonesource2 = (int)d_Data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
                             for (int i = 0; i < materialSlots.Length; i++)
                             {
                                 if ((int)materialSlots[i] == clonesource2)
@@ -1957,7 +1957,7 @@ namespace ManicDigger
                             }
                             materialSlots[activematerial] = clonesource2;
                         done:
-                            audio.Play(data.CloneSound[clonesource][0]); //todo sound cycle
+                            d_Audio.Play(d_Data.CloneSound[clonesource][0]); //todo sound cycle
                         }
                     }
                     if (left || right)
@@ -1965,29 +1965,29 @@ namespace ManicDigger
                         BlockPosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : tile.Current();
-                        if (MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
-                            Console.WriteLine(". newtile:" + newtile + " type: " + map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
+                            Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
                             if (pick0.pos != new Vector3(-1, -1, -1))
                             {
                                 int blocktype;
-                                if (left) { blocktype = map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
+                                if (left) { blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
                                 else { blocktype = materialSlots[activematerial]; }
-                                string[] sound = left ? data.BreakSound[blocktype] : data.BuildSound[blocktype];
+                                string[] sound = left ? d_Data.BreakSound[blocktype] : d_Data.BuildSound[blocktype];
                                 if (sound != null && sound.Length > 0)
                                 {
-                                    audio.Play(sound[0]); //todo sound cycle
+                                    d_Audio.Play(sound[0]); //todo sound cycle
                                 }
                             }
                             if (!right)
                             {
                                 particleEffectBlockBreak.StartParticleEffect(newtile);//must be before deletion - gets ground type.
                             }
-                            if (!MapUtil.IsValidPos(map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                            if (!MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                             {
                                 throw new Exception();
                             }
-                            game.OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                            d_Game.OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                                 new Vector3((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y), tile.pos,
                                 right);
                             //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
@@ -2006,15 +2006,15 @@ namespace ManicDigger
         public const float RailHeight = 0.3f;
         float getblockheight(int x, int y, int z)
         {
-            if (!MapUtil.IsValidPos(map, x, y, z))
+            if (!MapUtil.IsValidPos(d_Map, x, y, z))
             {
                 return 1;
             }
-            if (data.Rail[map.GetBlock(x, y, z)] != RailDirectionFlags.None)
+            if (d_Data.Rail[d_Map.GetBlock(x, y, z)] != RailDirectionFlags.None)
             {
                 return RailHeight;
             }
-            if (map.GetBlock(x, y, z) == data.BlockIdSingleStairs)
+            if (d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs)
             {
                 return 0.5f;
             }
@@ -2053,7 +2053,7 @@ namespace ManicDigger
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
-            if (config3d.viewdistance < 256)
+            if (d_Config3d.viewdistance < 256)
             {
                 SetFog();
             }
@@ -2094,7 +2094,7 @@ namespace ManicDigger
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindTexture(TextureTarget.Texture2D, terrainTextures.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, d_TerrainTextures.terrainTexture);
 
             GL.MatrixMode(MatrixMode.Modelview);
 
@@ -2108,7 +2108,7 @@ namespace ManicDigger
                 camera = FppCamera();
             }
             GL.LoadMatrix(ref camera);
-            the3d.ModelViewMatrix = camera;
+            d_The3d.ModelViewMatrix = camera;
 
             if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
 
@@ -2116,8 +2116,8 @@ namespace ManicDigger
             if (drawgame)
             {
                 DrawSkySphere();
-                sunmoonrenderer.Draw((float)e.Time);
-                terrain.Draw();
+                d_SunMoonRenderer.Draw((float)e.Time);
+                d_Terrain.Draw();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
@@ -2127,10 +2127,10 @@ namespace ManicDigger
                 DrawCharacters((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    characterrenderer.DrawCharacter(a, game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
+                    d_CharacterRenderer.DrawCharacter(a, d_Game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
                 }
                 DrawPlayers((float)e.Time);
-                foreach (IModelToDraw m in game.Models)
+                foreach (IModelToDraw m in d_Game.Models)
                 {
                     if (m.Id == selectedmodelid)
                     {
@@ -2151,7 +2151,7 @@ namespace ManicDigger
                 }
                 if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
                 {
-                    weapon.DrawWeapon((float)e.Time);
+                    d_Weapon.DrawWeapon((float)e.Time);
                 }
             }
             SetAmbientLight(Color.White);
@@ -2159,7 +2159,7 @@ namespace ManicDigger
             DrawPlayerNames();
             
             //OnResize(new EventArgs());
-            mainwindow.SwapBuffers();
+            d_MainWindow.SwapBuffers();
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
         }
@@ -2182,11 +2182,11 @@ namespace ManicDigger
             GL.Fog(FogParameter.FogColor, fogColor);
             GL.Fog(FogParameter.FogDensity, density);
             float fogsize = 10;
-            if (config3d.viewdistance <= 64)
+            if (d_Config3d.viewdistance <= 64)
             {
                 fogsize = 5;
             }
-            float fogstart = config3d.viewdistance - fogsize;
+            float fogstart = d_Config3d.viewdistance - fogsize;
             GL.Fog(FogParameter.FogStart, fogstart);
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
         }
@@ -2200,10 +2200,10 @@ namespace ManicDigger
         {
             if (playertexturedefault == -1)
             {
-                playertexturedefault = LoadTexture(getfile.GetFile(playertexturedefaultfilename));
+                playertexturedefault = LoadTexture(d_GetFile.GetFile(playertexturedefaultfilename));
             }
             List<string> players = new List<string>();
-            foreach (var k in clients.Players)
+            foreach (var k in d_Clients.Players)
             {
                 if (!k.Value.Name.Equals("Local", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -2218,7 +2218,7 @@ namespace ManicDigger
             }
             else
             {
-                playername = clients.Players[playerid].Name;
+                playername = d_Clients.Players[playerid].Name;
             }
             if (playername == null)
             {
@@ -2241,11 +2241,11 @@ namespace ManicDigger
         {
             if (skyspheretexture == -1)
             {
-                skyspheretexture = LoadTexture(getfile.GetFile("skysphere.png"));
-                skyspherenighttexture = LoadTexture(getfile.GetFile("skyspherenight.png"));
+                skyspheretexture = LoadTexture(d_GetFile.GetFile("skysphere.png"));
+                skyspherenighttexture = LoadTexture(d_GetFile.GetFile("skyspherenight.png"));
             }
             int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
-            if (shadows.GetType() == typeof(ShadowsSimple))
+            if (d_Shadows.GetType() == typeof(ShadowsSimple))
             {
                 texture = skyspheretexture;
             }
@@ -2287,7 +2287,7 @@ namespace ManicDigger
         private void DrawPlayers(float dt)
         {
             totaltime += dt;
-            foreach (var k in clients.Players)
+            foreach (var k in d_Clients.Players)
             {
                 if (k.Key == 255)
                 {
@@ -2324,7 +2324,7 @@ namespace ManicDigger
                     curstate = new PlayerInterpolationState();
                 }
                 //do not interpolate player position if player is controlled by game world
-                if (network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !network.EnablePlayerUpdatePosition[k.Key])
+                if (d_Network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !d_Network.EnablePlayerUpdatePosition[k.Key])
                 {
                     curstate.position = k.Value.Position;
                 }
@@ -2333,7 +2333,7 @@ namespace ManicDigger
                 DrawCharacter(info.anim, curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
                     + new Vector3(0, -CharacterPhysics.walldistance, 0),
                     curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key),
-                    clients.Players[k.Key].AnimationHint);
+                    d_Clients.Players[k.Key].AnimationHint);
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
@@ -2395,7 +2395,7 @@ namespace ManicDigger
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(map.MapSizeX, Math.Max(map.MapSizeY, map.MapSizeZ))));
+            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
             if (pick2.Count > 0)
@@ -2412,15 +2412,15 @@ namespace ManicDigger
         AnimationState v0anim = new AnimationState();
         void DrawCharacters(float dt)
         {
-            foreach (ICharacterToDraw v0 in game.Characters)
+            foreach (ICharacterToDraw v0 in d_Game.Characters)
             {
                 v0.Draw(dt);
             }
         }
         private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
         {
-            characterrenderer.SetAnimation("walk");
-            characterrenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
+            d_CharacterRenderer.SetAnimation("walk");
+            d_CharacterRenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
         }
         GuiState guistate;
         enum GuiState
@@ -2433,7 +2433,7 @@ namespace ManicDigger
         }
         private void DrawMouseCursor()
         {
-            the3d.Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
+            d_The3d.Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
         Size? aimsize;
         private void Draw2d()
@@ -2447,8 +2447,8 @@ namespace ManicDigger
                         {
                             if (GuiTyping == TypingState.Typing)
                             {
-                                hudchat.DrawChatLines(true);
-                                hudchat.DrawTypingBuffer();
+                                d_HudChat.DrawChatLines(true);
+                                d_HudChat.DrawTypingBuffer();
                             }
                             PerspectiveMode();
                             return;
@@ -2458,10 +2458,10 @@ namespace ManicDigger
                             DrawAim();
                         }
                         DrawMaterialSelector();
-                        hudchat.DrawChatLines(GuiTyping == TypingState.Typing);
+                        d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
                         {
-                            hudchat.DrawTypingBuffer();
+                            d_HudChat.DrawTypingBuffer();
                         }
                         if (Keyboard[GetKey(OpenTK.Input.Key.Tab)])
                         {
@@ -2476,7 +2476,7 @@ namespace ManicDigger
                     break;
                 case GuiState.Inventory:
                     {
-                        hudinventory.DrawInventory();
+                        d_HudInventory.DrawInventory();
                     }
                     break;
                 case GuiState.MapLoading:
@@ -2494,11 +2494,11 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWFPS)
             {
-                the3d.Draw2dText(fpstext, 20f, 20f, hudchat.ChatFontSize, Color.White);
+                d_The3d.Draw2dText(fpstext, 20f, 20f, d_HudChat.ChatFontSize, Color.White);
             }
             if (ENABLE_DRAWFPSHISTORY)
             {
-                fpshistorygraphrenderer.DrawFpsHistoryGraph();
+                d_FpsHistoryGraphRenderer.DrawFpsHistoryGraph();
             }
             if (drawblockinfo)
             {
@@ -2513,21 +2513,21 @@ namespace ManicDigger
                 DrawScreenshotFlash();
                 screenshotflash--;
             }
-            double lagSeconds = (DateTime.UtcNow - network.LastReceived).TotalSeconds;
+            double lagSeconds = (DateTime.UtcNow - d_Network.LastReceived).TotalSeconds;
             if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
             {
-                the3d.Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
-                the3d.Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
+                d_The3d.Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
+                d_The3d.Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
             }
             PerspectiveMode();
         }
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
-            the3d.Draw2dTexture(the3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
             string screenshottext = "Screenshot";
-            the3d.Draw2dText(screenshottext, xcenter(the3d.TextSize(screenshottext, 50).Width),
-                ycenter(the3d.TextSize(screenshottext, 50).Height), 50, Color.White);
+            d_The3d.Draw2dText(screenshottext, xcenter(d_The3d.TextSize(screenshottext, 50).Width),
+                ycenter(d_The3d.TextSize(screenshottext, 50).Height), 50, Color.White);
         }
         private void DrawBlockInfo()
         {
@@ -2535,29 +2535,29 @@ namespace ManicDigger
             int y = (int)pickcubepos.Z;
             int z = (int)pickcubepos.Y;
             string info = "None";
-            if (MapUtil.IsValidPos(map, x, y, z))
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
             {
-                var blocktype = map.GetBlock(x, y, z);
-                if (data.IsValid[blocktype])
+                var blocktype = d_Map.GetBlock(x, y, z);
+                if (d_Data.IsValid[blocktype])
                 {
-                    info = data.Name[blocktype];
+                    info = d_Data.Name[blocktype];
                 }
             }
-            the3d.Draw2dText(info, Width * 0.5f - the3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+            d_The3d.Draw2dText(info, Width * 0.5f - d_The3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
         }
         private void DrawConnectedPlayersList()
         {
-            List<string> l = new List<string>(network.ConnectedPlayers());
+            List<string> l = new List<string>(d_Network.ConnectedPlayers());
             for (int i = 0; i < l.Count; i++)
             {
-                the3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, hudchat.ChatFontSize, Color.White);
+                d_The3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
             }
         }
         private void DrawAim()
         {
             if (aimsize == null)
             {
-                using (var targetbmp = new Bitmap(getfile.GetFile("target.png")))
+                using (var targetbmp = new Bitmap(d_GetFile.GetFile("target.png")))
                 {
                     aimsize = targetbmp.Size;
                 }
@@ -2565,11 +2565,11 @@ namespace ManicDigger
             float aimwidth = aimsize.Value.Width;
             float aimheight = aimsize.Value.Height;
 
-            the3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+            d_The3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
         }
         private void DrawPlayerNames()
         {
-            foreach (KeyValuePair<int, Player> k in clients.Players)
+            foreach (KeyValuePair<int, Player> k in d_Clients.Players)
             {
                 if (k.Key == 255 || k.Value.Name == ""
                     || (!playerdrawinfo.ContainsKey(k.Key))
@@ -2587,7 +2587,7 @@ namespace ManicDigger
                     {
                         Vector3 pos = ((PlayerInterpolationState)ppos).position;
                         //do not interpolate player position if player is controlled by game world
-                        if (network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !network.EnablePlayerUpdatePosition[k.Key])
+                        if (d_Network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !d_Network.EnablePlayerUpdatePosition[k.Key])
                         {
                             pos = k.Value.Position;
                         }
@@ -2596,8 +2596,8 @@ namespace ManicDigger
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
-                        GL.Translate(-the3d.TextSize(name, 14).Width / 2, 0, 0);
-                        the3d.Draw2dText(name, 0, 0, 14, Color.White);
+                        GL.Translate(-d_The3d.TextSize(name, 14).Width / 2, 0, 0);
+                        d_The3d.Draw2dText(name, 0, 0, 14, Color.White);
                         GL.PopMatrix();
                     }
                 }
@@ -2761,7 +2761,7 @@ namespace ManicDigger
             fpscount++;
             longestframedt = (float)Math.Max(longestframedt, e.Time);
             TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
-            fpshistorygraphrenderer.Update((float)e.Time);
+            d_FpsHistoryGraphRenderer.Update((float)e.Time);
             if (elapsed.TotalSeconds >= 1)
             {
                 string fpstext1 = "";
@@ -2771,10 +2771,10 @@ namespace ManicDigger
                 longestframedt = 0;
                 fpscount = 0;
                 performanceinfo["fps"] = fpstext1;
-                performanceinfo["triangles"] = "Triangles: " + terrain.TrianglesCount();
-                int chunkupdates = terrain.ChunkUpdates;
+                performanceinfo["triangles"] = "Triangles: " + d_Terrain.TrianglesCount();
+                int chunkupdates = d_Terrain.ChunkUpdates;
                 performanceinfo["chunk updates"] = "Chunk updates: " + (chunkupdates - lastchunkupdates);
-                lastchunkupdates = terrain.ChunkUpdates;
+                lastchunkupdates = d_Terrain.ChunkUpdates;
 
                 string s = "";
                 List<string> l = new List<string>(performanceinfo.Values);
@@ -2795,7 +2795,7 @@ namespace ManicDigger
             }
             if (!titleset)
             {
-                mainwindow.Title = applicationname;
+                d_MainWindow.Title = applicationname;
                 titleset = true;
             }
         }
@@ -2807,7 +2807,7 @@ namespace ManicDigger
         #endregion
         public void AddChatline(string s)
         {
-            hudchat.AddChatline(s);
+            d_HudChat.AddChatline(s);
         }
         #region ILocalPlayerPosition Members
         public bool Swimming
@@ -2816,15 +2816,15 @@ namespace ManicDigger
             {
                 var p = LocalPlayerPosition;
                 p += new Vector3(0, CharacterPhysics.characterheight, 0);
-                if (!MapUtil.IsValidPos(map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return p.Y < WaterLevel;
                 }
-                return data.IsWater[map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+                return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
         #endregion
-        public float WaterLevel { get { return map.MapSizeZ / 2; } set { } }
+        public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
         public string GameUrl;
         Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members
@@ -2844,7 +2844,7 @@ namespace ManicDigger
         }
         #endregion
         #region IMap Members
-        IMapStorage IMap.Map { get { return map; } }
+        IMapStorage IMap.Map { get { return d_Map; } }
         #endregion
         AnimationHint localplayeranimationhint = new AnimationHint();
         #region IViewport3d Members
@@ -2863,24 +2863,24 @@ namespace ManicDigger
         #region IMap Members
         public void UpdateAllTiles()
         {
-            terrain.UpdateAllTiles();
+            d_Terrain.UpdateAllTiles();
         }
         #endregion
         public Options Options { get { return options; } set { options = value; } }
-        public int Height { get { return mainwindow.Height; } }
-        public int Width { get { return mainwindow.Width; } }
-        public OpenTK.Input.KeyboardDevice Keyboard { get { return mainwindow.Keyboard; } }
-        public OpenTK.Input.MouseDevice Mouse { get { return mainwindow.Mouse; } }
+        public int Height { get { return d_MainWindow.Height; } }
+        public int Width { get { return d_MainWindow.Width; } }
+        public OpenTK.Input.KeyboardDevice Keyboard { get { return d_MainWindow.Keyboard; } }
+        public OpenTK.Input.MouseDevice Mouse { get { return d_MainWindow.Mouse; } }
         public void Run()
         {
-            mainwindow.Run();
+            d_MainWindow.Run();
         }
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
         }
         public void DrawMaterialSelector()
         {
-            hudmaterialselector.DrawMaterialSelector();
+            d_HudMaterialSelector.DrawMaterialSelector();
         }
     }
 }

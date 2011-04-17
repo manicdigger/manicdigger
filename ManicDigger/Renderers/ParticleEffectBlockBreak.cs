@@ -16,20 +16,20 @@ namespace ManicDigger.Renderers
     public class ParticleEffectBlockBreak
     {
         [Inject]
-        public IMapStorage map;
+        public IMapStorage d_Map;
         [Inject]
-        public ITerrainTextures terrain;
+        public ITerrainTextures d_Terrain;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {
-            GL.BindTexture(TextureTarget.Texture2D, terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, d_Terrain.terrainTexture);
             foreach (ParticleEffect p in new List<ParticleEffect>(particleEffects))
             {
                 foreach (Particle pp in p.particles)
                 {
                     GL.Begin(BeginMode.Triangles);
-                    RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, terrain.texturesPacked);
+                    RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, d_Terrain.texturesPacked);
                     GL.TexCoord2(texrec.Left, texrec.Top);
                     GL.Vertex3(pp.position);
                     GL.TexCoord2(texrec.Right, texrec.Top);
@@ -72,16 +72,16 @@ namespace ManicDigger.Renderers
             ParticleEffect p = new ParticleEffect();
             p.center = v + new Vector3(0.5f, 0.5f, 0.5f);
             p.start = DateTime.Now;
-            if (!MapUtil.IsValidPos(map, (int)v.X, (int)v.Z, (int)v.Y))
+            if (!MapUtil.IsValidPos(d_Map, (int)v.X, (int)v.Z, (int)v.Y))
             {
                 return;
             }
-            int tiletype = map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
-            if (!data.IsValid[tiletype])
+            int tiletype = d_Map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
+            if (!d_Data.IsValid[tiletype])
             {
                 return;
             }
-            p.textureid = data.TextureId[tiletype, (int)TileSide.Top];
+            p.textureid = d_Data.TextureId[tiletype, (int)TileSide.Top];
             for (int i = 0; i < particlecount; i++)
             {
                 Particle pp = new Particle();

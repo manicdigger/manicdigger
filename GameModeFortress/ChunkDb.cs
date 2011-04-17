@@ -64,17 +64,17 @@ namespace GameModeFortress
     public class ChunkDbCompressed : IChunkDb
     {
         [Inject]
-        public IChunkDb chunkdb;
+        public IChunkDb d_ChunkDb;
         [Inject]
-        public ICompression compression;
+        public ICompression d_Compression;
         #region IChunkDb Members
         public void Open(string filename)
         {
-            chunkdb.Open(filename);
+            d_ChunkDb.Open(filename);
         }
         public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions)
         {
-            foreach(byte[] b in chunkdb.GetChunks(chunkpositions))
+            foreach(byte[] b in d_ChunkDb.GetChunks(chunkpositions))
             {
                 if (b == null)
                 {
@@ -82,7 +82,7 @@ namespace GameModeFortress
                 }
                 else
                 {
-                    yield return compression.Decompress(b);
+                    yield return d_Compression.Decompress(b);
                 }
             }
         }
@@ -98,33 +98,33 @@ namespace GameModeFortress
                 }
                 else
                 {
-                    b = compression.Compress(c.Chunk);
+                    b = d_Compression.Compress(c.Chunk);
                 }
                 compressed.Add(new DbChunk() { Position = c.Position, Chunk = b });
             }
-            chunkdb.SetChunks(compressed);
+            d_ChunkDb.SetChunks(compressed);
         }
         public byte[] GetGlobalData()
         {
-            byte[] globaldata = chunkdb.GetGlobalData();
+            byte[] globaldata = d_ChunkDb.GetGlobalData();
             if (globaldata == null)
             {
                 return null;
             }
             else
             {
-                return compression.Decompress(globaldata);
+                return d_Compression.Decompress(globaldata);
             }
         }
         public void SetGlobalData(byte[] data)
         {
             if (data == null)
             {
-                chunkdb.SetGlobalData(null);
+                d_ChunkDb.SetGlobalData(null);
             }
             else
             {
-                chunkdb.SetGlobalData(compression.Compress(data));
+                d_ChunkDb.SetGlobalData(d_Compression.Compress(data));
             }
         }
         #endregion

@@ -11,24 +11,24 @@ namespace GameModeFortress
     public partial class GameFortress
     {
         [Inject]
-        public IAudio audio { get; set; }
+        public IAudio d_Audio { get; set; }
         [Inject]
-        public RailMapUtil railmaputil { get; set; }
+        public RailMapUtil d_RailMapUtil { get; set; }
         [Inject]
-        public MinecartRenderer minecartrenderer { get; set; }
+        public MinecartRenderer d_MinecartRenderer { get; set; }
         void RailOnNewFrame(float dt)
         {
-            viewport.LocalPlayerAnimationHint.InVehicle = railriding;
-            viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
+            d_Viewport.LocalPlayerAnimationHint.InVehicle = railriding;
+            d_Viewport.LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
 
-            bool turnright = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.D)];
-            bool turnleft = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.A)];
+            bool turnright = d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.D)];
+            bool turnleft = d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.A)];
             RailSound();
             if (railriding)
             {
-                viewport.ENABLE_FREEMOVE = true;
-                viewport.ENABLE_MOVE = false;
-                viewport.LocalPlayerPosition = CurrentRailPos();
+                d_Viewport.ENABLE_FREEMOVE = true;
+                d_Viewport.ENABLE_MOVE = false;
+                d_Viewport.LocalPlayerPosition = CurrentRailPos();
                 currentrailblockprogress += currentvehiclespeed * (float)dt;
                 if (currentrailblockprogress >= 1)
                 {
@@ -62,11 +62,11 @@ namespace GameModeFortress
                     }
                 }
             }
-            if (viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.W)])
+            if (d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.W)])
             {
                 currentvehiclespeed += 1f * (float)dt;
             }
-            if (viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.S)])
+            if (d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.S)])
             {
                 currentvehiclespeed -= 5f * (float)dt;
             }
@@ -76,25 +76,25 @@ namespace GameModeFortress
             }
             //todo fix
             //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
-            if (!wasqpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.Q)])
+            if (!wasqpressed && d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.Q)])
             {
                 Reverse();
             }
 
-            if (!wasvpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)] && !railriding)
+            if (!wasvpressed && d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.V)] && !railriding)
             {
-                currentrailblock = new Vector3((int)viewport.LocalPlayerPosition.X,
-                    (int)viewport.LocalPlayerPosition.Z, (int)viewport.LocalPlayerPosition.Y - 1);
-                if (!MapUtil.IsValidPos(map, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
+                currentrailblock = new Vector3((int)d_Viewport.LocalPlayerPosition.X,
+                    (int)d_Viewport.LocalPlayerPosition.Z, (int)d_Viewport.LocalPlayerPosition.Y - 1);
+                if (!MapUtil.IsValidPos(d_Map, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
                 {
                     ExitVehicle();
                 }
                 else
                 {
-                    var railunderplayer = data.Rail[
-                        map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
+                    var railunderplayer = d_Data.Rail[
+                        d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
-                    viewport.CharacterHeight = minecartheight;
+                    d_Viewport.CharacterHeight = minecartheight;
                     currentvehiclespeed = 0;
                     if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
                     {
@@ -127,20 +127,20 @@ namespace GameModeFortress
                     lastdirection = currentdirection;
                 }
             }
-            else if (!wasvpressed && viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)] && railriding)
+            else if (!wasvpressed && d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.V)] && railriding)
             {
                 ExitVehicle();
-                viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
+                d_Viewport.LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
-            wasqpressed = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.Q)];
-            wasvpressed = viewport.keyboardstate[viewport.GetKey(OpenTK.Input.Key.V)];
+            wasqpressed = d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.Q)];
+            wasvpressed = d_Viewport.keyboardstate[d_Viewport.GetKey(OpenTK.Input.Key.V)];
         }
         private void ExitVehicle()
         {
-            viewport.CharacterHeight = WalkCharacterHeight;
+            d_Viewport.CharacterHeight = WalkCharacterHeight;
             railriding = false;
-            viewport.ENABLE_FREEMOVE = false;
-            viewport.ENABLE_MOVE = true;
+            d_Viewport.ENABLE_FREEMOVE = false;
+            d_Viewport.ENABLE_MOVE = true;
         }
         private void Reverse()
         {
@@ -158,14 +158,14 @@ namespace GameModeFortress
             {
                 railsoundpersecond = 10;
             }
-            audio.PlayAudioLoop("railnoise.wav", railriding && railsoundpersecond > 0.1f);
+            d_Audio.PlayAudioLoop("railnoise.wav", railriding && railsoundpersecond > 0.1f);
             if (!railriding)
             {
                 return;
             }
             if ((DateTime.Now - lastrailsoundtime).TotalSeconds > 1 / railsoundpersecond)
             {
-                audio.Play("rail" + (lastrailsound + 1) + ".wav");
+                d_Audio.Play("rail" + (lastrailsound + 1) + ".wav");
                 lastrailsoundtime = DateTime.Now;
                 lastrailsound++;
                 if (lastrailsound >= 4)
@@ -182,7 +182,7 @@ namespace GameModeFortress
         VehicleDirection12 lastdirection;
         Vector3 CurrentRailPos()
         {
-            var slope = railmaputil.GetRailSlope((int)currentrailblock.X,
+            var slope = d_RailMapUtil.GetRailSlope((int)currentrailblock.X,
                 (int)currentrailblock.Y, (int)currentrailblock.Z);
             Vector3 a = currentrailblock;
             float x_correction = 0;
@@ -269,10 +269,10 @@ namespace GameModeFortress
         {
             Vector3 new_position = enter.BlockPosition;
             VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
-            if (MapUtil.IsValidPos(map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
+            if (MapUtil.IsValidPos(d_Map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
-                RailDirectionFlags newpositionrail = data.Rail[
-                    map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
+                RailDirectionFlags newpositionrail = d_Data.Rail[
+                    d_Map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
                 List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
                 foreach (var z in DirectionUtils.PossibleNewRails(enter.EnterDirection))
                 {
@@ -363,12 +363,12 @@ namespace GameModeFortress
         }
         UpDown GetUpDownMove(Vector3 railblock, TileEnterDirection dir)
         {
-            if (!MapUtil.IsValidPos(map, (int)railblock.X, (int)railblock.Y, (int)railblock.Z))
+            if (!MapUtil.IsValidPos(d_Map, (int)railblock.X, (int)railblock.Y, (int)railblock.Z))
             {
                 return UpDown.None;
             }
             //going up
-            RailSlope slope = railmaputil.GetRailSlope((int)railblock.X, (int)railblock.Y, (int)railblock.Z);
+            RailSlope slope = d_RailMapUtil.GetRailSlope((int)railblock.X, (int)railblock.Y, (int)railblock.Z);
             if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
             {
                 return UpDown.Up;
@@ -411,8 +411,8 @@ namespace GameModeFortress
                 if (railriding)
                 {
                     var m = new Minecart();
-                    m.renderer = minecartrenderer;
-                    m.position = viewport.LocalPlayerPosition;
+                    m.renderer = d_MinecartRenderer;
+                    m.position = d_Viewport.LocalPlayerPosition;
                     m.direction = currentdirection;
                     m.lastdirection = lastdirection;
                     m.progress = currentrailblockprogress;

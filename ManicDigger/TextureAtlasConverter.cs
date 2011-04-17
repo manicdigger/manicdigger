@@ -9,11 +9,11 @@ namespace ManicDigger
     {
         public delegate T Factory<T>();
         [Inject]
-        public Factory<IFastBitmap> fastbitmapfactory { get; set; }
+        public Factory<IFastBitmap> d_FastBitmapFactory { get; set; }
         //tiles = 16 means 16 x 16 atlas
         public List<Bitmap> Atlas2dInto1d(Bitmap atlas2d, int tiles, int atlassizezlimit)
         {
-            IFastBitmap orig = fastbitmapfactory();
+            IFastBitmap orig = d_FastBitmapFactory();
             orig.bmp = atlas2d;
 
             int tilesize = atlas2d.Width / tiles;
@@ -38,7 +38,7 @@ namespace ManicDigger
                         atlas1d.Unlock();
                         atlases.Add(atlas1d.bmp);
                     }
-                    atlas1d = fastbitmapfactory();
+                    atlas1d = d_FastBitmapFactory();
                     atlas1d.bmp = new Bitmap(tilesize, atlassizezlimit);
                     atlas1d.Lock();
                 }

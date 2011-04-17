@@ -18,26 +18,26 @@ namespace ManicDiggerServer
             Server server = new Server();
             server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
-            map.currenttime = server;
+            map.d_CurrentTime = server;
             map.chunksize = 32;
 
             // TODO: make it possible to change the world generator at run-time!
             var generator = new Noise2DWorldGenerator();
             generator.ChunkSize = map.chunksize;
             // apply chunk size to generator
-            map.generator = generator;
+            map.d_Generator = generator;
 
-            map.heightmap = new InfiniteMapChunked2d() { chunksize = 32, map = map };
+            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = 32, d_Map = map };
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
-            server.map = map;
-            server.generator = generator;
+            server.d_Map = map;
+            server.d_Generator = generator;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var data = new GameDataCsv();
             data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
                 File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
-            server.data = data;
-            map.data = server.data;
-            server.craftingtabletool = new CraftingTableTool() { map = map };
+            server.d_Data = data;
+            map.d_Data = server.d_Data;
+            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
             bool singleplayer = false;
             foreach (string arg in args)
             {
@@ -47,13 +47,13 @@ namespace ManicDiggerServer
                 }
             }
             server.LocalConnectionsOnly = singleplayer;
-            server.getfile = getfile;
+            server.d_GetFile = getfile;
             var compression = new CompressionGzip();
-            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = compression };
-            server.chunkdb = chunkdb;
-            map.chunkdb = chunkdb;
-            server.networkcompression = compression;
-            server.water = new WaterFinite() { data = server.data };
+            var chunkdb = new ChunkDbCompressed() { d_ChunkDb = new ChunkDbSqlite(), d_Compression = compression };
+            server.d_ChunkDb = chunkdb;
+            map.d_ChunkDb = chunkdb;
+            server.d_NetworkCompression = compression;
+            server.d_Water = new WaterFinite() { data = server.d_Data };
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(

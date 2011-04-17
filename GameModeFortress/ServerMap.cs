@@ -25,14 +25,14 @@ namespace ManicDiggerServer
     public class ServerMap : IMapStorage
     {
         [Inject]
-        public IChunkDb chunkdb;
+        public IChunkDb d_ChunkDb;
         [Inject]
-        public IWorldGenerator generator;
+        public IWorldGenerator d_Generator;
         [Inject]
-        public ICurrentTime currenttime;
+        public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -46,7 +46,7 @@ namespace ManicDiggerServer
         {
             byte[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
-            chunks[x / chunksize, y / chunksize, z / chunksize].LastChange = currenttime.SimulationCurrentFrame;
+            chunks[x / chunksize, y / chunksize, z / chunksize].LastChange = d_CurrentTime.SimulationCurrentFrame;
             chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
             UpdateColumnHeight(x, y);
         }
@@ -57,12 +57,12 @@ namespace ManicDiggerServer
             for (int i = MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (MapUtil.IsValidPos(this, x, y, i) && !data.IsTransparentForLight[GetBlock(x, y, i)])
+                if (MapUtil.IsValidPos(this, x, y, i) && !d_Data.IsTransparentForLight[GetBlock(x, y, i)])
                 {
                     break;
                 }
             }
-            heightmap.SetBlock(x, y, height);
+            d_Heightmap.SetBlock(x, y, height);
         }
         public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
         {
@@ -84,7 +84,7 @@ namespace ManicDiggerServer
             Chunk chunk = chunks[x, y, z];
             if (chunk == null)
             {
-                byte[] serializedChunk = ChunkDb.GetChunk(chunkdb, x, y, z);
+                byte[] serializedChunk = ChunkDb.GetChunk(d_ChunkDb, x, y, z);
                 if (serializedChunk != null)
                 {
                     chunks[x, y, z] = DeserializeChunk(serializedChunk);
@@ -94,8 +94,8 @@ namespace ManicDiggerServer
                 }
 
                 // update chunk size and get chunk
-                generator.ChunkSize = chunksize;
-                byte[, ,] newchunk = generator.GetChunk(x, y, z);
+                d_Generator.ChunkSize = chunksize;
+                byte[, ,] newchunk = d_Generator.GetChunk(x, y, z);
                 if (newchunk != null)
                 {
                     chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
@@ -121,8 +121,8 @@ namespace ManicDiggerServer
                     int inChunkHeight = GetColumnHeightInChunk(chunks[x, y, z].data, xx, yy);
                     if (inChunkHeight != 0)//not empty column
                     {
-                        int oldHeight = heightmap.GetBlock(x * chunksize + xx, y * chunksize + yy);
-                        heightmap.SetBlock(x * chunksize + xx, y * chunksize + yy, Math.Max(oldHeight, inChunkHeight + z * chunksize));
+                        int oldHeight = d_Heightmap.GetBlock(x * chunksize + xx, y * chunksize + yy);
+                        d_Heightmap.SetBlock(x * chunksize + xx, y * chunksize + yy, Math.Max(oldHeight, inChunkHeight + z * chunksize));
                     }
                 }
             }
@@ -133,7 +133,7 @@ namespace ManicDiggerServer
             for (int i = chunksize - 1; i >= 0; i--)
             {
                 height = i;
-                if (!data.IsTransparentForLight[chunk[MapUtil.Index3d(xx, yy, i, chunksize, chunksize)]])
+                if (!d_Data.IsTransparentForLight[chunk[MapUtil.Index3d(xx, yy, i, chunksize, chunksize)]])
                 {
                     break;
                 }
@@ -151,7 +151,7 @@ namespace ManicDiggerServer
             MapSizeY = sizey;
             MapSizeZ = sizez;
             chunks = new Chunk[sizex / chunksize, sizey / chunksize, sizez / chunksize];
-            heightmap.Restart();
+            d_Heightmap.Restart();
         }
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
@@ -180,7 +180,7 @@ namespace ManicDiggerServer
                 {
                     for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
                     {
-                        chunks[(x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize].LastChange = currenttime.SimulationCurrentFrame;
+                        chunks[(x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize].LastChange = d_CurrentTime.SimulationCurrentFrame;
                     }
                 }
             }
@@ -207,11 +207,11 @@ namespace ManicDiggerServer
         }
         #endregion
         [Inject]
-        public InfiniteMapChunked2d heightmap;
+        public InfiniteMapChunked2d d_Heightmap;
         public byte[] GetHeightmapChunk(int x, int y)
         {
             //todo don't copy
-            byte[,] chunk2d = heightmap.GetChunk(x, y);
+            byte[,] chunk2d = d_Heightmap.GetChunk(x, y);
             byte[] chunk = new byte[chunksize * chunksize];
             for (int xx = 0; xx < chunksize; xx++)
             {

@@ -9,7 +9,7 @@ namespace ManicDigger
     public class MeshBatcher
     {
         [Inject]
-        public IFrustumCulling frustumculling;
+        public IFrustumCulling d_FrustumCulling;
         public MeshBatcher()
         {
         }
@@ -262,7 +262,7 @@ namespace ManicDigger
             {
                 ListInfo li = listinfo[i];
                 Vector3 center = li.center;
-                li.render = frustumculling.SphereInFrustum(center.X, center.Y, center.Z, li.radius);
+                li.render = d_FrustumCulling.SphereInFrustum(center.X, center.Y, center.Z, li.radius);
             }
         }
         public int MAX_DISPLAY_LISTS = 32 * 1024;

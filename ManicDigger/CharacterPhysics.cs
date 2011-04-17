@@ -23,12 +23,12 @@ namespace ManicDigger
     public class CharacterPhysics
     {
         [Inject]
-        public IMapStorage map;
+        public IMapStorage d_Map;
         [Inject]
-        public IGameDataPhysics data;
+        public IGameDataPhysics d_Data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
-            if (z >= map.MapSizeZ)
+            if (z >= d_Map.MapSizeZ)
             {
                 return true;
             }
@@ -37,17 +37,17 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            if (x >= map.MapSizeX || y >= map.MapSizeY)// || z >= mapsizez)
+            if (x >= d_Map.MapSizeX || y >= d_Map.MapSizeY)// || z >= mapsizez)
             {
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (data.IsWater[map.GetBlock(x, y, z)] &&
-                !data.IsWater[map.GetBlock(x, y, z + 1)]) { return true; }
-            return map.GetBlock(x, y, z) == 0
-                || (map.GetBlock(x, y, z) == data.BlockIdSingleStairs && map.GetBlock(x, y, z+2) == 0 && map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
-                || (data.IsWater[map.GetBlock(x, y, z)] && (!swimmingtop))
-                || data.IsEmptyForPhysics[map.GetBlock(x, y, z)];
+            if (d_Data.IsWater[d_Map.GetBlock(x, y, z)] &&
+                !d_Data.IsWater[d_Map.GetBlock(x, y, z + 1)]) { return true; }
+            return d_Map.GetBlock(x, y, z) == 0
+                || (d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs && d_Map.GetBlock(x, y, z+2) == 0 && d_Map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
+                || (d_Data.IsWater[d_Map.GetBlock(x, y, z)] && (!swimmingtop))
+                || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
         }
         public static float walldistance = 0.3f;
         public static float characterheight = 1.5f;
@@ -216,9 +216,9 @@ namespace ManicDigger
             Vector3i oldpositioni = new Vector3i((int)Math.Floor(oldposition.X), (int)Math.Floor(oldposition.Z),
                 (int)Math.Floor(oldposition.Y));
             bool wasonstairs = false;
-            if (MapUtil.IsValidPos(map, oldpositioni.x, oldpositioni.y, oldpositioni.z))
+            if (MapUtil.IsValidPos(d_Map, oldpositioni.x, oldpositioni.y, oldpositioni.z))
             {
-                wasonstairs = map.GetBlock(oldpositioni.x, oldpositioni.y, oldpositioni.z) == data.BlockIdSingleStairs;
+                wasonstairs = d_Map.GetBlock(oldpositioni.x, oldpositioni.y, oldpositioni.z) == d_Data.BlockIdSingleStairs;
             }
             Vector3 playerposition = newposition;
             //left
@@ -399,9 +399,9 @@ namespace ManicDigger
             bool isonstairs = false;
             Vector3i playerpositioni = new Vector3i((int)Math.Floor(playerposition.X), (int)Math.Floor(playerposition.Z),
                  (int)Math.Floor(playerposition.Y));
-            if (MapUtil.IsValidPos(map, playerpositioni.x, playerpositioni.y, playerpositioni.z))
+            if (MapUtil.IsValidPos(d_Map, playerpositioni.x, playerpositioni.y, playerpositioni.z))
             {
-                isonstairs = map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == data.BlockIdSingleStairs;
+                isonstairs = d_Map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == d_Data.BlockIdSingleStairs;
             }
 			
             if (isonstairs)

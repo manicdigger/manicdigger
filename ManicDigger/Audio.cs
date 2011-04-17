@@ -28,9 +28,9 @@ namespace ManicDigger
     public class AudioOpenAl : IAudio
     {
         [Inject]
-        public IGameExit gameexit;
+        public IGameExit d_GameExit;
         [Inject]
-        public IGetFilePath getfile;
+        public IGetFilePath d_GetFile;
         public AudioOpenAl()
         {
             try
@@ -229,7 +229,7 @@ namespace ManicDigger
             {
                 return;
             }
-            new X(getfile.GetFile(filename), gameexit).Play();
+            new X(d_GetFile.GetFile(filename), d_GameExit).Play();
         }
         Dictionary<string, X> soundsplaying = new Dictionary<string, X>();
         public void PlayAudioLoop(string filename, bool play)
@@ -242,13 +242,13 @@ namespace ManicDigger
             {
                 return;
             }
-            filename = getfile.GetFile(filename);
+            filename = d_GetFile.GetFile(filename);
             //todo: resume playing.
             if (play)
             {
                 if (!soundsplaying.ContainsKey(filename))
                 {
-                    var x = new X(filename, gameexit);
+                    var x = new X(filename, d_GameExit);
                     x.loop = true;
                     soundsplaying[filename] = x;
                 }

@@ -50,9 +50,9 @@ namespace ManicDigger
     public class DirtyChunks : IIsChunkDirty
     {
         [Inject]
-        public IMapStorage mapstorage;
+        public IMapStorage d_MapStorage;
         [Inject]
-        public IFrustumCulling frustum;
+        public IFrustumCulling d_Frustum;
         public int bigchunksize = 4;
         public int chunksize = 16;
         public int chunkdrawdistance = 16;
@@ -70,9 +70,9 @@ namespace ManicDigger
         int bigchunkdrawdistance_z { get { return Math.Max(1, chunkdrawdistance_z / bigchunksize); } }
         public void Start()
         {
-            mapsizexchunks = mapstorage.MapSizeX / chunksize;
-            mapsizeychunks = mapstorage.MapSizeY / chunksize;
-            mapsizezchunks = mapstorage.MapSizeZ / chunksize;
+            mapsizexchunks = d_MapStorage.MapSizeX / chunksize;
+            mapsizeychunks = d_MapStorage.MapSizeY / chunksize;
+            mapsizezchunks = d_MapStorage.MapSizeZ / chunksize;
             mapsizexchunksbig = mapsizexchunks / bigchunksize;
             mapsizeychunksbig = mapsizeychunks / bigchunksize;
             mapsizezchunksbig = mapsizezchunks / bigchunksize;
@@ -152,14 +152,14 @@ namespace ManicDigger
         static float sqrt3 = (float)Math.Sqrt(3);
         private bool IsSmallChunkInFrustum(int x, int y, int z)
         {
-            return frustum.SphereInFrustum(x * chunksize + chunksize / 2,
+            return d_Frustum.SphereInFrustum(x * chunksize + chunksize / 2,
                            z * chunksize + chunksize / 2,
                            y * chunksize + chunksize / 2,
                            (chunksize / 2) * sqrt3);
         }
         private bool IsBigChunkInFrustum(int vx, int vy, int vz)
         {
-            return frustum.SphereInFrustum(vx * bigchunksize * chunksize + chunksize * bigchunksize / 2,
+            return d_Frustum.SphereInFrustum(vx * bigchunksize * chunksize + chunksize * bigchunksize / 2,
                                     vz * bigchunksize * chunksize + chunksize * bigchunksize / 2,
                                     vy * bigchunksize * chunksize + chunksize * bigchunksize / 2,
                                     (bigchunksize * chunksize / 2) * sqrt3);

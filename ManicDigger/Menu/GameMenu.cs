@@ -44,32 +44,48 @@ namespace GameMenu
     }
     public partial class MenuWindow : IMyGameWindow
     {
-        public MainGameWindow mainwindow;
-        public IGameExit exit;
-        public void OnLoad(EventArgs e)
-        {
-            mainwindow.VSync = VSyncMode.On;
-            mainwindow.WindowState = WindowState.Normal;
-            FormMainMenu();
-            mainwindow.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
-        }
-        public The3d the3d;
-        public IAudio audio;
-        public IGetFilePath getfile;
-        public FormMainMenu formMainMenu;
-        public FormJoinMultiplayer formJoinMultiplayer;
-        public FormLogin formLogin;
-        public FormSelectWorld formSelectWorld;
-        public FormWorldOptions formWorldOptions;
-        public FormMessageBox formMessageBox;
-        public FormStartServer formStartServer;
-        public FormGameOptions formGameOptions;
-        public FormConnectToIp formConnectToIp;
-        public Game game;
-        public ManicDigger.Renderers.TextRenderer textrenderer;
+        [Inject]
+        public MainGameWindow d_MainWindow;
+        [Inject]
+        public IGameExit d_Exit;
+        [Inject]
+        public The3d d_The3d;
+        [Inject]
+        public IAudio d_Audio;
+        [Inject]
+        public IGetFilePath d_GetFile;
+        [Inject]
+        public FormMainMenu d_FormMainMenu;
+        [Inject]
+        public FormJoinMultiplayer d_FormJoinMultiplayer;
+        [Inject]
+        public FormLogin d_FormLogin;
+        [Inject]
+        public FormSelectWorld d_FormSelectWorld;
+        [Inject]
+        public FormWorldOptions d_FormWorldOptions;
+        [Inject]
+        public FormMessageBox d_FormMessageBox;
+        [Inject]
+        public FormStartServer d_FormStartServer;
+        [Inject]
+        public FormGameOptions d_FormGameOptions;
+        [Inject]
+        public FormConnectToIp d_FormConnectToIp;
+        [Inject]
+        public Game d_Game;
+        [Inject]
+        public ManicDigger.Renderers.TextRenderer d_TextRenderer;
         public IForm currentForm;
         public int typingfield = -1;
         public ThreadStart OnFinishedTyping;
+        public void OnLoad(EventArgs e)
+        {
+            d_MainWindow.VSync = VSyncMode.On;
+            d_MainWindow.WindowState = WindowState.Normal;
+            FormMainMenu();
+            d_MainWindow.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
+        }
         void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -132,8 +148,8 @@ namespace GameMenu
         void ResizeGraphics()
         {
             // Get new window size
-            int width = mainwindow.Width;
-            int height = mainwindow.Height;
+            int width = d_MainWindow.Width;
+            int height = d_MainWindow.Height;
             float aspect = (float)width / height;
 
             // Adjust graphics to window size
@@ -146,9 +162,9 @@ namespace GameMenu
         public void OnUpdateFrame(FrameEventArgs e)
         {
             //..base.OnUpdateFrame(e);
-            if (mainwindow.Keyboard[Key.Escape])
+            if (d_MainWindow.Keyboard[Key.Escape])
             {
-                mainwindow.Exit();
+                d_MainWindow.Exit();
             }
         }
         public void OnRenderFrame(FrameEventArgs e)
@@ -160,9 +176,9 @@ namespace GameMenu
             //background
             UpdateMouse();
             DrawWidgets(currentForm);
-            if (formMessageBox.Visible)
+            if (d_FormMessageBox.Visible)
             {
-                DrawWidgets(formMessageBox);
+                DrawWidgets(d_FormMessageBox);
             }
             else
             {
@@ -171,7 +187,7 @@ namespace GameMenu
             //PerspectiveMode();
             try
             {
-                mainwindow.SwapBuffers();
+                d_MainWindow.SwapBuffers();
             }
             catch { Application.Exit(); } //"failed to swap buffers" crash when exiting program.
         }
@@ -183,7 +199,7 @@ namespace GameMenu
         bool wasmouseright = false;
         private void UpdateMouse()
         {
-            if (!mainwindow.Focused)
+            if (!d_MainWindow.Focused)
             {
                 return;
             }
@@ -194,9 +210,9 @@ namespace GameMenu
             wasmouseleft = Mouse[OpenTK.Input.MouseButton.Left];
             wasmouseright = Mouse[OpenTK.Input.MouseButton.Right];
 
-            if (formMessageBox.Visible)
+            if (d_FormMessageBox.Visible)
             {
-                UpdateWidgetsMouse(formMessageBox);
+                UpdateWidgetsMouse(d_FormMessageBox);
             }
             else
             {
@@ -206,8 +222,8 @@ namespace GameMenu
         private void UpdateWidgetsMouse(IForm form)
         {
             selectedWidget = null;
-            float mousex = ((float)Mouse.X / mainwindow.Width) * ConstWidth;
-            float mousey = ((float)Mouse.Y / mainwindow.Height) * ConstHeight;
+            float mousex = ((float)Mouse.X / d_MainWindow.Width) * ConstWidth;
+            float mousey = ((float)Mouse.Y / d_MainWindow.Height) * ConstHeight;
             for (int i = 0; i < form.Widgets.Count; i++)
             {
                 Widget b = form.Widgets[i];
@@ -222,7 +238,7 @@ namespace GameMenu
                 if (w.Click != null)
                 {
                     w.Click();
-                    audio.Play(getfile.GetFile("destruct.wav"));
+                    d_Audio.Play(d_GetFile.GetFile("destruct.wav"));
                 }
                 if (w.IsTextbox)
                 {
@@ -263,26 +279,26 @@ namespace GameMenu
                 }
                 if (b.BackgroundSingleColor != null)
                 {
-                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
+                    d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
                         null, b.BackgroundSingleColor.Value);
                 }
                 if (b.IsScrollbar)
                 {
-                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
+                    d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height,
                         null, Color.Gray);
                     float scrollpos = b.Rect.Y + ((float)b.ScrollbarValue / (b.ScrollbarMax + 1)) * (b.Rect.Height - 40 * 2) + 40;
                     float scrollheight = (b.Rect.Height - (40 * 2)) / (b.ScrollbarMax + 1);
-                    the3d.Draw2dTexture(the3d.WhiteTexture(), b.Rect.X, scrollpos,
+                    d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), b.Rect.X, scrollpos,
                         b.Rect.Width, scrollheight, null, Color.Black);
-                    the3d.Draw2dText("^", b.Rect.X, b.Rect.Y, b.FontSize, Color.White);
-                    the3d.Draw2dText("v", b.Rect.X, b.Rect.Y + b.Rect.Height - 40, b.FontSize, Color.White);
+                    d_The3d.Draw2dText("^", b.Rect.X, b.Rect.Y, b.FontSize, Color.White);
+                    d_The3d.Draw2dText("v", b.Rect.X, b.Rect.Y + b.Rect.Height - 40, b.FontSize, Color.White);
                 }
                 string img = ((selectedWidget == i || b.selected)
                     && b.BackgroundImageSelected != null)
                     ? b.BackgroundImageSelected : b.BackgroundImage;
                 if (img != null)
                 {
-                    the3d.Draw2dBitmapFile(img, b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height);
+                    d_The3d.Draw2dBitmapFile(img, b.Rect.X, b.Rect.Y, b.Rect.Width, b.Rect.Height);
                 }
                 if (b.Text != null)
                 {
@@ -292,7 +308,7 @@ namespace GameMenu
                     {
                         text += "&7|";
                     }
-                    the3d.Draw2dText(text, b.Rect.X + dx, b.Rect.Y + dx, b.FontSize,
+                    d_The3d.Draw2dText(text, b.Rect.X + dx, b.Rect.Y + dx, b.FontSize,
                         (b.BackgroundImage == null && b.selected) ? Color.Red : b.TextColor);
                 }
             }
@@ -340,10 +356,10 @@ namespace GameMenu
         }
         public void MessageBoxYesNo(string text, ThreadStart yes, ThreadStart no)
         {
-            formMessageBox.MessageBoxYesNo(text,
-                delegate { yes(); formMessageBox.Visible = false; },
-                delegate { no(); formMessageBox.Visible = false; });
-            formMessageBox.Visible = true;
+            d_FormMessageBox.MessageBoxYesNo(text,
+                delegate { yes(); d_FormMessageBox.Visible = false; },
+                delegate { no(); d_FormMessageBox.Visible = false; });
+            d_FormMessageBox.Visible = true;
         }
         List<Widget> optionswidgets = new List<Widget>();
 
@@ -377,34 +393,34 @@ namespace GameMenu
         }
         public void FormMainMenu()
         {
-            currentForm = formMainMenu;
+            currentForm = d_FormMainMenu;
         }
         public void FormSelectSinglePlayerWorld()
         {
             afterSelectWorld = delegate
             {
-                int id = formSelectWorld.selectedWorld.Value;
-                if (string.IsNullOrEmpty(game.GetWorlds()[id]))
+                int id = d_FormSelectWorld.selectedWorld.Value;
+                if (string.IsNullOrEmpty(d_Game.GetWorlds()[id]))
                 {
                     FormWorldOptions(id);
                     afterWorldOptions = delegate
                     {
-                        game.StartSinglePlayer(id);
+                        d_Game.StartSinglePlayer(id);
                     };
                 }
                 else
                 {
-                    game.StartSinglePlayer(id);
+                    d_Game.StartSinglePlayer(id);
                 }
             };
-            currentForm = formSelectWorld;
+            currentForm = d_FormSelectWorld;
         }
         public void FormSelectWorld(ThreadStart a)
         {
             afterSelectWorld = delegate
             {
-                int id = formSelectWorld.selectedWorld.Value;
-                if (string.IsNullOrEmpty(game.GetWorlds()[id]))
+                int id = d_FormSelectWorld.selectedWorld.Value;
+                if (string.IsNullOrEmpty(d_Game.GetWorlds()[id]))
                 {
                     FormWorldOptions(id);
                     afterWorldOptions = delegate
@@ -417,33 +433,33 @@ namespace GameMenu
                     a();
                 }
             };
-            currentForm = formSelectWorld;
+            currentForm = d_FormSelectWorld;
         }
         public void FormStartServer()
         {
-            currentForm = formStartServer;
+            currentForm = d_FormStartServer;
         }
         private void FormWorldOptions(int id)
         {
-            currentForm = formWorldOptions;
-            formWorldOptions.worldId = id;
-            formWorldOptions.Initialize(); //after worldId set.
+            currentForm = d_FormWorldOptions;
+            d_FormWorldOptions.worldId = id;
+            d_FormWorldOptions.Initialize(); //after worldId set.
         }
         public void FormJoinMultiplayer()
         {
-            currentForm = formJoinMultiplayer;
+            currentForm = d_FormJoinMultiplayer;
         }
         public void FormLogin()
         {
-            currentForm = formLogin;
+            currentForm = d_FormLogin;
         }
         public void FormGameOptions()
         {
-            currentForm = formGameOptions;
+            currentForm = d_FormGameOptions;
         }
         public void FormConnectToIp()
         {
-            currentForm = formConnectToIp;
+            currentForm = d_FormConnectToIp;
         }
         public ThreadStart afterSelectWorld = delegate { };
         public ThreadStart afterWorldOptions = delegate { };
@@ -455,10 +471,10 @@ namespace GameMenu
         }
         public void Exit()
         {
-            mainwindow.Exit();
-            exit.exit = true;
+            d_MainWindow.Exit();
+            d_Exit.exit = true;
         }
-        public OpenTK.Input.KeyboardDevice Keyboard { get { return mainwindow.Keyboard; } }
-        public OpenTK.Input.MouseDevice Mouse { get { return mainwindow.Mouse; } }
+        public OpenTK.Input.KeyboardDevice Keyboard { get { return d_MainWindow.Keyboard; } }
+        public OpenTK.Input.MouseDevice Mouse { get { return d_MainWindow.Mouse; } }
     } 
 }

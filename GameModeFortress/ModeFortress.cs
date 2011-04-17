@@ -12,13 +12,13 @@ namespace GameModeFortress
     public class CraftingTableTool
     {
         [Inject]
-        public IMapStorage map;
+        public IMapStorage d_Map;
         public List<int> GetOnTable(List<Vector3i> table)
         {
             List<int> ontable = new List<int>();
             foreach (var v in table)
             {
-                int t = map.GetBlock(v.x, v.y, v.z + 1);
+                int t = d_Map.GetBlock(v.x, v.y, v.z + 1);
                 ontable.Add(t);
             }
             return ontable;
@@ -42,22 +42,22 @@ namespace GameModeFortress
                 }
                 l.Add(p);
                 var a = new Vector3i(p.x + 1, p.y, p.z);
-                if (map.GetBlock(a.x, a.y, a.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(a.x, a.y, a.z) == (int)TileTypeManicDigger.CraftingTable)
                 {
                     todo.Enqueue(a);
                 }
                 var b = new Vector3i(p.x - 1, p.y, p.z);
-                if (map.GetBlock(b.x, b.y, b.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(b.x, b.y, b.z) == (int)TileTypeManicDigger.CraftingTable)
                 {
                     todo.Enqueue(b);
                 }
                 var c = new Vector3i(p.x, p.y + 1, p.z);
-                if (map.GetBlock(c.x, c.y, c.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(c.x, c.y, c.z) == (int)TileTypeManicDigger.CraftingTable)
                 {
                     todo.Enqueue(c);
                 }
                 var d = new Vector3i(p.x, p.y - 1, p.z);
-                if (map.GetBlock(d.x, d.y, d.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(d.x, d.y, d.z) == (int)TileTypeManicDigger.CraftingTable)
                 {
                     todo.Enqueue(d);
                 }
@@ -78,29 +78,29 @@ namespace GameModeFortress
     public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, INetworkPacketReceived, ICurrentSeason, IMapStorageLight
     {
         [Inject]
-        public ITerrainRenderer terrain;
+        public ITerrainRenderer d_Terrain;
         [Inject]
-        public ITerrainTextures terrainTextures;
+        public ITerrainTextures d_TerrainTextures;
         [Inject]
-        public IViewport3d viewport;
+        public IViewport3d d_Viewport;
         [Inject]
-        public INetworkClientFortress network;
+        public INetworkClientFortress d_Network;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         [Inject]
-        public IShadows shadows;
+        public IShadows d_Shadows;
         [Inject]
-        public InfiniteMapChunked map;
+        public InfiniteMapChunked d_Map;
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         [Inject]
-        public CraftingTableTool craftingtabletool;
+        public CraftingTableTool d_CraftingTableTool;
         [Inject]
-        public ManicDigger.Renderers.SunMoonRenderer sunmoonrenderer;
+        public ManicDigger.Renderers.SunMoonRenderer d_SunMoonRenderer;
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
-            int activematerial = (byte)viewport.MaterialSlots[viewport.activematerial];
+            int activematerial = (byte)d_Viewport.MaterialSlots[d_Viewport.activematerial];
             int railstart = GameDataManicDigger.railstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
@@ -114,7 +114,7 @@ namespace GameModeFortress
                 {
                     dirnew = PickCorners(xfract, zfract);
                 }
-                RailDirectionFlags dir = data.Rail[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
+                RailDirectionFlags dir = d_Data.Rail[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
                 if (dir != RailDirectionFlags.None)
                 {
                     blockpos = blockposold;
@@ -144,35 +144,35 @@ namespace GameModeFortress
                         if (fillstart != null)
                         {
                             Vector3i f = fillstart.Value;
-                            if (!IsFillBlock(map.GetBlock(f.x, f.y, f.z)))
+                            if (!IsFillBlock(d_Map.GetBlock(f.x, f.y, f.z)))
                             {
-                                fillarea[f] = map.GetBlock(f.x, f.y, f.z);
+                                fillarea[f] = d_Map.GetBlock(f.x, f.y, f.z);
                             }
-                            map.SetBlock(f.x, f.y, f.z, (int)TileTypeManicDigger.FillStart);
+                            d_Map.SetBlock(f.x, f.y, f.z, (int)TileTypeManicDigger.FillStart);
 
 
                             FillFill(v, fillstart.Value);
                         }
-                        if (!IsFillBlock(map.GetBlock(v.x, v.y, v.z)))
+                        if (!IsFillBlock(d_Map.GetBlock(v.x, v.y, v.z)))
                         {
-                            fillarea[v] = map.GetBlock(v.x, v.y, v.z);
+                            fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.Cuboid);
+                        d_Map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.Cuboid);
                         fillend = v;
-                        terrain.UpdateTile(v.x, v.y, v.z);
+                        d_Terrain.UpdateTile(v.x, v.y, v.z);
                         return;
                     }
                     if (activematerial == (int)TileTypeManicDigger.FillStart)
                     {
                         ClearFillArea();
-                        if (!IsFillBlock(map.GetBlock(v.x, v.y, v.z)))
+                        if (!IsFillBlock(d_Map.GetBlock(v.x, v.y, v.z)))
                         {
-                            fillarea[v] = map.GetBlock(v.x, v.y, v.z);
+                            fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.FillStart);
+                        d_Map.SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.FillStart);
                         fillstart = v;
                         fillend = null;
-                        terrain.UpdateTile(v.x, v.y, v.z);
+                        d_Terrain.UpdateTile(v.x, v.y, v.z);
                         return;
                     }
                     if (fillarea.ContainsKey(v))// && fillarea[v])
@@ -232,23 +232,23 @@ namespace GameModeFortress
         }
         private void SendSetBlockAndUpdateSpeculative(int activematerial, int x, int y, int z, BlockSetMode mode)
         {
-            network.SendSetBlock(new Vector3(x, y, z), mode, activematerial);
+            d_Network.SendSetBlock(new Vector3(x, y, z), mode, activematerial);
             if (mode == BlockSetMode.Destroy)
             {
                 activematerial = SpecialBlockId.Empty;
             }
-            speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = map.GetBlock(x, y, z), time = DateTime.UtcNow };
-            map.SetBlock(x, y, z, activematerial);
-            terrain.UpdateTile(x, y, z);
-            shadows.OnLocalBuild(x, y, z);
+            speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), time = DateTime.UtcNow };
+            d_Map.SetBlock(x, y, z, activematerial);
+            d_Terrain.UpdateTile(x, y, z);
+            d_Shadows.OnLocalBuild(x, y, z);
         }
         private void ClearFillArea()
         {
             foreach (var k in fillarea)
             {
                 var vv = k.Key;
-                map.SetBlock(vv.x, vv.y, vv.z, k.Value);
-                terrain.UpdateTile(vv.x, vv.y, vv.z);
+                d_Map.SetBlock(vv.x, vv.y, vv.z, k.Value);
+                d_Terrain.UpdateTile(vv.x, vv.y, vv.z);
             }
             fillarea.Clear();
         }
@@ -276,11 +276,11 @@ namespace GameModeFortress
                             ClearFillArea();
                             return;
                         }
-                        if(!IsFillBlock(map.GetBlock(x,y,z)))
+                        if(!IsFillBlock(d_Map.GetBlock(x,y,z)))
                         {
-                            fillarea[new Vector3i(x, y, z)] = map.GetBlock(x, y, z);
-                            map.SetBlock(x, y, z, (int)TileTypeManicDigger.FillArea);
-                            terrain.UpdateTile(x, y, z);
+                            fillarea[new Vector3i(x, y, z)] = d_Map.GetBlock(x, y, z);
+                            d_Map.SetBlock(x, y, z, (int)TileTypeManicDigger.FillArea);
+                            d_Terrain.UpdateTile(x, y, z);
                         }
                     }
                 }
@@ -330,7 +330,7 @@ namespace GameModeFortress
         Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
         {
-            network.SendSetBlock(vector3, blockSetMode, p);
+            d_Network.SendSetBlock(vector3, blockSetMode, p);
         }
         private bool IsAnyPlayerInPos(Vector3 blockpos)
         {
@@ -342,7 +342,7 @@ namespace GameModeFortress
                     return true;
                 }
             }
-            return IsPlayerInPos(viewport.LocalPlayerPosition, blockpos);
+            return IsPlayerInPos(d_Viewport.LocalPlayerPosition, blockpos);
         }
         private bool IsPlayerInPos(Vector3 playerpos, Vector3 blockpos)
         {
@@ -363,38 +363,38 @@ namespace GameModeFortress
                 if ((DateTime.UtcNow - k.Value.time).TotalSeconds > 2)
                 {
                     speculative.Remove(k.Key);
-                    terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                    d_Terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
-            if (KeyPressed(viewport.GetKey(OpenTK.Input.Key.C)))
+            if (KeyPressed(d_Viewport.GetKey(OpenTK.Input.Key.C)))
             {
-                if (viewport.PickCubePos != new Vector3(-1, -1, -1))
+                if (d_Viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
-                    Vector3i pos = new Vector3i((int)viewport.PickCubePos.X, (int)viewport.PickCubePos.Z, (int)viewport.PickCubePos.Y);
-                    if (map.GetBlock(pos.x, pos.y, pos.z)
+                    Vector3i pos = new Vector3i((int)d_Viewport.PickCubePos.X, (int)d_Viewport.PickCubePos.Z, (int)d_Viewport.PickCubePos.Y);
+                    if (d_Map.GetBlock(pos.x, pos.y, pos.z)
                         == (int)TileTypeManicDigger.CraftingTable)
                     {
                         //draw crafting recipes list.
-                        viewport.CraftingRecipesStart(craftingrecipes.craftingrecipes, craftingtabletool.GetOnTable(craftingtabletool.GetTable(pos)),
+                        d_Viewport.CraftingRecipesStart(craftingrecipes.craftingrecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
                         (recipe) => { CraftingRecipeSelected(pos, recipe); });
                     }
                 }
             }
-            if (KeyPressed(viewport.GetKey(OpenTK.Input.Key.U)) || KeyPressed(viewport.GetKey(OpenTK.Input.Key.L)))
+            if (KeyPressed(d_Viewport.GetKey(OpenTK.Input.Key.U)) || KeyPressed(d_Viewport.GetKey(OpenTK.Input.Key.L)))
             {
-                if (viewport.PickCubePos != new Vector3(-1, -1, -1))
+                if (d_Viewport.PickCubePos != new Vector3(-1, -1, -1))
                 {
-                    Vector3i pos = new Vector3i((int)viewport.PickCubePos.X,
-                        (int)viewport.PickCubePos.Z,
-                        (int)viewport.PickCubePos.Y);
+                    Vector3i pos = new Vector3i((int)d_Viewport.PickCubePos.X,
+                        (int)d_Viewport.PickCubePos.Z,
+                        (int)d_Viewport.PickCubePos.Y);
                     {
-                        DoCommandDumpOrLoad(pos.x,pos.y,pos.z,KeyPressed(viewport.GetKey(OpenTK.Input.Key.U)),
-                            viewport.MaterialSlots[viewport.activematerial]);
+                        DoCommandDumpOrLoad(pos.x,pos.y,pos.z,KeyPressed(d_Viewport.GetKey(OpenTK.Input.Key.U)),
+                            d_Viewport.MaterialSlots[d_Viewport.activematerial]);
                     }
                 }
             }
-            viewport.FiniteInventory = FiniteInventory;
-            viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
+            d_Viewport.FiniteInventory = FiniteInventory;
+            d_Viewport.ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
             RailOnNewFrame((float)dt);
         }
         private bool DoCommandDumpOrLoad(int x,int y,int z, bool dump, int blocktype)
@@ -414,9 +414,9 @@ namespace GameModeFortress
             Vector3i pos = new Vector3i(x, y, z);
             if (execute)
             {
-                if (map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
                 {
-                    List<Vector3i> table = craftingtabletool.GetTable(pos);
+                    List<Vector3i> table = d_CraftingTableTool.GetTable(pos);
                     if (dump)
                     {
                         int dumped = 0;
@@ -478,7 +478,7 @@ namespace GameModeFortress
                         int xx = pos.x + x - 10 / 2;
                         int yy = pos.y + y - 10 / 2;
                         int zz = pos.z + z - 10 / 2;
-                        if (!MapUtil.IsValidPos(map, xx, yy, zz))
+                        if (!MapUtil.IsValidPos(d_Map, xx, yy, zz))
                         {
                             continue;
                         }
@@ -539,15 +539,15 @@ namespace GameModeFortress
             cmd.Y = (short)pos.y;
             cmd.Z = (short)pos.z;
             cmd.RecipeId = (short)recipe.Value;
-            network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Craft, Craft = cmd });
+            d_Network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Craft, Craft = cmd });
         }
         private bool KeyPressed(OpenTK.Input.Key key)
         {
-            return viewport.keypressed != null && viewport.keypressed.Key == key;
+            return d_Viewport.keypressed != null && d_Viewport.keypressed.Key == key;
         }
         private bool KeyDepressed(OpenTK.Input.Key key)
         {
-            return viewport.keydepressed != null && viewport.keydepressed.Key == key;
+            return d_Viewport.keydepressed != null && d_Viewport.keydepressed.Key == key;
         }
         Dictionary<int, int> FiniteInventory = new Dictionary<int, int>();
         public IEnumerable<ICharacterToDraw> Characters
@@ -571,34 +571,34 @@ namespace GameModeFortress
         #region IMapStorage Members
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            map.SetBlock(x, y, z, (byte)tileType);
-            shadows.OnSetBlock(x, y, z);
+            d_Map.SetBlock(x, y, z, (byte)tileType);
+            d_Shadows.OnSetBlock(x, y, z);
         }
         #endregion
         #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
         {
-            map.SetMapPortion(x, y, z, chunk);
+            d_Map.SetMapPortion(x, y, z, chunk);
         }
         #endregion
         #region IMapStorage Members
         public byte[, ,] Map { get { throw new NotImplementedException(); } set { throw new NotImplementedException(); } }
-        public int MapSizeX { get { return map.MapSizeX; } set { map.MapSizeX = value; } }
-        public int MapSizeY { get { return map.MapSizeY; } set { map.MapSizeY = value; } }
-        public int MapSizeZ { get { return map.MapSizeZ; } set { map.MapSizeZ = value; } }
+        public int MapSizeX { get { return d_Map.MapSizeX; } set { d_Map.MapSizeX = value; } }
+        public int MapSizeY { get { return d_Map.MapSizeY; } set { d_Map.MapSizeY = value; } }
+        public int MapSizeZ { get { return d_Map.MapSizeZ; } set { d_Map.MapSizeZ = value; } }
         #endregion
         #region IGameMode Members
         public void OnNewMap()
         {
-            int x = map.MapSizeX / 2;
-            int y = map.MapSizeY / 2;
-            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(map, SpecialBlockId.Empty, x, y), y + 0.5f);
+            int x = d_Map.MapSizeX / 2;
+            int y = d_Map.MapSizeY / 2;
+            playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(d_Map, SpecialBlockId.Empty, x, y), y + 0.5f);
         }
         #endregion
         #region IMapStorage Members
         public int GetBlock(int x, int y, int z)
         {
-            return map.GetBlock(x, y, z);
+            return d_Map.GetBlock(x, y, z);
         }
         #endregion
         #region IMapStorage Members
@@ -632,7 +632,7 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public int GetTerrainBlock(int x, int y, int z)
         {
-            shadows.OnGetTerrainBlock(x, y, z);
+            d_Shadows.OnGetTerrainBlock(x, y, z);
             return GetBlock(x, y, z);
         }
         FastColor white = new FastColor(Color.White);
@@ -642,11 +642,11 @@ namespace GameModeFortress
         }
         public int GetLight(int x, int y, int z)
         {
-            return shadows.GetLight(x, y, z);
+            return d_Shadows.GetLight(x, y, z);
         }
         public float LightMaxValue()
         {
-            return shadows.maxlight;
+            return d_Shadows.maxlight;
         }
         #endregion
         #region IGameMode Members
@@ -691,10 +691,10 @@ namespace GameModeFortress
                         if (packet.Season.Season != CurrentSeason)
                         {
                             CurrentSeason = packet.Season.Season;
-                            data.Update();
+                            d_Data.Update();
                             if (CurrentSeason == 0 || CurrentSeason == 3)
                             {
-                                terrain.UpdateAllTiles();
+                                d_Terrain.UpdateAllTiles();
                             }
                         }
                         if (packet.Season.Hour == int.MinValue)
@@ -710,28 +710,28 @@ namespace GameModeFortress
                             }
                             else
                             {
-                                packet.Season.Hour = sunmoonrenderer.Hour;
+                                packet.Season.Hour = d_SunMoonRenderer.Hour;
                             }
                         }
                         int sunlight;
                         if (packet.Season.Hour >= 6 && packet.Season.Hour < 18)
                         {
-                            sunlight = shadows.maxlight;
-                            viewport.SkySphereNight = false;
+                            sunlight = d_Shadows.maxlight;
+                            d_Viewport.SkySphereNight = false;
                         }
                         else
                         {
                             sunlight = packet.Season.Moon == 0 ? 0 : 1;
-                            viewport.SkySphereNight = true;
+                            d_Viewport.SkySphereNight = true;
                         }
-                        sunmoonrenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
-                        sunmoonrenderer.Hour = packet.Season.Hour;
+                        d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
+                        d_SunMoonRenderer.Hour = packet.Season.Hour;
 
-                        if (shadows.sunlight != sunlight)
+                        if (d_Shadows.sunlight != sunlight)
                         {
-                            shadows.sunlight = sunlight;
-                            shadows.ResetShadows();
-                            terrain.UpdateAllTiles();
+                            d_Shadows.sunlight = sunlight;
+                            d_Shadows.ResetShadows();
+                            d_Terrain.UpdateAllTiles();
                         }
                     }
                     return true;
@@ -739,27 +739,27 @@ namespace GameModeFortress
                     {
                         blobdownload = new MemoryStream();
                         blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
-                        ((NetworkClientFortress)network).ReceivedMapLength = 0; //todo
+                        ((NetworkClientFortress)d_Network).ReceivedMapLength = 0; //todo
                     }
                     return true;
                 case ServerPacketId.BlobPart:
                     {
                         BinaryWriter bw = new BinaryWriter(blobdownload);
                         bw.Write(packet.BlobPart.data);
-                        ((NetworkClientFortress)network).ReceivedMapLength += packet.BlobPart.data.Length; //todo
+                        ((NetworkClientFortress)d_Network).ReceivedMapLength += packet.BlobPart.data.Length; //todo
                     }
                     return true;
                 case ServerPacketId.BlobFinalize:
                     {
                         blobs[blobdownloadhash] = blobdownload.ToArray();
                         blobdownload = null;
-                        if (ENABLE_PER_SERVER_TEXTURES || viewport.Options.UseServerTextures)
+                        if (ENABLE_PER_SERVER_TEXTURES || d_Viewport.Options.UseServerTextures)
                         {
                             if (blobdownloadhash == serverterraintexture)
                             {
                                 using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
                                 {
-                                    terrainTextures.UseTerrainTextureAtlas2d(bmp);
+                                    d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
                                 }
                             }
                         }
@@ -792,12 +792,12 @@ namespace GameModeFortress
         #region ITerrainInfo Members
         public byte[] GetChunk(int x, int y, int z)
         {
-            return map.GetChunk(x, y, z);
+            return d_Map.GetChunk(x, y, z);
         }
         #endregion
         public void Reset(int sizex, int sizey, int sizez)
         {
-            map.Reset(sizex, sizey, sizez);
+            d_Map.Reset(sizex, sizey, sizez);
         }
     }
 }

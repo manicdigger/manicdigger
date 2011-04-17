@@ -14,21 +14,21 @@ namespace ManicDigger.Renderers
     public class TerrainChunkTesselator
     {
         [Inject]
-        public IMapStorage mapstorage;
+        public IMapStorage d_MapStorage;
         [Inject]
-        public IMapStoragePortion mapstorageportion;
+        public IMapStoragePortion d_MapStoragePortion;
         [Inject]
-        public IMapStorageLight mapstoragelight;
+        public IMapStorageLight d_MapStorageLight;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         [Inject]
-        public IBlockRendererTorch blockrenderertorch;
+        public IBlockRendererTorch d_BlockRendererTorch;
         [Inject]
-        public Config3d config3d;
+        public Config3d d_Config3d;
         [Inject]
-        public ITerrainTextures terrainrenderer; //textures
+        public ITerrainTextures d_TerrainTextures;
         [Inject]
-        public IShadows shadows;
+        public IShadows d_Shadows;
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16
@@ -47,17 +47,17 @@ namespace ManicDigger.Renderers
             currentChunkShadows = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
             currentChunkDraw = new byte[chunksize, chunksize, chunksize];
             currentChunkDrawCount = new byte[chunksize, chunksize, chunksize, 6];
-            mapsizex = mapstorage.MapSizeX;
-            mapsizey = mapstorage.MapSizeY;
-            mapsizez = mapstorage.MapSizeZ;
+            mapsizex = d_MapStorage.MapSizeX;
+            mapsizey = d_MapStorage.MapSizeY;
+            mapsizez = d_MapStorage.MapSizeZ;
             started = true;
-            istransparent = data.IsTransparent;
-            iswater = data.IsWater;
-            isvalid = data.IsValid;
-            maxlight = shadows.maxlight;
+            istransparent = d_Data.IsTransparent;
+            iswater = d_Data.IsWater;
+            isvalid = d_Data.IsValid;
+            maxlight = d_Shadows.maxlight;
             maxlightInverse = 1f / maxlight;
-            terrainTexturesPerAtlas = terrainrenderer.terrainTexturesPerAtlas;
-            terrainTexturesPerAtlasInverse = 1f / terrainrenderer.terrainTexturesPerAtlas;
+            terrainTexturesPerAtlas = d_TerrainTextures.terrainTexturesPerAtlas;
+            terrainTexturesPerAtlasInverse = 1f / d_TerrainTextures.terrainTexturesPerAtlas;
             allvi.Initialize(VI_MAX);
             for (int i = 0; i < VI_MAX; i++)
             {
@@ -85,8 +85,8 @@ namespace ManicDigger.Renderers
                 || z >= mapsizez / chunksize) { yield break; }
             if (ENABLE_ATLAS1D)
             {
-                toreturnatlas1d = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
-                toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / terrainrenderer.terrainTexturesPerAtlas];
+                toreturnatlas1d = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
+                toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
                 for (int i = 0; i < toreturnatlas1d.Length; i++)
                 {
                     //Manual memory allocation for performance - reuse arrays.
@@ -110,7 +110,7 @@ namespace ManicDigger.Renderers
             GetExtendedChunk(x, y, z);
             if (IsSolidChunk(currentChunk)) { FreeVi(); yield break; }
             ResetCurrentShadows();
-            shadows.OnMakeChunk(x, y, z);
+            d_Shadows.OnMakeChunk(x, y, z);
             CalculateVisibleFaces(currentChunk);
             CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
             CalculateBlockPolygons(x, y, z);
@@ -149,7 +149,7 @@ namespace ManicDigger.Renderers
                             verticesCount = toreturnatlas1d[i].verticesCount,
                             position =
                                 new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                            texture = terrainrenderer.terrainTextures1d[i % terrainrenderer.terrainTexturesPerAtlas],
+                            texture = d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas],
                         };
                     }
                 }
@@ -165,7 +165,7 @@ namespace ManicDigger.Renderers
                             verticesCount = toreturnatlas1dtransparent[i].verticesCount,
                             position =
                                 new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                            texture = terrainrenderer.terrainTextures1d[i % terrainrenderer.terrainTexturesPerAtlas],
+                            texture = d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas],
                             transparent = true,
                         };
                     }
@@ -183,7 +183,7 @@ namespace ManicDigger.Renderers
                         verticesCount = toreturnmain.verticesCount,
                         position =
                             new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                        texture = terrainrenderer.terrainTexture,
+                        texture = d_TerrainTextures.terrainTexture,
                     };
                 }
                 if (toreturntransparent.indicesCount > 0)
@@ -197,7 +197,7 @@ namespace ManicDigger.Renderers
                         position =
                             new Vector3(x * chunksize, y * chunksize, z * chunksize),
                         transparent = true,
-                        texture = terrainrenderer.terrainTexture,
+                        texture = d_TerrainTextures.terrainTexture,
                     };
                 }
             }
@@ -250,7 +250,7 @@ namespace ManicDigger.Renderers
         //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
         private void GetExtendedChunk(int x, int y, int z)
         {
-            mapstorageportion.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
+            d_MapStoragePortion.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
                 chunksize + 2, chunksize + 2, chunksize + 2);
         }
         VerticesIndices toreturnmain;
@@ -474,13 +474,13 @@ namespace ManicDigger.Renderers
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (data.IsFlower[tiletype])
+            if (d_Data.IsFlower[tiletype])
             {
                 drawtop = 0;
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            RailDirectionFlags rail = data.Rail[tiletype];
+            RailDirectionFlags rail = d_Data.Rail[tiletype];
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
             if (rail != RailDirectionFlags.None)
             {
@@ -490,11 +490,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (tt == data.BlockIdSingleStairs)
+            if (tt == d_Data.BlockIdSingleStairs)
             {
                 blockheight = 0.5f;
             }
-            if (tt == data.BlockIdTorch)
+            if (tt == d_Data.BlockIdTorch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -503,7 +503,7 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
                 List<ushort> torchelements = new List<ushort>();
                 List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
-                blockrenderertorch.AddTorch(torchelements, torchvertices, x, y, z, type);
+                d_BlockRendererTorch.AddTorch(torchelements, torchvertices, x, y, z, type);
                 int oldverticescount=toreturnmain.verticesCount;
                 for (int i = 0; i < torchelements.Count; i++)
                 {
@@ -524,7 +524,7 @@ namespace ManicDigger.Renderers
             {
                 if (railmaputil == null)
                 {
-                    railmaputil = new RailMapUtil() { data = data, mapstorage = mapstorage };
+                    railmaputil = new RailMapUtil() { d_Data = d_Data, d_MapStorage = d_MapStorage };
                 }
                 RailSlope slope = railmaputil.GetRailSlope(x, y, z);
                 if (slope == RailSlope.TwoRightRaised)
@@ -602,7 +602,7 @@ namespace ManicDigger.Renderers
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Top];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
                 int tilecount = drawtop;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -634,7 +634,7 @@ namespace ManicDigger.Renderers
                         (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Bottom];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
                 int tilecount = drawbottom;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -666,7 +666,7 @@ namespace ManicDigger.Renderers
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Front];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
                 int tilecount = drawfront;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -698,7 +698,7 @@ namespace ManicDigger.Renderers
                         (int)(color.G * shadowratiof),
                         (int)(color.B * shadowratiof));
                 }
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Back];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
                 int tilecount = drawback;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -730,7 +730,7 @@ namespace ManicDigger.Renderers
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
 
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Left];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
                 int tilecount = drawleft;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -763,7 +763,7 @@ namespace ManicDigger.Renderers
                         (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
                 }
 
-                int sidetexture = data.TextureId[tiletype, (int)TileSide.Right];
+                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
                 int tilecount = drawright;
                 VerticesIndices toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -795,7 +795,7 @@ namespace ManicDigger.Renderers
             {
                 return tt - PartialWaterBlock;
             }
-            if (data.IsWater[tt])
+            if (d_Data.IsWater[tt])
             {
                 return waterLevelsCount;
             }
@@ -810,7 +810,7 @@ namespace ManicDigger.Renderers
         {
             //fixes tree Z-fighting
             if (istransparent[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
-                && !data.IsTransparentFully[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
+                && !d_Data.IsTransparentFully[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
             if (dir == TileSide.Top || dir == TileSide.Bottom)
             {
                 int shadowz = dir == TileSide.Top ? 1 : -1;
@@ -869,11 +869,11 @@ namespace ManicDigger.Renderers
             {
                 if (!(istransparent[tiletype] || iswater[tiletype]))
                 {
-                    return toreturnatlas1d[textureid / terrainrenderer.terrainTexturesPerAtlas];
+                    return toreturnatlas1d[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
                 }
                 else
                 {
-                    return toreturnatlas1dtransparent[textureid / terrainrenderer.terrainTexturesPerAtlas];
+                    return toreturnatlas1dtransparent[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
                 }
             }
             else
@@ -895,7 +895,7 @@ namespace ManicDigger.Renderers
             {
                 if (IsValidPos(globalx, globaly, globalz))
                 {
-                    currentChunkShadows[xx, yy, zz] = (byte)(mapstoragelight.GetLight(globalx, globaly, globalz) + 1);
+                    currentChunkShadows[xx, yy, zz] = (byte)(d_MapStorageLight.GetLight(globalx, globaly, globalz) + 1);
                 }
                 else
                 {
@@ -907,7 +907,7 @@ namespace ManicDigger.Renderers
         private bool CanSupportTorch(byte blocktype)
         {
             return blocktype != SpecialBlockId.Empty
-                && blocktype != data.BlockIdTorch;
+                && blocktype != d_Data.BlockIdTorch;
         }
     }
 }

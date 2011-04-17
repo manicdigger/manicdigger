@@ -129,7 +129,7 @@ namespace GameMenu
                 Rect = new RectangleF(200, 1000, 400, 128),
                 Text = serverstarted ? "Stop" : "Start",
                 //Click = delegate { serverstarted = !serverstarted; FormStartMultiplayerServer(); },
-                Click = delegate { game.StartAndJoinLocalServer(menu.formSelectWorld.selectedWorld.Value); }
+                Click = delegate { game.StartAndJoinLocalServer(menu.d_FormSelectWorld.selectedWorld.Value); }
             });
             //widgets.Add(new Button()
             //{
@@ -150,8 +150,8 @@ namespace GameMenu
         }
         public void Render()
         {
-            string worldname = (menu.formSelectWorld.selectedWorld == null
-                ? "none" : game.GetWorlds()[menu.formSelectWorld.selectedWorld.Value]);
+            string worldname = (menu.d_FormSelectWorld.selectedWorld == null
+                ? "none" : game.GetWorlds()[menu.d_FormSelectWorld.selectedWorld.Value]);
             if (string.IsNullOrEmpty(worldname))
             {
                 worldname = "none";

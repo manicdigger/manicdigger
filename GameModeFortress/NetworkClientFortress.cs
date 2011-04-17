@@ -24,24 +24,24 @@ namespace GameModeFortress
     public class NetworkClientFortress : INetworkClientFortress
     {
         [Inject]
-        public IMap Map;
-        public IMapStoragePortion MapStoragePortion;
+        public IMap d_Map;
+        public IMapStoragePortion d_MapStoragePortion;
         [Inject]
-        public IClients Clients;
+        public IClients d_Clients;
         [Inject]
-        public IAddChatLine Chatlines;
+        public IAddChatLine d_Chatlines;
         [Inject]
-        public ILocalPlayerPosition Position;
+        public ILocalPlayerPosition d_Position;
         [Inject]
-        public INetworkPacketReceived NetworkPacketReceived;
+        public INetworkPacketReceived d_NetworkPacketReceived;
         [Inject]
-        public ICompression compression;
+        public ICompression d_Compression;
         [Inject]
-        public InfiniteMapChunked2d heightmap;
+        public InfiniteMapChunked2d d_Heightmap;
         [Inject]
-        public IShadows shadows;
+        public IShadows d_Shadows;
         [Inject]
-        public IResetMap resetmap;
+        public IResetMap d_ResetMap;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -188,7 +188,7 @@ namespace GameModeFortress
             if (spawned && ((DateTime.UtcNow - lastpositionsent).TotalSeconds > 0.1))
             {
                 lastpositionsent = DateTime.UtcNow;
-                SendPosition(Position.LocalPlayerPosition, Position.LocalPlayerOrientation);
+                SendPosition(d_Position.LocalPlayerPosition, d_Position.LocalPlayerOrientation);
             }
         }
         public int mapreceivedsizex;
@@ -295,11 +295,11 @@ namespace GameModeFortress
                             if (!IsBlob(b)) { needed.Add(b); }
                         }
                         SendRequestBlob(needed);
-                        if (packet.Identification.MapSizeX != Map.Map.MapSizeX
-                            || packet.Identification.MapSizeY != Map.Map.MapSizeY
-                            || packet.Identification.MapSizeZ != Map.Map.MapSizeZ)
+                        if (packet.Identification.MapSizeX != d_Map.Map.MapSizeX
+                            || packet.Identification.MapSizeY != d_Map.Map.MapSizeY
+                            || packet.Identification.MapSizeZ != d_Map.Map.MapSizeZ)
                         {
-                            resetmap.Reset(packet.Identification.MapSizeX,
+                            d_ResetMap.Reset(packet.Identification.MapSizeX,
                                 packet.Identification.MapSizeY,
                                 packet.Identification.MapSizeZ);
                         }
@@ -337,7 +337,7 @@ namespace GameModeFortress
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
                         int type = packet.SetBlock.BlockType;
-                        try { Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
+                        try { d_Map.SetTileAndUpdate(new Vector3(x, y, z), type); }
                         catch { Console.WriteLine("Cannot update tile!"); }
                     }
                     break;
@@ -346,8 +346,8 @@ namespace GameModeFortress
                         int playerid = packet.SpawnPlayer.PlayerId;
                         string playername = packet.SpawnPlayer.PlayerName;
                         connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
-                        Clients.Players[playerid] = new Player();
-                        Clients.Players[playerid].Name = playername;
+                        d_Clients.Players[playerid] = new Player();
+                        d_Clients.Players[playerid].Name = playername;
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                         if (playerid == 255)
                         {
@@ -371,12 +371,12 @@ namespace GameModeFortress
                                 connectedplayers.RemoveAt(i);
                             }
                         }
-                        Clients.Players.Remove(playerid);
+                        d_Clients.Players.Remove(playerid);
                     }
                     break;
                 case ServerPacketId.Message:
                     {
-                        Chatlines.AddChatline(packet.Message.Message);
+                        d_Chatlines.AddChatline(packet.Message.Message);
                         ChatLog(packet.Message.Message);
                     }
                     break;
@@ -387,7 +387,7 @@ namespace GameModeFortress
                 case ServerPacketId.Chunk:
                     {
                         var p = packet.Chunk;
-                        byte[] decompressedchunk = compression.Decompress(p.CompressedChunk);
+                        byte[] decompressedchunk = d_Compression.Decompress(p.CompressedChunk);
                         byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
                         {
                             BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
@@ -402,14 +402,14 @@ namespace GameModeFortress
                                 }
                             }
                         }
-                        MapStoragePortion.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
+                        d_MapStoragePortion.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
                         for (int xx = 0; xx < 2; xx++)
                         {
                             for (int yy = 0; yy < 2; yy++)
                             {
                                 for (int zz = 0; zz < 2; zz++)
                                 {
-                                    shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                    d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
                                 }
                             }
                         }
@@ -419,13 +419,13 @@ namespace GameModeFortress
                 case ServerPacketId.HeightmapChunk:
                     {
                         var p = packet.HeightmapChunk;
-                        byte[] decompressedchunk = compression.Decompress(p.CompressedHeightmap);
+                        byte[] decompressedchunk = d_Compression.Decompress(p.CompressedHeightmap);
                         for (int xx = 0; xx < p.SizeX; xx++)
                         {
                             for (int yy = 0; yy < p.SizeY; yy++)
                             {
                                 int height = decompressedchunk[MapUtil.Index2d(xx, yy, p.SizeX)];
-                                heightmap.SetBlock(p.X + xx, p.Y + yy, height);
+                                d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
                             }
                         }
                     }
@@ -434,7 +434,7 @@ namespace GameModeFortress
                     break;
             }
             {
-                bool handled = NetworkPacketReceived.NetworkPacketReceived(packet);
+                bool handled = d_NetworkPacketReceived.NetworkPacketReceived(packet);
                 if (!handled)
                 {
                     //Console.WriteLine("Invalid packet id: " + packet.PacketId);
@@ -514,19 +514,19 @@ namespace GameModeFortress
         {
             if (playerid == 255)
             {
-                Position.LocalPlayerPosition += v;
+                d_Position.LocalPlayerPosition += v;
                 spawned = true;
             }
             else
             {
-                if (!Clients.Players.ContainsKey(playerid))
+                if (!d_Clients.Players.ContainsKey(playerid))
                 {
-                    Clients.Players[playerid] = new Player();
-                    Clients.Players[playerid].Name = "invalid";
+                    d_Clients.Players[playerid] = new Player();
+                    d_Clients.Players[playerid].Name = "invalid";
                     //throw new Exception();
                     InvalidPlayerWarning(playerid);
                 }
-                Clients.Players[playerid].Position += v;
+                d_Clients.Players[playerid].Position += v;
             }
         }
         private static void InvalidPlayerWarning(int playerid)
@@ -545,24 +545,24 @@ namespace GameModeFortress
             {
                 if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
                 {
-                    Position.LocalPlayerPosition = realpos;
+                    d_Position.LocalPlayerPosition = realpos;
                 }
                 spawned = true;
             }
             else
             {
-                if (!Clients.Players.ContainsKey(playerid))
+                if (!d_Clients.Players.ContainsKey(playerid))
                 {
-                    Clients.Players[playerid] = new Player();
-                    Clients.Players[playerid].Name = "invalid";
+                    d_Clients.Players[playerid] = new Player();
+                    d_Clients.Players[playerid].Name = "invalid";
                     InvalidPlayerWarning(playerid);
                 }
                 if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
                 {
-                    Clients.Players[playerid].Position = realpos;
+                    d_Clients.Players[playerid].Position = realpos;
                 }
-                Clients.Players[playerid].Heading = heading;
-                Clients.Players[playerid].Pitch = pitch;
+                d_Clients.Players[playerid].Heading = heading;
+                d_Clients.Players[playerid].Pitch = pitch;
             }
         }
         List<byte> received = new List<byte>();

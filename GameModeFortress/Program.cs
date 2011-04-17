@@ -39,9 +39,9 @@ namespace GameModeFortress
             //maingamewindow = new MainGameWindow(w);  //done in StartMenu()
             maingamewindow.mywindow = w;
 
-            w.mainwindow = maingamewindow;
-            w.exit = exit;
-            w.audio = audio;
+            w.d_MainWindow = maingamewindow;
+            w.d_Exit = exit;
+            w.d_Audio = audio;
             MakeGame(true);
             w.GameUrl = GameUrl;
             if (User != null)
@@ -55,57 +55,57 @@ namespace GameModeFortress
         {
             var ww = new GameMenu.MenuWindow();
             maingamewindow = new MainGameWindow(ww);
-            ww.mainwindow = maingamewindow;
+            ww.d_MainWindow = maingamewindow;
 
-            ww.the3d = new The3d();
-            ww.the3d.getfile = getfile;
-            ww.the3d.config3d = new Config3d();
-            ww.the3d.terrain = new TerrainTextures();
-            ww.the3d.textrenderer = new ManicDigger.Renderers.TextRenderer();
+            ww.d_The3d = new The3d();
+            ww.d_The3d.d_GetFile = getfile;
+            ww.d_The3d.d_Config3d = new Config3d();
+            ww.d_The3d.d_Terrain = new TerrainTextures();
+            ww.d_The3d.d_TextRenderer = new ManicDigger.Renderers.TextRenderer();
             var game = this;
-            ww.game = game;
-            ww.textrenderer = new ManicDigger.Renderers.TextRenderer();
-            ww.exit = exit;
-            ww.audio = audio;
-            ww.getfile = getfile;
+            ww.d_Game = game;
+            ww.d_TextRenderer = new ManicDigger.Renderers.TextRenderer();
+            ww.d_Exit = exit;
+            ww.d_Audio = audio;
+            ww.d_GetFile = getfile;
 
-            audio.getfile = getfile;
-            audio.gameexit = exit;
+            audio.d_GetFile = getfile;
+            audio.d_GameExit = exit;
             
-            ww.formMainMenu = new FormMainMenu();
-            ww.formMainMenu.menu = ww;
-            ww.formMainMenu.Initialize();
-            ww.formJoinMultiplayer = new FormJoinMultiplayer();
-            ww.formJoinMultiplayer.menu = ww;
-            ww.formJoinMultiplayer.game = game;
-            ww.formJoinMultiplayer.Initialize();
-            ww.formLogin = new FormLogin();
-            ww.formLogin.menu = ww;
-            ww.formLogin.game = game;
-            ww.formLogin.Initialize();
-            ww.formSelectWorld = new FormSelectWorld();
-            ww.formSelectWorld.menu = ww;
-            ww.formSelectWorld.game = game;
-            ww.formSelectWorld.Initialize();
-            ww.formWorldOptions = new FormWorldOptions();
-            ww.formWorldOptions.menu = ww;
-            ww.formWorldOptions.game = game;
-            ww.formWorldOptions.Initialize();
-            ww.formMessageBox = new FormMessageBox();
-            ww.formMessageBox.menu = ww;
-            ww.formMessageBox.game = game;
-            ww.formStartServer = new FormStartServer();
-            ww.formStartServer.menu = ww;
-            ww.formStartServer.game = game;
-            ww.formStartServer.Initialize();
-            ww.formGameOptions = new FormGameOptions();
-            ww.formGameOptions.menu = ww;
-            ww.formGameOptions.game = game;
-            ww.formGameOptions.Initialize();
-            ww.formConnectToIp = new FormConnectToIp();
-            ww.formConnectToIp.menu = ww;
-            ww.formConnectToIp.game = game;
-            ww.formConnectToIp.Initialize();
+            ww.d_FormMainMenu = new FormMainMenu();
+            ww.d_FormMainMenu.menu = ww;
+            ww.d_FormMainMenu.Initialize();
+            ww.d_FormJoinMultiplayer = new FormJoinMultiplayer();
+            ww.d_FormJoinMultiplayer.menu = ww;
+            ww.d_FormJoinMultiplayer.game = game;
+            ww.d_FormJoinMultiplayer.Initialize();
+            ww.d_FormLogin = new FormLogin();
+            ww.d_FormLogin.menu = ww;
+            ww.d_FormLogin.game = game;
+            ww.d_FormLogin.Initialize();
+            ww.d_FormSelectWorld = new FormSelectWorld();
+            ww.d_FormSelectWorld.menu = ww;
+            ww.d_FormSelectWorld.game = game;
+            ww.d_FormSelectWorld.Initialize();
+            ww.d_FormWorldOptions = new FormWorldOptions();
+            ww.d_FormWorldOptions.menu = ww;
+            ww.d_FormWorldOptions.game = game;
+            ww.d_FormWorldOptions.Initialize();
+            ww.d_FormMessageBox = new FormMessageBox();
+            ww.d_FormMessageBox.menu = ww;
+            ww.d_FormMessageBox.game = game;
+            ww.d_FormStartServer = new FormStartServer();
+            ww.d_FormStartServer.menu = ww;
+            ww.d_FormStartServer.game = game;
+            ww.d_FormStartServer.Initialize();
+            ww.d_FormGameOptions = new FormGameOptions();
+            ww.d_FormGameOptions.menu = ww;
+            ww.d_FormGameOptions.game = game;
+            ww.d_FormGameOptions.Initialize();
+            ww.d_FormConnectToIp = new FormConnectToIp();
+            ww.d_FormConnectToIp.menu = ww;
+            ww.d_FormConnectToIp.game = game;
+            ww.d_FormConnectToIp.Initialize();
 
             maingamewindow.Run();
         }
@@ -126,148 +126,148 @@ namespace GameModeFortress
             var mapManipulator = new MapManipulator();
             var terrainRenderer = new TerrainRenderer();
             var the3d = new The3d();
-            the3d.getfile = getfile;
-            the3d.config3d = config3d;
-            the3d.viewportsize = w;
-            w.the3d = the3d;
+            the3d.d_GetFile = getfile;
+            the3d.d_Config3d = config3d;
+            the3d.d_ViewportSize = w;
+            w.d_The3d = the3d;
             var localplayerposition = w;
             var worldfeatures = new WorldFeaturesRendererDummy();
             var physics = new CharacterPhysics();
             var internetgamefactory = this;
             ICompression compression = IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
-            network.Map = w;
-            network.Clients = clientgame;
-            network.Chatlines = w;
-            network.Position = localplayerposition;
+            network.d_Map = w;
+            network.d_Clients = clientgame;
+            network.d_Chatlines = w;
+            network.d_Position = localplayerposition;
             network.ENABLE_FORTRESS = true;
-            network.NetworkPacketReceived = clientgame;
-            network.compression = compression;
-            network.resetmap = this;
-            terrainRenderer.the3d = the3d;
-            terrainRenderer.getfile = getfile;
-            terrainRenderer.config3d = config3d;
-            terrainRenderer.mapstorage = clientgame;
-            terrainRenderer.data = gamedata;
-            terrainRenderer.exit = exit;
-            terrainRenderer.localplayerposition = localplayerposition;
-            terrainRenderer.worldfeatures = worldfeatures;
+            network.d_NetworkPacketReceived = clientgame;
+            network.d_Compression = compression;
+            network.d_ResetMap = this;
+            terrainRenderer.d_The3d = the3d;
+            terrainRenderer.d_GetFile = getfile;
+            terrainRenderer.d_Config3d = config3d;
+            terrainRenderer.d_MapStorage = clientgame;
+            terrainRenderer.d_GameData = gamedata;
+            terrainRenderer.d_Exit = exit;
+            terrainRenderer.d_LocalPlayerPosition = localplayerposition;
+            terrainRenderer.d_WorldFeatures = worldfeatures;
             terrainRenderer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
             var terrainTextures = new TerrainTextures();
-            terrainTextures.getfile = getfile;
-            terrainTextures.the3d = the3d;
+            terrainTextures.d_GetFile = getfile;
+            terrainTextures.d_The3d = the3d;
             bool IsMono = Type.GetType("Mono.Runtime") != null;
-            terrainTextures.textureatlasconverter = new TextureAtlasConverter();
+            terrainTextures.d_TextureAtlasConverter = new TextureAtlasConverter();
             if (IsMono)
             {
-                terrainTextures.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmapDummy(); };
+                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmapDummy(); };
             }
             else
             {
-                terrainTextures.textureatlasconverter.fastbitmapfactory = () => { return new FastBitmap(); };
+                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmap(); };
             }
             terrainTextures.Start();
-            w.terrainTextures = terrainTextures;
+            w.d_TerrainTextures = terrainTextures;
             var blockrenderertorch = new BlockRendererTorch();
-            blockrenderertorch.terrainrenderer = terrainTextures;
-            blockrenderertorch.data = gamedata;
+            blockrenderertorch.d_TerainRenderer = terrainTextures;
+            blockrenderertorch.d_Data = gamedata;
             InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
-            this.dirtychunks = new DirtyChunks() { mapstorage = map };
+            this.dirtychunks = new DirtyChunks() { d_MapStorage = map };
             var terrainchunktesselator = new TerrainChunkTesselator();
-            terrainchunktesselator.config3d = config3d;
-            terrainchunktesselator.data = gamedata;
-            terrainchunktesselator.mapstorage = clientgame;
-            terrainchunktesselator.mapstorageportion = map;
-            terrainchunktesselator.mapstoragelight = clientgame;
-            terrainRenderer.terrainchunktesselator = terrainchunktesselator;
-            var frustumculling = new FrustumCulling() { getCameraMatrix = the3d };
-            terrainRenderer.batcher = new MeshBatcher() { frustumculling = frustumculling };
-            terrainRenderer.frustumculling = frustumculling;
+            terrainchunktesselator.d_Config3d = config3d;
+            terrainchunktesselator.d_Data = gamedata;
+            terrainchunktesselator.d_MapStorage = clientgame;
+            terrainchunktesselator.d_MapStoragePortion = map;
+            terrainchunktesselator.d_MapStorageLight = clientgame;
+            terrainRenderer.d_TerrainChunkTesselator = terrainchunktesselator;
+            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
+            terrainRenderer.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
+            terrainRenderer.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
-            terrainchunktesselator.blockrenderertorch = blockrenderertorch;
-            terrainchunktesselator.terrainrenderer = terrainTextures;
-            w.map = clientgame.mapforphysics;
-            w.physics = physics;
-            w.clients = clientgame;
-            w.network = network;
-            w.data = gamedata;
-            w.getfile = getfile;
-            w.config3d = config3d;
-            w.mapManipulator = mapManipulator;
-            w.terrain = terrainRenderer;
+            terrainchunktesselator.d_BlockRendererTorch = blockrenderertorch;
+            terrainchunktesselator.d_TerrainTextures = terrainTextures;
+            w.d_Map = clientgame.mapforphysics;
+            w.d_Physics = physics;
+            w.d_Clients = clientgame;
+            w.d_Network = network;
+            w.d_Data = gamedata;
+            w.d_GetFile = getfile;
+            w.d_Config3d = config3d;
+            w.d_MapManipulator = mapManipulator;
+            w.d_Terrain = terrainRenderer;
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
-            skysphere.meshbatcher = new MeshBatcher() { frustumculling = new FrustumCullingDummy() };
-            skysphere.playerpos = localplayerposition;
-            skysphere.the3d = the3d;
+            skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
+            skysphere.d_LocalPlayerPosition = localplayerposition;
+            skysphere.d_The3d = the3d;
             w.skysphere = skysphere;
             var textrenderer = new ManicDigger.Renderers.TextRenderer();
-            w.textrenderer = textrenderer;
-            weapon = new WeaponBlockInfo() { data = gamedata, terrain = terrainTextures, viewport = w, map = clientgame, shadows = shadowssimple };
-            w.weapon = new WeaponRenderer() { info = weapon, blockrenderertorch = blockrenderertorch, playerpos = w };
+            w.d_TextRenderer = textrenderer;
+            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple };
+            w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
-            w.characterrenderer = playerrenderer;
-            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { data = gamedata, map = clientgame, terrain = terrainTextures };
+            w.d_CharacterRenderer = playerrenderer;
+            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
             w.ENABLE_FINITEINVENTORY = false;
-            clientgame.terrain = terrainRenderer;
-            clientgame.viewport = w;
-            clientgame.data = gamedata;
-            clientgame.network = network;
-            clientgame.craftingtabletool = new CraftingTableTool() { map = mapstorage };
-            clientgame.audio = audio;
-            clientgame.railmaputil = new RailMapUtil() { data = gamedata, mapstorage = clientgame };
-            clientgame.minecartrenderer = new MinecartRenderer() { getfile = getfile, the3d = the3d };
-            clientgame.terrainTextures = terrainTextures;
-            terrainRenderer.ischunkready = dirtychunks;
-            network.MapStoragePortion = map;
-            map.ischunkready = dirtychunks;
+            clientgame.d_Terrain = terrainRenderer;
+            clientgame.d_Viewport = w;
+            clientgame.d_Data = gamedata;
+            clientgame.d_Network = network;
+            clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
+            clientgame.d_Audio = audio;
+            clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
+            clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
+            clientgame.d_TerrainTextures = terrainTextures;
+            terrainRenderer.d_IsChunkReady = dirtychunks;
+            network.d_MapStoragePortion = map;
+            map.d_IsChunkReady = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
             dirtychunks.Start();
-            dirtychunks.frustum = frustumculling;
-            clientgame.map = map;
-            w.game = clientgame;
-            w.login = new LoginClientDummy();
-            w.internetgamefactory = internetgamefactory;
+            dirtychunks.d_Frustum = frustumculling;
+            clientgame.d_Map = map;
+            w.d_Game = clientgame;
+            w.d_Login = new LoginClientDummy();
+            w.d_InternetGameFactory = internetgamefactory;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
-            playerskindownloader.exit = exit;
-            playerskindownloader.the3d = the3d;
+            playerskindownloader.d_Exit = exit;
+            playerskindownloader.d_The3d = the3d;
             playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
             w.playerskindownloader = playerskindownloader;
-            w.fpshistorygraphrenderer = new HudFpsHistoryGraphRenderer() { draw = the3d, viewportsize = w };
-            physics.map = clientgame.mapforphysics;
-            physics.data = gamedata;
-            audio.getfile = getfile;
-            audio.gameexit = exit;
+            w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w };
+            physics.d_Map = clientgame.mapforphysics;
+            physics.d_Data = gamedata;
+            audio.d_GetFile = getfile;
+            audio.d_GameExit = exit;
             this.clientgame = clientgame;
             this.map = map;
-            the3d.terrain = terrainTextures;
-            the3d.textrenderer = textrenderer;
-            w.currentshadows = this;
-            var sunmoonrenderer = new SunMoonRenderer() { draw2d = the3d, player = w, getfile = getfile, the3d = the3d };
-            w.sunmoonrenderer = sunmoonrenderer;
-            clientgame.sunmoonrenderer = sunmoonrenderer;
-            this.heightmap = new InfiniteMapChunked2d() { map = map };
+            the3d.d_Terrain = terrainTextures;
+            the3d.d_TextRenderer = textrenderer;
+            w.d_CurrentShadows = this;
+            var sunmoonrenderer = new SunMoonRenderer() { d_Draw2d = the3d, d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d };
+            w.d_SunMoonRenderer = sunmoonrenderer;
+            clientgame.d_SunMoonRenderer = sunmoonrenderer;
+            this.heightmap = new InfiniteMapChunked2d() { d_Map = map };
             heightmap.Restart();
-            network.heightmap = heightmap;
-            this.light = new InfiniteMapChunkedSimple() { map = map };
+            network.d_Heightmap = heightmap;
+            this.light = new InfiniteMapChunkedSimple() { d_Map = map };
             light.Restart();
             shadowsfull = new Shadows()
             {
-                data = gamedata,
-                map = clientgame,
-                terrain = terrainRenderer,
-                localplayerposition = localplayerposition,
-                config3d = config3d,
-                ischunkready = dirtychunks,
-                heightmap = heightmap,
-                light = light,
+                d_Data = gamedata,
+                d_Map = clientgame,
+                d_Terrain = terrainRenderer,
+                d_LocalPlayerPosition = localplayerposition,
+                d_Config3d = config3d,
+                d_IsChunkReady = dirtychunks,
+                d_Heightmap = heightmap,
+                d_Light = light,
             };
             shadowssimple = new ShadowsSimple()
             {
-                data = gamedata,
-                map = clientgame,
-                ischunkdirty = dirtychunks,
-                heightmap = heightmap
+                d_Data = gamedata,
+                d_Map = clientgame,
+                d_IsChunkDirty = dirtychunks,
+                d_Heightmap = heightmap
             };
             this.terrainchunktesselator = terrainchunktesselator;
             this.network = network;
@@ -279,9 +279,9 @@ namespace GameModeFortress
             {
                 UseShadowsSimple();
             }
-            w.hudchat = new ManicDigger.Gui.HudChat() { draw2d = the3d, viewportsize = w };
-            w.hudinventory = new ManicDigger.Gui.HudInventory() { data = gamedata, w = w, viewportsize = w };
-            w.hudmaterialselector = new ManicDigger.Gui.HudMaterialSelector() { gameWindow = w, viewportsize = w };
+            w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w };
+            w.d_HudInventory = new ManicDigger.Gui.HudInventory() { d_Data = gamedata, d_W = w, d_ViewportSize = w };
+            w.d_HudMaterialSelector = new ManicDigger.Gui.HudMaterialSelector() { d_GameWindow = w, d_ViewportSize = w };
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
@@ -289,7 +289,7 @@ namespace GameModeFortress
                     config3d, mapManipulator, terrainRenderer, the3d, exit,
                     localplayerposition, worldfeatures, physics,
                     internetgamefactory, blockrenderertorch, playerrenderer,
-                    map, w.login, shadowsfull, shadowssimple, terrainchunktesselator);
+                    map, w.d_Login, shadowsfull, shadowssimple, terrainchunktesselator);
             }
         }
         InfiniteMapChunked2d heightmap;
@@ -311,31 +311,31 @@ namespace GameModeFortress
         NetworkClientFortress network;
         void UseShadowsSimple()
         {
-            if (clientgame.shadows != null)
+            if (clientgame.d_Shadows != null)
             {
-                shadowssimple.sunlight = clientgame.shadows.sunlight;
+                shadowssimple.sunlight = clientgame.d_Shadows.sunlight;
             }
             var shadows = shadowssimple;
-            clientgame.shadows = shadows;
+            clientgame.d_Shadows = shadows;
             //map.shadows = shadows;
-            weapon.shadows = shadows;
-            terrainchunktesselator.shadows = shadows;
-            network.shadows = shadows;
-            w.shadows = shadows;
+            weapon.d_Shadows = shadows;
+            terrainchunktesselator.d_Shadows = shadows;
+            network.d_Shadows = shadows;
+            w.d_Shadows = shadows;
         }
         void UseShadowsFull()
         {
-            if (clientgame.shadows != null)
+            if (clientgame.d_Shadows != null)
             {
-                shadowsfull.sunlight = clientgame.shadows.sunlight;
+                shadowsfull.sunlight = clientgame.d_Shadows.sunlight;
             }
             var shadows = shadowsfull;
-            clientgame.shadows = shadows;
+            clientgame.d_Shadows = shadows;
             //map.shadows = shadows;
-            weapon.shadows = shadows;
-            terrainchunktesselator.shadows = shadows;
-            network.shadows = shadows;
-            w.shadows = shadows;
+            weapon.d_Shadows = shadows;
+            terrainchunktesselator.d_Shadows = shadows;
+            network.d_Shadows = shadows;
+            w.d_Shadows = shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull
@@ -567,36 +567,36 @@ namespace GameModeFortress
             Server server = new Server();
             server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
-            map.currenttime = server;
+            map.d_CurrentTime = server;
             map.chunksize = 32;
 
             // TODO: make it possible to change the world generator at run-time!
             var generator = new Noise2DWorldGenerator();
             generator.ChunkSize = map.chunksize;
             // apply chunk size to generator
-            map.generator = generator;
+            map.d_Generator = generator;
             server.chunksize = 32;
 
-            map.heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, map = map };
+            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, d_Map = map };
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
-            server.map = map;
-            server.generator = generator;
+            server.d_Map = map;
+            server.d_Generator = generator;
             var getfile = new GetFilePath(new[] { "mine", "minecraft" });
             var data = new GameDataCsv();
             data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
                 File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
-            server.data = data;
-            server.craftingtabletool = new CraftingTableTool() { map = map };
+            server.d_Data = data;
+            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
             server.LocalConnectionsOnly = !Public;
-            server.getfile = getfile;
+            server.d_GetFile = getfile;
             var networkcompression = new CompressionGzip();
             var diskcompression = new CompressionGzip();
-            var chunkdb = new ChunkDbCompressed() { chunkdb = new ChunkDbSqlite(), compression = diskcompression };
-            server.chunkdb = chunkdb;
-            map.chunkdb = chunkdb;
-            server.networkcompression = networkcompression;
-            map.data = server.data;
-            server.water = new WaterFinite() { data = server.data };
+            var chunkdb = new ChunkDbCompressed() { d_ChunkDb = new ChunkDbSqlite(), d_Compression = diskcompression };
+            server.d_ChunkDb = chunkdb;
+            map.d_ChunkDb = chunkdb;
+            server.d_NetworkCompression = networkcompression;
+            map.d_Data = server.d_Data;
+            server.d_Water = new WaterFinite() { data = server.d_Data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             server.Start();
             if ((Public) && (server.config.Public))

@@ -14,11 +14,11 @@ namespace ManicDigger.Renderers
     public class SkySphere
     {
         [Inject]
-        public MeshBatcher meshbatcher;
+        public MeshBatcher d_MeshBatcher;
         [Inject]
-        public ILocalPlayerPosition playerpos;
+        public ILocalPlayerPosition d_LocalPlayerPosition;
         [Inject]
-        public IThe3d the3d;
+        public IThe3d d_The3d;
         public int SkyTexture = -1;
         int SkyMeshId = -1;
         public void Draw()
@@ -32,19 +32,19 @@ namespace ManicDigger.Renderers
             {
                 ushort[] indices = CalculateElements(size, size, 20, 20);
                 VertexPositionTexture[] vertices = CalculateVertices(size, size, 20, 20);
-                SkyMeshId = meshbatcher.Add(indices, indices.Length, vertices, vertices.Length
+                SkyMeshId = d_MeshBatcher.Add(indices, indices.Length, vertices, vertices.Length
                     , false, SkyTexture, new Vector3(0, 0, 0), size * 2);
             }
-            the3d.Set3dProjection(size * 2);
+            d_The3d.Set3dProjection(size * 2);
             GL.MatrixMode(MatrixMode.Modelview);
-            meshbatcher.BindTexture = false;
+            d_MeshBatcher.BindTexture = false;
             GL.PushMatrix();
-            GL.Translate(playerpos.LocalPlayerPosition);
+            GL.Translate(d_LocalPlayerPosition.LocalPlayerPosition);
             GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, SkyTexture);
-            meshbatcher.Draw(playerpos.LocalPlayerPosition);
+            d_MeshBatcher.Draw(d_LocalPlayerPosition.LocalPlayerPosition);
             GL.PopMatrix();
-            the3d.Set3dProjection();
+            d_The3d.Set3dProjection();
         }
         public VertexPositionTexture[] CalculateVertices(float radius, float height, int segments, int rings)
         {

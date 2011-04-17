@@ -11,48 +11,48 @@ namespace ManicDigger.Renderers
     public class WeaponBlockInfo
     {
         [Inject]
-        public ITerrainTextures terrain;
+        public ITerrainTextures d_Terrain;
         [Inject]
-        public IViewport3d viewport;
+        public IViewport3d d_Viewport;
         [Inject]
-        public IGameData data;
+        public IGameData d_Data;
         [Inject]
-        public IMapStorage map;
+        public IMapStorage d_Map;
         [Inject]
-        public IShadows shadows;
-        public int terrainTexture { get { return terrain.terrainTexture; } }
-        public int texturesPacked { get { return terrain.texturesPacked; } }
+        public IShadows d_Shadows;
+        public int terrainTexture { get { return d_Terrain.terrainTexture; } }
+        public int texturesPacked { get { return d_Terrain.texturesPacked; } }
         public int GetWeaponTextureId(TileSide side)
         {
-            return data.TextureId[viewport.MaterialSlots[viewport.activematerial], (int)side];
+            return d_Data.TextureId[d_Viewport.MaterialSlots[d_Viewport.activematerial], (int)side];
         }
         public float Light
         {
             get
             {
-                Vector3 pos = viewport.LocalPlayerPosition;
+                Vector3 pos = d_Viewport.LocalPlayerPosition;
                 if ((int)pos.X >= 0 && (int)pos.Y >= 0 && (int)pos.Z >= 0
-                    && (int)pos.X < map.MapSizeX
-                    && (int)pos.Z < map.MapSizeY
-                    && (int)pos.Y < map.MapSizeZ)
+                    && (int)pos.X < d_Map.MapSizeX
+                    && (int)pos.Z < d_Map.MapSizeY
+                    && (int)pos.Y < d_Map.MapSizeZ)
                 {
-                    int? light = shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y);
-                    if (light == null) { light = shadows.maxlight; }
-                    return (float)light.Value / shadows.maxlight;
+                    int? light = d_Shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y);
+                    if (light == null) { light = d_Shadows.maxlight; }
+                    return (float)light.Value / d_Shadows.maxlight;
                 }
-                return 1f / shadows.maxlight;
+                return 1f / d_Shadows.maxlight;
             }
         }
-        public bool IsTorch() { return viewport.MaterialSlots[viewport.activematerial] == data.BlockIdTorch; }
+        public bool IsTorch() { return d_Viewport.MaterialSlots[d_Viewport.activematerial] == d_Data.BlockIdTorch; }
     }
     public class WeaponRenderer
     {
         [Inject]
-        public WeaponBlockInfo info;
+        public WeaponBlockInfo d_Info;
         [Inject]
-        public IBlockRendererTorch blockrenderertorch;
+        public IBlockRendererTorch d_BlockRendererTorch;
         [Inject]
-        public ILocalPlayerPosition playerpos;
+        public ILocalPlayerPosition d_LocalPlayerPosition;
         public void SetAttack(bool isattack, bool build)
         {
             this.build = build;
@@ -78,21 +78,21 @@ namespace ManicDigger.Renderers
         public void DrawWeapon(float dt)
         {
             int light;
-            if (info.IsTorch())
+            if (d_Info.IsTorch())
             {
                 light = 255;
             }
             else
             {
-                light = (int)(info.Light * 256);
+                light = (int)(d_Info.Light * 256);
                 if (light > 255) { light = 255; }
                 if (light < 0) { light = 0; }
             }
             GL.Color3(Color.FromArgb(light, light, light));
-            GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, d_Info.terrainTexture);
 
-            int curmaterial=info.viewport.MaterialSlots[info.viewport.activematerial];
-            float curlight = info.Light;
+            int curmaterial=d_Info.d_Viewport.MaterialSlots[d_Info.d_Viewport.activematerial];
+            float curlight = d_Info.Light;
             if (curmaterial != oldMaterial || curlight != oldLight)
             {
                 myelements = new List<ushort>();
@@ -100,9 +100,9 @@ namespace ManicDigger.Renderers
                 int x = 0;
                 int y = 0;
                 int z = 0;
-                if (info.IsTorch())
+                if (d_Info.IsTorch())
                 {
-                    blockrenderertorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
+                    d_BlockRendererTorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
                 }
                 else
                 {
@@ -126,8 +126,8 @@ namespace ManicDigger.Renderers
             GL.Rotate(60 + zzzy, new Vector3(0, 1, 0));
             GL.Scale(0.8, 0.8, 0.8);
 
-            bool move = oldplayerpos != playerpos.LocalPlayerPosition;
-            oldplayerpos = playerpos.LocalPlayerPosition;
+            bool move = oldplayerpos != d_LocalPlayerPosition.LocalPlayerPosition;
+            oldplayerpos = d_LocalPlayerPosition.LocalPlayerPosition;
             if (move)
             {
                 t += dt;
@@ -182,7 +182,7 @@ namespace ManicDigger.Renderers
             }
 
             GL.Begin(BeginMode.Triangles);
-            GL.BindTexture(TextureTarget.Texture2D, info.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, d_Info.terrainTexture);
             GL.Enable(EnableCap.Texture2D);
             for (int i = 0; i < myelements.Count; i++)
             {
@@ -213,8 +213,8 @@ namespace ManicDigger.Renderers
             //top
             //if (drawtop)
             {
-                int sidetexture = info.GetWeaponTextureId(TileSide.Top);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Top);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 0.0f, texrec.Left, texrec.Top));
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z + 1.0f, y + 1.0f, texrec.Left, texrec.Bottom));
@@ -230,8 +230,8 @@ namespace ManicDigger.Renderers
             //bottom - same as top, but z is 1 less.
             //if (drawbottom)
             {
-                int sidetexture = info.GetWeaponTextureId(TileSide.Bottom);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Bottom);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrec.Left, texrec.Top));
                 myvertices.Add(new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrec.Left, texrec.Bottom));
@@ -247,8 +247,8 @@ namespace ManicDigger.Renderers
             ////front
             //if (drawfront)
             {
-                int sidetexture = info.GetWeaponTextureId(TileSide.Front);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Front);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Right, texrec.Bottom));
@@ -264,8 +264,8 @@ namespace ManicDigger.Renderers
             //back - same as front, but x is 1 greater.
             //if (drawback)
             {//todo fix tcoords
-                int sidetexture = info.GetWeaponTextureId(TileSide.Back);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Back);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 1, z + 0, y + 1, texrec.Right, texrec.Bottom));
@@ -280,8 +280,8 @@ namespace ManicDigger.Renderers
             }
             //if (drawleft)
             {
-                int sidetexture = info.GetWeaponTextureId(TileSide.Left);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Left);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 0, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 0, texrec.Left, texrec.Top));
@@ -297,8 +297,8 @@ namespace ManicDigger.Renderers
             //right - same as left, but y is 1 greater.
             //if (drawright)
             {//todo fix tcoords
-                int sidetexture = info.GetWeaponTextureId(TileSide.Right);
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, info.texturesPacked);
+                int sidetexture = d_Info.GetWeaponTextureId(TileSide.Right);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_Info.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 0, y + 1, texrec.Left, texrec.Bottom));
                 myvertices.Add(new VertexPositionTexture(x + 0, z + 1, y + 1, texrec.Left, texrec.Top));
