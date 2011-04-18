@@ -318,6 +318,16 @@ namespace ManicDiggerServer
                 }
 
                 WebResponse response = request.GetResponse();
+                string key = null;
+                using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+                {
+                    key = sr.ReadToEnd();
+                }
+                if (!writtenServerKey)
+                {
+                    Console.WriteLine(GetHash(key));
+                    writtenServerKey = true;
+                }
 
                 request.Abort();
                 Console.WriteLine("Heartbeat sent.");
@@ -327,6 +337,23 @@ namespace ManicDiggerServer
                 Console.WriteLine(e.ToString());
                 Console.WriteLine("Unable to send heartbeat.");
             }
+        }
+        bool writtenServerKey = false;
+        public string hashPrefix = "server=";
+        string GetHash(string hash)
+        {
+            try
+            {
+                if (hash.Contains(hashPrefix))
+                {
+                    hash = hash.Substring(hash.IndexOf(hashPrefix) + hashPrefix.Length);
+                }
+            }
+            catch
+            {
+                return "";
+            }
+            return hash;
         }
         void Start(int port)
         {
@@ -1074,6 +1101,24 @@ namespace ManicDiggerServer
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             return new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
         }
+        public char[] AllowedUsernameCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".ToCharArray();
+        bool IsValidUsername(string s)
+        {
+            for (int i = 0; i < s.Length; i++)
+            {
+                for (int j = 0; j < AllowedUsernameCharacters.Length; j++)
+                {
+                    if (s[i] == AllowedUsernameCharacters[j])
+                    {
+                        goto next;
+                    }
+                }
+                return false;
+            next:
+                ;
+            }
+            return true;
+        }
         //returns bytes read.
         private int TryReadPacket(int clientid)
         {
@@ -1104,9 +1149,18 @@ namespace ManicDiggerServer
                     if (config.IsUserBanned(username))
                     {
                         SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
-                        KillPlayer(clientid);                        
+                        KillPlayer(clientid);
+                        break;
                     }
 
+                    if (!IsValidUsername(username))
+                    {
+                        SendDisconnectPlayer(clientid, "Invalid characters in username.");
+                        KillPlayer(clientid);
+                        break;
+                    }
+
+                    //when duplicate user connects, append a number to name.
                     foreach (var k in clients)
                     {
                         if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
@@ -1115,7 +1169,16 @@ namespace ManicDiggerServer
                             break;
                         }
                     }
-                    //todo verificationkey
+
+                    bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
+
+                    if ((ComputeMd5(config.Key.Replace("-", "") + username) != packet.Identification.VerificationKey)
+                        && (!isClientLocalhost))
+                    {
+                        //Account verification failed.
+                        username = "~" + username;
+                    }
+
                     clients[clientid].playername = username;
                     break;
                 case ClientPacketId.RequestBlob:
@@ -2014,10 +2077,24 @@ namespace ManicDiggerServer
             //todo
             return terrainTexture;
         }
+        MD5 md5 = System.Security.Cryptography.MD5.Create();
         byte[] ComputeMd5(byte[] b)
         {
-            MD5 md5 = System.Security.Cryptography.MD5.Create();
-            return md5.ComputeHash(terrainTexture);
+            return md5.ComputeHash(b);
+        }
+        string ComputeMd5(string input)
+        {
+            // step 1, calculate MD5 hash from input
+            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+            byte[] hash = md5.ComputeHash(inputBytes);
+
+            // step 2, convert byte array to hex string
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("X2"));
+            }
+            return sb.ToString().ToLower();
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
@@ -2038,6 +2115,7 @@ namespace ManicDiggerServer
             public List<byte[]> blobstosend = new List<byte[]>();
             public bool CanBuild = false;
             public bool IsAdmin = false; //Does this user have the server password and can ban users?
+            public bool IsGuest { get { return playername.StartsWith("~"); } }
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }

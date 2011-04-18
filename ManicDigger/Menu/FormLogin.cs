@@ -273,7 +273,4 @@ namespace GameMenu
             rememberpassword = userTextbox.Text != "";
         }
     }
-    public partial class MenuWindow
-    {
-    }
 }

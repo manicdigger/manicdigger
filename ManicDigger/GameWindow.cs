@@ -449,6 +449,13 @@ namespace ManicDigger
             mywindow.OnKeyPress(e);
         }
     }
+    public class ConnectData
+    {
+        public string Username;
+        public string Ip;
+        public int Port;
+        public string Auth;
+    }
     public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap, IAddChatLine, IViewport3d, IWaterLevel
     {
         [Inject]
@@ -469,8 +476,6 @@ namespace ManicDigger
         public CharacterPhysics d_Physics;
         [Inject]
         public INetworkClient d_Network;
-        [Inject]
-        public IInternetGameFactory d_InternetGameFactory;
 
         [Inject]
         public IAudio d_Audio;
@@ -478,8 +483,6 @@ namespace ManicDigger
         public IGetFilePath d_GetFile;
         [Inject]
         public IGameData d_Data;
-        [Inject]
-        public ILoginClient d_Login;
         [Inject]
         public Config3d d_Config3d;
         [Inject]
@@ -553,7 +556,8 @@ namespace ManicDigger
         }
         public void OnLoad(EventArgs e)
         {
-            //..base.OnLoad(e);
+            Connect();
+
             string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
             int minor = (int)version[2];
@@ -568,22 +572,6 @@ namespace ManicDigger
                 d_MainWindow.TargetRenderFrequency = 0;
             }
             GL.ClearColor(Color.Black);
-            //GL.Frustum(double.MinValue, double.MaxValue, double.MinValue, double.MaxValue, 1, 1000);
-            //clientgame.GeneratePlainMap();
-            //clientgame.LoadMapMinecraft();
-            if (GameUrl == null)
-            {
-                {
-                    GuiActionGenerateNewMap();
-                    GuiStateBackToGame();
-                }
-                d_Terrain.UpdateAllTiles();
-                d_Terrain.Start();
-            }
-            else
-            {
-                ClientCommand(".server " + GameUrl);
-            }
             d_MainWindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
             d_MainWindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
             d_MainWindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
@@ -722,25 +710,7 @@ namespace ManicDigger
                     else
                     { arguments = s.Substring(s.IndexOf(" ")); }
                     arguments = arguments.Trim();
-                    if (cmd == "server" || cmd == "connect")
-                    {
-                        string server = arguments;
-                        if (server.Length == 32)
-                        {
-                            server = "http://www.minecraft.net/play.jsp?server=" + server;
-                        }
-                        ConnectToInternetGame(username, pass, server);
-                        return;
-                    }
-                    else if (cmd == "nick" || cmd == "user" || cmd == "username")
-                    {
-                        username = arguments;
-                    }
-                    else if (cmd == "pass" || cmd == "password")
-                    {
-                        pass = arguments;
-                    }
-                    else if (cmd == "fps")
+                    if (cmd == "fps")
                     {
                         ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
                         ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
@@ -975,19 +945,6 @@ namespace ManicDigger
                     movespeed = basemovespeed * 10;
                     Log("Move speed: 10x.");
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.F9))
-                {
-                    string defaultserverfile = "defaultserver.txt";
-                    if (File.Exists(defaultserverfile))
-                    {
-                        ConnectToInternetGame(username, pass, File.ReadAllText(defaultserverfile));
-                        Log("Connected to default server.");
-                    }
-                    else
-                    {
-                        Log(string.Format("File {0} not found.", defaultserverfile));
-                    }
-                }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
                     if (!d_Network.AllowFreemove)
@@ -1188,103 +1145,18 @@ namespace ManicDigger
             FreeMouse = false;
             freemousejustdisabled = true;
         }
-        private void GuiActionGenerateNewMap()
-        {
-            //mapManipulator.GeneratePlainMap(map);
-            d_Network.Connect("", 0, "", "");
-            d_Game.OnNewMap();
-            d_Terrain.UpdateAllTiles();
-        }
         bool freemousejustdisabled;
         enum TypingState { None, Typing, Ready };
         TypingState GuiTyping = TypingState.None;
-        INetworkClient newnetwork;
-        ITerrainRenderer newterrain;
 
-        public string username = "gamer1";
-        string pass = "12345";
-        public string mppassword;
-        //This was used for changing server during game.
-        //Todo: move this to Program.cs.
-        private void ConnectToInternetGame(string qusername, string qpass, string qgameurl)
+        public ConnectData connectdata;
+        private void Connect()
         {
-            var oldclientgame = d_Map;
-            var oldnetwork = d_Network;
-            var oldterrain = d_Terrain;
-            d_InternetGameFactory.NewInternetGame();
             LoadOptions();
-            //.newclientgame = internetgamefactory.GetClientGame();
-            //.newnetwork = internetgamefactory.GetNetwork();
-            //.newterrain = internetgamefactory.GetTerrain();
-            //.newterrain.Start();
-            var newnetwork = d_Network;
-            var newterrain = d_Terrain;
-            if (oldterrain is IDisposable) { ((IDisposable)oldterrain).Dispose(); }
-            newterrain.Start();
-
-            newnetwork.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
-            newnetwork.MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
-
-            oldnetwork.Dispose();
-
-            new MethodInvoker(() =>
-            {
-                //game url can be
-                //a) minecraft.net url
-                //if (qgameurl.Contains("minecraft.net"))
-                //{
-                //}
-                //b) just hash
-                //c) ip:port (server must have disabled authorization checking).
-                LoginData logindata = new LoginData();
-                int? pport = null;
-                if (qgameurl.Contains(":") && (!qgameurl.Contains("http")))
-                {
-                    pport = int.Parse(qgameurl.Substring(qgameurl.IndexOf(":") + 1).Trim());
-                    qgameurl = qgameurl.Substring(0, qgameurl.IndexOf(":"));
-                }
-                if (mppassword == null)
-                {
-                    System.Net.IPAddress server2 = null;
-                    try
-                    {
-                        logindata = d_Login.Login(qusername, qpass, qgameurl);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.ToString());
-                    }
-                    if (logindata == null)
-                    {
-                        logindata = new LoginData();
-                    }
-                    if (System.Net.IPAddress.TryParse(qgameurl, out server2))
-                    {
-                        logindata.serveraddress = server2.ToString();
-                        logindata.port = 25565;
-                        if (pport != null)
-                        {
-                            logindata.port = pport.Value;
-                        }
-                        if (logindata.mppass == null)
-                        {
-                            logindata.mppass = "";
-                        }
-                    }
-                }
-                else
-                {
-                    logindata.mppass = mppassword;
-                    logindata.port = pport.Value;
-                    logindata.serveraddress = qgameurl;
-                }
-                frametickmainthreadtodo.Add(
-                    () =>
-                    {
-                        newnetwork.Connect(logindata.serveraddress, logindata.port, username, logindata.mppass);
-                    }
-                );
-            }).BeginInvoke(null, null);
+            d_Terrain.Start();
+            d_Network.MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
+            d_Network.MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
+            d_Network.Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
             MapLoadingStart();
         }
         void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
@@ -1518,10 +1390,6 @@ namespace ManicDigger
                 UpdateMouseViewportControl(e);
             }
             d_Network.Process();
-            if (newnetwork != null)
-            {
-                newnetwork.Process();
-            }
 
             bool angleup = false;
             bool angledown = false;
@@ -2216,7 +2084,7 @@ namespace ManicDigger
             string playername;
             if (playerid == 255)
             {
-                playername = username;
+                playername = connectdata.Username;
             }
             else
             {
@@ -2827,7 +2695,6 @@ namespace ManicDigger
         }
         #endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
-        public string GameUrl;
         Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members
         public OpenTK.Input.KeyboardDevice keyboardstate
@@ -2860,7 +2727,7 @@ namespace ManicDigger
         public Vector3 PickCubePos { get { return pickcubepos; } }
         #endregion
         #region IViewport3d Members
-        public string LocalPlayerName { get { return username; } }
+        public string LocalPlayerName { get { return connectdata.Username; } }
         #endregion
         #region IMap Members
         public void UpdateAllTiles()

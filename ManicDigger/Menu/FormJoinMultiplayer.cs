@@ -128,7 +128,9 @@ namespace GameMenu
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(200, 1000, 400, 128),
                 Text = "Connect",
-                Click = delegate { game.JoinMultiplayer(servers[selectedServer].Ip, servers[selectedServer].Port); },
+                //todo: hash should be enough
+                Click = delegate { game.JoinMultiplayer(servers[selectedServer].Hash);
+                },
             });
             widgets.Add(new Widget()
             {

@@ -127,14 +127,7 @@ namespace GameMenu
                     widget.OnText();
                 }
             }
-            if (currentform != null)
-            {
-                currentform();
-            }
-            //..base.OnKeyPress(e);
         }
-        //string typingbuffer = "";
-        ThreadStart currentform;
         enum MainMenuState
         {
             Main,
@@ -143,7 +136,6 @@ namespace GameMenu
         public void OnResize(EventArgs e)
         {
             ResizeGraphics();
-            //..base.OnResize(e);
         }
         void ResizeGraphics()
         {
@@ -161,7 +153,6 @@ namespace GameMenu
         }
         public void OnUpdateFrame(FrameEventArgs e)
         {
-            //..base.OnUpdateFrame(e);
             if (d_MainWindow.Keyboard[Key.Escape])
             {
                 d_MainWindow.Exit();
@@ -169,7 +160,6 @@ namespace GameMenu
         }
         public void OnRenderFrame(FrameEventArgs e)
         {
-            //..base.OnRenderFrame(e);
             GL.ClearColor(Color.Black);
             GL.Clear(ClearBufferMask.ColorBufferBit);
             OrthoMode();

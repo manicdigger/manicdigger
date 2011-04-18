@@ -20,15 +20,18 @@ using System.Text;
 
 namespace GameModeFortress
 {
-    public class ManicDiggerProgram2 : IInternetGameFactory, ICurrentShadows, IResetMap, Game
+    public class ManicDiggerProgram2 : ICurrentShadows, IResetMap, Game
     {
-        public string GameUrl = null;
-        public string User = "gamer";
+        public ManicDiggerProgram2()
+        {
+            connectdata.Username = "gamer";
+        }
         ManicDiggerGameWindow w;
         AudioOpenAl audio = new AudioOpenAl();
-        bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
+        //bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
+            LoadLogin();
             ManicDiggerProgram.exit = exit;
             StartMenu();
             //if (exit.exit) { return; }
@@ -43,14 +46,11 @@ namespace GameModeFortress
             w.d_MainWindow = maingamewindow;
             w.d_Exit = exit;
             w.d_Audio = audio;
-            MakeGame(true);
-            w.GameUrl = GameUrl;
-            if (User != null)
-            {
-                w.username = User;
-            }
+            MakeGame();
+            w.connectdata = connectdata;
             w.Run();
         }
+        public ConnectData connectdata = new ConnectData();
         GetFilePath getfile = new GetFilePath(new[] { "mine", "minecraft" });
         LoginDataFile logindatafile = new LoginDataFile();
         private void StartMenu()
@@ -114,7 +114,7 @@ namespace GameModeFortress
         }
         MainGameWindow maingamewindow;
         IGameExit exit = new GameExitDummy();
-        private void MakeGame(bool singleplayer)
+        private void MakeGame()
         {
             var getfile = this.getfile;
             var gamedata = new GameDataCsv();
@@ -137,7 +137,7 @@ namespace GameModeFortress
             var worldfeatures = new WorldFeaturesRendererDummy();
             var physics = new CharacterPhysics();
             var internetgamefactory = this;
-            ICompression compression = IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
+            ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
             network.d_Map = w;
             network.d_Clients = clientgame;
             network.d_Chatlines = w;
@@ -229,8 +229,6 @@ namespace GameModeFortress
             dirtychunks.d_Frustum = frustumculling;
             clientgame.d_Map = map;
             w.d_Game = clientgame;
-            w.d_Login = new LoginClientDummy();
-            w.d_InternetGameFactory = internetgamefactory;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = exit;
             playerskindownloader.d_The3d = the3d;
@@ -292,18 +290,12 @@ namespace GameModeFortress
                     config3d, mapManipulator, terrainRenderer, the3d, exit,
                     localplayerposition, worldfeatures, physics,
                     internetgamefactory, blockrenderertorch, playerrenderer,
-                    map, w.d_Login, shadowsfull, shadowssimple, terrainchunktesselator);
+                    map, shadowsfull, shadowssimple, terrainchunktesselator);
             }
         }
         InfiniteMapChunked2d heightmap;
         InfiniteMapChunkedSimple light;
         DirtyChunks dirtychunks;
-        #region IInternetGameFactory Members
-        public void NewInternetGame()
-        {
-            MakeGame(false);
-        }
-        #endregion
         GameFortress clientgame;
         InfiniteMapChunked map;
         ShadowsSimple shadowssimple;
@@ -432,29 +424,29 @@ namespace GameModeFortress
             this.LoginName = guestlogin;
             IsLoggedIn = false;
         }
+        ILoginClient loginclient = new LoginClientManicDigger();
         public bool LoginAccount(string login, string password)
         {
             if (string.IsNullOrEmpty(password))
             {
                 return false;
             }
-            var data = new MdLogin().Login(login, "" + password, "a");
+            var servers = GetServers(); //workaround for login.php problem. see comment in LoginClient.
+            var data = loginclient.Login(login, "" + password, servers[0].Hash);
             if (!data.PasswordCorrect)
             {
                 return false;
             }
             IsLoggedIn = true;
             this.LoginName = login;
+            this.LoginPassword = password;
             return true;
-        }
-        public void CreateAccountLogin(string createlogin, string createpassword)
-        {
-            this.User = createlogin;
         }
         public void StartSinglePlayer(int worldId)
         {
-            GameUrl = "127.0.0.1:25570";
-            User = "Local";
+            connectdata.Ip = "127.0.0.1";
+            connectdata.Port = 25570;
+            connectdata.Username = "Local";
             string name = "default";
             if (worldId != 0)
             {
@@ -467,8 +459,9 @@ namespace GameModeFortress
         public void StartAndJoinLocalServer(int worldId)
         {
             //todo login and config
-            GameUrl = "127.0.0.1:25565";
-            User = "Local";
+            connectdata.Ip = "127.0.0.1";
+            connectdata.Port = 25565;
+            connectdata.Username = "Local";
             string name = "default";
             if (worldId != 0)
             {
@@ -481,7 +474,17 @@ namespace GameModeFortress
         }
         public void JoinMultiplayer(string ip, int port)
         {
-            GameUrl = ip + ":" + port;
+            connectdata.Ip = ip;
+            connectdata.Port = port;
+            StartGame();
+        }
+        public void JoinMultiplayer(string hash)
+        {
+            var l = loginclient.Login(LoginName, LoginPassword, hash);
+            connectdata.Ip = l.ServerAddress;
+            connectdata.Port = l.Port;
+            connectdata.Username = LoginName;
+            connectdata.Auth = l.AuthCode;
             StartGame();
         }
         string slotsdirpath = Path.Combine(GameStorePath.GetStorePath(), "Saves");
@@ -494,7 +497,8 @@ namespace GameModeFortress
             File.WriteAllLines(slotspath, worlds);
         }
         public bool IsLoggedIn { get; set; }
-        public string LoginName { get { return User; } set { User = value; } }
+        public string LoginName { get { return connectdata.Username; } set { connectdata.Username = value; } }
+        public string LoginPassword { get; set; }
         public void DeleteWorld(int worldId)
         {
             string name = "default";
@@ -505,6 +509,18 @@ namespace GameModeFortress
             name += MapManipulator.BinSaveExtension;
             File.Delete(Path.Combine(slotsdirpath, name));
             SetWorldOptions(worldId, "");
+        }
+        void LoadLogin()
+        {
+            logindatafile.Load();
+            if (logindatafile.Password != "")
+            {
+                LoginAccount(logindatafile.LoginName, logindatafile.Password);
+            }
+            else if (logindatafile.LoginName != "")
+            {
+                LoginGuest(logindatafile.LoginName);
+            }
         }
     }
     public interface IResetMap
@@ -537,10 +553,10 @@ namespace GameModeFortress
                     {
                         throw new Exception("Invalid game mode: " + mode);
                     }
-                    p.GameUrl = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    p.connectdata.Ip = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
                     int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
-                    p.GameUrl += ":" + port;
-                    p.User = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                    p.connectdata.Port = port;
+                    p.connectdata.Username = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
                 }
             }
             else

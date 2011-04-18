@@ -9,9 +9,12 @@ namespace ManicDigger
 {
     public class LoginData
     {
-        public string serveraddress;
-        public int port;
-        public string mppass;
+        public string ServerAddress;
+        public int Port;
+        public string AuthCode; //Md5(private server key + player name)
+
+        public bool PasswordCorrect;
+        public bool ServerCorrect;
     }
     public interface ILoginClient
     {
@@ -25,6 +28,64 @@ namespace ManicDigger
             return null;
         }
         #endregion
+    }
+    public class LoginClientManicDigger : ILoginClient
+    {
+        public string LoginUrl = "http://fragmer.net/md/login.php";
+        public LoginData Login(string username, string password, string publicServerKey)
+        {
+            StringWriter sw = new StringWriter();//&salt={4}
+            string requestString = String.Format("username={0}&password={1}&server={2}"
+                , username, password, publicServerKey);
+
+            var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
+            request.Method = "POST";
+            request.Timeout = 15000; // 15s timeout
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
+
+            byte[] formData = Encoding.ASCII.GetBytes(requestString);
+            request.ContentLength = formData.Length;
+
+            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(formData, 0, formData.Length);
+                requestStream.Flush();
+            }
+
+            WebResponse response = request.GetResponse();
+
+            string responseText = null;
+            using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+            {
+                responseText = sr.ReadToEnd();
+            }
+
+            request.Abort();
+            LoginData data = new LoginData();
+            //Problem with current login.php: when both password and serverKey are incorrect then
+            // response will be just "Wrong server" and won't contain "Wrong username".
+            //Workaround: For checking password correctness
+            //provide a good publicServerKey - some server from xml.php.
+            data.PasswordCorrect = !(responseText.Contains("Wrong username") || responseText.Contains("Incorrect username"));
+            data.ServerCorrect = !responseText.Contains("server");
+            StringReader sr2 = new StringReader(responseText);
+            try
+            {
+                string authcode = sr2.ReadLine();
+                string ip = sr2.ReadLine();
+                string port = sr2.ReadLine();
+                data.AuthCode = authcode;
+                data.ServerAddress = ip;
+                data.Port = int.Parse(port);
+            }
+            catch
+            {
+            }
+            return data;
+        }
     }
     public class ServerInfo
     {
@@ -82,7 +143,7 @@ namespace ManicDigger
             string serveraddress = ReadValue(html.Substring(html.IndexOf("\"server\""), 40));
             string port = ReadValue(html.Substring(html.IndexOf("\"port\""), 40));
             string mppass = ReadValue(html.Substring(html.IndexOf("\"mppass\""), 80));
-            return new LoginData() { serveraddress = serveraddress, port = int.Parse(port), mppass = mppass };
+            return new LoginData() { ServerAddress = serveraddress, Port = int.Parse(port), AuthCode = mppass };
         }
         private string LoginAndReadPage(string username, string password, string gameurl)
         {
