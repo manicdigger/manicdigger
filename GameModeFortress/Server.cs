@@ -1771,7 +1771,7 @@ namespace ManicDiggerServer
             if (execute)
             {
                 int tiletype = cmd.Mode == (int)BlockSetMode.Create ?
-                    (byte)cmd.BlockType : SpecialBlockId.Empty;
+                    (int)cmd.BlockType : SpecialBlockId.Empty;
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, tiletype);
             }
             return true;
