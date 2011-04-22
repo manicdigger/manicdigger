@@ -532,7 +532,7 @@ namespace GameModeFortress
         [STAThread]
         public static void Main(string[] args)
         {
-            new CrashReporter().Start(Start, args);
+            new CrashReporter().Start(delegate { Start(args); });
         }
         private static void Start(string[] args)
         {

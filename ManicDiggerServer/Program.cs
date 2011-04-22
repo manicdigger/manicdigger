@@ -16,7 +16,7 @@ namespace ManicDiggerServer
             ServerProgram server = new ServerProgram();
             server.d_Exit = new GameExitDummy();
             ServerProgram.Public = true;
-            server.Start();
+            new CrashReporter().Start(server.Start);
         }
     }
 }

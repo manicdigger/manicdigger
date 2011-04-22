@@ -80,14 +80,13 @@ namespace ManicDigger
     }
     public class CrashReporter
     {
-        public delegate void Main(string[] args);
-        public void Start(Main main, string[] args)
+        public void Start(System.Threading.ThreadStart start)
         {
             if (!Debugger.IsAttached)
             {
                 try
                 {
-                    main(args);
+                    start();
                 }
                 catch (Exception e)
                 {
@@ -96,7 +95,7 @@ namespace ManicDigger
             }
             else
             {
-                main(args);
+                start();
             }
         }
         public static string gamepathcrash = GameStorePath.GetStorePath();
