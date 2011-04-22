@@ -74,6 +74,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="ServerConfig.cs" />
     <Compile Include="ServerMap.cs" />
+    <Compile Include="ServerProgram.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
