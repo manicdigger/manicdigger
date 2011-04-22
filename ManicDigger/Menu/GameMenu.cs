@@ -314,7 +314,7 @@ namespace GameMenu
         }
         public void AddCaption(IForm form, string text)
         {
-            form.Widgets.Add(new Widget() { Text = text, FontSize = 48, Rect = new RectangleF(ConstWidth / 2 - 430 * 1.5f / 2, 10, 1024 * 1.5f, 512 * 1.5f) });
+            form.Widgets.Add(new Widget() { Text = text, FontSize = 48, Rect = new RectangleF(ConstWidth / 2 - 430 * 1.5f / 2, 10, 1024 * 1.5f, 100) });
         }
         public void AddBackground(List<Widget> widgets)
         {
