@@ -36,9 +36,9 @@ namespace GameMenu
                         break;
                     }
                     var s = servers[serverid];
-                    AddListboxRow(new string[] { s.Name, s.Users.ToString(), s.Max.ToString(), s.Ip, s.Version },
+                    AddListboxRow(new string[] { Trim(s.Name, 36), s.Users.ToString(), s.Max.ToString(), s.Ip, Trim(s.Version, 18) },
                         50, 350 + i * 100, columnWidths, serverid, Color.White);
-                    AddListboxRow(new string[] { s.Players },
+                    AddListboxRow(new string[] { Trim(s.Players, 70) },
                         50, 350 + i * 100 + 50, columnWidths, serverid, Color.Gray);
                 }
             }
@@ -149,6 +149,15 @@ namespace GameMenu
                 Text = "Cancel",
                 Click = menu.FormMainMenu,
             });
+        }
+        private string Trim(string s, int length)
+        {
+            string dots = " (...)";
+            if (s.Length > length - dots.Length)
+            {
+                s = s.Substring(0, length - dots.Length) + dots;
+            }
+            return s;
         }
         Widget refreshingLabel;
         Widget serverListErrorWidget;
