@@ -28,13 +28,13 @@ Source: "output\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs create
 
 [Icons]
 Name: "{group}\{cm:UninstallProgram,Manic Digger}"; Filename: "{uninstallexe}"
-Name: "{group}\Manic Digger"; Filename: "{app}\Start.exe"
+Name: "{group}\Manic Digger"; Filename: "{app}\GameModeFortress.exe"
 
 [Registry]
 Root: HKCR; Subkey: ".mdlink"; ValueType: string; ValueName: ""; ValueData: "ManicDigger"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "ManicDigger"; ValueType: string; ValueName: ""; ValueData: "Manic Digger multiplayer link"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "ManicDigger\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\start.EXE,0"
-Root: HKCR; Subkey: "ManicDigger\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\start.EXE"" ""%1"""
+Root: HKCR; Subkey: "ManicDigger\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\GameModeFortress.exe,0"
+Root: HKCR; Subkey: "ManicDigger\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\GameModeFortress.exe"" ""%1"""
 
 
 
