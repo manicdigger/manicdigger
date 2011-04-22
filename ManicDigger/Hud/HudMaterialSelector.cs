@@ -31,7 +31,7 @@ namespace ManicDigger.Gui
             }
             d_GameWindow.d_The3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                 xcenter(singlesize * 10) + d_GameWindow.activematerial * singlesize, d_ViewportSize.Height - 100,
-                d_GameWindow.NextPowerOfTwo((uint)singlesize), d_GameWindow.NextPowerOfTwo((uint)singlesize));
+                BitTools.NextPowerOfTwo((uint)singlesize), BitTools.NextPowerOfTwo((uint)singlesize));
             if (d_GameWindow.ENABLE_FINITEINVENTORY)
             {
                 int inventoryload = 0;

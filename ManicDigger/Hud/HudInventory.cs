@@ -141,7 +141,7 @@ namespace ManicDigger.Gui
                 d_W.d_The3d.Draw2dBitmapFile(Path.Combine("gui", "activematerial.png"),
                     xcenter(inventorysinglesize * inventorysize) + inventoryselectedx * inventorysinglesize,
                     ycenter(inventorysinglesize * inventorysize) + inventoryselectedy * inventorysinglesize,
-                    d_W.NextPowerOfTwo((uint)inventorysinglesize), d_W.NextPowerOfTwo((uint)inventorysinglesize));
+                    BitTools.NextPowerOfTwo((uint)inventorysinglesize), BitTools.NextPowerOfTwo((uint)inventorysinglesize));
             }
             d_W.DrawMaterialSelector();
         }

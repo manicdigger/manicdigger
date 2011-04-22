@@ -1755,7 +1755,7 @@ namespace ManicDigger
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = new Box3D(0, 0, 0, BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
 
@@ -1889,17 +1889,6 @@ namespace ManicDigger
                 return 0.5f;
             }
             return 1;
-        }
-        public uint NextPowerOfTwo(uint x)
-        {
-            x--;
-            x |= x >> 1;  // handle  2 bit numbers
-            x |= x >> 2;  // handle  4 bit numbers
-            x |= x >> 4;  // handle  8 bit numbers
-            x |= x >> 8;  // handle 16 bit numbers
-            x |= x >> 16; // handle 32 bit numbers
-            x++;
-            return x;
         }
         private void OnPick(BlockPosSide pick0)
         {
@@ -2265,7 +2254,7 @@ namespace ManicDigger
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = new Box3D(0, 0, 0, BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
             pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
             if (pick2.Count > 0)

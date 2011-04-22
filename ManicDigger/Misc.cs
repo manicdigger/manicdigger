@@ -67,6 +67,33 @@ namespace ManicDigger
             return Color.FromArgb(A, R, G, B);
         }
     }
+    public class BitTools
+    {
+        public static bool IsPowerOfTwo(uint x)
+        {
+            return (
+              x == 1 || x == 2 || x == 4 || x == 8 || x == 16 || x == 32 ||
+              x == 64 || x == 128 || x == 256 || x == 512 || x == 1024 ||
+              x == 2048 || x == 4096 || x == 8192 || x == 16384 ||
+              x == 32768 || x == 65536 || x == 131072 || x == 262144 ||
+              x == 524288 || x == 1048576 || x == 2097152 ||
+              x == 4194304 || x == 8388608 || x == 16777216 ||
+              x == 33554432 || x == 67108864 || x == 134217728 ||
+              x == 268435456 || x == 536870912 || x == 1073741824 ||
+              x == 2147483648);
+        }
+        public static uint NextPowerOfTwo(uint x)
+        {
+            x--;
+            x |= x >> 1;  // handle  2 bit numbers
+            x |= x >> 2;  // handle  4 bit numbers
+            x |= x >> 4;  // handle  8 bit numbers
+            x |= x >> 8;  // handle 16 bit numbers
+            x |= x >> 16; // handle 32 bit numbers
+            x++;
+            return x;
+        }
+    }
     public static class Interpolation
     {
         public static FastColor InterpolateColor(float progress, params FastColor[] colors)
