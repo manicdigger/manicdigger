@@ -19,7 +19,7 @@ namespace GameMenu
             {
                 "Single-player",
                 "Join multiplayer",
-                "Start multiplayer server",
+                //"Start multiplayer server",
                 //"Game options",
                 "Exit",
             };
@@ -27,7 +27,7 @@ namespace GameMenu
                 {
                     menu.FormSelectSinglePlayerWorld,
                     menu.FormJoinMultiplayer,
-                    menu.FormStartServer,
+                    //menu.FormStartServer,
                     //menu.FormGameOptions,
                     menu.Exit,
                 };
