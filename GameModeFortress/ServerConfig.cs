@@ -35,6 +35,10 @@ namespace GameModeFortress
         public List<string> BannedUsers { get; set; }
         [XmlArrayItem(ElementName = "IP")]
         public List<string> BannedIPs { get; set; }
+        [XmlArrayItem(ElementName = "Admin")]
+        public List<string> Admins { get; set; }  // AutoAdmin
+        [XmlArrayItem(ElementName = "Builder")]
+        public List<string> Builders { get; set; }  // AutoAdmin
 
         /// <summary>
         /// Determines if an ip address has been banned
@@ -61,6 +65,28 @@ namespace GameModeFortress
             return false;
         }
 
+        public bool IsAutoAdmin(string username)
+        {
+            foreach (string Adminuser in this.Admins)
+            {
+                if (username.Equals(Adminuser, StringComparison.InvariantCulture))
+                    return true;
+            }
+            return false;
+       }
+
+        public bool IsAutoBuilder(string username)
+        {
+            foreach (string Builderuser in this.Builders)
+            {
+                if (username.Equals(Builderuser, StringComparison.InvariantCulture))
+                    return true;
+            }
+            return false;
+        }
+
+        public string DefaultPlayerName = "Player name?"; //invalid name. it should appear in default xml.
+
         public ServerConfig()
         {
             //Set Defaults
@@ -81,6 +107,8 @@ namespace GameModeFortress
             this.MapSizeZ = 128;
             this.BannedIPs = new List<string>();
             this.BannedUsers = new List<string>();
+            this.Admins = new List<string>();
+            this.Builders = new List<string>();
         }
     }
 }

@@ -262,7 +262,11 @@ namespace ManicDiggerServer
 
             //Check to see if config has been initialized
             if (config == null)
+            {
                 config = new ServerConfig();
+            }
+            if (config.Admins.Count == 0) { config.Admins.Add(config.DefaultPlayerName); }
+            if (config.Builders.Count == 0) { config.Builders.Add(config.DefaultPlayerName); }
 
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, config);
@@ -1179,6 +1183,9 @@ namespace ManicDiggerServer
                         username = "~" + username;
                     }
 
+                    if (config.Builders.Contains(username)) { clients[clientid].Rank = Rank.Builder; }
+                    if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }                    
+
                     clients[clientid].playername = username;
                     break;
                 case ClientPacketId.RequestBlob:
@@ -1318,7 +1325,7 @@ namespace ManicDiggerServer
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     string msg = string.Join(" ", ss, 2, ss.Length - 2);
-                                    SendMessage(k.Key, "msg " + k.Value.playername + ": " + msg);
+                                    SendMessage(k.Key, "msg " + c.playername + ": " + msg);
                                     messageSent = true;
                                     break;
                                 }
@@ -1331,25 +1338,60 @@ namespace ManicDiggerServer
                         }
                         break;
                     }
-                    else if (packet.Message.Message.StartsWith("/op"))
+
+                    else if (packet.Message.Message.StartsWith("/op")
+                        || packet.Message.Message.StartsWith("/rank"))
                     {
-                        if (!clients[clientid].CanBuild)
+                        if (clients[clientid].Rank != Rank.Admin)
                         {
-                            SendMessage(clientid, colorError + "You can't op others because you are not an op.");
+                            SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use rank.");
                             break;
                         }
                         string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        foreach(var k in clients)
+                        if (ss.Length < 2)
                         {
-                            if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                            SendMessage(clientid, colorError + "Usage: /op [username] [guest/builder/admin].");
+                            break;
+                        }
+                        string argName = ss[1];
+                        foreach (var k in clients)
+                        {
+                            if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                k.Value.CanBuild = true;
-                                SendMessageToAll(colorSuccess + k.Value.playername + " can now build.");
-                                SendMessage(k.Key, colorSuccess + "To build, type /login " + config.BuildPassword);
+                                string argRank = k.Value.Rank == Rank.Admin ? "admin" : "builder"; //don't remove admin with "/op user"
+                                if (ss.Length > 2) { argRank = ss[2]; }
+                                Rank r = Rank.Builder;
+                                if (argRank.Equals("guest", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Guest; }
+                                if (argRank.Equals("admin", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Admin; }
+
+                                
+                                k.Value.Rank = r;
+                                string name = k.Value.playername;
+                                if (r == Rank.Admin)
+                                {
+                                    if (!config.Admins.Contains(name)) { config.Admins.Add(name); }
+                                    config.Builders.Remove(name);
+                                    SendMessage(k.Key, "Type /help to see additional commands for administrators.");
+                                }
+                                else if (r == Rank.Builder)
+                                {
+                                    if (!config.Builders.Contains(name)) { config.Builders.Add(name); }
+                                    config.Admins.Remove(name);
+                                }
+                                else if (r == Rank.Guest)
+                                {
+                                    config.Builders.Remove(name);
+                                    config.Admins.Remove(name);
+                                }
+                                SaveConfig();
+
+                                SendMessageToAll(colorSuccess + "New rank for player "
+                                    + k.Value.playername + ": " + argRank + ".");
                             }
                         }
                         break;
                     }
+                    //for servers without global name verification
                     else if (packet.Message.Message.StartsWith("/login"))
                     {
                         if (string.IsNullOrEmpty(config.BuildPassword))
@@ -1357,36 +1399,24 @@ namespace ManicDiggerServer
                             break;
                         }
                         if (packet.Message.Message.Replace("/login ", "")
-                            .Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
+                         .Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            clients[clientid].CanBuild = true;
-                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
-                        }
-                        else
-                        {
-                            SendMessage(clientid, colorError + "Invalid password.");
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/admin"))
-                    {
-                        if (string.IsNullOrEmpty(config.AdminPassword))
-                        {
-                            break;
-                        }
-                        if (packet.Message.Message.Replace("/admin ", "")
-                            .Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            clients[clientid].IsAdmin = true;
-                            clients[clientid].CanBuild = true;
+                            clients[clientid].Rank = Rank.Admin;
                             SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
                             SendMessage(clientid, "Type /help to see additional commands for administrators.");
                         }
+                        else if (packet.Message.Message.Replace("/login ", "")
+                            .Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            clients[clientid].Rank = Rank.Builder;
+                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
+                        }
                         else
                         {
                             SendMessage(clientid, colorError + "Invalid password.");
                         }
                     }
-                   
+
                     else if (packet.Message.Message.StartsWith("/welcome"))
                     {
                         if (!clients[clientid].IsAdmin)
@@ -1398,7 +1428,7 @@ namespace ManicDiggerServer
                             //Monaiz
                             int messageStart = packet.Message.Message.IndexOf(" ");
                             config.WelcomeMessage = packet.Message.Message.Substring(messageStart);
-                            SendMessageToAll("New Welcome Message Set: " + colorSuccess + config.WelcomeMessage); 
+                            SendMessageToAll("New Welcome Message Set: " + colorSuccess + config.WelcomeMessage);
                             SaveConfig();
                             break;
                         }
@@ -1504,8 +1534,6 @@ namespace ManicDiggerServer
                     else if (packet.Message.Message.StartsWith("/help"))
                     {
                         SendMessage(clientid, colorHelp + "/login [buildpassword]");
-                        SendMessage(clientid, colorHelp + "/admin [adminpassword]");
-                        SendMessage(clientid, colorHelp + "/op [username]");
                         SendMessage(clientid, colorHelp + "/msg [username] text");
                         if (clients[clientid].IsAdmin)
                         {
@@ -1514,6 +1542,7 @@ namespace ManicDiggerServer
                             SendMessage(clientid, colorHelp + "/ban [username]");
                             SendMessage(clientid, colorHelp + "/banip [username]");
                             SendMessage(clientid, colorHelp + "/list");
+                            SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
                         }
                     }
                     else if (packet.Message.Message.StartsWith("."))
@@ -2098,6 +2127,12 @@ namespace ManicDiggerServer
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
+        public enum Rank
+        {
+            Guest,
+            Builder,
+            Admin, //Does this user have the server password and can ban users?
+        }
         class Client
         {
             public Socket socket;
@@ -2113,9 +2148,10 @@ namespace ManicDiggerServer
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public List<byte[]> blobstosend = new List<byte[]>();
-            public bool CanBuild = false;
-            public bool IsAdmin = false; //Does this user have the server password and can ban users?
+            public Rank Rank = Rank.Guest;
             public bool IsGuest { get { return playername.StartsWith("~"); } }
+            public bool IsAdmin { get { return Rank == Rank.Admin; } }
+            public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
     }
