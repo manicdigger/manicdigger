@@ -22,10 +22,6 @@ namespace GameModeFortress
 {
     public class ManicDiggerProgram2 : ICurrentShadows, IResetMap, Game
     {
-        public ManicDiggerProgram2()
-        {
-            connectdata.Username = "gamer";
-        }
         ManicDiggerGameWindow w;
         AudioOpenAl audio = new AudioOpenAl();
         //bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
@@ -33,14 +29,25 @@ namespace GameModeFortress
         {
             LoadLogin();
             ManicDiggerProgram.exit = exit;
-            StartMenu();
+            if (connectdata.Ip == null)
+            {
+                StartMenu();
+            }
+            else
+            {
+                StartGame();
+            }
             //if (exit.exit) { return; }
             //StartGame();
         }
         private void StartGame()
         {
             w = new ManicDiggerGameWindow();
-            //maingamewindow = new MainGameWindow(w);  //done in StartMenu()
+            if (maingamewindow == null)
+            {
+                //wasn't done in StartMenu().
+                maingamewindow = new MainGameWindow(w);
+            }
             maingamewindow.mywindow = w;
 
             w.d_MainWindow = maingamewindow;
@@ -520,6 +527,10 @@ namespace GameModeFortress
             else if (logindatafile.LoginName != "")
             {
                 LoginGuest(logindatafile.LoginName);
+            }
+            else
+            {
+                LoginGuest("gamer");
             }
         }
     }
