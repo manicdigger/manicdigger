@@ -2027,7 +2027,7 @@ namespace ManicDigger
             float density = 0.3f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             float[] fogColor;
-            if (SkySphereNight)
+            if (SkySphereNight && d_Shadows.GetType() != typeof(ShadowsSimple))
             {
                 fogColor = new[] { 0f, 0f, 0f, 1.0f };
             }
