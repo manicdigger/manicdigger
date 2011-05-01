@@ -7,6 +7,7 @@ using ManicDigger;
 using System.IO;
 using ManicDiggerServer;
 using ManicDigger.MapTools.Generators;
+using System.Diagnostics;
 
 namespace GameModeFortress
 {
@@ -35,7 +36,9 @@ namespace GameModeFortress
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.d_Map = map;
             server.d_Generator = generator;
-            var getfile = new GetFilePath(new[] { "mine", "minecraft" });
+            string datapath = Debugger.IsAttached ?
+                Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data") : "data";
+            var getfile = new GetFilePath(datapath);
             var data = new GameDataCsv();
             data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
                 File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
