@@ -1206,12 +1206,6 @@ namespace ManicDiggerServer
                     clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                     clients[clientid].PositionMul32GlZ = position.z;
 
-                    Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
-                    foreach (var v in ChunksAroundPlayer(playerpos))
-                    {
-                        d_Map.GetBlock(v.x, v.y, v.z); //force load
-                    }
-                    ChunkSimulation();
                     string username1 = clients[clientid].playername;
                     SendMessageToAll(string.Format("Player {0} joins.", username1));
                     SendMessage(clientid, colorSuccess + config.WelcomeMessage);
@@ -2010,12 +2004,29 @@ namespace ManicDiggerServer
                 }
                 SendBlobFinalize(clientid);
             }
+
+            SendLevelProgress(clientid, 0, "Generating world...");
+
+            Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
+            var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
+            for (int i = 0; i < around.Count; i++)
+            {
+                var v = around[i];
+                d_Map.GetBlock(v.x, v.y, v.z); //force load
+                if (i % 10 == 0)
+                {
+                    SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
+                }
+            }
+            ChunkSimulation();
+
             List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
             int sent = 0;
             for (int i = 0; i < unknown.Count; i++)
             {
                 sent += NotifyMapChunks(clientid, 5);
                 SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
+                if (sent >= unknown.Count) { break; }
             }
             SendLevelFinalize(clientid);
         }
