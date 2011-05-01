@@ -23,4 +23,5 @@ del output\*vshost.exe
 REM copy menu.mdxs.gz output\menu.mdxs.gz
 REM copy WorldGenerator.cs output\WorldGenerator.cs
 copy credits.html output\credits.html
+copy OpenTK.dll.config output\OpenTK.dll.config
 REM pause
