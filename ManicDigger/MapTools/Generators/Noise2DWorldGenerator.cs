@@ -58,6 +58,7 @@ namespace ManicDigger.MapTools.Generators
         /// <returns></returns>
         public override byte[, ,] GetChunk(int x, int y, int z)
         {
+            this.waterlevel = this.WaterLevel;
             _heightcache = new byte[this.ChunkSize, this.ChunkSize];
             x = x * this.ChunkSize;
             y = y * this.ChunkSize;
@@ -123,6 +124,8 @@ namespace ManicDigger.MapTools.Generators
 
         #endregion
 
+        int waterlevel;
+
         #region Chunk generation helper methods
     
         /// <summary>
@@ -139,7 +142,7 @@ namespace ManicDigger.MapTools.Generators
             int spec = special;
             int tile = WorldGeneratorTools.TileIdStone;
 
-            if (z > (int)this.WaterLevel)
+            if (z > waterlevel)
             {
                 if (spec == 0)
                 {
