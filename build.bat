@@ -1,7 +1,7 @@
 del /s /q output
 mkdir output
 
-copy oalinst.exe output\
+copy OpenAL32.dll output\
 xcopy /s data output\data\
 
 REM Dll
