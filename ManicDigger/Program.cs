@@ -25,21 +25,36 @@ namespace ManicDigger
     }
     public class GetFilePath : IGetFilePath
     {
-        public GetFilePath(string datapath)
+        public GetFilePath(IEnumerable<string> datapaths)
         {
-            this.DataPath = datapath;
+            this.DataPaths = new List<string>(datapaths).ToArray();
         }
-        public string DataPath;
+        public string[] DataPaths;
         Dictionary<string, string> cache = new Dictionary<string, string>();
         public string GetFile(string filename)
         {
             if (!cache.ContainsKey(filename))
             {
-                foreach (string s in Directory.GetFiles(DataPath, "*.*", SearchOption.AllDirectories))
-                {
-                    FileInfo f = new FileInfo(s);
-                    cache[f.Name] = s;
-                }
+				foreach (string path in DataPaths)
+				{
+					try
+					{
+						foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
+						{
+							try
+							{
+								FileInfo f = new FileInfo(s);
+								cache[f.Name] = s;
+							}
+							catch
+							{
+							}
+						}
+					}
+					catch
+					{
+					}
+				}
             }
             for (int i = 0; i < 2; i++)
             {

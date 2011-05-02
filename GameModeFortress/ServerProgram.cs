@@ -36,9 +36,8 @@ namespace GameModeFortress
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.d_Map = map;
             server.d_Generator = generator;
-            string datapath = Debugger.IsAttached ?
-                Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data") : "data";
-            var getfile = new GetFilePath(datapath);
+			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+            var getfile = new GetFilePath(datapaths);
             var data = new GameDataCsv();
             data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
                 File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));

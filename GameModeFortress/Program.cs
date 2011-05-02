@@ -27,9 +27,8 @@ namespace GameModeFortress
         //bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
-            string datapath = Debugger.IsAttached?
-                Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data") : "data";
-            getfile = new GetFilePath(datapath);
+			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+            getfile = new GetFilePath(datapaths);
             LoadLogin();
             ManicDiggerProgram.exit = exit;
             if (connectdata.Ip == null)
