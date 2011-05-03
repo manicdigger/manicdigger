@@ -19,7 +19,7 @@ namespace GameModeFortress
     public class PacketClientRequestBlob
     {
         [ProtoMember(1, IsRequired = false)]
-        public List<byte[]> RequestBlobMd5;
+		public List<byte[]> RequestBlobMd5; //todo, currently ignored.
     }
     [ProtoContract]
     public class PacketClientSetBlock
@@ -67,9 +67,9 @@ namespace GameModeFortress
         [ProtoMember(3, IsRequired = false)]
         public string ServerMotd;
         [ProtoMember(4, IsRequired = false)]
-        public List<byte[]> UsedBlobsMd5;
+		public List<byte[]> UsedBlobsMd5; //todo, currently ignored.
         [ProtoMember(5, IsRequired = false)]
-        public byte[] TerrainTextureMd5;
+		public byte[] TerrainTextureMd5; //todo, currently ignored.
         [ProtoMember(6, IsRequired = false)]
         public bool DisallowFreemove;
         [ProtoMember(7, IsRequired = false)]
@@ -88,7 +88,9 @@ namespace GameModeFortress
     public class PacketServerBlobInitialize
     {
         [ProtoMember(1, IsRequired = false)]
-        public byte[] hash;
+		public byte[] hash; //todo, currently ignored.
+		[ProtoMember(2, IsRequired = false)]
+		public string name;
     }
     [ProtoContract]
     public class PacketServerBlobPart

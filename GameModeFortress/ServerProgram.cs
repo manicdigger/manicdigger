@@ -37,6 +37,8 @@ namespace GameModeFortress
             server.d_Map = map;
             server.d_Generator = generator;
 			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+			string[] datapathspublic = new[] { Path.Combine(datapaths[0], "public"), Path.Combine(datapaths[1], "public") };
+			server.PublicDataPaths = datapathspublic;
             var getfile = new GetFileStream(datapaths);
             var data = new GameDataCsv();
             data.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),

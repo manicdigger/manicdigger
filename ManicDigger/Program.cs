@@ -70,7 +70,11 @@ namespace ManicDigger
 
             throw new FileNotFoundException(filename);
         }
-    }
+		public void SetFile(string name, byte[] data)
+		{
+			cache[name] = data;
+		}
+	}
     public class CrashReporter
     {
         public void Start(System.Threading.ThreadStart start)

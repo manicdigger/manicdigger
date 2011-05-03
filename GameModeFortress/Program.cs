@@ -230,6 +230,7 @@ namespace GameModeFortress
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
             clientgame.d_TerrainTextures = terrainTextures;
+			clientgame.d_GetFile = getfile;
             terrainRenderer.d_IsChunkReady = dirtychunks;
             network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;

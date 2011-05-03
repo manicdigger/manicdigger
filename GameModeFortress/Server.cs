@@ -61,6 +61,7 @@ namespace ManicDiggerServer
         [Inject]
         public WaterFinite d_Water { get; set; }
         public bool LocalConnectionsOnly { get; set; }
+		public string[] PublicDataPaths = new string[0];
         public int singleplayerport = 25570;
         public Random rnd = new Random();
         public int SpawnPositionRandomizationRange = 96;
@@ -1190,17 +1191,7 @@ namespace ManicDiggerServer
                     clients[clientid].playername = username;
                     break;
                 case ClientPacketId.RequestBlob:
-                    List<byte[]> b = packet.RequestBlob.RequestBlobMd5;
-                    foreach (var bb in b)
-                    {
-                        foreach (byte[] used in UsedBlobs())
-                        {
-                            if (CompareByteArray(bb, used))
-                            {
-                                clients[clientid].blobstosend.Add(bb);
-                            }
-                        }
-                    }
+
                     Vector3i position = DefaultSpawnPosition();
                     clients[clientid].PositionMul32GlX = position.x;
                     clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
@@ -1980,27 +1971,67 @@ namespace ManicDiggerServer
             byte[] compressedchunk = d_NetworkCompression.Compress(ms.ToArray());
             return compressedchunk;
         }
+		struct PublicFile
+		{
+			public string Name;
+			public byte[] Data;
+		}
+		List<PublicFile> PublicFiles()
+		{
+			List<PublicFile> files = new List<PublicFile>();
+			foreach (string path in PublicDataPaths)
+			{
+				try
+				{
+					foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
+					{
+						try
+						{
+							FileInfo f = new FileInfo(s);
+							if ((f.Attributes & FileAttributes.Hidden) != 0)
+							{
+								continue;
+							}
+							//cache[f.Name] = File.ReadAllBytes(s);
+							files.Add(new PublicFile()
+							{
+								Name = f.Name,
+								Data = File.ReadAllBytes(s),
+							});
+						}
+						catch
+						{
+						}
+					}
+				}
+				catch
+				{
+				}
+			}
+			return files;
+		}
         int BlobPartLength = 1024 * 4;
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
-            var blobstosend = clients[clientid].blobstosend;
-            for (int i = 0; i < blobstosend.Count; i++)
-            {
-                byte[] hash = blobstosend[i];
-                SendBlobInitialize(clientid, hash);
-                byte[] blob = GetBlob(hash);
-                int totalsent = 0;
-                foreach (byte[] part in Parts(blob, BlobPartLength))
-                {
-                    SendLevelProgress(clientid,
-                        (int)(((float)i / blobstosend.Count
-                        + ((float)totalsent / blob.Length) / blobstosend.Count) * 100), "Downloading data...");
-                    SendBlobPart(clientid, part);
-                    totalsent += part.Length;
-                }
-                SendBlobFinalize(clientid);
-            }
+
+			List<PublicFile> files = PublicFiles();
+			for (int i = 0; i < files.Count; i++)
+			{
+				PublicFile f = files[i];
+				SendBlobInitialize(clientid, f.Name == "terrain.png" ? terrainTextureMd5 : new byte[16], f.Name);
+				byte[] blob = f.Data;
+				int totalsent = 0;
+				foreach (byte[] part in Parts(blob, BlobPartLength))
+				{
+					SendLevelProgress(clientid,
+						(int)(((float)i / files.Count
+						+ ((float)totalsent / blob.Length) / files.Count) * 100), "Downloading data...");
+					SendBlobPart(clientid, part);
+					totalsent += part.Length;
+				}
+				SendBlobFinalize(clientid);
+			}
 
             SendLevelProgress(clientid, 0, "Generating world...");
 
@@ -2044,9 +2075,9 @@ namespace ManicDiggerServer
                 i += curpartsize;
             }
         }
-        private void SendBlobInitialize(int clientid, byte[] hash)
+        private void SendBlobInitialize(int clientid, byte[] hash, string name)
         {
-            PacketServerBlobInitialize p = new PacketServerBlobInitialize() { hash = hash };
+            PacketServerBlobInitialize p = new PacketServerBlobInitialize() { hash = hash, name = name };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobInitialize, BlobInitialize = p }));
         }
         private void SendBlobPart(int clientid, byte[] data)
@@ -2074,47 +2105,23 @@ namespace ManicDiggerServer
             PacketServerLevelFinalize p = new PacketServerLevelFinalize() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelFinalize, LevelFinalize = p }));
         }
-        private void SendServerIdentification(int clientid)
-        {
-            PacketServerIdentification p = new PacketServerIdentification()
-            {
-                MdProtocolVersion = GameVersion.Version,
-                ServerName = config.Name,
-                ServerMotd = config.Motd,
-                UsedBlobsMd5 = UsedBlobs(),
-                TerrainTextureMd5 = GetTerrainTextureMd5(),
-                DisallowFreemove = !config.AllowFreemove,
-                MapSizeX = d_Map.MapSizeX,
-                MapSizeY = d_Map.MapSizeY,
-                MapSizeZ = d_Map.MapSizeZ,
-            };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
-        }
-        byte[] GetTerrainTextureMd5()
-        {
-            if (terrainTexture == null)
-            {
-                terrainTexture = MyStream.ReadAllBytes(d_GetFile.GetFile("terrain.png"));
-            }
-            if (terrainTextureMd5 == null)
-            {
-                terrainTextureMd5 = ComputeMd5(terrainTexture);
-            }
-            return terrainTextureMd5;
-        }
-        byte[] terrainTexture;
-        byte[] terrainTextureMd5;
-        public List<byte[]> UsedBlobs()
-        {
-            List<byte[]> l = new List<byte[]>();
-            l.Add(GetTerrainTextureMd5());
-            return l;
-        }
-        private byte[] GetBlob(byte[] hash)
-        {
-            //todo
-            return terrainTexture;
-        }
+		private void SendServerIdentification(int clientid)
+		{
+			PacketServerIdentification p = new PacketServerIdentification()
+			{
+				MdProtocolVersion = GameVersion.Version,
+				ServerName = config.Name,
+				ServerMotd = config.Motd,
+				UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
+				TerrainTextureMd5 = terrainTextureMd5,
+				DisallowFreemove = !config.AllowFreemove,
+				MapSizeX = d_Map.MapSizeX,
+				MapSizeY = d_Map.MapSizeY,
+				MapSizeZ = d_Map.MapSizeZ,
+			};
+			SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
+		}
+		byte[] terrainTextureMd5 { get { byte[] b = new byte[16]; b[0] = 1; return b; } }
         MD5 md5 = System.Security.Cryptography.MD5.Create();
         byte[] ComputeMd5(byte[] b)
         {
@@ -2142,6 +2149,11 @@ namespace ManicDiggerServer
             Builder,
             Admin, //Does this user have the server password and can ban users?
         }
+		public struct BlobToSend
+		{
+			public string Name;
+			public byte[] Data;
+		}
         public class Client
         {
             public Socket socket;
@@ -2156,7 +2168,7 @@ namespace ManicDiggerServer
             public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
-            public List<byte[]> blobstosend = new List<byte[]>();
+            //public List<byte[]> blobstosend = new List<byte[]>();
             public Rank Rank = Rank.Guest;
             public bool IsGuest { get { return playername.StartsWith("~"); } }
             public bool IsAdmin { get { return Rank == Rank.Admin; } }

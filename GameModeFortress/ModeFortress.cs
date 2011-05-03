@@ -96,6 +96,8 @@ namespace GameModeFortress
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
         public ManicDigger.Renderers.SunMoonRenderer d_SunMoonRenderer;
+		[Inject]
+		public GetFileStream d_GetFile;
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
@@ -739,6 +741,7 @@ namespace GameModeFortress
                     {
                         blobdownload = new MemoryStream();
                         blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
+						blobdownloadname = packet.BlobInitialize.name;
                         ((NetworkClientFortress)d_Network).ReceivedMapLength = 0; //todo
                     }
                     return true;
@@ -751,18 +754,22 @@ namespace GameModeFortress
                     return true;
                 case ServerPacketId.BlobFinalize:
                     {
-                        blobs[blobdownloadhash] = blobdownload.ToArray();
-                        blobdownload = null;
+						byte[] downloaded = blobdownload.ToArray();
                         if (ENABLE_PER_SERVER_TEXTURES || d_Viewport.Options.UseServerTextures)
                         {
                             if (blobdownloadhash == serverterraintexture)
                             {
-                                using (Bitmap bmp = new Bitmap(new MemoryStream(blobs[blobdownloadhash])))
+                                using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
                                 {
                                     d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
                                 }
                             }
                         }
+						if (blobdownloadname != null) // old servers
+						{
+							d_GetFile.SetFile(blobdownloadname, downloaded);
+						}
+						blobdownload = null;
                     }
                     return true;
                 case ServerPacketId.ServerIdentification:
@@ -784,8 +791,8 @@ namespace GameModeFortress
             return hex.Replace("-", "");
         }
         string blobdownloadhash;
+		string blobdownloadname;
         MemoryStream blobdownload;
-        Dictionary<string, byte[]> blobs = new Dictionary<string, byte[]>();
         #region ICurrentSeason Members
         public int CurrentSeason { get; set; }
         #endregion
