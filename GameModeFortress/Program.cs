@@ -127,8 +127,6 @@ namespace GameModeFortress
         {
             var getfile = this.getfile;
             var gamedata = new GameDataCsv();
-            gamedata.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
-				MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
@@ -155,6 +153,8 @@ namespace GameModeFortress
             network.d_NetworkPacketReceived = clientgame;
             network.d_Compression = compression;
             network.d_ResetMap = this;
+			network.d_GameData = gamedata;
+			network.d_GetFile = getfile;
             terrainRenderer.d_The3d = the3d;
             terrainRenderer.d_GetFile = getfile;
             terrainRenderer.d_Config3d = config3d;

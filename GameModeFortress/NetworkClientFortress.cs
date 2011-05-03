@@ -42,6 +42,10 @@ namespace GameModeFortress
         public IShadows d_Shadows;
         [Inject]
         public IResetMap d_ResetMap;
+		[Inject]
+		public GameDataCsv d_GameData;
+		[Inject]
+		public GetFileStream d_GetFile;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -324,6 +328,8 @@ namespace GameModeFortress
                     break;
                 case ServerPacketId.LevelFinalize:
                     {
+						d_GameData.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
+							MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")));
                         if (MapLoaded != null)
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });

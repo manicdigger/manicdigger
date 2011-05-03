@@ -587,9 +587,9 @@ namespace ManicDigger
             d_MainWindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
             d_MainWindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
             d_MainWindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
-            materialSlots = d_Data.DefaultMaterialSlots;
+            
             GL.Enable(EnableCap.Lighting);
-            SetAmbientLight(terraincolor);
+            //SetAmbientLight(terraincolor);
             GL.Enable(EnableCap.ColorMaterial);
             GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
             GL.ShadeModel(ShadingModel.Smooth);
@@ -808,7 +808,6 @@ namespace ManicDigger
             arguments = arguments.Trim();
             return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
         }
-        Queue<MethodInvoker> todo = new Queue<MethodInvoker>();
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -1163,9 +1162,9 @@ namespace ManicDigger
         {
             this.maploadingprogress = e;
         }
-        List<MethodInvoker> frametickmainthreadtodo = new List<MethodInvoker>();
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
+			materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
             d_Game.OnNewMap();
             d_Terrain.UpdateAllTiles();
@@ -1370,26 +1369,13 @@ namespace ManicDigger
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
             d_Game.OnNewFrame(e.Time);
-            while (todo.Count > 0)
-            {
-                lasttodo = DateTime.Now;
-                var task = todo.Dequeue();
-                task();
-            }
-            lock (frametickmainthreadtodo)
-            {
-                for (int i = 0; i < frametickmainthreadtodo.Count; i++)
-                {
-                    frametickmainthreadtodo[i].Invoke();
-                }
-                frametickmainthreadtodo.Clear();
-            }
             UpdateMousePosition();
             if (guistate == GuiState.Normal)
             {
                 UpdateMouseViewportControl(e);
             }
             d_Network.Process();
+			if (guistate == GuiState.MapLoading) { return; }
 
             bool angleup = false;
             bool angledown = false;
@@ -1907,121 +1893,127 @@ namespace ManicDigger
         //Vector3 oldplayerposition;
         public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
-        public void OnRenderFrame(FrameEventArgs e)
-        {
-            GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
-            if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
-            //..base.OnRenderFrame(e);
-            if (d_Config3d.viewdistance < 256)
-            {
-                SetFog();
-            }
-            else
-            {
-                GL.Disable(EnableCap.Fog);
-            }
-            //Sleep is required in Mono for running the terrain background thread.
-            if (IsMono)
-            {
-                Application.DoEvents();
-                Thread.Sleep(0);
-            }
-            var deltaTime = e.Time;
+		public void OnRenderFrame(FrameEventArgs e)
+		{
+			GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
 
-            accumulator += deltaTime;
-            double dt = 1d / 75;
+			//Sleep is required in Mono for running the terrain background thread.
+			if (IsMono)
+			{
+				Application.DoEvents();
+				Thread.Sleep(0);
+			}
+			var deltaTime = e.Time;
 
-            while (accumulator >= dt)
-            {
-                FrameTick(new FrameEventArgs(dt));
-                t += dt;
-                accumulator -= dt;
-            }
-            if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
-            {
-                activematerial -= Mouse.WheelDelta;
-                activematerial = activematerial % 10;
-                while (activematerial < 0)
-                {
-                    activematerial += 10;
-                }
-            }
-            SetAmbientLight(terraincolor);
-            //const float alpha = accumulator / dt;
-            //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
-            UpdateTitleFps(e);
+			accumulator += deltaTime;
+			double dt = 1d / 75;
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+			while (accumulator >= dt)
+			{
+				FrameTick(new FrameEventArgs(dt));
+				t += dt;
+				accumulator -= dt;
+			}
+	
+			if (guistate == GuiState.MapLoading) { goto draw2d; }
 
-            GL.BindTexture(TextureTarget.Texture2D, d_TerrainTextures.terrainTexture);
+			if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
+			//..base.OnRenderFrame(e);
+			if (d_Config3d.viewdistance < 256)
+			{
+				SetFog();
+			}
+			else
+			{
+				GL.Disable(EnableCap.Fog);
+			}
 
-            GL.MatrixMode(MatrixMode.Modelview);
+			if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
+			{
+				activematerial -= Mouse.WheelDelta;
+				activematerial = activematerial % 10;
+				while (activematerial < 0)
+				{
+					activematerial += 10;
+				}
+			}
+			SetAmbientLight(terraincolor);
+			//const float alpha = accumulator / dt;
+			//Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
+			UpdateTitleFps(e);
 
-            Matrix4 camera;
-            if (overheadcamera)
-            {
-                camera = OverheadCamera();
-            }
-            else
-            {
-                camera = FppCamera();
-            }
-            GL.LoadMatrix(ref camera);
-            d_The3d.ModelViewMatrix = camera;
+			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
+			GL.BindTexture(TextureTarget.Texture2D, d_TerrainTextures.terrainTexture);
 
-            bool drawgame = guistate != GuiState.MapLoading;
-            if (drawgame)
-            {
-                DrawSkySphere();
-                d_SunMoonRenderer.Draw((float)e.Time);
-                d_Terrain.Draw();
-                particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
-                if (ENABLE_DRAW2D)
-                {
-                    DrawLinesAroundSelectedCube(pickcubepos);
-                }
+			GL.MatrixMode(MatrixMode.Modelview);
 
-                DrawCharacters((float)e.Time);
-                if (ENABLE_DRAW_TEST_CHARACTER)
-                {
-                    d_CharacterRenderer.DrawCharacter(a, d_Game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
-                }
-                DrawPlayers((float)e.Time);
-                foreach (IModelToDraw m in d_Game.Models)
-                {
-                    if (m.Id == selectedmodelid)
-                    {
-                        //GL.Color3(Color.Red);
-                    }
-                    m.Draw((float)e.Time);
-                    //GL.Color3(Color.White);
-                    /*
-                    GL.Begin(BeginMode.Triangles);
-                    foreach (var tri in m.TrianglesForPicking)
-                    {
-                        GL.Vertex3(tri.PointA);
-                        GL.Vertex3(tri.PointB);
-                        GL.Vertex3(tri.PointC);
-                    }
-                    GL.End();
-                    */
-                }
-                if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
-                {
-                    d_Weapon.DrawWeapon((float)e.Time);
-                }
-            }
-            SetAmbientLight(Color.White);
-            Draw2d();
-            DrawPlayerNames();
-            
-            //OnResize(new EventArgs());
-            d_MainWindow.SwapBuffers();
-            mouseleftclick = mouserightclick = false;
-            mouseleftdeclick = mouserightdeclick = false;
-        }
+			Matrix4 camera;
+			if (overheadcamera)
+			{
+				camera = OverheadCamera();
+			}
+			else
+			{
+				camera = FppCamera();
+			}
+			GL.LoadMatrix(ref camera);
+			d_The3d.ModelViewMatrix = camera;
+
+			if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
+
+			bool drawgame = guistate != GuiState.MapLoading;
+			if (drawgame)
+			{
+				DrawSkySphere();
+				d_SunMoonRenderer.Draw((float)e.Time);
+				d_Terrain.Draw();
+				particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
+				if (ENABLE_DRAW2D)
+				{
+					DrawLinesAroundSelectedCube(pickcubepos);
+				}
+
+				DrawCharacters((float)e.Time);
+				if (ENABLE_DRAW_TEST_CHARACTER)
+				{
+					d_CharacterRenderer.DrawCharacter(a, d_Game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
+				}
+				DrawPlayers((float)e.Time);
+				foreach (IModelToDraw m in d_Game.Models)
+				{
+					if (m.Id == selectedmodelid)
+					{
+						//GL.Color3(Color.Red);
+					}
+					m.Draw((float)e.Time);
+					//GL.Color3(Color.White);
+					/*
+					GL.Begin(BeginMode.Triangles);
+					foreach (var tri in m.TrianglesForPicking)
+					{
+						GL.Vertex3(tri.PointA);
+						GL.Vertex3(tri.PointB);
+						GL.Vertex3(tri.PointC);
+					}
+					GL.End();
+					*/
+				}
+				if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
+				{
+					d_Weapon.DrawWeapon((float)e.Time);
+				}
+			}
+		draw2d:
+			SetAmbientLight(Color.White);
+			Draw2d();
+			DrawPlayerNames();
+
+			//OnResize(new EventArgs());
+			d_MainWindow.SwapBuffers();
+			mouseleftclick = mouserightclick = false;
+			mouseleftdeclick = mouserightdeclick = false;
+		}
         private void SetFog()
         {
             float density = 0.3f;
