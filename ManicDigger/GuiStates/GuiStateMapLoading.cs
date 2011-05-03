@@ -17,7 +17,7 @@ namespace ManicDigger
         }
         private void MapLoadingDraw()
         {
-            d_The3d.Draw2dBitmapFile(d_GetFile.GetFile(Path.Combine("gui", "background.png")), 0, 0, 1024 * ((float)Width / 800), 1024 * ((float)Height / 600));
+            d_The3d.Draw2dBitmapFile(Path.Combine("gui", "background.png"), 0, 0, 1024 * ((float)Width / 800), 1024 * ((float)Height / 600));
             string connecting = "Connecting...";
             if (maploadingprogress.ProgressStatus != null)
             {

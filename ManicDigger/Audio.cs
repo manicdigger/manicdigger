@@ -30,7 +30,7 @@ namespace ManicDigger
         [Inject]
         public IGameExit d_GameExit;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         public AudioOpenAl()
         {
             try
@@ -119,13 +119,13 @@ namespace ManicDigger
         }
         class X
         {
-            public X(string filename, IGameExit gameexit)
+            public X(Stream filename, IGameExit gameexit)
             {
                 this.filename = filename;
                 this.gameexit = gameexit;
             }
             IGameExit gameexit;
-            public string filename;
+            public Stream filename;
             public void Play()
             {
                 if (started)
@@ -162,7 +162,7 @@ namespace ManicDigger
                     int buffer = OpenTK.Audio.OpenAL.AL.GenBuffer();
 
                     int channels, bits_per_sample, sample_rate;
-                    byte[] sound_data = LoadWave(File.Open(filename, FileMode.Open), out channels, out bits_per_sample, out sample_rate);
+                    byte[] sound_data = LoadWave(filename, out channels, out bits_per_sample, out sample_rate);
                     OpenTK.Audio.OpenAL.AL.BufferData(buffer, GetSoundFormat(channels, bits_per_sample), sound_data, sound_data.Length, sample_rate);
                     //audiofiles[filename]=buffer;
 
@@ -242,13 +242,13 @@ namespace ManicDigger
             {
                 return;
             }
-            filename = d_GetFile.GetFile(filename);
+            Stream file = d_GetFile.GetFile(filename);
             //todo: resume playing.
             if (play)
             {
                 if (!soundsplaying.ContainsKey(filename))
                 {
-                    var x = new X(filename, d_GameExit);
+                    var x = new X(file, d_GameExit);
                     x.loop = true;
                     soundsplaying[filename] = x;
                 }

@@ -28,7 +28,7 @@ namespace GameModeFortress
         public void Start()
         {
 			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
-            getfile = new GetFilePath(datapaths);
+            getfile = new GetFileStream(datapaths);
             LoadLogin();
             ManicDiggerProgram.exit = exit;
             if (connectdata.Ip == null)
@@ -60,7 +60,7 @@ namespace GameModeFortress
             w.Run();
         }
         public ConnectData connectdata = new ConnectData();
-        GetFilePath getfile;
+        GetFileStream getfile;
         LoginDataFile logindatafile = new LoginDataFile();
         private void StartMenu()
         {
@@ -127,8 +127,8 @@ namespace GameModeFortress
         {
             var getfile = this.getfile;
             var gamedata = new GameDataCsv();
-            gamedata.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
-                File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
+            gamedata.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
+				MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
             var clientgame = new GameFortress();
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
@@ -217,7 +217,7 @@ namespace GameModeFortress
             weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
-            playerrenderer.Load(new List<string>(File.ReadAllLines(getfile.GetFile("player.mdc"))));
+            playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.d_CharacterRenderer = playerrenderer;
             w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
             w.ENABLE_FINITEINVENTORY = false;

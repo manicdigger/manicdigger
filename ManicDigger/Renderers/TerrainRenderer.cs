@@ -30,7 +30,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public TextureAtlasConverter d_TextureAtlasConverter;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         public int texturesPacked { get { return 16; } } //16x16
         public int terrainTexture { get; set; }
         public void Start()
@@ -139,7 +139,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IThe3d d_The3d;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         [Inject]
         public Config3d d_Config3d;
         [Inject]
@@ -672,7 +672,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IThe3d d_The3d;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         [Inject]
         public IMapStorage d_MapStorage;
         [Inject]

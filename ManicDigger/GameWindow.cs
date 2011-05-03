@@ -90,7 +90,7 @@ namespace ManicDigger
     }
     public interface IThe3d
     {
-        int LoadTexture(string filename);
+        int LoadTexture(Stream file);
         int LoadTexture(Bitmap bmp);
         void Set3dProjection(float zfar);
         void Set3dProjection();
@@ -99,7 +99,7 @@ namespace ManicDigger
     {
         public int TextureId;
         #region IThe3d Members
-        public int LoadTexture(string filename)
+        public int LoadTexture(Stream file)
         {
             return TextureId;
         }
@@ -480,7 +480,7 @@ namespace ManicDigger
         [Inject]
         public IAudio d_Audio;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         [Inject]
         public IGameData d_Data;
         [Inject]
@@ -532,7 +532,7 @@ namespace ManicDigger
         public int LoadTexture(string filename)
         {
             d_The3d.d_Config3d = d_Config3d;
-            return d_The3d.LoadTexture(filename);
+            return d_The3d.LoadTexture(d_GetFile.GetFile(filename));
         }
         public int LoadTexture(Bitmap bmp)
         {
@@ -2059,7 +2059,7 @@ namespace ManicDigger
         {
             if (playertexturedefault == -1)
             {
-                playertexturedefault = LoadTexture(d_GetFile.GetFile(playertexturedefaultfilename));
+                playertexturedefault = LoadTexture(playertexturedefaultfilename);
             }
             List<string> players = new List<string>();
             foreach (var k in d_Clients.Players)
@@ -2100,8 +2100,8 @@ namespace ManicDigger
         {
             if (skyspheretexture == -1)
             {
-                skyspheretexture = LoadTexture(d_GetFile.GetFile("skysphere.png"));
-                skyspherenighttexture = LoadTexture(d_GetFile.GetFile("skyspherenight.png"));
+                skyspheretexture = LoadTexture("skysphere.png");
+                skyspherenighttexture = LoadTexture("skyspherenight.png");
             }
             int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
             if (d_Shadows.GetType() == typeof(ShadowsSimple))

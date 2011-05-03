@@ -31,7 +31,7 @@ namespace ManicDigger.Renderers
     public class MinecartRenderer
     {
         [Inject]
-        public IGetFilePath d_GetFile { get; set; }
+        public IGetFileStream d_GetFile { get; set; }
         [Inject]
         public IThe3d d_The3d { get; set; }
         int minecarttexture = -1;

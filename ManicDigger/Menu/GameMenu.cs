@@ -53,7 +53,7 @@ namespace GameMenu
         [Inject]
         public IAudio d_Audio;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         [Inject]
         public FormMainMenu d_FormMainMenu;
         [Inject]
@@ -228,7 +228,7 @@ namespace GameMenu
                 if (w.Click != null)
                 {
                     w.Click();
-                    d_Audio.Play(d_GetFile.GetFile("destruct.wav"));
+                    d_Audio.Play("destruct.wav");
                 }
                 if (w.IsTextbox)
                 {

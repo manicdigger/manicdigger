@@ -16,7 +16,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IThe3d d_The3d { get; set; }
         [Inject]
-        public IGetFilePath d_GetFile { get; set; }
+        public IGetFileStream d_GetFile { get; set; }
         int hour = 6;
         public int Hour
         {

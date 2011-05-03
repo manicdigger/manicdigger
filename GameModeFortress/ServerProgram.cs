@@ -37,10 +37,10 @@ namespace GameModeFortress
             server.d_Map = map;
             server.d_Generator = generator;
 			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
-            var getfile = new GetFilePath(datapaths);
+            var getfile = new GetFileStream(datapaths);
             var data = new GameDataCsv();
-            data.Load(File.ReadAllLines(getfile.GetFile("blocks.csv")),
-                File.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
+            data.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
+                MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
             server.d_Data = data;
             server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
             server.LocalConnectionsOnly = !Public;

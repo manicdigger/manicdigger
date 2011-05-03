@@ -50,7 +50,7 @@ namespace ManicDiggerServer
         [Inject]
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         public CraftingRecipes craftingrecipes = new CraftingRecipes();
         [Inject]
         public IChunkDb d_ChunkDb;
@@ -2094,7 +2094,7 @@ namespace ManicDiggerServer
         {
             if (terrainTexture == null)
             {
-                terrainTexture = File.ReadAllBytes(d_GetFile.GetFile("terrain.png"));
+                terrainTexture = MyStream.ReadAllBytes(d_GetFile.GetFile("terrain.png"));
             }
             if (terrainTextureMd5 == null)
             {

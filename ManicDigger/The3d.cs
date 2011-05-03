@@ -6,6 +6,7 @@ using System.Drawing;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace ManicDigger
 {
@@ -20,14 +21,19 @@ namespace ManicDigger
         [Inject]
         public TextRenderer d_TextRenderer;
         [Inject]
-        public IGetFilePath d_GetFile;
+        public IGetFileStream d_GetFile;
         [Inject]
         public IViewportSize d_ViewportSize;
         public bool ALLOW_NON_POWER_OF_TWO = false;
-        public int LoadTexture(string filename)
+        public int LoadTexture(Stream file)
         {
-            Bitmap bmp = new Bitmap(filename);
-            return LoadTexture(bmp);
+			using (file)
+			{
+				using (Bitmap bmp = new Bitmap(file))
+				{
+					return LoadTexture(bmp);
+				}
+			}
         }
         //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmpArg)

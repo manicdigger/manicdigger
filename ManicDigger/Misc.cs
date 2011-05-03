@@ -134,6 +134,28 @@ namespace ManicDigger
             return new Vector3(x, y, z);
         }
     }
+	public static class MyStream
+	{
+		public static string[] ReadAllLines(Stream s)
+		{
+			StreamReader sr = new StreamReader(s);
+			List<string> lines = new List<string>();
+			for (; ; )
+			{
+				string line = sr.ReadLine();
+				if (line == null)
+				{
+					break;
+				}
+				lines.Add(line);
+			}
+			return lines.ToArray();
+		}
+		public static byte[] ReadAllBytes(Stream stream)
+		{
+			return new BinaryReader(stream).ReadBytes((int)stream.Length);
+		}
+	}
     public static class MyMath
     {
         public static T Clamp<T>(T value, T min, T max)

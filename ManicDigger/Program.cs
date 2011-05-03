@@ -10,28 +10,28 @@ namespace ManicDigger
     public class InjectAttribute : Attribute
     {
     }
-    public interface IGetFilePath
+    public interface IGetFileStream
     {
-        string GetFile(string p);
+        Stream GetFile(string p);
     }
-    public class GetFilePathDummy : IGetFilePath
+    public class GetFileStreamDummy : IGetFileStream
     {
         #region IGetFilePath Members
-        public string GetFile(string p)
+        public Stream GetFile(string p)
         {
-            return p;
+			throw new FileNotFoundException();
         }
         #endregion
     }
-    public class GetFilePath : IGetFilePath
+    public class GetFileStream : IGetFileStream
     {
-        public GetFilePath(IEnumerable<string> datapaths)
+        public GetFileStream(IEnumerable<string> datapaths)
         {
             this.DataPaths = new List<string>(datapaths).ToArray();
         }
         public string[] DataPaths;
-        Dictionary<string, string> cache = new Dictionary<string, string>();
-        public string GetFile(string filename)
+        Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
+        public Stream GetFile(string filename)
         {
             if (!cache.ContainsKey(filename))
             {
@@ -44,7 +44,7 @@ namespace ManicDigger
 							try
 							{
 								FileInfo f = new FileInfo(s);
-								cache[f.Name] = s;
+								cache[f.Name] = File.ReadAllBytes(s);
 							}
 							catch
 							{
@@ -58,13 +58,13 @@ namespace ManicDigger
             }
             for (int i = 0; i < 2; i++)
             {
-                if (cache.ContainsKey(filename)) { return cache[filename]; }
+                if (cache.ContainsKey(filename)) { return new MemoryStream(cache[filename]); }
 
                 string f1 = filename.Replace(".png", ".jpg");
-                if (cache.ContainsKey(f1)) { return cache[f1]; }
+                if (cache.ContainsKey(f1)) { return new MemoryStream(cache[f1]); }
 
                 string f2 = filename.Replace(".jpg", ".png");
-                if (cache.ContainsKey(f2)) { return cache[f2]; }
+                if (cache.ContainsKey(f2)) { return new MemoryStream(cache[f2]); }
                 filename = new FileInfo(filename).Name; //handles GetFile(GetFile(file)) use.
             }
 
