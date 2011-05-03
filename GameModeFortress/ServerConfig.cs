@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-
 namespace GameModeFortress
 {
-    /// <summary>
-    /// Holds configuration for manic digger server.
-    /// </summary>
+
     [XmlRoot(ElementName = "ManicDiggerServerConfig")]
     public class ServerConfig
     {
@@ -39,12 +36,9 @@ namespace GameModeFortress
         public List<string> Admins { get; set; }  // AutoAdmin
         [XmlArrayItem(ElementName = "Builder")]
         public List<string> Builders { get; set; }  // AutoAdmin
+        [XmlArrayItem(ElementName = "Area")]
+        public List<AreaConfig> Areas { get; set; }
 
-        /// <summary>
-        /// Determines if an ip address has been banned
-        /// </summary>
-        /// <param name="ipAddress">Use toString() on IPAddress created by using getAddressBytes()</param>
-        /// <returns>True means that this address has been banned</returns>
         public bool IsIPBanned(string ipAddress)
         {
             foreach (string bannedip in this.BannedIPs)
@@ -87,6 +81,22 @@ namespace GameModeFortress
 
         public string DefaultPlayerName = "Player name?"; //invalid name. it should appear in default xml.
 
+        public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
+        {
+            bool canBuild = true;
+            foreach (AreaConfig area in this.Areas)
+            {
+                if (area.IsInCoords(x, y))
+                {
+                    if (!area.CanUserBuild(client))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return canBuild;
+        }
+
         public ServerConfig()
         {
             //Set Defaults
@@ -109,6 +119,108 @@ namespace GameModeFortress
             this.BannedUsers = new List<string>();
             this.Admins = new List<string>();
             this.Builders = new List<string>();
+            this.Areas = new List<AreaConfig>();
+            AreaConfig publicArea = new AreaConfig();
+            publicArea.Coords = "0,0,5000,10000";
+            publicArea.PermittedUsers = "[Guest]";
+            this.Areas.Add(publicArea);
+            AreaConfig builderArea = new AreaConfig();
+            builderArea.Coords = "5001,0,10000,10000";
+            builderArea.PermittedUsers = "[Builder]";
+            this.Areas.Add(builderArea);
+
+        }
+    }
+
+
+    public class AreaConfig
+    {
+        private int x1;
+        private int x2;
+        private int y1;
+        private int y2;
+        private string coords;
+        private bool isGuestAllowed;
+        private bool isUserAllowed;
+        private bool isBuilderAllowed;
+        private bool isAdminAllowed;
+        private string[] usersAllowed;
+        private string permittedUsers;
+
+        public AreaConfig()
+        {
+            this.isGuestAllowed = false;
+            this.isUserAllowed = false;
+            this.isBuilderAllowed = false;
+            this.isAdminAllowed = false;
+            this.Coords = "0,0,0,0";
+            this.PermittedUsers = "";
+        }
+
+        public string Coords
+        {
+            get { return this.coords; }
+            set
+            {
+                this.coords = value;
+                string[] myCoords = this.Coords.Split(new char[] { ',' });
+                x1 = Convert.ToInt32(myCoords[0]);
+                x2 = Convert.ToInt32(myCoords[2]);
+                y1 = Convert.ToInt32(myCoords[1]);
+                y2 = Convert.ToInt32(myCoords[3]);
+            }
+        }
+
+
+        public string PermittedUsers
+        {
+            get { return this.permittedUsers; }
+            set
+            {
+                this.permittedUsers = value;
+                this.isGuestAllowed = value.Contains("[Guest]");
+                this.isUserAllowed = value.Contains("[User]");
+                this.isBuilderAllowed = value.Contains("[Builder]");
+                this.isAdminAllowed = value.Contains("[Admin]");
+
+                string tmpUsers = value.Replace("[Guest]", "").Replace("[User]", "").Replace("[Builder]", "").Replace("[Admin]", "").Replace(",,", ",");
+
+                this.usersAllowed = tmpUsers.Split(new char[] { ',' });
+            }
+        }
+
+        public bool IsInCoords(int x, int y)
+        {
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool CanUserBuild(ManicDiggerServer.Server.Client client)
+        {
+            if (this.isGuestAllowed)
+                return true;
+            else if (this.isUserAllowed && !client.playername.StartsWith("~"))
+                return true;
+            else if (this.isBuilderAllowed && client.CanBuild)
+                return true;
+            else if (this.isAdminAllowed && client.IsAdmin)
+                return true;
+            else
+            {
+                foreach (String user in this.usersAllowed)
+                {
+                    if (client.playername == user)
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

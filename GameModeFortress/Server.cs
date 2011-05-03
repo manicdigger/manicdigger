@@ -1270,14 +1270,11 @@ namespace ManicDiggerServer
                     int y = packet.SetBlock.Y;
                     int z = packet.SetBlock.Z;
                     if ((!string.IsNullOrEmpty(config.BuildPassword))
-                        && (!clients[clientid].CanBuild))
+                        && !config.CanUserBuild(clients[clientid], x, y))
                     {
-                        if (y > d_Map.MapSizeY / 2)
-                        {
-                            SendMessage(clientid, colorError + "You need a permission to build on this half of the world.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
-                        }
+                        SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
+                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                        break;
                     }
                     BlockSetMode mode = packet.SetBlock.Mode == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
                     byte blocktype = (byte)packet.SetBlock.BlockType;
@@ -2145,7 +2142,7 @@ namespace ManicDiggerServer
             Builder,
             Admin, //Does this user have the server password and can ban users?
         }
-        class Client
+        public class Client
         {
             public Socket socket;
             public List<byte> received = new List<byte>();
