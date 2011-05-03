@@ -79,7 +79,12 @@ namespace GameModeFortress
             return false;
         }
 
-        public string DefaultPlayerName = "Player name?"; //invalid name. it should appear in default xml.
+		//Example name.
+		//Default serialized config becomes "<Admins><Admin>Player name?</Admin></Admins>"
+		//instead of "<Admins></Admins>".
+		//It makes editing xml in notepad easier.
+		//Contains "?" so nobody can use it.
+        public string DefaultPlayerName = "Player name?";
 
         public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
         {
