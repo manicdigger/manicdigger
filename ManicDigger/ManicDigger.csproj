@@ -69,7 +69,6 @@
     <Compile Include="Hud\Hud.cs" />
     <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
-    <Compile Include="Hud\HudInventoryOld.cs" />
     <Compile Include="Interpolation.cs" />
     <Compile Include="Inventory.cs" />
     <Compile Include="IterableSet.cs" />
