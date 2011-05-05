@@ -84,6 +84,7 @@ namespace GameModeFortress
 		//instead of "<Admins></Admins>".
 		//It makes editing xml in notepad easier.
 		//Contains "?" so nobody can use it.
+        [XmlIgnore]
         public string DefaultPlayerName = "Player name?";
 
         public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
@@ -126,11 +127,11 @@ namespace GameModeFortress
             this.Builders = new List<string>();
             this.Areas = new List<AreaConfig>();
             AreaConfig publicArea = new AreaConfig();
-            publicArea.Coords = "0,0,5000,10000";
+            publicArea.Coords = "0,0,10000,5000";
             publicArea.PermittedUsers = "[Guest]";
             this.Areas.Add(publicArea);
             AreaConfig builderArea = new AreaConfig();
-            builderArea.Coords = "5001,0,10000,10000";
+            builderArea.Coords = "0,5001,10000,10000";
             builderArea.PermittedUsers = "[Builder]";
             this.Areas.Add(builderArea);
 
@@ -196,7 +197,8 @@ namespace GameModeFortress
 
         public bool IsInCoords(int x, int y)
         {
-            if (x >= x1 && x <= x2 && y >= y1 && y <= y2)
+
+            if (x >= Math.Min(x1, x2) && x <= Math.Max(x1, x2) && y >= Math.Min(y1, y2) && y <= Math.Max(y1, y2))
             {
                 return true;
             }
@@ -205,6 +207,8 @@ namespace GameModeFortress
                 return false;
             }
         }
+
+        
 
         public bool CanUserBuild(ManicDiggerServer.Server.Client client)
         {
