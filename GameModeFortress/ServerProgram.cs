@@ -8,6 +8,7 @@ using System.IO;
 using ManicDiggerServer;
 using ManicDigger.MapTools.Generators;
 using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace GameModeFortress
 {
@@ -17,6 +18,7 @@ namespace GameModeFortress
         public IGameExit d_Exit;
         public static bool Public = false;
         public static string SaveFilenameWithoutExtension = "default";
+        public static ISocket Socket = null;
         public void Start()
         {
             Server server = new Server();
@@ -56,6 +58,17 @@ namespace GameModeFortress
             map.d_Data = server.d_Data;
             server.d_Water = new WaterFinite() { data = server.d_Data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
+            if (Socket == null)
+            {
+                server.d_MainSocket = new SocketNet()
+                {
+                    d_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                };
+            }
+            else
+            {
+                server.d_MainSocket = Socket;
+            }
             server.Start();
             if ((Public) && (server.config.Public))
             {

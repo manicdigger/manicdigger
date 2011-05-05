@@ -59,7 +59,10 @@ namespace ManicDiggerServer
         [Inject]
         public ICompression d_NetworkCompression;
         [Inject]
-        public WaterFinite d_Water { get; set; }
+        public WaterFinite d_Water;
+        [Inject]
+        public ISocket d_MainSocket;
+
         public bool LocalConnectionsOnly { get; set; }
         public string[] PublicDataPaths = new string[0];
         public int singleplayerport = 25570;
@@ -275,7 +278,6 @@ namespace ManicDiggerServer
 
         }
 
-        Socket main;
         IPEndPoint iep;
         string fListUrl = "http://fragmer.net/md/heartbeat.php";
         public void SendHeartbeat()
@@ -362,9 +364,6 @@ namespace ManicDiggerServer
         }
         void Start(int port)
         {
-            main = new Socket(AddressFamily.InterNetwork,
-                   SocketType.Stream, ProtocolType.Tcp);
-
             if (LocalConnectionsOnly)
             {
                 iep = new IPEndPoint(IPAddress.Loopback, port);
@@ -373,8 +372,8 @@ namespace ManicDiggerServer
             {
                 iep = new IPEndPoint(IPAddress.Any, port);
             }
-            main.Bind(iep);
-            main.Listen(10);
+            d_MainSocket.Bind(iep);
+            d_MainSocket.Listen(10);
         }
         int lastclient;
         public void Process()
@@ -400,7 +399,7 @@ namespace ManicDiggerServer
         double accumulator;
         public void Process1()
         {
-            if (main == null)
+            if (d_MainSocket == null)
             {
                 return;
             }
@@ -437,9 +436,9 @@ namespace ManicDiggerServer
             byte[] data = new byte[1024];
             string stringData;
             int recv;
-            if (main.Poll(0, SelectMode.SelectRead)) //Test for new connections
+            if (d_MainSocket.Poll(0, SelectMode.SelectRead)) //Test for new connections
             {
-                Socket client1 = main.Accept();
+                ISocket client1 = d_MainSocket.Accept();
                 IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
 
                 Client c = new Client();
@@ -472,9 +471,9 @@ namespace ManicDiggerServer
             {
                 return;
             }
-            Socket.Select(copyList, null, null, 0);//10000000);
+            d_MainSocket.Select(copyList, null, null, 0);//10000000);
 
-            foreach (Socket clientSocket in copyList)
+            foreach (ISocket clientSocket in copyList)
             {
                 int clientid = -1;
                 foreach (var k in new List<KeyValuePair<int, Client>>(clients))
@@ -2244,7 +2243,7 @@ namespace ManicDiggerServer
         }
         public class Client
         {
-            public Socket socket;
+            public ISocket socket;
             public List<byte> received = new List<byte>();
             public string playername = invalidplayername;
             public int PositionMul32GlX;

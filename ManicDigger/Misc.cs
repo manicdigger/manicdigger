@@ -14,6 +14,10 @@ using System.ComponentModel.Design;
 using ProtoBuf;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System.Net;
+using System.Net.Sockets;
+using System.Collections;
+using System.Threading;
 
 namespace ManicDigger
 {
@@ -1050,5 +1054,276 @@ namespace ManicDigger
         {
             return (T)CreateInstance(typeof(T), args);
         }
+    }
+    public interface ISocket
+    {
+        void Bind(IPEndPoint iep);
+        void Listen(int backlog);
+        bool Poll(int microSeconds, SelectMode selectMode);
+        ISocket Accept();
+        EndPoint RemoteEndPoint { get; }
+        void Disconnect(bool p);
+        void BeginSend(byte[] data, int pos, int dataLength, SocketFlags flags, AsyncCallback callback, object o);
+        void Select(IList checkRead, IList checkWrite, IList checkError, int microSeconds);
+        int Receive(byte[] data);
+        void Connect(string serverAddress, int port);
+        void Send(byte[] n);
+    }
+    public class SocketNet : ISocket
+    {
+        public SocketNet()
+        {
+        }
+        public SocketNet(Socket socket)
+        {
+            this.d_Socket = socket;
+        }
+        public Socket d_Socket;
+        public void Bind(IPEndPoint iep)
+        {
+            d_Socket.Bind(iep);
+        }
+        public void Listen(int backlog)
+        {
+            d_Socket.Listen(backlog);
+        }
+        public bool Poll(int microSeconds, SelectMode selectMode)
+        {
+            return d_Socket.Poll(microSeconds, selectMode);
+        }
+        public ISocket Accept()
+        {
+            return new SocketNet(d_Socket.Accept());
+        }
+        public EndPoint RemoteEndPoint
+        {
+            get { return d_Socket.RemoteEndPoint; }
+        }
+        public void Disconnect(bool p)
+        {
+            d_Socket.Disconnect(p);
+        }
+        public void BeginSend(byte[] data, int pos, int dataLength, SocketFlags flags, AsyncCallback callback, object o)
+        {
+            d_Socket.BeginSend(data, pos, dataLength, flags, callback, o);
+        }
+        public void Select(IList checkRead, IList checkWrite, IList checkError, int microSeconds)
+        {
+            Dictionary<Socket, SocketNet> readOrig = new Dictionary<Socket, SocketNet>();
+            Dictionary<Socket, SocketNet> writeOrig = new Dictionary<Socket, SocketNet>();
+            Dictionary<Socket, SocketNet> errorOrig = new Dictionary<Socket, SocketNet>();
+            ArrayList read = null;
+            ArrayList write = null;
+            ArrayList error = null;
+            if (checkRead != null)
+            {
+                read = new ArrayList();
+                foreach (SocketNet s in checkRead) { read.Add(s.d_Socket); readOrig[s.d_Socket] = s; }
+            }
+            if (checkWrite != null)
+            {
+                write = new ArrayList();
+                foreach (SocketNet s in checkWrite) { write.Add(s.d_Socket); writeOrig[s.d_Socket] = s; }
+            }
+            if (checkError != null)
+            {
+                error = new ArrayList();
+                foreach (SocketNet s in checkError) { error.Add(s.d_Socket); errorOrig[s.d_Socket] = s; }
+            }
+
+            Socket.Select(read, write, error, microSeconds);
+
+            if (checkRead != null)
+            {
+                checkRead.Clear();
+                foreach (Socket s in read) { checkRead.Add(readOrig[s]); }
+            }
+            if (checkWrite != null)
+            {
+                checkWrite.Clear();
+                foreach (Socket s in write) { checkWrite.Add(writeOrig[s]); }
+            }
+            if (checkError != null)
+            {
+                checkError.Clear();
+                foreach (Socket s in error) { checkError.Add(errorOrig[s]); }
+            }
+        }
+        public int Receive(byte[] data)
+        {
+            return d_Socket.Receive(data);
+        }
+        public void Connect(string serverAddress, int port)
+        {
+            d_Socket.Connect(serverAddress, port);
+        }
+        public void Send(byte[] n)
+        {
+            d_Socket.Send(n);
+        }
+    }
+    public class SocketDummy : ISocket
+    {
+        public SocketDummy()
+        {
+        }
+        public SocketDummy(SocketDummyNetwork network)
+        {
+            this.network = network;
+        }
+        public enum SocketType
+        {
+            Server,
+            Client,
+            ConnectionFromClient,
+        }
+        public SocketType type;
+        public SocketDummyNetwork network;
+        public void Bind(IPEndPoint iep)
+        {
+        }
+        public void Listen(int backlog)
+        {
+            type = SocketType.Server;
+        }
+        bool connectionAccepted;
+        public bool Poll(int microSeconds, SelectMode selectMode)
+        {
+            if (selectMode != SelectMode.SelectRead) { throw new NotImplementedException(); }
+            switch (type)
+            {
+                case SocketType.Client:
+                    return network.ClientReceiveBuffer.Count != 0;
+                case SocketType.ConnectionFromClient:
+                    return network.ServerReceiveBuffer.Count != 0;
+                case SocketType.Server:
+                    if (connectionAccepted)
+                    {
+                        return false;
+                    }
+                    bool ret = network.ServerReceiveBuffer.Count != 0;
+                    if (ret)
+                    {
+                        connectionAccepted = true;
+                    }
+                    return ret;
+                default:
+                    throw new Exception();
+            }
+        }
+        public ISocket Accept()
+        {
+            if (type == SocketType.Server)
+            {
+                return new SocketDummy(network) { type = SocketType.ConnectionFromClient };
+            }
+            throw new InvalidOperationException();
+        }
+        public EndPoint remoteEndpoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 12345);
+        public EndPoint RemoteEndPoint { get { return remoteEndpoint; } set { remoteEndpoint = value; } }
+        public void Disconnect(bool p)
+        {
+        }
+        public void BeginSend(byte[] data, int pos, int dataLength, SocketFlags flags, AsyncCallback callback, object o)
+        {
+            byte[] buf = new byte[dataLength];
+            for (int i = 0; i < dataLength; i++)
+            {
+                buf[i] = data[pos + i];
+            }
+            lock (network)
+            {
+                switch (type)
+                {
+                    case SocketType.Client:
+                        network.ServerReceiveBuffer.AddRange(buf);
+                        break;
+                    case SocketType.ConnectionFromClient:
+                        network.ClientReceiveBuffer.AddRange(buf);
+                        break;
+                    case SocketType.Server:
+                        throw new NotImplementedException();
+                    default:
+                        throw new Exception();
+                }
+            }
+        }
+        public void Select(IList checkRead, IList checkWrite, IList checkError, int microSeconds)
+        {
+            if (checkWrite != null) { throw new NotImplementedException(); }
+            if (checkError != null) { throw new NotImplementedException(); }
+            switch (type)
+            {
+                case SocketType.Client:
+                    throw new NotImplementedException();
+                case SocketType.ConnectionFromClient:
+                    throw new NotImplementedException();
+                case SocketType.Server:
+                    if (network.ServerReceiveBuffer.Count == 0)
+                    {
+                        checkRead.Clear();
+                    }
+                    break;
+            }
+        }
+        public int Receive(byte[] data)
+        {
+            List<byte> buf;
+            switch (type)
+            {
+                case SocketType.Server:
+                    throw new NotImplementedException();
+                case SocketType.Client:
+                    buf = network.ClientReceiveBuffer;
+                    break;
+                case SocketType.ConnectionFromClient:
+                    buf = network.ServerReceiveBuffer;
+                    break;
+                default:
+                    throw new Exception();
+            }
+            for (; ; )
+            {
+                lock (network)
+                {
+                    if (buf.Count > 0)
+                    {
+                        break;
+                    }
+                }
+                Thread.Sleep(0);
+            }
+            lock (network)
+            {
+                int count = buf.Count;
+                if (count > data.Length)
+                {
+                    count = data.Length;
+                }
+                for (int i = 0; i < count; i++)
+                {
+                    data[i] = buf[i];
+                }
+                buf.RemoveRange(0, count);
+                return count;
+            }
+        }
+        public void Connect(string serverAddress, int port)
+        {
+            type = SocketType.Client;
+        }
+        public void Send(byte[] n)
+        {
+            if (type != SocketType.Client) { throw new InvalidOperationException(); }
+            lock (network)
+            {
+                network.ServerReceiveBuffer.AddRange(n);
+            }
+        }
+    }
+    public class SocketDummyNetwork
+    {
+        public List<byte> ServerReceiveBuffer = new List<byte>();
+        public List<byte> ClientReceiveBuffer = new List<byte>();
     }
 }

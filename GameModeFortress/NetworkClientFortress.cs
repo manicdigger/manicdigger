@@ -25,6 +25,7 @@ namespace GameModeFortress
     {
         [Inject]
         public IMap d_Map;
+        [Inject]
         public IMapStoragePortion d_MapStoragePortion;
         [Inject]
         public IClients d_Clients;
@@ -46,13 +47,12 @@ namespace GameModeFortress
         public GameDataCsv d_GameData;
         [Inject]
         public GetFileStream d_GetFile;
+        [Inject]
+        public ISocket main;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
         {
-            main = new Socket(AddressFamily.InterNetwork,
-                   SocketType.Stream, ProtocolType.Tcp);
-
             iep = new IPEndPoint(IPAddress.Any, port);
             main.Connect(serverAddress, port);
             this.username = username;
@@ -73,7 +73,6 @@ namespace GameModeFortress
             return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
         }
         IPEndPoint iep;
-        Socket main;
         public void SendPacket(byte[] packet)
         {
             try

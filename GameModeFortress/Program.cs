@@ -17,6 +17,7 @@ using ManicDigger.Renderers;
 using ManicDiggerServer;
 using System.Text;
 using ManicDigger.Hud;
+using System.Net.Sockets;
 #endregion
 
 namespace GameModeFortress
@@ -61,6 +62,7 @@ namespace GameModeFortress
             w.Run();
         }
         public ConnectData connectdata = new ConnectData();
+        bool IsSinglePlayer { get { return connectdata.Port == 25570; } }
         GetFileStream getfile;
         LoginDataFile logindatafile = new LoginDataFile();
         private void StartMenu()
@@ -156,6 +158,15 @@ namespace GameModeFortress
             network.d_ResetMap = this;
             network.d_GameData = gamedata;
             network.d_GetFile = getfile;
+            if (IsSinglePlayer)
+            {
+                var socket = new SocketDummy() { network = this.dummyNetwork };
+                network.main = socket;
+            }
+            else
+            {
+                network.main = new SocketNet(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+            }
             terrainRenderer.d_The3d = the3d;
             terrainRenderer.d_GetFile = getfile;
             terrainRenderer.d_Config3d = config3d;
@@ -327,6 +338,7 @@ namespace GameModeFortress
                     map, shadowsfull, shadowssimple, terrainchunktesselator);
             }
         }
+        SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
         InfiniteMapChunked2d heightmap;
         InfiniteMapChunkedSimple light;
         DirtyChunks dirtychunks;
@@ -487,6 +499,9 @@ namespace GameModeFortress
                 name += worldId;
             }
             ServerProgram.SaveFilenameWithoutExtension = name;
+            ServerProgram.Public = false;
+            var socket = new SocketDummy(dummyNetwork);
+            ServerProgram.Socket = socket;
             new Thread(ManicDiggerProgram.ServerThreadStart).Start();
             StartGame();
         }
