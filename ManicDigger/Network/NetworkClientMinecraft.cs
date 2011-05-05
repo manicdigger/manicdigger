@@ -65,7 +65,7 @@ namespace ManicDigger
             main.Disconnect(false);
         }
         DateTime lastpositionsent;
-        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type)
+        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);

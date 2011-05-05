@@ -16,6 +16,7 @@ using ManicDigger.Network;
 using ManicDigger.Renderers;
 using ManicDiggerServer;
 using System.Text;
+using ManicDigger.Hud;
 #endregion
 
 namespace GameModeFortress
@@ -27,7 +28,7 @@ namespace GameModeFortress
         //bool IsSinglePlayer { get { return GameUrl.StartsWith("127.0.0.1"); } }
         public void Start()
         {
-			string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+            string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             getfile = new GetFileStream(datapaths);
             LoadLogin();
             ManicDiggerProgram.exit = exit;
@@ -82,7 +83,7 @@ namespace GameModeFortress
 
             audio.d_GetFile = getfile;
             audio.d_GameExit = exit;
-            
+
             ww.d_FormMainMenu = new FormMainMenu();
             ww.d_FormMainMenu.menu = ww;
             ww.d_FormMainMenu.Initialize();
@@ -153,8 +154,8 @@ namespace GameModeFortress
             network.d_NetworkPacketReceived = clientgame;
             network.d_Compression = compression;
             network.d_ResetMap = this;
-			network.d_GameData = gamedata;
-			network.d_GetFile = getfile;
+            network.d_GameData = gamedata;
+            network.d_GetFile = getfile;
             terrainRenderer.d_The3d = the3d;
             terrainRenderer.d_GetFile = getfile;
             terrainRenderer.d_Config3d = config3d;
@@ -214,7 +215,8 @@ namespace GameModeFortress
             w.skysphere = skysphere;
             var textrenderer = new ManicDigger.Renderers.TextRenderer();
             w.d_TextRenderer = textrenderer;
-            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple };
+            Inventory inventory = Inventory.Create();
+            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple, d_Inventory = inventory };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
@@ -230,7 +232,7 @@ namespace GameModeFortress
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
             clientgame.d_TerrainTextures = terrainTextures;
-			clientgame.d_GetFile = getfile;
+            clientgame.d_GetFile = getfile;
             terrainRenderer.d_IsChunkReady = dirtychunks;
             network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;
@@ -291,8 +293,29 @@ namespace GameModeFortress
                 UseShadowsSimple();
             }
             w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w };
-            w.d_HudInventory = new ManicDigger.Gui.HudInventory() { d_Data = gamedata, d_W = w, d_ViewportSize = w };
-            w.d_HudMaterialSelector = new ManicDigger.Gui.HudMaterialSelector() { d_GameWindow = w, d_ViewportSize = w };
+
+            var dataItems = new GameDataItemsBlocks() { d_Data = gamedata };
+            var inventoryController = clientgame;
+            var inventoryUtil = new InventoryUtil();
+            var hudInventory = new HudInventory();
+            hudInventory.dataItems = dataItems;
+            hudInventory.inventory = inventory;
+            hudInventory.inventoryUtil = inventoryUtil;
+            hudInventory.controller = inventoryController;
+            hudInventory.viewport_size = w;
+            hudInventory.mouse_current = w;
+            hudInventory.the3d = the3d;
+            hudInventory.getfile = getfile;
+            hudInventory.ActiveMaterial = w;
+            hudInventory.viewport3d = w;
+            w.d_Inventory = inventory;
+            w.d_InventoryController = inventoryController;
+            w.d_InventoryUtil = inventoryUtil;
+            inventoryUtil.d_Inventory = inventory;
+            inventoryUtil.d_Items = dataItems;
+
+            clientgame.d_Inventory = inventory;
+            w.d_HudInventory = hudInventory;
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(

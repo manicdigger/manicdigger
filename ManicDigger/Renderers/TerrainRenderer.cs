@@ -532,9 +532,10 @@ namespace ManicDigger.Renderers
         public IGameData d_Data;
         [Inject]
         public ITerrainTextures d_TerainRenderer;
+        public int TopTexture;
+        public int SideTexture;
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
-            int tiletype = d_Data.BlockIdTorch;
             Color curcolor = Color.White;
             float torchsizexy = 0.2f;
             float topx = 1f / 2f - torchsizexy / 2f;
@@ -559,7 +560,7 @@ namespace ManicDigger.Renderers
             Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
             //top
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
+                int sidetexture = TopTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
@@ -575,7 +576,7 @@ namespace ManicDigger.Renderers
             }
             //bottom - same as top, but z is 1 less.
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
+                int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
@@ -591,7 +592,7 @@ namespace ManicDigger.Renderers
             }
             //front
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
+                int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -607,7 +608,7 @@ namespace ManicDigger.Renderers
             }
             //back - same as front, but x is 1 greater.
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
+                int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -622,7 +623,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 2));
             }
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
+                int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -638,7 +639,7 @@ namespace ManicDigger.Renderers
             }
             //right - same as left, but y is 1 greater.
             {
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
+                int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));

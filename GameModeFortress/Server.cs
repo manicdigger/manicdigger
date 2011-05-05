@@ -35,13 +35,13 @@ namespace ManicDiggerServer
         [ProtoMember(3, IsRequired = false)]
         public int MapSizeZ;
         [ProtoMember(4, IsRequired = false)]
-        public Dictionary<string, PacketServerFiniteInventory> Inventory;
+        public Dictionary<string, PacketServerInventory> Inventory;
         [ProtoMember(7, IsRequired = false)]
         public int Seed;
         [ProtoMember(8, IsRequired = false)]
         public long SimulationCurrentFrame;
     }
-    public class Server : ICurrentTime
+    public class Server : ICurrentTime, IDropItem
     {
         [Inject]
         public ServerMap d_Map;
@@ -61,7 +61,7 @@ namespace ManicDiggerServer
         [Inject]
         public WaterFinite d_Water { get; set; }
         public bool LocalConnectionsOnly { get; set; }
-		public string[] PublicDataPaths = new string[0];
+        public string[] PublicDataPaths = new string[0];
         public int singleplayerport = 25570;
         public Random rnd = new Random();
         public int SpawnPositionRandomizationRange = 96;
@@ -110,7 +110,7 @@ namespace ManicDiggerServer
             this.Inventory = save.Inventory;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
         }
-        public Dictionary<string, PacketServerFiniteInventory> Inventory = new Dictionary<string, PacketServerFiniteInventory>();
+        public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>();
         public void SaveGame(Stream s)
         {
             ManicDiggerSave save = new ManicDiggerSave();
@@ -539,7 +539,7 @@ namespace ManicDiggerServer
             foreach (var k in clients)
             {
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
-                NotifyFiniteInventory(k.Key);
+                NotifyInventory(k.Key);
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
             UnloadUnusedChunks();
@@ -1022,52 +1022,65 @@ namespace ManicDiggerServer
             return sent;
         }
         const string invalidplayername = "invalid";
-        private void NotifyFiniteInventory(int clientid)
+        private void NotifyInventory(int clientid)
         {
             Client c = clients[clientid];
             if (c.IsInventoryDirty && c.playername != invalidplayername)
             {
-                PacketServerFiniteInventory p;
+                PacketServerInventory p;
+                /*
                 if (config.IsCreative)
                 {
-                    p = new PacketServerFiniteInventory()
+                    p = new PacketServerInventory()
                     {
-                        BlockTypeAmount = StartFiniteInventory(),
+                        BlockTypeAmount = StartInventory(),
                         IsFinite = false,
                     };
                 }
                 else
+                */
                 {
                     p = GetPlayerInventory(c.playername);
                 }
-                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FiniteInventory, FiniteInventory = p }));
+                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FiniteInventory, Inventory = p }));
                 c.IsInventoryDirty = false;
             }
         }
-        PacketServerFiniteInventory GetPlayerInventory(string playername)
+        PacketServerInventory GetPlayerInventory(string playername)
         {
             if (Inventory == null)
             {
-                Inventory = new Dictionary<string, PacketServerFiniteInventory>();
+                Inventory = new Dictionary<string, PacketServerInventory>();
             }
             if (!Inventory.ContainsKey(playername))
             {
-                Inventory[playername] = new PacketServerFiniteInventory()
+                Inventory[playername] = new PacketServerInventory()
                 {
-                    BlockTypeAmount = StartFiniteInventory(),
+                    Inventory = StartInventory(),
+                    /*
                     IsFinite = true,
                     Max = FiniteInventoryMax,
+                    */
                 };
             }
             return Inventory[playername];
         }
         public int FiniteInventoryMax = 200;
-        Dictionary<int, int> StartFiniteInventory()
+        /*
+        Dictionary<int, int> StartInventory()
         {
             Dictionary<int, int> d = new Dictionary<int, int>();
             d[(int)TileTypeManicDigger.CraftingTable] = 6;
             d[(int)TileTypeManicDigger.Crops1] = 1;
             return d;
+        }
+        */
+        Inventory StartInventory()
+        {
+            Inventory i = ManicDigger.Inventory.Create();
+            i.Items.Add(new ProtoPoint(0, 0), new Item() { ItemClass = ItemClass.Block, BlockId = (int)TileTypeManicDigger.CraftingTable, BlockCount = 6 });
+            i.Items.Add(new ProtoPoint(1, 0), new Item() { ItemClass = ItemClass.Block, BlockId = (int)TileTypeManicDigger.Crops1, BlockCount = 1 });
+            return i;
         }
         Vector3i PlayerBlockPosition(Client c)
         {
@@ -1186,7 +1199,7 @@ namespace ManicDiggerServer
                     }
 
                     if (config.Builders.Contains(username)) { clients[clientid].Rank = Rank.Builder; }
-                    if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }                    
+                    if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }
 
                     clients[clientid].playername = username;
                     break;
@@ -1275,7 +1288,10 @@ namespace ManicDiggerServer
                     }
                     //todo check block type.
                     //map.SetBlock(x, y, z, blocktype);
-                    DoCommandBuild(clientid, true, packet.SetBlock);
+                    if (!DoCommandBuild(clientid, true, packet.SetBlock))
+                    {
+                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                    }
                     d_Water.BlockChange(d_Map, x, y, z);
                     break;
                 case ClientPacketId.PositionandOrientation:
@@ -1303,7 +1319,7 @@ namespace ManicDiggerServer
                         bool messageSent = false;
                         if (ss.Length >= 3)
                         {
-                            foreach(var k in clients)
+                            foreach (var k in clients)
                             {
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
@@ -1347,7 +1363,7 @@ namespace ManicDiggerServer
                                 if (argRank.Equals("guest", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Guest; }
                                 if (argRank.Equals("admin", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Admin; }
 
-                                
+
                                 k.Value.Rank = r;
                                 string name = k.Value.playername;
                                 if (r == Rank.Admin)
@@ -1545,6 +1561,9 @@ namespace ManicDiggerServer
                 case ClientPacketId.Craft:
                     DoCommandCraft(true, packet.Craft);
                     break;
+                case ClientPacketId.InventoryAction:
+                    DoCommandInventory(clientid, packet.InventoryAction);
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
@@ -1649,9 +1668,83 @@ namespace ManicDiggerServer
                 }
             }
         }
+        public IGameDataItems d_DataItems = new GameDataItemsBlocks();
+        InventoryUtil GetInventoryUtil(Inventory inventory)
+        {
+            InventoryUtil util = new InventoryUtil();
+            util.d_Inventory = inventory;
+            util.d_Items = d_DataItems;
+            return util;
+        }
+        private void DoCommandInventory(int player_id, PacketClientInventoryAction cmd)
+        {
+            Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            var s = new InventoryServer();
+            s.d_Inventory = inventory;
+            s.d_InventoryUtil = GetInventoryUtil(inventory);
+            s.d_Items = d_DataItems;
+            s.d_DropItem = this;
+
+            switch (cmd.Action)
+            {
+                case InventoryActionType.Click:
+                    s.InventoryClick(cmd.A);
+                    break;
+                case InventoryActionType.MoveToInventory:
+                    s.MoveToInventory(cmd.A);
+                    break;
+                case InventoryActionType.WearItem:
+                    s.WearItem(cmd.A, cmd.B);
+                    break;
+                default:
+                    break;
+            }
+            clients[player_id].IsInventoryDirty = true;
+            NotifyInventory(player_id);
+        }
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
+            Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            if (cmd.Mode == (int)BlockSetMode.Create)
+            {
+                int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+                if (!(oldblock == 0 || d_Data.IsWater[oldblock]))
+                {
+                    return false;
+                }
+                var item = inventory.RightHand[cmd.MaterialSlot];
+                if (item == null)
+                {
+                    return false;
+                }
+                switch (item.ItemClass)
+                {
+                    case ItemClass.Block:
+                        item.BlockCount--;
+                        if (item.BlockCount == 0)
+                        {
+                            inventory.RightHand[cmd.MaterialSlot] = null;
+                        }
+                        SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
+                        break;
+                    default:
+                        //todo
+                        return false;
+                }
+            }
+            else
+            {
+                var item = new Item();
+                item.ItemClass = ItemClass.Block;
+                int blockid = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
+                GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+                SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
+            }
+            clients[player_id].IsInventoryDirty = true;
+            NotifyInventory(player_id);
+            /*
             if (ENABLE_FINITEINVENTORY)
             {
                 Dictionary<int, int> inventory = GetPlayerInventory(clients[player_id].playername).BlockTypeAmount;
@@ -1751,12 +1844,7 @@ namespace ManicDiggerServer
             else
             {
             }
-            if (execute)
-            {
-                int tiletype = cmd.Mode == (int)BlockSetMode.Create ?
-                    (int)cmd.BlockType : SpecialBlockId.Empty;
-                SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, tiletype);
-            }
+            */
             return true;
         }
         void SetBlockAndNotify(int x, int y, int z, int blocktype)
@@ -1893,7 +1981,7 @@ namespace ManicDiggerServer
         private void SendMessage(int clientid, string message)
         {
             string truncated = message; //.Substring(0, Math.Min(64, message.Length));
-            
+
             PacketServerMessage p = new PacketServerMessage();
             p.PlayerId = clientid;
             p.Message = truncated;
@@ -1971,67 +2059,67 @@ namespace ManicDiggerServer
             byte[] compressedchunk = d_NetworkCompression.Compress(ms.ToArray());
             return compressedchunk;
         }
-		struct PublicFile
-		{
-			public string Name;
-			public byte[] Data;
-		}
-		List<PublicFile> PublicFiles()
-		{
-			List<PublicFile> files = new List<PublicFile>();
-			foreach (string path in PublicDataPaths)
-			{
-				try
-				{
-					foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
-					{
-						try
-						{
-							FileInfo f = new FileInfo(s);
-							if ((f.Attributes & FileAttributes.Hidden) != 0)
-							{
-								continue;
-							}
-							//cache[f.Name] = File.ReadAllBytes(s);
-							files.Add(new PublicFile()
-							{
-								Name = f.Name,
-								Data = File.ReadAllBytes(s),
-							});
-						}
-						catch
-						{
-						}
-					}
-				}
-				catch
-				{
-				}
-			}
-			return files;
-		}
+        struct PublicFile
+        {
+            public string Name;
+            public byte[] Data;
+        }
+        List<PublicFile> PublicFiles()
+        {
+            List<PublicFile> files = new List<PublicFile>();
+            foreach (string path in PublicDataPaths)
+            {
+                try
+                {
+                    foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            FileInfo f = new FileInfo(s);
+                            if ((f.Attributes & FileAttributes.Hidden) != 0)
+                            {
+                                continue;
+                            }
+                            //cache[f.Name] = File.ReadAllBytes(s);
+                            files.Add(new PublicFile()
+                            {
+                                Name = f.Name,
+                                Data = File.ReadAllBytes(s),
+                            });
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+            return files;
+        }
         int BlobPartLength = 1024 * 4;
         private void SendLevel(int clientid)
         {
             SendLevelInitialize(clientid);
 
-			List<PublicFile> files = PublicFiles();
-			for (int i = 0; i < files.Count; i++)
-			{
-				PublicFile f = files[i];
-				SendBlobInitialize(clientid, f.Name == "terrain.png" ? terrainTextureMd5 : new byte[16], f.Name);
-				byte[] blob = f.Data;
-				int totalsent = 0;
-				foreach (byte[] part in Parts(blob, BlobPartLength))
-				{
-					SendLevelProgress(clientid,
-						(int)(((float)i / files.Count
-						+ ((float)totalsent / blob.Length) / files.Count) * 100), "Downloading data...");
-					SendBlobPart(clientid, part);
-					totalsent += part.Length;
-				}
-				SendBlobFinalize(clientid);
-			}
+            List<PublicFile> files = PublicFiles();
+            for (int i = 0; i < files.Count; i++)
+            {
+                PublicFile f = files[i];
+                SendBlobInitialize(clientid, f.Name == "terrain.png" ? terrainTextureMd5 : new byte[16], f.Name);
+                byte[] blob = f.Data;
+                int totalsent = 0;
+                foreach (byte[] part in Parts(blob, BlobPartLength))
+                {
+                    SendLevelProgress(clientid,
+                        (int)(((float)i / files.Count
+                        + ((float)totalsent / blob.Length) / files.Count) * 100), "Downloading data...");
+                    SendBlobPart(clientid, part);
+                    totalsent += part.Length;
+                }
+                SendBlobFinalize(clientid);
+            }
 
             SendLevelProgress(clientid, 0, "Generating world...");
 
@@ -2097,7 +2185,7 @@ namespace ManicDiggerServer
         }
         private void SendLevelProgress(int clientid, int percentcomplete, string status)
         {
-            PacketServerLevelProgress p = new PacketServerLevelProgress() { PercentComplete = percentcomplete, Status = status};
+            PacketServerLevelProgress p = new PacketServerLevelProgress() { PercentComplete = percentcomplete, Status = status };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelDataChunk, LevelDataChunk = p }));
         }
         private void SendLevelFinalize(int clientid)
@@ -2105,23 +2193,23 @@ namespace ManicDiggerServer
             PacketServerLevelFinalize p = new PacketServerLevelFinalize() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelFinalize, LevelFinalize = p }));
         }
-		private void SendServerIdentification(int clientid)
-		{
-			PacketServerIdentification p = new PacketServerIdentification()
-			{
-				MdProtocolVersion = GameVersion.Version,
-				ServerName = config.Name,
-				ServerMotd = config.Motd,
-				UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
-				TerrainTextureMd5 = terrainTextureMd5,
-				DisallowFreemove = !config.AllowFreemove,
-				MapSizeX = d_Map.MapSizeX,
-				MapSizeY = d_Map.MapSizeY,
-				MapSizeZ = d_Map.MapSizeZ,
-			};
-			SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
-		}
-		byte[] terrainTextureMd5 { get { byte[] b = new byte[16]; b[0] = 1; return b; } }
+        private void SendServerIdentification(int clientid)
+        {
+            PacketServerIdentification p = new PacketServerIdentification()
+            {
+                MdProtocolVersion = GameVersion.Version,
+                ServerName = config.Name,
+                ServerMotd = config.Motd,
+                UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
+                TerrainTextureMd5 = terrainTextureMd5,
+                DisallowFreemove = !config.AllowFreemove,
+                MapSizeX = d_Map.MapSizeX,
+                MapSizeY = d_Map.MapSizeY,
+                MapSizeZ = d_Map.MapSizeZ,
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
+        }
+        byte[] terrainTextureMd5 { get { byte[] b = new byte[16]; b[0] = 1; return b; } }
         MD5 md5 = System.Security.Cryptography.MD5.Create();
         byte[] ComputeMd5(byte[] b)
         {
@@ -2149,11 +2237,11 @@ namespace ManicDiggerServer
             Builder,
             Admin, //Does this user have the server password and can ban users?
         }
-		public struct BlobToSend
-		{
-			public string Name;
-			public byte[] Data;
-		}
+        public struct BlobToSend
+        {
+            public string Name;
+            public byte[] Data;
+        }
         public class Client
         {
             public Socket socket;
@@ -2175,5 +2263,84 @@ namespace ManicDiggerServer
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
+
+        public int dumpmax = 30;
+        public void DropItem(ref Item item, Vector3i pos)
+        {
+            switch (item.ItemClass)
+            {
+                case ItemClass.Block:
+                    for (int i = 0; i < dumpmax; i++)
+                    {
+                        if (item.BlockCount == 0) { break; }
+                        //find empty position that is nearest to dump place AND has a block under.
+                        Vector3i? nearpos = FindDumpPlace(pos);
+                        if (nearpos == null)
+                        {
+                            break;
+                        }
+                        SetBlockAndNotify(nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, item.BlockId);
+                        item.BlockCount--;
+                    }
+                    if (item.BlockCount == 0)
+                    {
+                        item = null;
+                    }
+                    break;
+                default:
+                    //todo
+                    break;
+            }
+        }
+        private Vector3i? FindDumpPlace(Vector3i pos)
+        {
+            List<Vector3i> l = new List<Vector3i>();
+            for (int x = 0; x < 10; x++)
+            {
+                for (int y = 0; y < 10; y++)
+                {
+                    for (int z = 0; z < 10; z++)
+                    {
+                        int xx = pos.x + x - 10 / 2;
+                        int yy = pos.y + y - 10 / 2;
+                        int zz = pos.z + z - 10 / 2;
+                        if (!MapUtil.IsValidPos(d_Map, xx, yy, zz))
+                        {
+                            continue;
+                        }
+                        if (d_Map.GetBlock(xx, yy, zz) == SpecialBlockId.Empty
+                            && d_Map.GetBlock(xx, yy, zz - 1) != SpecialBlockId.Empty)
+                        {
+                            bool playernear = false;
+                            foreach (var player in clients)
+                            {
+                                if (Length(Minus(PlayerBlockPosition(player.Value), new Vector3i(xx, yy, zz))) < 3)
+                                {
+                                    playernear = true;
+                                }
+                            }
+                            if (!playernear)
+                            {
+                                l.Add(new Vector3i(xx, yy, zz));
+                            }
+                        }
+                    }
+                }
+            }
+            l.Sort((a, b) => Length(Minus(a, pos)).CompareTo(Length(Minus(b, pos))));
+            if (l.Count > 0)
+            {
+                return l[0];
+            }
+            return null;
+        }
+        private Vector3i Minus(Vector3i a, Vector3i b)
+        {
+            return new Vector3i(a.x - b.x, a.y - b.y, a.z - b.z);
+        }
+        int Length(Vector3i v)
+        {
+            return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+        }
     }
 }

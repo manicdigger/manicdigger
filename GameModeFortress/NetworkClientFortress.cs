@@ -42,10 +42,10 @@ namespace GameModeFortress
         public IShadows d_Shadows;
         [Inject]
         public IResetMap d_ResetMap;
-		[Inject]
-		public GameDataCsv d_GameData;
-		[Inject]
-		public GetFileStream d_GetFile;
+        [Inject]
+        public GameDataCsv d_GameData;
+        [Inject]
+        public GetFileStream d_GetFile;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -94,7 +94,7 @@ namespace GameModeFortress
             main.Disconnect(false);
         }
         DateTime lastpositionsent;
-        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type)
+        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot)
         {
             PacketClientSetBlock p = new PacketClientSetBlock()
             {
@@ -102,7 +102,8 @@ namespace GameModeFortress
                 Y = (int)position.Y,
                 Z = (int)position.Z,
                 Mode = (mode == BlockSetMode.Create ? (byte)1 : (byte)0),
-                BlockType = type
+                BlockType = type,
+                MaterialSlot = materialslot,
             };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
         }
@@ -112,7 +113,7 @@ namespace GameModeFortress
         }
         public void SendChat(string s)
         {
-            PacketClientMessage p = new PacketClientMessage() {  Message = s };
+            PacketClientMessage p = new PacketClientMessage() { Message = s };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Message, Message = p }));
         }
         private byte[] Serialize(PacketClient p)
@@ -188,7 +189,7 @@ namespace GameModeFortress
                     }
                 }
             }
-            end:
+        end:
             if (spawned && ((DateTime.UtcNow - lastpositionsent).TotalSeconds > 0.1))
             {
                 lastpositionsent = DateTime.UtcNow;
@@ -328,8 +329,8 @@ namespace GameModeFortress
                     break;
                 case ServerPacketId.LevelFinalize:
                     {
-						d_GameData.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
-							MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")));
+                        d_GameData.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
+                            MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")));
                         if (MapLoaded != null)
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });

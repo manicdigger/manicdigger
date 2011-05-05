@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ProtoBuf;
+using ManicDigger;
 
 namespace GameModeFortress
 {
@@ -19,7 +20,7 @@ namespace GameModeFortress
     public class PacketClientRequestBlob
     {
         [ProtoMember(1, IsRequired = false)]
-		public List<byte[]> RequestBlobMd5; //todo, currently ignored.
+        public List<byte[]> RequestBlobMd5; //todo, currently ignored.
     }
     [ProtoContract]
     public class PacketClientSetBlock
@@ -33,7 +34,10 @@ namespace GameModeFortress
         [ProtoMember(4, IsRequired = false)]
         public byte Mode;
         [ProtoMember(5, IsRequired = false)]
+        [Obsolete]
         public int BlockType;
+        [ProtoMember(6, IsRequired = false)]
+        public int MaterialSlot;
     }
     [ProtoContract]
     public class PacketClientPositionAndOrientation
@@ -57,6 +61,22 @@ namespace GameModeFortress
         [ProtoMember(1, IsRequired = false)]
         public string Message;
     }
+    public enum InventoryActionType
+    {
+        Click,
+        WearItem,
+        MoveToInventory,
+    }
+    [ProtoContract]
+    public class PacketClientInventoryAction
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public InventoryActionType Action;
+        [ProtoMember(2, IsRequired = false)]
+        public InventoryPosition A;
+        [ProtoMember(3, IsRequired = false)]
+        public InventoryPosition B;
+    }
     [ProtoContract]
     public class PacketServerIdentification
     {
@@ -67,9 +87,9 @@ namespace GameModeFortress
         [ProtoMember(3, IsRequired = false)]
         public string ServerMotd;
         [ProtoMember(4, IsRequired = false)]
-		public List<byte[]> UsedBlobsMd5; //todo, currently ignored.
+        public List<byte[]> UsedBlobsMd5; //todo, currently ignored.
         [ProtoMember(5, IsRequired = false)]
-		public byte[] TerrainTextureMd5; //todo, currently ignored.
+        public byte[] TerrainTextureMd5; //todo, currently ignored.
         [ProtoMember(6, IsRequired = false)]
         public bool DisallowFreemove;
         [ProtoMember(7, IsRequired = false)]
@@ -88,9 +108,9 @@ namespace GameModeFortress
     public class PacketServerBlobInitialize
     {
         [ProtoMember(1, IsRequired = false)]
-		public byte[] hash; //todo, currently ignored.
-		[ProtoMember(2, IsRequired = false)]
-		public string name;
+        public byte[] hash; //todo, currently ignored.
+        [ProtoMember(2, IsRequired = false)]
+        public string name;
     }
     [ProtoContract]
     public class PacketServerBlobPart
@@ -213,7 +233,7 @@ namespace GameModeFortress
         [ProtoMember(11, IsRequired = false)]
         public PacketServerChunk Chunk;
         [ProtoMember(12, IsRequired = false)]
-        public PacketServerFiniteInventory FiniteInventory;
+        public PacketServerInventory Inventory;
         [ProtoMember(13, IsRequired = false)]
         public PacketServerSeason Season;
         [ProtoMember(14, IsRequired = false)]
@@ -244,6 +264,8 @@ namespace GameModeFortress
         public PacketClientCraft Craft;
         [ProtoMember(7, IsRequired = false)]
         public PacketClientRequestBlob RequestBlob;
+        [ProtoMember(8, IsRequired = false)]
+        public PacketClientInventoryAction InventoryAction;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -280,14 +302,18 @@ namespace GameModeFortress
         public byte[] CompressedHeightmap;
     }
     [ProtoContract]
-    public class PacketServerFiniteInventory
+    public class PacketServerInventory
     {
+        /*
         [ProtoMember(1, IsRequired = false)]
         public bool IsFinite;
         [ProtoMember(2, IsRequired = false)]
         public Dictionary<int, int> BlockTypeAmount = new Dictionary<int, int>();
         [ProtoMember(3, IsRequired = false)]
         public int Max = 200;
+        */
+        [ProtoMember(4, IsRequired = false)]
+        public ManicDigger.Inventory Inventory;
     }
     [ProtoContract]
     public class PacketServerSeason
@@ -328,6 +354,7 @@ namespace GameModeFortress
         Craft = 9,
         Message = 0x0d,
         RequestBlob = 50,
+        InventoryAction = 51,
         ExtendedPacketCommand = 100,
     }
     /// <summary>

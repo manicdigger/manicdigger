@@ -75,7 +75,8 @@ namespace GameModeFortress
         public int SimulationCurrentFrame { get { return 0; } }
         #endregion
     }
-    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo, INetworkPacketReceived, ICurrentSeason, IMapStorageLight
+    public partial class GameFortress : IGameMode, IMapStorage, IClients, ITerrainInfo,
+		INetworkPacketReceived, ICurrentSeason, IMapStorageLight, IInventoryController
     {
         [Inject]
         public ITerrainRenderer d_Terrain;
@@ -98,11 +99,13 @@ namespace GameModeFortress
         public ManicDigger.Renderers.SunMoonRenderer d_SunMoonRenderer;
 		[Inject]
 		public GetFileStream d_GetFile;
+		[Inject]
+		public Inventory d_Inventory;
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
-            int activematerial = (byte)d_Viewport.MaterialSlots[d_Viewport.activematerial];
+            int activematerial = (byte)d_Viewport.MaterialSlots[d_Viewport.ActiveMaterial];
             int railstart = GameDataManicDigger.railstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
@@ -193,8 +196,8 @@ namespace GameModeFortress
                                 }
                             }
                         }
-                        ClearFillArea();
-                        fillstart = null;
+						ClearFillArea();
+						fillstart = null;
                         fillend = null;
                         return;
                     }
@@ -232,17 +235,27 @@ namespace GameModeFortress
                 SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
             }
         }
-        private void SendSetBlockAndUpdateSpeculative(int activematerial, int x, int y, int z, BlockSetMode mode)
+        private void SendSetBlockAndUpdateSpeculative(int materialslot, int x, int y, int z, BlockSetMode mode)
         {
-            d_Network.SendSetBlock(new Vector3(x, y, z), mode, activematerial);
-            if (mode == BlockSetMode.Destroy)
+			d_Network.SendSetBlock(new Vector3(x, y, z), mode, materialslot, d_Viewport.ActiveMaterial);
+
+            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            if (item != null && item.ItemClass == ItemClass.Block)
             {
-                activematerial = SpecialBlockId.Empty;
+                int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
+                if (mode == BlockSetMode.Destroy)
+                {
+                    blockid = SpecialBlockId.Empty;
+                }
+                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), time = DateTime.UtcNow };
+                d_Map.SetBlock(x, y, z, blockid);
+                d_Terrain.UpdateTile(x, y, z);
+                d_Shadows.OnLocalBuild(x, y, z);
             }
-            speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), time = DateTime.UtcNow };
-            d_Map.SetBlock(x, y, z, activematerial);
-            d_Terrain.UpdateTile(x, y, z);
-            d_Shadows.OnLocalBuild(x, y, z);
+            else
+            {
+                //todo
+            }
         }
         private void ClearFillArea()
         {
@@ -332,7 +345,7 @@ namespace GameModeFortress
         Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
         public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
         {
-            d_Network.SendSetBlock(vector3, blockSetMode, p);
+            d_Network.SendSetBlock(vector3, blockSetMode, p, d_Viewport.ActiveMaterial);
         }
         private bool IsAnyPlayerInPos(Vector3 blockpos)
         {
@@ -391,7 +404,7 @@ namespace GameModeFortress
                         (int)d_Viewport.PickCubePos.Y);
                     {
                         DoCommandDumpOrLoad(pos.x,pos.y,pos.z,KeyPressed(d_Viewport.GetKey(OpenTK.Input.Key.U)),
-                            d_Viewport.MaterialSlots[d_Viewport.activematerial]);
+                            d_Viewport.MaterialSlots[d_Viewport.ActiveMaterial]);
                     }
                 }
             }
@@ -683,9 +696,12 @@ namespace GameModeFortress
             {
                 case ServerPacketId.FiniteInventory:
                     {
+						d_Inventory.CopyFrom(packet.Inventory.Inventory);
+						/*
                         FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
                         ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
                         FiniteInventoryMax = packet.FiniteInventory.Max;
+						*/
                     }
                     return true;
                 case ServerPacketId.Season:
@@ -806,5 +822,30 @@ namespace GameModeFortress
         {
             d_Map.Reset(sizex, sizey, sizez);
         }
-    }
+
+		public void InventoryClick(InventoryPosition pos)
+		{
+			PacketClientInventoryAction p = new PacketClientInventoryAction();
+			p.A = pos;
+			p.Action = InventoryActionType.Click;
+			d_Network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+		}
+
+		public void WearItem(InventoryPosition from, InventoryPosition to)
+		{
+			PacketClientInventoryAction p = new PacketClientInventoryAction();
+			p.A = from;
+			p.B = to;
+			p.Action = InventoryActionType.WearItem;
+			d_Network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+		}
+
+		public void MoveToInventory(InventoryPosition from)
+		{
+			PacketClientInventoryAction p = new PacketClientInventoryAction();
+			p.A = from;
+			p.Action = InventoryActionType.MoveToInventory;
+			d_Network.SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+		}
+	}
 }

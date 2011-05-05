@@ -46,6 +46,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\OpenTK.dll</HintPath>
     </Reference>
+    <Reference Include="protobuf-net, Version=1.0.0.282, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\protobuf-net\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Data" />
@@ -65,8 +69,9 @@
     <Compile Include="Hud\Hud.cs" />
     <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
-    <Compile Include="Hud\HudMaterialSelector.cs" />
+    <Compile Include="Hud\HudInventoryOld.cs" />
     <Compile Include="Interpolation.cs" />
+    <Compile Include="Inventory.cs" />
     <Compile Include="IterableSet.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />

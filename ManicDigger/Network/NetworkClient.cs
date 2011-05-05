@@ -14,7 +14,7 @@ namespace ManicDigger
         void Dispose();
         void Connect(string serverAddress, int port, string username, string auth);
         void Process();
-        void SendSetBlock(Vector3 position, BlockSetMode mode, int type);
+        void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot);
         event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         event EventHandler<MapLoadedEventArgs> MapLoaded;
         void SendChat(string s);

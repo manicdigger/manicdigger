@@ -27,13 +27,13 @@ namespace ManicDigger
         public bool ALLOW_NON_POWER_OF_TWO = false;
         public int LoadTexture(Stream file)
         {
-			using (file)
-			{
-				using (Bitmap bmp = new Bitmap(file))
-				{
-					return LoadTexture(bmp);
-				}
-			}
+            using (file)
+            {
+                using (Bitmap bmp = new Bitmap(file))
+                {
+                    return LoadTexture(bmp);
+                }
+            }
         }
         //http://www.opentk.com/doc/graphics/textures/loading
         public int LoadTexture(Bitmap bmpArg)
@@ -358,5 +358,39 @@ namespace ManicDigger
         public float znear = 0.1f;
         float zfar { get { return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999; } }
         public bool ENABLE_ZFAR = true;
+        public void OrthoMode(int width, int height)
+        {
+            //GL.Disable(EnableCap.DepthTest);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Ortho(0, width, height, 0, 0, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+        }
+        public void PerspectiveMode()
+        {
+            // Enter into our projection matrix mode
+            GL.MatrixMode(MatrixMode.Projection);
+            // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
+            GL.PopMatrix();
+            // Go back to our model view matrix like normal
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+            //GL.LoadIdentity();
+            //GL.Enable(EnableCap.DepthTest);
+        }
+        public void ResizeGraphics(int width, int height)
+        {
+            float aspect = (float)width / height;
+
+            // Adjust graphics to window size
+            GL.Viewport(0, 0, width, height);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            //GLU.Perspective(45.0, aspect, 1.0, 100.0);
+            GL.MatrixMode(MatrixMode.Modelview);
+        }
     }
 }

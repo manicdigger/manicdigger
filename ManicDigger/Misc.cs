@@ -11,6 +11,7 @@ using System.Xml.Serialization;
 using System.Reflection;
 using System.Diagnostics;
 using System.ComponentModel.Design;
+using ProtoBuf;
 
 namespace ManicDigger
 {
@@ -33,6 +34,45 @@ namespace ManicDigger
                 //return Path.Combine(apppath, mdfolder);
                 return mdfolder;
             }
+        }
+    }
+    [ProtoContract]
+    public class ProtoPoint
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        public ProtoPoint()
+        {
+        }
+        public ProtoPoint(int x, int y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+        public ProtoPoint(Point p)
+        {
+            this.X = p.X;
+            this.Y = p.Y;
+        }
+        public Point ToPoint()
+        {
+            return new Point(X, Y);
+        }
+        public override bool Equals(object obj)
+        {
+            ProtoPoint obj2 = obj as ProtoPoint;
+            if (obj2 != null)
+            {
+                return this.X == obj2.X
+                    && this.Y == obj2.Y;
+            }
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return X ^ Y;
         }
     }
     public struct FastColor
@@ -134,28 +174,28 @@ namespace ManicDigger
             return new Vector3(x, y, z);
         }
     }
-	public static class MyStream
-	{
-		public static string[] ReadAllLines(Stream s)
-		{
-			StreamReader sr = new StreamReader(s);
-			List<string> lines = new List<string>();
-			for (; ; )
-			{
-				string line = sr.ReadLine();
-				if (line == null)
-				{
-					break;
-				}
-				lines.Add(line);
-			}
-			return lines.ToArray();
-		}
-		public static byte[] ReadAllBytes(Stream stream)
-		{
-			return new BinaryReader(stream).ReadBytes((int)stream.Length);
-		}
-	}
+    public static class MyStream
+    {
+        public static string[] ReadAllLines(Stream s)
+        {
+            StreamReader sr = new StreamReader(s);
+            List<string> lines = new List<string>();
+            for (; ; )
+            {
+                string line = sr.ReadLine();
+                if (line == null)
+                {
+                    break;
+                }
+                lines.Add(line);
+            }
+            return lines.ToArray();
+        }
+        public static byte[] ReadAllBytes(Stream stream)
+        {
+            return new BinaryReader(stream).ReadBytes((int)stream.Length);
+        }
+    }
     public static class MyMath
     {
         public static T Clamp<T>(T value, T min, T max)
@@ -608,7 +648,7 @@ namespace ManicDigger
         public void ReadXml(System.Xml.XmlReader reader)
         {
             XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue)); 
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
 
             bool wasEmpty = reader.IsEmptyElement;
             reader.Read();
@@ -625,7 +665,7 @@ namespace ManicDigger
                 reader.ReadStartElement("key");
                 TKey key = (TKey)keySerializer.Deserialize(reader);
                 reader.ReadEndElement();
- 
+
                 reader.ReadStartElement("value");
                 TValue value = (TValue)valueSerializer.Deserialize(reader);
                 reader.ReadEndElement();
@@ -642,21 +682,21 @@ namespace ManicDigger
         public void WriteXml(System.Xml.XmlWriter writer)
         {
             XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue)); 
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
 
             foreach (TKey key in this.Keys)
             {
-                writer.WriteStartElement("item"); 
+                writer.WriteStartElement("item");
 
                 writer.WriteStartElement("key");
                 keySerializer.Serialize(writer, key);
                 writer.WriteEndElement();
-                
+
                 writer.WriteStartElement("value");
                 TValue value = this[key];
                 valueSerializer.Serialize(writer, value);
 
-                writer.WriteEndElement(); 
+                writer.WriteEndElement();
 
                 writer.WriteEndElement();
             }

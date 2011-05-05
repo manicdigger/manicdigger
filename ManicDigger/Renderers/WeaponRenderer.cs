@@ -20,11 +20,28 @@ namespace ManicDigger.Renderers
         public IMapStorage d_Map;
         [Inject]
         public IShadows d_Shadows;
+        [Inject]
+        public Inventory d_Inventory;
         public int terrainTexture { get { return d_Terrain.terrainTexture; } }
         public int texturesPacked { get { return d_Terrain.texturesPacked; } }
         public int GetWeaponTextureId(TileSide side)
         {
-            return d_Data.TextureId[d_Viewport.MaterialSlots[d_Viewport.activematerial], (int)side];
+            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            if (item == null)
+            {
+                //empty hand
+                if (side == TileSide.Top) { return 129; }
+                return 128;
+            }
+            if (item.ItemClass == ItemClass.Block)
+            {
+                return d_Data.TextureId[item.BlockId, (int)side];
+            }
+            else
+            {
+                //todo
+                return 0;
+            }
         }
         public float Light
         {
@@ -43,14 +60,25 @@ namespace ManicDigger.Renderers
                 return 1f / d_Shadows.maxlight;
             }
         }
-        public bool IsTorch() { return d_Viewport.MaterialSlots[d_Viewport.activematerial] == d_Data.BlockIdTorch; }
+        public bool IsTorch()
+        {
+            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            return item != null
+                && item.ItemClass == ItemClass.Block
+                && item.BlockId == d_Data.BlockIdTorch;
+        }
+        public bool IsEmptyHand()
+        {
+            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            return item == null;
+        }
     }
     public class WeaponRenderer
     {
         [Inject]
         public WeaponBlockInfo d_Info;
         [Inject]
-        public IBlockRendererTorch d_BlockRendererTorch;
+        public BlockRendererTorch d_BlockRendererTorch;
         [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition;
         public void SetAttack(bool isattack, bool build)
@@ -91,7 +119,16 @@ namespace ManicDigger.Renderers
             GL.Color3(Color.FromArgb(light, light, light));
             GL.BindTexture(TextureTarget.Texture2D, d_Info.terrainTexture);
 
-            int curmaterial=d_Info.d_Viewport.MaterialSlots[d_Info.d_Viewport.activematerial];
+            Item item = d_Info.d_Inventory.RightHand[d_Info.d_Viewport.ActiveMaterial];
+            int curmaterial;
+            if (item == null)
+            {
+                curmaterial = d_Info.d_Data.BlockIdTorch;
+            }
+            else
+            {
+                curmaterial = item.BlockId;
+            }
             float curlight = d_Info.Light;
             if (curmaterial != oldMaterial || curlight != oldLight)
             {
@@ -100,8 +137,16 @@ namespace ManicDigger.Renderers
                 int x = 0;
                 int y = 0;
                 int z = 0;
-                if (d_Info.IsTorch())
+                if (d_Info.IsEmptyHand())
                 {
+                    d_BlockRendererTorch.TopTexture = d_Info.GetWeaponTextureId(TileSide.Top);
+                    d_BlockRendererTorch.SideTexture = d_Info.GetWeaponTextureId(TileSide.Front);
+                    d_BlockRendererTorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
+                }
+                else if (d_Info.IsTorch())
+                {
+                    d_BlockRendererTorch.TopTexture = d_Info.GetWeaponTextureId(TileSide.Top);
+                    d_BlockRendererTorch.SideTexture = d_Info.GetWeaponTextureId(TileSide.Front);
                     d_BlockRendererTorch.AddTorch(myelements, myvertices, x, y, z, TorchType.Normal);
                 }
                 else
