@@ -520,6 +520,8 @@ namespace ManicDigger
         public IInventoryController d_InventoryController;
         [Inject]
         public InventoryUtil d_InventoryUtil;
+        [Inject]
+        public IScreenshot d_Screenshot;
 
         public bool SkySphereNight { get; set; }
 
@@ -1038,14 +1040,8 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
-                    using (Bitmap bmp = GrabScreenshot())
-                    {
-                        string path = System.Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-                        string time = string.Format("{0:yyyy-MM-dd_HH-mm-ss}", DateTime.Now);
-                        string filename = Path.Combine(path, time + ".png");
-                        bmp.Save(filename);
-                        screenshotflash = 5;
-                    }
+                    d_Screenshot.SaveScreenshot();
+                    screenshotflash = 5;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
@@ -1123,21 +1119,6 @@ namespace ManicDigger
             Overhead,
         }
         CameraType cameratype = CameraType.Fpp;
-        // Returns a System.Drawing.Bitmap with the contents of the current framebuffer
-        public Bitmap GrabScreenshot()
-        {
-            if (GraphicsContext.CurrentContext == null)
-                throw new GraphicsContextMissingException();
-
-            Bitmap bmp = new Bitmap(this.d_MainWindow.ClientSize.Width, this.d_MainWindow.ClientSize.Height);
-            System.Drawing.Imaging.BitmapData data =
-                bmp.LockBits(this.d_MainWindow.ClientRectangle, System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            GL.ReadPixels(0, 0, this.d_MainWindow.ClientSize.Width, this.d_MainWindow.ClientSize.Height, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
-            bmp.UnlockBits(data);
-
-            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
-            return bmp;
-        }
         public void Log(string p)
         {
             AddChatline(p);
@@ -2398,10 +2379,10 @@ namespace ManicDigger
                     break;
                 case GuiState.Inventory:
                     {
-                        d_The3d.ResizeGraphics(Width, Height);
-                        d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
+                        //d_The3d.ResizeGraphics(Width, Height);
+                        //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
                         d_HudInventory.Draw();
-                        d_The3d.PerspectiveMode();
+                        //d_The3d.PerspectiveMode();
                     }
                     break;
                 case GuiState.MapLoading:
@@ -2785,10 +2766,10 @@ namespace ManicDigger
         }
         public void DrawMaterialSelector()
         {
-            d_The3d.ResizeGraphics(Width, Height);
-            d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
+            //d_The3d.ResizeGraphics(Width, Height);
+            //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
             d_HudInventory.DrawMaterialSelector();
-            d_The3d.PerspectiveMode();
+            //d_The3d.PerspectiveMode();
         }
 
         public Point MouseCurrent

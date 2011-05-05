@@ -123,7 +123,7 @@ namespace ManicDigger.Renderers
             int curmaterial;
             if (item == null)
             {
-                curmaterial = d_Info.d_Data.BlockIdTorch;
+                curmaterial = 0;
             }
             else
             {

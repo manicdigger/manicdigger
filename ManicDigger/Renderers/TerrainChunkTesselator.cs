@@ -22,7 +22,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IGameData d_Data;
         [Inject]
-        public IBlockRendererTorch d_BlockRendererTorch;
+        public BlockRendererTorch d_BlockRendererTorch;
         [Inject]
         public Config3d d_Config3d;
         [Inject]
@@ -503,6 +503,8 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
                 List<ushort> torchelements = new List<ushort>();
                 List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
+                d_BlockRendererTorch.SideTexture = d_Data.TextureId[d_Data.BlockIdTorch, (int)TileSide.Front];
+                d_BlockRendererTorch.TopTexture = d_Data.TextureId[d_Data.BlockIdTorch, (int)TileSide.Top];
                 d_BlockRendererTorch.AddTorch(torchelements, torchvertices, x, y, z, type);
                 int oldverticescount=toreturnmain.verticesCount;
                 for (int i = 0; i < torchelements.Count; i++)

@@ -17,6 +17,16 @@ namespace ManicDigger.Tests
             VSync = VSyncMode.On;
             WindowState = WindowState.Normal;
             MainMenu();
+            Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(Keyboard_KeyDown);
+        }
+
+        void Keyboard_KeyDown(object sender, KeyboardKeyEventArgs e)
+        {
+            if (e.Key == Key.F12)
+            {
+                Screenshot screenshot = new Screenshot() { d_GameWindow = this };
+                screenshot.SaveScreenshot();
+            }
         }
 
         private void MainMenu()

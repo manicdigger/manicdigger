@@ -77,7 +77,7 @@ namespace ManicDigger.Tests
             mouse_current.Offset(-window.X, -window.Y);
             mouse_current.Offset(0, -20);
 
-            the3d.OrthoMode(hud.ConstWidth, hud.ConstHeight);
+            the3d.OrthoMode(window.Width, window.Height);
             hud.OnRenderFrame(e);
         }
         public override void OnKeyPress(KeyPressEventArgs e)
@@ -86,9 +86,9 @@ namespace ManicDigger.Tests
         }
         public override void OnResize(EventArgs e)
         {
-            the3d.ResizeGraphics(viewportsize.Width, viewportsize.Height);
-            //GL.Viewport(0, 0, window.Width, window.Height);
-            //the3d.Set3dProjection();
+            //the3d.ResizeGraphics(viewportsize.Width, viewportsize.Height);
+            GL.Viewport(0, 0, window.Width, window.Height);
+            the3d.Set3dProjection();
         }
         public void Dispose()
         {
