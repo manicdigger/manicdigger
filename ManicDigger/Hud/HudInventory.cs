@@ -117,14 +117,16 @@ namespace ManicDigger.Hud
                 && scaledMouse.X < MaterialSelectorStart.X + 10 * ActiveMaterialCellSize
                 && scaledMouse.Y < MaterialSelectorStart.Y + 10 * ActiveMaterialCellSize)
             {
+                int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
                 ActiveMaterial.ActiveMaterial = (scaledMouse.X - MaterialSelectorStart.X) / ActiveMaterialCellSize;
-                /*
-                server.InventoryClick(new InventoryPosition()
+                if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
                 {
-                    type = InventoryPositionType.MaterialSelector,
-                    MaterialId = ActiveMaterial,
-                });
-                */
+                    controller.InventoryClick(new InventoryPosition()
+                    {
+                        type = InventoryPositionType.MaterialSelector,
+                        MaterialId = ActiveMaterial.ActiveMaterial,
+                    });
+                }
             }
             if (SelectedWearPlace(scaledMouse) != null)
             {

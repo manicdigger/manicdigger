@@ -476,7 +476,29 @@ namespace ManicDigger
             }
             else if (pos.type == InventoryPositionType.MaterialSelector)
             {
-                //todo ?
+                if (d_Inventory.DragDropItem == null && d_Inventory.RightHand[pos.MaterialId] != null)
+                {
+                    d_Inventory.DragDropItem = d_Inventory.RightHand[pos.MaterialId];
+                    d_Inventory.RightHand[pos.MaterialId] = null;
+                }
+                else if (d_Inventory.DragDropItem != null && d_Inventory.RightHand[pos.MaterialId] == null)
+                {
+                    if(d_Items.CanWear(WearPlace.RightHand, d_Inventory.DragDropItem))
+                    {
+                        d_Inventory.RightHand[pos.MaterialId] = d_Inventory.DragDropItem;
+                        d_Inventory.DragDropItem = null;
+                    }
+                }
+                else if (d_Inventory.DragDropItem != null && d_Inventory.RightHand[pos.MaterialId] != null)
+                {
+                    if (d_Items.CanWear(WearPlace.RightHand, d_Inventory.DragDropItem))
+                    {
+                        Item oldHand = d_Inventory.RightHand[pos.MaterialId];
+                        d_Inventory.RightHand[pos.MaterialId] = d_Inventory.DragDropItem;
+                        d_Inventory.DragDropItem = oldHand;
+                    }
+                }
+                SendInventory();
             }
             else if (pos.type == InventoryPositionType.WearPlace)
             {
