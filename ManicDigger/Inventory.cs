@@ -522,10 +522,58 @@ namespace ManicDigger
 
         public void WearItem(InventoryPosition from, InventoryPosition to)
         {
+            //todo
+            if (from.type == InventoryPositionType.MainArea
+                && to.type == InventoryPositionType.MaterialSelector
+                && d_Inventory.RightHand[to.MaterialId] == null
+                && d_Items.CanWear(WearPlace.RightHand, d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)]))
+            {
+                d_Inventory.RightHand[to.MaterialId] = d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)];
+                d_Inventory.Items.Remove(new ProtoPoint(from.AreaX, from.AreaY));
+            }
         }
 
-        public void MoveToInventory(InventoryPosition to)
+        public void MoveToInventory(InventoryPosition from)
         {
+            //todo
+            if (from.type == InventoryPositionType.MaterialSelector)
+            {
+                //duplicate code with GrabItem().
+
+                Item item = d_Inventory.RightHand[from.MaterialId];
+                //grab to main area - stacking
+                for (int x = 0; x < d_InventoryUtil.CellCount.X; x++)
+                {
+                    for (int y = 0; y < d_InventoryUtil.CellCount.Y; y++)
+                    {
+                        var p = d_InventoryUtil.ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
+                        if (p != null && p.Length == 1)
+                        {
+                            var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0])], item);
+                            if (stacked != null)
+                            {
+                                d_Inventory.Items[new ProtoPoint(x, y)] = stacked;
+                                d_Inventory.RightHand[from.MaterialId] = null;
+                                return;
+                            }
+                        }
+                    }
+                }
+                //grab to main area - adding
+                for (int x = 0; x < d_InventoryUtil.CellCount.X; x++)
+                {
+                    for (int y = 0; y < d_InventoryUtil.CellCount.Y; y++)
+                    {
+                        var p = d_InventoryUtil.ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
+                        if (p != null && p.Length == 0)
+                        {
+                            d_Inventory.Items[new ProtoPoint(x, y)] = item;
+                            d_Inventory.RightHand[from.MaterialId] = null;
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
     public class GameDataItemsBlocks : IGameDataItems
