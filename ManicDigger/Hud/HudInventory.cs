@@ -113,12 +113,10 @@ namespace ManicDigger.Hud
                 });
             }
             //material selector
-            if (scaledMouse.X >= MaterialSelectorStart.X && scaledMouse.Y >= MaterialSelectorStart.Y
-                && scaledMouse.X < MaterialSelectorStart.X + 10 * ActiveMaterialCellSize
-                && scaledMouse.Y < MaterialSelectorStart.Y + 10 * ActiveMaterialCellSize)
+            if (SelectedMaterialSelectorSlot(scaledMouse) != null)
             {
                 int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
-                ActiveMaterial.ActiveMaterial = (scaledMouse.X - MaterialSelectorStart.X) / ActiveMaterialCellSize;
+                ActiveMaterial.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).Value;
                 if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
                 {
                     controller.InventoryClick(new InventoryPosition()
@@ -137,6 +135,17 @@ namespace ManicDigger.Hud
                     ActiveMaterial = ActiveMaterial.ActiveMaterial,
                 });
             }
+        }
+
+        private int? SelectedMaterialSelectorSlot(Point scaledMouse)
+        {
+            if (scaledMouse.X >= MaterialSelectorStart.X && scaledMouse.Y >= MaterialSelectorStart.Y
+                && scaledMouse.X < MaterialSelectorStart.X + 10 * ActiveMaterialCellSize
+                && scaledMouse.Y < MaterialSelectorStart.Y + 10 * ActiveMaterialCellSize)
+            {
+                return (scaledMouse.X - MaterialSelectorStart.X) / ActiveMaterialCellSize;
+            }
+            return null;
         }
 
         private Point? SelectedCell(Point scaledMouse)
@@ -267,6 +276,16 @@ namespace ManicDigger.Hud
                 if (itemAtWearPlace != null)
                 {
                     DrawItemInfo(Offset(InventoryStart, wearPlaceStart[(int)selected]), itemAtWearPlace);
+                }
+            }
+            if (SelectedMaterialSelectorSlot(scaledMouse) != null)
+            {
+                int selected = SelectedMaterialSelectorSlot(scaledMouse).Value;
+                Item item = inventory.RightHand[selected];
+                if (item != null)
+                {
+                    DrawItemInfo(new Point(MaterialSelectorStart.X + ActiveMaterialCellSize * selected,
+                        MaterialSelectorStart.Y), item);
                 }
             }
 
