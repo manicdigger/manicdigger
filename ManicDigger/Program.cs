@@ -39,6 +39,10 @@ namespace ManicDigger
 				{
 					try
 					{
+                        if (!Directory.Exists(path))
+                        {
+                            continue;
+                        }
 						foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
 						{
 							try

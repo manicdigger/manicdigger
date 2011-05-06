@@ -13,6 +13,7 @@ using ManicDigger.MapTools;
 using OpenTK;
 using ProtoBuf;
 using System.Xml.Serialization;
+using System.Drawing;
 
 namespace ManicDiggerServer
 {
@@ -1199,6 +1200,7 @@ namespace ManicDiggerServer
 
                     if (config.Builders.Contains(username)) { clients[clientid].Rank = Rank.Builder; }
                     if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }
+                    if (LocalConnectionsOnly) { clients[clientid].Rank = Rank.Admin; }
 
                     clients[clientid].playername = username;
                     break;
@@ -1529,6 +1531,74 @@ namespace ManicDiggerServer
                             break;
                         }
                     }
+                    else if (packet.Message.Message.StartsWith("/giveall"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot give all blocks.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            foreach (var k in clients)
+                            {
+                                if (ss.Length < 2 ||
+                                    k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    string targetName = k.Value.playername;
+                                    string sourcename = clients[clientid].playername;
+                                    for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+                                    {
+                                        if (!d_Data.IsBuildable[i])
+                                        {
+                                            continue;
+                                        }
+                                        Inventory inventory = GetPlayerInventory(targetName).Inventory;
+                                        InventoryUtil util = GetInventoryUtil(inventory);
+
+                                        for (int xx = 0; xx < util.CellCount.X; xx++)
+                                        {
+                                            for (int yy = 0; yy < util.CellCount.Y; yy++)
+                                            {
+                                                if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
+                                                {
+                                                    continue;
+                                                }
+                                                Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
+                                                if (currentItem != null
+                                                    && currentItem.ItemClass == ItemClass.Block
+                                                    && currentItem.BlockId == i)
+                                                {
+                                                    currentItem.BlockCount = 999;
+                                                    goto nextblock;
+                                                }
+                                            }
+                                        }
+                                        for (int xx = 0; xx < util.CellCount.X; xx++)
+                                        {
+                                            for (int yy = 0; yy < util.CellCount.Y; yy++)
+                                            {
+                                                Item newItem = new Item();
+                                                newItem.ItemClass = ItemClass.Block;
+                                                newItem.BlockId = i;
+                                                newItem.BlockCount = 999;
+
+                                                if (util.ItemAtCell(new Point(xx, yy)) == null)
+                                                {
+                                                    inventory.Items[new ProtoPoint(xx, yy)] = newItem;
+                                                    goto nextblock;
+                                                }
+                                            }
+                                        }
+                                    nextblock:
+                                        k.Value.IsInventoryDirty = true;
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
                     else if (packet.Message.Message.StartsWith("/help"))
                     {
                         SendMessage(clientid, colorHelp + "/login [buildpassword]");
@@ -1539,6 +1609,7 @@ namespace ManicDiggerServer
                             SendMessage(clientid, colorHelp + "/welcome [login motd message]");
                             SendMessage(clientid, colorHelp + "/ban [username]");
                             SendMessage(clientid, colorHelp + "/banip [username]");
+                            SendMessage(clientid, colorHelp + "/giveall [username]");
                             SendMessage(clientid, colorHelp + "/list");
                             SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
                         }
@@ -2070,6 +2141,10 @@ namespace ManicDiggerServer
             {
                 try
                 {
+                    if (!Directory.Exists(path))
+                    {
+                        continue;
+                    }
                     foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
                     {
                         try
