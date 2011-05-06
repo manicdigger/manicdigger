@@ -117,15 +117,18 @@ namespace ManicDigger
                 default: throw new NotSupportedException("The specified sound format is not supported.");
             }
         }
-        class X
+        Dictionary<string, AudioSample> cache = new Dictionary<string, AudioSample>();
+        class AudioTask
         {
-            public X(Stream filename, IGameExit gameexit)
+            public AudioTask(IGameExit gameexit, string id, AudioOpenAl audio)
             {
-                this.filename = filename;
                 this.gameexit = gameexit;
+                this.filename = id;
+                this.audio = audio;
             }
+            AudioOpenAl audio;
             IGameExit gameexit;
-            public Stream filename;
+            public string filename;
             public void Play()
             {
                 if (started)
@@ -147,8 +150,43 @@ namespace ManicDigger
                 }
                 catch (Exception e) { Console.WriteLine(e.ToString()); }
             }
+            
+
+            AudioSample GetSample(string filename)
+            {
+                if (!audio.cache.ContainsKey(filename))
+                {
+                    Stream stream = audio.d_GetFile.GetFile(filename);
+                    if (stream.ReadByte() == 'R'
+                        && stream.ReadByte() == 'I'
+                        && stream.ReadByte() == 'F'
+                        && stream.ReadByte() == 'F')
+                    {
+                        stream.Position = 0;
+                        int channels, bits_per_sample, sample_rate;
+                        byte[] sound_data = LoadWave(stream, out channels, out bits_per_sample, out sample_rate);
+                        AudioSample sample = new AudioSample()
+                        {
+                            Pcm = sound_data,
+                            BitsPerSample = bits_per_sample,
+                            Channels = channels,
+                            Rate = sample_rate,
+                        };
+                        audio.cache[filename] = sample;
+                    }
+                    else
+                    {
+                        stream.Position = 0;
+                        AudioSample sample = new OggDecoder().OggToWav(stream);
+                        audio.cache[filename] = sample;
+                    }
+                }
+                return audio.cache[filename];
+            }
+
             private void DoPlay()
             {
+                AudioSample sample = GetSample(filename);
                 //if(!audiofiles.ContainsKey(filename))
                 {
 
@@ -161,9 +199,7 @@ namespace ManicDigger
 
                     int buffer = OpenTK.Audio.OpenAL.AL.GenBuffer();
 
-                    int channels, bits_per_sample, sample_rate;
-                    byte[] sound_data = LoadWave(filename, out channels, out bits_per_sample, out sample_rate);
-                    OpenTK.Audio.OpenAL.AL.BufferData(buffer, GetSoundFormat(channels, bits_per_sample), sound_data, sound_data.Length, sample_rate);
+                    OpenTK.Audio.OpenAL.AL.BufferData(buffer, GetSoundFormat(sample.Channels, sample.BitsPerSample), sample.Pcm, sample.Pcm.Length, sample.Rate);
                     //audiofiles[filename]=buffer;
 
                     OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcei.Buffer, buffer);
@@ -229,9 +265,9 @@ namespace ManicDigger
             {
                 return;
             }
-            new X(d_GetFile.GetFile(filename), d_GameExit).Play();
+            new AudioTask(d_GameExit, filename, this).Play();
         }
-        Dictionary<string, X> soundsplaying = new Dictionary<string, X>();
+        Dictionary<string, AudioTask> soundsplaying = new Dictionary<string, AudioTask>();
         public void PlayAudioLoop(string filename, bool play)
         {
             if (!enabled)
@@ -242,13 +278,12 @@ namespace ManicDigger
             {
                 return;
             }
-            Stream file = d_GetFile.GetFile(filename);
             //todo: resume playing.
             if (play)
             {
                 if (!soundsplaying.ContainsKey(filename))
                 {
-                    var x = new X(file, d_GameExit);
+                    var x = new AudioTask(d_GameExit, filename, this);
                     x.loop = true;
                     soundsplaying[filename] = x;
                 }

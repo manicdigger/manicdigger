@@ -69,6 +69,13 @@ namespace ManicDigger
 
                 string f2 = filename.Replace(".jpg", ".png");
                 if (cache.ContainsKey(f2)) { return new MemoryStream(cache[f2]); }
+
+                string f3 = filename.Replace(".wav", ".ogg");
+                if (cache.ContainsKey(f3)) { return new MemoryStream(cache[f3]); }
+
+                string f4 = filename.Replace(".ogg", ".wav");
+                if (cache.ContainsKey(f4)) { return new MemoryStream(cache[f4]); }
+
                 filename = new FileInfo(filename).Name; //handles GetFile(GetFile(file)) use.
             }
 
