@@ -614,10 +614,12 @@ namespace ManicDiggerServer
         }
         int DAY_EVERY_SECONDS = 60 * 60;//1 hour
         public int HourDetail = 4;
+        public int GameStartHour = 9; //9 am
         int GetHour(long frame)
         {
             long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / (24 * HourDetail);
-            return (int)((frame / everyframes) % (24 * HourDetail));
+            long startframe = (everyframes * HourDetail * GameStartHour);
+            return (int)(((frame + startframe) / everyframes) % (24 * HourDetail));
         }
         /*
         int GetMoon(long frame)
