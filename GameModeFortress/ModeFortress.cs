@@ -715,35 +715,33 @@ namespace GameModeFortress
                                 d_Terrain.UpdateAllTiles();
                             }
                         }
-                        if (packet.Season.Hour == int.MinValue)
+                        packet.Season.Hour -= 1;
+                        if (packet.Season.Hour < 0)
                         {
-                            //why this happens?
-                            //server never sents this value but it gets received here anyway.
-                            //default was 12 but it caused a 1-hour long day at hour 23.
-                            //fix: changed default value to int.MinValue to at least detect this.
-                            if (!received_sun)
+                            //shouldn't happen
+                            packet.Season.Hour = 12 * HourDetail;
+                        }
+                        if (NightLevels == null)
+                        {
+                            string[] l = MyStream.ReadAllLines(d_GetFile.GetFile("sunlevels.csv"));
+                            NightLevels = new int[24 * HourDetail];
+                            for (int i = 0; i < 24 * HourDetail; i++)
                             {
-                                packet.Season.Hour = 6;
-                                received_sun = true;
+                                string s = l[i];
+                                if (s.Contains(";")) { s = s.Substring(0, s.IndexOf(";")); }
+                                if (s.Contains(",")) { s = s.Substring(0, s.IndexOf(",")); }
+                                s = s.Trim();
+                                NightLevels[i] = int.Parse(s);
                             }
-                            else
-                            {
-                                packet.Season.Hour = d_SunMoonRenderer.Hour;
-                            }
                         }
-                        int sunlight;
-                        if (packet.Season.Hour >= 6 && packet.Season.Hour < 18)
-                        {
-                            sunlight = d_Shadows.maxlight;
-                            d_Viewport.SkySphereNight = false;
-                        }
-                        else
-                        {
-                            sunlight = packet.Season.Moon == 0 ? 0 : 1;
-                            d_Viewport.SkySphereNight = true;
-                        }
+                        int sunlight = NightLevels[packet.Season.Hour];
+                        d_Viewport.SkySphereNight = sunlight < 8;
                         d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
-                        d_SunMoonRenderer.Hour = packet.Season.Hour;
+                        int hour = packet.Season.Hour / HourDetail;
+                        if (d_SunMoonRenderer.Hour != hour)
+                        {
+                            d_SunMoonRenderer.Hour = hour;
+                        }
 
                         if (d_Shadows.sunlight != sunlight)
                         {
@@ -797,7 +795,8 @@ namespace GameModeFortress
                     return false;
             }
         }
-        bool received_sun = false;
+        public int HourDetail = 4;
+        public int[] NightLevels;
         public bool ENABLE_PER_SERVER_TEXTURES = false;
         string serverterraintexture;
         #endregion

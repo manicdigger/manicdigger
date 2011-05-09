@@ -592,10 +592,14 @@ namespace ManicDiggerServer
         Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
+            if (!clients[clientid].IsConnected)
+            {
+                return;
+            }
             PacketServerSeason p = new PacketServerSeason()
             {
                 Season = GetSeason(simulationcurrentframe),
-                Hour = GetHour(simulationcurrentframe),
+                Hour = GetHour(simulationcurrentframe) + 1,
                 DayNightCycleSpeedup = (60 * 60 * 24) / DAY_EVERY_SECONDS,
                 //Moon = GetMoon(simulationcurrentframe),
                 Moon = 0,
@@ -609,10 +613,11 @@ namespace ManicDiggerServer
             return (int)((frame / everyframes) % 4);
         }
         int DAY_EVERY_SECONDS = 60 * 60;//1 hour
+        public int HourDetail = 4;
         int GetHour(long frame)
         {
-            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / 24;
-            return (int)((frame / everyframes) % 24);
+            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS / (24 * HourDetail);
+            return (int)((frame / everyframes) % (24 * HourDetail));
         }
         /*
         int GetMoon(long frame)
@@ -1267,7 +1272,7 @@ namespace ManicDiggerServer
                             }
                         }
                     }
-
+                    clients[clientid].IsConnected = true;
                     NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
@@ -2335,6 +2340,7 @@ namespace ManicDiggerServer
             public bool IsGuest { get { return playername.StartsWith("~"); } }
             public bool IsAdmin { get { return Rank == Rank.Admin; } }
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
+            public bool IsConnected;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
 

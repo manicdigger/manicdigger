@@ -76,7 +76,7 @@ namespace ManicDigger
         }
         public int maxlight
         {
-            get { return 16; }
+            get { return 15; }
         }
         public void OnGetTerrainBlock(int x, int y, int z)
         {
@@ -128,8 +128,8 @@ namespace ManicDigger
         
         public int chunksize = 16;
         int minlight = 0;
-        public int maxlight { get { return 16; } }
-        int sunlight_ = 16;
+        public int maxlight { get { return 15; } }
+        int sunlight_ = 15;
         public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
 
         public Shadows()
