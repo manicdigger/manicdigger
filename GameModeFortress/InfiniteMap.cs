@@ -174,6 +174,10 @@ namespace GameModeFortress
             Array.Clear(outPortion, 0, outPortion.Length);
 
             int chunksizebits = (int)Math.Log(chunksize, 2);
+            int mapchunksx = MapSizeX / chunksize;
+            int mapchunksy = MapSizeY / chunksize;
+            int mapchunksz = MapSizeZ / chunksize;
+            int mapsizechunks = mapchunksx * mapchunksy * mapchunksz;
 
             for (int xx = 0; xx < portionsizex; xx++)
             {
@@ -185,8 +189,10 @@ namespace GameModeFortress
                         int cx = (x + xx) >> chunksizebits;
                         int cy = (y + yy) >> chunksizebits;
                         int cz = (z + zz) >> chunksizebits;
-                        int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
-                        if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
+                        //int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
+                        int cpos = (cz * mapchunksy + cy) * mapchunksx + cx;
+                        //if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
+                        if (cpos < 0 || cpos >= mapsizechunks)
                         {
                             continue;
                         }
@@ -195,9 +201,21 @@ namespace GameModeFortress
                         {
                             continue;
                         }
-                        int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
+                        //int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
+                        int chunkGlobalX = cx << chunksizebits;
+                        int chunkGlobalY = cy << chunksizebits;
+                        int chunkGlobalZ = cz << chunksizebits;
+
+                        int inChunkX = (x + xx) - chunkGlobalX;
+                        int inChunkY = (y + yy) - chunkGlobalY;
+                        int inChunkZ = (z + zz) - chunkGlobalZ;
+
+                        //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
+                        int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
+
                         int block = chunk.data[pos];
-                        outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
+                        //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
+                        outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (byte)block;
                     }
                 }
             }

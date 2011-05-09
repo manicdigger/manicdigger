@@ -65,6 +65,7 @@ namespace ManicDigger
         void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
         void SetMapPortion(int x, int y, int z, byte[, ,] chunk);
         void UseMap(byte[, ,] map);
+        byte[] GetChunk(int x, int y, int z);
     }
     public interface IMapStorageLight
     {
@@ -254,6 +255,13 @@ namespace ManicDigger
                     }
                 }
             }
+        }
+        public int chunksize = 16;
+        public byte[] GetChunk(int x, int y, int z)
+        {
+            byte[] chunk = new byte[chunksize * chunksize * chunksize];
+            GetMapPortion(chunk, x, y, z, chunksize, chunksize, chunksize);
+            return chunk;
         }
     }
     public class XmlTool

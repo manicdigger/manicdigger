@@ -232,7 +232,8 @@ namespace GameModeFortress
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
             w.d_CharacterRenderer = playerrenderer;
-            w.particleEffectBlockBreak = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
+            particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
+            w.particleEffectBlockBreak = particle;
             w.ENABLE_FINITEINVENTORY = false;
             clientgame.d_Terrain = terrainRenderer;
             clientgame.d_Viewport = w;
@@ -279,14 +280,13 @@ namespace GameModeFortress
             shadowsfull = new Shadows()
             {
                 d_Data = gamedata,
-                d_Map = clientgame,
-                d_Terrain = terrainRenderer,
-                d_LocalPlayerPosition = localplayerposition,
-                d_Config3d = config3d,
-                d_IsChunkReady = dirtychunks,
+                d_Map = map,
                 d_Heightmap = heightmap,
                 d_Light = light,
+                d_MapPortion = map,
+                d_DirtyChunks = dirtychunks,
             };
+            shadowsfull.Start();
             shadowssimple = new ShadowsSimple()
             {
                 d_Data = gamedata,
@@ -350,6 +350,7 @@ namespace GameModeFortress
         TerrainChunkTesselator terrainchunktesselator;
         public bool fullshadows = false;
         NetworkClientFortress network;
+        ParticleEffectBlockBreak particle;
         void UseShadowsSimple()
         {
             if (clientgame.d_Shadows != null)
@@ -363,6 +364,7 @@ namespace GameModeFortress
             terrainchunktesselator.d_Shadows = shadows;
             network.d_Shadows = shadows;
             w.d_Shadows = shadows;
+            particle.d_Shadows = shadows;
         }
         void UseShadowsFull()
         {
@@ -377,6 +379,7 @@ namespace GameModeFortress
             terrainchunktesselator.d_Shadows = shadows;
             network.d_Shadows = shadows;
             w.d_Shadows = shadows;
+            particle.d_Shadows = shadows;
         }
         #region ICurrentShadows Members
         public bool ShadowsFull

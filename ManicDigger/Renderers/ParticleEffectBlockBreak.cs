@@ -18,6 +18,8 @@ namespace ManicDigger.Renderers
         [Inject]
         public IMapStorage d_Map;
         [Inject]
+        public IShadows d_Shadows;
+        [Inject]
         public ITerrainTextures d_Terrain;
         [Inject]
         public IGameData d_Data;
@@ -28,13 +30,17 @@ namespace ManicDigger.Renderers
             {
                 foreach (Particle pp in p.particles)
                 {
+                    float l = p.light;
                     GL.Begin(BeginMode.Triangles);
                     RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, d_Terrain.texturesPacked);
                     GL.TexCoord2(texrec.Left, texrec.Top);
+                    GL.Color3(l, l, l);
                     GL.Vertex3(pp.position);
                     GL.TexCoord2(texrec.Right, texrec.Top);
+                    GL.Color3(l, l, l);
                     GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(0, particlesize, particlesize)));
                     GL.TexCoord2(texrec.Right, texrec.Bottom);
+                    GL.Color3(l, l, l);
                     GL.Vertex3(pp.position + Vector3.Multiply(pp.direction, new Vector3(particlesize, 0, particlesize)));
                     Vector3 delta = pp.direction;
                     delta = Vector3.Multiply(delta, (float)deltaTime * particlespeed);
@@ -61,6 +67,7 @@ namespace ManicDigger.Renderers
             public DateTime start;
             public List<Particle> particles = new List<Particle>();
             public int textureid;
+            public float light = 1f;
         }
         Random rnd = new Random();
         public void StartParticleEffect(Vector3 v)
@@ -82,6 +89,7 @@ namespace ManicDigger.Renderers
                 return;
             }
             p.textureid = d_Data.TextureId[tiletype, (int)TileSide.Top];
+            p.light = (float)d_Shadows.MaybeGetLight((int)v.X, (int)v.Z, (int)v.Y) / d_Shadows.maxlight;
             for (int i = 0; i < particlecount; i++)
             {
                 Particle pp = new Particle();

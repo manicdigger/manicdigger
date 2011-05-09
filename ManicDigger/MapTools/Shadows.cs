@@ -19,6 +19,8 @@ namespace ManicDigger
         int sunlight { get; set; }
         void OnSetChunk(int x, int y, int z);
     }
+    //Top block in each column is at light level 16.
+    //All blocks below are at light level 11.
     public class ShadowsSimple : IShadows
     {
         [Inject]
@@ -30,7 +32,7 @@ namespace ManicDigger
         [Inject]
         public InfiniteMapChunked2d d_Heightmap;
         public int chunksize = 16;
-        int defaultshadow = 11;
+        public int defaultshadow = 11;
         #region IShadows Members
         public void OnLocalBuild(int x, int y, int z)
         {
@@ -88,7 +90,7 @@ namespace ManicDigger
         #region IShadows Members
         public int? MaybeGetLight(int x, int y, int z)
         {
-            return null;
+            return IsShadow(x, y, z) ? defaultshadow : maxlight;
         }
         #endregion
         #region IShadows Members
@@ -106,20 +108,19 @@ namespace ManicDigger
         }
         #endregion
     }
+    //Before drawing a chunk (16x16x16) on screen,
+    //it floods light from 3x3x3 chunks around it.
+    //Todo: Optimize.
     public class Shadows : IShadows
     {
         [Inject]
         public IMapStorage d_Map;
         [Inject]
+        public IMapStoragePortion d_MapPortion;
+        [Inject]
+        public IIsChunkDirty d_DirtyChunks;
+        [Inject]
         public IGameDataLight d_Data;
-        [Inject]
-        public ITerrainRenderer d_Terrain;
-        [Inject]
-        public ILocalPlayerPosition d_LocalPlayerPosition;
-        [Inject]
-        public Config3d d_Config3d;
-        [Inject]
-        public IIsChunkDirty d_IsChunkReady;
         [Inject]
         public InfiniteMapChunked2d d_Heightmap;
         [Inject]
@@ -133,173 +134,52 @@ namespace ManicDigger
 
         public Shadows()
         {
-            q.Initialize(1024);
         }
 
-        Queue<Vector3i> shadowstoupdate = new Queue<Vector3i>();
+        public void Start()
+        {
+            portion = new byte[chunksize * chunksize * chunksize * 3 * 3 * 3];
+            light = new byte[chunksize * chunksize * chunksize * 3 * 3 * 3];
+            q.Initialize(1024);
+            lighttoflood.Initialize(1024);
+        }
+
         public void OnLocalBuild(int x, int y, int z)
         {
-            lock (lighttoupdate_lock)
-            {
-                //UpdateShadows(x, y, z);
-                shadowstoupdate.Enqueue(new Vector3i(x, y, z));
-            }
         }
+
         public void OnSetBlock(int x, int y, int z)
         {
-            shadowstoupdate.Enqueue(new Vector3i(x, y, z));
-        }
-        private void UpdateShadows(int x, int y, int z)
-        {
-            if ((d_LocalPlayerPosition.LocalPlayerPosition
-                - new OpenTK.Vector3(x, z, y)).Length
-                > d_Config3d.viewdistance * 1.5f)
+            int oldheight = d_Heightmap.GetBlock(x, y);
+            UpdateColumnHeight(x, y);
+            //update shadows in all chunks below
+            int newheight = d_Heightmap.GetBlock(x, y);
+            int min = Math.Min(oldheight, newheight);
+            int max = Math.Max(oldheight, newheight);
+            for (int i = min; i < max; i++)
             {
-                //do not update shadow info outside of fog range
-                // - clear shadow information there.
-                for (int zz = 0; zz < d_Map.MapSizeZ; zz += chunksize)
+                if (i / chunksize != z / chunksize)
                 {
-                    d_Light.ClearChunk(x, y, zz);
-                    d_Light.ClearChunk(x - chunksize, y, zz);
-                    d_Light.ClearChunk(x + chunksize, y, zz);
-                    d_Light.ClearChunk(x, y - chunksize, zz);
-                    d_Light.ClearChunk(x, y + chunksize, zz);
-                }
-                return;
-            }
-
-            lighttoupdate.Clear();
-            UpdateSunlight(x, y, z);
-            List<Vector3i> near = new List<Vector3i>();
-            near.Add(new Vector3i(x, y, z));
-            foreach (var n in BlocksNear(x, y, z))
-            {
-                if (MapUtil.IsValidPos(d_Map, n.x, n.y, n.z))
-                {
-                    near.Add(n);
+                    d_DirtyChunks.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true);
                 }
             }
-            if (near.Count > 0)
+            //Todo: too many redraws. Optimize.
+            //Now placing a single block updates 27 chunks,
+            //and each of those chunk updates calculates light from 27 chunks.
+            //So placing a block is often 729x slower than it should be.
+            for (int xx = 0; xx < 3; xx++)
             {
-                DefloodLight(near);
-            }
-            SetChangedChunksDirty();
-        }
-        private void SetChangedChunksDirty()
-        {
-            foreach (var k in lighttoupdate)
-            {
-                Vector3i kpos = MapUtil.FromMapPos(k.Key);
-                if (MapUtil.IsValidPos(d_Map, kpos.x, kpos.y, kpos.z))
+                for (int yy = 0; yy < 3; yy++)
                 {
-                    d_Terrain.UpdateTile(kpos.x, kpos.y, kpos.z);
-                    d_IsChunkReady.SetChunkDirty(kpos.x / chunksize, kpos.y / chunksize, kpos.z / chunksize, true);
-                }
-            }
-        }
-        Dictionary<ulong, bool> lighttoupdate = new Dictionary<ulong, bool>();
-        object lighttoupdate_lock = new object();
-        public bool loaded = true;
-        public void ResetShadows()
-        {
-            d_Light.Restart();
-            chunklighted = new bool[d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize, d_Map.MapSizeZ / chunksize];
-            UpdateHeightCache();
-            loaded = true;
-        }
-        private void UpdateLight()
-        {
-            //light = new InfiniteMapChunkedSimple() { map = map };
-            d_Light.Restart();
-            UpdateHeightCache();
-        }
-        int LightGetBlock(int x, int y, int z)
-        {
-            retry:
-            int block = d_Light.GetBlock(x, y, z);
-            if (block == 0)//unknown
-            {
-                UpdateStartSunlight(x, y, z);
-                goto retry;
-            }
-            return block - 1;
-        }
-        private void UpdateStartSunlight(int x, int y, int z)
-        {
-            int height = GetLightHeight(x,y);
-            int light;
-            if (z >= height)
-            {
-                light = sunlight;
-            }
-            else
-            {
-                light = minlight;
-            }
-            LightSetBlock(x, y, z, (byte)light);
-        }
-        private void UpdateStartSunlightChunk(int x, int y, int z)
-        {
-            int startx = (x / chunksize) * chunksize;
-            int starty = (y / chunksize) * chunksize;
-            int startz = (z / chunksize) * chunksize;
-            for (int xx = 0; xx < chunksize; xx++)
-            {
-                for (int yy = 0; yy < chunksize; yy++)
-                {
-                    int height = GetLightHeight(startx + xx, starty + yy);
-                    for (int zz = 0; zz < chunksize; zz++)
+                    for (int zz = 0; zz < 3; zz++)
                     {
-                        int light;
-                        if (startz + zz >= height)
-                        {
-                            light = sunlight;
-                        }
-                        else
-                        {
-                            light = minlight;
-                        }
-                        LightSetBlock(startx + xx, starty + yy, startz + zz, (byte)light);
+                        d_DirtyChunks.SetChunkDirty(x / chunksize + xx - 1, y / chunksize + yy - 1, z / chunksize + zz - 1, true);
                     }
                 }
             }
-            chunklighted[x / chunksize, y / chunksize, z / chunksize] = true;
         }
-        void LightSetBlock(int x, int y, int z, int block)
-        {
-            d_Light.SetBlock(x, y, z, block + 1);
-        }
-        private void UpdateHeightCache()
-        {
-            /*
-            if (lightheight != null)
-            {
-                lightheight.Clear();
-            }
-            */
-        }
-        private int GetRealLightHeightAt(int x, int y)
-        {
-            Point p = new Point(x, y);
-            int height = d_Map.MapSizeZ - 1;
-            for (int z = d_Map.MapSizeZ - 1; z >= 0; z--)
-            {
-                if (d_Data.IsTransparentForLight[d_Map.GetBlock(x, y, z)])
-                {
-                    height--;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            return height;
-        }
-        int GetLightHeight(int x, int y)
-        {
-            return d_Heightmap.GetBlock(x, y);
-        }
-        void UpdateLightHeightmapAt(int x, int y)
+
+        private void UpdateColumnHeight(int x, int y)
         {
             //todo faster
             int height = d_Map.MapSizeZ - 1;
@@ -312,163 +192,105 @@ namespace ManicDigger
                 }
             }
             d_Heightmap.SetBlock(x, y, height);
-            /*lightheight.SetBlock(x, y, GetRealLightHeightAt(x, y) + 1);*/
         }
-        void UpdateSunlight(int x, int y, int z)
-        {
-            /* if (lightheight == null) { ResetShadows(); } */
-            int oldheight = GetLightHeight(x, y);
-            if (oldheight < 0) { oldheight = 0; }
-            if (oldheight >= d_Map.MapSizeZ) { oldheight = d_Map.MapSizeZ - 1; }
-            UpdateLightHeightmapAt(x, y);
-            int newheight = GetLightHeight(x, y);
-            if (newheight < 0) { newheight = 0; } //fixes crash
-            if (newheight < oldheight)
-            {
-                //make white
-                for (int i = newheight; i <= oldheight; i++)
-                {
-                    SetLight(x, y, i, sunlight);
-                    currentlightchunk = null;
-                    FloodLight(x, y, i);
-                }
-            }
-            if (newheight > oldheight)
-            {
-                List<Vector3i> deflood = new List<Vector3i>();
-                //make black
-                for (int i = oldheight; i <= newheight; i++)
-                {
-                    SetLight(x, y, i, minlight);
-                    //DefloodLight(x, i);
-                    foreach (var n in BlocksNear(x, y, i))
-                    {
-                        if (MapUtil.IsValidPos(d_Map, n.x, n.y, n.z))
-                        {
-                            deflood.Add(n);
-                        }
-                    }
-                }
-                if (deflood.Count != 0)
-                {
-                    DefloodLight(deflood);
-                }
-            }
-        }
-        void SetLight(int x, int y, int z, int value)
-        {
-            LightSetBlock(x, y, z, (byte)value);
-            if (lighttoupdate != null)
-            {
-                lighttoupdate[MapUtil.ToMapPos((x / 16) * 16 + 5, (y / 16) * 16 + 5, (z / 16) * 16 + 5)] = true;
 
-                for (int i = 0; i < blocksnear.Length; i++)
+        public void ResetShadows()
+        {
+            Array.Clear(portion, 0, portion.Length);
+            Array.Clear(light, 0, portion.Length);
+        }
+
+        public int GetLight(int x, int y, int z)
+        {
+            return d_Light.GetBlock(x, y, z);
+        }
+
+        public void OnGetTerrainBlock(int x, int y, int z)
+        {
+        }
+
+        public int? MaybeGetLight(int x, int y, int z)
+        {
+            int l = 0;
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                l = d_Light.GetBlock(x, y, z); // returns 0 when unknown
+            }
+            if (l == 0)
+            {
+                if (z >= GetLightHeight(x, y))
                 {
-                    int vx = x + blocksnear[i].x;
-                    int vy = y + blocksnear[i].y;
-                    int vz = z + blocksnear[i].z;
-                    if (vx / 16 != x / 16
-                        || vy / 16 != y / 16
-                        || vz / 16 != z / 16)
-                    {
-                        lighttoupdate[MapUtil.ToMapPos((vx / 16) * 16 + 5, (vy / 16) * 16 + 5, (vz / 16) * 16 + 5)] = true;
-                    }
+                    return sunlight_;
                 }
+                else
+                {
+                    return minlight;
+                }
+            }
+            else
+            {
+                return l - 1;
             }
         }
-        bool IsSunlighted(int x, int y, int z)
+
+        byte[] portion;
+        byte[] light;
+
+        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
         {
-            return z > d_Heightmap.GetBlock(x, y);
+            int x = (chunkx - 1) * chunksize;
+            int y = (chunky - 1) * chunksize;
+            int z = (chunkz - 1) * chunksize;
+            
+            GetPortion(d_MapPortion, chunksize, portion, x, y, z);
+            lighttoflood.Clear();
+            ApplySunlight(portion, light, x, y, z);
+            ApplyLightEmitting(portion, light, x, y, z);
+            FloodSunlight(portion, light, x, y, z);
+            FloodLight();
+            SetPortion(x, y, z);
         }
-        private void DefloodLight(IEnumerable<Vector3i> start)
+
+        private void FloodLight()
         {
-            Queue<Vector3i> q = new Queue<Vector3i>();
-            Vector3i ss = new Vector3i();
-            foreach (var s in start)
+            while (lighttoflood.Count > 0)
             {
-                q.Enqueue(s);
-                ss = s;
-            }
-            Dictionary<Vector3i, bool> reflood = new Dictionary<Vector3i, bool>();
-            int searched = 1;
-            for (; ; )
-            {
-                if (q.Count == 0)
-                {
-                    break;
-                }
-                Vector3i v = q.Dequeue();
-                searched++;
-                if (distancesquare(v, new Vector3i(ss.x, ss.y, ss.z)) > maxlight * 2 * maxlight * 2)
-                {
-                    continue;
-                }
-                int vblock = d_Map.GetBlock(v.x, v.y, v.z);
-                if (!d_Data.IsTransparentForLight[vblock]
-                    && d_Data.LightRadius[vblock] == 0)
-                {
-                    continue;
-                }
-                int vlight = LightGetBlock(v.x, v.y, v.z);
-                if (vlight == maxlight
-                    || d_Data.LightRadius[vblock] != 0)
-                {
-                    reflood[v] = true;
-                    continue;
-                }
-                if (vlight == minlight)
-                {
-                    continue;
-                }
-                SetLight(v.x, v.y, v.z, minlight);
-                foreach (var n in BlocksNear(v.x, v.y, v.z))
-                {
-                    if (!MapUtil.IsValidPos(d_Map, n.x, n.y, n.z))
-                    {
-                        continue;
-                    }
-                    if (LightGetBlock(n.x, n.y, n.z) < vlight)
-                    {
-                        q.Enqueue(n);
-                    }
-                    else
-                    {
-                        reflood[n] = true;
-                    }
-                }
-            }
-            //Console.WriteLine("reflood: {0}, searched: {1}", reflood.Keys.Count, searched);
-            foreach (var p in reflood.Keys)
-            {
-                currentlightchunk = null;
-                FloodLight(p.x, p.y, p.z);
+                var k = lighttoflood.Pop();
+                FloodLight(portion, light, k.x, k.y, k.z);
             }
         }
-        private int distancesquare(Vector3i a, Vector3i b)
+
+        FastQueue<Vector3i> q = new FastQueue<Vector3i>();
+
+        public void FloodLight(byte[] portion, byte[] light, int startx, int starty, int startz)
         {
-            int dx = a.x - b.x;
-            int dy = a.y - b.y;
-            int dz = a.z - b.z;
-            return dx * dx + dy * dy + dz * dz;
-        }
-        FastStack<Vector3i> q = new FastStack<Vector3i>();
-        byte[, ,] currentlightchunk;
-        int startx;
-        int starty;
-        int startz;
-        private void FloodLight(int x, int y, int z)
-        {
-            if (d_Light == null)
+            const int portionsize = 16 * 3;
+            int pos = MapUtil.Index3d(startx, starty, startz, portionsize, portionsize);
+            if (light[pos] == minlight)
             {
-                UpdateLight();
+                return;
             }
-            int lightradius = d_Data.LightRadius[d_Map.GetBlock(x, y, z)];
+            int lightradius = d_Data.LightRadius[portion[pos]];
             if (lightradius != 0)
             {
-                LightSetBlock(x, y, z, (byte)(lightradius));
+                light[pos] = (byte)lightradius;
             }
+            if (light[pos + 1] == light[pos]
+                && light[pos - 1] == light[pos]
+                && light[pos + portionsize] == light[pos]
+                && light[pos - portionsize] == light[pos]
+                && light[pos + portionsize * portionsize] == light[pos]
+                && light[pos - portionsize * portionsize] == light[pos])
+            {
+                return;
+            }
+
             q.Clear();
-            q.Push(new Vector3i(x, y, z));
+            Vector3i start = new Vector3i();
+            start.x = startx;
+            start.y = starty;
+            start.z = startz;
+            q.Push(start);
             for (; ; )
             {
                 if (q.Count == 0)
@@ -476,16 +298,13 @@ namespace ManicDigger
                     break;
                 }
                 Vector3i v = q.Pop();
-                if (distancesquare(v, new Vector3i(x, y, z)) > maxlight * maxlight)
-                {
-                    continue;
-                }
-                int vlight = LightGetBlockFast(v.x, v.y, v.z);
+                int vpos = MapUtil.Index3d(v.x, v.y, v.z, portionsize, portionsize);
+                int vlight = light[vpos];
                 if (vlight == minlight)
                 {
                     continue;
                 }
-                int vblock = d_Map.GetBlock(v.x, v.y, v.z);
+                int vblock = portion[vpos];
                 if (!d_Data.IsTransparentForLight[vblock]
                     && d_Data.LightRadius[vblock] == 0)
                 {
@@ -496,49 +315,28 @@ namespace ManicDigger
                     int nx = v.x + blocksnear[i].x;
                     int ny = v.y + blocksnear[i].y;
                     int nz = v.z + blocksnear[i].z;
-                    if (!MapUtil.IsValidPos(d_Map, nx, ny, nz))
+                    if (!IsValidPos(nx, ny, nz))
                     {
                         continue;
                     }
-                    if (LightGetBlockFast(nx, ny, nz) < vlight - 1)
+                    int npos = MapUtil.Index3d(nx, ny, nz, portionsize, portionsize);
+                    if (light[npos] < vlight - 1)
                     {
-                        //this is for reflooding sunlight.
-                        if (IsSunlighted(nx, ny, nz)
-                            && (LightGetBlock(nx, ny, nz) < sunlight)
-                            && (vlight - 1 <= sunlight))
-                        {
-                            LightSetBlock(nx, ny, nz, sunlight);
-                        }
-                        else
-                        {
-                            SetLight(nx, ny, nz, (byte)(vlight - 1));
-                        }
+                        light[npos] = (byte)(vlight - 1);
                         q.Push(new Vector3i(nx, ny, nz));
                     }
                 }
             }
         }
-        int LightGetBlockFast(int x, int y, int z)
+
+        int chunksizeportion { get { return chunksize * 3; } }
+
+        private bool IsValidPos(int vx, int vy, int vz)
         {
-            /*
-            if (currentlightchunk != null && InSameChunk(x, y, z, startx, starty, startz))
-            {
-                int block = currentlightchunk[x % chunksize, y % chunksize, z % chunksize];
-                if (block == 0)//unknown
-                {
-                    return LightGetBlock(x, y, z);
-                }
-                return block - 1;
-            }
-            */
-            return LightGetBlock(x, y, z);
+            return vx >= 0 && vy >= 0 && vz >= 0
+                && vx < chunksizeportion && vy < chunksizeportion && vz < chunksizeportion;
         }
-        bool InSameChunk(int x1, int y1, int z1, int x2, int y2, int z2)
-        {
-            return x1 / chunksize == x2 / chunksize
-                && y1 / chunksize == y2 / chunksize
-                && z1 / chunksize == z2 / chunksize;
-        }
+
         Vector3i[] blocksnear = new Vector3i[6]
         {
             new Vector3i(-1, 0, 0),
@@ -548,79 +346,67 @@ namespace ManicDigger
             new Vector3i(0, 0, -1),
             new Vector3i(0, 0, 1),
         };
-        private IEnumerable<Vector3i> BlocksNear(int x, int y, int z)
+
+        private void SetPortion(int x, int y, int z)
         {
-            yield return new Vector3i(x - 1, y, z);
-            yield return new Vector3i(x + 1, y, z);
-            yield return new Vector3i(x, y - 1, z);
-            yield return new Vector3i(x, y + 1, z);
-            yield return new Vector3i(x, y, z - 1);
-            yield return new Vector3i(x, y, z + 1);
-        }
-        private IEnumerable<Vector3i> BlocksNearWith(int x, int y, int z)
-        {
-            yield return new Vector3i(x, y, z);
-            yield return new Vector3i(x - 1, y, z);
-            yield return new Vector3i(x + 1, y, z);
-            yield return new Vector3i(x, y - 1, z);
-            yield return new Vector3i(x, y + 1, z);
-            yield return new Vector3i(x, y, z - 1);
-            yield return new Vector3i(x, y, z + 1);
-        }
-        //int solidmax = 0;
-        //int solidmin = 0;
-        //int solidunknown = 0;
-        //int notsolid = 0;
-        private void FloodLightChunk(int x, int y, int z)
-        {
-            this.currentlightchunk = d_Light.GetChunk(x, y, z);
-            this.startx = x;
-            this.starty = y;
-            this.startz = z;
-            if (IsSolidChunk(currentlightchunk, (byte)(sunlight + 1)))
+            int mapsizex = d_Map.MapSizeX;
+            int mapsizey = d_Map.MapSizeY;
+            int mapsizez = d_Map.MapSizeZ;
+            for (int xx = -1; xx < chunksize + 1; xx++)
             {
-                //solidmax++;
-                return;
-            }
-            //if (IsSolidChunk(currentlightchunk, (byte)(minlight + 1)))
-            //{
-            //    //solidmin++;
-            //    return;
-            //}
-            //if (IsSolidChunk(currentlightchunk, 0)) { solidunknown++; }
-            //else { notsolid++; }
-        //    Dictionary<Vector3i, bool> lighttoupdatecopy = lighttoupdate;
-    //        lighttoupdate = null;
-            for (int xx = 0 - 1; xx < chunksize + 1; xx++)
-            {
-                for (int yy = 0 - 1; yy < chunksize + 1; yy++)
+                for (int yy = -1; yy < chunksize + 1; yy++)
                 {
-                    for (int zz = 0 - 1; zz < chunksize + 1; zz++)
+                    for (int zz = -1; zz < chunksize + 1; zz++)
                     {
-                        if (MapUtil.IsValidPos(d_Map, x + xx, y + yy, z + zz))
-                            FloodLight(x + xx, y + yy, z + zz);
-                    }
-                }
-            }
-       //     lighttoupdate = lighttoupdatecopy;
-        }
-        bool IsSolidChunk(byte[, ,] chunk, byte value)
-        {
-            for (int xx = 0; xx < chunksize; xx++)
-            {
-                for (int yy = 0; yy < chunksize; yy++)
-                {
-                    for (int zz = 0; zz < chunksize; zz++)
-                    {
-                        if (currentlightchunk[xx, yy, zz] != value)
+                        if (IsValidPos(x + chunksize + xx, y + chunksize + yy, z + chunksize + zz,
+                            mapsizex, mapsizey, mapsizez))
                         {
-                            return false;
+                            d_Light.SetBlock(x + chunksize + xx, y + chunksize + yy, z + chunksize + zz,
+                                light[MapUtil.Index3d(xx + chunksize, yy + chunksize, zz + chunksize,
+                                chunksize * 3, chunksize * 3)]);
                         }
                     }
                 }
             }
+        }
+
+        public static bool IsValidPos(int x, int y, int z, int MapSizeX, int MapSizeY, int MapSizeZ)
+        {
+            if (x < 0 || y < 0 || z < 0)
+            {
+                return false;
+            }
+            if (x >= MapSizeX || y >= MapSizeY || z >= MapSizeZ)
+            {
+                return false;
+            }
             return true;
         }
+
+        public void OnSetChunk(int x, int y, int z)
+        {
+        }
+
+        private void GetPortion(IMapStoragePortion m, int chunksize, byte[] portion, int x, int y, int z)
+        {
+            for (int xx = 0; xx < 3; xx++)
+            {
+                for (int yy = 0; yy < 3; yy++)
+                {
+                    for (int zz = 0; zz < 3; zz++)
+                    {
+                        if (IsValidChunkPos(x / chunksize + xx, y / chunksize + yy, z / chunksize + zz))
+                        {
+                            CopyChunk(portion,
+                                m.GetChunk(x + xx * chunksize, y + yy * chunksize, z + zz * chunksize),
+                                xx * chunksize, yy * chunksize, zz * chunksize,
+                                chunksize * 3, chunksize * 3, chunksize * 3);
+                        }
+                    }
+                }
+            }
+        }
+
         bool IsValidChunkPos(int cx, int cy, int cz)
         {
             return cx >= 0 && cy >= 0 && cz >= 0
@@ -628,66 +414,148 @@ namespace ManicDigger
                 && cy < d_Map.MapSizeY / chunksize
                 && cz < d_Map.MapSizeZ / chunksize;
         }
-        bool[, ,] chunklighted;
-        public int GetLight(int x, int y, int z)
+
+        private unsafe void CopyChunk(byte[] portionArr, byte[] chunkArr, int x, int y, int z,
+            int portionsizex, int portionsizey, int portionsizez)
         {
-            if (loaded)
+            fixed (byte* portion = portionArr)
+            fixed (byte* chunk = chunkArr)
+            for (int zz = 0; zz < 16; zz++)
             {
-                while (shadowstoupdate.Count > 0)
+                for (int yy = 0; yy < 16; yy++)
                 {
-                    Vector3i p = shadowstoupdate.Dequeue();
-                    UpdateShadows(p.x, p.y, p.z);
+                    int pos = MapUtil.Index3d(0, yy, zz, 16, 16);
+                    int pos2 = MapUtil.Index3d(x + 0, y + yy, z + zz, portionsizex, portionsizey);
+                    for (int xx = 0; xx < 16; xx++)
+                    {
+                        byte orig = chunk[pos];
+                        portion[pos2] = (byte)orig;
+                        pos++;
+                        pos2++;
+                    }
                 }
             }
-            if (d_Light == null)
-            {
-                UpdateLight();
-            }
-            return LightGetBlock(x, y, z);
         }
-        public void OnGetTerrainBlock(int x, int y, int z)
+
+        FastStack<Vector3i> lighttoflood = new FastStack<Vector3i>();
+        
+        public unsafe void ApplySunlight(byte[] portionarr, byte[] lightarr, int x, int y, int z)
         {
+            int portionsize = 16 * 3;
+            int[] radius = d_Data.LightRadius;
+            int zplus = portionsize * portionsize;
+            fixed (byte* light = lightarr)
+            for (int xx = 0; xx < portionsize; xx++)
+            {
+                for (int yy = 0; yy < portionsize; yy++)
+                {
+                    int height = GetLightHeight(x + xx, y + yy);
+                    int h = height - z;
+                    h = MyMath.Clamp(h, 0, portionsize);
+                    int pos = MapUtil.Index3d(xx, yy, 0, portionsize, portionsize);
+                    for (int zz = 0; zz < h; zz++)
+                    {
+                        light[pos] = (byte)minlight;
+                        pos += zplus;
+                    }
+                    for (int zz = h; zz < portionsize; zz++)
+                    {
+                        //int pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
+                        light[pos] = (byte)sunlight_;
+                        pos += zplus;
+                    }
+                }
+            }
+            
         }
-        #region IShadows Members
-        public int? MaybeGetLight(int x, int y, int z)
+
+        private unsafe void ApplyLightEmitting(byte[] portionArr, byte[] lightArr, int x, int y, int z)
         {
-            if (d_Light == null)
+            int[] radiusArr = d_Data.LightRadius;
+            int portionsize = 16 * 3;
+            int portionsize3 = MyMath.Pow3(portionsize);
+            fixed (byte* portion = portionArr)
+            fixed (byte* light = lightArr)
+            fixed (int* radius = radiusArr)
+            for (int pos = 0; pos < portionsize3; pos++)
+            //for (int xx = 0; xx < portionsize; xx++)
             {
-                UpdateLight();
-            }
-            int l = d_Light.GetBlock(x, y, z);
-            if (l == 0)
-            {
-                return null;
-            }
-            else
-            {
-                return l - 1;
+                //for (int yy = 0; yy < portionsize; yy++)
+                {
+                   // for (int zz = 0; zz < portionsize; zz++)
+                    if(portion[pos]!=0) //optimization
+                    if(radius[portion[pos]]!=0) //optimization
+                    {
+                        //var pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
+                        if (radius[portion[pos]] > light[pos])
+                        {
+                            var p = MapUtil.Pos(pos, portionsize, portionsize);
+                            int xx = p.x;
+                            int yy = p.y;
+                            int zz = p.z;
+                            int l = d_Data.LightRadius[portion[pos]];
+                            if (xx > 1 && yy > 1 && zz > 1
+                                && xx < portionsize - 1 && yy < portionsize - 1 && zz < portionsize - 1)
+                            {
+                                lighttoflood.Push(new Vector3i(xx, yy, zz));
+                            }
+                            light[pos] = (byte)Math.Max(l, light[pos]);
+                        }
+                    }
+                }
             }
         }
-        #endregion
-        #region IShadows Members
-        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
+
+        public unsafe void FloodSunlight(byte[] portionArr, byte[] lightArr, int x, int y, int z)
         {
-            if (chunklighted == null)
+            int portionsize = 16 * 3;
+            int portionsize3 = MyMath.Pow3(portionsize);
+            int startx = x;
+            int starty = y;
+            int startz = z;
+            int[] radiusArr = d_Data.LightRadius;
+            bool[] transparentArr = d_Data.IsTransparentForLight;
+            fixed (byte* portion = portionArr)
+            fixed (byte* light = lightArr)
+            fixed (int* radius = radiusArr)
+            fixed (bool* transparent = transparentArr)
+            for (int pos = 0; pos < portionsize3 - portionsize; pos++)
+            //for (int zz = 1; zz < portionsize - 1; zz++)
             {
-                chunklighted = new bool[d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize, d_Map.MapSizeZ / chunksize];
+                //for (int xx = 1; xx < portionsize - 1; xx++)
+                {
+                    //for (int yy = 1; yy < portionsize - 1; yy++)
+                    {
+                        //int pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
+                        if (!transparent[portion[pos]])
+                        {
+                            continue;
+                        }
+                        int curlight = light[pos];
+                        if ((light[pos + 1] != curlight && transparent[portion[pos + 1]])
+                            || (light[pos + portionsize] != curlight && transparent[portion[pos + portionsize]]))
+                        {
+                            var p = MapUtil.Pos(pos, portionsize, portionsize);
+                            int xx = p.x;
+                            int yy = p.y;
+                            int zz = p.z;
+                            if (xx > 1 && yy > 1 && zz > 1
+                                && xx < portionsize - 1 && yy < portionsize - 1 && zz < portionsize - 1)
+                            {
+                                lighttoflood.Push(new Vector3i(xx, yy, zz));
+                                lighttoflood.Push(new Vector3i(xx + 1, yy, zz));
+                                lighttoflood.Push(new Vector3i(xx, yy + 1, zz));
+                            }
+                        }
+                    }
+                }
             }
-            if (!chunklighted[chunkx, chunky, chunkz])
-            FloodLightChunk(chunkx * chunksize, chunky * chunksize, chunkz * chunksize);
-            chunklighted[chunkx, chunky, chunkz] = true;
-            lighttoupdate.Remove(MapUtil.ToMapPos(chunkx * chunksize + 5, chunky * chunksize + 5, chunkz * chunksize + 5));
-            SetChangedChunksDirty();
-            lighttoupdate.Clear();
         }
-        #endregion
-        #region IShadows Members
-        public void OnSetChunk(int x, int y, int z)
+
+        int GetLightHeight(int x, int y)
         {
-            chunklighted[x / chunksize, y / chunksize, z / chunksize] = false;
-            d_Light.ClearChunk(x, y, z);
+            return d_Heightmap.GetBlock(x, y);
         }
-        #endregion
     }
     public class InfiniteMapChunked2d
     {

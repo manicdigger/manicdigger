@@ -48,16 +48,20 @@ namespace ManicDigger.Renderers
             get
             {
                 Vector3 pos = d_Viewport.LocalPlayerPosition;
-                if ((int)pos.X >= 0 && (int)pos.Y >= 0 && (int)pos.Z >= 0
-                    && (int)pos.X < d_Map.MapSizeX
-                    && (int)pos.Z < d_Map.MapSizeY
-                    && (int)pos.Y < d_Map.MapSizeZ)
+                //if ((int)pos.X >= 0 && (int)pos.Y >= 0 && (int)pos.Z >= 0
+                //    && (int)pos.X < d_Map.MapSizeX
+                //    && (int)pos.Z < d_Map.MapSizeY
+                //    && (int)pos.Y < d_Map.MapSizeZ)
+                try
                 {
                     int? light = d_Shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y);
                     if (light == null) { light = d_Shadows.maxlight; }
                     return (float)light.Value / d_Shadows.maxlight;
                 }
-                return 1f / d_Shadows.maxlight;
+                catch
+                {
+                    return 1f / d_Shadows.maxlight;
+                }
             }
         }
         public bool IsTorch()

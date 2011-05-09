@@ -13,6 +13,7 @@ namespace ManicDigger.MapTools
         public const int TileIdEmpty = 0;
         public const int TileIdGrass = 2;
         public const int TileIdDirt = 3;
+        public const int TileIdAdminium = 7;
         public const int TileIdWater = 8;
         public const int TileIdSand = 12;
         public const int TileIdGravel = 13;

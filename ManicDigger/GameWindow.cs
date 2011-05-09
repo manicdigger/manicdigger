@@ -1879,6 +1879,7 @@ namespace ManicDigger
                                 int blocktype;
                                 if (left) { blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
                                 else { blocktype = materialSlots[ActiveMaterial]; }
+                                if (left && blocktype == d_Data.BlockIdAdminium) { goto end; }
                                 string[] sound = left ? d_Data.BreakSound[blocktype] : d_Data.BuildSound[blocktype];
                                 if (sound != null && sound.Length > 0)
                                 {
@@ -1902,6 +1903,7 @@ namespace ManicDigger
                     }
                 }
             }
+        end:
             fastclicking = false;
             if (!(left || right || middle))
             {

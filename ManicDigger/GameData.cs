@@ -49,6 +49,7 @@ namespace ManicDigger
         int BlockIdSponge { get; }
         int BlockIdTrampoline { get; }
         int BlockIdTorch { get; }
+        int BlockIdAdminium { get; }
     }
     public class SpecialBlockId
     {
@@ -127,6 +128,7 @@ namespace ManicDigger
         public int BlockIdSponge { get; set; }
         public int BlockIdTrampoline { get; set; }
         public int BlockIdTorch { get; set; }
+        public int BlockIdAdminium { get; set; }
 
         private bool[] mIsWater;
         private bool[] mIsTransparent;
@@ -354,6 +356,7 @@ namespace ManicDigger
         public int BlockIdSponge { get { return mBlockIdSponge; } set { mBlockIdSponge = value; } }
         public int BlockIdTrampoline { get { return mBlockIdTrampoline; } set { mBlockIdTrampoline = value; } }
         public int BlockIdTorch { get { return mBlockIdTorch; } set { mBlockIdTorch = value; } }
+        public int BlockIdAdminium { get { return mBlockIdAdminium; } set { mBlockIdAdminium = value; } }
 
         private bool[] mIsWater;
         private bool[] mIsTransparent;
@@ -387,5 +390,6 @@ namespace ManicDigger
         private int mBlockIdSponge = 19;
         private int mBlockIdTrampoline = 114;
         private int mBlockIdTorch = 50;
+        private int mBlockIdAdminium = 7;
     }
 }
