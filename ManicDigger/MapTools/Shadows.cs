@@ -208,7 +208,12 @@ namespace ManicDigger
 
         public int GetLight(int x, int y, int z)
         {
-            return d_Light.GetBlock(x, y, z);
+            int light = d_Light.GetBlock(x, y, z);
+            if (light > maxlight)
+            {
+                light = maxlight;
+            }
+            return light;
         }
 
         public void OnGetTerrainBlock(int x, int y, int z)

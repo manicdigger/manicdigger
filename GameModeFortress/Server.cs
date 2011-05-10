@@ -1084,10 +1084,24 @@ namespace ManicDiggerServer
         */
         Inventory StartInventory()
         {
-            Inventory i = ManicDigger.Inventory.Create();
-            i.Items.Add(new ProtoPoint(0, 0), new Item() { ItemClass = ItemClass.Block, BlockId = (int)TileTypeManicDigger.CraftingTable, BlockCount = 6 });
-            i.Items.Add(new ProtoPoint(1, 0), new Item() { ItemClass = ItemClass.Block, BlockId = (int)TileTypeManicDigger.Crops1, BlockCount = 1 });
-            return i;
+            Inventory inv = ManicDigger.Inventory.Create();
+            int x = 0;
+            int y = 0;
+            for (int i = 0; i < d_Data.StartInventoryAmount.Length; i++)
+            {
+                int amount = d_Data.StartInventoryAmount[i];
+                if (amount > 0)
+                {
+                    inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = amount });
+                    x++;
+                    if (x >= GetInventoryUtil(inv).CellCount.X)
+                    {
+                        x = 0;
+                        y++;
+                    }
+                }
+            }
+            return inv;
         }
         Vector3i PlayerBlockPosition(Client c)
         {

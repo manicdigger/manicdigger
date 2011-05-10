@@ -36,6 +36,8 @@ namespace ManicDigger
         string[][] BreakSound { get; }
         string[][] BuildSound { get; }
         string[][] CloneSound { get; }
+        int[] StartInventoryAmount { get; }
+
         int[] DefaultMaterialSlots { get; }
         float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
 
@@ -55,106 +57,6 @@ namespace ManicDigger
     public class SpecialBlockId
     {
         public const int Empty = 0;
-    }
-    public class GameDataDummy : IGameData
-    {
-        public GameDataDummy()
-        {
-            Initialize(256);
-        }
-
-        public GameDataDummy(int count)
-        {
-            Initialize(count);
-        }
-
-        private void Initialize(int count)
-        {
-            mIsWater = new bool[count];
-            mIsTransparent = new bool[count];
-            mIsValid = new bool[count];
-            mIsTransparentForLight = new bool[count];
-            mIsTransparentFully = new bool[count];
-            mIsEmptyForPhysics = new bool[count];
-            mTextureId = new int[count, 6];
-            mTextureIdForInventory = new int[count];
-            mIsBuildable = new bool[count];
-            mWhenPlayerPlacesGetsConvertedTo = new int[count];
-            mIsFlower = new bool[count];
-            mRail = new RailDirectionFlags[count];
-            mName = new string[count];
-            mWalkSpeed = new float[count];
-            mIsSlipperyWalk = new bool[count];
-            mWalkSound = new string[count][];
-            mBreakSound = new string[count][];
-            mBuildSound = new string[count][];
-            mCloneSound = new string[count][];
-            mLightRadius = new int[count];
-            mDefaultMaterialSlots = new int[10];
-            mLightLevels = new float[16];
-        }
-
-        public void Update()
-        {
-        }
-
-        public bool[] IsWater { get { return mIsWater; } }
-        public bool[] IsTransparent { get { return mIsTransparent; } }
-        public bool[] IsValid { get { return mIsValid; } }
-        public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
-        public bool[] IsTransparentFully { get { return mIsTransparentFully; } }
-        public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
-        public int[,] TextureId { get { return mTextureId; } }
-        public int[] TextureIdForInventory { get { return mTextureIdForInventory; } }
-        public bool[] IsBuildable { get { return mIsBuildable; } }
-        public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
-        public bool[] IsFlower { get { return mIsFlower; } }
-        public RailDirectionFlags[] Rail { get { return mRail; } }
-        public string[] Name { get { return mName; } }
-        public float[] WalkSpeed { get { return mWalkSpeed; } }
-        public bool[] IsSlipperyWalk { get { return mIsSlipperyWalk; } }
-        public string[][] WalkSound { get { return mWalkSound; } }
-        public string[][] BreakSound { get { return mBreakSound; ; } }
-        public string[][] BuildSound { get { return mBuildSound; } }
-        public string[][] CloneSound { get { return mCloneSound; } }
-        public int[] LightRadius { get { return mLightRadius; } }
-        public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
-        public float[] LightLevels { get { return mLightLevels; } }
-
-        public int BlockIdGrass { get; set; }
-        public int BlockIdDirt { get; set; }
-        public int BlockIdGold { get; set; }
-        public int BlockIdStone { get; set; }
-        public int BlockIdWater { get; set; }
-        public int BlockIdSand { get; set; }
-        public int BlockIdSingleStairs { get; set; }
-        public int BlockIdSponge { get; set; }
-        public int BlockIdTrampoline { get; set; }
-        public int BlockIdTorch { get; set; }
-        public int BlockIdAdminium { get; set; }
-
-        private bool[] mIsWater;
-        private bool[] mIsTransparent;
-        private bool[] mIsValid;
-        private bool[] mIsTransparentForLight;
-        private bool[] mIsTransparentFully;
-        private bool[] mIsEmptyForPhysics;
-        private int[,] mTextureId;
-        private int[] mTextureIdForInventory;
-        private bool[] mIsBuildable;
-        private int[] mWhenPlayerPlacesGetsConvertedTo;
-        private bool[] mIsFlower;
-        private RailDirectionFlags[] mRail;
-        private string[] mName;
-        private float[] mWalkSpeed;
-        private bool[] mIsSlipperyWalk;
-        private string[][] mWalkSound;
-        private string[][] mBreakSound;
-        private string[][] mBuildSound;
-        private string[][] mCloneSound;
-        private int[] mLightRadius;
-        private int[] mDefaultMaterialSlots;
-        private float[] mLightLevels;
     }
     public interface ICurrentSeason
     {
@@ -224,6 +126,7 @@ namespace ManicDigger
                 mIsTransparentFully[id] = BoolParse(block[Column("IsTransparentFully").Value]);
                 mIsEmptyForPhysics[id] = BoolParse(block[Column("IsEmptyForPhysics").Value]);
                 mLightRadius[id] = (int)intParse(Get(block, "LightRadius"));
+                mStartInventoryAmount[id] = (int)intParse(Get(block, "StartInventoryAmount"));
             }
         }
         private void LoadSound(string[][] t, string s, string[] block, int id)
@@ -326,6 +229,8 @@ namespace ManicDigger
                 mCloneSound[i] = new string[0];
             }
             mLightRadius = new int[count];
+            mStartInventoryAmount = new int[count];
+
             mDefaultMaterialSlots = new int[10];
             mLightLevels = new float[16];
             mIsValid[0] = true;
@@ -352,6 +257,8 @@ namespace ManicDigger
         public string[][] BuildSound { get { return mBuildSound; } }
         public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
+        public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
+
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
 
@@ -388,6 +295,8 @@ namespace ManicDigger
         private string[][] mBuildSound;
         private string[][] mCloneSound;
         private int[] mLightRadius;
+        private int[] mStartInventoryAmount;
+
         private int[] mDefaultMaterialSlots;
         private float[] mLightLevels;
 
