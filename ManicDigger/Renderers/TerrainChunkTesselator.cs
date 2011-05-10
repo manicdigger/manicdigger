@@ -598,7 +598,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(color.R * shadowratiof),
                         (int)(color.G * shadowratiof),
@@ -630,7 +630,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
                         (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
@@ -662,7 +662,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(color.R * shadowratiof),
                         (int)(color.G * shadowratiof),
@@ -694,7 +694,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(color.R * shadowratiof),
                         (int)(color.G * shadowratiof),
@@ -725,7 +725,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
                         (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
@@ -758,7 +758,7 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = ((float)shadowratio) * maxlightInverse;
+                    float shadowratiof = d_Data.LightLevels[shadowratio];
                     curcolor = new FastColor(color.A,
                         (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
                         (int)(Math.Min(curcolor.G, color.G * shadowratiof)),

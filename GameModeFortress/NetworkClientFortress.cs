@@ -329,7 +329,8 @@ namespace GameModeFortress
                 case ServerPacketId.LevelFinalize:
                     {
                         d_GameData.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
-                            MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")));
+                            MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")),
+                            MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
                         if (MapLoaded != null)
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });

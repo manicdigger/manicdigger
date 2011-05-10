@@ -37,6 +37,7 @@ namespace ManicDigger
         string[][] BuildSound { get; }
         string[][] CloneSound { get; }
         int[] DefaultMaterialSlots { get; }
+        float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
 
         //Special blocks
         //Block 0 is empty block.
@@ -90,6 +91,7 @@ namespace ManicDigger
             mCloneSound = new string[count][];
             mLightRadius = new int[count];
             mDefaultMaterialSlots = new int[10];
+            mLightLevels = new float[16];
         }
 
         public void Update()
@@ -117,6 +119,7 @@ namespace ManicDigger
         public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
+        public float[] LightLevels { get { return mLightLevels; } }
 
         public int BlockIdGrass { get; set; }
         public int BlockIdDirt { get; set; }
@@ -151,6 +154,7 @@ namespace ManicDigger
         private string[][] mCloneSound;
         private int[] mLightRadius;
         private int[] mDefaultMaterialSlots;
+        private float[] mLightLevels;
     }
     public interface ICurrentSeason
     {
@@ -165,7 +169,7 @@ namespace ManicDigger
     public class GameDataCsv : IGameData
     {
         public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
-        public void Load(string[] csv, string[] defaultmaterialslots)
+        public void Load(string[] csv, string[] defaultmaterialslots, string[] lightlevels)
         {
             this.blocks = LoadCsv(csv);
             int count = 256;
@@ -174,6 +178,10 @@ namespace ManicDigger
             for (int i = 0; i < 10; i++)
             {
                 mDefaultMaterialSlots[i] = int.Parse(defaultmaterialslots[i]);
+            }
+            for (int i = 0; i < 16; i++)
+            {
+                mLightLevels[i] = float.Parse(lightlevels[i], System.Globalization.CultureInfo.InvariantCulture);
             }
         }
         public void Update()
@@ -319,6 +327,7 @@ namespace ManicDigger
             }
             mLightRadius = new int[count];
             mDefaultMaterialSlots = new int[10];
+            mLightLevels = new float[16];
             mIsValid[0] = true;
             mIsEmptyForPhysics[0] = true;
         }
@@ -344,6 +353,7 @@ namespace ManicDigger
         public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
+        public float[] LightLevels { get { return mLightLevels; } }
 
 
         public int BlockIdGrass { get { return mBlockIdGrass; } set { mBlockIdGrass = value; } }
@@ -379,6 +389,7 @@ namespace ManicDigger
         private string[][] mCloneSound;
         private int[] mLightRadius;
         private int[] mDefaultMaterialSlots;
+        private float[] mLightLevels;
 
         private int mBlockIdGrass = 2;
         private int mBlockIdDirt = 3;

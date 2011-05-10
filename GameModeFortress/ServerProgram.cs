@@ -44,7 +44,8 @@ namespace GameModeFortress
             var getfile = new GetFileStream(datapaths);
             var data = new GameDataCsv();
             data.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
-                MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")));
+                MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")),
+                MyStream.ReadAllLines(getfile.GetFile("lightlevels.csv")));
             server.d_Data = data;
             server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
             server.LocalConnectionsOnly = !Public;
