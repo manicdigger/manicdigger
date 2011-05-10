@@ -2517,9 +2517,10 @@ namespace ManicDigger
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
                         GL.Translate(-d_The3d.TextSize(name, 14).Width / 2, 0, 0);
+
                         //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
                         //Todo: Can't change text color because text has outline anyway.
-                        d_The3d.Draw2dText(name, 0, 0, 14, Color.White);
+                        d_The3d.Draw2dText(name, 0, 0, 14, Color.White, true);
                         GL.PopMatrix();
                     }
                 }

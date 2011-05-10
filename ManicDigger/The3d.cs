@@ -184,6 +184,10 @@ namespace ManicDigger
         }
         public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
         {
+            Draw2dText(text, x, y, fontsize, color, false);
+        }
+        public void Draw2dText(string text, float x, float y, float fontsize, Color? color, bool enabledepthtest)
+        {
             if (text == null || text.Trim() == "")
             {
                 return;
@@ -206,7 +210,7 @@ namespace ManicDigger
             ct = cachedTextTextures[t];
             ct.lastuse = DateTime.UtcNow;
             GL.Disable(EnableCap.AlphaTest);
-            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null);
+            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
             GL.Enable(EnableCap.AlphaTest);
             DeleteUnusedCachedTextTextures();
         }
@@ -224,6 +228,10 @@ namespace ManicDigger
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
         {
+            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, color, false);
+        }
+        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
+        {
             RectangleF rect;
             if (inAtlasId == null)
             {
@@ -237,7 +245,10 @@ namespace ManicDigger
             GL.Color3(color);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
             GL.Enable(EnableCap.Texture2D);
-            GL.Disable(EnableCap.DepthTest);
+            if (!enabledepthtest)
+            {
+                GL.Disable(EnableCap.DepthTest);
+            }
             GL.Begin(BeginMode.Quads);
             float x2 = x1 + width;
             float y2 = y1 + height;
@@ -246,7 +257,10 @@ namespace ManicDigger
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
             GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex2(x1, y2);
             GL.End();
-            GL.Enable(EnableCap.DepthTest);
+            if (!enabledepthtest)
+            {
+                GL.Enable(EnableCap.DepthTest);
+            }
             GL.PopAttrib();
         }
         VertexPositionTexture[] draw2dtexturesVertices;
