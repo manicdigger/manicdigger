@@ -1641,8 +1641,8 @@ namespace ManicDigger
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs
-                || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
+                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs)
+                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)]);
         }
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
@@ -2020,8 +2020,10 @@ namespace ManicDigger
             if (drawgame)
             {
                 DrawSkySphere();
+                DrawPlayers((float)e.Time);
                 d_SunMoonRenderer.Draw((float)e.Time);
                 d_Terrain.Draw();
+                DrawPlayerNames();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
@@ -2033,7 +2035,6 @@ namespace ManicDigger
                 {
                     d_CharacterRenderer.DrawCharacter(a, d_Game.PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
                 }
-                DrawPlayers((float)e.Time);
                 foreach (IModelToDraw m in d_Game.Models)
                 {
                     if (m.Id == selectedmodelid)
@@ -2061,7 +2062,6 @@ namespace ManicDigger
         draw2d:
             SetAmbientLight(Color.White);
             Draw2d();
-            DrawPlayerNames();
 
             //OnResize(new EventArgs());
             d_MainWindow.SwapBuffers();
@@ -2235,6 +2235,8 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
+                float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
+                GL.Color3(shadow, shadow, shadow);
                 DrawCharacter(info.anim, curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
                     + new Vector3(0, -CharacterPhysics.walldistance, 0),
                     curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key),
@@ -2243,14 +2245,22 @@ namespace ManicDigger
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
                 info.lastrealpitch = k.Value.Pitch;
+                GL.Color3(1f, 1f, 1f);
             }
             if (ENABLE_TPP_VIEW)
             {
+                float shadow = (float)d_Shadows.MaybeGetLight(
+                    (int)LocalPlayerPosition.X,
+                    (int)LocalPlayerPosition.Z,
+                    (int)LocalPlayerPosition.Y)
+                    / d_Shadows.maxlight;
+                GL.Color3(shadow, shadow, shadow);
                 DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
                     NetworkHelper.HeadingByte(LocalPlayerOrientation),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255), localplayeranimationhint);
                 lastlocalplayerpos = LocalPlayerPosition;
+                GL.Color3(1f, 1f, 1f);
             }
         }
         Vector3 lastlocalplayerpos;
@@ -2495,6 +2505,7 @@ namespace ManicDigger
                     if (ppos != null)
                     {
                         Vector3 pos = ((PlayerInterpolationState)ppos).position;
+                        float shadow = (float)d_Shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y) / d_Shadows.maxlight;
                         //do not interpolate player position if player is controlled by game world
                         if (d_Network.EnablePlayerUpdatePosition.ContainsKey(k.Key) && !d_Network.EnablePlayerUpdatePosition[k.Key])
                         {
@@ -2506,6 +2517,8 @@ namespace ManicDigger
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
                         GL.Translate(-d_The3d.TextSize(name, 14).Width / 2, 0, 0);
+                        //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
+                        //Todo: Can't change text color because text has outline anyway.
                         d_The3d.Draw2dText(name, 0, 0, 14, Color.White);
                         GL.PopMatrix();
                     }
