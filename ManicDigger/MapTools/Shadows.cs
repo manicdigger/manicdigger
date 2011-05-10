@@ -173,7 +173,13 @@ namespace ManicDigger
                 {
                     for (int zz = 0; zz < 3; zz++)
                     {
-                        d_DirtyChunks.SetChunkDirty(x / chunksize + xx - 1, y / chunksize + yy - 1, z / chunksize + zz - 1, true);
+                        int cx = x / chunksize + xx - 1;
+                        int cy = y / chunksize + yy - 1;
+                        int cz = z / chunksize + zz - 1;
+                        if (IsValidChunkPos(cx, cy, cz))
+                        {
+                            d_DirtyChunks.SetChunkDirty(cx, cy, cz, true);
+                        }
                     }
                 }
             }

@@ -2362,6 +2362,7 @@ namespace ManicDigger
                         {
                             DrawAim();
                         }
+                        DrawMaterialSelector();
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
                         {
@@ -2371,7 +2372,6 @@ namespace ManicDigger
                         {
                             DrawConnectedPlayersList();
                         }
-                        DrawMaterialSelector();
                     }
                     break;
                 case GuiState.EscapeMenu:
@@ -2400,7 +2400,7 @@ namespace ManicDigger
                 default:
                     throw new Exception();
             }
-            d_The3d.OrthoMode(Width, Height);
+            //d_The3d.OrthoMode(Width, Height);
             if (ENABLE_DRAWFPS)
             {
                 d_The3d.Draw2dText(fpstext, 20f, 20f, d_HudChat.ChatFontSize, Color.White);
