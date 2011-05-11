@@ -272,6 +272,18 @@ namespace ManicDiggerServer
             }
             if (config.Admins.Count == 0) { config.Admins.Add(config.DefaultPlayerName); }
             if (config.Builders.Count == 0) { config.Builders.Add(config.DefaultPlayerName); }
+            if (config.Areas.Count == 0)
+            {
+                AreaConfig publicArea = new AreaConfig();
+                publicArea.Coords = "0,0,10000,5000";
+                publicArea.PermittedUsers = "[Guest]";
+                config.Areas.Add(publicArea);
+                AreaConfig builderArea = new AreaConfig();
+                builderArea.Coords = "0,5001,10000,10000";
+                builderArea.PermittedUsers = "[Builder]";
+                config.Areas.Add(builderArea);
+            }
+
 
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, config);

@@ -126,15 +126,6 @@ namespace GameModeFortress
             this.Admins = new List<string>();
             this.Builders = new List<string>();
             this.Areas = new List<AreaConfig>();
-            AreaConfig publicArea = new AreaConfig();
-            publicArea.Coords = "0,0,10000,5000";
-            publicArea.PermittedUsers = "[Guest]";
-            this.Areas.Add(publicArea);
-            AreaConfig builderArea = new AreaConfig();
-            builderArea.Coords = "0,5001,10000,10000";
-            builderArea.PermittedUsers = "[Builder]";
-            this.Areas.Add(builderArea);
-
         }
     }
 
