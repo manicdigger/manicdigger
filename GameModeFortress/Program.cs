@@ -245,6 +245,9 @@ namespace GameModeFortress
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
             clientgame.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
+            var craftingrecipes = new CraftingRecipes();
+            craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
+            clientgame.craftingrecipes = craftingrecipes;
             terrainRenderer.d_IsChunkReady = dirtychunks;
             network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;

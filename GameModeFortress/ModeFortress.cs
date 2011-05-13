@@ -92,7 +92,8 @@ namespace GameModeFortress
         public IShadows d_Shadows;
         [Inject]
         public InfiniteMapChunked d_Map;
-        public CraftingRecipes craftingrecipes = new CraftingRecipes();
+        [Inject]
+        public CraftingRecipes craftingrecipes;
         [Inject]
         public CraftingTableTool d_CraftingTableTool;
         [Inject]

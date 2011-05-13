@@ -68,12 +68,79 @@ namespace ManicDigger
         public int CurrentSeason { get { return 0; } }
         #endregion
     }
+    public class Csv
+    {
+        public string[][] data;
+
+        public void LoadCsv(string[] csv)
+        {
+            List<string[]> table = new List<string[]>();
+            for (int i = 0; i < csv.Length; i++)
+            {
+                string s = csv[i];
+                s = s.Replace("\"", "");
+                string[] ss = s.Split(new char[] { ',', ';' });
+                table.Add(ss);
+            }
+            data = table.ToArray();
+        }
+
+        public string Get(int row, string column)
+        {
+            string[] rowStrings = data[row];
+            return rowStrings[Column(column).Value];
+        }
+
+        public int? Column(string columnHeader)
+        {
+            string[] headers = data[0];
+            for (int i = 0; i < headers.Length; i++)
+            {
+                if (headers[i].Equals(columnHeader, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        public int GetInt(int row, string columnHeader)
+        {
+            return (int)DoubleParse(Get(row, columnHeader));
+        }
+
+        public bool GetBool(int row, string columnHeader)
+        {
+            return BoolParse(Get(row, columnHeader));
+        }
+
+        public double GetDouble(int row, string column)
+        {
+            return DoubleParse(Get(row, column));
+        }
+
+        private double DoubleParse(string s)
+        {
+            double result;
+            if (double.TryParse(s, out result))
+            {
+                return result;
+            }
+            return 0;
+        }
+
+        private bool BoolParse(string s)
+        {
+            return !(s == "" || s == "0" || s.Equals("false", StringComparison.InvariantCultureIgnoreCase));
+        }
+    }
     public class GameDataCsv : IGameData
     {
         public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
         public void Load(string[] csv, string[] defaultmaterialslots, string[] lightlevels)
         {
-            this.blocks = LoadCsv(csv);
+            this.csv = new Csv();
+            this.csv.LoadCsv(csv);
             int count = 256;
             Initialize(count);
             Update();
@@ -88,50 +155,49 @@ namespace ManicDigger
         }
         public void Update()
         {
-            for (int i = 1; i < blocks.Length; i++)
+            for (int i = 1; i < csv.data.Length; i++)
             {
-                string[] block = blocks[i];
-                string id_ = block[Column("Id").Value];
+                string id_ = csv.Get(i, "Id");
                 if (id_.Contains("_")) { continue; }//todo
                 int id = int.Parse(id_);
-                mName[id] = block[Column("Name").Value];
+                mName[id] = csv.Get(i, "Name");
                 mIsValid[id] = true;
-                if (Get(block, "Season").Trim() != "")
+                if (csv.Get(i, "Season").Trim() != "")
                 {
-                    if (CurrentSeason.CurrentSeason != int.Parse(Get(block, "Season")))
+                    if (CurrentSeason.CurrentSeason != int.Parse(csv.Get(i, "Season")))
                     {
                         continue;
                     }
                 }
-                mTextureId[id, 0] = (int)intParse(Get(block, "TextureIdTop"));
-                mTextureId[id, 1] = (int)intParse(Get(block, "TextureIdBottom"));
-                mTextureId[id, 2] = (int)intParse(Get(block, "TextureIdFront"));
-                mTextureId[id, 3] = (int)intParse(Get(block, "TextureIdBack"));
-                mTextureId[id, 4] = (int)intParse(Get(block, "TextureIdLeft"));
-                mTextureId[id, 5] = (int)intParse(Get(block, "TextureIdRight"));
-                mTextureIdForInventory[id] = (int)intParse(block[Column("TextureIdForInventory").Value]);
-                mIsBuildable[id] = BoolParse(block[Column("IsBuildable").Value]);
-                mWhenPlayerPlacesGetsConvertedTo[id] = (int)intParse(block[Column("WhenPlayerPlacesGetsConvertedTo").Value]);
-                mIsFlower[id] = BoolParse(block[Column("IsFlower").Value]);
-                mRail[id] = (RailDirectionFlags)intParse(Get(block, "Rail"));
-                mWalkSpeed[id] = (float)intParse(Get(block, "WalkSpeed"));
-                mIsTransparentForLight[id] = BoolParse(block[Column("IsTransparentForLight").Value]);
-                mIsSlipperyWalk[id] = BoolParse(block[Column("IsSlipperyWalk").Value]);
-                LoadSound(mWalkSound, "WalkSound", block, id);
-                LoadSound(mBreakSound, "BreakSound", block, id);
-                LoadSound(mBuildSound, "BuildSound", block, id);
-                LoadSound(mCloneSound, "CloneSound", block, id);
-                mIsWater[id] = BoolParse(block[Column("IsFluid").Value]);
-                mIsTransparent[id] = BoolParse(block[Column("IsTransparent").Value]);
-                mIsTransparentFully[id] = BoolParse(block[Column("IsTransparentFully").Value]);
-                mIsEmptyForPhysics[id] = BoolParse(block[Column("IsEmptyForPhysics").Value]);
-                mLightRadius[id] = (int)intParse(Get(block, "LightRadius"));
-                mStartInventoryAmount[id] = (int)intParse(Get(block, "StartInventoryAmount"));
+                mTextureId[id, 0] = csv.GetInt(i, "TextureIdTop");
+                mTextureId[id, 1] = csv.GetInt(i, "TextureIdBottom");
+                mTextureId[id, 2] = csv.GetInt(i, "TextureIdFront");
+                mTextureId[id, 3] = csv.GetInt(i, "TextureIdBack");
+                mTextureId[id, 4] = csv.GetInt(i, "TextureIdLeft");
+                mTextureId[id, 5] = csv.GetInt(i, "TextureIdRight");
+                mTextureIdForInventory[id] = csv.GetInt(i, "TextureIdForInventory");
+                mIsBuildable[id] = csv.GetBool(i, "IsBuildable");
+                mWhenPlayerPlacesGetsConvertedTo[id] = csv.GetInt(i, "WhenPlayerPlacesGetsConvertedTo");
+                mIsFlower[id] = csv.GetBool(i, "IsFlower");
+                mRail[id] = (RailDirectionFlags)csv.GetInt(i, "Rail");
+                mWalkSpeed[id] = (float)csv.GetDouble(i, "WalkSpeed");
+                mIsTransparentForLight[id] = csv.GetBool(i, "IsTransparentForLight");
+                mIsSlipperyWalk[id] = csv.GetBool(i, "IsSlipperyWalk");
+                LoadSound(mWalkSound, "WalkSound", i, id);
+                LoadSound(mBreakSound, "BreakSound", i, id);
+                LoadSound(mBuildSound, "BuildSound", i, id);
+                LoadSound(mCloneSound, "CloneSound", i, id);
+                mIsWater[id] = csv.GetBool(i, "IsFluid");
+                mIsTransparent[id] = csv.GetBool(i, "IsTransparent");
+                mIsTransparentFully[id] = csv.GetBool(i, "IsTransparentFully");
+                mIsEmptyForPhysics[id] = csv.GetBool(i, "IsEmptyForPhysics");
+                mLightRadius[id] = csv.GetInt(i, "LightRadius");
+                mStartInventoryAmount[id] = csv.GetInt(i, "StartInventoryAmount");
             }
         }
-        private void LoadSound(string[][] t, string s, string[] block, int id)
+        private void LoadSound(string[][] t, string s, int i, int id)
         {
-            t[id] = Get(block, s).Split(new char[] { ' ' });
+            t[id] = csv.Get(i, s).Split(new char[] { ' ' });
             if (t[id].Length == 1 && t[id][0].Length == 0)
             {
                 t[id] = new string[0];
@@ -144,49 +210,7 @@ namespace ManicDigger
                 }
             }
         }
-        private string[][] LoadCsv(string[] csv)
-        {
-            List<string[]> table = new List<string[]>();
-            for (int i = 0; i < csv.Length; i++)
-            {
-                string s = csv[i];
-                s = s.Replace("\"", "");
-                string[] ss = s.Split(new char[] { ',', ';' });
-                table.Add(ss);
-            }
-            return table.ToArray();
-        }
-        private string Get(string[] block, string column)
-        {
-            return block[Column(column).Value];
-        }
-        double intParse(string s)
-        {
-            double result;
-            if (double.TryParse(s, out result))
-            {
-                return result;
-            }
-            return 0;
-        }
-        private bool BoolParse(string s)
-        {
-            return !(s == "" || s == "0" || s.Equals("false", StringComparison.InvariantCultureIgnoreCase));
-        }
-        int? Column(string columnHeader)
-        {
-            string[] headers = blocks[0];
-            for (int i = 0; i < headers.Length; i++)
-            {
-                if (headers[i].Equals(columnHeader, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return i;
-                }
-            }
-            return null;
-        }
-        string[][] blocks;
-
+        Csv csv;
         private void Initialize(int count)
         {
             mIsWater = new bool[count];

@@ -7,10 +7,21 @@ namespace GameModeFortress
 {
     public class CraftingRecipes
     {
+        public IGameData data;
         public CraftingRecipes()
         {
             MakeRecipes();
         }
+        public void Load(string[] csvLines)
+        {
+            this.csv = new Csv();
+            this.csv.LoadCsv(csvLines);
+            for (int i = 0; i < csv.data.Length; i++)
+            {
+                CraftingRecipe r = new CraftingRecipe();
+            }
+        }
+        Csv csv;
         public List<CraftingRecipe> craftingrecipes = new List<CraftingRecipe>();
         void MakeRecipes()
         {
