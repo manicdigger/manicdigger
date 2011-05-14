@@ -1036,6 +1036,28 @@ namespace ManicDigger
                     }
                     else throw new Exception();
                 }
+				if (e.Key == GetKey(OpenTK.Input.Key.Plus) || e.Key == GetKey(OpenTK.Input.Key.KeypadPlus))
+                {
+                   if(cameratype == CameraType.Overhead) {
+							overheadcameradistance -= 1;
+					} else if (cameratype == CameraType.Tpp) {
+							tppcameradistance -= 1;
+					  }
+                }
+				if (e.Key == GetKey(OpenTK.Input.Key.Minus) || e.Key == GetKey(OpenTK.Input.Key.KeypadMinus))
+                {
+                    if(cameratype == CameraType.Overhead) {
+							overheadcameradistance += 1;
+					} else if (cameratype == CameraType.Tpp) {
+							tppcameradistance += 1;
+						}
+                }
+                    if (overheadcameradistance < TPP_CAMERA_DISTANCE_MIN) { overheadcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                    if (overheadcameradistance > TPP_CAMERA_DISTANCE_MAX) { overheadcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+
+                    if (tppcameradistance < TPP_CAMERA_DISTANCE_MIN) { tppcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                    if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+				
                 if (e.Key == GetKey(OpenTK.Input.Key.F6))
                 {
                     d_Terrain.UpdateAllTiles();
