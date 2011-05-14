@@ -800,9 +800,12 @@ namespace ManicDigger
                         try
                         {
                             if (d_Network.AllowFreemove)
-                            {
-                                movespeed = basemovespeed * float.Parse(arguments);
-                                AddChatline("Movespeed: " + arguments + "x");
+                            {	if(float.Parse(arguments) <= 500) {
+                            		movespeed = basemovespeed * float.Parse(arguments);
+                            		AddChatline("Movespeed: " + arguments + "x");
+								} else {
+									AddChatline("Entered movespeed to high! max. 500x");	
+								}
                             }
                             else
                             {
