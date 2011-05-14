@@ -1676,6 +1676,7 @@ namespace ManicDiggerServer
         string PlayerNameColored(int clientid)
         {
             return (clients[clientid].CanBuild ? colorOpUsername : "")
+                + (clients[clientid].IsAdmin ? colorAdmin : "")
                 + clients[clientid].playername;
         }
         string colorNormal = "&f"; //white
@@ -1683,6 +1684,7 @@ namespace ManicDiggerServer
         string colorOpUsername = "&2"; //green
         string colorSuccess = "&2"; //green
         string colorError = "&4"; //red
+        string colorAdmin = "&e"; //yellow
         bool CompareByteArray(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) { return false; }
