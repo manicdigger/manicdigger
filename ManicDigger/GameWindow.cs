@@ -794,6 +794,28 @@ namespace ManicDigger
                             Log(string.Format("No such player: {0}.", arg));
                         }
                     }
+                    else if (cmd == "movespeed")
+                    {
+                        string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
+                        try
+                        {
+                            if (d_Network.AllowFreemove)
+                            {
+                                movespeed = basemovespeed * float.Parse(arguments);
+                                AddChatline("Movespeed: " + arguments + "x");
+                            }
+                            else
+                            {
+                                Log(strFreemoveNotAllowed);
+                                return;
+                            }
+                        }
+                        catch
+                        {
+                            AddChatline("Invalid value!");
+                            AddChatline("USE: .movespeed [movespeed]");
+                        }
+                    }
                     else if (cmd == "testmodel")
                     {
                         ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
