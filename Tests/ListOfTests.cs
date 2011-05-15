@@ -30,6 +30,7 @@ namespace ManicDigger.Tests
             AddTest(new TestFont() { window = window, viewportsize = window, getfile = getfile }, "Font");
             AddTest(new TestAudio() { getfile = getfile }, "Audio");
             AddTest(new TestInventory() { window = window, viewportsize = window, getfile = getfile }, "Inventory");
+            AddTest(new TestHeartbeat() {  }, "Server heartbeat");
         }
         The3d the3d = new The3d();
         TextRenderer textrenderer = new TextRenderer();

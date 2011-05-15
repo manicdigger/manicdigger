@@ -54,6 +54,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestAudio.cs" />
     <Compile Include="TestFont.cs" />
+    <Compile Include="TestHeartbeat.cs" />
     <Compile Include="TestInventory.cs" />
   </ItemGroup>
   <ItemGroup>

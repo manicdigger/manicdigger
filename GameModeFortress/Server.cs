@@ -63,6 +63,8 @@ namespace ManicDiggerServer
         public WaterFinite d_Water;
         [Inject]
         public ISocket d_MainSocket;
+        [Inject]
+        public IServerHeartbeat d_Heartbeat;
 
         public bool LocalConnectionsOnly { get; set; }
         public string[] PublicDataPaths = new string[0];
@@ -291,65 +293,36 @@ namespace ManicDiggerServer
 
         }
 
-        IPEndPoint iep;
-        string fListUrl = "http://fragmer.net/md/heartbeat.php";
         public void SendHeartbeat()
         {
+            if (config.Key == null)
+            {
+                return;
+            }
+            d_Heartbeat.Name = config.Name;
+            d_Heartbeat.MaxClients = config.MaxClients;
+            d_Heartbeat.Port = config.Port;
+            d_Heartbeat.Version = GameVersion.Version;
+            d_Heartbeat.Key = config.Key;
+            d_Heartbeat.UsersCount = clients.Count;
+            d_Heartbeat.Motd = config.Motd;
+            List<string> playernames = new List<string>();
+            lock (clients)
+            {
+                foreach (var k in clients)
+                {
+                    playernames.Add(k.Value.playername);
+                }
+            }
+            d_Heartbeat.Players = playernames;
             try
             {
-                if (config.Key == null)
-                {
-                    return;
-                }
-                StringWriter sw = new StringWriter();//&salt={4}
-                string staticData = String.Format("name={0}&max={1}&public={2}&port={3}&version={4}&fingerprint={5}"
-                    , System.Web.HttpUtility.UrlEncode(config.Name),
-                    config.MaxClients, "true", config.Port, GameVersion.Version, config.Key.Replace("-", ""));
-
-                List<string> playernames = new List<string>();
-                lock (clients)
-                {
-                    foreach (var k in clients)
-                    {
-                        playernames.Add(k.Value.playername);
-                    }
-                }
-                string requestString = staticData +
-                                        "&users=" + clients.Count +
-                                        "&motd=" + System.Web.HttpUtility.UrlEncode(config.Motd) +
-                                        "&gamemode=Fortress" +
-                                        "&players=" + string.Join(",", playernames.ToArray());
-
-                var request = (HttpWebRequest)WebRequest.Create(fListUrl);
-                request.Method = "POST";
-                request.Timeout = 15000; // 15s timeout
-                request.ContentType = "application/x-www-form-urlencoded";
-                request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
-
-                byte[] formData = Encoding.ASCII.GetBytes(requestString);
-                request.ContentLength = formData.Length;
-
-                System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
-
-                using (Stream requestStream = request.GetRequestStream())
-                {
-                    requestStream.Write(formData, 0, formData.Length);
-                    requestStream.Flush();
-                }
-
-                WebResponse response = request.GetResponse();
-                string key = null;
-                using (StreamReader sr = new StreamReader(response.GetResponseStream()))
-                {
-                    key = sr.ReadToEnd();
-                }
+                d_Heartbeat.SendHeartbeat();
                 if (!writtenServerKey)
                 {
-                    Console.WriteLine(GetHash(key));
+                    Console.WriteLine(GetHash(d_Heartbeat.ReceivedKey)); 
                     writtenServerKey = true;
                 }
-
-                request.Abort();
                 Console.WriteLine("Heartbeat sent.");
             }
             catch (Exception e)
@@ -358,6 +331,8 @@ namespace ManicDiggerServer
                 Console.WriteLine("Unable to send heartbeat.");
             }
         }
+
+        IPEndPoint iep;
         bool writtenServerKey = false;
         public string hashPrefix = "server=";
         string GetHash(string hash)

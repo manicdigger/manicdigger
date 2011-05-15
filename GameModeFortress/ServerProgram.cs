@@ -70,6 +70,7 @@ namespace GameModeFortress
             {
                 server.d_MainSocket = Socket;
             }
+            server.d_Heartbeat = new ServerHeartbeat();
             server.Start();
             if ((Public) && (server.config.Public))
             {
