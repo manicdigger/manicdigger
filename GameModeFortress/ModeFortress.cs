@@ -698,7 +698,12 @@ namespace GameModeFortress
             {
                 case ServerPacketId.FiniteInventory:
                     {
-						d_Inventory.CopyFrom(packet.Inventory.Inventory);
+                        //check for null so it's possible to connect
+                        //to old versions of game (before 2011-05-05)
+                        if (packet.Inventory.Inventory != null)
+                        {
+                            d_Inventory.CopyFrom(packet.Inventory.Inventory);
+                        }
 						/*
                         FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
                         ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
