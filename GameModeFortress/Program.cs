@@ -31,7 +31,6 @@ namespace GameModeFortress
         {
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             getfile = new GetFileStream(datapaths);
-            LoadLogin();
             ManicDiggerProgram.exit = exit;
             if (connectdata.Ip == null)
             {
@@ -483,16 +482,23 @@ namespace GameModeFortress
             {
                 return false;
             }
-            var servers = GetServers(); //workaround for login.php problem. see comment in LoginClient.
-            var data = loginclient.Login(login, "" + password, servers[0].Hash);
-            if (!data.PasswordCorrect)
+            try
+            {
+                var servers = GetServers(); //workaround for login.php problem. see comment in LoginClient.
+                var data = loginclient.Login(login, "" + password, servers[0].Hash);
+                if (!data.PasswordCorrect)
+                {
+                    return false;
+                }
+                IsLoggedIn = true;
+                this.LoginName = login;
+                this.LoginPassword = password;
+                return true;
+            }
+            catch
             {
                 return false;
             }
-            IsLoggedIn = true;
-            this.LoginName = login;
-            this.LoginPassword = password;
-            return true;
         }
         public void StartSinglePlayer(int worldId)
         {
@@ -565,7 +571,7 @@ namespace GameModeFortress
             File.Delete(Path.Combine(slotsdirpath, name));
             SetWorldOptions(worldId, "");
         }
-        void LoadLogin()
+        public void LoadLogin()
         {
             logindatafile.Load();
             if (logindatafile.Password != "")

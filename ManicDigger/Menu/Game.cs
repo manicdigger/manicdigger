@@ -24,6 +24,7 @@ namespace GameMenu
     public interface Game
     {
         string[] GetWorlds();
+        void LoadLogin();
         bool IsLoggedIn { get; set; }
         string LoginName { get; set; }
         void SetWorldOptions(int worldId, string name);

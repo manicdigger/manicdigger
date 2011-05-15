@@ -12,6 +12,7 @@ namespace GameMenu
         public Game game;
         public void Initialize()
         {
+            game.LoadLogin();
             if (game.LoginName == "Local")
             {
                 game.LoginName = "gamer";
