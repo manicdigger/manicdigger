@@ -1748,7 +1748,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        public IGameDataItems d_DataItems = new GameDataItemsBlocks();
+        public IGameDataItems d_DataItems;
         InventoryUtil GetInventoryUtil(Inventory inventory)
         {
             InventoryUtil util = new InventoryUtil();
@@ -1786,6 +1786,16 @@ namespace ManicDiggerServer
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            if (cmd.Mode == (int)BlockSetMode.Create
+                && d_Data.Rail[cmd.BlockType] != 0)
+            {
+                return DoCommandBuildRail(player_id, execute, cmd);
+            }
+            if (cmd.Mode == (int)BlockSetMode.Destroy
+                && d_Data.Rail[d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z)] != 0)
+            {
+                return DoCommandRemoveRail(player_id, execute, cmd);
+            }
             if (cmd.Mode == (int)BlockSetMode.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
@@ -1806,6 +1816,9 @@ namespace ManicDiggerServer
                         {
                             inventory.RightHand[cmd.MaterialSlot] = null;
                         }
+                        if (d_Data.Rail[item.BlockId] != 0)
+                        {
+                        }
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
                         break;
                     default:
@@ -1824,107 +1837,77 @@ namespace ManicDiggerServer
             }
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
-            /*
-            if (ENABLE_FINITEINVENTORY)
+            return true;
+        }
+
+        private bool DoCommandBuildRail(int player_id, bool execute, PacketClientSetBlock cmd)
+        {
+            Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+            //int blockstoput = 1;
+            if (!(oldblock == SpecialBlockId.Empty || GameDataManicDigger.IsRailTile(oldblock)))
             {
-                Dictionary<int, int> inventory = GetPlayerInventory(clients[player_id].playername).BlockTypeAmount;
-                if (cmd.Mode == (int)BlockSetMode.Create)
-                {
-                    int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                    int blockstoput = 1;
-                    if (GameDataManicDigger.IsRailTile(cmd.BlockType))
-                    {
-                        if (!(oldblock == SpecialBlockId.Empty
-                            || GameDataManicDigger.IsRailTile(oldblock)))
-                        {
-                            return false;
-                        }
-                        //count how many rails will be created
-                        int oldrailcount = 0;
-                        if (GameDataManicDigger.IsRailTile(oldblock))
-                        {
-                            oldrailcount = MyLinq.Count(
-                                DirectionUtils.ToRailDirections(
-                                (RailDirectionFlags)(oldblock - GameDataManicDigger.railstart)));
-                        }
-                        int newrailcount = MyLinq.Count(
-                            DirectionUtils.ToRailDirections(
-                            (RailDirectionFlags)(cmd.BlockType - GameDataManicDigger.railstart)));
-                        blockstoput = newrailcount - oldrailcount;
-                        //check if player has that many rails
-                        int inventoryrail = GetEquivalentCount(inventory, cmd.BlockType);
-                        if (blockstoput > inventoryrail)
-                        {
-                            return false;
-                        }
-                        if (execute)
-                        {
-                            RemoveEquivalent(inventory, cmd.BlockType, blockstoput);
-                        }
-                    }
-                    else
-                    {
-                        //todo when removing rail under minecart, make minecart block in place of removed rail.
-                        if (oldblock != SpecialBlockId.Empty)
-                        {
-                            return false;
-                        }
-                        //check if player has such block
-                        int hasblock = -1; //which equivalent block it has exactly?
-                        foreach (var k in inventory)
-                        {
-                            if (EquivalentBlock(k.Key, cmd.BlockType)
-                                && k.Value > 0)
-                            {
-                                hasblock = k.Key;
-                            }
-                        }
-                        if (hasblock == -1)
-                        {
-                            return false;
-                        }
-                        if (execute)
-                        {
-                            inventory[hasblock]--;
-                        }
-                    }
-                }
-                else
-                {
-                    //add to inventory
-                    int blocktype = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                    blocktype = d_Data.WhenPlayerPlacesGetsConvertedTo[blocktype];
-                    if ((!d_Data.IsValid[blocktype])
-                        || blocktype == SpecialBlockId.Empty)
-                    {
-                        return false;
-                    }
-                    int blockstopick = 1;
-                    if (GameDataManicDigger.IsRailTile(blocktype))
-                    {
-                        blockstopick = MyLinq.Count(
-                            DirectionUtils.ToRailDirections(
-                            (RailDirectionFlags)(blocktype - GameDataManicDigger.railstart)));
-                    }
-                    if (TotalAmount(inventory) + blockstopick > FiniteInventoryMax)
-                    {
-                        return false;
-                    }
-                    if (execute)
-                    {
-                        if (!inventory.ContainsKey(blocktype))
-                        {
-                            inventory[blocktype] = 0;
-                        }
-                        inventory[blocktype] += blockstopick;
-                    }
-                }
-                clients[player_id].IsInventoryDirty = true;
+                return false;
             }
-            else
+            
+            //count how many rails will be created
+            int oldrailcount = 0;
+            if (GameDataManicDigger.IsRailTile(oldblock))
             {
+                oldrailcount = MyLinq.Count(
+                    DirectionUtils.ToRailDirections(
+                    (RailDirectionFlags)(oldblock - GameDataManicDigger.railstart)));
             }
-            */
+            int newrailcount = MyLinq.Count(
+                DirectionUtils.ToRailDirections(
+                (RailDirectionFlags)(cmd.BlockType - GameDataManicDigger.railstart)));
+            int blockstoput = newrailcount - oldrailcount;
+
+            Item item = inventory.RightHand[cmd.MaterialSlot];
+            if (!(item.ItemClass == ItemClass.Block && d_Data.Rail[item.BlockId] != 0))
+            {
+                return false;
+            }
+            item.BlockCount -= blockstoput;
+            if (item.BlockCount == 0)
+            {
+                inventory.RightHand[cmd.MaterialSlot] = null;
+            }
+            SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
+
+            clients[player_id].IsInventoryDirty = true;
+            NotifyInventory(player_id);
+            return true;
+        }
+
+        private bool DoCommandRemoveRail(int player_id, bool execute, PacketClientSetBlock cmd)
+        {
+            Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            //add to inventory
+            int blocktype = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+            blocktype = d_Data.WhenPlayerPlacesGetsConvertedTo[blocktype];
+            if ((!d_Data.IsValid[blocktype])
+                || blocktype == SpecialBlockId.Empty)
+            {
+                return false;
+            }
+            int blockstopick = 1;
+            if (GameDataManicDigger.IsRailTile(blocktype))
+            {
+                blockstopick = MyLinq.Count(
+                    DirectionUtils.ToRailDirections(
+                    (RailDirectionFlags)(blocktype - GameDataManicDigger.railstart)));
+            }
+
+            var item = new Item();
+            item.ItemClass = ItemClass.Block;
+            item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blocktype];
+            item.BlockCount = blockstopick;
+            GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+            SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
+
+            clients[player_id].IsInventoryDirty = true;
+            NotifyInventory(player_id);
             return true;
         }
         void SetBlockAndNotify(int x, int y, int z, int blocktype)

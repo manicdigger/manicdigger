@@ -596,7 +596,12 @@ namespace ManicDigger
             if (itemA.ItemClass == ItemClass.Block
                 && itemB.ItemClass == ItemClass.Block)
             {
-                if (itemA.BlockId != itemB.BlockId) { return null; }
+                int railcountA = MyLinq.Count(DirectionUtils.ToRailDirections(d_Data.Rail[itemA.BlockId]));
+                int railcountB = MyLinq.Count(DirectionUtils.ToRailDirections(d_Data.Rail[itemB.BlockId]));
+                if ((itemA.BlockId != itemB.BlockId) && (!(railcountA > 0 && railcountB > 0)))
+                {
+                    return null;
+                }
                 //todo stack size limit
                 Item ret = new Item();
                 ret.ItemClass = itemA.ItemClass;

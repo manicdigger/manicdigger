@@ -236,14 +236,15 @@ namespace GameModeFortress
                 SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
             }
         }
-        private void SendSetBlockAndUpdateSpeculative(int materialslot, int x, int y, int z, BlockSetMode mode)
+        private void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, BlockSetMode mode)
         {
-			d_Network.SendSetBlock(new Vector3(x, y, z), mode, materialslot, d_Viewport.ActiveMaterial);
+			d_Network.SendSetBlock(new Vector3(x, y, z), mode, material, d_Viewport.ActiveMaterial);
 
             Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
             if (item != null && item.ItemClass == ItemClass.Block)
             {
-                int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
+                //int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
+                int blockid = material;
                 if (mode == BlockSetMode.Destroy)
                 {
                     blockid = SpecialBlockId.Empty;

@@ -57,6 +57,7 @@ namespace GameModeFortress
             map.d_ChunkDb = chunkdb;
             server.d_NetworkCompression = networkcompression;
             map.d_Data = server.d_Data;
+            server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
             server.d_Water = new WaterFinite() { data = server.d_Data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (Socket == null)
