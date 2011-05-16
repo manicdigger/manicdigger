@@ -4,6 +4,8 @@ using System.Text;
 using GameMenu;
 using System.Drawing;
 using System.Windows.Forms;
+using ManicDigger.Menu;
+using System.IO;
 
 namespace ManicDigger.Menu
 {
@@ -31,7 +33,7 @@ namespace ManicDigger.Menu
                 BackgroundImage = menu.button4,
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 300, 650, 90),
-                Text = "",
+                Text = gethashurl(),
                 Click = delegate { },
                 FontSize = 20,
                 IsTextbox = true,
@@ -63,7 +65,7 @@ namespace ManicDigger.Menu
                 BackgroundImage = menu.button4,
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 600, 600, 90),
-                Text = "",
+                Text = getip(),
                 Click = delegate { },
                 FontSize = 20,
                 IsTextbox = true,
@@ -83,7 +85,7 @@ namespace ManicDigger.Menu
                 BackgroundImage = menu.button4,
                 BackgroundImageSelected = menu.button4sel,
                 Rect = new RectangleF(500, 700, 600, 90),
-                Text = "25565",
+                Text = getport(),
                 Click = delegate { },
                 FontSize = 20,
                 IsTextbox = true,
@@ -115,8 +117,92 @@ namespace ManicDigger.Menu
 
             menu.AddOkCancel(this, delegate { Connect(); }, delegate { menu.currentForm = menu.d_FormJoinMultiplayer; });
         }
+		public static string GetStorePath()
+        {
+            string apppath = Path.GetDirectoryName(Application.ExecutablePath);
+            string mdfolder = "ManicDiggerUserData";
+            if (apppath.Contains(
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)))
+            {
+                string mdpath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    mdfolder);
+                return mdpath;
+            }
+            else
+            {
+                //return Path.Combine(apppath, mdfolder);
+                return mdfolder;
+            }
+        }
+        public static string GetIpsaveFilePath()
+        {
+            string path = GameStorePath.GetStorePath();
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return Path.Combine(path, "lastip.txt");
+        }
+		void createipsavefile()
+		{
+			StringBuilder f = new StringBuilder();
+			f.AppendLine("");
+			f.AppendLine("");
+			f.AppendLine("25565");	// Write port number
+			File.WriteAllText(GetIpsaveFilePath(), f.ToString());
+		}
+		void Saveip()
+		{
+			// delete history!
+			File.Delete(GetIpsaveFilePath());			
+			
+			StringBuilder b = new StringBuilder();	
+			b.AppendLine(hashTextboxWidget.Text);
+			b.AppendLine(ipTextboxWidget.Text);
+			b.AppendLine(portTextboxWidget.Text);
+			File.WriteAllText(GetIpsaveFilePath(), b.ToString());
+		}
+		public string gethashurl()
+		{
+			string filename = GetIpsaveFilePath();
+			if (File.Exists(filename)) {
+				string[] ipsavecontent = File.ReadAllLines(filename);
+				return ipsavecontent[0];
+			} else {
+				createipsavefile();
+				return "";
+			}
+		}
+		public string getip()
+		{
+			string filename = GetIpsaveFilePath();
+			if (File.Exists(filename)) {
+				string[] ipsavecontent = File.ReadAllLines(filename);
+				return ipsavecontent[1];
+			} else {
+				createipsavefile();
+				return "";
+			}
+		}
+		public string getport()
+		{
+			string filename = GetIpsaveFilePath();
+			if (File.Exists(filename)) {
+				string[] ipsavecontent = File.ReadAllLines(filename);
+				if(ipsavecontent[2] == "") {	// If someone deleted standard port, restore it!
+					return "25565";
+				} else {
+					return ipsavecontent[2];	
+				}
+			} else {
+				createipsavefile();
+				return "25565";
+			}
+		}	
         void Connect()
         {
+			Saveip();
             if (hashTextboxWidget.Text != "")
             {
                 game.JoinMultiplayer(hashTextboxWidget.Text);

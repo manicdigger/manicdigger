@@ -46,6 +46,15 @@ namespace GameMenu
             }
             return Path.Combine(path, "Password.txt");
         }
+        public static string GetIpsaveFilePath()
+        {
+            string path = GameStorePath.GetStorePath();
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return Path.Combine(path, "lastip.txt");
+        }		
         public void Delete()
         {
             string filename = GetPasswordFilePath();
