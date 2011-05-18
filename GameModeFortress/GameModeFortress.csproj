@@ -64,8 +64,12 @@
     <Compile Include="CraftingRecipes.cs" />
     <Compile Include="GameDataManicDigger.cs" />
     <Compile Include="GameDataMinecraft.cs" />
+    <Compile Include="ManicDiggerGameWindow.cs" />
+    <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
+    <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
+    <Compile Include="GuiStates\GuiStateMapLoading.cs" />
     <Compile Include="InfiniteMap.cs" />
-    <Compile Include="ModeFortress.cs" />
+    <Compile Include="Misc.cs" />
     <Compile Include="ModeFortressRail.cs" />
     <Compile Include="NetworkClientFortress.cs" />
     <Compile Include="Packets.cs" />

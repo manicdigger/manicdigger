@@ -26,6 +26,13 @@ namespace ManicDigger.Hud
     {
         Vector3i SelectedBlock();
     }
+    public class Viewport3dSelectedBlockDummy : IViewport3dSelectedBlock
+    {
+        public Vector3i SelectedBlock()
+        {
+            return new Vector3i(-1, -1, -1);
+        }
+    }
 
     public class HudInventory
     {

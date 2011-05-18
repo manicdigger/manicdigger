@@ -71,9 +71,6 @@
     <Compile Include="DirtyChunks.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
-    <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
-    <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
-    <Compile Include="GuiStates\GuiStateMapLoading.cs" />
     <Compile Include="Hud\Hud.cs" />
     <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
@@ -111,7 +108,7 @@
     <Compile Include="Renderers\MinecartRenderer.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
-    <Compile Include="GameWindow.cs" />
+    <Compile Include="GameWindowMisc.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Network\NetworkClientMinecraft.cs" />

@@ -5,6 +5,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
 using ManicDigger.Collisions;
+using ManicDigger.Hud;
 
 namespace ManicDigger.Renderers
 {
@@ -13,7 +14,9 @@ namespace ManicDigger.Renderers
         [Inject]
         public ITerrainTextures d_Terrain;
         [Inject]
-        public IViewport3d d_Viewport;
+        public IActiveMaterial d_Viewport;
+        [Inject]
+        public ILocalPlayerPosition d_LocalPlayerPosition;
         [Inject]
         public IGameData d_Data;
         [Inject]
@@ -47,7 +50,7 @@ namespace ManicDigger.Renderers
         {
             get
             {
-                Vector3 pos = d_Viewport.LocalPlayerPosition;
+                Vector3 pos = d_LocalPlayerPosition.LocalPlayerPosition;
                 //if ((int)pos.X >= 0 && (int)pos.Y >= 0 && (int)pos.Z >= 0
                 //    && (int)pos.X < d_Map.MapSizeX
                 //    && (int)pos.Z < d_Map.MapSizeY

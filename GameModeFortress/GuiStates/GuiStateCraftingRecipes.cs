@@ -10,7 +10,7 @@ namespace ManicDigger
         #region IViewport3d Members
         public void CraftingRecipesStart(List<CraftingRecipe> recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
         {
-            this.craftingrecipes = recipes;
+            this.craftingrecipes2 = recipes;
             this.craftingblocks = blocks;
             this.craftingrecipeselected = craftingRecipeSelected;
             guistate = GuiState.CraftingRecipes;
@@ -18,7 +18,7 @@ namespace ManicDigger
             FreeMouse = true;
         }
         #endregion
-        List<CraftingRecipe> craftingrecipes;
+        public List<CraftingRecipe> craftingrecipes2;
         List<int> craftingblocks;
         Action<int?> craftingrecipeselected;
 
@@ -28,9 +28,9 @@ namespace ManicDigger
         {
             List<int> okrecipes = new List<int>();
             this.okrecipes = okrecipes;
-            for (int i = 0; i < craftingrecipes.Count; i++)
+            for (int i = 0; i < craftingrecipes2.Count; i++)
             {
-                CraftingRecipe r = craftingrecipes[i];
+                CraftingRecipe r = craftingrecipes2[i];
                 //can apply recipe?
                 foreach (Ingredient ingredient in r.ingredients)
                 {
@@ -52,7 +52,7 @@ namespace ManicDigger
             }
             for (int i = 0; i < okrecipes.Count; i++)
             {
-                CraftingRecipe r = craftingrecipes[okrecipes[i]];
+                CraftingRecipe r = craftingrecipes2[okrecipes[i]];
                 for (int ii = 0; ii < r.ingredients.Count; ii++)
                 {
                     int xx = menustartx + 20 + ii * 130;

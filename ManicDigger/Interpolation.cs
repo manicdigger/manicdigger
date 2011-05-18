@@ -13,7 +13,7 @@ namespace ManicDigger
         void AddNetworkPacket(object c, double time);
         object InterpolatedState(double time);
     }
-    class NetworkInterpolation : INetworkInterpolation
+    public class NetworkInterpolation : INetworkInterpolation
     {
         struct Packet
         {

@@ -129,7 +129,7 @@ namespace GameModeFortress
         {
             var getfile = this.getfile;
             var gamedata = new GameDataCsv();
-            var clientgame = new GameFortress();
+            var clientgame = w;
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
             var network = new NetworkClientFortress();
@@ -208,7 +208,7 @@ namespace GameModeFortress
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             terrainchunktesselator.d_BlockRendererTorch = blockrenderertorch;
             terrainchunktesselator.d_TerrainTextures = terrainTextures;
-            w.d_Map = clientgame.mapforphysics;
+            //w.d_Map = clientgame.mapforphysics;
             w.d_Physics = physics;
             w.d_Clients = clientgame;
             w.d_Network = network;
@@ -226,7 +226,7 @@ namespace GameModeFortress
             var textrenderer = new ManicDigger.Renderers.TextRenderer();
             w.d_TextRenderer = textrenderer;
             Inventory inventory = Inventory.Create();
-            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple, d_Inventory = inventory };
+            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple, d_Inventory = inventory, d_LocalPlayerPosition = w };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
@@ -235,7 +235,6 @@ namespace GameModeFortress
             w.particleEffectBlockBreak = particle;
             w.ENABLE_FINITEINVENTORY = false;
             clientgame.d_Terrain = terrainRenderer;
-            clientgame.d_Viewport = w;
             clientgame.d_Data = gamedata;
             clientgame.d_Network = network;
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
@@ -246,7 +245,7 @@ namespace GameModeFortress
             clientgame.d_GetFile = getfile;
             var craftingrecipes = new CraftingRecipes();
             craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
-            clientgame.craftingrecipes = craftingrecipes;
+            w.d_CraftingRecipes = craftingrecipes;
             terrainRenderer.d_IsChunkReady = dirtychunks;
             network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;
@@ -254,7 +253,6 @@ namespace GameModeFortress
             dirtychunks.Start();
             dirtychunks.d_Frustum = frustumculling;
             clientgame.d_Map = map;
-            w.d_Game = clientgame;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = exit;
             playerskindownloader.d_The3d = the3d;
@@ -266,7 +264,6 @@ namespace GameModeFortress
             physics.d_Data = gamedata;
             audio.d_GetFile = getfile;
             audio.d_GameExit = exit;
-            this.clientgame = clientgame;
             this.map = map;
             the3d.d_Terrain = terrainTextures;
             the3d.d_TextRenderer = textrenderer;
@@ -344,7 +341,6 @@ namespace GameModeFortress
         InfiniteMapChunked2d heightmap;
         InfiniteMapChunkedSimple light;
         DirtyChunks dirtychunks;
-        GameFortress clientgame;
         InfiniteMapChunked map;
         ShadowsSimple shadowssimple;
         Shadows shadowsfull;
@@ -355,12 +351,11 @@ namespace GameModeFortress
         ParticleEffectBlockBreak particle;
         void UseShadowsSimple()
         {
-            if (clientgame.d_Shadows != null)
+            if (w.d_Shadows != null)
             {
-                shadowssimple.sunlight = clientgame.d_Shadows.sunlight;
+                shadowssimple.sunlight = w.d_Shadows.sunlight;
             }
             var shadows = shadowssimple;
-            clientgame.d_Shadows = shadows;
             //map.shadows = shadows;
             weapon.d_Shadows = shadows;
             terrainchunktesselator.d_Shadows = shadows;
@@ -370,12 +365,11 @@ namespace GameModeFortress
         }
         void UseShadowsFull()
         {
-            if (clientgame.d_Shadows != null)
+            if (w.d_Shadows != null)
             {
-                shadowsfull.sunlight = clientgame.d_Shadows.sunlight;
+                shadowsfull.sunlight = w.d_Shadows.sunlight;
             }
             var shadows = shadowsfull;
-            clientgame.d_Shadows = shadows;
             //map.shadows = shadows;
             weapon.d_Shadows = shadows;
             terrainchunktesselator.d_Shadows = shadows;

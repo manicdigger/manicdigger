@@ -38,7 +38,7 @@ namespace ManicDigger.Tests
             hud.the3d = the3d;
             hud.getfile = getfile;
             hud.ActiveMaterial = new ActiveMaterialDummy();
-            hud.viewport3d = new ViewportDummy();
+            hud.viewport3d = new Viewport3dSelectedBlockDummy();
             server.d_Items = dataItems;
             server.d_Inventory = inventory;
             server.d_InventoryUtil = inventoryUtil;
