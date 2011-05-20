@@ -132,7 +132,7 @@ namespace GameModeFortress
             var clientgame = w;
             ICurrentSeason currentseason = clientgame;
             gamedata.CurrentSeason = currentseason;
-            var network = new NetworkClientFortress();
+            var network = w;
             var mapstorage = clientgame;
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
@@ -147,16 +147,8 @@ namespace GameModeFortress
             var physics = new CharacterPhysics();
             var internetgamefactory = this;
             ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
-            network.d_Map = w;
-            network.d_Clients = clientgame;
-            network.d_Chatlines = w;
-            network.d_Position = localplayerposition;
-            network.ENABLE_FORTRESS = true;
-            network.d_NetworkPacketReceived = clientgame;
             network.d_Compression = compression;
             network.d_ResetMap = this;
-            network.d_GameData = gamedata;
-            network.d_GetFile = getfile;
             if (IsSinglePlayer)
             {
                 var socket = new SocketDummy() { network = this.dummyNetwork };
@@ -211,7 +203,6 @@ namespace GameModeFortress
             //w.d_Map = clientgame.mapforphysics;
             w.d_Physics = physics;
             w.d_Clients = clientgame;
-            w.d_Network = network;
             w.d_Data = gamedata;
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
@@ -236,7 +227,6 @@ namespace GameModeFortress
             w.ENABLE_FINITEINVENTORY = false;
             clientgame.d_Terrain = terrainRenderer;
             clientgame.d_Data = gamedata;
-            clientgame.d_Network = network;
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
             clientgame.d_Audio = audio;
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
@@ -248,7 +238,6 @@ namespace GameModeFortress
             w.d_CraftingRecipes = craftingrecipes;
             network.d_CraftingRecipes = craftingrecipes;
             terrainRenderer.d_IsChunkReady = dirtychunks;
-            network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;
             map.Reset(10 * 1000, 10 * 1000, 128);
             dirtychunks.Start();
@@ -295,7 +284,6 @@ namespace GameModeFortress
                 d_Heightmap = heightmap
             };
             this.terrainchunktesselator = terrainchunktesselator;
-            this.network = network;
             if (fullshadows)
             {
                 UseShadowsFull();
@@ -348,7 +336,6 @@ namespace GameModeFortress
         WeaponBlockInfo weapon;
         TerrainChunkTesselator terrainchunktesselator;
         public bool fullshadows = false;
-        NetworkClientFortress network;
         ParticleEffectBlockBreak particle;
         void UseShadowsSimple()
         {
@@ -360,7 +347,6 @@ namespace GameModeFortress
             //map.shadows = shadows;
             weapon.d_Shadows = shadows;
             terrainchunktesselator.d_Shadows = shadows;
-            network.d_Shadows = shadows;
             w.d_Shadows = shadows;
             particle.d_Shadows = shadows;
         }
@@ -374,7 +360,6 @@ namespace GameModeFortress
             //map.shadows = shadows;
             weapon.d_Shadows = shadows;
             terrainchunktesselator.d_Shadows = shadows;
-            network.d_Shadows = shadows;
             w.d_Shadows = shadows;
             particle.d_Shadows = shadows;
         }
