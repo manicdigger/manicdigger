@@ -2704,7 +2704,7 @@ namespace ManicDigger
                         == (int)TileTypeManicDigger.CraftingTable)
                     {
                         //draw crafting recipes list.
-                        CraftingRecipesStart(craftingrecipes2, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
+                        CraftingRecipesStart(d_CraftingRecipes.craftingrecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
                         (recipe) => { CraftingRecipeSelected(pos, recipe); });
                     }
                 }

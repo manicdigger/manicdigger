@@ -23,7 +23,6 @@
 "MossyCobblestone";1;"Cobblestone";1;;;;
 "Cobblestone";1;"MossyCobblestone";1;;;;
 "Sponge";1;"GoldBlock";1;;;;
-;;;;;;;
 "RedCloth";1;"GoldBlock";1;;;;
 "OrangeCloth";1;"RedCloth";1;;;;
 "YellowCloth";1;"OrangeCloth";1;;;;
@@ -41,7 +40,6 @@
 "GrayCloth";1;"BlackCloth";1;;;;
 "WhiteCloth";1;"GrayCloth";1;;;;
 "RedCloth";1;"WhiteCloth";1;;;;
-;;;;;;;
 "Roof";1;"Brick";2;;;;
 "ChemicalGreen";1;"GoldBlock";1;;;;
 "Camouflage";1;"GoldBlock";1;;;;

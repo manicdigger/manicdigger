@@ -244,8 +244,9 @@ namespace GameModeFortress
             clientgame.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
             var craftingrecipes = new CraftingRecipes();
-            craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
+            craftingrecipes.data = gamedata;
             w.d_CraftingRecipes = craftingrecipes;
+            network.d_CraftingRecipes = craftingrecipes;
             terrainRenderer.d_IsChunkReady = dirtychunks;
             network.d_MapStoragePortion = map;
             map.d_IsChunkReady = dirtychunks;

@@ -52,7 +52,7 @@ namespace ManicDiggerServer
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
         public IGetFileStream d_GetFile;
-        public CraftingRecipes craftingrecipes = new CraftingRecipes();
+        public CraftingRecipes d_CraftingRecipes;
         [Inject]
         public IChunkDb d_ChunkDb;
         [Inject]
@@ -1683,7 +1683,7 @@ namespace ManicDiggerServer
             {
                 return false;
             }
-            if (cmd.RecipeId < 0 || cmd.RecipeId >= craftingrecipes.craftingrecipes.Count)
+            if (cmd.RecipeId < 0 || cmd.RecipeId >= d_CraftingRecipes.craftingrecipes.Count)
             {
                 return false;
             }
@@ -1697,7 +1697,7 @@ namespace ManicDiggerServer
                 for (; ; )
                 {
                     //check if ingredients available
-                    foreach (Ingredient ingredient in craftingrecipes.craftingrecipes[i].ingredients)
+                    foreach (Ingredient ingredient in d_CraftingRecipes.craftingrecipes[i].ingredients)
                     {
                         if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
                         {
@@ -1705,7 +1705,7 @@ namespace ManicDiggerServer
                         }
                     }
                     //remove ingredients
-                    foreach (Ingredient ingredient in craftingrecipes.craftingrecipes[i].ingredients)
+                    foreach (Ingredient ingredient in d_CraftingRecipes.craftingrecipes[i].ingredients)
                     {
                         for (int ii = 0; ii < ingredient.Amount; ii++)
                         {
@@ -1714,9 +1714,9 @@ namespace ManicDiggerServer
                         }
                     }
                     //add output
-                    for (int z = 0; z < craftingrecipes.craftingrecipes[i].output.Amount; z++)
+                    for (int z = 0; z < d_CraftingRecipes.craftingrecipes[i].output.Amount; z++)
                     {
-                        outputtoadd.Add(craftingrecipes.craftingrecipes[i].output.Type);
+                        outputtoadd.Add(d_CraftingRecipes.craftingrecipes[i].output.Type);
                     }
                 }
             nextrecipe:

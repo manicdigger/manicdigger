@@ -49,6 +49,8 @@ namespace GameModeFortress
         public GetFileStream d_GetFile;
         [Inject]
         public ISocket main;
+        [Inject]
+        public CraftingRecipes d_CraftingRecipes;
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
@@ -331,6 +333,8 @@ namespace GameModeFortress
                         d_GameData.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
                             MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")),
                             MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
+                        d_CraftingRecipes.Load(MyStream.ReadAllLines(d_GetFile.GetFile("craftingrecipes.csv")));
+                        
                         if (MapLoaded != null)
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });
