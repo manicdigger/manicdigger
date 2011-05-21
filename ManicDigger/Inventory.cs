@@ -227,11 +227,13 @@ namespace ManicDigger
             switch (item.ItemClass)
             {
                 case ItemClass.Block:
+                    /*
                     if (d_Inventory.RightHand[ActiveMaterial] == null)
                     {
                         d_Inventory.RightHand[ActiveMaterial] = item;
                         return true;
                     }
+                    */
                     //stacking
                     for (int i = 0; i < 10; i++)
                     {

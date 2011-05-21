@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 namespace ManicDigger
 {
@@ -37,6 +38,7 @@ namespace ManicDigger
         string[][] BuildSound { get; }
         string[][] CloneSound { get; }
         int[] StartInventoryAmount { get; }
+        float[] Strength { get; }
 
         int[] DefaultMaterialSlots { get; }
         float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
@@ -122,7 +124,7 @@ namespace ManicDigger
         private double DoubleParse(string s)
         {
             double result;
-            if (double.TryParse(s, out result))
+            if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
             {
                 return result;
             }
@@ -193,6 +195,7 @@ namespace ManicDigger
                 mIsEmptyForPhysics[id] = csv.GetBool(i, "IsEmptyForPhysics");
                 mLightRadius[id] = csv.GetInt(i, "LightRadius");
                 mStartInventoryAmount[id] = csv.GetInt(i, "StartInventoryAmount");
+                mStrength[id] = (float)csv.GetDouble(i, "Strength");
             }
         }
         private void LoadSound(string[][] t, string s, int i, int id)
@@ -254,6 +257,7 @@ namespace ManicDigger
             }
             mLightRadius = new int[count];
             mStartInventoryAmount = new int[count];
+            mStrength = new float[count];
 
             mDefaultMaterialSlots = new int[10];
             mLightLevels = new float[16];
@@ -282,6 +286,7 @@ namespace ManicDigger
         public string[][] CloneSound { get { return mCloneSound; } }
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
+        public float[] Strength { get { return mStrength; } }
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
@@ -320,6 +325,7 @@ namespace ManicDigger
         private string[][] mCloneSound;
         private int[] mLightRadius;
         private int[] mStartInventoryAmount;
+        private float[] mStrength;
 
         private int[] mDefaultMaterialSlots;
         private float[] mLightLevels;

@@ -1296,6 +1296,10 @@ namespace ManicDigger
                     left = false;
                 }
             }
+            if (!left)
+            {
+                currentAttackedBlock = null;
+            }
 
             float pick_distance = PICK_DISTANCE;
             if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
@@ -1510,12 +1514,35 @@ namespace ManicDigger
                             }
                             if (!right)
                             {
+                                //attack
+                                var pos = new Vector3i((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
+                                currentAttackedBlock = new Vector3i(pos.x,pos.y,pos.z);
+                                if (!blockhealth.ContainsKey(pos))
+                                {
+                                    blockhealth[pos] = GetCurrentBlockHealth(pos.x, pos.y, pos.z);
+                                }
+                                blockhealth[pos] -= WeaponAttackStrength();
+                                float health = GetCurrentBlockHealth(pos.x,pos.y,pos.z);
+                                if (health <= 0)
+                                {
+                                    if (currentAttackedBlock != null)
+                                    {
+                                        blockhealth.Remove(currentAttackedBlock.Value);
+                                    }
+                                    currentAttackedBlock = null;
+                                    goto broken;
+                                }
+                                goto end;
+                            }
+                            if (!right)
+                            {
                                 particleEffectBlockBreak.StartParticleEffect(newtile);//must be before deletion - gets ground type.
                             }
                             if (!MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                             {
                                 throw new Exception();
                             }
+                        broken:
                             OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                                 new Vector3((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y), tile.pos,
                                 right);
@@ -1532,6 +1559,46 @@ namespace ManicDigger
                 lastbuild = new DateTime();
                 fastclicking = true;
             }
+        }
+        float WeaponAttackStrength()
+        {
+            return (float)NextDouble(2, 4);
+        }
+        double NextDouble(double min, double max)
+        {
+            return rnd.NextDouble() * (max - min) + min;
+        }
+        float GetCurrentBlockHealth(int x, int y, int z)
+        {
+            if (blockhealth.ContainsKey(new Vector3i(x, y, z)))
+            {
+                return blockhealth[new Vector3i(x, y, z)];
+            }
+            int blocktype = d_Map.GetBlock(x, y, z);
+            return d_Data.Strength[blocktype];
+        }
+        Dictionary<Vector3i, float> blockhealth = new Dictionary<Vector3i, float>();
+        Vector3i? currentAttackedBlock;
+
+        void DrawEnemyHealthBlock()
+        {
+            if (currentAttackedBlock != null)
+            {
+                int x = currentAttackedBlock.Value.x;
+                int y = currentAttackedBlock.Value.y;
+                int z = currentAttackedBlock.Value.z;
+                int blocktype = d_Map.GetBlock(x, y, z);
+                float health = GetCurrentBlockHealth(x, y, z);
+                float progress = health / d_Data.Strength[blocktype];
+                DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
+            }
+        }
+
+        void DrawEnemyHealthCommon(string name, float progress)
+        {
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, 35, null, Color.Black);
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, 35, null, Color.Red);
+            d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 14).Width), 40, 14, null);
         }
 
         public const float RailHeight = 0.3f;
@@ -1995,6 +2062,7 @@ namespace ManicDigger
                             DrawAim();
                         }
                         DrawMaterialSelector();
+                        DrawEnemyHealthBlock();
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
                         {
@@ -2075,16 +2143,26 @@ namespace ManicDigger
             int x = (int)pickcubepos.X;
             int y = (int)pickcubepos.Z;
             int z = (int)pickcubepos.Y;
-            string info = "None";
-            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            //string info = "None";
+            if (!MapUtil.IsValidPos(d_Map, x, y, z))
             {
-                var blocktype = d_Map.GetBlock(x, y, z);
-                if (d_Data.IsValid[blocktype])
-                {
-                    info = d_Data.Name[blocktype];
-                }
+                return;
+            }
+            int blocktype = d_Map.GetBlock(x, y, z);
+            if (!d_Data.IsValid[blocktype])
+            {
+                return;
+            }
+            currentAttackedBlock = new Vector3i(x, y, z);
+            DrawEnemyHealthBlock();
+            /*
+            int blocktype = d_Map.GetBlock(x, y, z);
+            if (d_Data.IsValid[blocktype])
+            {
+                info = d_Data.Name[blocktype];
             }
             d_The3d.Draw2dText(info, Width * 0.5f - d_The3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
+            */
         }
         private void DrawConnectedPlayersList()
         {
