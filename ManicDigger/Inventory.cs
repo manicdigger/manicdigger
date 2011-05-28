@@ -227,13 +227,6 @@ namespace ManicDigger
             switch (item.ItemClass)
             {
                 case ItemClass.Block:
-                    /*
-                    if (d_Inventory.RightHand[ActiveMaterial] == null)
-                    {
-                        d_Inventory.RightHand[ActiveMaterial] = item;
-                        return true;
-                    }
-                    */
                     //stacking
                     for (int i = 0; i < 10; i++)
                     {
@@ -247,6 +240,11 @@ namespace ManicDigger
                             d_Inventory.RightHand[i] = result;
                             return true;
                         }
+                    }
+                    if (d_Inventory.RightHand[ActiveMaterial] == null)
+                    {
+                        d_Inventory.RightHand[ActiveMaterial] = item;
+                        return true;
                     }
                     //current hand
                     if (d_Inventory.RightHand[ActiveMaterial].ItemClass == ItemClass.Block
