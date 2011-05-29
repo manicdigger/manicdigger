@@ -480,6 +480,36 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
+            if (tiletype == 128 || tiletype == 129) //open door
+            {
+                flowerfix = 0.9f;
+                //x-1, x+1
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 0;
+                    drawfront = 0;
+                    drawleft = 1;
+                    drawright = 0;
+                }
+                //y-1, y+1
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 1;
+                    drawfront = 0;
+                    drawleft = 0;
+                    drawright = 0;
+                }
+            }
+            //doors are drawed using a bug with flower drawing.
+            //when there are blocks around flower, then some sides are not rendered.
+            //this fixes case when there are no blocks around doors.
+            if (tiletype == 126 || tiletype == 127 || tiletype == 128 || tiletype == 129) //door
+            {
+                if (drawleft > 0 || drawright > 0) { drawfront = 0; drawback = 0; }
+                if (drawfront > 0 || drawback > 0) { drawleft = 0; drawright = 0; }
+            }
             RailDirectionFlags rail = d_Data.Rail[tiletype];
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
             if (rail != RailDirectionFlags.None)

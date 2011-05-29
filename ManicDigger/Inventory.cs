@@ -232,7 +232,7 @@ namespace ManicDigger
                     {
                         if (d_Inventory.RightHand[i] == null)
                         {
-                            break;
+                            continue;
                         }
                         Item result = d_Items.Stack(d_Inventory.RightHand[i], item);
                         if (result != null)

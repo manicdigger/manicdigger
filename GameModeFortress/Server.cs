@@ -1786,7 +1786,12 @@ namespace ManicDiggerServer
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
-            if (cmd.Mode == (int)BlockSetMode.Create
+            if (cmd.Mode == BlockSetMode.Use)
+            {
+                UseDoor(cmd.X, cmd.Y, cmd.Z);
+                return true;
+            }
+            if (cmd.Mode == BlockSetMode.Create
                 && d_Data.Rail[cmd.BlockType] != 0)
             {
                 return DoCommandBuildRail(player_id, execute, cmd);
@@ -1796,7 +1801,7 @@ namespace ManicDiggerServer
             {
                 return DoCommandRemoveRail(player_id, execute, cmd);
             }
-            if (cmd.Mode == (int)BlockSetMode.Create)
+            if (cmd.Mode == BlockSetMode.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
                 if (!(oldblock == 0 || d_Data.IsWater[oldblock]))
@@ -1819,6 +1824,14 @@ namespace ManicDiggerServer
                         if (d_Data.Rail[item.BlockId] != 0)
                         {
                         }
+                        if (item.BlockId == (int)TileTypeManicDigger.DoorBottomClosed)
+                        {
+                            if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1) != 0)
+                            {
+                                return false;
+                            }
+                            SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z + 1, (int)TileTypeManicDigger.DoorTopClosed);
+                        }
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
                         break;
                     default:
@@ -1834,10 +1847,46 @@ namespace ManicDiggerServer
                 item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
                 GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
+                if (IsDoor(blockid) && IsDoor(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
+                {
+                    SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z + 1, SpecialBlockId.Empty);
+                }
+                if (IsDoor(blockid) && IsDoor(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z - 1)))
+                {
+                    SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z - 1, SpecialBlockId.Empty);
+                }
             }
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
             return true;
+        }
+
+        private bool IsDoor(int blockid)
+        {
+            return blockid == 126 || blockid == 127 || blockid == 128 || blockid == 129;
+        }
+
+        private void UseDoor(int x, int y, int z)
+        {
+            for (int zz = -1; zz < 2; zz++)
+            {
+                if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomClosed)
+                {
+                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomOpen);
+                }
+                else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomOpen)
+                {
+                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomClosed);
+                }
+                if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopClosed)
+                {
+                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopOpen);
+                }
+                else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopOpen)
+                {
+                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopClosed);
+                }
+            }
         }
 
         private bool DoCommandBuildRail(int player_id, bool execute, PacketClientSetBlock cmd)

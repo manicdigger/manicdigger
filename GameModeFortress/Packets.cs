@@ -32,7 +32,7 @@ namespace GameModeFortress
         [ProtoMember(3, IsRequired = false)]
         public int Z;
         [ProtoMember(4, IsRequired = false)]
-        public byte Mode;
+        public BlockSetMode Mode;
         [ProtoMember(5, IsRequired = false)]
         [Obsolete]
         public int BlockType;

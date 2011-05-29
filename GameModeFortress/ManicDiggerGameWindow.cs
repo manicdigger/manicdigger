@@ -1271,6 +1271,17 @@ namespace ManicDigger
         bool leftpressedpicking = false;
         public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
         int selectedmodelid = -1;
+        bool IsUsableBlock(int blocktype)
+        {
+            return blocktype == (int)TileTypeManicDigger.DoorBottomClosed
+                || blocktype == (int)TileTypeManicDigger.DoorTopClosed
+                || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
+                || blocktype == (int)TileTypeManicDigger.DoorTopOpen;
+        }
+        bool IsWearingWeapon()
+        {
+            return d_Inventory.RightHand[ActiveMaterial] != null;
+        }
         private void UpdatePicking()
         {
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
@@ -1512,6 +1523,17 @@ namespace ManicDigger
                                     d_Audio.Play(sound[0]); //todo sound cycle
                                 }
                             }
+                            //usable blocks
+                            if (left)
+                            {
+                                int blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
+                                if (IsUsableBlock(blocktype) && !IsWearingWeapon())
+                                {
+                                    OnPickUse(tile.Current());// new Vector3i((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y));
+                                    goto end;
+                                }
+                            }
+                            //normal attack
                             if (!right)
                             {
                                 //attack
@@ -2502,7 +2524,10 @@ namespace ManicDigger
             }
             return new Vector3i((int)pos.X, (int)pos.Z, (int)pos.Y);
         }
-
+        private void OnPickUse(Vector3 pos)
+        {
+            SendSetBlock(new Vector3(pos.X, pos.Z, pos.Y), BlockSetMode.Use, 0, ActiveMaterial);
+        }
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
@@ -3282,7 +3307,7 @@ namespace ManicDigger
                 X = (int)position.X,
                 Y = (int)position.Y,
                 Z = (int)position.Z,
-                Mode = (mode == BlockSetMode.Create ? (byte)1 : (byte)0),
+                Mode = mode,
                 BlockType = type,
                 MaterialSlot = materialslot,
             };

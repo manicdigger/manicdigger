@@ -42,5 +42,9 @@ namespace GameModeFortress
         Water5,
         Water6,
         Water7,
+        DoorBottomClosed,
+        DoorTopClosed,
+        DoorBottomOpen,
+        DoorTopOpen,
     }
 }

@@ -433,6 +433,7 @@ namespace ManicDigger
     {
         Destroy,
         Create,
+        Use, //open doors, use crafting table, etc.
     }
     public interface ILogger
     {
