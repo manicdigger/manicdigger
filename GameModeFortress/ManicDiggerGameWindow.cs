@@ -1276,7 +1276,8 @@ namespace ManicDigger
             return blocktype == (int)TileTypeManicDigger.DoorBottomClosed
                 || blocktype == (int)TileTypeManicDigger.DoorTopClosed
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
-                || blocktype == (int)TileTypeManicDigger.DoorTopOpen;
+                || blocktype == (int)TileTypeManicDigger.DoorTopOpen
+                || blocktype == (int)TileTypeMinecraft.TNT;
         }
         bool IsWearingWeapon()
         {
@@ -3198,6 +3199,11 @@ namespace ManicDigger
                 case ServerPacketId.ServerIdentification:
                     {
                         serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
+                    }
+                    return true;
+                case ServerPacketId.Sound:
+                    {
+                        d_Audio.Play(packet.Sound.Name);
                     }
                     return true;
                 default:

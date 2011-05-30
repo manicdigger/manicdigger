@@ -205,6 +205,12 @@ namespace GameModeFortress
         public string DisconnectReason;
     }
     [ProtoContract]
+    public class PacketServerSound
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string Name;
+    }
+    [ProtoContract]
     public class PacketServer
     {
         [ProtoMember(90, IsRequired = false)]
@@ -246,6 +252,8 @@ namespace GameModeFortress
         public PacketServerHeightmapChunk HeightmapChunk;
         [ProtoMember(18, IsRequired = false)]
         public PacketServerPing Ping;
+        [ProtoMember(19, IsRequired = false)]
+        public PacketServerSound Sound;
     }
     [ProtoContract]
     public class PacketClient
@@ -382,6 +390,7 @@ namespace GameModeFortress
         BlobPart = 19,
         BlobFinalize = 20,
         HeightmapChunk = 21,
+        Sound = 22,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

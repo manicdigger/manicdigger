@@ -535,7 +535,65 @@ namespace ManicDiggerServer
                 ChunkSimulation();
             }
             UpdateWater();
+            tntTimer.Update(UpdateTnt);
         }
+
+        private void UpdateTnt()
+        {
+            int startQueueCount = tntStack.Count;
+            int now = 0;
+            while (now++ < 3)
+            {
+                if (tntStack.Count == 0)
+                {
+                    return;
+                }
+                Vector3i pos = tntStack.Pop();
+                for (int xx = 0; xx < tntRange; xx++)
+                {
+                    for (int yy = 0; yy < tntRange; yy++)
+                    {
+                        for (int zz = 0; zz < tntRange; zz++)
+                        {
+                            Vector3i pos2 = new Vector3i(pos.x + xx - tntRange / 2,
+                                pos.y + yy - tntRange / 2,
+                                pos.z + zz - tntRange / 2);
+                            if (!MapUtil.IsValidPos(d_Map, pos2.x, pos2.y, pos2.z))
+                            {
+                                continue;
+                            }
+                            int block = d_Map.GetBlock(pos2.x, pos2.y, pos2.z);
+                            if (tntStack.Count < tntMax
+                                && pos2 != pos
+                                && block == (int)TileTypeMinecraft.TNT)
+                            {
+                                tntStack.Push(pos2);
+                                tntTimer.accumulator = tntTimer.INTERVAL;
+                            }
+                            else
+                            {
+                                if ((block != 0)
+                                    && (block != (int)TileTypeMinecraft.Adminium)
+                                    && !(d_Data.IsWater[block]))
+                                {
+                                    SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            foreach (var k in clients)
+            {
+                SendSound(k.Key, "tnt.wav");
+            }
+        }
+
+        public int tntRange = 4;
+        Timer tntTimer = new Timer() { INTERVAL = 5 };
+        Stack<Vector3i> tntStack = new Stack<Vector3i>();
+        public int tntMax = 10;
+
         private void UpdateWater()
         {
             d_Water.Update();
@@ -1789,6 +1847,7 @@ namespace ManicDiggerServer
             if (cmd.Mode == BlockSetMode.Use)
             {
                 UseDoor(cmd.X, cmd.Y, cmd.Z);
+                UseTnt(cmd.X, cmd.Y, cmd.Z);
                 return true;
             }
             if (cmd.Mode == BlockSetMode.Create
@@ -1885,6 +1944,17 @@ namespace ManicDiggerServer
                 else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopOpen)
                 {
                     SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopClosed);
+                }
+            }
+        }
+
+        private void UseTnt(int x, int y, int z)
+        {
+            if (d_Map.GetBlock(x, y, z) == (int)TileTypeMinecraft.TNT)
+            {
+                if (tntStack.Count < tntMax)
+                {
+                    tntStack.Push(new Vector3i(x, y, z));
                 }
             }
         }
@@ -2061,6 +2131,11 @@ namespace ManicDiggerServer
             }
             PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
+        }
+        private void SendSound(int clientid, string name)
+        {
+            PacketServerSound p = new PacketServerSound() { Name = name };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Sound, Sound = p }));
         }
         private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, byte heading, byte pitch)
         {

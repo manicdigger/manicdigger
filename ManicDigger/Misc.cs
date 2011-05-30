@@ -587,7 +587,7 @@ namespace ManicDigger
 
         double starttime;
         double oldtime;
-        double accumulator;
+        public double accumulator;
         public Timer()
         {
             Reset();
