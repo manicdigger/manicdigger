@@ -537,27 +537,56 @@ namespace ManicDigger.Renderers
         public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
         {
             Color curcolor = Color.White;
-            float torchsizexy = 0.2f;
+            float torchsizexy = 0.16f;
             float topx = 1f / 2f - torchsizexy / 2f;
             float topy = 1f / 2f - torchsizexy / 2f;
             float bottomx = 1f / 2f - torchsizexy / 2f;
             float bottomy = 1f / 2f - torchsizexy / 2f;
+
             topx += x;
             topy += y;
             bottomx += x;
             bottomy += y;
+
             if (type == TorchType.Front) { bottomx = x - torchsizexy; }
             if (type == TorchType.Back) { bottomx = x + 1; }
             if (type == TorchType.Left) { bottomy = y - torchsizexy; }
             if (type == TorchType.Right) { bottomy = y + 1; }
-            Vector3 top00 = new Vector3(topx, z + 1, topy);
-            Vector3 top01 = new Vector3(topx, z + 1, topy + torchsizexy);
-            Vector3 top10 = new Vector3(topx + torchsizexy, z + 1, topy);
-            Vector3 top11 = new Vector3(topx + torchsizexy, z + 1, topy + torchsizexy);
+
+            Vector3 top00 = new Vector3(topx, z + 0.9f, topy);
+            Vector3 top01 = new Vector3(topx, z + 0.9f, topy + torchsizexy);
+            Vector3 top10 = new Vector3(topx + torchsizexy, z + 0.9f, topy);
+            Vector3 top11 = new Vector3(topx + torchsizexy, z + 0.9f, topy + torchsizexy);
+
+            if (type == TorchType.Left)
+            {
+                top01 += new Vector3(0, -0.1f, 0);
+                top11 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Right)
+            {
+                top10 += new Vector3(0, -0.1f, 0);
+                top00 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Front)
+            {
+                top10 += new Vector3(0, -0.1f, 0);
+                top11 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Back)
+            {
+                top01 += new Vector3(0, -0.1f, 0);
+                top00 += new Vector3(0, -0.1f, 0);
+            }
+
             Vector3 bottom00 = new Vector3(bottomx, z + 0, bottomy);
             Vector3 bottom01 = new Vector3(bottomx, z + 0, bottomy + torchsizexy);
             Vector3 bottom10 = new Vector3(bottomx + torchsizexy, z + 0, bottomy);
             Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
+
             //top
             {
                 int sidetexture = TopTexture;
@@ -574,6 +603,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 3));
                 myelements.Add((ushort)(lastelement + 2));
             }
+
             //bottom - same as top, but z is 1 less.
             {
                 int sidetexture = SideTexture;
@@ -590,6 +620,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 2));
             }
+
             //front
             {
                 int sidetexture = SideTexture;
@@ -606,6 +637,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 3));
                 myelements.Add((ushort)(lastelement + 2));
             }
+
             //back - same as front, but x is 1 greater.
             {
                 int sidetexture = SideTexture;
@@ -622,6 +654,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 1));
                 myelements.Add((ushort)(lastelement + 2));
             }
+
             {
                 int sidetexture = SideTexture;
                 RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
@@ -637,6 +670,7 @@ namespace ManicDigger.Renderers
                 myelements.Add((ushort)(lastelement + 3));
                 myelements.Add((ushort)(lastelement + 2));
             }
+
             //right - same as left, but y is 1 greater.
             {
                 int sidetexture = SideTexture;
