@@ -20,8 +20,6 @@ xcopy /s /y Start\bin\release\*.exe output\
 
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
-REM copy menu.mdxs.gz output\menu.mdxs.gz
-REM copy WorldGenerator.cs output\WorldGenerator.cs
-copy credits.html output\credits.html
+copy credits.txt output\credits.txt
 copy OpenTK.dll.config output\OpenTK.dll.config
 REM pause
