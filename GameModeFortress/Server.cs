@@ -825,28 +825,28 @@ namespace ManicDiggerServer
         {
             if (MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z + 1))
             {
-                int block2 = d_Map.GetBlock(pos.x, pos.y, pos.z + 1);
-                if (d_Data.IsTransparentForLight[block2])
+                int roofBlock = d_Map.GetBlock(pos.x, pos.y, pos.z + 1);
+                if (d_Data.IsTransparentForLight[roofBlock])
                 {
-                    if (!IsShadow(pos.x, pos.y, pos.z))
+                    if (IsShadow(pos.x, pos.y, pos.z) && !reflectedSunnyLight(pos.x, pos.y, pos.z))
                     {
-                        SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
-                    }
-                    else
-                    {
-                        // if 1% chance happens then 1 mushroom will grow up 
+                        // if 1% chance happens then 1 mushroom will grow up );
                         if (rnd.NextDouble() < 0.01)
                         {
                             int tile = rnd.NextDouble() < 0.6 ? (int)TileTypeMinecraft.RedMushroom : (int)TileTypeMinecraft.BrownMushroom;
                             SetBlockAndNotify(pos.x, pos.y, pos.z + 1, tile);
                         }
                     }
+                    else
+                    {
+                        SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
+                    }
                 }
             }
         }
         private void BlockTickGrass(Vector3i pos)
         {
-            if (IsShadow(pos.x, pos.y, pos.z))
+            if (IsShadow(pos.x, pos.y, pos.z) && !reflectedSunnyLight(pos.x, pos.y, pos.z))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Dirt);
             }
@@ -939,6 +939,19 @@ namespace ManicDiggerServer
                     return true;
                 }
             }
+            return false;
+        }
+        // The true if on a cube gets the sunlight reflected from another cubes
+        private bool reflectedSunnyLight(int x, int y, int z)
+        {
+            for (int i = x - 2; i <= x + 2; i++)
+                for (int j = y - 2; j <= y + 2; j++)
+                {
+                    if (!IsShadow(i, j, z))
+                    {
+                        return true;
+                    }
+                }
             return false;
         }
         int CompressUnusedIteration = 0;
