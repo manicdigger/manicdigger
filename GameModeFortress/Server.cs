@@ -846,7 +846,8 @@ namespace ManicDiggerServer
         }
         private void BlockTickGrass(Vector3i pos)
         {
-            if (IsShadow(pos.x, pos.y, pos.z) && !reflectedSunnyLight(pos.x, pos.y, pos.z))
+            if (IsShadow(pos.x, pos.y, pos.z) 
+                && !(reflectedSunnyLight(pos.x, pos.y, pos.z) && d_Data.IsTransparentForLight[d_Map.GetBlock(pos.x, pos.y, pos.z + 1)]))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Dirt);
             }
