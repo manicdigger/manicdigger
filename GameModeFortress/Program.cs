@@ -335,7 +335,7 @@ namespace GameModeFortress
         Shadows shadowsfull;
         WeaponBlockInfo weapon;
         TerrainChunkTesselator terrainchunktesselator;
-        public bool fullshadows = false;
+        public bool fullshadows = true;
         ParticleEffectBlockBreak particle;
         void UseShadowsSimple()
         {

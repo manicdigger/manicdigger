@@ -162,7 +162,7 @@ namespace GameMenu
         }
         public class Options
         {
-            public bool Shadows;
+            public bool Shadows = true;
             public int Font;
             public int DrawDistance = 256;
             public bool UseServerTextures = true;
