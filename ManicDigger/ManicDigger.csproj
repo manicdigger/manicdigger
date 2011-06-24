@@ -50,6 +50,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\csvorbis.dll</HintPath>
     </Reference>
+    <Reference Include="LibNoise, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\LibNoise.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\OpenTK.dll</HintPath>
@@ -81,6 +85,7 @@
     <Compile Include="MapTools\Forester.cs" />
     <Compile Include="MapTools\Generators\ExperimentalWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\GenerationOption.cs" />
+    <Compile Include="MapTools\Generators\NewWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\Noise3DWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\WorldGeneratorBase.cs" />

@@ -130,19 +130,10 @@ namespace ManicDigger.MapTools
             forester.Generate(x, y, z, chunksize);
         }
 
-        /// <summary>
-        /// Creates some small trees all over the chunk.
-        /// </summary>
-        /// <param name="map"></param>
-        /// <param name="cx"></param>
-        /// <param name="cy"></param>
-        /// <param name="cz"></param>
-        /// <param name="chunksize"></param>
-        /// <param name="rnd"></param>
-        public static void MakeSmallTrees(IMapStorage map, int cx, int cy, int cz, int chunksize, Random rnd)
+        public static void MakeSmallTrees(IMapStorage map, int cx, int cy, int cz, int chunksize, Random rnd, int count)
         {
             int chooseTreeType;
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < count; i++)
             {
                 int x = cx + rnd.Next(chunksize);
                 int y = cy + rnd.Next(chunksize);

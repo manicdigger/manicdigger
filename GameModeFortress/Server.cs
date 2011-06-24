@@ -2221,7 +2221,7 @@ namespace ManicDiggerServer
         void EmptyCallback(IAsyncResult result)
         {
         }
-        int drawdistance = 192;
+        int drawdistance = 128;
         public int chunksize = 32;
         int chunkdrawdistance { get { return drawdistance / chunksize; } }
         IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)

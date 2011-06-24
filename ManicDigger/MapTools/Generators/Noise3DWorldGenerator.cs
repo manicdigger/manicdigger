@@ -152,7 +152,7 @@ namespace ManicDigger.MapTools.Generators
             z *= this.ChunkSize;
             if (!EnableBigTrees)
             {
-                PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd);
+                PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, 30);
             }
             else
             {

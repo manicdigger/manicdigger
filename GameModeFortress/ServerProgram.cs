@@ -28,7 +28,7 @@ namespace GameModeFortress
             map.chunksize = 32;
 
             // TODO: make it possible to change the world generator at run-time!
-            var generator = new Noise2DWorldGenerator();
+            var generator = new NewWorldGenerator();
             generator.ChunkSize = map.chunksize;
             // apply chunk size to generator
             map.d_Generator = generator;
