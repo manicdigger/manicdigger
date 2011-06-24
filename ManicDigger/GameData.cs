@@ -47,6 +47,7 @@ namespace ManicDigger
         //Block 0 is empty block.
         int BlockIdGrass { get; }
         int BlockIdDirt { get; }
+        int BlockIdGravel { get; }
         int BlockIdGold { get; }
         int BlockIdStone { get; }
         int BlockIdWater { get; }
@@ -294,6 +295,7 @@ namespace ManicDigger
 
         public int BlockIdGrass { get { return mBlockIdGrass; } set { mBlockIdGrass = value; } }
         public int BlockIdDirt { get { return mBlockIdDirt; } set { mBlockIdDirt = value; } }
+        public int BlockIdGravel { get { return mBlockIdGravel; } set { mBlockIdGravel = value; } }
         public int BlockIdGold { get { return mBlockIdGold; } set { mBlockIdGold = value; } }
         public int BlockIdStone { get { return mBlockIdStone; } set { mBlockIdStone = value; } }
         public int BlockIdWater { get { return mBlockIdWater; } set { mBlockIdWater = value; } }
@@ -332,6 +334,7 @@ namespace ManicDigger
 
         private int mBlockIdGrass = 2;
         private int mBlockIdDirt = 3;
+        private int mBlockIdGravel = 13;
         private int mBlockIdGold = 14;
         private int mBlockIdStone = 1;
         private int mBlockIdWater = 9;

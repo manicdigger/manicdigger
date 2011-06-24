@@ -62,6 +62,8 @@ namespace ManicDiggerServer
         [Inject]
         public WaterFinite d_Water;
         [Inject]
+        public GroundPhysics d_GroundPhysics;
+        [Inject]
         public ISocket d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
@@ -1374,6 +1376,7 @@ namespace ManicDiggerServer
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                     }
                     d_Water.BlockChange(d_Map, x, y, z);
+                    d_GroundPhysics.BlockChange(d_Map, x, y, z);
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {

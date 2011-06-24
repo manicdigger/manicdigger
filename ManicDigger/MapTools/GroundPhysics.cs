@@ -1,0 +1,71 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using OpenTK;
+
+namespace ManicDigger.MapTools
+{
+    public class GroundPhysics
+    {
+        [Inject]
+        public IGameData data;
+
+        public void BlockChange(IMapStorage map, int x, int y, int z)
+        {
+            this.map = map;
+
+            if (IsValidDualPos(x, y, z - 1) && (IsSlideDown(x, y, z, data.BlockIdSand) || IsSlideDown(x, y, z, data.BlockIdGravel)))
+            {
+                BlockMoveDown(x, y, z - 1, 0);
+                BlockChange(map, x, y, z - 1);
+            }
+            else if (IsValidDualPos(x, y, z) && (IsDestroyOfBase(x, y, z, data.BlockIdSand) || IsDestroyOfBase(x, y, z, data.BlockIdGravel)))
+            {
+                BlockMoveDown(x, y, z, GetDepth(x, y, z));
+                BlockChange(map, x, y, z + 1);
+            }
+        }
+
+        #region Private Fields
+
+        private IMapStorage map;
+
+        #endregion
+
+        #region Private Methods
+
+        private int GetDepth(int x, int y, int z)
+        {
+            int startHeight = z;
+            while (MapUtil.IsValidPos(this.map, x, y, z) && (this.map.GetBlock(x, y, z) == SpecialBlockId.Empty)) 
+            {
+                z--;
+            }
+
+            return (startHeight - z) - 1;
+        }
+
+        private bool IsSlideDown(int x, int y, int z, int blockType)
+        {
+            return ((this.map.GetBlock(x, y, z - 1) == SpecialBlockId.Empty) && (this.map.GetBlock(x, y, z) == blockType));
+        }
+
+        private void BlockMoveDown(int x, int y, int z, int depth)
+        {
+            this.map.SetBlock(x, y, z - depth, this.map.GetBlock(x, y, z + 1));
+            this.map.SetBlock(x, y, z + 1, SpecialBlockId.Empty);
+        }
+
+        private bool IsDestroyOfBase(int x, int y, int z, int blockType)
+        {
+            return (this.map.GetBlock(x, y, z) == SpecialBlockId.Empty) && (this.map.GetBlock(x, y, z + 1) == blockType);
+        }
+
+        private bool IsValidDualPos(int x, int y, int z)
+        {
+            return MapUtil.IsValidPos(this.map, x, y, z) && MapUtil.IsValidPos(this.map, x, y, z + 1);
+        }
+
+        #endregion
+    }
+}
