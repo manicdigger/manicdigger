@@ -89,6 +89,7 @@
     <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\Noise3DWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\WorldGeneratorBase.cs" />
+    <Compile Include="MapTools\GroundPhysics.cs" />
     <Compile Include="MapTools\IWorldGenerator.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
