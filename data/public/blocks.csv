@@ -159,5 +159,5 @@
 239;"Rail63";239;16;16;16;16;16;239;0;239;0;63;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;0;;0;0;1
 126;"DoorBottomClosed";130;130;130;130;130;130;130;1;126;1;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;0;;0;0;1
 127;"DoorTopClosed";131;131;131;131;131;131;131;1;126;1;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;0;;0;0;1
-128;"DoorBottomOpen";130;130;130;130;130;130;132;1;126;1;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;1;;0;0;1
-129;"DoorTopOpen";131;131;131;131;131;131;133;1;126;1;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;1;;0;0;1
+128;"DoorBottomOpen";130;130;130;130;130;130;132;1;126;1;0;1;1;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;1;;0;0;1
+129;"DoorTopOpen";131;131;131;131;131;131;133;1;126;1;0;1;1;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;1;;0;0;1
