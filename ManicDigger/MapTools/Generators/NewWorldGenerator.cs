@@ -361,11 +361,21 @@ namespace ManicDigger.MapTools.Generators
             }
             //random trees
             PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, 30);
+
+            PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength);
         }
         public int Seed { get; set; }
         public void SetSeed(int seed)
         {
+            this.Seed = seed;
         }
+
+        public bool EnableCaves = false;
+        public int goldorelength = 50;
+        public int ironorelength = 50;
+        public int coalorelength = 50;
+        public int gravellength = 50;
+        public int dirtlength = 40;
 
         float cavessize = 15;
         float cavestreshold = 0.6f;
