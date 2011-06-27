@@ -117,7 +117,7 @@ namespace GameModeFortress
             this.Public = true;
             this.BuildPassword = "";
             this.AdminPassword = "";
-            this.AllowFreemove = true;
+            this.AllowFreemove = false;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;
             this.MapSizeZ = 128;
