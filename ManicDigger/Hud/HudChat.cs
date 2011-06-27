@@ -42,7 +42,7 @@ namespace ManicDigger.Gui
                 ChatLines.Add(new Chatline() { text = s.Substring(128, 64), time = DateTime.Now });
                 ChatLines.Add(new Chatline() { text = s.Substring(192), time = DateTime.Now });
             }
-            if (s.Length > 128)
+            else if (s.Length > 128)
             {
                 ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
                 ChatLines.Add(new Chatline() { text = s.Substring(64, 64), time = DateTime.Now });
