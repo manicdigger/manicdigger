@@ -408,7 +408,7 @@ namespace ManicDigger
                     }
                     else
                     {
-                        string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 64));
+                        string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
                         SendChat(chatline);
                     }
                 }
@@ -416,7 +416,7 @@ namespace ManicDigger
             }
             else
             {
-                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 64));
+                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
                 SendChat(chatline);
             }
         }

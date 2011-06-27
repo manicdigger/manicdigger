@@ -35,7 +35,28 @@ namespace ManicDigger.Gui
         }
         public void AddChatline(string s)
         {
-            ChatLines.Add(new Chatline() { text = s, time = DateTime.Now });
+            if (s.Length > 192)
+            {
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(128, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(192), time = DateTime.Now });
+            }
+            if (s.Length > 128)
+            {
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(128), time = DateTime.Now });
+            }
+            else if (s.Length > 64)
+            {
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64), time = DateTime.Now });
+            }
+            else
+            {
+                ChatLines.Add(new Chatline() { text = s, time = DateTime.Now });
+            }
         }
         public void DrawChatLines(bool all)
         {
