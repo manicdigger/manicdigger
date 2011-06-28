@@ -41,6 +41,8 @@ namespace ManicDiggerServer
         public int Seed;
         [ProtoMember(8, IsRequired = false)]
         public long SimulationCurrentFrame;
+        [ProtoMember(9, IsRequired = false)]
+        public Dictionary<string, PacketServerPlayerStats> PlayerStats;
     }
     public class Server : ICurrentTime, IDropItem
     {
@@ -116,14 +118,17 @@ namespace ManicDiggerServer
             Seed = save.Seed;
             d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
             this.Inventory = save.Inventory;
+            this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
         }
         public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>();
+        public Dictionary<string, PacketServerPlayerStats> PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
         public void SaveGame(Stream s)
         {
             ManicDiggerSave save = new ManicDiggerSave();
             SaveAllLoadedChunks();
             save.Inventory = Inventory;
+            save.PlayerStats = PlayerStats;
             save.Seed = Seed;
             save.SimulationCurrentFrame = simulationcurrentframe;
             Serializer.Serialize(s, save);
@@ -529,6 +534,7 @@ namespace ManicDiggerServer
             {
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyInventory(k.Key);
+                NotifyPlayerStats(k.Key);
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
             UnloadUnusedChunks();
@@ -1114,6 +1120,16 @@ namespace ManicDiggerServer
                 c.IsInventoryDirty = false;
             }
         }
+        private void NotifyPlayerStats(int clientid)
+        {
+            Client c = clients[clientid];
+            if (c.IsPlayerStatsDirty && c.playername != invalidplayername)
+            {
+                PacketServerPlayerStats p = GetPlayerStats(c.playername);
+                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerStats, PlayerStats = p }));
+                c.IsInventoryDirty = false;
+            }
+        }
         PacketServerInventory GetPlayerInventory(string playername)
         {
             if (Inventory == null)
@@ -1132,6 +1148,18 @@ namespace ManicDiggerServer
                 };
             }
             return Inventory[playername];
+        }
+        PacketServerPlayerStats GetPlayerStats(string playername)
+        {
+            if (PlayerStats == null)
+            {
+                PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
+            }
+            if (!PlayerStats.ContainsKey(playername))
+            {
+                PlayerStats[playername] = StartPlayerStats();
+            }
+            return PlayerStats[playername];
         }
         public int FiniteInventoryMax = 200;
         /*
@@ -1163,6 +1191,13 @@ namespace ManicDiggerServer
                 }
             }
             return inv;
+        }
+        PacketServerPlayerStats StartPlayerStats()
+        {
+            var p = new PacketServerPlayerStats();
+            p.CurrentHealth = 20;
+            p.MaxHealth = 20;
+            return p;
         }
         Vector3i PlayerBlockPosition(Client c)
         {
@@ -1716,6 +1751,18 @@ namespace ManicDiggerServer
                     break;
                 case ClientPacketId.InventoryAction:
                     DoCommandInventory(clientid, packet.InventoryAction);
+                    break;
+                case ClientPacketId.Health:
+                    //todo server side
+                    var stats = GetPlayerStats(clients[clientid].playername);
+                    stats.CurrentHealth = packet.Health.CurrentHealth;
+                    if (stats.CurrentHealth < 1)
+                    {
+                        //death
+                        //todo respawn
+                        stats.CurrentHealth = stats.MaxHealth;
+                    }
+                    clients[clientid].IsPlayerStatsDirty = true;
                     break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
@@ -2464,6 +2511,7 @@ namespace ManicDiggerServer
             public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
+            public bool IsPlayerStatsDirty = true;
             //public List<byte[]> blobstosend = new List<byte[]>();
             public Rank Rank = Rank.Guest;
             public bool IsGuest { get { return playername.StartsWith("~"); } }

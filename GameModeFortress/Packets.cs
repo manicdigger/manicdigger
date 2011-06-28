@@ -254,6 +254,8 @@ namespace GameModeFortress
         public PacketServerPing Ping;
         [ProtoMember(19, IsRequired = false)]
         public PacketServerSound Sound;
+        [ProtoMember(20, IsRequired = false)]
+        public PacketServerPlayerStats PlayerStats;
     }
     [ProtoContract]
     public class PacketClient
@@ -274,6 +276,8 @@ namespace GameModeFortress
         public PacketClientRequestBlob RequestBlob;
         [ProtoMember(8, IsRequired = false)]
         public PacketClientInventoryAction InventoryAction;
+        [ProtoMember(9, IsRequired = false)]
+        public PacketClientHealth Health;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -324,6 +328,22 @@ namespace GameModeFortress
         public ManicDigger.Inventory Inventory;
     }
     [ProtoContract]
+    public class PacketServerPlayerStats
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int CurrentHealth = 20;
+        [ProtoMember(2, IsRequired = false)]
+        public int MaxHealth = 20;
+    }
+    //Temporary, for client-side health.
+    //Todo fix because it allows cheating.
+    [ProtoContract]
+    public class PacketClientHealth
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int CurrentHealth;
+    }
+    [ProtoContract]
     public class PacketServerSeason
     {
         [ProtoMember(1, IsRequired = false)]
@@ -363,6 +383,7 @@ namespace GameModeFortress
         Message = 0x0d,
         RequestBlob = 50,
         InventoryAction = 51,
+        Health = 52,
         ExtendedPacketCommand = 100,
     }
     /// <summary>
@@ -391,6 +412,7 @@ namespace GameModeFortress
         BlobFinalize = 20,
         HeightmapChunk = 21,
         Sound = 22,
+        PlayerStats = 23,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

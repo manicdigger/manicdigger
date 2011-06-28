@@ -673,8 +673,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
-                    player.playerposition = PlayerPositionSpawn;
-                    player.movedz = 0;
+                    Respawn();
                     Log("Respawn.");
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.P))
@@ -1171,6 +1170,7 @@ namespace ManicDigger
             {
                 UpdateWalkSound(e.Time);
             }
+            UpdateBlockDamageToPlayer();
             if (guistate == GuiState.CraftingRecipes)
             {
                 CraftingMouse();
@@ -1187,6 +1187,64 @@ namespace ManicDigger
             keyevent = null;
             keyeventup = null;
         }
+
+        //Todo server side
+        private void UpdateBlockDamageToPlayer()
+        {
+            var p = LocalPlayerPosition;
+            p += new Vector3(0, CharacterPhysics.characterheight, 0);
+            int block1 = 0;
+            int block2 = 0;
+            if (MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+            {
+                block1 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y);
+            }
+            if (MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y) - 1))
+            {
+                block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
+            }
+            
+            //Todo d_Data.DamageToPlayer.
+            //Todo swimming in water too long.
+            if (block1 == (int)TileTypeMinecraft.Lava
+                || block1 == (int)TileTypeMinecraft.StationaryLava
+                || block2 == (int)TileTypeMinecraft.Lava
+                || block2 == (int)TileTypeMinecraft.StationaryLava)
+            {
+                BlockDamageToPlayerTimer.Update(ApplyBlockDamageToPlayer);
+            }
+        }
+
+        public int BlockDamageToPlayer = 2;
+        public const int BlockDamageToPlayerEvery = 1;
+
+        void ApplyBlockDamageToPlayer()
+        {
+            PlayerStats.CurrentHealth -= BlockDamageToPlayer;
+            if (PlayerStats.CurrentHealth <= 0)
+            {
+                d_Audio.Play("death.wav");
+                Respawn();
+            }
+            else
+            {
+                d_Audio.Play(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
+            }
+            SendPacketClient(new PacketClient()
+            {
+                PacketId = ClientPacketId.Health,
+                Health = new PacketClientHealth() { CurrentHealth = PlayerStats.CurrentHealth },
+            });
+        }
+
+        private void Respawn()
+        {
+            player.playerposition = PlayerPositionSpawn;
+            player.movedz = 0;
+        }
+
+        Timer BlockDamageToPlayerTimer = new Timer() { INTERVAL = BlockDamageToPlayerEvery, MaxDeltaTime = BlockDamageToPlayerEvery * 2 };
+
         public OpenTK.Input.Key GetKey(OpenTK.Input.Key key)
         {
             if (options.Keys.ContainsKey((int)key))
@@ -1602,6 +1660,20 @@ namespace ManicDigger
         }
         Dictionary<Vector3i, float> blockhealth = new Dictionary<Vector3i, float>();
         Vector3i? currentAttackedBlock;
+
+        public PacketServerPlayerStats PlayerStats;
+
+        public void DrawPlayerHealth()
+        {
+            if (PlayerStats != null)
+            {
+                float progress = (float)PlayerStats.CurrentHealth / PlayerStats.MaxHealth;
+                Point size = new Point(30, 140);
+                Point pos = new Point((int)(0.06f * Width), Height - 50);
+                d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), pos.X, pos.Y - size.Y, size.X, size.Y, null, Color.Black);
+                d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), pos.X, pos.Y - (progress * size.Y), size.X, (progress) * size.Y, null, Color.Red);
+            }
+        }
 
         void DrawEnemyHealthBlock()
         {
@@ -2085,6 +2157,7 @@ namespace ManicDigger
                             DrawAim();
                         }
                         DrawMaterialSelector();
+                        DrawPlayerHealth();
                         DrawEnemyHealthBlock();
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
@@ -3650,6 +3723,12 @@ namespace ManicDigger
                                 d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
                             }
                         }
+                    }
+                    break;
+                case ServerPacketId.PlayerStats:
+                    {
+                        var p = packet.PlayerStats;
+                        this.PlayerStats = p;
                     }
                     break;
                 default:
