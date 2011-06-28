@@ -13,6 +13,7 @@ namespace ManicDigger
         bool Enabled { get; set; }
         void Play(string filename);
         void PlayAudioLoop(string filename, bool play);
+        void PlayAudioLoop(string filename, bool play, bool restart);
     }
     public class AudioDummy : IAudio
     {
@@ -20,6 +21,9 @@ namespace ManicDigger
         {
         }
         public void PlayAudioLoop(string filename, bool play)
+        {
+        }
+        public void PlayAudioLoop(string filename, bool play, bool restart)
         {
         }
         bool enabled = true;
@@ -225,6 +229,11 @@ namespace ManicDigger
                             }
                             if (state != (int)OpenTK.Audio.OpenAL.ALSourceState.Playing && (shouldplay))
                             {
+                                if (restart)
+                                {
+                                    OpenTK.Audio.OpenAL.AL.SourceRewind(source);
+                                    restart = false;
+                                }
                                 OpenTK.Audio.OpenAL.AL.SourcePlay(source);
                             }
                         }
@@ -254,6 +263,11 @@ namespace ManicDigger
             //    stop = true;
             //}
             public bool shouldplay;
+            public bool restart;
+            public void Restart()
+            {
+                restart = true;
+            }
         }
         public void Play(string filename)
         {
@@ -269,6 +283,10 @@ namespace ManicDigger
         }
         Dictionary<string, AudioTask> soundsplaying = new Dictionary<string, AudioTask>();
         public void PlayAudioLoop(string filename, bool play)
+        {
+            PlayAudioLoop(filename, play, false);
+        }
+        public void PlayAudioLoop(string filename, bool play, bool restart)
         {
             if (!enabled)
             {
@@ -286,6 +304,10 @@ namespace ManicDigger
                     var x = new AudioTask(d_GameExit, filename, this);
                     x.loop = true;
                     soundsplaying[filename] = x;
+                }
+                if (restart)
+                {
+                    soundsplaying[filename].Restart();
                 }
                 soundsplaying[filename].Play();
             }

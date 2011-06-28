@@ -1171,6 +1171,7 @@ namespace ManicDigger
                 UpdateWalkSound(e.Time);
             }
             UpdateBlockDamageToPlayer();
+            UpdateFallDamageToPlayer();
             if (guistate == GuiState.CraftingRecipes)
             {
                 CraftingMouse();
@@ -1186,6 +1187,61 @@ namespace ManicDigger
             //must be here because frametick can be called more than once per render frame.
             keyevent = null;
             keyeventup = null;
+        }
+        //bool test;
+        private void UpdateFallDamageToPlayer()
+        {
+            //fallspeed 4 is 10 blocks high
+            //fallspeed 5.5 is 20 blocks high
+            float fallspeed = player.movedz / (-basemovespeed);
+            /*
+            test = false;
+            if (fallspeed > 5.5f)
+            {
+                test = true;
+            }
+            */
+            Vector3i pos = GetPlayerEyesBlock();
+            if ((MapUtil.blockheight(d_Map, 0, pos.x, pos.y) < pos.z - 8)
+                || fallspeed > 3)
+            {
+                d_Audio.PlayAudioLoop("fallloop.wav", fallspeed > 2, true);
+            }
+            else
+            {
+                d_Audio.PlayAudioLoop("fallloop.wav", false, true);
+            }
+
+            //fall damage
+
+            if (MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z - 3))
+            {
+                int blockBelow = d_Map.GetBlock(pos.x, pos.y, pos.z - 3);
+                if ((blockBelow != 0) && (!d_Data.IsWater[blockBelow]))
+                {
+                    float severity = 0;
+                    if (fallspeed < 4) { return; }
+                    else if (fallspeed < 4.5) { severity = 0.3f; }
+                    else if (fallspeed < 5.0) { severity = 0.5f; }
+                    else if (fallspeed < 5.5) { severity = 0.6f; }
+                    else if (fallspeed < 6.0) { severity = 0.8f; }
+                    else { severity = 1f; }
+                    if ((DateTime.UtcNow - lastfalldamagetime).TotalSeconds < 1)
+                    {
+                        return;
+                    }
+                    lastfalldamagetime = DateTime.UtcNow;
+                    ApplyDamageToPlayer((int)(severity * PlayerStats.MaxHealth));
+                }
+            }
+        }
+        DateTime lastfalldamagetime;
+        
+        Vector3i GetPlayerEyesBlock()
+        {
+            var p = LocalPlayerPosition;
+            p += new Vector3(0, CharacterPhysics.characterheight, 0);
+            return new Vector3i((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y));
         }
 
         //Todo server side
@@ -1220,7 +1276,12 @@ namespace ManicDigger
 
         void ApplyBlockDamageToPlayer()
         {
-            PlayerStats.CurrentHealth -= BlockDamageToPlayer;
+            ApplyDamageToPlayer(BlockDamageToPlayer);
+        }
+
+        void ApplyDamageToPlayer(int damage)
+        {
+            PlayerStats.CurrentHealth -= damage;
             if (PlayerStats.CurrentHealth <= 0)
             {
                 d_Audio.Play("death.wav");
@@ -1673,6 +1734,7 @@ namespace ManicDigger
                 d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), pos.X, pos.Y - size.Y, size.X, size.Y, null, Color.Black);
                 d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), pos.X, pos.Y - (progress * size.Y), size.X, (progress) * size.Y, null, Color.Red);
             }
+            //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
         }
 
         void DrawEnemyHealthBlock()
