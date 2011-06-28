@@ -37,7 +37,7 @@ namespace ManicDigger.MapTools
         private int GetDepth(int x, int y, int z)
         {
             int startHeight = z;
-            while (MapUtil.IsValidPos(this.map, x, y, z) && (this.map.GetBlock(x, y, z) == SpecialBlockId.Empty)) 
+            while (MapUtil.IsValidPos(this.map, x, y, z) && (IsSoftBlock(this.map.GetBlock(x, y, z)))) 
             {
                 z--;
             }
@@ -45,9 +45,21 @@ namespace ManicDigger.MapTools
             return (startHeight - z) - 1;
         }
 
+        private bool IsSoftBlock(int blockType)
+        {
+            if (blockType == SpecialBlockId.Empty)
+                return true;
+            else if (blockType == data.BlockIdWater)
+                return true;
+            else if (blockType == 8)
+                return true;
+            else
+                return false;
+        }
+
         private bool IsSlideDown(int x, int y, int z, int blockType)
         {
-            return ((this.map.GetBlock(x, y, z - 1) == SpecialBlockId.Empty) && (this.map.GetBlock(x, y, z) == blockType));
+            return (((IsSoftBlock(this.map.GetBlock(x, y, z - 1)))) && (this.map.GetBlock(x, y, z) == blockType));
         }
 
         private void BlockMoveDown(int x, int y, int z, int depth)
@@ -58,7 +70,7 @@ namespace ManicDigger.MapTools
 
         private bool IsDestroyOfBase(int x, int y, int z, int blockType)
         {
-            return (this.map.GetBlock(x, y, z) == SpecialBlockId.Empty) && (this.map.GetBlock(x, y, z + 1) == blockType);
+            return (IsSoftBlock((this.map.GetBlock(x, y, z))) && (this.map.GetBlock(x, y, z + 1) == blockType));
         }
 
         private bool IsValidDualPos(int x, int y, int z)
