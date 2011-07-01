@@ -1312,7 +1312,15 @@ namespace ManicDiggerServer
                     l.Add(new Vector3i(0, -1, zz));
                 }
             }
-            Vector3i dir = l[rnd.Next(l.Count)];
+            Vector3i dir;
+            if (l.Count > 0)
+            {
+                dir = l[rnd.Next(l.Count)];
+            }
+            else
+            {
+                dir = new Vector3i();
+            }
             m.WalkDirection = dir;
             m.WalkProgress = 0;
         }
