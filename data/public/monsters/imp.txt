@@ -1,0 +1,94 @@
+exportanim,stand
+exportanim,walk
+exportanim,attack
+
+skinsize,64,32
+
+set,legsheight,0.9
+set,armsheight,1.8
+set,minuslegsheight,-0.9
+set,minusarmsheight,-1.78
+
+rotate,headingdeg,0,1,0
+
+scale,0.3,0.3,0.5
+translate,-0.15,0,-0.3
+ifeq,anim,walk
+translate,0,updown,0
+endif
+
+
+//torso
+makecoords,coords,8,12,4,16,16
+drawcuboid,0,legsheight,0,0.3,0.9,0.6,skin,coords
+
+
+//head
+pushmatrix
+translate,0,armsheight,.06
+
+rotate,pitchdeg,0,0,1
+translate,0,minusarmsheight,0
+makecoords,coords,8,8,8,0,0
+drawcuboid,-0.15,armsheight,0,0.6,0.5,0.5,skin,coords
+popmatrix
+
+
+//left leg
+pushmatrix
+translate,0.15,legsheight,0
+ifeq,anim,walk
+rotate,limbrotation1, 0, 0, 1
+endif
+translate,-0.15, minuslegsheight, 0
+
+makecoords, coords, 4, 8, 4, 0, 16
+drawcuboid, 0, 0, 0, 0.3, 0.9, 0.2, skin, coords
+
+popmatrix
+
+//right leg
+pushmatrix
+translate,0.15,legsheight,0
+ifeq,anim,walk
+rotate,limbrotation2, 0, 0, 1
+endif
+translate,-0.15, minuslegsheight, .09
+
+drawcuboid, 0, 0, 0.3, 0.3, 0.9, 0.2, skin, coords
+
+popmatrix
+
+set,attackrotation,limbrotation2
+mul,attackrotation,0.5
+add,attackrotation,-90
+
+//right  arm
+pushmatrix
+translate,0.15, armsheight, 0
+ifeq,anim,walk
+rotate,limbrotation1,-50,-45, -90
+endif
+ifeq,anim,attack
+rotate,attackrotation, -3333,-8090, 90
+endif
+translate,-0.15, minusarmsheight, 0
+
+makecoords, coords, 4, 8, 4, 40, 16
+drawcuboid, 0, legsheight, -0.0, 0.1, 0.9,-1., skin, coords
+
+popmatrix
+
+//left  arm
+pushmatrix
+translate,0., armsheight, 0
+ifeq,anim,walk
+rotate,limbrotation2,-50,-45,-90
+endif
+translate,-0., minusarmsheight, 0
+
+drawcuboid, 0, legsheight, 0.6, 0.1, 0.9, 1., skin, coords
+
+popmatrix
+
+popmatrix

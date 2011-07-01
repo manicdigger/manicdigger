@@ -75,6 +75,11 @@ namespace ManicDigger
     {
         float WaterLevel { get; set; }
     }
+    public enum PlayerType
+    {
+        Player,
+        Monster,
+    }
     public class Player
     {
         public Vector3 Position;
@@ -82,6 +87,8 @@ namespace ManicDigger
         public byte Pitch;
         public string Name;
         public AnimationHint AnimationHint = new AnimationHint();
+        public PlayerType Type;
+        public int MonsterType;
     }
     public static class MapUtil
     {
@@ -111,6 +118,13 @@ namespace ManicDigger
                 return false;
             }
             return true;
+        }
+        public static bool IsValidChunkPos(IMapStorage map, int cx, int cy, int cz, int chunksize)
+        {
+            return cx >= 0 && cy >= 0 && cz >= 0
+                && cx < map.MapSizeX / chunksize
+                && cy < map.MapSizeY / chunksize
+                && cz < map.MapSizeZ / chunksize;
         }
         public static int blockheight(IMapStorage map, int tileidempty, int x, int y)
         {

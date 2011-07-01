@@ -1946,12 +1946,26 @@ namespace ManicDigger
         int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
+        Dictionary<int, int> monstertextures = new Dictionary<int, int>();
         public string playertexturedefaultfilename = "mineplayer.png";
         private int GetPlayerTexture(int playerid)
         {
             if (playertexturedefault == -1)
             {
                 playertexturedefault = LoadTexture(playertexturedefaultfilename);
+            }
+            Player player = this.players[playerid];
+            if (player.Type == PlayerType.Monster)
+            {
+                if (!monstertextures.ContainsKey(player.MonsterType))
+                {
+                    string skinfile = d_DataMonsters.MonsterSkin[this.players[playerid].MonsterType];
+                    using (Bitmap bmp = new Bitmap(d_GetFile.GetFile(skinfile)))
+                    {
+                        monstertextures[player.MonsterType] = d_The3d.LoadTexture(bmp);
+                    }
+                }
+                return monstertextures[player.MonsterType];
             }
             List<string> players = new List<string>();
             foreach (var k in d_Clients.Players)
@@ -2083,10 +2097,29 @@ namespace ManicDigger
                 bool moves = curpos != info.lastcurpos;
                 float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
-                DrawCharacter(info.anim, curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
-                    + new Vector3(0, -CharacterPhysics.walldistance, 0),
-                    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key),
-                    d_Clients.Players[k.Key].AnimationHint);
+                Vector3 FeetPos = curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
+                        + new Vector3(0, -CharacterPhysics.walldistance, 0);
+                var animHint = d_Clients.Players[k.Key].AnimationHint;
+                if (k.Value.Type == PlayerType.Player)
+                {
+                    DrawCharacter(info.anim, FeetPos,
+                        curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+                }
+                else
+                {
+                    int type = k.Value.MonsterType;
+                    if (!MonsterRenderers.ContainsKey(type))
+                    {
+                        var r = new CharacterRendererMonsterCode();
+                        r.Load(new List<string>(d_DataMonsters.MonsterCode[type]));
+                        MonsterRenderers[type] = r;
+                    }
+                    MonsterRenderers[type].SetAnimation("walk");
+                    //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todo
+                    MonsterRenderers[type].DrawCharacter(info.anim, curpos,
+                        (byte)(-curstate.heading - 256 / 4), curstate.pitch,
+                        moves, dt, GetPlayerTexture(k.Key), animHint);
+                }
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
                 info.lastrealheading = k.Value.Heading;
@@ -2183,6 +2216,7 @@ namespace ManicDigger
             d_CharacterRenderer.SetAnimation("walk");
             d_CharacterRenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
         }
+        Dictionary<int, ICharacterRenderer> MonsterRenderers = new Dictionary<int, ICharacterRenderer>();
         GuiState guistate;
         enum GuiState
         {
@@ -2371,6 +2405,10 @@ namespace ManicDigger
                         }
                         GL.PushMatrix();
                         GL.Translate(pos.X, pos.Y + 1f, pos.Z);
+                        if (k.Value.Type == PlayerType.Monster)
+                        {
+                            GL.Translate(0, 1f, 0);
+                        }
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
@@ -3718,6 +3756,28 @@ namespace ManicDigger
                         ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
                     }
                     break;
+                case ServerPacketId.Monster:
+                    {
+                        if (packet.Monster.Monsters == null)
+                        {
+                            break;
+                        }
+                        foreach (var k in packet.Monster.Monsters)
+                        {
+                            int id = k.Id + MonsterIdFirst;
+                            if (!players.ContainsKey(id))
+                            {
+                                players[id] = new Player()
+                                {
+                                    Name = d_DataMonsters.MonsterName[k.MonsterType],
+                                };
+                            }
+                            ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
+                            players[id].Type = PlayerType.Monster;
+                            players[id].MonsterType = k.MonsterType;
+                        }
+                    }
+                    break;
                 case ServerPacketId.DespawnPlayer:
                     {
                         int playerid = packet.DespawnPlayer.PlayerId;
@@ -3806,6 +3866,8 @@ namespace ManicDigger
             LastReceived = currentTime;
             return lengthPrefixLength + packetLength;
         }
+        public GameDataMonsters d_DataMonsters;
+        public int MonsterIdFirst = 1000;
         DateTime currentTime;
         private void SendRequestBlob(List<byte[]> needed)
         {

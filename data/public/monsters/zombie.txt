@@ -1,0 +1,85 @@
+set,legsheight,0.9
+set,armsheight,1.8
+set,minuslegsheight,-0.8
+set,minusarmsheight,-1.8
+
+set,mainrotation,heading
+mul,mainrotation,0.00390625
+mul,mainrotation,-360
+add,mainrotation,-90
+rotate,mainrotation,0,1,0
+
+scale,0.7,0.7,0.7
+translate,-0.15,-0.07,-0.3
+translate,0,updown,0
+
+
+//torso
+makecoords,coords,8,12,4,16,16
+drawcuboid,0,legsheight,0,0.4,.8,0.6,skin,coords
+
+
+//head
+pushmatrix
+translate,0,armsheight,-0
+
+set,headrotation,pitch
+div,headrotation,256
+mul,headrotation,360
+rotate,headrotation,0,0,1
+if,hintleanleft
+rotate,30,0,1,0
+endif
+if,hintleanright
+rotate,-90,0,3,6
+endif
+translate,0,minusarmsheight,0
+makecoords,coords,8,8,8,0,0
+drawcuboid,-0.15,armsheight,0,0.6,0.6,0.6,skin,coords
+popmatrix
+
+
+//left leg
+pushmatrix
+translate,0.15,legsheight,0
+rotate,limbrotation1, 0, 0, 1
+translate,-0.15, minuslegsheight, 0
+
+makecoords, coords, 4, 8, 4, 0, 16
+drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//right leg
+pushmatrix
+translate,0.15,legsheight,0
+rotate,limbrotation2, 0,0, 1
+translate,-0.15, minuslegsheight, 0
+
+drawcuboid, 0, 0, 0.3, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+
+//left arm
+pushmatrix
+translate,0.15, armsheight, 0
+rotate,limbrotation1,-0, 0, 1
+translate,-0.15, minusarmsheight, 0
+
+makecoords, coords, 4, 8, 4, 40, 16
+drawcuboid, 0, legsheight, -0.3, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//right arm
+pushmatrix
+translate,0.15, armsheight, 0
+rotate,limbrotation1,0,-0,-1
+translate,-0.15, minusarmsheight, 0
+
+drawcuboid, 0, legsheight, 0.6, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+popmatrix

@@ -43,6 +43,8 @@ namespace ManicDiggerServer
         public long SimulationCurrentFrame;
         [ProtoMember(9, IsRequired = false)]
         public Dictionary<string, PacketServerPlayerStats> PlayerStats;
+        [ProtoMember(10, IsRequired = false)]
+        public int LastMonsterId;
     }
     public class Server : ICurrentTime, IDropItem
     {
@@ -120,7 +122,9 @@ namespace ManicDiggerServer
             this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
+            this.LastMonsterId = save.LastMonsterId;
         }
+        public int LastMonsterId;
         public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>();
         public Dictionary<string, PacketServerPlayerStats> PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
         public void SaveGame(Stream s)
@@ -131,6 +135,7 @@ namespace ManicDiggerServer
             save.PlayerStats = PlayerStats;
             save.Seed = Seed;
             save.SimulationCurrentFrame = simulationcurrentframe;
+            save.LastMonsterId = LastMonsterId;
             Serializer.Serialize(s, save);
         }
         private void SaveAllLoadedChunks()
@@ -446,6 +451,10 @@ namespace ManicDiggerServer
                 {
                     INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
                 };
+                c.notifyMonstersTimer = new ManicDigger.Timer()
+                {
+                    INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
+                };
                 if (clients.Count > config.MaxClients)
                 {
                     SendDisconnectPlayer(lastclient - 1, "Too many players! Try to connect later.");
@@ -535,6 +544,7 @@ namespace ManicDiggerServer
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyInventory(k.Key);
                 NotifyPlayerStats(k.Key);
+                k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
             UnloadUnusedChunks();
@@ -724,6 +734,7 @@ namespace ManicDiggerServer
         }
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {
+            AddMonsters(p);
             byte[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
             {
@@ -767,6 +778,56 @@ namespace ManicDiggerServer
                 }
             }
         }
+
+        public int[] MonsterTypesUnderground = new int[] { 1, 2 };
+        public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
+
+        private void AddMonsters(Vector3i p)
+        {
+            Chunk chunk = d_Map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
+            int tries = 0;
+            while (chunk.Monsters.Count < 1)
+            {
+                int xx = rnd.Next(chunksize);
+                int yy = rnd.Next(chunksize);
+                int zz = rnd.Next(chunksize);
+                int px = p.x + xx;
+                int py = p.y + yy;
+                int pz = p.z + zz;
+                if ((!MapUtil.IsValidPos(d_Map, px, py, pz))
+                    || (!MapUtil.IsValidPos(d_Map, px, py, pz + 1))
+                    || (!MapUtil.IsValidPos(d_Map, px, py, pz - 1)))
+                {
+                    continue;
+                }
+                int type;
+                int height = MapUtil.blockheight(d_Map, 0, px, py);
+                if (pz >= height)
+                {
+                    type = MonsterTypesOnGround[rnd.Next(MonsterTypesOnGround.Length)];
+                }
+                else
+                {
+                    type = MonsterTypesUnderground[rnd.Next(MonsterTypesUnderground.Length)];
+                }
+                if (d_Map.GetBlock(px, py, pz) == 0
+                    && d_Map.GetBlock(px, py, pz + 1) == 0
+                    && d_Map.GetBlock(px, py, pz - 1) != 0
+                    && (!d_Data.IsWater[d_Map.GetBlock(px, py, pz - 1)]))
+                {
+                    chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), MonsterType = type });
+                }
+                if (tries++ > 500)
+                {
+                    break;
+                }
+            }
+        }
+        public int NewMonsterId()
+        {
+            return LastMonsterId++;
+        }
+
         private void BlockTickCrops(Vector3i pos)
         {
             if (MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z + 1))
@@ -1012,6 +1073,7 @@ namespace ManicDiggerServer
             ChunkDb.SetChunk(d_ChunkDb, x, y, z, ms.ToArray());
         }
         int SEND_CHUNKS_PER_SECOND = 10;
+        int SEND_MONSTER_UDAPTES_PER_SECOND = 3;
         private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
         {
             Client c = clients[clientid];
@@ -1129,6 +1191,130 @@ namespace ManicDiggerServer
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerStats, PlayerStats = p }));
                 c.IsInventoryDirty = false;
             }
+        }
+        private void NotifyMonsters(int clientid)
+        {
+            Client c = clients[clientid];
+            int mapx = c.PositionMul32GlX / 32;
+            int mapy = c.PositionMul32GlZ / 32;
+            int mapz = c.PositionMul32GlY / 32;
+            //3x3x3 chunks
+            List<PacketServerMonster> p = new List<PacketServerMonster>();
+            for (int xx = -1; xx < 2; xx++)
+            {
+                for (int yy = -1; yy < 2; yy++)
+                {
+                    for (int zz = -1; zz < 2; zz++)
+                    {
+                        int cx = (mapx / chunksize) + xx;
+                        int cy = (mapy / chunksize) + yy;
+                        int cz = (mapz / chunksize) + zz;
+                        if (!MapUtil.IsValidChunkPos(d_Map, cx, cy, cz, chunksize))
+                        {
+                            continue;
+                        }
+                        Chunk chunk = d_Map.chunks[cx, cy, cz];
+                        if (chunk == null || chunk.Monsters == null)
+                        {
+                            continue;
+                        }
+                        foreach (Monster m in new List<Monster>(chunk.Monsters))
+                        {
+                            MonsterWalk(m);
+                        }
+                        foreach (Monster m in chunk.Monsters)
+                        {
+                            float progress = m.WalkProgress;
+                            if (progress < 0) //delay
+                            {
+                                progress = 0;
+                            }
+                            byte heading = 0;
+                            if (m.WalkDirection.x == -1 && m.WalkDirection.y == 0) { heading = (byte)(((int)byte.MaxValue * 3) / 4); }
+                            if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading =  byte.MaxValue / 4; }
+                            if (m.WalkDirection.x == 0 && m.WalkDirection.y == -1) { heading = 0; }
+                            if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading =  byte.MaxValue / 2;}
+                            var mm = new PacketServerMonster()
+                            {
+                                Id = m.Id,
+                                MonsterType = m.MonsterType,
+                                PositionAndOrientation = new PositionAndOrientation()
+                                {
+                                    Heading = heading,
+                                    Pitch = 0,
+                                    X = (int)((m.X + progress * m.WalkDirection.x) * 32 + 16),
+                                    Y = (int)((m.Z + progress * m.WalkDirection.z) * 32),
+                                    Z = (int)((m.Y + progress * m.WalkDirection.y) * 32 + 16),
+                                }
+                            };
+                            p.Add(mm);
+                        }
+                    }
+                }
+            }
+            SendPacket(clientid, Serialize(new PacketServer()
+            {
+                PacketId = ServerPacketId.Monster,
+                Monster = new PacketServerMonsters() { Monsters = p.ToArray() }
+            }));
+        }
+        void MonsterWalk(Monster m)
+        {
+            m.WalkProgress += 0.3f;
+            if (m.WalkProgress < 1)
+            {
+                return;
+            }
+            int oldcx = m.X / chunksize;
+            int oldcy = m.Y / chunksize;
+            int oldcz = m.Z / chunksize;
+            d_Map.chunks[oldcx, oldcy, oldcz].Monsters.Remove(m);
+            m.X += m.WalkDirection.x;
+            m.Y += m.WalkDirection.y;
+            m.Z += m.WalkDirection.z;
+            int newcx = m.X / chunksize;
+            int newcy = m.Y / chunksize;
+            int newcz = m.Z / chunksize;
+            if (d_Map.chunks[newcx, newcy, newcz].Monsters == null)
+            {
+                d_Map.chunks[newcx, newcy, newcz].Monsters = new List<Monster>();
+            }
+            d_Map.chunks[newcx, newcy, newcz].Monsters.Add(m);
+            /*
+            if (rnd.Next(3) == 0)
+            {
+                m.WalkDirection = new Vector3i();
+                m.WalkProgress = -2;
+                return;
+            }
+            */
+            List<Vector3i> l = new List<Vector3i>();
+            for (int zz = -1; zz < 2; zz++)
+            {
+                if (d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz) == 0
+                     && d_Map.GetBlock(m.X + 1, m.Y, m.Z + zz - 1) != 0)
+                {
+                    l.Add(new Vector3i(1, 0, zz));
+                }
+                if (d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz) == 0
+                    && d_Map.GetBlock(m.X - 1, m.Y, m.Z + zz - 1) != 0)
+                {
+                    l.Add(new Vector3i(-1, 0, zz));
+                }
+                if (d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz) == 0
+                    && d_Map.GetBlock(m.X, m.Y + 1, m.Z + zz - 1) != 0)
+                {
+                    l.Add(new Vector3i(0, 1, zz));
+                }
+                if (d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz) == 0
+                    && d_Map.GetBlock(m.X, m.Y - 1, m.Z + zz - 1) != 0)
+                {
+                    l.Add(new Vector3i(0, -1, zz));
+                }
+            }
+            Vector3i dir = l[rnd.Next(l.Count)];
+            m.WalkDirection = dir;
+            m.WalkProgress = 0;
         }
         PacketServerInventory GetPlayerInventory(string playername)
         {
@@ -1383,7 +1569,7 @@ namespace ManicDiggerServer
                                 SendPacket(clientid, Serialize(pp));
                             }
                         }
-                    }
+                    }                    
                     clients[clientid].IsConnected = true;
                     NotifySeason(clientid);
                     break;
@@ -2518,6 +2704,7 @@ namespace ManicDiggerServer
             public bool IsAdmin { get { return Rank == Rank.Admin; } }
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
             public bool IsConnected;
+            public ManicDigger.Timer notifyMonstersTimer;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
 

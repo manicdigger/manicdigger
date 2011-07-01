@@ -204,6 +204,7 @@ namespace GameModeFortress
             w.d_Physics = physics;
             w.d_Clients = clientgame;
             w.d_Data = gamedata;
+            w.d_DataMonsters = new GameDataMonsters(getfile);
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
             w.d_MapManipulator = mapManipulator;

@@ -1,0 +1,109 @@
+exportanim,walk
+
+set,legsheight,0.9
+set,armsheight,1.7
+set,minuslegsheight,-0.9
+set,minusarmsheight,-1.8
+set,bodyz,1
+set,heady,1.5
+set,minusheady,-1.5
+
+rotate,headingdeg,0,1,0
+
+scale,0.7,0.7,0.7
+translate,-0.6,0,-0.5
+translate,0,updown,0
+
+
+//torso
+makecoords,coords,8,12,4,16,16
+drawcuboid,0,legsheight,0,1.5,0.9,bodyz,skin,coords
+
+
+//head
+pushmatrix
+translate,0,heady,0
+
+set,headz,bodyz
+mul,headz,0.5
+add,headz,-0.3
+
+rotate,pitchdeg,0,0,1
+translate,0,minusheady,0
+makecoords,coords,8,8,8,0,0
+drawcuboid,-0.6,heady,headz,0.6,0.6,0.6,skin,coords
+
+makecoords,coords,8,8,8,32,0
+drawcuboid,-0.85,heady,0.35,0.25,0.3,0.3,skin,coords
+popmatrix
+
+
+//left leg
+pushmatrix
+translate,0.15,legsheight,0
+rotate,limbrotation1, 0, 0, 1
+translate,-0.15, minuslegsheight, 0
+
+makecoords, coords, 4, 8, 4, 0, 16
+drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//right leg
+pushmatrix
+translate,0.15,legsheight,0
+rotate,limbrotation2, 0, 0, 1
+translate,-0.15, minuslegsheight, 0
+
+set,bodyz1,bodyz
+add,bodyz1,-0.3
+drawcuboid, 0, 0, bodyz1, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//left leg
+pushmatrix
+translate,1.15,legsheight,0
+rotate,limbrotation1, 0, 0, 1
+translate,-0.15, minuslegsheight, 0
+
+makecoords, coords, 4, 8, 4, 0, 16
+drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//right leg
+pushmatrix
+translate,1.15,legsheight,0
+rotate,limbrotation2, 0, 0, 1
+translate,-0.15, minuslegsheight, 0
+
+set,bodyz1,bodyz
+add,bodyz1,-0.3
+drawcuboid, 0, 0, bodyz1, 0.3, 0.9, 0.3, skin, coords
+
+popmatrix
+
+//left arm
+pushmatrix
+translate,0.5, armsheight, 0
+rotate,-30,0,0,1
+rotate,30,-1,0,0
+
+makecoords, coords, 4, 8, 4, 40, 16
+drawcuboid, 0, 0, -0.15, 0.7, 1.5, 0.3, skin, coords
+
+popmatrix
+
+
+//right arm
+pushmatrix
+translate,0.5, armsheight, 1
+rotate,-30,0,0,1
+rotate,30,1,0,0
+makecoords, coords, 4, 8, 4, 40, 16
+drawcuboid, 0, 0, -0.15, 0.7, 1.5, 0.3, skin, coords
+
+popmatrix
+
+popmatrix

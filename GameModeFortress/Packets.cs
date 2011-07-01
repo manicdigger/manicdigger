@@ -256,6 +256,8 @@ namespace GameModeFortress
         public PacketServerSound Sound;
         [ProtoMember(20, IsRequired = false)]
         public PacketServerPlayerStats PlayerStats;
+        [ProtoMember(21, IsRequired = false)]
+        public PacketServerMonsters Monster;
     }
     [ProtoContract]
     public class PacketClient
@@ -335,6 +337,22 @@ namespace GameModeFortress
         [ProtoMember(2, IsRequired = false)]
         public int MaxHealth = 20;
     }
+    [ProtoContract]
+    public class PacketServerMonsters
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public PacketServerMonster[] Monsters;
+    }
+    [ProtoContract]
+    public class PacketServerMonster
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int Id;
+        [ProtoMember(2, IsRequired = false)]
+        public int MonsterType;
+        [ProtoMember(3, IsRequired = false)]
+        public PositionAndOrientation PositionAndOrientation;
+    }
     //Temporary, for client-side health.
     //Todo fix because it allows cheating.
     [ProtoContract]
@@ -413,6 +431,8 @@ namespace GameModeFortress
         HeightmapChunk = 21,
         Sound = 22,
         PlayerStats = 23,
+        Monster = 24,
+        ActiveMonsters = 25,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

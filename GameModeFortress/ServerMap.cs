@@ -5,10 +5,27 @@ using GameModeFortress;
 using ManicDigger;
 using ManicDigger.MapTools;
 using ProtoBuf;
+using System.Collections.Generic;
 #endregion
 
 namespace ManicDiggerServer
 {
+    [ProtoContract()]
+    public class Monster
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int Id;
+        [ProtoMember(2, IsRequired = false)]
+        public int MonsterType;
+        [ProtoMember(3, IsRequired = false)]
+        public int X;
+        [ProtoMember(4, IsRequired = false)]
+        public int Y;
+        [ProtoMember(5, IsRequired = false)]
+        public int Z;
+        public Vector3i WalkDirection;
+        public float WalkProgress = 0;
+    }
     [ProtoContract()]
     public class Chunk
     {
@@ -21,6 +38,8 @@ namespace ManicDiggerServer
         [ProtoMember(4, IsRequired = false)]
         public int LastChange;
         public bool DirtyForSaving;
+        [ProtoMember(5, IsRequired = false)]
+        public List<Monster> Monsters = new List<Monster>();
     }
     public class ServerMap : IMapStorage
     {
