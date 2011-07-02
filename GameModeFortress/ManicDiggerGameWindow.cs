@@ -3768,6 +3768,7 @@ namespace ManicDigger
                         {
                             break;
                         }
+                        Dictionary<int, int> updatedMonsters = new Dictionary<int, int>();
                         foreach (var k in packet.Monster.Monsters)
                         {
                             int id = k.Id + MonsterIdFirst;
@@ -3781,6 +3782,18 @@ namespace ManicDigger
                             ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
                             players[id].Type = PlayerType.Monster;
                             players[id].MonsterType = k.MonsterType;
+                            updatedMonsters[id] = 1;
+                        }
+                        //remove all old monsters that were not sent by server now.
+                        foreach (int id in new List<int>(players.Keys))
+                        {
+                            if (id >= MonsterIdFirst)
+                            {
+                                if (!updatedMonsters.ContainsKey(id))
+                                {
+                                    players.Remove(id);
+                                }
+                            }
                         }
                     }
                     break;

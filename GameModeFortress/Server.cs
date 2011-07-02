@@ -1252,12 +1252,27 @@ namespace ManicDiggerServer
                     }
                 }
             }
+            //send only nearest monsters
+            p.Sort((a, b) =>
+            {
+                Vector3i posA=new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
+                Vector3i posB = new Vector3i(b.PositionAndOrientation.X, b.PositionAndOrientation.Y, b.PositionAndOrientation.Z);
+                Client client = clients[clientid];
+                Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY,client.PositionMul32GlZ);
+                return DistanceSquared(posA, posPlayer).CompareTo(DistanceSquared(posB, posPlayer));
+            }
+            );
+            if (p.Count > sendmaxmonsters)
+            {
+                p.RemoveRange(sendmaxmonsters, p.Count - sendmaxmonsters);
+            }
             SendPacket(clientid, Serialize(new PacketServer()
             {
                 PacketId = ServerPacketId.Monster,
                 Monster = new PacketServerMonsters() { Monsters = p.ToArray() }
             }));
         }
+        int sendmaxmonsters = 10;
         void MonsterWalk(Monster m)
         {
             m.WalkProgress += 0.3f;
