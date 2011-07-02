@@ -93,6 +93,8 @@ namespace ManicDigger
         public IResetMap d_ResetMap;
         [Inject]
         public ICompression d_Compression;
+        [Inject]
+        public IFrustumCulling d_FrustumCulling;
 
         public bool SkySphereNight { get; set; }
 
@@ -2095,6 +2097,14 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
+                info.lastcurpos = curpos;
+                info.lastrealpos = realpos;
+                info.lastrealheading = k.Value.Heading;
+                info.lastrealpitch = k.Value.Pitch;
+                if (!d_FrustumCulling.SphereInFrustum(curpos.X, curpos.Y, curpos.Z, 3))
+                {
+                    continue;
+                }
                 float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
                 Vector3 FeetPos = curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
@@ -2115,15 +2125,11 @@ namespace ManicDigger
                         MonsterRenderers[type] = r;
                     }
                     MonsterRenderers[type].SetAnimation("walk");
-                    //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todo
+                    //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
                     MonsterRenderers[type].DrawCharacter(info.anim, curpos,
                         (byte)(-curstate.heading - 256 / 4), curstate.pitch,
                         moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
-                info.lastcurpos = curpos;
-                info.lastrealpos = realpos;
-                info.lastrealheading = k.Value.Heading;
-                info.lastrealpitch = k.Value.Pitch;
                 GL.Color3(1f, 1f, 1f);
             }
             if (ENABLE_TPP_VIEW)

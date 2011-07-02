@@ -251,6 +251,7 @@ namespace GameModeFortress
             w.playerskindownloader = playerskindownloader;
             w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w };
             w.d_Screenshot = new Screenshot() { d_GameWindow = maingamewindow };
+            w.d_FrustumCulling = frustumculling;
             physics.d_Map = clientgame.mapforphysics;
             physics.d_Data = gamedata;
             audio.d_GetFile = getfile;
