@@ -18,6 +18,10 @@ REM Start
 xcopy /s /y Start\bin\release\*.dll output\
 xcopy /s /y Start\bin\release\*.exe output\
 
+REM Monster editor
+xcopy /s /y MdMonsterEditor\bin\Release\*.dll output\
+xcopy /s /y MdMonsterEditor\bin\Release\*.exe output\
+
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
 copy credits.txt output\credits.txt
