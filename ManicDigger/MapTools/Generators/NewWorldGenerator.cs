@@ -368,6 +368,7 @@ namespace ManicDigger.MapTools.Generators
         public void SetSeed(int seed)
         {
             this.Seed = seed;
+            Init();
         }
 
         public bool EnableCaves = false;
