@@ -243,12 +243,27 @@ namespace ManicDigger
                 char c = e.KeyChar;
                 if ((char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)
                     || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
-                    && c != '\r')
+                    && c != '\r' && c != '\t')
                 {
                     d_HudChat.GuiTypingBuffer += e.KeyChar;
                 }
+                if (c == '\t' && d_HudChat.GuiTypingBuffer.Trim() != "")
+                {
+                    foreach (var k in players)
+                    {
+                        if (k.Value.Type != PlayerType.Player)
+                        {
+                            continue;
+                        }
+                        if (k.Value.Name.StartsWith(d_HudChat.GuiTypingBuffer, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            d_HudChat.GuiTypingBuffer = k.Value.Name + ": ";
+                            break;
+                        }
+                    }
+                }
             }
-        }
+       }
         float overheadcameradistance = 10;
         float tppcameradistance = 3;
         void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
