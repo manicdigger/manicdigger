@@ -1288,10 +1288,16 @@ namespace ManicDigger
                 switch (type)
                 {
                     case SocketType.Client:
-                        network.ServerReceiveBuffer.AddRange(buf);
+                        for (int i = 0; i < buf.Length; i++)
+                        {
+                            network.ServerReceiveBuffer.Enqueue(buf[i]);
+                        }
                         break;
                     case SocketType.ConnectionFromClient:
-                        network.ClientReceiveBuffer.AddRange(buf);
+                        for (int i = 0; i < buf.Length; i++)
+                        {
+                            network.ClientReceiveBuffer.Enqueue(buf[i]);
+                        }
                         break;
                     case SocketType.Server:
                         throw new NotImplementedException();
@@ -1320,7 +1326,7 @@ namespace ManicDigger
         }
         public int Receive(byte[] data)
         {
-            List<byte> buf;
+            Queue<byte> buf;
             switch (type)
             {
                 case SocketType.Server:
@@ -1354,9 +1360,8 @@ namespace ManicDigger
                 }
                 for (int i = 0; i < count; i++)
                 {
-                    data[i] = buf[i];
+                    data[i] = buf.Dequeue();
                 }
-                buf.RemoveRange(0, count);
                 return count;
             }
         }
@@ -1369,13 +1374,16 @@ namespace ManicDigger
             if (type != SocketType.Client) { throw new InvalidOperationException(); }
             lock (network)
             {
-                network.ServerReceiveBuffer.AddRange(n);
+                for(int i=0;i<n.Length;i++)
+                {
+                    network.ServerReceiveBuffer.Enqueue(n[i]);
+                }
             }
         }
     }
     public class SocketDummyNetwork
     {
-        public List<byte> ServerReceiveBuffer = new List<byte>();
-        public List<byte> ClientReceiveBuffer = new List<byte>();
+        public Queue<byte> ServerReceiveBuffer = new Queue<byte>();
+        public Queue<byte> ClientReceiveBuffer = new Queue<byte>();
     }
 }
