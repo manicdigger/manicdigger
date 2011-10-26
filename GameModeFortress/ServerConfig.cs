@@ -25,6 +25,7 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)] //Forces element to appear
         public string AdminPassword { get; set; }   //Password for managing kicks and bans
         public bool AllowFreemove { get; set; }     //Allow character to fly?
+        public bool Monsters { get; set; }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
@@ -118,6 +119,7 @@ namespace GameModeFortress
             this.BuildPassword = "";
             this.AdminPassword = "";
             this.AllowFreemove = false;
+            this.Monsters = true;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;
             this.MapSizeZ = 128;

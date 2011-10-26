@@ -3400,6 +3400,17 @@ namespace ManicDigger
                         d_Audio.Play(packet.Sound.Name);
                     }
                     return true;
+                case ServerPacketId.RemoveMonsters:
+                    {
+                    	foreach (int id in new List<int>(players.Keys))
+                        {
+                            if (id >= MonsterIdFirst)
+                            {
+                                players.Remove(id);
+                            }
+                        }
+                    }
+                    return true;
                 default:
                     return false;
             }

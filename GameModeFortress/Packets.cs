@@ -433,6 +433,8 @@ namespace GameModeFortress
         PlayerStats = 23,
         Monster = 24,
         ActiveMonsters = 25,
+        
+        RemoveMonsters = 50,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,

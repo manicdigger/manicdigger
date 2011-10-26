@@ -544,7 +544,10 @@ namespace ManicDiggerServer
                 k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyInventory(k.Key);
                 NotifyPlayerStats(k.Key);
-                k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
+                if (config.Monsters)
+                {
+                	k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
+                }
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
             UnloadUnusedChunks();
@@ -734,7 +737,10 @@ namespace ManicDiggerServer
         }
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {
-            AddMonsters(p);
+            if (config.Monsters)
+            {
+            	AddMonsters(p);
+            }
             byte[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
             {
@@ -1926,7 +1932,36 @@ namespace ManicDiggerServer
                             break;
                         }
                     }
-                    else if (packet.Message.Message.StartsWith("/help"))
+                    else if (packet.Message.Message.StartsWith("/monsters"))
+					{
+						if (!clients[clientid].IsAdmin)
+						{
+							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+						}
+						else
+						{
+							string[] ss = packet.Message.Message.Split(new[] { ' ' });
+							if (ss.Length < 2 || (!ss[1].Equals("off") && !ss[1].Equals("on"))) {
+								SendMessage(clientid, "Usage: /monsters [on/off].");
+							}
+							else {
+								config.Monsters = ss[1].Equals("off") ? false : true;
+								SaveConfig();
+								if (!config.Monsters)
+								{
+									foreach (var k in clients) {
+										SendPacket(k.Key, Serialize(new PacketServer()
+			                               {
+			                               	PacketId = ServerPacketId.RemoveMonsters
+			                               }));
+									}
+								}
+								SendMessage(clientid, colorSuccess + "Monsters turned " + ss[1]);
+								break;
+							}
+						}
+					}
+					else if (packet.Message.Message.StartsWith("/help"))
                     {
                         SendMessage(clientid, colorHelp + "/login [buildpassword]");
                         SendMessage(clientid, colorHelp + "/msg [username] text");
@@ -1937,6 +1972,7 @@ namespace ManicDiggerServer
                             SendMessage(clientid, colorHelp + "/ban [username]");
                             SendMessage(clientid, colorHelp + "/banip [username]");
                             SendMessage(clientid, colorHelp + "/giveall [username]");
+                            SendMessage(clientid, colorHelp + "/monsters [on/off]");
                             SendMessage(clientid, colorHelp + "/list");
                             SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
                         }
