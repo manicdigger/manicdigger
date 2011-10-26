@@ -37,6 +37,8 @@ namespace GameModeFortress
         public List<string> Admins { get; set; }  // AutoAdmin
         [XmlArrayItem(ElementName = "Builder")]
         public List<string> Builders { get; set; }  // AutoAdmin
+        [XmlArrayItem(ElementName = "Mod")]
+        public List<string> Mods { get; set; }  // AutoAdmin
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
 
@@ -75,6 +77,17 @@ namespace GameModeFortress
             foreach (string Builderuser in this.Builders)
             {
                 if (username.Equals(Builderuser, StringComparison.InvariantCulture))
+                    return true;
+            }
+            return false;
+        }
+
+		public bool IsMod
+			(string username)
+        {
+            foreach (string Moduser in this.Mods)
+            {
+                if (username.Equals(Moduser, StringComparison.InvariantCulture))
                     return true;
             }
             return false;
@@ -127,6 +140,7 @@ namespace GameModeFortress
             this.BannedUsers = new List<string>();
             this.Admins = new List<string>();
             this.Builders = new List<string>();
+            this.Mods = new List<string>();
             this.Areas = new List<AreaConfig>();
         }
     }

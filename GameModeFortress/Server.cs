@@ -286,6 +286,7 @@ namespace ManicDiggerServer
             }
             if (config.Admins.Count == 0) { config.Admins.Add(config.DefaultPlayerName); }
             if (config.Builders.Count == 0) { config.Builders.Add(config.DefaultPlayerName); }
+            if (config.Mods.Count == 0) { config.Mods.Add(config.DefaultPlayerName); }
             if (config.Areas.Count == 0)
             {
                 AreaConfig publicArea = new AreaConfig();
@@ -1533,6 +1534,8 @@ namespace ManicDiggerServer
                     if (config.Builders.Contains(username)) { clients[clientid].Rank = Rank.Builder; }
                     if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }
                     if (LocalConnectionsOnly) { clients[clientid].Rank = Rank.Admin; }
+                    
+                    clients[clientid].IsMod = config.IsMod(username);
 
                     clients[clientid].playername = username;
                     break;
@@ -1672,7 +1675,63 @@ namespace ManicDiggerServer
                         break;
                     }
 
-                    else if (packet.Message.Message.StartsWith("/op")
+                    else if (packet.Message.Message.StartsWith("/addmod"))
+					{
+						if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
+						{
+							SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use mod.");
+							break;
+						}
+						string[] ss = packet.Message.Message.Split(new[] { ' ' });
+						if (ss.Length < 2)
+						{
+							SendMessage(clientid, colorError + "Usage: /addmod [username].");
+							break;
+						}
+						string argName = ss[1];
+						foreach (var k in clients)
+						{
+							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
+							{
+								config.Mods.Add(argName);
+								k.Value.IsMod = true;
+								SaveConfig();
+								SendMessageToAll(colorSuccess + k.Value.playername + " got mod permission.");
+								break;
+							}
+						}
+						break;
+					}
+                    
+					else if (packet.Message.Message.StartsWith("/remmod"))
+					{
+						if (!clients[clientid].IsAdmin && !clients[clientid].IsMod )
+						{
+							SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use mod.");
+							break;
+						}
+						string[] ss = packet.Message.Message.Split(new[] { ' ' });
+						if (ss.Length < 2)
+						{
+							SendMessage(clientid, colorError + "Usage: /remmod [username].");
+							break;
+						}
+						string argName = ss[1];
+						foreach (var k in clients)
+						{
+							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
+							{
+								config.Mods.Remove(argName);
+								k.Value.IsMod = false;
+								SaveConfig();
+								SendMessageToAll(colorSuccess + k.Value.playername + " lost mod permission.");
+								break;
+							}
+						}
+						break;
+					}
+					
+					else if (packet.Message.Message.StartsWith("/op")
                         || packet.Message.Message.StartsWith("/rank"))
                     {
                         if (clients[clientid].Rank != Rank.Admin)
@@ -1768,7 +1827,7 @@ namespace ManicDiggerServer
                     }
                     else if (packet.Message.Message.StartsWith("/kick"))
                     {
-                        if (!clients[clientid].IsAdmin)
+                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
                         {
                             SendMessage(clientid, "You are not logged in as an administrator and cannot kick other players.");
                         }
@@ -1793,7 +1852,7 @@ namespace ManicDiggerServer
                     }
                     else if (packet.Message.Message.StartsWith("/ban "))
                     {
-                        if (!clients[clientid].IsAdmin)
+                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
                         {
                             SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
                         }
@@ -1821,7 +1880,7 @@ namespace ManicDiggerServer
                     }
                     else if (packet.Message.Message.StartsWith("/banip"))
                     {
-                        if (!clients[clientid].IsAdmin)
+                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
                         {
                             SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
                         }
@@ -1850,7 +1909,7 @@ namespace ManicDiggerServer
                     }
                     else if (packet.Message.Message.StartsWith("/list"))
                     {
-                        if (!clients[clientid].IsAdmin)
+                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
                         {
                             SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
                         }
@@ -1967,15 +2026,20 @@ namespace ManicDiggerServer
                         SendMessage(clientid, colorHelp + "/msg [username] text");
                         if (clients[clientid].IsAdmin)
                         {
-                            SendMessage(clientid, colorHelp + "/kick [username]");
-                            SendMessage(clientid, colorHelp + "/welcome [login motd message]");
-                            SendMessage(clientid, colorHelp + "/ban [username]");
-                            SendMessage(clientid, colorHelp + "/banip [username]");
-                            SendMessage(clientid, colorHelp + "/giveall [username]");
-                            SendMessage(clientid, colorHelp + "/monsters [on/off]");
-                            SendMessage(clientid, colorHelp + "/list");
-                            SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
-                        }
+							SendMessage(clientid, colorHelp + "/addmod [username]");
+							SendMessage(clientid, colorHelp + "/remmod [username]");
+							SendMessage(clientid, colorHelp + "/kick [username]");
+							SendMessage(clientid, colorHelp + "/ban [username]");
+							SendMessage(clientid, colorHelp + "/banip [username]");
+							SendMessage(clientid, colorHelp + "/list");
+							if (!clients[clientid].IsMod)
+							{
+								SendMessage(clientid, colorHelp + "/welcome [login motd message]");
+								SendMessage(clientid, colorHelp + "/giveall [username]");
+								SendMessage(clientid, colorHelp + "/monsters [on/off]");
+								SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
+							}
+						}
                     }
                     else if (packet.Message.Message.StartsWith("."))
                     {
@@ -2762,6 +2826,7 @@ namespace ManicDiggerServer
             public bool IsGuest { get { return playername.StartsWith("~"); } }
             public bool IsAdmin { get { return Rank == Rank.Admin; } }
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
+            public bool IsMod;
             public bool IsConnected;
             public ManicDigger.Timer notifyMonstersTimer;
         }
