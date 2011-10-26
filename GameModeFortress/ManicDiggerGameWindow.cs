@@ -306,6 +306,7 @@ namespace ManicDigger
             string[] ss = s.Split(new char[] { ' ' });
             if (s.StartsWith("."))
             {
+                string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
                 try
                 {
                     string cmd = ss[0].Substring(1);
@@ -350,7 +351,15 @@ namespace ManicDigger
                     }
                     else if (cmd == "freemove")
                     {
-                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
+                        if (AllowFreemove)
+                        {
+	                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
+                        }
+                        else
+                        {
+                            Log(strFreemoveNotAllowed);
+                            return;
+                        }
                     }
                     else if (cmd == "fov")
                     {
@@ -384,7 +393,6 @@ namespace ManicDigger
                     }
                     else if (cmd == "movespeed")
                     {
-                        string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
                         try
                         {
                             if (AllowFreemove)
