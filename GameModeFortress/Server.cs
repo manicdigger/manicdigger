@@ -1991,7 +1991,110 @@ namespace ManicDiggerServer
                             break;
                         }
                     }
-                    else if (packet.Message.Message.StartsWith("/monsters"))
+                    else if (packet.Message.Message.StartsWith("/give"))
+					{
+						if (!clients[clientid].IsAdmin)
+						{
+							SendMessage(clientid, "You are not logged in as an administrator and cannot access give command.");
+						}
+						else
+						{
+							string UsageMessage = "Usage: /give [username] blockname amount";
+							string[] ss = packet.Message.Message.Split(new[] { ' ' });
+							foreach (var k in clients)
+							{
+								if (ss.Length < 3 || ss.Length > 4)
+								{
+									SendMessage(clientid, UsageMessage);
+								}
+								else if (ss.Length < 4 ||
+								    k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
+								{
+									string targetName = k.Value.playername;
+									string sourcename = clients[clientid].playername;
+									string blockname = (ss.Length < 4) ? ss[1] : ss[2];
+									int amount;
+									if (ss.Length < 4)
+									{
+										if (!Int32.TryParse(ss[2], out amount))
+									    {
+											SendMessage(clientid, UsageMessage);
+											break;
+										}
+									}
+									else
+									{
+										if (!Int32.TryParse(ss[3], out amount))
+									    {
+											SendMessage(clientid, UsageMessage);
+											break;
+										}
+									}
+									if (amount < 1)
+									{
+										break;
+									}
+									else if (amount > 999)
+									{
+										amount = 999;
+									}
+									for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+									{
+										if (!d_Data.IsBuildable[i])
+										{
+											continue;
+										}
+										if (!d_Data.Name[i].Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
+										{
+											continue;
+										}
+										Inventory inventory = GetPlayerInventory(targetName).Inventory;
+										InventoryUtil util = GetInventoryUtil(inventory);
+
+										for (int xx = 0; xx < util.CellCount.X; xx++)
+										{
+											for (int yy = 0; yy < util.CellCount.Y; yy++)
+											{
+												if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
+												{
+													continue;
+												}
+												Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
+												if (currentItem != null
+												    && currentItem.ItemClass == ItemClass.Block
+												    && currentItem.BlockId == i)
+												{
+													currentItem.BlockCount = amount;
+													goto nextblock;
+												}
+											}
+										}
+										for (int xx = 0; xx < util.CellCount.X; xx++)
+										{
+											for (int yy = 0; yy < util.CellCount.Y; yy++)
+											{
+												Item newItem = new Item();
+												newItem.ItemClass = ItemClass.Block;
+												newItem.BlockId = i;
+												newItem.BlockCount = amount;
+
+												if (util.ItemAtCell(new Point(xx, yy)) == null)
+												{
+													inventory.Items[new ProtoPoint(xx, yy)] = newItem;
+													goto nextblock;
+												}
+											}
+										}
+									nextblock:
+										k.Value.IsInventoryDirty = true;
+									}
+									break;
+								}
+							}
+							break;
+						}
+					}
+					else if (packet.Message.Message.StartsWith("/monsters"))
 					{
 						if (!clients[clientid].IsAdmin)
 						{
@@ -2036,6 +2139,7 @@ namespace ManicDiggerServer
 							{
 								SendMessage(clientid, colorHelp + "/welcome [login motd message]");
 								SendMessage(clientid, colorHelp + "/giveall [username]");
+								SendMessage(clientid, colorHelp + "/give [username] blockname amount");
 								SendMessage(clientid, colorHelp + "/monsters [on/off]");
 								SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
 							}
