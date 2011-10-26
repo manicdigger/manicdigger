@@ -321,6 +321,10 @@ namespace ManicDigger
                         ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
                         ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
                     }
+                    if (cmd == "pos")
+                    {
+                    	ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
+                    }
                     else if (cmd == "fog")
                     {
                         int foglevel;
@@ -2330,7 +2334,12 @@ namespace ManicDigger
             {
                 d_FpsHistoryGraphRenderer.DrawFpsHistoryGraph();
             }
-            if (drawblockinfo)
+           if (ENABLE_DRAWPOSITION)
+            {
+            	string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " +  Math.Floor(player.playerposition.Y) + "; Z: " + Math.Floor(player.playerposition.Z);
+                d_The3d.Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
+            }
+             if (drawblockinfo)
             {
                 DrawBlockInfo();
             }
@@ -2489,6 +2498,7 @@ namespace ManicDigger
         int ENABLE_LAG = 0;
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
+        bool ENABLE_DRAWPOSITION = false;
         //int targettexture = -1;
         IEnumerable<TileSide> AllTileSides
         {
