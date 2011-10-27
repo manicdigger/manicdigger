@@ -2123,6 +2123,55 @@ namespace ManicDiggerServer
 							}
 						}
 					}
+					else if (packet.Message.Message.StartsWith("/areauser"))
+					{
+						if (!clients[clientid].IsAdmin)
+						{
+							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+						}
+						else
+						{
+							string[] ss = packet.Message.Message.Split(new[] { ' ' });
+							if (ss.Length < 3) {
+								SendMessage(clientid, "Usage: /areauser olduser newuser.");
+							}
+							else {
+								foreach (AreaConfig area in config.Areas)
+								{
+									if (area.PermittedUsers.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase)) {
+									    	area.PermittedUsers = ss[2];
+									    	SaveConfig();
+									    	SendMessage(clientid, "Area changed.");
+											break;
+									    }
+								}
+							}
+						}
+						break;
+					}
+					else if (packet.Message.Message.StartsWith("/addarea"))
+					{
+						if (!clients[clientid].IsAdmin)
+						{
+							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+						}
+						else
+						{
+							string[] ss = packet.Message.Message.Split(new[] { ' ' });
+							if (ss.Length < 3) {
+								SendMessage(clientid, "Usage: /addarea username coords.");
+							}
+							else {
+								config.Areas.Add(new AreaConfig(){
+								                 	PermittedUsers = ss[1], Coords = ss[2]
+								                 });
+								SaveConfig();
+								SendMessage(clientid, "Area added.");
+								break;
+							}
+						}
+						break;
+					}
 					else if (packet.Message.Message.StartsWith("/help"))
                     {
                         SendMessage(clientid, colorHelp + "/login [buildpassword]");
@@ -2142,6 +2191,8 @@ namespace ManicDiggerServer
 								SendMessage(clientid, colorHelp + "/give [username] blockname amount");
 								SendMessage(clientid, colorHelp + "/monsters [on/off]");
 								SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
+								SendMessage(clientid, colorHelp + "/addarea username coords");
+								SendMessage(clientid, colorHelp + "/areauser olduser newuser");
 							}
 						}
                     }
