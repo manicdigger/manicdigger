@@ -28,5 +28,6 @@ namespace ManicDigger.MapTools
         public const int TileIdRedFlower = 38;
         public const int TileIdApples = 106;
         public const int TileIdHay = 107;
+        public const int TileIdSilverOre = 133;
     }
 }

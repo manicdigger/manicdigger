@@ -17,6 +17,7 @@ namespace ManicDigger.MapTools.Generators
         private int ironorelength = 50;
         private int coalorelength = 50;
         private int gravellength = 50;
+        private int silverlength = 50;
         private int dirtlength = 40;
 
         #endregion
@@ -119,7 +120,7 @@ namespace ManicDigger.MapTools.Generators
             {
                 PopulationTools.MakeTrees(map, x, y, z, this.ChunkSize, _rnd);
             }
-            PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength);
+            PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength, silverlength);
         }
 
         #endregion

@@ -362,7 +362,7 @@ namespace ManicDigger.MapTools.Generators
             //random trees
             PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, 30);
 
-            PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength);
+            PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength, silverlength);
         }
         public int Seed { get; set; }
         public void SetSeed(int seed)
@@ -376,6 +376,7 @@ namespace ManicDigger.MapTools.Generators
         public int ironorelength = 50;
         public int coalorelength = 50;
         public int gravellength = 50;
+        public int silverlength = 50;
         public int dirtlength = 40;
 
         float cavessize = 15;

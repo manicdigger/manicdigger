@@ -362,7 +362,8 @@ namespace ManicDigger.MapTools
             int goldOreLength,
             int ironOreLength,
             int coalOreLength,
-            int dirtOreLength)
+            int dirtOreLength,
+            int silverOreLength)
         {
             //if (rnd.NextDouble() >= 0.6)
             {
@@ -389,15 +390,16 @@ namespace ManicDigger.MapTools
             int length = 200;
             if (rnd.NextDouble() < 0.85)
             {
-                int oretype = rnd.Next(5);
+                int oretype = rnd.Next(6);
                 if (oretype == 0) { length = gravelLength; }
                 if (oretype == 1) { length = goldOreLength; }
                 if (oretype == 2) { length = ironOreLength; }
                 if (oretype == 3) { length = coalOreLength; }
                 if (oretype == 4) { length = dirtOreLength; }
+                if (oretype == 5) { length = silverOreLength; }
 
                 length = rnd.Next(length);
-                blocktype = oretype != 4 ? WorldGeneratorTools.TileIdGravel + oretype : WorldGeneratorTools.TileIdDirt;
+                blocktype = oretype < 4 ? WorldGeneratorTools.TileIdGravel + oretype : (oretype > 4 ? WorldGeneratorTools.TileIdGravel + oretype + 115 : WorldGeneratorTools.TileIdDirt);
             }
             if (blocktype == WorldGeneratorTools.TileIdEmpty && (!enableCaves))
             {
@@ -449,7 +451,8 @@ namespace ManicDigger.MapTools
                             WorldGeneratorTools.TileIdGrass,
                             WorldGeneratorTools.TileIdGoldOre,
                             WorldGeneratorTools.TileIdIronOre,
-                            WorldGeneratorTools.TileIdCoalOre
+                            WorldGeneratorTools.TileIdCoalOre,
+                            WorldGeneratorTools.TileIdSilverOre
                         };
                     }
                     if (blocktype == WorldGeneratorTools.TileIdGravel)
@@ -461,7 +464,8 @@ namespace ManicDigger.MapTools
                             WorldGeneratorTools.TileIdSand, 
                             WorldGeneratorTools.TileIdGoldOre, 
                             WorldGeneratorTools.TileIdIronOre, 
-                            WorldGeneratorTools.TileIdCoalOre 
+                            WorldGeneratorTools.TileIdCoalOre,
+							WorldGeneratorTools.TileIdSilverOre                            
                         };
                     }
 
