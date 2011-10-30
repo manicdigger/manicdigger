@@ -252,6 +252,7 @@ namespace ManicDigger
             GL.Begin(BeginMode.Quads);
             float x2 = x1 + width;
             float y2 = y1 + height;
+            
             GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex2(x2, y2);
             GL.TexCoord2(rect.Right, rect.Top); GL.Vertex2(x2, y1);
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
@@ -266,7 +267,10 @@ namespace ManicDigger
         VertexPositionTexture[] draw2dtexturesVertices;
         ushort[] draw2dtexturesIndices;
         int draw2dtexturesMAX = 512;
-        public void Draw2dTextures(Draw2dData[] todraw, int textureid)
+        public void Draw2dTextures(Draw2dData[] todraw, int textureid) {
+        	Draw2dTextures(todraw, textureid, 0);
+        }
+        public void Draw2dTextures(Draw2dData[] todraw, int textureid, float angle)
         {
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.BindTexture(TextureTarget.Texture2D, textureid);
@@ -304,10 +308,23 @@ namespace ManicDigger
                 }
                 float x2 = v.x1 + v.width;
                 float y2 = v.y1 + v.height;
-                vertices[i] = new VertexPositionTexture(x2, y2, 0, rect.Right, rect.Bottom, v.color);
-                vertices[i + 1] = new VertexPositionTexture(x2, v.y1, 0, rect.Right, rect.Top, v.color);
-                vertices[i + 2] = new VertexPositionTexture(v.x1, v.y1, 0, rect.Left, rect.Top, v.color);
-                vertices[i + 3] = new VertexPositionTexture(v.x1, y2, 0, rect.Left, rect.Bottom, v.color);
+
+                PointF[] pnts = new PointF[4] {
+					new PointF(x2, y2),
+					new PointF(x2,v.y1),
+					new PointF(v.x1,v.y1),
+					new PointF(v.x1,y2)};
+                if (angle != 0)
+                {
+					System.Drawing.Drawing2D.Matrix mx=new System.Drawing.Drawing2D.Matrix();
+					mx.RotateAt(angle, new PointF(v.x1+v.width/2,v.y1+v.height/2));
+					mx.TransformPoints(pnts);
+                }
+				
+                vertices[i] = new VertexPositionTexture(pnts[0].X, pnts[0].Y, 0, rect.Right, rect.Bottom, v.color);
+                vertices[i + 1] = new VertexPositionTexture(pnts[1].X, pnts[1].Y, 0, rect.Right, rect.Top, v.color);
+                vertices[i + 2] = new VertexPositionTexture(pnts[2].X, pnts[2].Y, 0, rect.Left, rect.Top, v.color);
+                vertices[i + 3] = new VertexPositionTexture(pnts[3].X, pnts[3].Y, 0, rect.Left, rect.Bottom, v.color);
                 indices[i] = i;
                 indices[i + 1] = (ushort)(i + 1);
                 indices[i + 2] = (ushort)(i + 2);

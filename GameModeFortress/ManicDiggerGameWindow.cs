@@ -615,6 +615,10 @@ namespace ManicDigger
                         Log("Move: Normal.");
                     }
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.F4))
+                {
+                	ENABLE_COMPASS = !ENABLE_COMPASS;
+                }
                 if (e.Key == GetKey(OpenTK.Input.Key.I))
                 {
                     drawblockinfo = !drawblockinfo;
@@ -1780,6 +1784,28 @@ namespace ManicDigger
             }
         }
 
+        void DrawCompass()
+        {
+        	if (!ENABLE_COMPASS) return;
+			int compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
+			int needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
+			float size = 175;
+			float posX = Width-100;
+			float posY = 100;
+			float rotation = -(float)((((player.playerorientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 360);
+			
+			Draw2dData[] todraw = new Draw2dData[1];
+			todraw[0].x1 = posX-size/2;
+			todraw[0].y1 = posY-size/2;
+			todraw[0].width = size;
+			todraw[0].height = size;
+			todraw[0].inAtlasId = null;
+			todraw[0].color = new FastColor(Color.White);
+			
+			d_The3d.Draw2dTexture(compassid, posX-size/2, posY-size/2, size, size, null);
+			d_The3d.Draw2dTextures(todraw, needleid, rotation);
+        }
+
         void DrawEnemyHealthCommon(string name, float progress)
         {
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, 35, null, Color.Black);
@@ -2288,6 +2314,7 @@ namespace ManicDigger
                         DrawMaterialSelector();
                         DrawPlayerHealth();
                         DrawEnemyHealthBlock();
+                        DrawCompass();
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         if (GuiTyping == TypingState.Typing)
                         {
@@ -2496,6 +2523,7 @@ namespace ManicDigger
             return (int)(Height / 2 - height / 2);
         }
         int ENABLE_LAG = 0;
+        bool ENABLE_COMPASS = false;
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
         bool ENABLE_DRAWPOSITION = false;
