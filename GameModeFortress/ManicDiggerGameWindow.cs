@@ -1786,6 +1786,8 @@ namespace ManicDigger
         
         int compassid = -1;
         int needleid = -1;
+        float compassangle = 0;
+        float compassvertex = 1;
 
         void DrawCompass()
         {
@@ -1797,7 +1799,20 @@ namespace ManicDigger
 			float size = 175;
 			float posX = Width-100;
 			float posY = 100;
-			float rotation = -(float)((((player.playerorientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 360);
+			float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
+			
+			if (playerorientation > compassangle)
+			{
+				compassvertex += (float)Math.Pow(playerorientation-compassangle, .2f) / 5;
+			}
+			else if (playerorientation < compassangle)
+			{
+				compassvertex -= (float)Math.Pow(compassangle-playerorientation, .2f) / 5;
+			}
+			
+			compassvertex *= .95f;
+			if (compassvertex < -.1f || compassvertex > .1f)
+				compassangle += compassvertex;
 			
 			Draw2dData[] todraw = new Draw2dData[1];
 			todraw[0].x1 = posX-size/2;
@@ -1808,7 +1823,7 @@ namespace ManicDigger
 			todraw[0].color = new FastColor(Color.White);
 			
 			d_The3d.Draw2dTexture(compassid, posX-size/2, posY-size/2, size, size, null);
-			d_The3d.Draw2dTextures(todraw, needleid, rotation);
+			d_The3d.Draw2dTextures(todraw, needleid, compassangle);
         }
 
         void DrawEnemyHealthCommon(string name, float progress)
