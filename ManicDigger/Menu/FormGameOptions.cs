@@ -131,7 +131,6 @@ namespace GameMenu
             new KeyHelp(){Text="1x move speed", DefaultKey=(int)OpenTK.Input.Key.F1},
             new KeyHelp(){Text="10x move speed", DefaultKey=(int)OpenTK.Input.Key.F2},
             new KeyHelp(){Text="Free move", DefaultKey=(int)OpenTK.Input.Key.F3},
-            new KeyHelp(){Text="Compass", DefaultKey=(int)OpenTK.Input.Key.F4},
             new KeyHelp(){Text="Third-person camera", DefaultKey=(int)OpenTK.Input.Key.F5},
             new KeyHelp(){Text="Fullscreen", DefaultKey=(int)OpenTK.Input.Key.F11},
             new KeyHelp(){Text="Screenshot", DefaultKey=(int)OpenTK.Input.Key.F12},

@@ -30,7 +30,7 @@ namespace ManicDigger.Renderers
         public int GetWeaponTextureId(TileSide side)
         {
             Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
-            if (item == null)
+            if (item == null || IsCompass())
             {
                 //empty hand
                 if (side == TileSide.Top) { return 129; }
@@ -73,6 +73,13 @@ namespace ManicDigger.Renderers
             return item != null
                 && item.ItemClass == ItemClass.Block
                 && item.BlockId == d_Data.BlockIdTorch;
+        }
+        public bool IsCompass()
+        {
+            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            return item != null
+                && item.ItemClass == ItemClass.Block
+                && item.BlockId == d_Data.BlockIdCompass;
         }
         public bool IsEmptyHand()
         {
@@ -134,7 +141,7 @@ namespace ManicDigger.Renderers
             }
             else
             {
-                curmaterial = item.BlockId;
+            	curmaterial = item.BlockId == 151 ? 128 : item.BlockId;
             }
             float curlight = d_Info.Light;
             if (curmaterial != oldMaterial || curlight != oldLight)
@@ -144,7 +151,7 @@ namespace ManicDigger.Renderers
                 int x = 0;
                 int y = 0;
                 int z = 0;
-                if (d_Info.IsEmptyHand())
+                if (d_Info.IsEmptyHand() || d_Info.IsCompass())
                 {
                     d_BlockRendererTorch.TopTexture = d_Info.GetWeaponTextureId(TileSide.Top);
                     d_BlockRendererTorch.SideTexture = d_Info.GetWeaponTextureId(TileSide.Front);

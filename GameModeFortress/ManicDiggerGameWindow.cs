@@ -615,10 +615,6 @@ namespace ManicDigger
                         Log("Move: Normal.");
                     }
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.F4))
-                {
-                	ENABLE_COMPASS = !ENABLE_COMPASS;
-                }
                 if (e.Key == GetKey(OpenTK.Input.Key.I))
                 {
                     drawblockinfo = !drawblockinfo;
@@ -1789,9 +1785,21 @@ namespace ManicDigger
         float compassangle = 0;
         float compassvertex = 1;
 
+        bool CompassInActiveMaterials()
+        {
+        	for(int i=0; i<10; i++)
+        	{
+        		if(MaterialSlots[i]==d_Data.BlockIdCompass)
+        		{
+        			return true;
+        		}
+        	}
+        	return false;
+        }
+        
         void DrawCompass()
         {
-        	if (!ENABLE_COMPASS) return;
+        	if (!CompassInActiveMaterials()) return;
         	if (compassid == -1) {
 				compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
 				needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
@@ -2543,7 +2551,6 @@ namespace ManicDigger
             return (int)(Height / 2 - height / 2);
         }
         int ENABLE_LAG = 0;
-        bool ENABLE_COMPASS = false;
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
         bool ENABLE_DRAWPOSITION = false;
@@ -2821,7 +2828,7 @@ namespace ManicDigger
             int z = (short)blockpos.Z;
             var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
             {
-                if (IsAnyPlayerInPos(blockpos))
+                if (IsAnyPlayerInPos(blockpos) || activematerial == 151)
                 {
                     return;
                 }
