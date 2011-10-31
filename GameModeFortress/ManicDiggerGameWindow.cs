@@ -1783,12 +1783,17 @@ namespace ManicDigger
                 DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
             }
         }
+        
+        int compassid = -1;
+        int needleid = -1;
 
         void DrawCompass()
         {
         	if (!ENABLE_COMPASS) return;
-			int compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
-			int needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
+        	if (compassid == -1) {
+				compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
+				needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
+        	}
 			float size = 175;
 			float posX = Width-100;
 			float posY = 100;
