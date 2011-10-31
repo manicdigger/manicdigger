@@ -502,6 +502,28 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
+            if (tiletype == 150) //open door
+            {
+                //x-1, x+1
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 150
+                    && currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 150)
+                {
+                    drawleft = 0;
+                    drawright = 0;
+                }
+                //y-1, y+1
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 150
+                    && currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 150)
+                {
+                    drawfront = 0;
+                    drawback = 0;
+                }
+                if (drawback == 0 && drawfront == 0 && drawleft == 0 && drawright == 0)
+                {
+                	drawback = 1;
+                	drawleft = 1;
+                }
+            }
             //doors are drawed using a bug with flower drawing.
             //when there are blocks around flower, then some sides are not rendered.
             //this fixes case when there are no blocks around doors.
