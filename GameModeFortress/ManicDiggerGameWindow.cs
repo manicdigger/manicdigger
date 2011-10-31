@@ -3387,7 +3387,7 @@ namespace ManicDigger
                         {
                             CurrentSeason = packet.Season.Season;
                             d_Data.Update();
-                            if (CurrentSeason == 0 || CurrentSeason == 3)
+                            if (CurrentSeason >= 0 && CurrentSeason <= 3)
                             {
                                 d_Terrain.UpdateAllTiles();
                             }
