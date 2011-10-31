@@ -79,7 +79,7 @@ namespace ManicDigger
                 Reverse();
             }
 
-            if (!wasvpressed && keyboardstate[GetKey(OpenTK.Input.Key.V)] && !railriding)
+            if (!wasvpressed && keyboardstate[GetKey(OpenTK.Input.Key.V)] && !railriding && !ENABLE_FREEMOVE)
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z, (int)LocalPlayerPosition.Y - 1);
