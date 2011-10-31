@@ -58,16 +58,6 @@
 "LuxuryRoof";1;"Roof";2;;;;
 "SandBrick";1;"Sand";1;"Stone";2;;
 "Fence";1;"TreeTrunk";2;;;;
-"FenceFront";1;"Fence";1;;;;
-"FenceBack";1;"FenceLeft";1;;;;
-"FenceLeft";1;"FenceFront";1;;;;
-"FenceRight";1;"FenceBack";1;;;;
-"FenceFront";1;"FenceRight";1;;;;
-"FenceFrontLeft";1;"Fence";2;;;;
-"FenceFrontRight";1;"FenceFrontLeft";1;;;;
-"FenceBackRight";1;"FenceFrontRight";1;;;;
-"FenceBackLeft";1;"FenceBackRight";1;;;;
-"FenceFrontLeft";1;"FenceBackLeft";1;;;;
 "FakeBookcase";1;"Bookcase";1;"Camouflage";5;;
 "WoodDesk";1;"Wood";2;"TreeTrunk";1;;
 "GlassDesk";1;"Glass";2;"TreeTrunk";1;;
