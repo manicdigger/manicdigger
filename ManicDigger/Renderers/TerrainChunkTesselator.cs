@@ -502,7 +502,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (tiletype == 150) //open door
+            if (tiletype == 150) // fence tiles automatically when another fence is beside
             {
                 //x-1, x+1
                 if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 150

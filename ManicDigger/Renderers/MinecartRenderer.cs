@@ -40,7 +40,7 @@ namespace ManicDigger.Renderers
         {
             if (minecarttexture == -1)
             {
-                minecarttexture = d_The3d.LoadTexture(d_GetFile.GetFile("minecart.png"));
+            	minecarttexture = d_The3d.LoadTexture(new System.Drawing.Bitmap(new System.IO.MemoryStream(MyStream.ReadAllBytes(d_GetFile.GetFile("minecart.png")))));
             }
             GL.PushMatrix();
             GL.Translate(position + new Vector3(0, -0.7f, 0));
