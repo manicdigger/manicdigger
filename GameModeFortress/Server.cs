@@ -596,7 +596,7 @@ namespace ManicDiggerServer
                             {
                                 if ((block != 0)
                                     && (block != (int)TileTypeMinecraft.Adminium)
-                                    && !(d_Data.IsWater[block]))
+                                    && !(d_Data.IsFluid[block]))
                                 {
                                     SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
                                 }
@@ -820,7 +820,7 @@ namespace ManicDiggerServer
                 if (d_Map.GetBlock(px, py, pz) == 0
                     && d_Map.GetBlock(px, py, pz + 1) == 0
                     && d_Map.GetBlock(px, py, pz - 1) != 0
-                    && (!d_Data.IsWater[d_Map.GetBlock(px, py, pz - 1)]))
+                    && (!d_Data.IsFluid[d_Map.GetBlock(px, py, pz - 1)]))
                 {
                     chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), MonsterType = type });
                 }

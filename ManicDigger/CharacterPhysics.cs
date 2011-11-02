@@ -42,11 +42,11 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (d_Data.IsWater[d_Map.GetBlock(x, y, z)] &&
-                !d_Data.IsWater[d_Map.GetBlock(x, y, z + 1)]) { return true; }
+            if (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] &&
+                !d_Data.IsFluid[d_Map.GetBlock(x, y, z + 1)]) { return true; }
             return d_Map.GetBlock(x, y, z) == 0
                 || (d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs && d_Map.GetBlock(x, y, z+2) == 0 && d_Map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
-                || (d_Data.IsWater[d_Map.GetBlock(x, y, z)] && (!swimmingtop))
+                || (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] && (!swimmingtop))
                 || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
         }
         public static float walldistance = 0.3f;
@@ -65,6 +65,7 @@ namespace ManicDigger
             public bool ENABLE_NOCLIP;
             public bool wantsjump;
             public bool moveup;
+            public bool movedown;
             public float jumpstartacceleration;
         }
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push)
@@ -98,6 +99,7 @@ namespace ManicDigger
                 state.curspeed.Y = MakeCloserToZero(state.curspeed.Y, move.acceleration.acceleration2 * (float)dt);
                 state.curspeed.Z = MakeCloserToZero(state.curspeed.Z, move.acceleration.acceleration2 * (float)dt);
                 diff1.Y += move.moveup ? 2 * move.movespeednow * (float)dt : 0;
+                diff1.Y -= move.movedown ? 2 * move.movespeednow * (float)dt : 0;
                 state.curspeed += Vector3.Multiply(diff1, move.acceleration.acceleration3 * (float)dt);
                 if (state.curspeed.Length > move.movespeednow)
                 {

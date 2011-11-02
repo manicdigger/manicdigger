@@ -166,11 +166,16 @@ namespace ManicDigger.MapTools
         }
         int waterLevelsCount = 8;
         int PartialWaterBlock = 118;
-        int blockidFillArea = 117;
+        // int blockidFillArea = 117;
         bool IsWater(int tt)
         {
             return ((tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
-            || data.IsWater[tt]) && (tt != blockidFillArea);
+            || data.IsWater[tt]);
+        }
+        bool IsFluid(int tt)
+        {
+            return ((tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
+            || data.IsFluid[tt]);
         }
         private int GetWaterLevel(int tt)
         {

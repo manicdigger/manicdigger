@@ -175,9 +175,10 @@
 146;"Mosaik";96;96;96;96;96;96;96;1;146;0;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;0;0;0;;0;0;1
 147;"Asphalt";97;97;97;97;97;97;97;1;147;0;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;0;0;0;;0;0;1
 148;"Cake";144;146;145;145;145;145;144;1;148;0;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;0;0;0;;0;0;1
-149;"Fire";30;30;30;30;30;30;30;1;149;0;0;1;1;0;;"destruct";"build";"clone";;0;1;0;1;;15;0;1
+149;"Fire";30;30;30;30;30;30;30;1;149;1;0;1;1;0;;"destruct";"build";"clone";;0;1;0;1;;15;0;1
 150;"Fence";56;56;56;56;56;56;56;1;150;1;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;1;;0;0;1
 151;"Compass";147;147;147;147;147;147;147;1;151;0;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;0;0;0;;0;1;1
+152;"Ladder";158;158;158;158;158;158;158;1;152;1;0;1;1;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;1;1;0;0;;0;0;1
 2;"Grass";104;2;105;105;105;105;104;0;3;0;0;1;0;0;"walksnow1 walksnow2 walksnow3 walksnow4";"destruct";"build";"clone";;0;0;0;0;1;0;0;1
 2;"Grass";99;2;100;100;100;100;99;0;3;0;0;1;0;0;"walksnow1 walksnow2 walksnow3 walksnow4";"destruct";"build";"clone";;0;0;0;0;2;0;0;1
 18;"Leaves";98;98;98;98;98;98;98;0;18;0;0;1;0;0;"walk1 walk2 walk3 walk4";"destruct";"build";"clone";;0;1;0;0;2;0;0;1

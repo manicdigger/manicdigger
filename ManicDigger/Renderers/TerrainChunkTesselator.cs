@@ -524,6 +524,37 @@ namespace ManicDigger.Renderers
                 	drawleft = 1;
                 }
             }
+            if (tiletype == d_Data.BlockIdLadder) // try to fit ladder to best wall or existing ladder
+            {
+            	flowerfix = 0.95f;
+            	drawfront = 0;
+            	drawback = 0;
+            	drawleft = 0;
+            	drawright = 0;
+            	int matchwall;
+            	int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
+                if (ladderAtPositionMatchWall < 0) {
+                	
+                	int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
+                	int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, +1);
+                	
+                	if (ladderbelow != 0)
+                	{
+                		ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz+ladderbelow, currentChunk);
+                	}
+                	else if (ladderabove != 0)
+                	{
+                		ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz+ladderabove, currentChunk);
+                	}
+                }
+                switch (ladderAtPositionMatchWall)
+                {
+            		case 1: drawleft = 1; break;
+            		case 2: drawback = 1; break;
+            		case 3: drawfront = 1; break;
+            		default: drawright = 1; break;
+                }
+            }
             //doors are drawed using a bug with flower drawing.
             //when there are blocks around flower, then some sides are not rendered.
             //this fixes case when there are no blocks around doors.
@@ -963,5 +994,65 @@ namespace ManicDigger.Renderers
             return blocktype != SpecialBlockId.Empty
                 && blocktype != d_Data.BlockIdTorch;
         }
-    }
+         private int getBestLadderWall(int x, int y, int z, byte[] currentChunk)
+        {
+        	bool front=false;
+        	bool back=false;
+        	bool left=false;
+        	bool right=false;
+        	int wallscount = 0;
+            if (currentChunk[MapUtil.Index3d(x, y - 1, z, chunksize + 2, chunksize + 2)] != 0)
+            {
+            	front = true;
+            	wallscount++;
+            }
+            if (currentChunk[MapUtil.Index3d(x, y + 1, z, chunksize + 2, chunksize + 2)] != 0)
+            {
+            	back = true;
+            	wallscount++;
+            }
+            int c = currentChunk[MapUtil.Index3d(x - 1, y, z, chunksize + 2, chunksize + 2)];
+        	if (c != 0)
+            {
+            	left = true;
+            	wallscount++;
+            }
+            if (currentChunk[MapUtil.Index3d(x + 1, y, z, chunksize + 2, chunksize + 2)] != 0)
+            {
+                right = true;
+            	wallscount++;
+            }
+            if (wallscount != 1) {
+            	return -1;
+            } else {
+            	if (front) {
+            		return 0;
+            	}
+            	else if (back) {
+            		return 1;
+            	}
+            	else if (left) {
+            		return 2;
+            	}
+            	else {
+            		return 3;
+            	}
+            }
+        }
+        int getBestLadderInDirection(int x, int y, int z, byte[] currentChunk, int dir) {
+        	int dz = dir;
+        	int result = 0;
+        	try
+        	{
+	        	while (currentChunk[MapUtil.Index3d(x, y, z + dz, chunksize + 2, chunksize + 2)] == 152)
+	        	{
+	        		result = dz;
+	        		if (getBestLadderWall(x, y, z + dz, currentChunk) != -1) return result;
+	        		dz += dir;
+	        	}
+        	}
+        	catch { }
+        	return 0;
+        }
+   }
 }

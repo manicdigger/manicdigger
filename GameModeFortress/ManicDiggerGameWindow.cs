@@ -1079,6 +1079,7 @@ namespace ManicDigger
             int movedx = 0;
             int movedy = 0;
             bool moveup = false;
+            bool movedown = false;
             if (guistate == GuiState.Normal)
             {
                 if (GuiTyping == TypingState.None)
@@ -1122,6 +1123,10 @@ namespace ManicDigger
                     if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)])
                     {
                         moveup = true;
+                    }
+                    if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.ControlLeft)])
+                    {
+                        movedown = true;
                     }
                 }
             }
@@ -1186,6 +1191,7 @@ namespace ManicDigger
                 jumpstartacceleration = jumpstartacceleration,
                 movespeednow = movespeednow,
                 moveup = moveup,
+                movedown = movedown,
                 Swimming = Swimming,
                 wantsjump = wantsjump,
             };
@@ -2709,12 +2715,25 @@ namespace ManicDigger
                 {
                     return p.Y < WaterLevel;
                 }
+                return d_Data.IsFluid[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+            }
+        }
+        public bool WaterSwimming
+        {
+            get
+            {
+                var p = LocalPlayerPosition;
+                p += new Vector3(0, CharacterPhysics.characterheight, 0);
+                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                {
+                    return p.Y < WaterLevel;
+                }
                 return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
-        #endregion
+		#endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
-        Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
+        Color terraincolor { get { return WaterSwimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members
         public OpenTK.Input.KeyboardDevice keyboardstate
         {
