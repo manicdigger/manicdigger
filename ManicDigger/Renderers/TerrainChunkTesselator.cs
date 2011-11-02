@@ -52,7 +52,7 @@ namespace ManicDigger.Renderers
             mapsizez = d_MapStorage.MapSizeZ;
             started = true;
             istransparent = d_Data.IsTransparent;
-            iswater = d_Data.IsWater;
+            iswater = d_Data.IsFluid;
             isvalid = d_Data.IsValid;
             maxlight = d_Shadows.maxlight;
             maxlightInverse = 1f / maxlight;
