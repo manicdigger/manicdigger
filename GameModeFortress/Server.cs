@@ -46,7 +46,7 @@ namespace ManicDiggerServer
         [ProtoMember(10, IsRequired = false)]
         public int LastMonsterId;
     }
-    public class Server : ICurrentTime, IDropItem
+    public partial class Server : ICurrentTime, IDropItem
     {
         [Inject]
         public ServerMap d_Map;
@@ -540,9 +540,10 @@ namespace ManicDiggerServer
                     KillPlayer(k.Key);
                 }
             }
+            NotifyMap();
             foreach (var k in clients)
             {
-                k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
+                //k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
                 NotifyInventory(k.Key);
                 NotifyPlayerStats(k.Key);
                 if (config.Monsters)
@@ -551,7 +552,7 @@ namespace ManicDiggerServer
                 }
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
-            UnloadUnusedChunks();
+            //UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
                 ChunkSimulation();
@@ -659,7 +660,7 @@ namespace ManicDiggerServer
         Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
-            if (!clients[clientid].IsConnected)
+            if (clients[clientid].state == ClientStateOnServer.Connecting)
             {
                 return;
             }
@@ -697,6 +698,7 @@ namespace ManicDiggerServer
         */
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
+
         void ChunkSimulation()
         {
             foreach (var k in clients)
@@ -732,10 +734,12 @@ namespace ManicDiggerServer
                 }
             }
         }
+
         private void PopulateChunk(Vector3i p)
         {
             d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
         }
+
         private void ChunkUpdate(Vector3i p, long lastupdate)
         {
             if (config.Monsters)
@@ -1031,6 +1035,7 @@ namespace ManicDiggerServer
                 }
             return false;
         }
+        /*
         int CompressUnusedIteration = 0;
         private void UnloadUnusedChunks()
         {
@@ -1073,6 +1078,7 @@ namespace ManicDiggerServer
                 }
             }
         }
+        */
         private void DoSaveChunk(int x, int y, int z, Chunk c)
         {
             MemoryStream ms = new MemoryStream();
@@ -1081,6 +1087,7 @@ namespace ManicDiggerServer
         }
         int SEND_CHUNKS_PER_SECOND = 10;
         int SEND_MONSTER_UDAPTES_PER_SECOND = 3;
+        /*
         private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
         {
             Client c = clients[clientid];
@@ -1105,10 +1112,12 @@ namespace ManicDiggerServer
             }
             return tosend;
         }
+        */
         private void LoadChunk(Vector3i v)
         {
             d_Map.GetBlock(v.x, v.y, v.z);
         }
+        /*
         private int NotifyMapChunks(int clientid, int limit)
         {
             Client c = clients[clientid];
@@ -1162,8 +1171,35 @@ namespace ManicDiggerServer
                 };
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
             }
+         */
+            /*
+Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
+var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
+for (int i = 0; i < around.Count; i++)
+{
+    var v = around[i];
+    d_Map.GetBlock(v.x, v.y, v.z); //force load
+    if (i % 10 == 0)
+    {
+        SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
+    }
+}
+ChunkSimulation();
+
+List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
+int sent = 0;
+for (int i = 0; i < unknown.Count; i++)
+{
+    sent += NotifyMapChunks(clientid, 5);
+    SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
+    if (sent >= unknown.Count) { break; }
+}
+*/
+        /*
+            SendLevelFinalize(clientid);
             return sent;
         }
+        */
         const string invalidplayername = "invalid";
         private void NotifyInventory(int clientid)
         {
@@ -1447,6 +1483,13 @@ namespace ManicDiggerServer
         {
             int x = d_Map.MapSizeX / 2;
             int y = d_Map.MapSizeY / 2 - 1;//antivandal side
+            //for new ServerWorldManager
+            {
+                x = (x / chunksize) * chunksize;
+                y = (y / chunksize) * chunksize;
+                x += centerareasize / 2;
+                y += centerareasize / 2;
+            }
             //spawn position randomization disabled.
             //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
@@ -1549,7 +1592,7 @@ namespace ManicDiggerServer
                     string username1 = clients[clientid].playername;
                     SendMessageToAll(string.Format("Player {0} joins.", username1));
                     SendMessage(clientid, colorSuccess + config.WelcomeMessage);
-                    SendLevel(clientid);
+                    SendBlobs(clientid);
 
                     //.players.Players[clientid] = new Player() { Name = username };
                     //send new player spawn to all players
@@ -1601,8 +1644,8 @@ namespace ManicDiggerServer
                                 SendPacket(clientid, Serialize(pp));
                             }
                         }
-                    }                    
-                    clients[clientid].IsConnected = true;
+                    }
+                    clients[clientid].state = ClientStateOnServer.Loading;
                     NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
@@ -2818,7 +2861,7 @@ namespace ManicDiggerServer
             return files;
         }
         int BlobPartLength = 1024 * 4;
-        private void SendLevel(int clientid)
+        private void SendBlobs(int clientid)
         {
             SendLevelInitialize(clientid);
 
@@ -2841,29 +2884,6 @@ namespace ManicDiggerServer
             }
 
             SendLevelProgress(clientid, 0, "Generating world...");
-
-            Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
-            var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
-            for (int i = 0; i < around.Count; i++)
-            {
-                var v = around[i];
-                d_Map.GetBlock(v.x, v.y, v.z); //force load
-                if (i % 10 == 0)
-                {
-                    SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
-                }
-            }
-            ChunkSimulation();
-
-            List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
-            int sent = 0;
-            for (int i = 0; i < unknown.Count; i++)
-            {
-                sent += NotifyMapChunks(clientid, 5);
-                SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
-                if (sent >= unknown.Count) { break; }
-            }
-            SendLevelFinalize(clientid);
         }
         static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
         {
@@ -2961,8 +2981,16 @@ namespace ManicDiggerServer
             public string Name;
             public byte[] Data;
         }
+        public enum ClientStateOnServer
+        {
+            Connecting,
+            Loading,
+            Playing,
+        }
         public class Client
         {
+            public ClientStateOnServer state = ClientStateOnServer.Connecting;
+            public int maploadingsentchunks = 0;
             public ISocket socket;
             public List<byte> received = new List<byte>();
             public string playername = invalidplayername;
@@ -2982,7 +3010,6 @@ namespace ManicDiggerServer
             public bool IsAdmin { get { return Rank == Rank.Admin; } }
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
             public bool IsMod;
-            public bool IsConnected;
             public ManicDigger.Timer notifyMonstersTimer;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();

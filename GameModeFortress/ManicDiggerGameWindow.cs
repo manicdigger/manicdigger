@@ -808,7 +808,6 @@ namespace ManicDigger
         private void Connect()
         {
             LoadOptions();
-            d_Terrain.Start();
             MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
             MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
             Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
@@ -820,6 +819,7 @@ namespace ManicDigger
         }
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
+            d_Terrain.Start();
             materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
             OnNewMap();
@@ -3922,29 +3922,32 @@ namespace ManicDigger
                 case ServerPacketId.Chunk:
                     {
                         var p = packet.Chunk;
-                        byte[] decompressedchunk = d_Compression.Decompress(p.CompressedChunk);
-                        byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
+                        if (p.CompressedChunk != null)
                         {
-                            BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
-                            for (int zz = 0; zz < p.SizeZ; zz++)
+                            byte[] decompressedchunk = d_Compression.Decompress(p.CompressedChunk);
+                            byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
                             {
-                                for (int yy = 0; yy < p.SizeY; yy++)
+                                BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
+                                for (int zz = 0; zz < p.SizeZ; zz++)
                                 {
-                                    for (int xx = 0; xx < p.SizeX; xx++)
+                                    for (int yy = 0; yy < p.SizeY; yy++)
                                     {
-                                        receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                        for (int xx = 0; xx < p.SizeX; xx++)
+                                        {
+                                            receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                        }
                                     }
                                 }
                             }
-                        }
-                        d_Map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
-                        for (int xx = 0; xx < 2; xx++)
-                        {
-                            for (int yy = 0; yy < 2; yy++)
+                            d_Map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
+                            for (int xx = 0; xx < 2; xx++)
                             {
-                                for (int zz = 0; zz < 2; zz++)
+                                for (int yy = 0; yy < 2; yy++)
                                 {
-                                    d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                    for (int zz = 0; zz < 2; zz++)
+                                    {
+                                        d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                    }
                                 }
                             }
                         }
