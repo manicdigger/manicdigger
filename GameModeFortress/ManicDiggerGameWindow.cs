@@ -1815,9 +1815,7 @@ namespace ManicDigger
 			float posY = 100;
 			float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
 			
-			if (playerorientation-compassangle != 0)
-				compassvertex += (playerorientation-compassangle) / 50;
-			
+			compassvertex += (playerorientation-compassangle) / 50;
 			compassvertex *= .90f;
 			compassangle += compassvertex;
 			
