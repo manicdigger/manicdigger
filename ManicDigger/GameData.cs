@@ -194,7 +194,7 @@ namespace ManicDigger
                 LoadSound(mBuildSound, "BuildSound", i, id);
                 LoadSound(mCloneSound, "CloneSound", i, id);
                 mIsFluid[id] = csv.GetBool(i, "IsFluid");
-                mIsWater[id] = (id == 8 || id == 9);
+                mIsWater[id] = (id == 8 || id == 9 || (id >= 118 && id <= 125));
                 mIsTransparent[id] = csv.GetBool(i, "IsTransparent");
                 mIsTransparentFully[id] = csv.GetBool(i, "IsTransparentFully");
                 mIsEmptyForPhysics[id] = csv.GetBool(i, "IsEmptyForPhysics");
