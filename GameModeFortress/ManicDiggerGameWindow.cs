@@ -1786,10 +1786,10 @@ namespace ManicDigger
             }
         }
         
-        int compassid = -1;
-        int needleid = -1;
-        float compassangle = 0;
-        float compassvertex = 1;
+        private int compassid = -1;
+        private int needleid = -1;
+        private float compassangle = 0;
+        private float compassvertex = 1;
 
         bool CompassInActiveMaterials()
         {
@@ -1815,18 +1815,11 @@ namespace ManicDigger
 			float posY = 100;
 			float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
 			
-			if (playerorientation > compassangle)
-			{
-				compassvertex += (float)Math.Pow(playerorientation-compassangle, .2f) / 5;
-			}
-			else if (playerorientation < compassangle)
-			{
-				compassvertex -= (float)Math.Pow(compassangle-playerorientation, .2f) / 5;
-			}
+			if (playerorientation-compassangle != 0)
+				compassvertex += (playerorientation-compassangle) / 50;
 			
-			compassvertex *= .95f;
-			if (compassvertex < -.1f || compassvertex > .1f)
-				compassangle += compassvertex;
+			compassvertex *= .90f;
+			compassangle += compassvertex;
 			
 			Draw2dData[] todraw = new Draw2dData[1];
 			todraw[0].x1 = posX-size/2;
