@@ -700,6 +700,16 @@ namespace ManicDigger
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.E))
+                {
+                	if (currentAttackedBlock != null)
+                	{
+                		if (IsUsableBlock(d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z)))
+                		{
+                			SendSetBlock(new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z), BlockSetMode.Use, 0, ActiveMaterial);
+                		}
+                	}
+                }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
                     Respawn();
@@ -1442,7 +1452,7 @@ namespace ManicDigger
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
-
+            
             if (!leftpressedpicking)
             {
                 if (mouseleftclick)
@@ -1596,6 +1606,10 @@ namespace ManicDigger
                 }
                 return;
             }
+            var ntile = pick0.Current();
+            if(IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y))) {
+            	currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
+            }
             if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
             {
                 if (left && !fastclicking)
@@ -1676,16 +1690,6 @@ namespace ManicDigger
                                 if (sound != null && sound.Length > 0)
                                 {
                                     d_Audio.Play(sound[0]); //todo sound cycle
-                                }
-                            }
-                            //usable blocks
-                            if (left)
-                            {
-                                int blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                                if (IsUsableBlock(blocktype) && !IsWearingWeapon())
-                                {
-                                    OnPickUse(tile.Current());// new Vector3i((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y));
-                                    goto end;
                                 }
                             }
                             //normal attack
@@ -1782,6 +1786,9 @@ namespace ManicDigger
                 int blocktype = d_Map.GetBlock(x, y, z);
                 float health = GetCurrentBlockHealth(x, y, z);
                 float progress = health / d_Data.Strength[blocktype];
+                if (IsUsableBlock(blocktype)) {
+                	DrawEnemyHealthUseInfo(d_Data.Name[blocktype], progress, true);
+                }
                 DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
             }
         }
@@ -1833,9 +1840,20 @@ namespace ManicDigger
 
         void DrawEnemyHealthCommon(string name, float progress)
         {
-            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, 35, null, Color.Black);
-            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, 35, null, Color.Red);
+            DrawEnemyHealthUseInfo(name, 1, false);
+        }
+
+        void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
+        {
+        	int y = useInfo ? 55 : 35;
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, y, null, Color.Black);
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, Color.Red);
             d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 14).Width), 40, 14, null);
+            if (useInfo)
+            {
+            	name = "(press E to use)";
+            	d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 10).Width), 70, 10, null);
+            }
         }
 
         public const float RailHeight = 0.3f;
