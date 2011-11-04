@@ -2878,6 +2878,10 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == BlockSetMode.Create)
                 {
+                	if (activematerial == (int)TileTypeMinecraft.TNT)
+                	{
+                		if (z+1 == d_Map.MapSizeZ) return;
+                	}
                     if (activematerial == (int)TileTypeManicDigger.Cuboid)
                     {
                         ClearFillArea();
