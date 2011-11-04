@@ -25,6 +25,7 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)] //Forces element to appear
         public string AdminPassword { get; set; }   //Password for managing kicks and bans
         public bool AllowFreemove { get; set; }     //Allow character to fly?
+        public bool Flooding { get; set; }          //Allow flooding water?
         public bool Monsters { get; set; }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -34,11 +35,11 @@ namespace GameModeFortress
         [XmlArrayItem(ElementName = "IP")]
         public List<string> BannedIPs { get; set; }
         [XmlArrayItem(ElementName = "Admin")]
-        public List<string> Admins { get; set; }  // AutoAdmin
+        public List<string> Admins { get; set; }    // AutoAdmin
         [XmlArrayItem(ElementName = "Builder")]
-        public List<string> Builders { get; set; }  // AutoAdmin
+        public List<string> Builders { get; set; }  // AutoBuilder
         [XmlArrayItem(ElementName = "Mod")]
-        public List<string> Mods { get; set; }  // AutoAdmin
+        public List<string> Mods { get; set; }      // AutoMods
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
 
@@ -132,6 +133,7 @@ namespace GameModeFortress
             this.BuildPassword = "";
             this.AdminPassword = "";
             this.AllowFreemove = false;
+            this.Flooding = true;
             this.Monsters = true;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;

@@ -556,7 +556,8 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
-            UpdateWater();
+            if (config.Flooding)
+            	UpdateWater();
             tntTimer.Update(UpdateTnt);
         }
 
@@ -618,7 +619,7 @@ namespace ManicDiggerServer
 
         private void UpdateWater()
         {
-            d_Water.Update();
+        	d_Water.Update();
             try
             {
                 foreach (var v in d_Water.tosetwater)
