@@ -704,9 +704,21 @@ namespace ManicDigger
                 {
                 	if (currentAttackedBlock != null)
                 	{
-                		if (IsUsableBlock(d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z)))
+                		Vector3 pos = new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                		int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                		if (IsUsableBlock(blocktype))
                 		{
-                			SendSetBlock(new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z), BlockSetMode.Use, 0, ActiveMaterial);
+                			if (GameDataManicDigger.IsRailTile(blocktype))
+                			{
+                				player.playerposition.X = pos.X + .5f;
+                				player.playerposition.Y = pos.Z + 1;
+                				player.playerposition.Z = pos.Y + .5f;
+                				ENABLE_FREEMOVE = false;
+                			}
+                			else
+                			{
+                				SendSetBlock(pos, BlockSetMode.Use, 0, ActiveMaterial);
+                			}
                 		}
                 	}
                 }
@@ -1441,7 +1453,8 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeManicDigger.DoorTopClosed
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
                 || blocktype == (int)TileTypeManicDigger.DoorTopOpen
-                || blocktype == (int)TileTypeMinecraft.TNT;
+                || blocktype == (int)TileTypeMinecraft.TNT
+            	|| GameDataManicDigger.IsRailTile(blocktype);
         }
         bool IsWearingWeapon()
         {

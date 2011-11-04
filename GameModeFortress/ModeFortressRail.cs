@@ -79,7 +79,7 @@ namespace ManicDigger
                 Reverse();
             }
 
-            if (!wasvpressed && keyboardstate[GetKey(OpenTK.Input.Key.V)] && !railriding && !ENABLE_FREEMOVE)
+            if (!wasepressed && keyboardstate[GetKey(OpenTK.Input.Key.E)] && !railriding && !ENABLE_FREEMOVE)
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z, (int)LocalPlayerPosition.Y - 1);
@@ -89,8 +89,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    var railunderplayer = d_Data.Rail[
-                        d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
+                    var railunderplayer = d_Data.Rail[d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
                     CharacterHeight = minecartheight;
                     currentvehiclespeed = 0;
@@ -125,13 +124,13 @@ namespace ManicDigger
                     lastdirection = currentdirection;
                 }
             }
-            else if (!wasvpressed && keyboardstate[GetKey(OpenTK.Input.Key.V)] && railriding)
+            else if (!wasepressed && keyboardstate[GetKey(OpenTK.Input.Key.E)] && railriding)
             {
                 ExitVehicle();
                 LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
             wasqpressed = keyboardstate[GetKey(OpenTK.Input.Key.Q)];
-            wasvpressed = keyboardstate[GetKey(OpenTK.Input.Key.V)];
+            wasepressed = keyboardstate[GetKey(OpenTK.Input.Key.E)];
         }
         private void ExitVehicle()
         {
@@ -306,7 +305,7 @@ namespace ManicDigger
         }
         bool railriding = false;
         bool wasqpressed = false;
-        bool wasvpressed = false;
+        bool wasepressed = false;
         VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
         {
             if (turnright)
