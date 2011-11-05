@@ -145,7 +145,7 @@ namespace ManicDigger
                 // This needs to be cleaned up some other way.
                 try
                 {
-                    state.playerposition = WallSlide(state.playerposition, newposition);
+                    state.playerposition = WallSlide(state, state.playerposition, newposition);
                 }
                 catch
                 {
@@ -210,7 +210,7 @@ namespace ManicDigger
                 return c;
             }
         }
-        public Vector3 WallSlide(Vector3 oldposition, Vector3 newposition)
+        public Vector3 WallSlide(CharacterPhysicsState state, Vector3 oldposition, Vector3 newposition)
         {
             reachedceiling = false;
             reachedwall = false;
@@ -406,7 +406,7 @@ namespace ManicDigger
                 isonstairs = d_Map.GetBlock(playerpositioni.x, playerpositioni.y, playerpositioni.z) == d_Data.BlockIdSingleStairs;
             }
 			
-            if (isonstairs)
+            if (isonstairs && state.jumpacceleration == 0)
             {
                 playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
             }

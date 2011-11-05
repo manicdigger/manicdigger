@@ -599,7 +599,7 @@ namespace ManicDiggerServer
                                     && (block != (int)TileTypeMinecraft.Adminium)
                                     && !(d_Data.IsFluid[block]))
                                 {
-                                    SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
+                            		SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
                                 }
                             }
                         }
@@ -608,7 +608,7 @@ namespace ManicDiggerServer
             }
             foreach (var k in clients)
             {
-                SendSound(k.Key, "tnt.wav");
+            	SendSound(k.Key, "tnt.wav");
             }
         }
 
@@ -2031,13 +2031,13 @@ namespace ManicDiggerServer
 											break;
 										}
 									}
-									if (amount < 1)
+									if (amount < 0)
 									{
 										break;
 									}
-									else if (amount > 999)
+									else if (amount > 9999)
 									{
-										amount = 999;
+										amount = 9999;
 									}
 									for (int i = 0; i < d_Data.IsBuildable.Length; i++)
 									{
@@ -2065,7 +2065,14 @@ namespace ManicDiggerServer
 												    && currentItem.ItemClass == ItemClass.Block
 												    && currentItem.BlockId == i)
 												{
-													currentItem.BlockCount = amount;
+													if (amount == 0)
+													{
+														inventory.Items[new ProtoPoint(xx, yy)] = null;
+													}
+													else
+													{
+														currentItem.BlockCount = amount;
+													}
 													goto nextblock;
 												}
 											}
@@ -2392,7 +2399,7 @@ namespace ManicDiggerServer
             if (cmd.Mode == BlockSetMode.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                if (!(oldblock == 0 || d_Data.IsWater[oldblock]))
+                if (!(oldblock == 0 || d_Data.IsFluid[oldblock]))
                 {
                     return false;
                 }
