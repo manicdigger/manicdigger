@@ -572,6 +572,21 @@ namespace ManicDiggerServer
                     return;
                 }
                 Vector3i pos = tntStack.Pop();
+                int closeplayer = -1;
+                int closedistance = -1;
+	            foreach (var k in clients)
+	        	{
+	            	int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                	if (closedistance == -1 || distance < closedistance)
+                	{
+                   		closedistance = distance;
+                   		closeplayer = k.Key;
+                    }
+	            	if (distance < 255) {
+	            		SendSound(k.Key, "tnt.wav");
+	            	}
+	    		}
+	            Inventory inventory = GetPlayerInventory(clients[closeplayer].playername).Inventory;
                 for (int xx = 0; xx < tntRange; xx++)
                 {
                     for (int yy = 0; yy < tntRange; yy++)
@@ -600,15 +615,22 @@ namespace ManicDiggerServer
                                     && !(d_Data.IsFluid[block]))
                                 {
                             		SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
+                            		
+                            		// chance to get some of destruced blocks
+                            		if (rnd.NextDouble() < .20f)
+                            		{
+                            			var item = new Item();
+						                item.ItemClass = ItemClass.Block;
+						                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+                            			GetInventoryUtil(inventory).GrabItem(item, 0);
+                            		}
                                 }
                             }
                         }
                     }
                 }
-            }
-            foreach (var k in clients)
-            {
-            	SendSound(k.Key, "tnt.wav");
+                clients[closeplayer].IsInventoryDirty = true;
+                NotifyInventory(closeplayer);
             }
         }
 
