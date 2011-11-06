@@ -1013,11 +1013,11 @@ namespace ManicDiggerServer
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
             }
         }
-        // floowers will die when they have not light, dirt or grass, or 25% chance happens
+        // floowers will die when they have not light, dirt or grass , or 2% chance happens
         private void BlockTickFlower(Vector3i pos)
         {
             if (!MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z)) return;
-            if (rnd.NextDouble() < 0.25) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (rnd.NextDouble() < 0.02) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
             if (IsShadow(pos.x, pos.y, pos.z - 1))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
