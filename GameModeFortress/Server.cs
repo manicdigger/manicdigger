@@ -127,7 +127,8 @@ namespace ManicDiggerServer
             d_Generator.SetSeed(save.Seed);
             Seed = save.Seed;
             d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
-            this.Inventory = save.Inventory;
+            if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>();
+            else this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
             this.LastMonsterId = save.LastMonsterId;
@@ -139,7 +140,10 @@ namespace ManicDiggerServer
         {
             ManicDiggerSave save = new ManicDiggerSave();
             SaveAllLoadedChunks();
-            save.Inventory = Inventory;
+            if (!config.IsCreative)
+            {
+            	save.Inventory = Inventory;
+            }
             save.PlayerStats = PlayerStats;
             save.Seed = Seed;
             save.SimulationCurrentFrame = simulationcurrentframe;
@@ -1425,8 +1429,21 @@ namespace ManicDiggerServer
             int y = 0;
             for (int i = 0; i < d_Data.StartInventoryAmount.Length; i++)
             {
-                int amount = d_Data.StartInventoryAmount[i];
-                if (amount > 0)
+            	int amount = d_Data.StartInventoryAmount[i];
+            	if (config.IsCreative)
+            	{
+            		if (amount > 0 || d_Data.IsBuildable[i])
+            		{
+            			inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
+                    	x++;
+                    	if (x >= GetInventoryUtil(inv).CellCount.X)
+                    	{
+                        	x = 0;
+                        	y++;
+                    	}
+            		}
+            	}
+                else if (amount > 0)
                 {
                     inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = amount });
                     x++;
