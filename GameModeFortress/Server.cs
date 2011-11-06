@@ -108,7 +108,15 @@ namespace ManicDiggerServer
             if (globaldata == null)
             {
                 //no savegame
-                Seed = new Random().Next();
+                d_Generator.treeCount = config.Generator.TreeCount;
+                if (config.Generator.RandomSeed)
+                {
+                	Seed = new Random().Next();
+                }
+                else
+                {
+                	Seed = config.Generator.Seed;
+                }
                 d_Generator.SetSeed(Seed);
                 MemoryStream ms = new MemoryStream();
                 SaveGame(ms);

@@ -242,7 +242,7 @@ namespace ManicDigger.MapTools.Generators
             treenoise.Seed = (Seed + 2);
             treenoise.OctaveCount = (6);
             treenoise.Frequency = (1.0 / 180.0);
-            treenoise.Lacunarity = (2.0);
+            treenoise.Lacunarity = ((treeCount/20.0)*(treeCount/20.0) * 2.0);
 
             //###### END TREE GEN #######
             /*
@@ -360,10 +360,11 @@ namespace ManicDigger.MapTools.Generators
                 PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, (int)count);
             }
             //random trees
-            PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, 30);
+            PopulationTools.MakeSmallTrees(map, x, y, z, this.ChunkSize, _rnd, treeCount + 10 - (10 - treeCount / 10));
 
             PopulationTools.MakeCaves(map, x, y, z, this.ChunkSize, _rnd, this.EnableCaves, gravellength, goldorelength, ironorelength, coalorelength, dirtlength, silverlength);
         }
+        public int treeCount { get; set; }
         public int Seed { get; set; }
         public void SetSeed(int seed)
         {

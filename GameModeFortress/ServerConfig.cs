@@ -42,6 +42,8 @@ namespace GameModeFortress
         public List<string> Mods { get; set; }      // AutoMods
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
+        [XmlElement(ElementName="MapGenerator")]
+        public MapGeneratorConfig Generator { get; set; }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -144,6 +146,7 @@ namespace GameModeFortress
             this.Builders = new List<string>();
             this.Mods = new List<string>();
             this.Areas = new List<AreaConfig>();
+            this.Generator = new MapGeneratorConfig();
         }
     }
 
@@ -240,5 +243,32 @@ namespace GameModeFortress
 
             return false;
         }
+    }
+    
+    
+    public class MapGeneratorConfig
+    {
+    	int treeCount;
+    	
+    	public MapGeneratorConfig()
+    	{
+    		this.treeCount = 20;
+    		this.RandomSeed = true;
+    		this.Seed = 0;
+    	}
+    	
+    	public bool RandomSeed { get; set; }
+    	public int Seed { get; set; }
+    	
+    	public int TreeCount
+    	{
+    		get { return this.treeCount; }
+    		set
+    		{
+    			if (value < 0) this.treeCount = 0;
+    			else if (value > 100) this.treeCount = 100;
+    			else this.treeCount = value;
+    		}
+    	}
     }
 }
