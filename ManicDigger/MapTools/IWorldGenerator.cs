@@ -22,6 +22,7 @@ namespace ManicDigger.MapTools
         /// </summary>
         /// <remarks>Affects the way how chunks are populated.</remarks>
         int ChunkSize { get; set; }
+        int treeCount { get; set; }
         /// <summary>
         /// Gets the seed that is used by this generator.
         /// </summary>

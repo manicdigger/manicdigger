@@ -108,7 +108,15 @@ namespace ManicDiggerServer
             if (globaldata == null)
             {
                 //no savegame
-                Seed = new Random().Next();
+                d_Generator.treeCount = config.Generator.TreeCount;
+                if (config.Generator.RandomSeed)
+                {
+                	Seed = new Random().Next();
+                }
+                else
+                {
+                	Seed = config.Generator.Seed;
+                }
                 d_Generator.SetSeed(Seed);
                 MemoryStream ms = new MemoryStream();
                 SaveGame(ms);
@@ -119,7 +127,8 @@ namespace ManicDiggerServer
             d_Generator.SetSeed(save.Seed);
             Seed = save.Seed;
             d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
-            this.Inventory = save.Inventory;
+            if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>();
+            else this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
             this.LastMonsterId = save.LastMonsterId;
@@ -131,7 +140,10 @@ namespace ManicDiggerServer
         {
             ManicDiggerSave save = new ManicDiggerSave();
             SaveAllLoadedChunks();
-            save.Inventory = Inventory;
+            if (!config.IsCreative)
+            {
+            	save.Inventory = Inventory;
+            }
             save.PlayerStats = PlayerStats;
             save.Seed = Seed;
             save.SimulationCurrentFrame = simulationcurrentframe;
@@ -557,7 +569,8 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
-            UpdateWater();
+            if (config.Flooding)
+            	UpdateWater();
             tntTimer.Update(UpdateTnt);
         }
 
@@ -572,6 +585,21 @@ namespace ManicDiggerServer
                     return;
                 }
                 Vector3i pos = tntStack.Pop();
+                int closeplayer = -1;
+                int closedistance = -1;
+	            foreach (var k in clients)
+	        	{
+	            	int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                	if (closedistance == -1 || distance < closedistance)
+                	{
+                   		closedistance = distance;
+                   		closeplayer = k.Key;
+                    }
+	            	if (distance < 255) {
+	            		SendSound(k.Key, "tnt.wav");
+	            	}
+	    		}
+	            Inventory inventory = GetPlayerInventory(clients[closeplayer].playername).Inventory;
                 for (int xx = 0; xx < tntRange; xx++)
                 {
                     for (int yy = 0; yy < tntRange; yy++)
@@ -597,18 +625,25 @@ namespace ManicDiggerServer
                             {
                                 if ((block != 0)
                                     && (block != (int)TileTypeMinecraft.Adminium)
-                                    && !(d_Data.IsWater[block]))
+                                    && !(d_Data.IsFluid[block]))
                                 {
-                                    SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
+                            		SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
+                            		
+                            		// chance to get some of destruced blocks
+                            		if (rnd.NextDouble() < .20f)
+                            		{
+                            			var item = new Item();
+						                item.ItemClass = ItemClass.Block;
+						                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+                            			GetInventoryUtil(inventory).GrabItem(item, 0);
+                            		}
                                 }
                             }
                         }
                     }
                 }
-            }
-            foreach (var k in clients)
-            {
-                SendSound(k.Key, "tnt.wav");
+                clients[closeplayer].IsInventoryDirty = true;
+                NotifyInventory(closeplayer);
             }
         }
 
@@ -619,7 +654,7 @@ namespace ManicDiggerServer
 
         private void UpdateWater()
         {
-            d_Water.Update();
+        	d_Water.Update();
             try
             {
                 foreach (var v in d_Water.tosetwater)
@@ -824,7 +859,7 @@ namespace ManicDiggerServer
                 if (d_Map.GetBlock(px, py, pz) == 0
                     && d_Map.GetBlock(px, py, pz + 1) == 0
                     && d_Map.GetBlock(px, py, pz - 1) != 0
-                    && (!d_Data.IsWater[d_Map.GetBlock(px, py, pz - 1)]))
+                    && (!d_Data.IsFluid[d_Map.GetBlock(px, py, pz - 1)]))
                 {
                     chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), MonsterType = type });
                 }
@@ -994,11 +1029,11 @@ namespace ManicDiggerServer
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
             }
         }
-        // floowers will die when they have not light, dirt or grass, or 25% chance happens
+        // floowers will die when they have not light, dirt or grass , or 2% chance happens
         private void BlockTickFlower(Vector3i pos)
         {
             if (!MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z)) return;
-            if (rnd.NextDouble() < 0.25) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (rnd.NextDouble() < 0.02) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
             if (IsShadow(pos.x, pos.y, pos.z - 1))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
@@ -1430,8 +1465,21 @@ for (int i = 0; i < unknown.Count; i++)
             int y = 0;
             for (int i = 0; i < d_Data.StartInventoryAmount.Length; i++)
             {
-                int amount = d_Data.StartInventoryAmount[i];
-                if (amount > 0)
+            	int amount = d_Data.StartInventoryAmount[i];
+            	if (config.IsCreative)
+            	{
+            		if (amount > 0 || d_Data.IsBuildable[i])
+            		{
+            			inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
+                    	x++;
+                    	if (x >= GetInventoryUtil(inv).CellCount.X)
+                    	{
+                        	x = 0;
+                        	y++;
+                    	}
+            		}
+            	}
+                else if (amount > 0)
                 {
                     inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = amount });
                     x++;
@@ -2073,13 +2121,13 @@ for (int i = 0; i < unknown.Count; i++)
 											break;
 										}
 									}
-									if (amount < 1)
+									if (amount < 0)
 									{
 										break;
 									}
-									else if (amount > 999)
+									else if (amount > 9999)
 									{
-										amount = 999;
+										amount = 9999;
 									}
 									for (int i = 0; i < d_Data.IsBuildable.Length; i++)
 									{
@@ -2107,7 +2155,14 @@ for (int i = 0; i < unknown.Count; i++)
 												    && currentItem.ItemClass == ItemClass.Block
 												    && currentItem.BlockId == i)
 												{
-													currentItem.BlockCount = amount;
+													if (amount == 0)
+													{
+														inventory.Items[new ProtoPoint(xx, yy)] = null;
+													}
+													else
+													{
+														currentItem.BlockCount = amount;
+													}
 													goto nextblock;
 												}
 											}
@@ -2434,7 +2489,7 @@ for (int i = 0; i < unknown.Count; i++)
             if (cmd.Mode == BlockSetMode.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                if (!(oldblock == 0 || d_Data.IsWater[oldblock]))
+                if (!(oldblock == 0 || d_Data.IsFluid[oldblock]))
                 {
                     return false;
                 }

@@ -25,6 +25,7 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)] //Forces element to appear
         public string AdminPassword { get; set; }   //Password for managing kicks and bans
         public bool AllowFreemove { get; set; }     //Allow character to fly?
+        public bool Flooding { get; set; }          //Allow flooding water?
         public bool Monsters { get; set; }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -34,13 +35,15 @@ namespace GameModeFortress
         [XmlArrayItem(ElementName = "IP")]
         public List<string> BannedIPs { get; set; }
         [XmlArrayItem(ElementName = "Admin")]
-        public List<string> Admins { get; set; }  // AutoAdmin
+        public List<string> Admins { get; set; }    // AutoAdmin
         [XmlArrayItem(ElementName = "Builder")]
-        public List<string> Builders { get; set; }  // AutoAdmin
+        public List<string> Builders { get; set; }  // AutoBuilder
         [XmlArrayItem(ElementName = "Mod")]
-        public List<string> Mods { get; set; }  // AutoAdmin
+        public List<string> Mods { get; set; }      // AutoMods
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
+        [XmlElement(ElementName="MapGenerator")]
+        public MapGeneratorConfig Generator { get; set; }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -132,6 +135,7 @@ namespace GameModeFortress
             this.BuildPassword = "";
             this.AdminPassword = "";
             this.AllowFreemove = false;
+            this.Flooding = true;
             this.Monsters = true;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;
@@ -142,6 +146,7 @@ namespace GameModeFortress
             this.Builders = new List<string>();
             this.Mods = new List<string>();
             this.Areas = new List<AreaConfig>();
+            this.Generator = new MapGeneratorConfig();
         }
     }
 
@@ -238,5 +243,32 @@ namespace GameModeFortress
 
             return false;
         }
+    }
+    
+    
+    public class MapGeneratorConfig
+    {
+    	int treeCount;
+    	
+    	public MapGeneratorConfig()
+    	{
+    		this.treeCount = 20;
+    		this.RandomSeed = true;
+    		this.Seed = 0;
+    	}
+    	
+    	public bool RandomSeed { get; set; }
+    	public int Seed { get; set; }
+    	
+    	public int TreeCount
+    	{
+    		get { return this.treeCount; }
+    		set
+    		{
+    			if (value < 0) this.treeCount = 0;
+    			else if (value > 100) this.treeCount = 100;
+    			else this.treeCount = value;
+    		}
+    	}
     }
 }

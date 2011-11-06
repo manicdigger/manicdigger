@@ -700,6 +700,28 @@ namespace ManicDigger
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.E))
+                {
+                	if (currentAttackedBlock != null)
+                	{
+                		Vector3 pos = new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                		int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                		if (IsUsableBlock(blocktype))
+                		{
+                			if (GameDataManicDigger.IsRailTile(blocktype))
+                			{
+                				player.playerposition.X = pos.X + .5f;
+                				player.playerposition.Y = pos.Z + 1;
+                				player.playerposition.Z = pos.Y + .5f;
+                				ENABLE_FREEMOVE = false;
+                			}
+                			else
+                			{
+                				SendSetBlock(pos, BlockSetMode.Use, 0, ActiveMaterial);
+                			}
+                		}
+                	}
+                }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
                     Respawn();
@@ -1079,6 +1101,7 @@ namespace ManicDigger
             int movedx = 0;
             int movedy = 0;
             bool moveup = false;
+            bool movedown = false;
             if (guistate == GuiState.Normal)
             {
                 if (GuiTyping == TypingState.None)
@@ -1122,6 +1145,10 @@ namespace ManicDigger
                     if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)])
                     {
                         moveup = true;
+                    }
+                    if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.ControlLeft)])
+                    {
+                        movedown = true;
                     }
                 }
             }
@@ -1186,6 +1213,7 @@ namespace ManicDigger
                 jumpstartacceleration = jumpstartacceleration,
                 movespeednow = movespeednow,
                 moveup = moveup,
+                movedown = movedown,
                 Swimming = Swimming,
                 wantsjump = wantsjump,
             };
@@ -1406,6 +1434,7 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
+            	|| d_Map.GetBlock(x, y, z) == 117
                 || d_Data.IsWater[d_Map.GetBlock(x, y, z)];
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
@@ -1425,7 +1454,8 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeManicDigger.DoorTopClosed
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
                 || blocktype == (int)TileTypeManicDigger.DoorTopOpen
-                || blocktype == (int)TileTypeMinecraft.TNT;
+                || blocktype == (int)TileTypeMinecraft.TNT
+            	|| GameDataManicDigger.IsRailTile(blocktype);
         }
         bool IsWearingWeapon()
         {
@@ -1436,7 +1466,7 @@ namespace ManicDigger
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
-
+            
             if (!leftpressedpicking)
             {
                 if (mouseleftclick)
@@ -1590,6 +1620,10 @@ namespace ManicDigger
                 }
                 return;
             }
+            var ntile = pick0.Current();
+            if(IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y))) {
+            	currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
+            }
             if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
             {
                 if (left && !fastclicking)
@@ -1670,16 +1704,6 @@ namespace ManicDigger
                                 if (sound != null && sound.Length > 0)
                                 {
                                     d_Audio.Play(sound[0]); //todo sound cycle
-                                }
-                            }
-                            //usable blocks
-                            if (left)
-                            {
-                                int blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                                if (IsUsableBlock(blocktype) && !IsWearingWeapon())
-                                {
-                                    OnPickUse(tile.Current());// new Vector3i((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y));
-                                    goto end;
                                 }
                             }
                             //normal attack
@@ -1776,14 +1800,17 @@ namespace ManicDigger
                 int blocktype = d_Map.GetBlock(x, y, z);
                 float health = GetCurrentBlockHealth(x, y, z);
                 float progress = health / d_Data.Strength[blocktype];
+                if (IsUsableBlock(blocktype)) {
+                	DrawEnemyHealthUseInfo(d_Data.Name[blocktype], progress, true);
+                }
                 DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
             }
         }
         
-        int compassid = -1;
-        int needleid = -1;
-        float compassangle = 0;
-        float compassvertex = 1;
+        private int compassid = -1;
+        private int needleid = -1;
+        private float compassangle = 0;
+        private float compassvertex = 1;
 
         bool CompassInActiveMaterials()
         {
@@ -1809,18 +1836,9 @@ namespace ManicDigger
 			float posY = 100;
 			float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
 			
-			if (playerorientation > compassangle)
-			{
-				compassvertex += (float)Math.Pow(playerorientation-compassangle, .2f) / 5;
-			}
-			else if (playerorientation < compassangle)
-			{
-				compassvertex -= (float)Math.Pow(compassangle-playerorientation, .2f) / 5;
-			}
-			
-			compassvertex *= .95f;
-			if (compassvertex < -.1f || compassvertex > .1f)
-				compassangle += compassvertex;
+			compassvertex += (playerorientation-compassangle) / 50;
+			compassvertex *= .90f;
+			compassangle += compassvertex;
 			
 			Draw2dData[] todraw = new Draw2dData[1];
 			todraw[0].x1 = posX-size/2;
@@ -1836,9 +1854,20 @@ namespace ManicDigger
 
         void DrawEnemyHealthCommon(string name, float progress)
         {
-            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, 35, null, Color.Black);
-            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, 35, null, Color.Red);
+            DrawEnemyHealthUseInfo(name, 1, false);
+        }
+
+        void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
+        {
+        	int y = useInfo ? 55 : 35;
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, y, null, Color.Black);
+            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, Color.Red);
             d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 14).Width), 40, 14, null);
+            if (useInfo)
+            {
+            	name = "(press E to use)";
+            	d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 10).Width), 70, 10, null);
+            }
         }
 
         public const float RailHeight = 0.3f;
@@ -2709,12 +2738,25 @@ namespace ManicDigger
                 {
                     return p.Y < WaterLevel;
                 }
+                return d_Data.IsFluid[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+            }
+        }
+        public bool WaterSwimming
+        {
+            get
+            {
+                var p = LocalPlayerPosition;
+                p += new Vector3(0, CharacterPhysics.characterheight, 0);
+                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                {
+                    return p.Y < WaterLevel;
+                }
                 return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
-        #endregion
+		#endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
-        Color terraincolor { get { return Swimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
+        Color terraincolor { get { return WaterSwimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members
         public OpenTK.Input.KeyboardDevice keyboardstate
         {
@@ -2837,6 +2879,10 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == BlockSetMode.Create)
                 {
+                	if (activematerial == (int)TileTypeMinecraft.TNT)
+                	{
+                		if (z+1 == d_Map.MapSizeZ) return;
+                	}
                     if (activematerial == (int)TileTypeManicDigger.Cuboid)
                     {
                         ClearFillArea();

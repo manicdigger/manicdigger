@@ -13,6 +13,7 @@ namespace ManicDigger
     public interface IGameDataPhysics
     {
         bool[] IsEmptyForPhysics { get; }
+        bool[] IsFluid { get; }
         bool[] IsWater { get; }
         int BlockIdSingleStairs { get; }
     }
@@ -57,6 +58,7 @@ namespace ManicDigger
         int BlockIdTorch { get; }
         int BlockIdAdminium { get; }
         int BlockIdCompass { get; }
+        int BlockIdLadder { get; }
     }
     public class SpecialBlockId
     {
@@ -191,7 +193,8 @@ namespace ManicDigger
                 LoadSound(mBreakSound, "BreakSound", i, id);
                 LoadSound(mBuildSound, "BuildSound", i, id);
                 LoadSound(mCloneSound, "CloneSound", i, id);
-                mIsWater[id] = csv.GetBool(i, "IsFluid");
+                mIsFluid[id] = csv.GetBool(i, "IsFluid");
+                mIsWater[id] = (id == 8 || id == 9 || (id >= 118 && id <= 125)) && mIsFluid[id];
                 mIsTransparent[id] = csv.GetBool(i, "IsTransparent");
                 mIsTransparentFully[id] = csv.GetBool(i, "IsTransparentFully");
                 mIsEmptyForPhysics[id] = csv.GetBool(i, "IsEmptyForPhysics");
@@ -218,6 +221,7 @@ namespace ManicDigger
         Csv csv;
         private void Initialize(int count)
         {
+        	mIsFluid = new bool[count];
             mIsWater = new bool[count];
             mIsTransparent = new bool[count];
             mIsValid = new bool[count];
@@ -267,6 +271,7 @@ namespace ManicDigger
             mIsEmptyForPhysics[0] = true;
         }
 
+        public bool[] IsFluid { get { return mIsFluid; } }
         public bool[] IsWater { get { return mIsWater; } }
         public bool[] IsTransparent { get { return mIsTransparent; } }
         public bool[] IsValid { get { return mIsValid; } }
@@ -307,7 +312,9 @@ namespace ManicDigger
         public int BlockIdTorch { get { return mBlockIdTorch; } set { mBlockIdTorch = value; } }
         public int BlockIdAdminium { get { return mBlockIdAdminium; } set { mBlockIdAdminium = value; } }
         public int BlockIdCompass { get { return mBlockIdCompass; } set { mBlockIdCompass = value; } }
+        public int BlockIdLadder { get { return mBlockIdLadder; } set { mBlockIdLadder = value; } }
 
+        private bool[] mIsFluid;
         private bool[] mIsWater;
         private bool[] mIsTransparent;
         private bool[] mIsValid;
@@ -347,6 +354,7 @@ namespace ManicDigger
         private int mBlockIdTorch = 50;
         private int mBlockIdAdminium = 7;
         private int mBlockIdCompass = 151;
+        private int mBlockIdLadder = 152;
     }
 
     public class GameDataMonsters
