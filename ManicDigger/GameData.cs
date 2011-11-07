@@ -161,6 +161,7 @@ namespace ManicDigger
         }
         public void Update()
         {
+        	if (csv == null) return;
             for (int i = 1; i < csv.data.Length; i++)
             {
                 string id_ = csv.Get(i, "Id");
