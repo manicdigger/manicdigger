@@ -299,9 +299,10 @@ namespace ManicDigger
             }
         }
 
-        public int? FreeHand()
+        public int? FreeHand(int ActiveMaterial)
         {
             int? freehand = null;
+            if (d_Inventory.RightHand[ActiveMaterial] == null) return ActiveMaterial;
             for (int i = 0; i < d_Inventory.RightHand.Length; i++)
             {
                 if (d_Inventory.RightHand[i] == null)

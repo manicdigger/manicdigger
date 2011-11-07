@@ -1626,9 +1626,13 @@ namespace ManicDigger
             }
             if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
             {
+            	if (left && d_Inventory.RightHand[ActiveMaterial] == null) {
+            		PacketClientHealth p = new PacketClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
+	    			SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.MonsterHit, Health = p }));
+	            }
                 if (left && !fastclicking)
                 {
-                    //todo animation
+                	//todo animation
                     fastclicking = false;
                 }
                 if (left || right || middle)
@@ -1655,7 +1659,7 @@ namespace ManicDigger
                                     goto done;
                                 }
                             }
-                            int? freehand = d_InventoryUtil.FreeHand();
+                            int? freehand = d_InventoryUtil.FreeHand(ActiveMaterial);
                             //find this block in inventory.
                             foreach (var k in d_Inventory.Items)
                             {
@@ -2529,16 +2533,21 @@ namespace ManicDigger
                         GL.Translate(pos.X, pos.Y + 1f, pos.Z);
                         if (k.Value.Type == PlayerType.Monster)
                         {
-                            GL.Translate(0, 1f, 0);
+                        	GL.Translate(0, 1f, 0);
                         }
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                         GL.Scale(0.02, 0.02, 0.02);
-                        GL.Translate(-d_The3d.TextSize(name, 14).Width / 2, 0, 0);
 
                         //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
                         //Todo: Can't change text color because text has outline anyway.
-                        d_The3d.Draw2dText(name, 0, 0, 14, Color.White, true);
+                        if (k.Value.Type == PlayerType.Monster)
+                        {
+                        	d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
+                        	d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -25, -10, 50 * (k.Value.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
+                        }
+                        d_The3d.Draw2dText(name, -d_The3d.TextSize(name, 14).Width / 2, 0, 14, Color.White, true);
+//                        GL.Translate(0, 1, 0);
                         GL.PopMatrix();
                     }
                 }
@@ -3926,6 +3935,7 @@ namespace ManicDigger
                             }
                             ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
                             players[id].Type = PlayerType.Monster;
+                            players[id].Health = k.Health;
                             players[id].MonsterType = k.MonsterType;
                             updatedMonsters[id] = 1;
                         }

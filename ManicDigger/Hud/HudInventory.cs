@@ -272,7 +272,7 @@ namespace ManicDigger.Hud
                     {
                         int x = (selected.X) * CellDrawSize + CellsStart.X;
                         int y = (selected.Y) * CellDrawSize + CellsStart.Y;
-                        DrawItemInfo(new Point(x, y), item);
+                        DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), item);
                     }
                 }
             }
@@ -282,7 +282,7 @@ namespace ManicDigger.Hud
                 Item itemAtWearPlace = inventoryUtil.ItemAtWearPlace(selected, ActiveMaterial.ActiveMaterial);
                 if (itemAtWearPlace != null)
                 {
-                    DrawItemInfo(Offset(InventoryStart, wearPlaceStart[(int)selected]), itemAtWearPlace);
+                    DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), itemAtWearPlace);
                 }
             }
             if (SelectedMaterialSelectorSlot(scaledMouse) != null)
@@ -291,8 +291,7 @@ namespace ManicDigger.Hud
                 Item item = inventory.RightHand[selected];
                 if (item != null)
                 {
-                    DrawItemInfo(new Point(MaterialSelectorStart.X + ActiveMaterialCellSize * selected,
-                        MaterialSelectorStart.Y), item);
+                    DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), item);
                 }
             }
 
@@ -391,12 +390,19 @@ namespace ManicDigger.Hud
 
         public void DrawItemInfo(Point screenpos, Item item)
         {
-            if (screenpos.X < 150 + 20) { screenpos.X = 150 + 20; }
-            if (screenpos.Y < 100 + 20) { screenpos.Y = 100 + 20; }
-            if (screenpos.X > viewport_size.Width - (150 + 20)) { screenpos.X = viewport_size.Width - (150 + 20); }
-            if (screenpos.Y > viewport_size.Height - (100 + 20)) { screenpos.Y = viewport_size.Height - (100 + 20); }
-            the3d.Draw2dTexture(the3d.WhiteTexture(), screenpos.X - 150, screenpos.Y - 100, 250, 100, null, Color.FromArgb(0, Color.Gray));
-            the3d.Draw2dText(dataItems.ItemInfo(item), screenpos.X - 150, screenpos.Y - 100, 10, null);
+        	Point size = dataItems.ItemSize(item);
+        	float tw = the3d.TextSize(dataItems.ItemInfo(item), 11.5f).Width + 6;
+        	float th = the3d.TextSize(dataItems.ItemInfo(item), 11.5f).Height + 4;
+        	float w = tw + CellDrawSize * size.X;
+        	float h = th < CellDrawSize * size.Y ? CellDrawSize * size.Y + 4 : th;
+        	if (screenpos.X < w + 20) { screenpos.X = (int)w + 20; }
+            if (screenpos.Y < h + 20) { screenpos.Y = (int)h + 20; }
+            if (screenpos.X > viewport_size.Width - (w + 20)) { screenpos.X = viewport_size.Width - ((int)w + 20); }
+            if (screenpos.Y > viewport_size.Height - (h + 20)) { screenpos.Y = viewport_size.Height - ((int)h + 20); }
+            the3d.Draw2dTexture(the3d.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(0, Color.Black));
+            the3d.Draw2dTexture(the3d.WhiteTexture(), screenpos.X - w+2, screenpos.Y - h+2, w-4, h-4, null, Color.FromArgb(0, Color.DimGray));
+            the3d.Draw2dText(dataItems.ItemInfo(item), screenpos.X - tw + 4, screenpos.Y - h + 2, 10, null);
+            DrawItem(new Point(screenpos.X - (int)w + 2, screenpos.Y - (int)h + 2), new Item { BlockId = item.BlockId }, null);
         }
         static Point Offset(Point a, Point b)
         {
