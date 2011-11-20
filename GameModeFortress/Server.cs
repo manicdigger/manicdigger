@@ -1693,7 +1693,7 @@ for (int i = 0; i < unknown.Count; i++)
                             }
                         }
                     }
-                    clients[clientid].state = ClientStateOnServer.Loading;
+                    clients[clientid].state = ClientStateOnServer.LoadingGenerating;
                     NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
@@ -3039,7 +3039,8 @@ for (int i = 0; i < unknown.Count; i++)
         public enum ClientStateOnServer
         {
             Connecting,
-            Loading,
+            LoadingGenerating,
+            LoadingSending,
             Playing,
         }
         public class Client

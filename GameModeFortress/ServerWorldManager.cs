@@ -26,16 +26,16 @@ namespace ManicDiggerServer
                 }
                 var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
                 Vector3i playerpos = PlayerBlockPosition(k.Value);
-                //a) if player is loading, then first load all, and then send all
+                //a) if player is loading, then first generate all (LoadingGenerating), and then send all (LoadingSending)
                 //b) if player is playing, then load 1, send 1.
-                if (k.Value.state == ClientStateOnServer.Loading)
+                if (k.Value.state == ClientStateOnServer.LoadingGenerating)
                 {
                     //load
                     for (int i = 0; i < chunksAround.Count; i++)
                     {
                         Vector3i v = chunksAround[i];
                         LoadChunk(v);
-                        if (k.Value.state == ClientStateOnServer.Loading)
+                        if (k.Value.state == ClientStateOnServer.LoadingGenerating)
                         {
                             var a = PlayerArea(k.Key);
                             if (i % 10 == 0)
@@ -48,6 +48,10 @@ namespace ManicDiggerServer
                             return;
                         }
                     }
+                    k.Value.state = ClientStateOnServer.LoadingSending;
+                }
+                else if (k.Value.state == ClientStateOnServer.LoadingSending)
+                {
                     //send
                     for (int i = 0; i < chunksAround.Count; i++)
                     {
@@ -56,10 +60,7 @@ namespace ManicDiggerServer
                         if (!k.Value.chunksseen.ContainsKey(v))
                         {
                             SendChunk(k.Key, v);
-                            if (k.Value.state == ClientStateOnServer.Loading)
-                            {
-                                SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), "Downloading map...");
-                            }
+                            SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), "Downloading map...");
                             if (s.ElapsedMilliseconds > 10)
                             {
                                 return;
@@ -68,16 +69,13 @@ namespace ManicDiggerServer
                     }
                     //Finished map loading for a connecting player.
                     bool sent_all_in_range = (k.Value.maploadingsentchunks == chunksAround.Count);
-                    if (clients[k.Key].state == ClientStateOnServer.Loading)
+                    if (sent_all_in_range)
                     {
-                        if (sent_all_in_range)
-                        {
-                            SendLevelFinalize(k.Key);
-                            clients[k.Key].state = ClientStateOnServer.Playing;
-                        }
+                        SendLevelFinalize(k.Key);
+                        clients[k.Key].state = ClientStateOnServer.Playing;
                     }
                 }
-                else
+                else //b)
                 {
                     chunksAround.AddRange(ChunksAroundPlayer(playerpos));
                     //chunksAround.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
