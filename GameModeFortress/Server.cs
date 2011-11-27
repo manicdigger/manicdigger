@@ -564,7 +564,7 @@ namespace ManicDiggerServer
                 }
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
-            //UnloadUnusedChunks();
+            UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
                 ChunkSimulation();
@@ -1070,7 +1070,7 @@ namespace ManicDiggerServer
                 }
             return false;
         }
-        /*
+        
         int CompressUnusedIteration = 0;
         private void UnloadUnusedChunks()
         {
@@ -1113,7 +1113,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        */
+        
         private void DoSaveChunk(int x, int y, int z, Chunk c)
         {
             MemoryStream ms = new MemoryStream();
