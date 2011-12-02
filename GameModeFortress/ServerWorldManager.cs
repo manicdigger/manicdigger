@@ -71,6 +71,7 @@ namespace ManicDiggerServer
                     bool sent_all_in_range = (k.Value.maploadingsentchunks == chunksAround.Count);
                     if (sent_all_in_range)
                     {
+                        DontSpawnPlayerInWater(k.Key);
                         SendLevelFinalize(k.Key);
                         clients[k.Key].state = ClientStateOnServer.Playing;
                     }
@@ -96,6 +97,67 @@ namespace ManicDiggerServer
                     }
                 }
             }
+        }
+
+        private void DontSpawnPlayerInWater(int clientId)
+        {
+            Vector3i pos1 = PlayerBlockPosition(clients[clientId]);
+            if (IsPlayerPositionDry(pos1.x, pos1.y, pos1.z))
+            {
+                return;
+            }
+            
+            //find shore
+            //bonus +10 because player shouldn't be spawned too close to shore.
+            bool bonusset = false;
+            int bonus = -1;
+            for (int i = 0; i < playerareasize / 4 - 5; i++)
+            {
+                Vector3i pos = PlayerBlockPosition(clients[clientId]);
+                if (IsPlayerPositionDry(pos.x, pos.y, pos.z))
+                {
+                    if (!bonusset)
+                    {
+                        bonus = 10;
+                        bonusset = true;
+                    }
+                }
+                if (bonusset && bonus-- < 0)
+                {
+                    break;
+                }
+                clients[clientId].PositionMul32GlX += 32;
+                int newblockheight = MapUtil.blockheight(d_Map, 0,
+                    clients[clientId].PositionMul32GlX / 32,
+                    clients[clientId].PositionMul32GlZ / 32);
+                clients[clientId].PositionMul32GlY = newblockheight * 32 + 16;
+            }
+            foreach (var k in clients)
+            {
+                int clientId2 = clientId;
+                if (k.Key == clientId)
+                {
+                    clientId2 = 255;
+                }
+                SendPlayerTeleport(k.Key, (byte)clientId2, k.Value.PositionMul32GlX, k.Value.PositionMul32GlY,
+                    k.Value.PositionMul32GlZ, (byte)k.Value.positionheading, (byte)k.Value.positionpitch);
+            }
+        }
+
+        bool IsPlayerPositionDry(int x, int y, int z)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (MapUtil.IsValidPos(d_Map, x, y, z - i))
+                {
+                    int blockUnderPlayer = d_Map.GetBlock(x, y, z - i);
+                    if (d_Data.IsFluid[blockUnderPlayer])
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         void SendChunk(int clientid, Vector3i v)

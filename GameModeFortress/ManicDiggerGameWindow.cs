@@ -3341,9 +3341,12 @@ namespace ManicDigger
         #region IGameMode Members
         public void OnNewMap()
         {
+            /*
             int x = d_Map.MapSizeX / 2;
             int y = d_Map.MapSizeY / 2;
             playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(d_Map, SpecialBlockId.Empty, x, y), y + 0.5f);
+            */
+            playerpositionspawn = LocalPlayerPosition;
         }
         #endregion
         #region IMapStorage Members

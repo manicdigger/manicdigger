@@ -1544,7 +1544,7 @@ for (int i = 0; i < unknown.Count; i++)
             //spawn position randomization disabled.
             //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-            return new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
+            return new Vector3i(x * 32 + 15, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32 + 15);
         }
         public char[] AllowedUsernameCharacters = ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             + "1234567890_-").ToCharArray();
