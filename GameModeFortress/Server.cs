@@ -484,11 +484,14 @@ namespace ManicDiggerServer
             {
                 copyList.Add(k.Value.socket);
             }
-            if (copyList.Count == 0)
+            //if (copyList.Count == 0)
+            //{
+            //    return;
+            //}
+            if (copyList.Count != 0)
             {
-                return;
+                d_MainSocket.Select(copyList, null, null, 0);//10000000);
             }
-            d_MainSocket.Select(copyList, null, null, 0);//10000000);
 
             foreach (ISocket clientSocket in copyList)
             {
@@ -1070,7 +1073,7 @@ namespace ManicDiggerServer
                 }
             return false;
         }
-        
+
         int CompressUnusedIteration = 0;
         private void UnloadUnusedChunks()
         {
