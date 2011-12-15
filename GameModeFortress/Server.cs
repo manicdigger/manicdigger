@@ -71,6 +71,8 @@ namespace ManicDiggerServer
         public ISocket d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
+        [Inject]
+        public IScriptInterpreter d_Interpreter;
 
         public bool LocalConnectionsOnly { get; set; }
         public string[] PublicDataPaths = new string[0];
@@ -2344,6 +2346,18 @@ for (int i = 0; i < unknown.Count; i++)
 								SendMessage(clientid, colorHelp + "/areauser olduser newuser");
 							}
 						}
+                    }
+                    else if (packet.Message.Message.StartsWith("/run"))
+                    {
+                       var script = packet.Message.Message.Substring(4);
+                       object result;
+                       if (d_Interpreter.Execute(script, out result))
+                       {
+                          SendMessage(clientid, colorSuccess + " => " + result);
+                          break;
+                       }
+                       SendMessage(clientid, colorError + "Error.");
+                       break;
                     }
                     else if (packet.Message.Message.StartsWith("."))
                     {
