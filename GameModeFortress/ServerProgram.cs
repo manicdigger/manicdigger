@@ -77,8 +77,6 @@ namespace GameModeFortress
                 server.d_MainSocket = Socket;
             }
             server.d_Heartbeat = new ServerHeartbeat();
-            var interpreter = new JavaScriptInterpreter();
-            server.d_Interpreter = interpreter;
             server.Start();
             if ((Public) && (server.config.Public))
             {

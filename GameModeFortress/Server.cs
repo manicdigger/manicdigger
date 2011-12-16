@@ -71,8 +71,6 @@ namespace ManicDiggerServer
         public ISocket d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
-        [Inject]
-        public IScriptInterpreter d_Interpreter;
 
         public bool LocalConnectionsOnly { get; set; }
         public string[] PublicDataPaths = new string[0];
@@ -2347,11 +2345,22 @@ for (int i = 0; i < unknown.Count; i++)
 							}
 						}
                     }
-                    else if (packet.Message.Message.StartsWith("/run"))
+                    else if (packet.Message.Message.StartsWith("/run ") && packet.Message.Message.Length > 5)
                     {
-                       var script = packet.Message.Message.Substring(4);
+                       var script = packet.Message.Message.Substring(5);
+                       var client = clients[clientid];
+                       if (client.Interpreter == null)
+                       {
+                          client.Interpreter = new JavaScriptInterpreter();
+                          client.Console = new ScriptConsole(this, clientid);
+                          client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
+                          client.Interpreter.SetFunction("out", new Action<object>(client.Console.Print));
+                          client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
+                       }
+                       var interpreter = client.Interpreter;
                        object result;
-                       if (d_Interpreter.Execute(script, out result))
+                       SendMessage(clientid, colorNormal + script);
+                       if (interpreter.Execute(script, out result))
                        {
                           SendMessage(clientid, colorSuccess + " => " + result);
                           break;
@@ -2400,6 +2409,7 @@ for (int i = 0; i < unknown.Count; i++)
             }
             return lengthPrefixLength + packetLength;
         }
+
         string PlayerNameColored(int clientid)
         {
             return (clients[clientid].CanBuild ? colorOpUsername : "")
@@ -2412,7 +2422,32 @@ for (int i = 0; i < unknown.Count; i++)
         string colorSuccess = "&2"; //green
         string colorError = "&4"; //red
         string colorAdmin = "&e"; //yellow
-        bool CompareByteArray(byte[] a, byte[] b)
+        public enum MessageType { Normal, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
+        private string MessageTypeToString(MessageType type)
+        {
+           switch (type)
+           {
+              case MessageType.Normal:
+              case MessageType.White:
+                 return colorNormal;
+              case MessageType.Help:
+              case MessageType.Red:
+                 return colorHelp;
+              case MessageType.OpUsername:
+              case MessageType.Green:
+                 return colorOpUsername;
+              case MessageType.Error:
+                 return colorError;
+              case MessageType.Success:
+                 return colorSuccess;
+              case MessageType.Admin:
+              case MessageType.Yellow:
+                 return colorAdmin;
+              default:
+                 return colorNormal;
+           }
+        }
+       bool CompareByteArray(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) { return false; }
             for (int i = 0; i < a.Length; i++)
@@ -2862,7 +2897,11 @@ for (int i = 0; i < unknown.Count; i++)
             PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
         }
-        private void SendMessage(int clientid, string message)
+        public void SendMessage(int clientid, string message, MessageType color)
+        {
+           SendMessage(clientid, MessageTypeToString(color) + message);
+        }
+       private void SendMessage(int clientid, string message)
         {
             string truncated = message; //.Substring(0, Math.Min(64, message.Length));
 
@@ -3137,6 +3176,8 @@ for (int i = 0; i < unknown.Count; i++)
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
             public bool IsMod;
             public ManicDigger.Timer notifyMonstersTimer;
+            public IScriptInterpreter Interpreter;
+            public ScriptConsole Console;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
 
@@ -3217,6 +3258,6 @@ for (int i = 0; i < unknown.Count; i++)
         int Length(Vector3i v)
         {
             return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        }
+        }
     }
 }

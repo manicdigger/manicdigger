@@ -79,6 +79,7 @@
     <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptConsole.cs" />
     <Compile Include="ScriptInterpreter.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="ServerConfig.cs" />
