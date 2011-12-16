@@ -2349,6 +2349,11 @@ for (int i = 0; i < unknown.Count; i++)
                     {
                        var script = packet.Message.Message.Substring(5);
                        var client = clients[clientid];
+                       if (!client.IsAdmin)
+                       {
+                          SendMessage(clientid, "Server scripts can only be run by admin.", MessageType.Error);
+                          break;
+                       }
                        if (client.Interpreter == null)
                        {
                           client.Interpreter = new JavaScriptInterpreter();
