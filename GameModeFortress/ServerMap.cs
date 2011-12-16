@@ -23,6 +23,7 @@ namespace ManicDiggerServer
         public int Y;
         [ProtoMember(5, IsRequired = false)]
         public int Z;
+        public int Health;
         public Vector3i WalkDirection;
         public float WalkProgress = 0;
     }

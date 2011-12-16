@@ -352,6 +352,8 @@ namespace GameModeFortress
         public int MonsterType;
         [ProtoMember(3, IsRequired = false)]
         public PositionAndOrientation PositionAndOrientation;
+        [ProtoMember(4, IsRequired = false)]
+        public int Health;
     }
     //Temporary, for client-side health.
     //Todo fix because it allows cheating.
@@ -402,6 +404,7 @@ namespace GameModeFortress
         RequestBlob = 50,
         InventoryAction = 51,
         Health = 52,
+        MonsterHit = 53,
         ExtendedPacketCommand = 100,
     }
     /// <summary>

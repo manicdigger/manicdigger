@@ -89,6 +89,7 @@ namespace ManicDigger
         public AnimationHint AnimationHint = new AnimationHint();
         public PlayerType Type;
         public int MonsterType;
+        public int Health;
     }
     public static class MapUtil
     {

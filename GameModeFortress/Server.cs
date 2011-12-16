@@ -864,7 +864,7 @@ namespace ManicDiggerServer
                     && d_Map.GetBlock(px, py, pz - 1) != 0
                     && (!d_Data.IsFluid[d_Map.GetBlock(px, py, pz - 1)]))
                 {
-                    chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), MonsterType = type });
+                    chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), Health = 20, MonsterType = type });
                 }
                 if (tries++ > 500)
                 {
@@ -1273,6 +1273,55 @@ for (int i = 0; i < unknown.Count; i++)
                 c.IsInventoryDirty = false;
             }
         }
+        private void HitMonsters(int clientid, int health)
+        {
+        	Client c = clients[clientid];
+            int mapx = c.PositionMul32GlX / 32;
+            int mapy = c.PositionMul32GlZ / 32;
+            int mapz = c.PositionMul32GlY / 32;
+            //3x3x3 chunks
+            List<PacketServerMonster> p = new List<PacketServerMonster>();
+            for (int xx = -1; xx < 2; xx++)
+            {
+                for (int yy = -1; yy < 2; yy++)
+                {
+                    for (int zz = -1; zz < 2; zz++)
+                    {
+                        int cx = (mapx / chunksize) + xx;
+                        int cy = (mapy / chunksize) + yy;
+                        int cz = (mapz / chunksize) + zz;
+                        if (!MapUtil.IsValidChunkPos(d_Map, cx, cy, cz, chunksize))
+                        {
+                            continue;
+                        }
+                        Chunk chunk = d_Map.chunks[cx, cy, cz];
+                        if (chunk == null || chunk.Monsters == null)
+                        {
+                            continue;
+                        }
+                        foreach (Monster m in chunk.Monsters)
+                        {
+                        	Vector3i mpos = new Vector3i { x = m.X, y = m.Y, z = m.Z };
+                        	Vector3i ppos = new Vector3i { x = clients[clientid].PositionMul32GlX / 32,
+                        		y = clients[clientid].PositionMul32GlZ / 32,
+                        		z = clients[clientid].PositionMul32GlY / 32};
+                        	if (DistanceSquared(mpos, ppos) < 15)
+                        	{
+                        		m.Health -= health;
+                        		Console.WriteLine("HIT! -2 = " + m.Health);
+                        		if (m.Health <= 0) {
+                        			chunk.Monsters.Remove(m);
+                        			SendSound(clientid, "death.wav");
+                    				break;
+                        		}
+                        		SendSound(clientid, "grunt2.wav");
+                        		break;
+                        	}
+                        }
+                    }
+                }
+            }
+        }
         private void NotifyMonsters(int clientid)
         {
             Client c = clients[clientid];
@@ -1319,6 +1368,7 @@ for (int i = 0; i < unknown.Count; i++)
                             {
                                 Id = m.Id,
                                 MonsterType = m.MonsterType,
+                                Health = m.Health,
                                 PositionAndOrientation = new PositionAndOrientation()
                                 {
                                     Heading = heading,
@@ -1756,6 +1806,7 @@ for (int i = 0; i < unknown.Count; i++)
                                 {
                                     string msg = string.Join(" ", ss, 2, ss.Length - 2);
                                     SendMessage(k.Key, "msg " + c.playername + ": " + msg);
+                                    SendSound(k.Key, "message.wav");
                                     messageSent = true;
                                     break;
                                 }
@@ -2329,6 +2380,9 @@ for (int i = 0; i < unknown.Count; i++)
                     }
                     clients[clientid].IsPlayerStatsDirty = true;
                     break;
+                case ClientPacketId.MonsterHit:
+                    HitMonsters(clientid, packet.Health.CurrentHealth);
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
@@ -2533,7 +2587,10 @@ for (int i = 0; i < unknown.Count; i++)
                 item.ItemClass = ItemClass.Block;
                 int blockid = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
                 item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
-                GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+                if (!config.IsCreative)
+                {
+                	GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+                }
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
                 if (IsDoor(blockid) && IsDoor(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
                 {
