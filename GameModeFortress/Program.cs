@@ -136,14 +136,12 @@ namespace GameModeFortress
             var mapstorage = clientgame;
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
-            var terrainRenderer = new TerrainRenderer();
             var the3d = new The3d();
             the3d.d_GetFile = getfile;
             the3d.d_Config3d = config3d;
             the3d.d_ViewportSize = w;
             w.d_The3d = the3d;
             var localplayerposition = w;
-            var worldfeatures = new WorldFeaturesRendererDummy();
             var physics = new CharacterPhysics();
             var internetgamefactory = this;
             ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
@@ -158,15 +156,6 @@ namespace GameModeFortress
             {
                 network.main = new SocketNet(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
             }
-            terrainRenderer.d_The3d = the3d;
-            terrainRenderer.d_GetFile = getfile;
-            terrainRenderer.d_Config3d = config3d;
-            terrainRenderer.d_MapStorage = clientgame;
-            terrainRenderer.d_GameData = gamedata;
-            terrainRenderer.d_Exit = exit;
-            terrainRenderer.d_LocalPlayerPosition = localplayerposition;
-            terrainRenderer.d_WorldFeatures = worldfeatures;
-            terrainRenderer.OnCrash += (a, b) => { CrashReporter.Crash(b.exception); };
             var terrainTextures = new TerrainTextures();
             terrainTextures.d_GetFile = getfile;
             terrainTextures.d_The3d = the3d;
@@ -185,18 +174,18 @@ namespace GameModeFortress
             var blockrenderertorch = new BlockRendererTorch();
             blockrenderertorch.d_TerainRenderer = terrainTextures;
             blockrenderertorch.d_Data = gamedata;
-            InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
-            this.dirtychunks = new DirtyChunks() { d_MapStorage = map };
+            //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
+            var map = w;
             var terrainchunktesselator = new TerrainChunkTesselator();
             terrainchunktesselator.d_Config3d = config3d;
             terrainchunktesselator.d_Data = gamedata;
             terrainchunktesselator.d_MapStorage = clientgame;
             terrainchunktesselator.d_MapStoragePortion = map;
             terrainchunktesselator.d_MapStorageLight = clientgame;
-            terrainRenderer.d_TerrainChunkTesselator = terrainchunktesselator;
+            w.d_TerrainChunkTesselator = terrainchunktesselator;
             var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
-            terrainRenderer.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
-            terrainRenderer.d_FrustumCulling = frustumculling;
+            w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
+            w.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             terrainchunktesselator.d_BlockRendererTorch = blockrenderertorch;
             terrainchunktesselator.d_TerrainTextures = terrainTextures;
@@ -208,7 +197,7 @@ namespace GameModeFortress
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
             w.d_MapManipulator = mapManipulator;
-            w.d_Terrain = terrainRenderer;
+            w.d_Terrain = w;
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
             skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
@@ -218,7 +207,7 @@ namespace GameModeFortress
             var textrenderer = new ManicDigger.Renderers.TextRenderer();
             w.d_TextRenderer = textrenderer;
             Inventory inventory = Inventory.Create();
-            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = shadowssimple, d_Inventory = inventory, d_LocalPlayerPosition = w };
+            weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = w, d_Inventory = inventory, d_LocalPlayerPosition = w };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
@@ -226,7 +215,8 @@ namespace GameModeFortress
             particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
             w.particleEffectBlockBreak = particle;
             w.ENABLE_FINITEINVENTORY = false;
-            clientgame.d_Terrain = terrainRenderer;
+            w.d_Shadows = w;
+            clientgame.d_Terrain = w;
             clientgame.d_Data = gamedata;
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
             clientgame.d_Audio = audio;
@@ -238,11 +228,7 @@ namespace GameModeFortress
             craftingrecipes.data = gamedata;
             w.d_CraftingRecipes = craftingrecipes;
             network.d_CraftingRecipes = craftingrecipes;
-            terrainRenderer.d_IsChunkReady = dirtychunks;
-            map.d_IsChunkReady = dirtychunks;
-            map.Reset(10 * 1000, 10 * 1000, 128);
-            dirtychunks.Start();
-            dirtychunks.d_Frustum = frustumculling;
+            w.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.d_Map = map;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = exit;
@@ -268,24 +254,9 @@ namespace GameModeFortress
             network.d_Heightmap = heightmap;
             this.light = new InfiniteMapChunkedSimple() { d_Map = map };
             light.Restart();
-            shadowsfull = new Shadows()
-            {
-                d_Data = gamedata,
-                d_Map = map,
-                d_Heightmap = heightmap,
-                d_Light = light,
-                d_MapPortion = map,
-                d_DirtyChunks = dirtychunks,
-            };
-            shadowsfull.Start();
-            shadowssimple = new ShadowsSimple()
-            {
-                d_Data = gamedata,
-                d_Map = clientgame,
-                d_IsChunkDirty = dirtychunks,
-                d_Heightmap = heightmap
-            };
             this.terrainchunktesselator = terrainchunktesselator;
+            w.d_TerrainChunkTesselator = terrainchunktesselator;
+            terrainchunktesselator.d_Shadows = w;
             if (fullshadows)
             {
                 UseShadowsFull();
@@ -322,25 +293,25 @@ namespace GameModeFortress
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
                     w, audio, gamedata, clientgame, network, mapstorage, getfile,
-                    config3d, mapManipulator, terrainRenderer, the3d, exit,
-                    localplayerposition, worldfeatures, physics,
+                    config3d, mapManipulator, w, the3d, exit,
+                    localplayerposition, physics,
                     internetgamefactory, blockrenderertorch, playerrenderer,
-                    map, shadowsfull, shadowssimple, terrainchunktesselator);
+                    map, terrainchunktesselator);
             }
         }
         SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
         InfiniteMapChunked2d heightmap;
         InfiniteMapChunkedSimple light;
-        DirtyChunks dirtychunks;
-        InfiniteMapChunked map;
-        ShadowsSimple shadowssimple;
-        Shadows shadowsfull;
+        ManicDiggerGameWindow map;
+        //ShadowsSimple shadowssimple;
+        //Shadows shadowsfull;
         WeaponBlockInfo weapon;
         TerrainChunkTesselator terrainchunktesselator;
         public bool fullshadows = true;
         ParticleEffectBlockBreak particle;
         void UseShadowsSimple()
         {
+            /*
             if (w.d_Shadows != null)
             {
                 shadowssimple.sunlight = w.d_Shadows.sunlight;
@@ -351,9 +322,11 @@ namespace GameModeFortress
             terrainchunktesselator.d_Shadows = shadows;
             w.d_Shadows = shadows;
             particle.d_Shadows = shadows;
+            */
         }
         void UseShadowsFull()
         {
+            /*
             if (w.d_Shadows != null)
             {
                 shadowsfull.sunlight = w.d_Shadows.sunlight;
@@ -364,6 +337,7 @@ namespace GameModeFortress
             terrainchunktesselator.d_Shadows = shadows;
             w.d_Shadows = shadows;
             particle.d_Shadows = shadows;
+            */
         }
         #region ICurrentShadows Members
         public bool ShadowsFull
@@ -391,7 +365,7 @@ namespace GameModeFortress
             map.Reset(sizex, sizey, sizez);
             light.Restart();
             heightmap.Restart();
-            dirtychunks.Start();
+            //dirtychunks.Start();
         }
         public GameMenu.ServerInfo[] GetServers()
         {

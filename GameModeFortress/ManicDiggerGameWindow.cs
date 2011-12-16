@@ -26,7 +26,8 @@ namespace ManicDigger
     public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap,
         IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
         IClients, IViewportSize, IViewport3dSelectedBlock,
-        IMapStorage, IInventoryController, IMapStorageLight, ITerrainInfo
+        IMapStorage, IInventoryController, IMapStorageLight,
+        IMapStoragePortion, ITerrainRenderer, IShadows
     {
         [Inject]
         public MainGameWindow d_MainWindow;
@@ -37,7 +38,7 @@ namespace ManicDigger
         [Inject]
         public ITerrainRenderer d_Terrain;
         [Inject]
-        public InfiniteMapChunked d_Map;
+        public ManicDiggerGameWindow d_Map;
         [Inject]
         public IClients d_Clients;
         [Inject]
@@ -63,8 +64,6 @@ namespace ManicDigger
         public MapManipulator d_MapManipulator;
         [Inject]
         public SunMoonRenderer d_SunMoonRenderer;
-        [Inject]
-        public IShadows d_Shadows;
         [Inject]
         public IGameExit d_Exit;
         [Inject]
@@ -95,6 +94,11 @@ namespace ManicDigger
         public ICompression d_Compression;
         [Inject]
         public IFrustumCulling d_FrustumCulling;
+        [Inject]
+        public MeshBatcher d_Batcher;
+        [Inject]
+        public TerrainChunkTesselator d_TerrainChunkTesselator;
+        public IShadows d_Shadows;
 
         public bool SkySphereNight { get; set; }
 
@@ -2031,7 +2035,7 @@ namespace ManicDigger
             float density = 0.3f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             float[] fogColor;
-            if (SkySphereNight && d_Shadows.GetType() != typeof(ShadowsSimple))
+            if (SkySphereNight && (!shadowssimple))//d_Shadows.GetType() != typeof(ShadowsSimple))
             {
                 fogColor = new[] { 0f, 0f, 0f, 1.0f };
             }
@@ -2122,7 +2126,7 @@ namespace ManicDigger
                 skyspherenighttexture = LoadTexture("skyspherenight.png");
             }
             int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
-            if (d_Shadows.GetType() == typeof(ShadowsSimple))
+            if (shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
             {
                 texture = skyspheretexture;
             }
@@ -2790,12 +2794,6 @@ namespace ManicDigger
         #region IViewport3d Members
         public string LocalPlayerName { get { return connectdata.Username; } }
         #endregion
-        #region IMap Members
-        public void UpdateAllTiles()
-        {
-            d_Terrain.UpdateAllTiles();
-        }
-        #endregion
         public Options Options { get { return options; } set { options = value; } }
         public int Height { get { return d_MainWindow.Height; } }
         public int Width { get { return d_MainWindow.Width; } }
@@ -3320,23 +3318,10 @@ namespace ManicDigger
         public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
 
         #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, int tileType)
-        {
-            d_Map.SetBlock(x, y, z, (byte)tileType);
-            d_Shadows.OnSetBlock(x, y, z);
-        }
-        #endregion
-        #region IMapStorage Members
         public void SetChunk(int x, int y, int z, byte[, ,] chunk)
         {
             d_Map.SetMapPortion(x, y, z, chunk);
         }
-        #endregion
-        #region IMapStorage Members
-        public byte[, ,] Map { get { throw new NotImplementedException(); } set { throw new NotImplementedException(); } }
-        public int MapSizeX { get { return d_Map.MapSizeX; } set { d_Map.MapSizeX = value; } }
-        public int MapSizeY { get { return d_Map.MapSizeY; } set { d_Map.MapSizeY = value; } }
-        public int MapSizeZ { get { return d_Map.MapSizeZ; } set { d_Map.MapSizeZ = value; } }
         #endregion
         #region IGameMode Members
         public void OnNewMap()
@@ -3347,12 +3332,6 @@ namespace ManicDigger
             playerpositionspawn = new Vector3(x + 0.5f, MapUtil.blockheight(d_Map, SpecialBlockId.Empty, x, y), y + 0.5f);
             */
             playerpositionspawn = LocalPlayerPosition;
-        }
-        #endregion
-        #region IMapStorage Members
-        public int GetBlock(int x, int y, int z)
-        {
-            return d_Map.GetBlock(x, y, z);
         }
         #endregion
         #region IMapStorage Members
@@ -3396,7 +3375,8 @@ namespace ManicDigger
         }
         public int GetLight(int x, int y, int z)
         {
-            return d_Shadows.GetLight(x, y, z);
+            //return d_Shadows.GetLight(x, y, z);
+            return 15;
         }
         public float LightMaxValue()
         {
@@ -3553,16 +3533,6 @@ namespace ManicDigger
         #region ICurrentSeason Members
         public int CurrentSeason { get; set; }
         #endregion
-        #region ITerrainInfo Members
-        public byte[] GetChunk(int x, int y, int z)
-        {
-            return d_Map.GetChunk(x, y, z);
-        }
-        #endregion
-        public void Reset(int sizex, int sizey, int sizez)
-        {
-            d_Map.Reset(sizex, sizey, sizez);
-        }
 
         public void InventoryClick(InventoryPosition pos)
         {
@@ -4192,5 +4162,240 @@ namespace ManicDigger
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
         public DateTime LastReceived { get; set; }
+        //[Inject]
+        //public IIsChunkDirty d_IsChunkReady;
+        public Chunk[] chunks;
+        #region IMapStorage Members
+        public int MapSizeX { get; set; }
+        public int MapSizeY { get; set; }
+        public int MapSizeZ { get; set; }
+        public int GetBlock(int x, int y, int z)
+        {
+            int cx = x / chunksize;
+            int cy = y / chunksize;
+            int cz = z / chunksize;
+            Chunk chunk = chunks[MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize)];
+            if (chunk == null)
+            {
+                return 0;
+            }
+            return chunk.data[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+        }
+        public void SetBlock(int x, int y, int z, int tileType)
+        {
+            byte[] chunk = GetChunk(x, y, z);
+            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
+            d_Shadows.OnSetBlock(x, y, z);
+        }
+        #endregion
+        public byte[] GetChunk(int x, int y, int z)
+        {
+            x = x / chunksize;
+            y = y / chunksize;
+            z = z / chunksize;
+            int mapsizexchunks = MapSizeX / chunksize;
+            int mapsizeychunks = MapSizeY / chunksize;
+            Chunk chunk = chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+            if (chunk == null)
+            {
+                //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
+                //byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
+                //if (newchunk != null)
+                //{
+                //    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                //}
+                //else
+                {
+                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
+                }
+                return chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
+            }
+            return chunk.data;
+        }
+        public int chunksize = 16;
+        public void Reset(int sizex, int sizey, int sizez)
+        {
+            MapSizeX = sizex;
+            MapSizeY = sizey;
+            MapSizeZ = sizez;
+            chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize) * (sizez / chunksize)];
+            SetAllChunksNotDirty();
+        }
+        #region IMapStorage Members
+        public void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
+        {
+            int chunksizex = chunk.GetUpperBound(0) + 1;
+            int chunksizey = chunk.GetUpperBound(1) + 1;
+            int chunksizez = chunk.GetUpperBound(2) + 1;
+            if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
+            if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
+            if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
+            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            for (int cx = 0; cx < chunksizex / chunksize; cx++)
+            {
+                for (int cy = 0; cy < chunksizey / chunksize; cy++)
+                {
+                    for (int cz = 0; cz < chunksizex / chunksize; cz++)
+                    {
+                        localchunks[cx, cy, cz] = GetChunk(x + cx * chunksize, y + cy * chunksize, z + cz * chunksize);
+                        FillChunk(localchunks[cx, cy, cz], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk);
+                    }
+                }
+            }
+            for (int xxx = 0; xxx < chunksizex; xxx += chunksize)
+            {
+                for (int yyy = 0; yyy < chunksizex; yyy += chunksize)
+                {
+                    for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
+                    {
+                        SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true);
+                        SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
+                    }
+                }
+            }
+        }
+        private void SetChunksAroundDirty(int x, int y, int z)
+        {
+            if (IsValidChunkPosition(x, y, z)) { SetChunkDirty(x - 1, y, z, true); }
+            if (IsValidChunkPosition(x - 1, y, z)) { SetChunkDirty(x - 1, y, z, true); }
+            if (IsValidChunkPosition(x + 1, y, z)) { SetChunkDirty(x + 1, y, z, true); }
+            if (IsValidChunkPosition(x, y - 1, z)) { SetChunkDirty(x, y - 1, z, true); }
+            if (IsValidChunkPosition(x, y + 1, z)) { SetChunkDirty(x, y + 1, z, true); }
+            if (IsValidChunkPosition(x, y, z - 1)) { SetChunkDirty(x, y, z - 1, true); }
+            if (IsValidChunkPosition(x, y, z + 1)) { SetChunkDirty(x, y, z + 1, true); }
+        }
+        private bool IsValidChunkPosition(int xx, int yy, int zz)
+        {
+            return xx >= 0 && yy >= 0 && zz >= 0
+                && xx < MapSizeX / chunksize
+                && yy < MapSizeY / chunksize
+                && zz < MapSizeZ / chunksize;
+        }
+        private void FillChunk(byte[] destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, byte[, ,] source)
+        {
+            for (int x = 0; x < destinationchunksize; x++)
+            {
+                for (int y = 0; y < destinationchunksize; y++)
+                {
+                    for (int z = 0; z < destinationchunksize; z++)
+                    {
+                        //if (x + sourcex < source.GetUpperBound(0) + 1
+                        //    && y + sourcey < source.GetUpperBound(1) + 1
+                        //    && z + sourcez < source.GetUpperBound(2) + 1)
+                        {
+                            destination[MapUtil.Index3d(x, y, z, destinationchunksize, destinationchunksize)]
+                                = source[x + sourcex, y + sourcey, z + sourcez];
+                        }
+                    }
+                }
+            }
+        }
+        #endregion
+        #region IIsChunkReady Members
+        public bool IsChunkReady(int x, int y, int z)
+        {
+            return IsChunkDirty(x, y, z);
+        }
+        #endregion
+        #region IIsChunkReady Members
+        public bool IsChunkDirty(int x, int y, int z)
+        {
+            //return d_IsChunkReady.IsChunkDirty(x, y, z);
+            return true;
+        }
+        public void SetChunkDirty(int x, int y, int z, bool dirty)
+        {
+            //d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
+        }
+        #endregion
+        public void SetAllChunksNotDirty()
+        {
+            //d_IsChunkReady.SetAllChunksNotDirty();
+        }
+        public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+        {
+            Array.Clear(outPortion, 0, outPortion.Length);
+
+            int chunksizebits = (int)Math.Log(chunksize, 2);
+            int mapchunksx = MapSizeX / chunksize;
+            int mapchunksy = MapSizeY / chunksize;
+            int mapchunksz = MapSizeZ / chunksize;
+            int mapsizechunks = mapchunksx * mapchunksy * mapchunksz;
+
+            for (int xx = 0; xx < portionsizex; xx++)
+            {
+                for (int yy = 0; yy < portionsizey; yy++)
+                {
+                    for (int zz = 0; zz < portionsizez; zz++)
+                    {
+                        //Find chunk.
+                        int cx = (x + xx) >> chunksizebits;
+                        int cy = (y + yy) >> chunksizebits;
+                        int cz = (z + zz) >> chunksizebits;
+                        //int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
+                        int cpos = (cz * mapchunksy + cy) * mapchunksx + cx;
+                        //if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
+                        if (cpos < 0 || cpos >= mapsizechunks)
+                        {
+                            continue;
+                        }
+                        Chunk chunk = chunks[cpos];
+                        if (chunk == null || chunk.data == null)
+                        {
+                            continue;
+                        }
+                        //int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
+                        int chunkGlobalX = cx << chunksizebits;
+                        int chunkGlobalY = cy << chunksizebits;
+                        int chunkGlobalZ = cz << chunksizebits;
+
+                        int inChunkX = (x + xx) - chunkGlobalX;
+                        int inChunkY = (y + yy) - chunkGlobalY;
+                        int inChunkZ = (z + zz) - chunkGlobalZ;
+
+                        //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
+                        int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
+
+                        int block = chunk.data[pos];
+                        //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
+                        outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (byte)block;
+                    }
+                }
+            }
+        }
+        public static int DistanceSquared(int x1, int y1, int z1, int x2, int y2, int z2)
+        {
+            int dx = x1 - x2;
+            int dy = y1 - y2;
+            int dz = z1 - z2;
+            return dx * dx + dy * dy + dz * dz;
+        }
+
+        #region IShadowsGetLight Members
+
+        public int? MaybeGetLight(int x, int y, int z)
+        {
+            return 15;
+        }
+
+        #endregion
+
+        #region IShadowsGetLight Members
+
+        public int maxlight
+        {
+            get { return 15; }
+        }
+
+        #endregion
+    }
+    public class Chunk
+    {
+        public byte[] data;
+        public int LastUpdate;
+        public bool IsPopulated;
+        public int LastChange;
     }
 }

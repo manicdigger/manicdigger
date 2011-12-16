@@ -276,7 +276,7 @@ namespace ManicDigger
             d_TextRenderer.NewFont = options.Font != 1;
             d_CurrentShadows.ShadowsFull = options.Shadows;
             d_Shadows.ResetShadows();
-            d_Terrain.UpdateAllTiles();
+            //d_Terrain.UpdateAllTiles();
             d_Config3d.viewdistance = options.DrawDistance;
             d_Audio.Enabled = options.EnableSound;
         }
