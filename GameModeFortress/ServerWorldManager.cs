@@ -37,7 +37,7 @@ namespace ManicDiggerServer
                         LoadChunk(v);
                         if (k.Value.state == ClientStateOnServer.LoadingGenerating)
                         {
-                            var a = PlayerArea(k.Key);
+                            //var a = PlayerArea(k.Key);
                             if (i % 10 == 0)
                             {
                                 SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), "Generating world...");
@@ -209,22 +209,7 @@ namespace ManicDiggerServer
 
         PointG PlayerArea(int playerId)
         {
-            Point p = PlayerCenterArea(playerId);
-            int x = p.X + centerareasize / 2;
-            int y = p.Y + centerareasize / 2;
-            x -= playerareasize / 2;
-            y -= playerareasize / 2;
-            return new Point(x, y);
-        }
-
-        PointG PlayerCenterArea(int playerId)
-        {
-            var pos = PlayerBlockPosition(clients[playerId]);
-            int px = pos.x;
-            int py = pos.y;
-            int gridposx = (px / centerareasize) * centerareasize;
-            int gridposy = (py / centerareasize) * centerareasize;
-            return new Point(gridposx, gridposy);
+            return MapUtil.PlayerArea(playerareasize, centerareasize, PlayerBlockPosition(clients[playerId]));
         }
 
         IEnumerable<Vector3iG> PlayerAreaChunks(int playerId)

@@ -197,7 +197,6 @@ namespace GameModeFortress
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
             w.d_MapManipulator = mapManipulator;
-            w.d_Terrain = w;
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
             skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
@@ -216,7 +215,6 @@ namespace GameModeFortress
             w.particleEffectBlockBreak = particle;
             w.ENABLE_FINITEINVENTORY = false;
             w.d_Shadows = w;
-            clientgame.d_Terrain = w;
             clientgame.d_Data = gamedata;
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
             clientgame.d_Audio = audio;

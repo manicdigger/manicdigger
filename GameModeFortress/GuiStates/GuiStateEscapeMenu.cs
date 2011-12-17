@@ -74,7 +74,7 @@ namespace ManicDigger
                     (a, b) =>
                     {
                         d_CurrentShadows.ShadowsFull = !d_CurrentShadows.ShadowsFull;
-                        d_Terrain.UpdateAllTiles();
+                        RedrawAllBlocks();
                     });
                 AddButton("View distance: " + (d_Config3d.viewdistance),
                     (a, b) =>

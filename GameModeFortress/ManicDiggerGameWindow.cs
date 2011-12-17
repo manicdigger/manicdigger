@@ -27,7 +27,7 @@ namespace ManicDigger
         IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
-        IMapStoragePortion, ITerrainRenderer, IShadows
+        IMapStoragePortion, IShadows
     {
         [Inject]
         public MainGameWindow d_MainWindow;
@@ -35,8 +35,6 @@ namespace ManicDigger
         public The3d d_The3d;
         [Inject]
         public ManicDigger.Renderers.TextRenderer d_TextRenderer;
-        [Inject]
-        public ITerrainRenderer d_Terrain;
         [Inject]
         public ManicDiggerGameWindow d_Map;
         [Inject]
@@ -116,7 +114,7 @@ namespace ManicDigger
             int y = (int)pos.Y;
             int z = (int)pos.Z;
             d_Map.SetBlock(x, y, z, type);
-            d_Terrain.UpdateTile(x, y, z);
+            RedrawBlock(x, y, z);
             //          });
         }
         public int LoadTexture(string filename)
@@ -677,7 +675,7 @@ namespace ManicDigger
 
                 if (e.Key == GetKey(OpenTK.Input.Key.F6))
                 {
-                    d_Terrain.UpdateAllTiles();
+                    RedrawAllBlocks();
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F7))
                 {
@@ -793,6 +791,7 @@ namespace ManicDigger
                 }
             }
             d_Config3d.viewdistance = drawDistances[0];
+            StartTerrain();
         }
         enum CameraType
         {
@@ -845,11 +844,11 @@ namespace ManicDigger
         }
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
-            d_Terrain.Start();
+            StartTerrain();
             materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
             OnNewMap();
-            d_Terrain.UpdateAllTiles();
+            RedrawAllBlocks();
         }
         [Obsolete]
         int[] materialSlots;
@@ -1069,6 +1068,7 @@ namespace ManicDigger
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
+            UpdateTerrain();
             OnNewFrame(e.Time);
             UpdateMousePosition();
             if (guistate == GuiState.Normal)
@@ -1988,7 +1988,7 @@ namespace ManicDigger
                 DrawSkySphere();
                 DrawPlayers((float)e.Time);
                 d_SunMoonRenderer.Draw((float)e.Time);
-                d_Terrain.Draw();
+                DrawTerrain();
                 DrawPlayerNames();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
@@ -2702,10 +2702,10 @@ namespace ManicDigger
                 longestframedt = 0;
                 fpscount = 0;
                 performanceinfo["fps"] = fpstext1;
-                performanceinfo["triangles"] = "Triangles: " + d_Terrain.TrianglesCount();
-                int chunkupdates = d_Terrain.ChunkUpdates;
+                performanceinfo["triangles"] = "Triangles: " + TrianglesCount();
+                int chunkupdates = ChunkUpdates;
                 performanceinfo["chunk updates"] = "Chunk updates: " + (chunkupdates - lastchunkupdates);
-                lastchunkupdates = d_Terrain.ChunkUpdates;
+                lastchunkupdates = ChunkUpdates;
 
                 string s = "";
                 List<string> l = new List<string>(performanceinfo.Values);
@@ -2912,7 +2912,7 @@ namespace ManicDigger
                         }
                         SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.Cuboid);
                         fillend = v;
-                        d_Terrain.UpdateTile(v.x, v.y, v.z);
+                        RedrawBlock(v.x, v.y, v.z);
                         return;
                     }
                     if (activematerial == (int)TileTypeManicDigger.FillStart)
@@ -2925,7 +2925,7 @@ namespace ManicDigger
                         SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.FillStart);
                         fillstart = v;
                         fillend = null;
-                        d_Terrain.UpdateTile(v.x, v.y, v.z);
+                        RedrawBlock(v.x, v.y, v.z);
                         return;
                     }
                     if (fillarea.ContainsKey(v))// && fillarea[v])
@@ -2998,8 +2998,8 @@ namespace ManicDigger
                 }
                 speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), time = DateTime.UtcNow };
                 SetBlock(x, y, z, blockid);
-                d_Terrain.UpdateTile(x, y, z);
-                d_Shadows.OnLocalBuild(x, y, z);
+                RedrawBlock(x, y, z);
+                OnLocalBuild(x, y, z);
             }
             else
             {
@@ -3012,7 +3012,7 @@ namespace ManicDigger
             {
                 var vv = k.Key;
                 SetBlock(vv.x, vv.y, vv.z, k.Value);
-                d_Terrain.UpdateTile(vv.x, vv.y, vv.z);
+                RedrawBlock(vv.x, vv.y, vv.z);
             }
             fillarea.Clear();
         }
@@ -3044,7 +3044,7 @@ namespace ManicDigger
                         {
                             fillarea[new Vector3i(x, y, z)] = d_Map.GetBlock(x, y, z);
                             SetBlock(x, y, z, (int)TileTypeManicDigger.FillArea);
-                            d_Terrain.UpdateTile(x, y, z);
+                            RedrawBlock(x, y, z);
                         }
                     }
                 }
@@ -3127,7 +3127,7 @@ namespace ManicDigger
                 if ((DateTime.UtcNow - k.Value.time).TotalSeconds > 2)
                 {
                     speculative.Remove(k.Key);
-                    d_Terrain.UpdateTile(k.Key.x, k.Key.y, k.Key.z);
+                    RedrawBlock(k.Key.x, k.Key.y, k.Key.z);
                 }
             }
             if (KeyPressed(GetKey(OpenTK.Input.Key.C)))
@@ -3427,7 +3427,7 @@ namespace ManicDigger
                             d_Data.Update();
                             if (CurrentSeason >= 0 && CurrentSeason <= 3)
                             {
-                                d_Terrain.UpdateAllTiles();
+                                RedrawAllBlocks();
                             }
                         }
                         packet.Season.Hour -= 1;
@@ -3462,7 +3462,7 @@ namespace ManicDigger
                         {
                             d_Shadows.sunlight = sunlight;
                             d_Shadows.ResetShadows();
-                            d_Terrain.UpdateAllTiles();
+                            RedrawAllBlocks();
                         }
                     }
                     return true;

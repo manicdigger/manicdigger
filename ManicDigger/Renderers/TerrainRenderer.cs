@@ -61,40 +61,6 @@ namespace ManicDigger.Renderers
         public int[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get; set; }
     }
-    public interface ITerrainRenderer
-    {
-        void Start();
-        void Draw();
-        void UpdateAllTiles();
-        void UpdateTile(int x, int y, int z);
-        int TrianglesCount();
-        int ChunkUpdates { get; }
-    }
-    public class TerrainRendererDummy : ITerrainRenderer
-    {
-        #region ITerrainRenderer Members
-        public void Start()
-        {
-        }
-        public void Draw()
-        {
-        }
-        public void UpdateAllTiles()
-        {
-        }
-        public void UpdateTile(int x, int y, int z)
-        {
-        }
-        public int TrianglesCount()
-        {
-            return 0;
-        }
-        public int DrawDistance { get; set; }
-        #endregion
-        #region ITerrainRenderer Members
-        public int ChunkUpdates { get; set; }
-        #endregion
-    }
     public class TextureAtlas
     {
         public static RectangleF TextureCoords2d(int textureId, int texturesPacked)
