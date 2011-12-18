@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
+using System.Diagnostics;
 
 namespace ManicDigger
 {
@@ -34,6 +35,82 @@ namespace ManicDigger
             d_Batcher.Draw(LocalPlayerPosition);
         }
 
+        public void TryRemap()
+        {
+            var p = MapUtil.PlayerArea(mapAreaSize, centerAreaSize, PlayerBlockPosition());
+            var newMapPosition = new Vector3i(p.X, p.Y, 0);
+            if (CurrentRendererMapPositionG != newMapPosition)
+            {
+                //todo: check if complete terrain in new area is already downloaded.
+                Remap(newMapPosition);
+                CurrentRendererMapPositionG = newMapPosition;
+            }
+        }
+
+        //todo: use this for chunk byte[], not just for terrain renderer meshes.
+        public void Remap(Vector3i newMapPosition)
+        {
+            //make a list of old chunks
+            var newRendererMap = new RenderedChunk[RendererMap.Length];
+            Dictionary<Vector3i, RenderedChunk> oldChunks = new Dictionary<Vector3i, RenderedChunk>();
+            for (int x = 0; x < mapAreaSize / chunksize; x++)
+            {
+                for (int y = 0; y < mapAreaSize / chunksize; y++)
+                {
+                    for (int z = 0; z < MapSizeZ / chunksize; z++)
+                    {
+                        int pos = MapUtil.Index3d(x, y, z, mapAreaSize / chunksize, mapAreaSize / chunksize);
+                        int chunkx = x + CurrentRendererMapPositionG.x / chunksize;
+                        int chunky = y + CurrentRendererMapPositionG.y / chunksize;
+                        int chunkz = z + CurrentRendererMapPositionG.z / chunksize;
+                        Vector3i pos2 = new Vector3i(chunkx, chunky, chunkz);
+                        oldChunks[pos2] = RendererMap[pos];
+                    }
+                }
+            }
+            for (int x = 0; x < mapAreaSize / chunksize; x++)
+            {
+                for (int y = 0; y < mapAreaSize / chunksize; y++)
+                {
+                    for (int z = 0; z < MapSizeZ / chunksize; z++)
+                    {
+                        int pos = MapUtil.Index3d(x, y, z, mapAreaSize / chunksize, mapAreaSize / chunksize);
+                        int newchunkx = x + newMapPosition.x / chunksize;
+                        int newchunky = y + newMapPosition.y / chunksize;
+                        int newchunkz = z + newMapPosition.z / chunksize;
+                        Vector3i pos2 = new Vector3i(newchunkx, newchunky, newchunkz);
+                        if (oldChunks.ContainsKey(pos2))
+                        {
+                            //if already loaded
+                            newRendererMap[pos] = oldChunks[pos2];
+                            oldChunks[pos2] = null;
+                        }
+                        else
+                        {
+                            //if needs loading
+                            newRendererMap[pos] = new RenderedChunk();
+                        }
+                    }
+                }
+            }
+            foreach (var k in oldChunks)
+            {
+                //wasn't used in new area.
+                if (k.Value != null && k.Value.ids != null)
+                {
+                    foreach (var subMeshId in k.Value.ids)
+                    {
+                        d_Batcher.Remove(subMeshId);
+                    }
+                }
+                //todo: save to disk
+            }
+            for (int i = 0; i < newRendererMap.Length; i++)
+            {
+                RendererMap[i] = newRendererMap[i];
+            }
+        }
+
         public void UpdateTerrain()
         {
             if (RendererMap == null)
@@ -41,7 +118,11 @@ namespace ManicDigger
                 //Start() not called yet.
                 return;
             }
-            //todo: Call Remap() if needed.
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            TryRemap();
+
             for (int x = 0; x < mapAreaSize / chunksize; x++)
             {
                 for (int y = 0; y < mapAreaSize / chunksize; y++)
@@ -72,10 +153,16 @@ namespace ManicDigger
                                 }
                             }
                             RendererMap[pos].ids = ids.ToArray();
+                            if (stopwatch.ElapsedMilliseconds > 2)
+                            {
+                                goto exit;
+                            }
                         }
                     }
                 }
             }
+        exit:
+            ;
         }
 
         public void RedrawBlock(int x, int y, int z)
@@ -93,6 +180,25 @@ namespace ManicDigger
             }
         }
 
+        void SetChunkDirty(int cx, int cy, int cz, bool dirty)
+        {
+            int x = cx * chunksize;
+            int y = cy * chunksize;
+            int z = cz * chunksize;
+            if (x >= CurrentRendererMapPositionG.x
+                && y >= CurrentRendererMapPositionG.y
+                && z >= CurrentRendererMapPositionG.z
+                && x < CurrentRendererMapPositionG.x + mapAreaSize
+                && y < CurrentRendererMapPositionG.y + mapAreaSize
+                && z < MapSizeZ)
+            {
+                int xx = x - CurrentRendererMapPositionG.x;
+                int yy = y - CurrentRendererMapPositionG.y;
+                int zz = z - CurrentRendererMapPositionG.z;
+                RendererMap[MapUtil.Index3d(xx / chunksize, yy / chunksize, zz / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].dirty = dirty;
+            }
+        }
+
         public class RenderedChunk
         {
             public int[] ids;
@@ -104,6 +210,10 @@ namespace ManicDigger
 
         public void RedrawAllBlocks()
         {
+            if (RendererMap == null)
+            {
+                return;
+            }
             for (int i = 0; i < RendererMap.Length; i++)
             {
                 RendererMap[i].dirty = true;

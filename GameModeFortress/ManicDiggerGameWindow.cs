@@ -848,7 +848,6 @@ namespace ManicDigger
             materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
             OnNewMap();
-            RedrawAllBlocks();
         }
         [Obsolete]
         int[] materialSlots;
@@ -3979,6 +3978,7 @@ namespace ManicDigger
                                     }
                                 }
                             }
+
                         }
                         ReceivedMapLength += lengthPrefixLength + packetLength;
                     }
@@ -4265,15 +4265,15 @@ namespace ManicDigger
                 }
             }
         }
-        private void SetChunksAroundDirty(int x, int y, int z)
+        private void SetChunksAroundDirty(int cx, int cy, int cz)
         {
-            if (IsValidChunkPosition(x, y, z)) { SetChunkDirty(x - 1, y, z, true); }
-            if (IsValidChunkPosition(x - 1, y, z)) { SetChunkDirty(x - 1, y, z, true); }
-            if (IsValidChunkPosition(x + 1, y, z)) { SetChunkDirty(x + 1, y, z, true); }
-            if (IsValidChunkPosition(x, y - 1, z)) { SetChunkDirty(x, y - 1, z, true); }
-            if (IsValidChunkPosition(x, y + 1, z)) { SetChunkDirty(x, y + 1, z, true); }
-            if (IsValidChunkPosition(x, y, z - 1)) { SetChunkDirty(x, y, z - 1, true); }
-            if (IsValidChunkPosition(x, y, z + 1)) { SetChunkDirty(x, y, z + 1, true); }
+            if (IsValidChunkPosition(cx, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true); }
+            if (IsValidChunkPosition(cx - 1, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true); }
+            if (IsValidChunkPosition(cx + 1, cy, cz)) { SetChunkDirty(cx + 1, cy, cz, true); }
+            if (IsValidChunkPosition(cx, cy - 1, cz)) { SetChunkDirty(cx, cy - 1, cz, true); }
+            if (IsValidChunkPosition(cx, cy + 1, cz)) { SetChunkDirty(cx, cy + 1, cz, true); }
+            if (IsValidChunkPosition(cx, cy, cz - 1)) { SetChunkDirty(cx, cy, cz - 1, true); }
+            if (IsValidChunkPosition(cx, cy, cz + 1)) { SetChunkDirty(cx, cy, cz + 1, true); }
         }
         private bool IsValidChunkPosition(int xx, int yy, int zz)
         {
@@ -4315,10 +4315,10 @@ namespace ManicDigger
             //return d_IsChunkReady.IsChunkDirty(x, y, z);
             return true;
         }
-        public void SetChunkDirty(int x, int y, int z, bool dirty)
-        {
+        //public void SetChunkDirty(int x, int y, int z, bool dirty)
+        //{
             //d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
-        }
+        //}
         #endregion
         public void SetAllChunksNotDirty()
         {
