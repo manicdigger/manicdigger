@@ -20,7 +20,6 @@ namespace GameModeFortress
    public class JavaScriptInterpreter : IScriptInterpreter
    {
       private JintEngine m_engine;
-      private JsScope m_global_scope;
 
       public JavaScriptInterpreter()
       {

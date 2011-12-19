@@ -929,7 +929,7 @@ namespace ManicDiggerServer
 
             Place(x, y, z + 4, TileIdLeaves);
         }
-        private void Place(int x, int y, int z, int blocktype)
+        public void Place(int x, int y, int z, int blocktype)
         {
             if (MapUtil.IsValidPos(d_Map, x, y, z))
             {
@@ -1549,7 +1549,7 @@ for (int i = 0; i < unknown.Count; i++)
             p.MaxHealth = 20;
             return p;
         }
-        Vector3i PlayerBlockPosition(Client c)
+        public Vector3i PlayerBlockPosition(Client c)
         {
             return new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlZ / 32, c.PositionMul32GlY / 32);
         }
@@ -1757,14 +1757,6 @@ for (int i = 0; i < unknown.Count; i++)
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                         break;
                     }
-                    BlockSetMode mode = packet.SetBlock.Mode == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
-                    byte blocktype = (byte)packet.SetBlock.BlockType;
-                    if (mode == BlockSetMode.Destroy)
-                    {
-                        blocktype = 0; //data.TileIdEmpty
-                    }
-                    //todo check block type.
-                    //map.SetBlock(x, y, z, blocktype);
                     if (!DoCommandBuild(clientid, true, packet.SetBlock))
                     {
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -2589,7 +2581,7 @@ for (int i = 0; i < unknown.Count; i++)
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
         }
-        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
+        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd )
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
@@ -3200,7 +3192,12 @@ for (int i = 0; i < unknown.Count; i++)
             public ScriptConsole Console;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
-
+        public Client GetClient(int id)
+        {
+           if (!clients.ContainsKey(id))
+              return null;
+           return clients[id];
+        }
         public int dumpmax = 30;
         public void DropItem(ref Item item, Vector3i pos)
         {
