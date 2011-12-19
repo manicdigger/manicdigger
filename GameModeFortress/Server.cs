@@ -2348,29 +2348,7 @@ for (int i = 0; i < unknown.Count; i++)
                     else if (packet.Message.Message.StartsWith("/run ") && packet.Message.Message.Length > 5)
                     {
                        var script = packet.Message.Message.Substring(5);
-                       var client = clients[clientid];
-                       if (!client.IsAdmin)
-                       {
-                          SendMessage(clientid, "Server scripts can only be run by admin.", MessageType.Error);
-                          break;
-                       }
-                       if (client.Interpreter == null)
-                       {
-                          client.Interpreter = new JavaScriptInterpreter();
-                          client.Console = new ScriptConsole(this, clientid);
-                          client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
-                          client.Interpreter.SetFunction("out", new Action<object>(client.Console.Print));
-                          client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
-                       }
-                       var interpreter = client.Interpreter;
-                       object result;
-                       SendMessage(clientid, colorNormal + script);
-                       if (interpreter.Execute(script, out result))
-                       {
-                          SendMessage(clientid, colorSuccess + " => " + result);
-                          break;
-                       }
-                       SendMessage(clientid, colorError + "Error.");
+                       RunInClientSandbox(script, clientid);
                        break;
                     }
                     else if (packet.Message.Message.StartsWith("."))
@@ -2379,7 +2357,10 @@ for (int i = 0; i < unknown.Count; i++)
                     }
                     else if (packet.Message.Message.StartsWith("/"))
                     {
-                        SendMessage(clientid, colorError + "Invalid command.");
+                        //SendMessage(clientid, colorError + "Invalid command.");
+                       // assume script expression or command coming
+                         var script = packet.Message.Message.Substring(1);
+                         RunInClientSandbox(script, clientid);
                         break;
                     }
                     else
@@ -2414,6 +2395,40 @@ for (int i = 0; i < unknown.Count; i++)
             }
             return lengthPrefixLength + packetLength;
         }
+
+       private void RunInClientSandbox(string script, int clientid)
+       {
+          var client = clients[clientid];
+          if (!client.IsAdmin)
+          {
+             SendMessage(clientid, "Server scripts can only be run by admin.", MessageType.Error);
+             return;
+          }
+          if (client.Interpreter == null)
+          {
+             client.Interpreter = new JavaScriptInterpreter();
+             client.Console = new ScriptConsole(this, clientid);
+             client.Console.InjectConsoleCommands(client.Interpreter);
+             client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
+             client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
+          }
+          var interpreter = client.Interpreter;
+          object result;
+          SendMessage(clientid, colorNormal + script);
+          if (interpreter.Execute(script, out result))
+          {
+             try
+             {
+                SendMessage(clientid, colorSuccess + " => " + result);
+             }
+             catch (FormatException e) // can happen
+             {
+                SendMessage(clientid, colorError + "Error. " + e.Message);
+             }
+             return;
+          }
+          SendMessage(clientid, colorError + "Error.");
+       }
 
         string PlayerNameColored(int clientid)
         {
@@ -3263,6 +3278,7 @@ for (int i = 0; i < unknown.Count; i++)
         int Length(Vector3i v)
         {
             return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        }
+        }
+
     }
 }
