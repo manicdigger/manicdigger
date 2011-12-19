@@ -458,13 +458,18 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key == GetKey(OpenTK.Input.Key.ShiftLeft) || e.Key == GetKey(OpenTK.Input.Key.ShiftRight))
+                IsShiftPressed = false;
             if (GuiTyping == TypingState.None)
             {
                 keyeventup = e;
             }
         }
+        bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key ==  GetKey(OpenTK.Input.Key.ShiftLeft) ||  e.Key ==  GetKey(OpenTK.Input.Key.ShiftRight))
+                IsShiftPressed = true;
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
                 if (d_MainWindow.WindowState == WindowState.Fullscreen)
@@ -487,6 +492,13 @@ namespace ManicDigger
                     guistate = GuiState.EscapeMenu;
                     menustate = new MenuState();
                     FreeMouse = true;
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
+                {
+                   GuiTyping = TypingState.Typing;
+                   d_HudChat.IsTyping = true;
+                   d_HudChat.GuiTypingBuffer = "";
+                   return;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
                 {
@@ -522,7 +534,7 @@ namespace ManicDigger
                     }
                     return;
                 }
-                if (GuiTyping == TypingState.Typing)
+               if (GuiTyping == TypingState.Typing)
                 {
                     var key = e.Key;
                     string c = "";
