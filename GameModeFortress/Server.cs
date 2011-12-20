@@ -2343,6 +2343,22 @@ for (int i = 0; i < unknown.Count; i++)
                        RunInClientSandbox(script, clientid);
                        break;
                     }
+                    else if (packet.Message.Message.StartsWith("/load ") && packet.Message.Message.Length > 6)
+                    {
+                       var script_file = packet.Message.Message.Substring(6);
+                       var script = "";
+                       try
+                       {
+                          script=File.ReadAllText(Path.Combine(gamepathconfig, script_file));
+                       }
+                       catch (Exception e)
+                       {
+                          SendMessage(clientid, e.Message, MessageType.Error);
+                          break;
+                       }
+                       RunInClientSandbox(script, clientid);
+                       break;
+                    }
                     else if (packet.Message.Message.StartsWith("."))
                     {
                         break;

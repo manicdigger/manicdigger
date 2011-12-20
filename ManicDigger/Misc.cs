@@ -480,6 +480,10 @@ namespace ManicDigger
             }
             return hash;
         }
+        public override string ToString()
+        {
+           return string.Format("[{0}, {1}]", x, y);
+        }
     }
     public struct Vector3i
     {
@@ -623,7 +627,7 @@ namespace ManicDigger
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
     }
-    class FastStack<T>
+    public class FastStack<T>
     {
         public void Initialize(int maxCount)
         {

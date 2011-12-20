@@ -96,21 +96,19 @@ namespace GameModeFortress
    {
 
       public ScriptConsole Console;
-      public enum Orientation
-      {
-         North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest,
-         Up, UpNorth, UpNorthEast, UpEast, UpSouthEast, UpSouth, UpSouthWest, UpWest, UpNorthWest,
-         Down, DownNorth, DownNorthEast, DownEast, DownSouthEast, DownSouth, DownSouthWest, DownWest, DownNorthWest,
-      }
-
-      #region --> Turtle API
+      //public enum Orientation
+      //{
+      //   North, NorthEast, East, SouthEast, South, SouthWest, West, NorthWest,
+      //   Up, UpNorth, UpNorthEast, UpEast, UpSouthEast, UpSouth, UpSouthWest, UpWest, UpNorthWest,
+      //   Down, DownNorth, DownNorthEast, DownEast, DownSouthEast, DownSouth, DownSouthWest, DownWest, DownNorthWest,
+      //}
 
       public Vector3i position = new Vector3i( 0, 0, 0 );
       public double x { get { return position.x; } }
       public double y { get { return position.y; } }
       public double z { get { return position.z; } }
 
-      public Orientation orientation;
+      //public Orientation orientation;
 
       public void set_player_position()
       {
@@ -124,7 +122,111 @@ namespace GameModeFortress
          Console.PutBlock(x, y, z, material);
       }
 
-      #endregion
+      public Vector3i direction = new Vector3i(0,-1, 0); // turtle looks north by default
+
+      public void look_north()
+      {
+         direction = new Vector3i(0, -1, 0);
+      }
+
+      public void look_east()
+      {
+         direction = new Vector3i(-1, 0, 0);
+      }
+
+      public void look_south()
+      {
+         direction = new Vector3i(0, 1, 0);
+      }
+
+      public void look_west()
+      {
+         direction = new Vector3i(1, 0, 0);
+      }
+
+      public void look_up()
+      {
+         direction = new Vector3i(0, 0, 1);
+      }
+
+      public void look_down()
+      {
+         direction = new Vector3i(0, 0, -1);
+      }
+
+      public void forward()
+      {
+         position = new Vector3i(position.x + direction.x, position.y + direction.y, position.z+direction.z);
+      }
+
+      public void back()
+      {
+         position = new Vector3i(position.x - direction.x, position.y - direction.y, position.z - direction.z);
+      }
+
+      public void save() // push the current turtle position and direction to the stack
+      {
+         m_stack.Push(new Vector3i[] {position, direction});
+      }
+
+      public void load() // pop position and direction from the stack and set them
+      {
+         var array = m_stack.Pop();
+         if (array == null)
+            return;
+         position = array[0];
+         direction = array[1];
+      }
+
+      private FastStack<Vector3i[]> m_stack = new FastStack<Vector3i[]>();
+
+      public void status()
+      {
+         Console.Print("Turtle status:");
+         Console.Print("Position: "+position);
+         Console.Print("Orientation: " + DirectionToString(direction) + "  "+ direction);
+      }
+
+      public static string DirectionToString(Vector3i dir)
+      {
+         if (dir.x == 0)
+         {
+            if (dir.y == 0)
+            {
+               if (dir.z == 1)
+                  return "Up";
+               else if (dir.z == -1) 
+                  return "Down";
+            }
+            if (dir.z == 0)
+            {
+               if (dir.y == 1)
+                  return "South";
+               else if (dir.y == -1)
+                  return "North";
+            }
+         }
+         else if (dir.y == 0 && dir.z == 0)
+         {
+            if (dir.x == 1)
+               return "West";
+            else if (dir.x == -1)
+               return "East";
+         }
+         return "Unknown direction";
+      }
+
+      //public void turn_right()
+      //{
+
+      //}
+
+
+      //public void turn_left()
+      //{
+
+      //}
+
    }
 
   public delegate void Action<T1,T2, T3, T4>(T1 t1, T2 t2, T3 t3, T4 t4);
