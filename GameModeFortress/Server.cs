@@ -484,11 +484,14 @@ namespace ManicDiggerServer
             {
                 copyList.Add(k.Value.socket);
             }
-            if (copyList.Count == 0)
+            //if (copyList.Count == 0)
+            //{
+            //    return;
+            //}
+            if (copyList.Count != 0)
             {
-                return;
+                d_MainSocket.Select(copyList, null, null, 0);//10000000);
             }
-            d_MainSocket.Select(copyList, null, null, 0);//10000000);
 
             foreach (ISocket clientSocket in copyList)
             {
@@ -564,7 +567,7 @@ namespace ManicDiggerServer
                 }
             }
             pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
-            //UnloadUnusedChunks();
+            UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
                 ChunkSimulation();
@@ -1070,7 +1073,7 @@ namespace ManicDiggerServer
                 }
             return false;
         }
-        /*
+
         int CompressUnusedIteration = 0;
         private void UnloadUnusedChunks()
         {
@@ -1113,7 +1116,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        */
+        
         private void DoSaveChunk(int x, int y, int z, Chunk c)
         {
             MemoryStream ms = new MemoryStream();
@@ -1591,7 +1594,7 @@ for (int i = 0; i < unknown.Count; i++)
             //spawn position randomization disabled.
             //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-            return new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
+            return new Vector3i(x * 32 + 15, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32 + 15);
         }
         public char[] AllowedUsernameCharacters = ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             + "1234567890_-").ToCharArray();
@@ -1743,7 +1746,7 @@ for (int i = 0; i < unknown.Count; i++)
                             }
                         }
                     }
-                    clients[clientid].state = ClientStateOnServer.Loading;
+                    clients[clientid].state = ClientStateOnServer.LoadingGenerating;
                     NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
@@ -2366,9 +2369,9 @@ for (int i = 0; i < unknown.Count; i++)
                     else if (packet.Message.Message.StartsWith("/"))
                     {
                         //SendMessage(clientid, colorError + "Invalid command.");
-                       // assume script expression or command coming
-                         var script = packet.Message.Message.Substring(1);
-                         RunInClientSandbox(script, clientid);
+                        // assume script expression or command coming
+                        var script = packet.Message.Message.Substring(1);
+                        RunInClientSandbox(script, clientid);
                         break;
                     }
                     else
@@ -2475,7 +2478,7 @@ for (int i = 0; i < unknown.Count; i++)
                  return colorNormal;
            }
         }
-       bool CompareByteArray(byte[] a, byte[] b)
+        bool CompareByteArray(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) { return false; }
             for (int i = 0; i < a.Length; i++)
@@ -2597,7 +2600,7 @@ for (int i = 0; i < unknown.Count; i++)
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
         }
-        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd )
+        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
@@ -2929,7 +2932,7 @@ for (int i = 0; i < unknown.Count; i++)
         {
            SendMessage(clientid, MessageTypeToString(color) + message);
         }
-       private void SendMessage(int clientid, string message)
+        private void SendMessage(int clientid, string message)
         {
             string truncated = message; //.Substring(0, Math.Min(64, message.Length));
 
@@ -3177,7 +3180,8 @@ for (int i = 0; i < unknown.Count; i++)
         public enum ClientStateOnServer
         {
             Connecting,
-            Loading,
+            LoadingGenerating,
+            LoadingSending,
             Playing,
         }
         public class Client
@@ -3292,6 +3296,5 @@ for (int i = 0; i < unknown.Count; i++)
         {
             return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
         }
-
     }
 }
