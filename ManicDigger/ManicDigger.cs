@@ -97,10 +97,12 @@ namespace ManicDigger
         {
             return x + y * sizex;
         }
+
         public static int Index3d(int x, int y, int h, int sizex, int sizey)
         {
             return (h * sizey + y) * sizex + x;
         }
+
         public static Vector3i Pos(int index, int sizex, int sizey)
         {
             int x = index % sizex;
@@ -108,6 +110,7 @@ namespace ManicDigger
             int h = index / (sizex * sizey);
             return new Vector3i(x, y, h);
         }
+
         public static bool IsValidPos(IMapStorage map, int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0)
@@ -120,6 +123,7 @@ namespace ManicDigger
             }
             return true;
         }
+
         public static bool IsValidChunkPos(IMapStorage map, int cx, int cy, int cz, int chunksize)
         {
             return cx >= 0 && cy >= 0 && cz >= 0
@@ -127,6 +131,7 @@ namespace ManicDigger
                 && cy < map.MapSizeY / chunksize
                 && cz < map.MapSizeZ / chunksize;
         }
+
         public static int blockheight(IMapStorage map, int tileidempty, int x, int y)
         {
             for (int z = map.MapSizeZ - 1; z >= 0; z--)
@@ -138,6 +143,7 @@ namespace ManicDigger
             }
             return map.MapSizeZ / 2;
         }
+
         static ulong pow20minus1 = 1048576 - 1;
         public static Vector3i FromMapPos(ulong v)
         {
@@ -148,6 +154,7 @@ namespace ManicDigger
             uint x = (uint)(v & pow20minus1);
             return new Vector3i((int)x, (int)y, (int)z);
         }
+
         public static ulong ToMapPos(int x, int y, int z)
         {
             ulong v = 0;
@@ -156,6 +163,7 @@ namespace ManicDigger
             v |= (ulong)z;
             return v;
         }
+
         public static byte[] ToFlatMap(byte[, ,] map)
         {
             int sizex = map.GetUpperBound(0) + 1;
@@ -174,6 +182,7 @@ namespace ManicDigger
             }
             return flatmap;
         }
+
         public static int SearchColumn(IMapStorage map, int x, int y, int id, int startH)
         {
             for (int h = startH; h > 0; h--)
@@ -185,10 +194,12 @@ namespace ManicDigger
             }
             return -1; // -1 means 'not found'
         }
+
         public static int SearchColumn(IMapStorage map, int x, int y, int id)
         {
             return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
         }
+
         public static bool IsSolidChunk(byte[] chunk)
         {
             for (int i = 0; i <= chunk.GetUpperBound(0); i++)
@@ -200,6 +211,7 @@ namespace ManicDigger
             }
             return true;
         }
+
         public static bool IsSolidChunk(byte[, ,] chunk)
         {
             for (int x = 0; x <= chunk.GetUpperBound(0); x++)
@@ -216,6 +228,36 @@ namespace ManicDigger
                 }
             }
             return true;
+        }
+
+        public static Point PlayerArea(int playerAreaSize, int centerAreaSize, Vector3i blockPosition)
+        {
+            Point p = PlayerCenterArea(playerAreaSize, centerAreaSize, blockPosition);
+            int x = p.X + centerAreaSize / 2;
+            int y = p.Y + centerAreaSize / 2;
+            x -= playerAreaSize / 2;
+            y -= playerAreaSize / 2;
+            return new Point(x, y);
+        }
+
+        public static Point PlayerCenterArea(int playerAreaSize, int centerAreaSize, Vector3i blockPosition)
+        {
+            int px = blockPosition.x;
+            int py = blockPosition.y;
+            int gridposx = (px / centerAreaSize) * centerAreaSize;
+            int gridposy = (py / centerAreaSize) * centerAreaSize;
+            return new Point(gridposx, gridposy);
+        }
+
+        public static IEnumerable<Vector3> BlocksAround(Vector3 pos)
+        {
+            yield return new Vector3(pos + new Vector3(0, 0, 0));
+            yield return new Vector3(pos + new Vector3(+1, 0, 0));
+            yield return new Vector3(pos + new Vector3(-1, 0, 0));
+            yield return new Vector3(pos + new Vector3(0, +1, 0));
+            yield return new Vector3(pos + new Vector3(0, -1, 0));
+            yield return new Vector3(pos + new Vector3(0, 0, +1));
+            yield return new Vector3(pos + new Vector3(0, 0, -1));
         }
     }
     public class MapStorage : IMapStorage, IMapStoragePortion
@@ -396,7 +438,7 @@ namespace ManicDigger
         //void LoadMap(byte[, ,] map);
         IMapStorage Map { get; }
         void SetTileAndUpdate(Vector3 pos, int type);
-        void UpdateAllTiles();
+        void RedrawAllBlocks();
     }
     public class MapDummy : ManicDigger.IMap
     {
@@ -410,7 +452,7 @@ namespace ManicDigger
         public IMapStorage Map { get { return map; } }
         #endregion
         #region IMap Members
-        public void UpdateAllTiles()
+        public void RedrawAllBlocks()
         {
         }
         #endregion

@@ -22,7 +22,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IMapStorage d_Map;
         [Inject]
-        public IShadows d_Shadows;
+        public IShadowsGetLight d_Shadows;
         [Inject]
         public Inventory d_Inventory;
         public int terrainTexture { get { return d_Terrain.terrainTexture; } }

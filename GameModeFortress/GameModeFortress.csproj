@@ -68,7 +68,6 @@
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
     <Compile Include="GuiStates\GuiStateMapLoading.cs" />
-    <Compile Include="InfiniteMap.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="ModeFortressRail.cs" />
     <Compile Include="Packets.cs" />
@@ -80,6 +79,8 @@
     <Compile Include="ServerMap.cs" />
     <Compile Include="ServerProgram.cs" />
     <Compile Include="ServerWorldManager.cs" />
+    <Compile Include="Shadows.cs" />
+    <Compile Include="TerrainRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
