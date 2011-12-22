@@ -111,6 +111,7 @@
     <Compile Include="Hud\HudFpsHistoryGraphRenderer.cs" />
     <Compile Include="OggDecoder.cs" />
     <Compile Include="Renderers\CharacterRendererMonsterCode.cs" />
+    <Compile Include="Renderers\MonospacedTextRenderer.cs" />
     <Compile Include="Renderers\MinecartRenderer.cs" />
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Collisions.cs" />
