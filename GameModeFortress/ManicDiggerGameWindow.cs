@@ -69,6 +69,8 @@ namespace ManicDigger
         [Inject]
         public HudChat d_HudChat;
         [Inject]
+        public HudTextEditor d_HudTextEditor;
+        [Inject]
         public HudInventory d_HudInventory;
         [Inject]
         public Inventory d_Inventory;
@@ -265,7 +267,11 @@ namespace ManicDigger
                     }
                 }
             }
-       }
+            if (guistate == GuiState.EditText)
+            {
+               d_HudTextEditor.HandleKeyPress(sender, e);
+            }
+        }
         float overheadcameradistance = 10;
         float tppcameradistance = 3;
         void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
@@ -709,7 +715,11 @@ namespace ManicDigger
                     if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
                     if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.F12))
+                if (e.Key == OpenTK.Input.Key.F9)
+                {
+                   guistate = GuiState.EditText;
+                }
+               if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
@@ -788,6 +798,13 @@ namespace ManicDigger
                 {
                     GuiStateBackToGame();
                 }
+            }
+            else if (guistate == GuiState.EditText) {
+               if (e.Key == GetKey(OpenTK.Input.Key.Escape))
+               {
+                  GuiStateBackToGame();
+               }
+               d_HudTextEditor.HandleKeyDown(sender, e);
             }
             else throw new Exception();
         }
@@ -1180,6 +1197,7 @@ namespace ManicDigger
             else if (guistate == GuiState.CraftingRecipes)
             {
             }
+            else if (guistate == GuiState.EditText) { }
             else throw new Exception();
             float movespeednow = MoveSpeedNow();
             Acceleration acceleration = new Acceleration();
@@ -2360,6 +2378,7 @@ namespace ManicDigger
             Inventory,
             MapLoading,
             CraftingRecipes,
+           EditText
         }
         private void DrawMouseCursor()
         {
@@ -2425,6 +2444,11 @@ namespace ManicDigger
                         DrawCraftingRecipes();
                     }
                     break;
+                case GuiState.EditText:
+                    {
+                       d_HudTextEditor.Render();
+                    }
+                    break;
                 default:
                     throw new Exception();
             }
@@ -2463,7 +2487,7 @@ namespace ManicDigger
             }
             d_The3d.PerspectiveMode();
         }
-        public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
+       public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
