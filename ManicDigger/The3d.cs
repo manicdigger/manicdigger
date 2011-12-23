@@ -138,16 +138,7 @@ namespace ManicDigger
             {
                 return size;
             }
-            using (Font font = new Font("Verdana", fontsize))
-            {
-                using (Bitmap bmp = new Bitmap(1, 1))
-                {
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    {
-                        size = g.MeasureString(text, font);
-                    }
-                }
-            }
+            size=d_TextRenderer.MeasureTextSize(text, fontsize);
             textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
             return size;
         }
