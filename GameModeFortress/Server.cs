@@ -2352,6 +2352,11 @@ for (int i = 0; i < unknown.Count; i++)
                     {
                         break;
                     }
+                    else if (packet.Message.Message == "/crash")
+                    {
+                        KillPlayer(clientid);
+                        break;
+                    }
                     else if (packet.Message.Message.StartsWith("/"))
                     {
                         SendMessage(clientid, colorError + "Invalid command.");

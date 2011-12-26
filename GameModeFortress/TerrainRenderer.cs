@@ -118,11 +118,10 @@ namespace ManicDigger
                 //Start() not called yet.
                 return;
             }
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
 
             TryRemap();
 
+            int updated = 0;
             for (int x = 0; x < mapAreaSize / chunksize; x++)
             {
                 for (int y = 0; y < mapAreaSize / chunksize; y++)
@@ -140,6 +139,7 @@ namespace ManicDigger
                                 }
                             }
                             RendererMap[pos].dirty = false;
+                            chunkupdates++;
                             List<int> ids = new List<int>();
                             var a = d_TerrainChunkTesselator.MakeChunk(CurrentRendererMapPositionG.x / chunksize + x,
                                 CurrentRendererMapPositionG.y / chunksize + y, z);
@@ -153,7 +153,7 @@ namespace ManicDigger
                                 }
                             }
                             RendererMap[pos].ids = ids.ToArray();
-                            if (stopwatch.ElapsedMilliseconds > 2)
+                            if ((updated++) > 2 && framestopwatch.ElapsedMilliseconds > 5)
                             {
                                 goto exit;
                             }

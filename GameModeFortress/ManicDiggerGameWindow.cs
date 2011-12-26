@@ -1912,8 +1912,11 @@ namespace ManicDigger
         //Vector3 oldplayerposition;
         public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
+        public Stopwatch framestopwatch;
         public void OnRenderFrame(FrameEventArgs e)
         {
+            framestopwatch = new Stopwatch();
+            framestopwatch.Start();
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
 
             //Sleep is required in Mono for running the terrain background thread.
