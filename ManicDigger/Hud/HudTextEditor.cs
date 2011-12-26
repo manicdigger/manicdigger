@@ -21,17 +21,13 @@ namespace ManicDigger.Hud
             d_TextRenderer = new MonospacedTextRenderer()
          };
          CHARACTER_WIDTH = d_The3d.d_TextRenderer.MeasureTextSize(new string('M', 100), FONTSIZE).Width / 100f; // <--- measuring 100 gives a better result than measuring a single char
-         CHARACTER_HEIGHT = d_The3d.d_TextRenderer.MeasureTextSize("gG", FONTSIZE).Height;
+         UpdateEditorViewport();
       }
-
-      The3d d_The3d;
 
       public const float FONTSIZE = 9f;
       public const float LINESPACING = 4f;
       public readonly Color CURSOR_COLOR = Color.Black;
       public readonly Color TEXT_COLOR = Color.Black;
-      public const float MARGIN_RIGHT = 20;
-      public const float MARGIN_TOP = 20;
       public float CHARACTER_WIDTH, CHARACTER_HEIGHT;
       public float CURSOR_OFFSET_X = 1.0f;
 
@@ -39,6 +35,73 @@ namespace ManicDigger.Hud
       public IViewportSize d_ViewportSize;
 
       private TextEditor m_editor = new TextEditor();
+
+      The3d d_The3d;
+
+      private float m_left = 100;
+      private float m_top = 100;
+      private float m_padding = 10;
+      private float m_width = 500;
+      private float m_height = 300;
+
+      public float Width
+      {
+         get { return m_width; }
+         set
+         {
+            m_width = value;
+            UpdateEditorViewport();
+         }
+      }
+
+      public float Height
+      {
+         get { return m_height; }
+         set
+         {
+            m_height = value;
+            UpdateEditorViewport();
+         }
+      }
+
+      public float Left
+      {
+         get { return m_left; }
+         set
+         {
+            m_left = value;
+            UpdateEditorViewport();
+         }
+      }
+
+      public float Top
+      {
+         get { return m_top; }
+         set
+         {
+            m_top = value;
+            UpdateEditorViewport();
+         }
+      }
+
+      public float Padding
+      {
+         get { return m_padding; }
+         set
+         {
+            m_padding = value;
+            UpdateEditorViewport();
+         }
+      }
+
+      private void UpdateEditorViewport()
+      {
+         var cols = (int)Math.Floor((m_width - 2 * m_padding) / CHARACTER_WIDTH);
+         var rows = (int)Math.Floor((m_height - 2 * m_padding) / (FONTSIZE + LINESPACING));
+
+         m_editor.ViewportWidth = cols;
+         m_editor.ViewportHeight = rows;
+      }
 
       public void SetText(string text)
       {
@@ -62,22 +125,30 @@ namespace ManicDigger.Hud
 
       private void DrawCursor()
       {
-         var cursor_x = MARGIN_RIGHT + m_editor.CursorCol * CHARACTER_WIDTH + CURSOR_OFFSET_X;
-         var cursor_y = MARGIN_TOP + m_editor.CursorRow * (FONTSIZE + LINESPACING) - LINESPACING / 2;
+         var cursor_x = m_left + m_padding + (m_editor.CursorCol - m_editor.ViewportCol) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
+         var cursor_y = m_top + m_padding + (m_editor.CursorRow - m_editor.ViewportRow) * (FONTSIZE + LINESPACING) - LINESPACING / 2;
          d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), cursor_x, cursor_y, 1, FONTSIZE * 2, null, CURSOR_COLOR);
       }
 
       private void DrawEditorBackground()
       {
-         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 0, 0, d_ViewportSize.Width, d_ViewportSize.Height, null, new FastColor(200, 250, 250, 250).ToColor());
+         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), m_left, m_top, m_width, m_height, null, new FastColor(200, 250, 250, 250).ToColor());
       }
 
       private void DrawVisibleLines()
       {
          float y = 0;
-         foreach (var line in m_editor.Lines)
+         var start_col = m_editor.ViewportCol;
+         var end_col = start_col + m_editor.ViewportWidth;
+         var skip_rows = Math.Max(0, m_editor.ViewportRow);
+         var rows_left_after_skip = Math.Max(MyLinq.Count(m_editor.Lines) - skip_rows, 0);
+         var visible_rows = Math.Min(m_editor.ViewportHeight, rows_left_after_skip);
+         foreach (var line in MyLinq.Take(MyLinq.Skip(m_editor.Lines, skip_rows), visible_rows))
          {
-            d_The3d.Draw2dText(line.Text, MARGIN_RIGHT, MARGIN_TOP + y, FONTSIZE, TEXT_COLOR);
+            var safe_end_col=Math.Min(line.Length, end_col);
+            var safe_start_col = Math.Min(start_col, safe_end_col);
+            var visible_text = line.GetSegment(safe_start_col, safe_end_col);
+            d_The3d.Draw2dText(visible_text, m_left + m_padding, m_top + m_padding + y, FONTSIZE, TEXT_COLOR);
             y += FONTSIZE + LINESPACING;
          }
       }
@@ -105,7 +176,7 @@ namespace ManicDigger.Hud
                m_editor.Delete();
                break;
             case Key.Home:
-               m_editor.SetCursor(0, m_editor.CursorRow);
+               m_editor.CursorCol = 0;
                break;
             case Key.End:
                m_editor.GoToEndOfLine();
@@ -142,8 +213,12 @@ namespace ManicDigger.Hud
       List<TextLine> m_lines = new List<TextLine>() { new TextLine("Hello World!"), new TextLine("bla bla bla") };
       public IEnumerable<TextLine> Lines { get { return m_lines; } }
 
-      public int CursorRow = 0;
-      public int CursorCol = 0;
+      private int m_cursor_row = 0;
+      private int m_cursor_col = 0;
+      private int m_viewport_row = 0; // <-- if text is larger than viewport this tells which is the first visible row in the viewport
+      private int m_viewport_col = 0; // <-- if text is larger than viewport this tells which is the first visible col in the viewport
+      public int ViewportWidth = 1000; // <-- width in characters. Needs to be set by widget to ensure correct scrolling behavior
+      public int ViewportHeight = 1000; // <-- height in lines. Needs to be set by widget to ensure correct scrolling behavior
 
       public string Text
       {
@@ -161,6 +236,58 @@ namespace ManicDigger.Hud
             foreach (var line in m_lines)
                text.AppendLine(line.Text);
             return text.ToString();
+         }
+      }
+
+      public int CursorRow
+      {
+         get { return m_cursor_row; }
+         set
+         {
+            m_cursor_row = value;
+            if (m_cursor_row < 0)
+               m_cursor_row = 0;
+            if (m_cursor_row >= ViewportRow + ViewportHeight)
+               m_viewport_row = m_cursor_row - ViewportHeight + 1;
+            else if (m_cursor_row < ViewportRow)
+               ViewportRow = m_cursor_row;
+         }
+      }
+
+      public int CursorCol
+      {
+         get { return m_cursor_col; }
+         set
+         {
+            m_cursor_col = value;
+            if (m_cursor_col < 0)
+               m_cursor_col = 0;
+            m_cursor_col = Math.Min(m_cursor_col, GetLine(CursorRow).Length);
+            if (m_cursor_col > ViewportCol + ViewportWidth)
+               m_viewport_col = m_cursor_col - ViewportWidth;
+            else if (m_cursor_col < ViewportCol)
+               ViewportCol = m_cursor_col;
+         }
+      }
+
+      public int ViewportRow
+      {
+         get { return m_viewport_row; }
+         set { 
+            m_viewport_row = value;
+            if (m_viewport_row < 0)
+               m_viewport_row = 0;
+         }
+      }
+
+      public int ViewportCol
+      {
+         get { return m_viewport_col; }
+         set
+         {
+            m_viewport_col = value;
+            if (m_viewport_col < 0)
+               m_viewport_col = 0;
          }
       }
 
@@ -267,41 +394,23 @@ namespace ManicDigger.Hud
       public void Delete()
       {
          var line = GetLine(CursorRow);
-         if (CursorRow >= m_lines.Count && CursorCol <=  line.Length)
+         if (CursorRow >= m_lines.Count && CursorCol <= line.Length)
             return;
          if (CursorCol < line.Length)
          {
-            line.Remove(CursorCol, CursorCol+1);
+            line.Remove(CursorCol, CursorCol + 1);
          }
          else
          {
-            var line_below = GetLine(CursorRow+1);
+            var line_below = GetLine(CursorRow + 1);
             m_lines.RemoveAt(CursorRow + 1);
             line.Append(line_below.Text);
          }
       }
 
-      public void SetCursor(int col, int row)
-      {
-         CursorCol=col;
-         CursorRow=row;
-         CheckCursorPosition();
-         // TODO: scroll
-      }
-
-      private void CheckCursorPosition()
-      {
-         if (CursorCol < 0)
-            CursorCol = 0;
-         if (CursorRow < 0)
-            CursorRow = 0;
-         CursorCol = Math.Min(CursorCol, GetLine(CursorRow).Length);
-      }
-
       public void GoToEndOfLine()
       {
          CursorCol = GetLine(CursorRow).Length;
-         // TODO: scroll
       }
    }
 
