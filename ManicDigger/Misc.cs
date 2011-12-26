@@ -735,6 +735,17 @@ namespace ManicDigger
                 i++;
             }
         }
+        public static IEnumerable<T> Skip<T>(IEnumerable<T> l, int n)
+        {
+           var iterator = l.GetEnumerator();
+           for(int i=0; i<n; i++) 
+           {
+               if(iterator.MoveNext()==false)
+                  yield break;
+           }
+           while (iterator.MoveNext())
+              yield return iterator.Current;
+        }
     }
     [XmlRoot("dictionary")]
     public class SerializableDictionary<TKey, TValue>
