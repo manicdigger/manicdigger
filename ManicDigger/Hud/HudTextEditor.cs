@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text;
+using System.Text.RegularExpressions;
 using ManicDigger.Renderers;
 using OpenTK;
 using OpenTK.Input;
@@ -243,6 +244,21 @@ namespace ManicDigger.Hud
             m_editor.InsertTab();
             return;
          }
+         if (m_editor.IsCtrlKeyDown)
+         {
+            switch (e.KeyChar)
+            {
+               case 'c':
+                  m_editor.Copy();
+                  return;
+               case 'x':
+                  m_editor.Cut();
+                  return;
+               case 'v':
+                  m_editor.Paste();
+                  return;
+            }
+         }
          if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
          {
             m_editor.Insert(e.KeyChar.ToString());
@@ -416,13 +432,36 @@ namespace ManicDigger.Hud
 
       public void Insert(string s)
       {
-         var line = GetLine(CursorRow);
-         line.Insert(CursorCol, s);
-         CursorCol += s.Length;
+         if (IsSelectionActive)
+            DeleteSelection();
+         var lines = Regex.Split( s, @"\r?\n");
+         if (lines.Length == 1) // insertion of text without line breaks
+         {
+            var line = GetLine(CursorRow);
+            line.Insert(CursorCol, s);
+            CursorCol += s.Length;
+            return;
+         }
+         // insertion of text with line breaks
+         Insert(lines[0]);
+         InsertCarriageReturn();
+         Insert(lines[lines.Length-1]);
+         var col = CursorCol;
+         if (lines.Length > 2)
+         {
+            for (int i = lines.Length - 2; i > 1; i--)
+            {
+               m_lines.Insert(CursorRow, new TextLine(lines[i]));
+            }
+         }
+         CursorCol = col;
+         CursorRow += lines.Length;
       }
 
       public void InsertCarriageReturn()
       {
+         if (IsSelectionActive)
+            DeleteSelection();
          var line = GetLine(CursorRow);
          string removed = "";
          if (line.Length > 0 && CursorCol < line.Length)
@@ -457,6 +496,11 @@ namespace ManicDigger.Hud
 
       public void BackSpace()
       {
+         if (IsSelectionActive)
+         {
+            DeleteSelection();
+            return;
+         }
          if (CursorCol == 0 && CursorRow == 0)
             return;
          var line = GetLine(CursorRow);
@@ -478,6 +522,11 @@ namespace ManicDigger.Hud
 
       public void Delete()
       {
+         if (IsSelectionActive)
+         {
+            DeleteSelection();
+            return;
+         }
          var line = GetLine(CursorRow);
          if (CursorRow >= m_lines.Count && CursorCol <= line.Length)
             return;
@@ -493,12 +542,57 @@ namespace ManicDigger.Hud
          }
       }
 
+      public void DeleteSelection()
+      {
+         int[] selection = GetSaveSelection();
+         int sel_begin_col = selection[0];
+         int sel_begin_row = selection[1];
+         int sel_end_col = selection[2];
+         int sel_end_row = selection[3];
+         // selection does not span multiple lines
+         if (sel_begin_row == sel_end_row) 
+         {
+            DeleteSingleLineSelection(sel_begin_row, sel_begin_col, sel_end_col);
+            return;
+         }
+         // Note: selection spans multiple lines, so we remove the last line, the lines between and then the first line (in order to not shift indices of selected lines)
+         DeleteSingleLineSelection(sel_end_row, 0, sel_end_col); // remove last line
+         if (sel_end_row - sel_begin_row > 1) // remove entire lines between first and last row of selection
+         {
+            for (int i = sel_end_row - 1; i > sel_begin_row + 1; i--)
+               m_lines.RemoveAt(i);
+         }
+         DeleteSingleLineSelection(sel_begin_row, sel_begin_col, GetLineLength(sel_begin_row)); // remove last line
+         // join the lines before and after the selection by deleting the line break
+         var line_below = GetLine(CursorRow + 1);
+         m_lines.RemoveAt(CursorRow + 1);
+         GetLine(CursorRow).Append(line_below.Text);
+         IsSelectionActive=false;
+      }
+
+      private void DeleteSingleLineSelection(int row, int start_col, int end_col)
+      {
+         var line = GetLine(row);
+         if (start_col == 0 && end_col >= line.Length)
+            m_lines.RemoveAt(row); // remove entire line
+         else
+            line.Remove(start_col, end_col); // remove selected part of the line
+         SelectionStartRow = SelectionEndRow = CursorRow = row;
+         SelectionStartCol = SelectionEndCol = CursorCol = start_col;
+      }
+
+      public void ReplaceSelection(string replacement)
+      {
+         DeleteSelection();
+         Insert(replacement);
+      }
+
       public void GoToEndOfLine()
       {
          CursorCol = GetLine(CursorRow).Length;
       }
 
-      public Vector2i GetLineSelection(int line) // returned vector contains the start column as x and the end column as y
+      private int[] GetSaveSelection() // return selection and ensure that selection begin is before selection end
       {
          int sel_begin_row, sel_begin_col, sel_end_row, sel_end_col;
          if (SelectionStartRow < SelectionEndRow)
@@ -522,10 +616,19 @@ namespace ManicDigger.Hud
             sel_end_col = SelectionStartCol;
             sel_end_row = SelectionStartRow;
          }
+         return new int[4] { sel_begin_col , sel_begin_row, sel_end_col, sel_end_row };
+      }
+
+      public Vector2i GetLineSelection(int line) // returned vector contains the start column as x and the end column as y
+      {
+         int[] selection = GetSaveSelection();
+         int sel_begin_col = selection[0];
+         int sel_begin_row = selection[1];
+         int sel_end_col = selection[2];
+         int sel_end_row = selection[3];
          var sel = new Vector2i(0, 0);
          if (line < sel_begin_row || line > sel_end_row)
             return sel; // no selection in this line
-         int sel_start_col;
          if (line == sel_begin_row)
          {
             sel.x = sel_begin_col;
@@ -543,6 +646,34 @@ namespace ManicDigger.Hud
             sel.y = GetLineLength(line);
          }
          return sel;
+      }
+
+      private string m_clip_buffer;
+      public event Action<object> ClipBufferChanged; // <-- forwarding internal clipbuffer to system clipboard can be hooked into here
+      public string ClipBuffer
+      {
+         get { return m_clip_buffer; }
+         set { 
+            m_clip_buffer = value;
+            if (ClipBufferChanged!=null)
+               ClipBufferChanged(this);
+         }
+      }
+
+      public void Copy()
+      {
+         // TODO: copy selection to clip buffer
+      }
+
+      public void Cut()
+      {
+         Copy();
+         DeleteSelection();
+      }
+
+      public void Paste()
+      {
+         Insert(ClipBuffer);
       }
    }
 
