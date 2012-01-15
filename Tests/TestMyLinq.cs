@@ -1,3 +1,4 @@
+// Copyright (c) 2011 by Henon <meinrad.recheis@gmail.com>
 using System.Collections.Generic;
 using NUnit.Framework;
 

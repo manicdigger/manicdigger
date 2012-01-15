@@ -472,6 +472,10 @@ namespace ManicDigger
             {
                 keyeventup = e;
             }
+            if (guistate == GuiState.EditText)
+            {
+               d_HudTextEditor.HandleKeyUp(sender, e);
+            }
         }
         bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -3812,7 +3816,7 @@ namespace ManicDigger
                 && packet.PacketId != ServerPacketId.Chunk
                 && packet.PacketId != ServerPacketId.Ping)
             {
-                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
+                //Console.WriteLine("read packet: " + Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
             }
             switch (packet.PacketId)
             {

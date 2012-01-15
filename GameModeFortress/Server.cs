@@ -345,7 +345,7 @@ namespace ManicDiggerServer
                 d_Heartbeat.SendHeartbeat();
                 if (!writtenServerKey)
                 {
-                    Console.WriteLine(GetHash(d_Heartbeat.ReceivedKey)); 
+                   Console.WriteLine("hash: "+ GetHash(d_Heartbeat.ReceivedKey)); 
                     writtenServerKey = true;
                 }
                 Console.WriteLine("Heartbeat sent.");
@@ -2879,7 +2879,7 @@ for (int i = 0; i < unknown.Count; i++)
         }
         private void SendMessageToAll(string message)
         {
-            Console.WriteLine(message);
+            Console.WriteLine("Message to all: "+ message);
             foreach (var k in clients)
             {
                 SendMessage(k.Key, message);

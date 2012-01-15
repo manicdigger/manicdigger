@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Copyright (c) 2011-2012 by Henon <meinrad.recheis@gmail.com>
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,6 +29,7 @@ namespace ManicDigger.Hud
       public const float LINESPACING = 4f;
       public readonly Color CURSOR_COLOR = Color.Black;
       public readonly Color TEXT_COLOR = Color.Black;
+      public readonly Color SELECTION_COLOR = Color.LightGray;
       public float CHARACTER_WIDTH, CHARACTER_HEIGHT;
       public float CURSOR_OFFSET_X = 1.0f;
 
@@ -143,14 +145,35 @@ namespace ManicDigger.Hud
          var skip_rows = Math.Max(0, m_editor.ViewportRow);
          var rows_left_after_skip = Math.Max(MyLinq.Count(m_editor.Lines) - skip_rows, 0);
          var visible_rows = Math.Min(m_editor.ViewportHeight, rows_left_after_skip);
+         var row = skip_rows;
          foreach (var line in MyLinq.Take(MyLinq.Skip(m_editor.Lines, skip_rows), visible_rows))
          {
             var safe_end_col=Math.Min(line.Length, end_col);
             var safe_start_col = Math.Min(start_col, safe_end_col);
             var visible_text = line.GetSegment(safe_start_col, safe_end_col);
+            if (m_editor.IsSelectionActive)
+               DrawSelection(row, safe_start_col, safe_end_col);
             d_The3d.Draw2dText(visible_text, m_left + m_padding, m_top + m_padding + y, FONTSIZE, TEXT_COLOR);
             y += FONTSIZE + LINESPACING;
+            row++;
          }
+      }
+
+      private void DrawSelection(int row, int start_col, int end_col)
+      {
+         Vector2i line_selection = m_editor.GetLineSelection(row);
+         int sel_start_col = (line_selection.x <= start_col ? start_col : line_selection.x);
+         if (sel_start_col > end_col)
+            return; // no selection in the visible part of this line;
+         var sel_end_col = (line_selection.y >= end_col ? end_col : line_selection.y);
+         if (sel_end_col < start_col)
+            return; // no selection in the visible part of this line
+         if (sel_start_col == sel_end_col)
+            return; // no selection to draw.
+         var sel_begin_x = m_left + m_padding + (sel_start_col - m_editor.ViewportCol) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
+         var sel_begin_y = m_top + m_padding + (row - m_editor.ViewportRow) * (FONTSIZE + LINESPACING);// - LINESPACING / 2;
+         var sel_width = (sel_end_col - sel_start_col) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
+         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), sel_begin_x, sel_begin_y, sel_width, FONTSIZE * 2, null, SELECTION_COLOR);
       }
 
       public void HandleKeyDown(object sender, KeyboardKeyEventArgs e)
@@ -180,6 +203,29 @@ namespace ManicDigger.Hud
                break;
             case Key.End:
                m_editor.GoToEndOfLine();
+               break;
+            case Key.ShiftLeft:
+            case Key.ShiftRight:
+               m_editor.IsShiftKeyDown=true;
+               break;
+            case Key.ControlLeft:
+            case Key.ControlRight:
+               m_editor.IsCtrlKeyDown = true;
+               break;
+         }
+      }
+
+      public void HandleKeyUp(object sender, KeyboardKeyEventArgs e)
+      {
+         switch (e.Key)
+         {
+            case Key.ShiftLeft:
+            case Key.ShiftRight:
+               m_editor.IsShiftKeyDown = false;
+               break;
+            case Key.ControlLeft:
+            case Key.ControlRight:
+               m_editor.IsCtrlKeyDown = false;
                break;
          }
       }
@@ -219,6 +265,11 @@ namespace ManicDigger.Hud
       private int m_viewport_col = 0; // <-- if text is larger than viewport this tells which is the first visible col in the viewport
       public int ViewportWidth = 1000; // <-- width in characters. Needs to be set by widget to ensure correct scrolling behavior
       public int ViewportHeight = 1000; // <-- height in lines. Needs to be set by widget to ensure correct scrolling behavior
+      public int SelectionStartCol = 0; // <-- note: the value is meaningless without IsSelectionActive == true
+      public int SelectionStartRow = 0; // <-- note: the value is meaningless without IsSelectionActive == true
+      public int SelectionEndCol = 0; // <-- note: the value is meaningless without IsSelectionActive == true
+      public int SelectionEndRow = 0; // <-- note: the value is meaningless without IsSelectionActive == true
+      public bool IsSelectionActive = false; // <-- denotes whether the editor has currently selected some text
 
       public string Text
       {
@@ -244,6 +295,8 @@ namespace ManicDigger.Hud
          get { return m_cursor_row; }
          set
          {
+            var old_cursor_col = m_cursor_col;
+            var old_cursor_row = m_cursor_row;
             m_cursor_row = value;
             if (m_cursor_row < 0)
                m_cursor_row = 0;
@@ -251,6 +304,7 @@ namespace ManicDigger.Hud
                m_viewport_row = m_cursor_row - ViewportHeight + 1;
             else if (m_cursor_row < ViewportRow)
                ViewportRow = m_cursor_row;
+            UpdateSelection(old_cursor_col, old_cursor_row);
          }
       }
 
@@ -259,6 +313,8 @@ namespace ManicDigger.Hud
          get { return m_cursor_col; }
          set
          {
+            var old_cursor_col = m_cursor_col;
+            var old_cursor_row = m_cursor_row;
             m_cursor_col = value;
             if (m_cursor_col < 0)
                m_cursor_col = 0;
@@ -267,6 +323,32 @@ namespace ManicDigger.Hud
                m_viewport_col = m_cursor_col - ViewportWidth;
             else if (m_cursor_col < ViewportCol)
                ViewportCol = m_cursor_col;
+            UpdateSelection(old_cursor_col, old_cursor_row);
+         }
+      }
+
+      private void UpdateSelection(int old_cursor_col, int old_cursor_row)
+      {
+         if (IsShiftKeyDown == false)
+         {
+            IsSelectionActive = false;
+         }
+         else
+         {
+            if (IsSelectionActive == false) // start selection
+            {
+               SelectionStartCol = old_cursor_col;
+               SelectionStartRow = old_cursor_row;
+               SelectionEndCol = CursorCol;
+               SelectionEndRow = CursorRow;
+               IsSelectionActive = true;
+            }
+            else // expand selection
+            {
+               SelectionEndCol = CursorCol;
+               SelectionEndRow = CursorRow;
+            }
+            //Console.WriteLine("selection update {0}:{1}->{2}:{3}", SelectionStartCol, SelectionStartRow, SelectionEndCol, SelectionEndRow);
          }
       }
 
@@ -290,6 +372,9 @@ namespace ManicDigger.Hud
                m_viewport_col = 0;
          }
       }
+
+      public bool IsShiftKeyDown { get; set; }
+      public bool IsCtrlKeyDown { get; set; }
 
       public void MoveCursorLeftRight(int delta_col)
       {
@@ -411,6 +496,53 @@ namespace ManicDigger.Hud
       public void GoToEndOfLine()
       {
          CursorCol = GetLine(CursorRow).Length;
+      }
+
+      public Vector2i GetLineSelection(int line) // returned vector contains the start column as x and the end column as y
+      {
+         int sel_begin_row, sel_begin_col, sel_end_row, sel_end_col;
+         if (SelectionStartRow < SelectionEndRow)
+         {
+            sel_begin_col = SelectionStartCol;
+            sel_begin_row = SelectionStartRow;
+            sel_end_col = SelectionEndCol;
+            sel_end_row = SelectionEndRow;
+         }
+         else if (SelectionStartRow == SelectionEndRow)
+         {
+            sel_begin_col = (SelectionStartCol < SelectionEndCol ? SelectionStartCol : SelectionEndCol);
+            sel_begin_row = SelectionStartRow;
+            sel_end_col = (SelectionStartCol < SelectionEndCol ? SelectionEndCol : SelectionStartCol);
+            sel_end_row = SelectionEndRow;
+         }
+         else
+         {
+            sel_begin_col = SelectionEndCol;
+            sel_begin_row = SelectionEndRow;
+            sel_end_col = SelectionStartCol;
+            sel_end_row = SelectionStartRow;
+         }
+         var sel = new Vector2i(0, 0);
+         if (line < sel_begin_row || line > sel_end_row)
+            return sel; // no selection in this line
+         int sel_start_col;
+         if (line == sel_begin_row)
+         {
+            sel.x = sel_begin_col;
+         }
+         else // line > sel_begin_row
+         {
+            sel.x = 0;
+         }
+         if (line == sel_end_row)
+         {
+            sel.y = sel_end_col;
+         }
+         else // line < sel_end_row
+         {
+            sel.y = GetLineLength(line);
+         }
+         return sel;
       }
    }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Copyright (c) 2011 by Henon <meinrad.recheis@gmail.com>
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;

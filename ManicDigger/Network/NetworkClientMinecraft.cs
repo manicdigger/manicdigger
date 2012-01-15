@@ -214,7 +214,7 @@ namespace ManicDigger
                 && packetId != MinecraftServerPacketId.PlayerTeleport
                 && packetId != MinecraftServerPacketId.ExtendedPacketTick)
             {
-                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packetId));
+               //Console.WriteLine("read packet: "+Enum.GetName(typeof(MinecraftServerPacketId), packetId));
             }
             switch (packetId)
             {
