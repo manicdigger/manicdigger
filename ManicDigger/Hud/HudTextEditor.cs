@@ -213,6 +213,22 @@ namespace ManicDigger.Hud
             case Key.ControlRight:
                m_editor.IsCtrlKeyDown = true;
                break;
+            case Key.C:
+               if (m_editor.IsCtrlKeyDown)
+                  m_editor.Copy();
+               break;
+            case Key.X:
+               if (m_editor.IsCtrlKeyDown)
+                  m_editor.Cut();
+               break;
+            case Key.V:
+               if (m_editor.IsCtrlKeyDown)
+                  m_editor.Paste();
+               break;
+            case Key.A:
+               if (m_editor.IsCtrlKeyDown)
+                  m_editor.SelectAll();
+               break;
          }
       }
 
@@ -244,21 +260,21 @@ namespace ManicDigger.Hud
             m_editor.InsertTab();
             return;
          }
-         if (m_editor.IsCtrlKeyDown)
-         {
-            switch (e.KeyChar)
-            {
-               case 'c':
-                  m_editor.Copy();
-                  return;
-               case 'x':
-                  m_editor.Cut();
-                  return;
-               case 'v':
-                  m_editor.Paste();
-                  return;
-            }
-         }
+         //if (m_editor.IsCtrlKeyDown)
+         //{
+         //   switch (e.KeyChar)
+         //   {
+         //      case 'c':
+         //         m_editor.Copy();
+         //         return;
+         //      case 'x':
+         //         m_editor.Cut();
+         //         return;
+         //      case 'v':
+         //         m_editor.Paste();
+         //         return;
+         //   }
+         //}
          if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
          {
             m_editor.Insert(e.KeyChar.ToString());
@@ -311,8 +327,6 @@ namespace ManicDigger.Hud
          get { return m_cursor_row; }
          set
          {
-            var old_cursor_col = m_cursor_col;
-            var old_cursor_row = m_cursor_row;
             m_cursor_row = value;
             if (m_cursor_row < 0)
                m_cursor_row = 0;
@@ -320,7 +334,6 @@ namespace ManicDigger.Hud
                m_viewport_row = m_cursor_row - ViewportHeight + 1;
             else if (m_cursor_row < ViewportRow)
                ViewportRow = m_cursor_row;
-            UpdateSelection(old_cursor_col, old_cursor_row);
          }
       }
 
@@ -329,8 +342,6 @@ namespace ManicDigger.Hud
          get { return m_cursor_col; }
          set
          {
-            var old_cursor_col = m_cursor_col;
-            var old_cursor_row = m_cursor_row;
             m_cursor_col = value;
             if (m_cursor_col < 0)
                m_cursor_col = 0;
@@ -339,15 +350,21 @@ namespace ManicDigger.Hud
                m_viewport_col = m_cursor_col - ViewportWidth;
             else if (m_cursor_col < ViewportCol)
                ViewportCol = m_cursor_col;
-            UpdateSelection(old_cursor_col, old_cursor_row);
          }
+      }
+
+      public void ResetSelection()
+      {
+         IsSelectionActive=false;
+         SelectionStartCol = SelectionEndCol = CursorCol;
+         SelectionStartRow = SelectionEndRow = CursorRow;
       }
 
       private void UpdateSelection(int old_cursor_col, int old_cursor_row)
       {
          if (IsShiftKeyDown == false)
          {
-            IsSelectionActive = false;
+            ResetSelection();
          }
          else
          {
@@ -394,6 +411,8 @@ namespace ManicDigger.Hud
 
       public void MoveCursorLeftRight(int delta_col)
       {
+         var old_cursor_col = m_cursor_col;
+         var old_cursor_row = m_cursor_row;
          CursorCol += delta_col;
          if (CursorCol < 0) // jump to end of previous row
          {
@@ -410,15 +429,19 @@ namespace ManicDigger.Hud
             CursorRow += 1;
             CursorCol = GetLineLength(CursorRow);
          }
+         UpdateSelection(old_cursor_col, old_cursor_row);
       }
 
       public void MoveCursorUpDown(int delta_row)
       {
+         var old_cursor_col = m_cursor_col;
+         var old_cursor_row = m_cursor_row;
          CursorRow += delta_row;
          if (CursorRow < 0)
             CursorRow = 0;
          if (GetLineLength(CursorRow) < CursorCol)
             CursorCol = GetLineLength(CursorRow); // reset to end of line because cursor is beyond the end of line (no "virtual space")
+         UpdateSelection(old_cursor_col, old_cursor_row);
       }
 
       private int GetLineLength(int row)
@@ -440,6 +463,7 @@ namespace ManicDigger.Hud
             var line = GetLine(CursorRow);
             line.Insert(CursorCol, s);
             CursorCol += s.Length;
+            ResetSelection();
             return;
          }
          // insertion of text with line breaks
@@ -449,13 +473,14 @@ namespace ManicDigger.Hud
          var col = CursorCol;
          if (lines.Length > 2)
          {
-            for (int i = lines.Length - 2; i > 1; i--)
+            for (int i = lines.Length - 2; i > 0; i--)
             {
                m_lines.Insert(CursorRow, new TextLine(lines[i]));
             }
          }
          CursorCol = col;
          CursorRow += lines.Length;
+         ResetSelection();
       }
 
       public void InsertCarriageReturn()
@@ -474,6 +499,7 @@ namespace ManicDigger.Hud
             GetLine(CursorRow); // make sure empty lines are generated up to the insertion row index
          m_lines.Insert(CursorRow, new TextLine(removed));
          CursorCol = 0;
+         ResetSelection();
       }
 
       private TextLine GetLine(int row)
@@ -544,7 +570,7 @@ namespace ManicDigger.Hud
 
       public void DeleteSelection()
       {
-         int[] selection = GetSaveSelection();
+         int[] selection = GetSelection();
          int sel_begin_col = selection[0];
          int sel_begin_row = selection[1];
          int sel_end_col = selection[2];
@@ -559,15 +585,15 @@ namespace ManicDigger.Hud
          DeleteSingleLineSelection(sel_end_row, 0, sel_end_col); // remove last line
          if (sel_end_row - sel_begin_row > 1) // remove entire lines between first and last row of selection
          {
-            for (int i = sel_end_row - 1; i > sel_begin_row + 1; i--)
+            for (int i = sel_end_row - 1; i > sel_begin_row; i--)
                m_lines.RemoveAt(i);
          }
-         DeleteSingleLineSelection(sel_begin_row, sel_begin_col, GetLineLength(sel_begin_row)); // remove last line
+         DeleteSingleLineSelection(sel_begin_row, sel_begin_col, GetLineLength(sel_begin_row)); // remove first line
          // join the lines before and after the selection by deleting the line break
          var line_below = GetLine(CursorRow + 1);
          m_lines.RemoveAt(CursorRow + 1);
          GetLine(CursorRow).Append(line_below.Text);
-         IsSelectionActive=false;
+         ResetSelection();
       }
 
       private void DeleteSingleLineSelection(int row, int start_col, int end_col)
@@ -577,8 +603,9 @@ namespace ManicDigger.Hud
             m_lines.RemoveAt(row); // remove entire line
          else
             line.Remove(start_col, end_col); // remove selected part of the line
-         SelectionStartRow = SelectionEndRow = CursorRow = row;
-         SelectionStartCol = SelectionEndCol = CursorCol = start_col;
+         CursorRow = row;
+         CursorCol = start_col;
+         ResetSelection();
       }
 
       public void ReplaceSelection(string replacement)
@@ -592,7 +619,7 @@ namespace ManicDigger.Hud
          CursorCol = GetLine(CursorRow).Length;
       }
 
-      private int[] GetSaveSelection() // return selection and ensure that selection begin is before selection end
+      private int[] GetSelection() // return selection and ensure that selection begin is before selection end
       {
          int sel_begin_row, sel_begin_col, sel_end_row, sel_end_col;
          if (SelectionStartRow < SelectionEndRow)
@@ -621,7 +648,7 @@ namespace ManicDigger.Hud
 
       public Vector2i GetLineSelection(int line) // returned vector contains the start column as x and the end column as y
       {
-         int[] selection = GetSaveSelection();
+         int[] selection = GetSelection();
          int sel_begin_col = selection[0];
          int sel_begin_row = selection[1];
          int sel_end_col = selection[2];
@@ -662,7 +689,7 @@ namespace ManicDigger.Hud
 
       public void Copy()
       {
-         // TODO: copy selection to clip buffer
+         ClipBuffer = GetSelectedText();
       }
 
       public void Cut()
@@ -674,6 +701,39 @@ namespace ManicDigger.Hud
       public void Paste()
       {
          Insert(ClipBuffer);
+      }
+
+      private string GetSelectedText()
+      {
+         if (!IsSelectionActive)
+            return "";
+         int[] selection = GetSelection();
+         int sel_begin_col = selection[0];
+         int sel_begin_row = selection[1];
+         int sel_end_col = selection[2];
+         int sel_end_row = selection[3];
+         // selection does not span multiple lines
+         if (sel_begin_row == sel_end_row)
+            return GetLine(sel_begin_row).GetSegment( sel_begin_col, sel_end_col);
+         // selection spans multiple lines
+         var s = new StringBuilder();
+         s.AppendLine(GetLine(sel_begin_row).GetSegment(sel_begin_col, GetLineLength(sel_begin_row)));
+         if (sel_end_row - sel_begin_row > 1) // add entire lines between first and last row of selection
+         {
+            for (int i = sel_begin_row + 1; i < sel_end_row; i++)
+               s.AppendLine(GetLine(i).Text);
+         }
+         s.Append(GetLine(sel_end_row).GetSegment(0, sel_end_col));
+         return s.ToString();
+      }
+
+      public void SelectAll()
+      {
+         SelectionStartCol = 0;
+         SelectionStartRow = 0;
+         SelectionEndRow = m_lines.Count - 1;
+         SelectionEndCol = GetLine(SelectionEndRow).Length;
+         IsSelectionActive = true;
       }
    }
 
