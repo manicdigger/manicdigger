@@ -11,7 +11,7 @@ namespace ManicDigger
         int chunkupdates;
         public int ChunkUpdates { get { return chunkupdates; } }
 
-        int mapAreaSize { get { return (int)d_Config3d.viewdistance; } }
+        int mapAreaSize { get { return (int)d_Config3d.viewdistance * 2; } }
         int centerAreaSize { get { return (int)d_Config3d.viewdistance / 2; } }
 
         public void StartTerrain()
@@ -21,7 +21,8 @@ namespace ManicDigger
             CurrentRendererMapPositionG = new Vector3i(p.X, p.Y, 0);
             if (RendererMap != null)
             {
-                throw new NotImplementedException();
+                d_Batcher.Clear();
+                //throw new NotImplementedException();
             }
             RendererMap = new RenderedChunk[(mapAreaSize / chunksize) * (mapAreaSize / chunksize) * (MapSizeZ / chunksize)];
             for (int i = 0; i < RendererMap.Length; i++)
@@ -39,6 +40,7 @@ namespace ManicDigger
         {
             var p = MapUtil.PlayerArea(mapAreaSize, centerAreaSize, PlayerBlockPosition());
             var newMapPosition = new Vector3i(p.X, p.Y, 0);
+            //if (PlayerBlockPosition() != oldplayerpos)
             if (CurrentRendererMapPositionG != newMapPosition)
             {
                 //todo: check if complete terrain in new area is already downloaded.

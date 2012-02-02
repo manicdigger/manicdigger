@@ -787,10 +787,11 @@ namespace ManicDigger
                 if (d_Config3d.viewdistance == drawDistances[i])
                 {
                     d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Length];
-                    return;
+                    goto end;
                 }
             }
             d_Config3d.viewdistance = drawDistances[0];
+        end:
             StartTerrain();
         }
         enum CameraType
