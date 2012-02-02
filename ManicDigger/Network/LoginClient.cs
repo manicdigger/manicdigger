@@ -31,7 +31,7 @@ namespace ManicDigger
     }
     public class LoginClientManicDigger : ILoginClient
     {
-        public string LoginUrl = "http://fragmer.net/md/login.php";
+        public string LoginUrl = "http://manicdigger.sourceforge.net/play/login.php";
         public LoginData Login(string username, string password, string publicServerKey)
         {
             StringWriter sw = new StringWriter();//&salt={4}

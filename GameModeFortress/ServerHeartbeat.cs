@@ -39,7 +39,7 @@ namespace GameModeFortress
             this.Motd = "";
             this.GameMode = "Fortress";
         }
-        public string fListUrl = "http://fragmer.net/md/heartbeat.php";
+        public string fListUrl = "http://manicdigger.sourceforge.net/play/heartbeat.php";
 
         public string Name { get; set; }
         public string Key { get; set; }

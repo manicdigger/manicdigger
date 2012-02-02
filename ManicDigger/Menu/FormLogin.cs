@@ -152,7 +152,7 @@ namespace GameMenu
             });
 
             //Link Create Account
-            string url = "http://fragmer.net/md/";
+            string url = "http://manicdigger.sourceforge.net/play/";
             widgets.Add(new Widget()
             {
                 BackgroundImage = null,

@@ -231,7 +231,7 @@ namespace GameModeFortress
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = exit;
             playerskindownloader.d_The3d = the3d;
-            playerskindownloader.skinserver = "http://fragmer.net/md/skins/";
+            playerskindownloader.skinserver = "http://manicdigger.sourceforge.net/play/skins/";
             w.playerskindownloader = playerskindownloader;
             w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w };
             w.d_Screenshot = new Screenshot() { d_GameWindow = maingamewindow };
@@ -407,7 +407,7 @@ namespace GameModeFortress
                 return null;
             }
         }
-        public string ServerListAddress = "http://fragmer.net/md/xml.php";
+        public string ServerListAddress = "http://manicdigger.sourceforge.net/play/xml.php";
         public string[] GetWorlds()
         {
             //Todo: replace fixed slots with ability to load any files, for easy
