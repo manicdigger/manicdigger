@@ -255,10 +255,12 @@ namespace GameModeFortress
     		this.treeCount = 20;
     		this.RandomSeed = true;
     		this.Seed = 0;
+            this.GeneratorType = "NewWorldGenerator";
     	}
     	
     	public bool RandomSeed { get; set; }
     	public int Seed { get; set; }
+        public string GeneratorType { get; set; }
     	
     	public int TreeCount
     	{
@@ -270,5 +272,22 @@ namespace GameModeFortress
     			else this.treeCount = value;
     		}
     	}
+
+        public ManicDigger.MapTools.IWorldGenerator getGenerator()
+        {
+            switch(this.GeneratorType)
+            {
+                case "NewWorldGenerator":
+                    return new ManicDigger.MapTools.Generators.NewWorldGenerator();
+                case "Noise2DWorldGenerator":
+                    return new ManicDigger.MapTools.Generators.Noise2DWorldGenerator();
+                case "FlatMapGenerator":
+                    return new ManicDigger.MapTools.Generators.FlatMapGenerator();
+                case "Noise3DWorldGenerator":
+                    return new ManicDigger.MapTools.Generators.Noise3DWorldGenerator();
+                default :
+                    return new ManicDigger.MapTools.Generators.NewWorldGenerator();
+            }
+        }
     }
 }
