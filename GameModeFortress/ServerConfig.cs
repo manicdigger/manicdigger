@@ -65,6 +65,22 @@ namespace GameModeFortress
             return false;
         }
 
+        public bool UnbanPlayer(string username)
+        {
+            bool exists = false;
+            for (int i = this.BannedUsers.Count - 1; i >= 0; i--)
+            {
+                string banneduser = this.BannedUsers[i];
+                if (banneduser.Equals(username, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    exists = true;
+                    this.BannedUsers.RemoveAt(i);
+                    break;
+                }
+            }
+            return exists;
+        }
+
         public bool IsAutoAdmin(string username)
         {
             foreach (string Adminuser in this.Admins)

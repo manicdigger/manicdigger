@@ -2049,6 +2049,60 @@ for (int i = 0; i < unknown.Count; i++)
                             break;
                         }
                     }
+                    else if (packet.Message.Message.StartsWith("/unban"))
+                    {
+                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            bool valid = false;
+
+                            if (ss.Length == 3)
+                            {
+                                // unban a playername
+                                if (ss[1].Equals("-p"))
+                                {
+                                    valid = true;
+                                    bool exists = false;
+                                    // case insensitive
+                                    exists = config.UnbanPlayer(ss[2]);
+                                    SaveConfig();
+                                    if (!exists)
+                                    {
+                                        SendMessage(clientid, colorError + "Player " + ss[2] + " not found.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorSuccess + "Player " + ss[2] + " unbanned.");
+                                    }
+                                }
+                                // unban an IP
+                                else if (ss[1].Equals("-ip"))
+                                {
+                                    valid = true;
+                                    bool exists = false;
+                                    exists = config.BannedIPs.Remove(ss[2]);
+                                    SaveConfig();
+                                    if (!exists)
+                                    {
+                                        SendMessage(clientid, colorError + "IP " + ss[2] + " not found.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorSuccess + "IP " + ss[2] + " unbanned.");
+                                    }
+                                }
+                            }
+                            if (!valid)
+                            {
+                                SendMessage(clientid, colorError + "Usage: /unban [-p playername | -ip ipaddress]");
+                            }
+                            break;
+                        }
+                    }
                     else if (packet.Message.Message.StartsWith("/list"))
                     {
                         if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
@@ -2332,6 +2386,7 @@ for (int i = 0; i < unknown.Count; i++)
 							SendMessage(clientid, colorHelp + "/kick [username]");
 							SendMessage(clientid, colorHelp + "/ban [username]");
 							SendMessage(clientid, colorHelp + "/banip [username]");
+                            SendMessage(clientid, colorHelp + "/unban [-p playername | -ip ipaddress]");
 							SendMessage(clientid, colorHelp + "/list");
 							if (!clients[clientid].IsMod)
 							{
