@@ -2040,13 +2040,10 @@ for (int i = 0; i < unknown.Count; i++)
                                     string sourcename = clients[clientid].playername;
                                     config.BannedIPs.Add(((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
                                     SaveConfig();
-
-                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
-                                    k.Value.socket.Disconnect(true);
-
-                                    KillPlayer(k.Key);
-
                                     SendMessageToAll(colorError + targetName + " was banned by " + sourcename);
+                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
+                                    KillPlayer(k.Key);
+                                    break;
                                 }
                             }
                             break;
