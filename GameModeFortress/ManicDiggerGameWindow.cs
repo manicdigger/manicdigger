@@ -382,19 +382,47 @@ namespace ManicDigger
                     }
                     else if (cmd == "tp" || cmd == "teleport")
                     {
-                        string arg = arguments;
-                        bool tp = false;
-                        foreach (var k in d_Clients.Players)
+                        Regex playerRegex = new Regex(@"^(?<player>(~\w+?|\w+?))$");
+                        Regex coordinateRegex = new Regex(@"^(?<x>\d+)(\s(?<y>\d+))?\s(?<z>\d+)$");
+
+                        if (playerRegex.IsMatch(arguments))
                         {
-                            if (k.Value.Name.Equals(arg, StringComparison.InvariantCultureIgnoreCase))
+                            bool tp = false;
+                            foreach (var k in d_Clients.Players)
                             {
-                                player.playerposition = k.Value.Position;
-                                tp = true;
+                                if (k.Value.Name.Equals(arguments, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    player.playerposition = k.Value.Position;
+                                    tp = true;
+                                    break;
+                                }
+                            }
+                            if (!tp)
+                            {
+                                Log(string.Format("No such player: {0}.", arguments));
                             }
                         }
-                        if (!tp)
+                        else if (coordinateRegex.IsMatch(arguments))
                         {
-                            Log(string.Format("No such player: {0}.", arg));
+                            Match match = coordinateRegex.Match(arguments);
+                            int x = int.Parse(match.Groups["x"].Value);
+                            int z = int.Parse(match.Groups["z"].Value);
+                            // when y is not given, set player to highest map point on (x|z)
+                            int y = match.Groups["y"].Value.Equals("") ? MapUtil.blockheight(d_Map, 0, x, z) : int.Parse(match.Groups["y"].Value);
+
+                            if (MapUtil.IsValidPos(d_Map, x, z, y))
+                            {
+                                player.playerposition = new Vector3(x, y, z);
+                            }
+                            else
+                            {
+                                Log(string.Format("Invalid coordinates: {0}.", arguments));
+                            }
+                        }
+                        else
+                        {
+                            AddChatline("Invalid argument!");
+                            AddChatline("USE: .tp [player | [x] {y} [z]]");
                         }
                     }
                     else if (cmd == "movespeed")
