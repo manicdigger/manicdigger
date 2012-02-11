@@ -14,6 +14,7 @@ using OpenTK;
 using ProtoBuf;
 using System.Xml.Serialization;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 namespace ManicDiggerServer
 {
@@ -1596,25 +1597,6 @@ for (int i = 0; i < unknown.Count; i++)
             //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
             return new Vector3i(x * 32 + 15, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32 + 15);
         }
-        public char[] AllowedUsernameCharacters = ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-            + "1234567890_-").ToCharArray();
-        bool IsValidUsername(string s)
-        {
-            for (int i = 0; i < s.Length; i++)
-            {
-                for (int j = 0; j < AllowedUsernameCharacters.Length; j++)
-                {
-                    if (s[i] == AllowedUsernameCharacters[j])
-                    {
-                        goto next;
-                    }
-                }
-                return false;
-            next:
-                ;
-            }
-            return true;
-        }
         //returns bytes read.
         private int TryReadPacket(int clientid)
         {
@@ -1642,28 +1624,14 @@ for (int i = 0; i < unknown.Count; i++)
                     SendServerIdentification(clientid);
                     string username = packet.Identification.Username;
 
-                    if (config.IsUserBanned(username))
+                    // allowed characters in username: a-z,A-Z,0-9,-,_ length: 1-16
+                    Regex allowedUsername = new Regex(@"^(\w|-){1,16}$");
+
+                    if (!allowedUsername.IsMatch(username))
                     {
-                        SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                        SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
                         KillPlayer(clientid);
                         break;
-                    }
-
-                    if (!IsValidUsername(username))
-                    {
-                        SendDisconnectPlayer(clientid, "Invalid characters in username.");
-                        KillPlayer(clientid);
-                        break;
-                    }
-
-                    //when duplicate user connects, append a number to name.
-                    foreach (var k in clients)
-                    {
-                        if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            username = GenerateUsername(username);
-                            break;
-                        }
                     }
 
                     bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
@@ -1675,8 +1643,27 @@ for (int i = 0; i < unknown.Count; i++)
                         username = "~" + username;
                     }
 
-                    if (config.Builders.Contains(username)) { clients[clientid].Rank = Rank.Builder; }
-                    if (config.Admins.Contains(username)) { clients[clientid].Rank = Rank.Admin; }
+                    if (config.IsUserBanned(username))
+                    {
+                        SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                        KillPlayer(clientid);
+                        break;
+                    }
+
+                    //When a duplicate user connects, append a number to name.
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // Duplicates are handled as guests.
+                            username = GenerateUsername(username);
+                            if (!username.StartsWith("~")) { username = "~" + username; }
+                            break;
+                        }
+                    }
+
+                    if (config.IsBuilder(username)) { clients[clientid].Rank = Rank.Builder; }
+                    if (config.IsAdmin(username)) { clients[clientid].Rank = Rank.Admin; }
                     if (LocalConnectionsOnly) { clients[clientid].Rank = Rank.Admin; }
                     
                     clients[clientid].IsMod = config.IsMod(username);
@@ -1838,7 +1825,7 @@ for (int i = 0; i < unknown.Count; i++)
 						{
 							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
 							{
-								config.Mods.Add(argName);
+								if (!config.IsMod(argName)) {config.Mods.Add(argName);}
 								k.Value.IsMod = true;
 								SaveConfig();
 								SendMessageToAll(colorSuccess + k.Value.playername + " got mod permission.");
@@ -1866,7 +1853,7 @@ for (int i = 0; i < unknown.Count; i++)
 						{
 							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
 							{
-								config.Mods.Remove(argName);
+								config.RemoveMod(argName);
 								k.Value.IsMod = false;
 								SaveConfig();
 								SendMessageToAll(colorSuccess + k.Value.playername + " lost mod permission.");
@@ -1906,19 +1893,19 @@ for (int i = 0; i < unknown.Count; i++)
                                 string name = k.Value.playername;
                                 if (r == Rank.Admin)
                                 {
-                                    if (!config.Admins.Contains(name)) { config.Admins.Add(name); }
-                                    config.Builders.Remove(name);
+                                    if (!config.IsAdmin(name)) { config.Admins.Add(name); }
+                                    config.RemoveBuilder(name);
                                     SendMessage(k.Key, "Type /help to see additional commands for administrators.");
                                 }
                                 else if (r == Rank.Builder)
                                 {
-                                    if (!config.Builders.Contains(name)) { config.Builders.Add(name); }
-                                    config.Admins.Remove(name);
+                                    if (!config.IsBuilder(name)) { config.Builders.Add(name); }
+                                    config.RemoveAdmin(name);
                                 }
                                 else if (r == Rank.Guest)
                                 {
-                                    config.Builders.Remove(name);
-                                    config.Admins.Remove(name);
+                                    config.RemoveBuilder(name);
+                                    config.RemoveAdmin(name);
                                 }
                                 SaveConfig();
 
@@ -2838,24 +2825,24 @@ for (int i = 0; i < unknown.Count; i++)
         private string GenerateUsername(string name)
         {
             string defaultname = name;
-            if (name.Length > 0 && char.IsNumber(name[name.Length - 1]))
+            int appendNumber = 1;
+            bool exists;
+    
+            do
             {
-                defaultname = name.Substring(0, name.Length - 1);
-            }
-            for (int i = 1; i < 100; i++)
-            {
+                exists = false;
                 foreach (var k in clients)
                 {
-                    if (k.Value.playername.Equals(defaultname + i))
+                    if (k.Value.playername.Equals(defaultname + appendNumber))
                     {
-                        goto nextname;
+                         exists = true;
+                         appendNumber++;
+                         break;
                     }
                 }
-                return defaultname + i;
-            nextname:
-                ;
-            }
-            return defaultname;
+            } while(exists);
+            
+            return defaultname + appendNumber;
         }
         private void SendMessageToAll(string message)
         {

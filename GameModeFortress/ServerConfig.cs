@@ -45,6 +45,87 @@ namespace GameModeFortress
         [XmlElement(ElementName="MapGenerator")]
         public MapGeneratorConfig Generator { get; set; }
 
+        public bool IsAdmin(string username)
+        {
+            foreach (string admin in this.Admins)
+            {
+                if (admin.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool RemoveAdmin(string username)
+        {
+            bool exists = false;
+            for (int i = this.Admins.Count - 1; i >= 0; i--)
+            {
+                string admin = this.Admins[i];
+                if (admin.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    exists = true;
+                    this.Admins.RemoveAt(i);
+                    break;
+                }
+            }
+            return exists;
+        }
+
+        public bool IsMod(string username)
+        {
+            foreach (string mod in this.Mods)
+            {
+                if (mod.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool RemoveMod(string username)
+        {
+            bool exists = false;
+            for (int i = this.Mods.Count - 1; i >= 0; i--)
+            {
+                string mod = this.Mods[i];
+                if (mod.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    exists = true;
+                    this.Mods.RemoveAt(i);
+                    break;
+                }
+            }
+            return exists;
+        }
+
+        public bool IsBuilder(string username)
+        {
+            foreach (string builder in this.Builders)
+            {
+                if (builder.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+             }
+             return false;
+        }
+        public bool RemoveBuilder(string username)
+        {
+            bool exists = false;
+            for (int i = this.Builders.Count - 1; i >= 0; i--)
+            {
+                string builder = this.Builders[i];
+                if (builder.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    exists = true;
+                    this.Builders.RemoveAt(i);
+                    break;
+                }
+            }
+            return exists;
+        }
+
         public bool IsIPBanned(string ipAddress)
         {
             foreach (string bannedip in this.BannedIPs)
@@ -59,7 +140,7 @@ namespace GameModeFortress
         {
             foreach (string banneduser in this.BannedUsers)
             {
-                if (username.Equals(banneduser, StringComparison.InvariantCulture))
+                if (username.Equals(banneduser, StringComparison.InvariantCultureIgnoreCase))
                     return true;
             }
             return false;
@@ -71,7 +152,7 @@ namespace GameModeFortress
             for (int i = this.BannedUsers.Count - 1; i >= 0; i--)
             {
                 string banneduser = this.BannedUsers[i];
-                if (banneduser.Equals(username, StringComparison.CurrentCultureIgnoreCase))
+                if (banneduser.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                 {
                     exists = true;
                     this.BannedUsers.RemoveAt(i);
@@ -85,7 +166,7 @@ namespace GameModeFortress
         {
             foreach (string Adminuser in this.Admins)
             {
-                if (username.Equals(Adminuser, StringComparison.InvariantCulture))
+                if (username.Equals(Adminuser, StringComparison.InvariantCultureIgnoreCase))
                     return true;
             }
             return false;
@@ -95,18 +176,7 @@ namespace GameModeFortress
         {
             foreach (string Builderuser in this.Builders)
             {
-                if (username.Equals(Builderuser, StringComparison.InvariantCulture))
-                    return true;
-            }
-            return false;
-        }
-
-		public bool IsMod
-			(string username)
-        {
-            foreach (string Moduser in this.Mods)
-            {
-                if (username.Equals(Moduser, StringComparison.InvariantCulture))
+                if (username.Equals(Builderuser, StringComparison.InvariantCultureIgnoreCase))
                     return true;
             }
             return false;
