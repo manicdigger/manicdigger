@@ -2096,19 +2096,120 @@ for (int i = 0; i < unknown.Count; i++)
                     }
                     else if (packet.Message.Message.StartsWith("/list"))
                     {
-                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
+                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                        bool valid = false;
+
+                        if (ss.Length == 2)
                         {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                        }
-                        else
-                        {
-                            SendMessage(clientid, colorHelp + "List of Players:");
-                            foreach (var k in clients)
+                            switch (ss[1])
                             {
-                                SendMessage(clientid, k.Value.playername.ToString() + " " + ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
+                                case "-users":
+                                case "-u":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Players:");
+                                        foreach (var k in clients)
+                                        {
+                                            SendMessage(clientid, k.Value.playername.ToString() + " " + ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
+                                        }
+                                    }
+                                    break;
+                                case "-areas":
+                                case "-a":
+                                    valid = true;
+                                    SendMessage(clientid, colorHelp + "List of Areas:");
+                                    foreach (AreaConfig area in config.Areas)
+                                    {
+                                        SendMessage(clientid, area.Coords + " " + area.PermittedUsers);
+                                    }
+                                    break;
+                                case "-bannedusers":
+                                case "-bu":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Banned Users:");
+                                        foreach (string currentUser in config.BannedUsers)
+                                        {
+                                            SendMessage(clientid, currentUser);
+                                        }
+                                    }
+                                    break;
+                                case "-bannedips":
+                                case "-bip":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Banned IPs:");
+                                        foreach (string currentIP in config.BannedIPs)
+                                        {
+                                            SendMessage(clientid, currentIP);
+                                        }
+                                    }
+                                    break;
+                                case "-builders":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Builders:");
+                                        foreach (string currentBuilder in config.Builders)
+                                        {
+                                            SendMessage(clientid, currentBuilder);
+                                        }
+                                    }
+                                    break;
+                                case "-admins":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Admins:");
+                                        foreach (string currentAdmin in config.Admins)
+                                        {
+                                            SendMessage(clientid, currentAdmin);
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    SendMessage(clientid, "Invalid parameter.");
+                                    break;
                             }
-                            break;
                         }
+                        if (!valid)
+                        {
+                            string options = "";
+                            if (clients[clientid].IsAdmin)
+                            {
+                                options = "[-users | -builders | -admins | -areas | -bannedusers | -bannedips]";
+                            }
+                            else
+                            {
+                                options = "[-areas]";
+                            }
+                            SendMessage(clientid, colorError + "Usage: /list " + options);
+                        }
+                        break;
+
                     }
                     else if (packet.Message.Message.StartsWith("/giveall"))
                     {
@@ -2378,7 +2479,7 @@ for (int i = 0; i < unknown.Count; i++)
 							SendMessage(clientid, colorHelp + "/ban [username]");
 							SendMessage(clientid, colorHelp + "/banip [username]");
                             SendMessage(clientid, colorHelp + "/unban [-p playername | -ip ipaddress]");
-							SendMessage(clientid, colorHelp + "/list");
+							SendMessage(clientid, colorHelp + "/list [-users | -builders | -admins | -areas | -bannedusers | -bannedips]");
 							if (!clients[clientid].IsMod)
 							{
 								SendMessage(clientid, colorHelp + "/welcome [login motd message]");
