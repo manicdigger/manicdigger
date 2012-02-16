@@ -85,6 +85,7 @@
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
     <Compile Include="MapTools\Generators\ExperimentalWorldGenerator.cs" />
+    <Compile Include="MapTools\Generators\FlatMapGenerator.cs" />
     <Compile Include="MapTools\Generators\GenerationOption.cs" />
     <Compile Include="MapTools\Generators\NewWorldGenerator.cs" />
     <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
