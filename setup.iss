@@ -39,3 +39,7 @@ Root: HKCR; Subkey: "ManicDigger\shell\open\command"; ValueType: string; ValueNa
 
 
 
+Root: HKCR; Subkey: "md"; ValueType: string; ValueName: ""; ValueData: "URL:Manic Digger"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "md"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCR; Subkey: "md\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\GameModeFortress.exe,0"
+Root: HKCR; Subkey: "md\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\GameModeFortress.exe"" ""%1"""

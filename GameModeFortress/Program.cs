@@ -577,6 +577,26 @@ namespace GameModeFortress
                     p.connectdata.Port = port;
                     p.connectdata.Username = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
                 }
+                else
+                {
+                    MyUri uri = new MyUri(args[0]);
+                    p.connectdata = new ConnectData();
+                    p.connectdata.Ip = uri.Ip;
+                    p.connectdata.Port = 25565;
+                    p.connectdata.Username = "gamer";
+                    if (uri.Port != -1)
+                    {
+                        p.connectdata.Port = uri.Port;
+                    }
+                    if (uri.Get.ContainsKey("user"))
+                    {
+                        p.connectdata.Username = uri.Get["user"];
+                    }
+                    if (uri.Get.ContainsKey("auth"))
+                    {
+                        p.connectdata.Auth = uri.Get["auth"];
+                    }
+                }
             }
             else
             {

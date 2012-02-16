@@ -1406,4 +1406,43 @@ namespace ManicDigger
         public Queue<byte> ServerReceiveBuffer = new Queue<byte>();
         public Queue<byte> ClientReceiveBuffer = new Queue<byte>();
     }
+
+    public class MyUri
+    {
+        public MyUri(string uri)
+        {
+            //string url = "md://publichash:123/?user=a&auth=123";
+            var a = new Uri(uri);
+            Ip = a.Host;
+            Port = a.Port;
+            Get = ParseGet(uri);
+        }
+        public string Url { get; private set; }
+        public string Ip { get; private set; }
+        public int Port { get; private set; }
+        public Dictionary<string, string> Get { get; private set; }
+        private static Dictionary<string, string> ParseGet(string url)
+        {
+            try
+            {
+                Dictionary<string, string> d;
+                d = new Dictionary<string, string>();
+                if (url.Contains("?"))
+                {
+                    string url2 = url.Substring(url.IndexOf("?") + 1);
+                    var ss = url2.Split(new char[] { '&' });
+                    for (int i = 0; i < ss.Length; i++)
+                    {
+                        var ss2 = ss[i].Split(new char[] { '=' });
+                        d[ss2[0]] = ss2[1];
+                    }
+                }
+                return d;
+            }
+            catch
+            {
+                throw new FormatException("Invalid address: " + url);
+            }
+        }
+    }
 }
