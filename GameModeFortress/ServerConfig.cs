@@ -16,6 +16,9 @@ namespace GameModeFortress
         public string WelcomeMessage { get; set; }  //Displays when the user logs in.
         public int Port { get; set; }               //Port the server runs on
         public int MaxClients { get; set; }
+        public bool BuildLogging { get; set; }
+        public bool ServerEventLogging { get; set; }
+        public bool ChatLogging { get; set; }
         public string Key { get; set; }             //GUID to uniquely identify the server
         [XmlElement(ElementName="Creative")]
         public bool IsCreative { get; set; }        //Is this a free build server?
@@ -215,6 +218,9 @@ namespace GameModeFortress
             this.WelcomeMessage = "Welcome to my Manic Digger server!"; //This is just the default when nothing has been set.
             this.Port = 25565;
             this.MaxClients = 16;
+            this.BuildLogging = false;
+            this.ServerEventLogging = false;
+            this.ChatLogging = false;
             this.Key = Guid.NewGuid().ToString();
             this.IsCreative = true;
             this.Public = true;

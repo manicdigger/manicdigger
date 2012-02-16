@@ -79,6 +79,70 @@ namespace ManicDiggerServer
         public Random rnd = new Random();
         public int SpawnPositionRandomizationRange = 96;
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
+
+
+        public string serverpathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
+        private void BuildLog(string p)
+        {
+            if (!config.BuildLogging)
+            {
+                return;
+            }
+            if (!Directory.Exists(serverpathlogs))
+            {
+                Directory.CreateDirectory(serverpathlogs);
+            }
+            string filename = Path.Combine(serverpathlogs, "BuildLog.txt");
+            try
+            {
+                File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            }
+            catch
+            {
+                Console.WriteLine("Cannot write to server log file {0}.", filename);
+            }
+        }
+        private void ServerEventLog(string p)
+        {
+            if (!config.ServerEventLogging)
+            {
+                return;
+            }
+            if (!Directory.Exists(serverpathlogs))
+            {
+                Directory.CreateDirectory(serverpathlogs);
+            }
+            string filename = Path.Combine(serverpathlogs, "ServerEventLog.txt");
+            try
+            {
+                File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            }
+            catch
+            {
+                Console.WriteLine("Cannot write to server log file {0}.", filename);
+            }
+        }
+        private void ChatLog(string p)
+        {
+            if (!config.ChatLogging)
+            {
+                return;
+            }
+            if (!Directory.Exists(serverpathlogs))
+            {
+                Directory.CreateDirectory(serverpathlogs);
+            }
+            string filename = Path.Combine(serverpathlogs, "ChatLog.txt");
+            try
+            {
+                File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            }
+            catch
+            {
+                Console.WriteLine("Cannot write to server log file {0}.", filename);
+            }
+        }
+
         public void Start()
         {
             LoadConfig();
@@ -260,6 +324,10 @@ namespace ManicDiggerServer
                         config.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
                         config.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
                     }
+                    config.BuildLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildLogging"));
+                    config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
+                    config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
+
                 }
                 //Save with new version.
                 SaveConfig();
@@ -481,6 +549,7 @@ namespace ManicDiggerServer
                 else if (config.IsIPBanned(iep1.Address.ToString()))
                 {
                     SendDisconnectPlayer(lastclient - 1, "Your IP has been banned from this server.");
+                    ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
                     KillPlayer(lastclient - 1);
                 }
             }
@@ -1583,6 +1652,7 @@ for (int i = 0; i < unknown.Count; i++)
             if (name != "invalid")
             {
                 SendMessageToAll(string.Format("Player {0} disconnected.", name));
+                ServerEventLog(string.Format("{0} disconnects.", name));
             }
         }
         Vector3i DefaultSpawnPosition()
@@ -1634,6 +1704,7 @@ for (int i = 0; i < unknown.Count; i++)
                     if (!allowedUsername.IsMatch(username))
                     {
                         SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
+                        ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
                         KillPlayer(clientid);
                         break;
                     }
@@ -1650,6 +1721,7 @@ for (int i = 0; i < unknown.Count; i++)
                     if (config.IsUserBanned(username))
                     {
                         SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                        ServerEventLog(string.Format("{0} can't join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
                         KillPlayer(clientid);
                         break;
                     }
@@ -1682,7 +1754,9 @@ for (int i = 0; i < unknown.Count; i++)
                     clients[clientid].PositionMul32GlZ = position.z;
 
                     string username1 = clients[clientid].playername;
+                    string ip = ((IPEndPoint)clients[clientid].socket.RemoteEndPoint).Address.ToString();
                     SendMessageToAll(string.Format("Player {0} joins.", username1));
+                    ServerEventLog(string.Format("{0} {1} joins.", username1, ip));
                     SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                     SendBlobs(clientid);
 
@@ -1757,6 +1831,7 @@ for (int i = 0; i < unknown.Count; i++)
                     }
                     d_Water.BlockChange(d_Map, x, y, z);
                     d_GroundPhysics.BlockChange(d_Map, x, y, z);
+                    BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), blocktype));
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
@@ -1790,6 +1865,8 @@ for (int i = 0; i < unknown.Count; i++)
                                     string msg = string.Join(" ", ss, 2, ss.Length - 2);
                                     SendMessage(k.Key, "msg " + c.playername + ": " + msg);
                                     SendSound(k.Key, "message.wav");
+                                    // Private chat messages shouldn't be logged. Respect users' privacy!
+                                    //ChatLog(string.Format("msg {0} -> {1}: {2}", c.playername, k.Value.playername, msg));
                                     messageSent = true;
                                     break;
                                 }
@@ -1825,6 +1902,7 @@ for (int i = 0; i < unknown.Count; i++)
 								k.Value.IsMod = true;
 								SaveConfig();
 								SendMessageToAll(colorSuccess + k.Value.playername + " got mod permission.");
+                                ServerEventLog(string.Format("{0} gives {1} mod permission.", clients[clientid].playername, k.Value.playername));
 								break;
 							}
 						}
@@ -1853,6 +1931,7 @@ for (int i = 0; i < unknown.Count; i++)
 								k.Value.IsMod = false;
 								SaveConfig();
 								SendMessageToAll(colorSuccess + k.Value.playername + " lost mod permission.");
+                                ServerEventLog(string.Format("{0} removes mod permission of {1}.", clients[clientid].playername, k.Value.playername));
 								break;
 							}
 						}
@@ -1907,6 +1986,7 @@ for (int i = 0; i < unknown.Count; i++)
 
                                 SendMessageToAll(colorSuccess + "New rank for player "
                                     + k.Value.playername + ": " + argRank + ".");
+                                ServerEventLog(string.Format("{0} sets rank of {1} to {2}.", clients[clientid].playername, k.Value.playername, r));
                             }
                         }
                         break;
@@ -1914,26 +1994,28 @@ for (int i = 0; i < unknown.Count; i++)
                     //for servers without global name verification
                     else if (packet.Message.Message.StartsWith("/login"))
                     {
+                        string password = packet.Message.Message.Replace("/login ", "");
                         if (string.IsNullOrEmpty(config.BuildPassword))
                         {
                             break;
                         }
-                        if (packet.Message.Message.Replace("/login ", "")
-                         .Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
+                        if (password.Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
                         {
                             clients[clientid].Rank = Rank.Admin;
                             SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
                             SendMessage(clientid, "Type /help to see additional commands for administrators.");
+                            ServerEventLog(string.Format("{0} logs in as Admin.", clients[clientid].playername));
                         }
-                        else if (packet.Message.Message.Replace("/login ", "")
-                            .Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
+                        else if (password.Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
                         {
                             clients[clientid].Rank = Rank.Builder;
                             SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
+                            ServerEventLog(string.Format("{0} logs in as Builder.", clients[clientid].playername));
                         }
                         else
                         {
                             SendMessage(clientid, colorError + "Invalid password.");
+                            ServerEventLog(string.Format("{0} fails to log in (invalid password: {1}).", clients[clientid].playername, password));
                         }
                     }
 
@@ -1946,13 +2028,131 @@ for (int i = 0; i < unknown.Count; i++)
                         else
                         {
                             //Monaiz
-                            int messageStart = packet.Message.Message.IndexOf(" ");
-                            config.WelcomeMessage = packet.Message.Message.Substring(messageStart);
+                            string welcomeMessage = packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
+                            config.WelcomeMessage = welcomeMessage;
                             SendMessageToAll("New Welcome Message Set: " + colorSuccess + config.WelcomeMessage);
+                            ServerEventLog(string.Format("{0} changes welcome message to {1}.", clients[clientid].playername, welcomeMessage));
                             SaveConfig();
                             break;
                         }
                     }
+
+                    else if (packet.Message.Message.StartsWith("/logging"))
+                    {
+                        if (!clients[clientid].IsAdmin)
+                        {
+                            SendMessage(clientid, "You are not logged in as an administrator and cannot set logging.");
+                        }
+                        else
+                        {
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            bool valid = false;
+
+                            if (ss.Length > 1)
+                            {
+                                switch (ss[1])
+                                {
+                                    // all logging state
+                                    case "-s":
+                                        if (ss.Length == 2)
+                                        {
+                                            valid = true;
+                                            SendMessage(clientid, "Build: " + config.BuildLogging);
+                                            SendMessage(clientid, "Server events: " + config.ServerEventLogging);
+                                            SendMessage(clientid, "Chat: " + config.ChatLogging);
+                                        }
+                                        break;
+                                    case "-b":
+                                        if (ss.Length == 2)
+                                        {
+                                            valid = true;
+                                            SendMessage(clientid, "Build logging: " + config.BuildLogging);
+                                        }
+                                        else if (ss.Length == 3)
+                                        {
+                                            if (ss[2].Equals("on"))
+                                            {
+                                                valid = true;
+                                                config.BuildLogging = true;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Enabled build logging.");
+                                                ServerEventLog(string.Format("{0} enables build logging.", clients[clientid].playername));
+                                            }
+                                            else if (ss[2].Equals("off"))
+                                            {
+                                                valid = true;
+                                                config.BuildLogging = false;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Disabled build logging.");
+                                                ServerEventLog(string.Format("{0} disables build logging.", clients[clientid].playername));
+                                            }
+                                        }
+                                        break;
+                                    case "-se":
+                                        if (ss.Length == 2)
+                                        {
+                                            valid = true;
+                                            SendMessage(clientid, "Server event logging: " + config.ServerEventLogging);
+                                        }
+                                        else if (ss.Length == 3)
+                                        {
+                                            if (ss[2].Equals("on"))
+                                            {
+                                                valid = true;
+                                                config.ServerEventLogging = true;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Enabled server event logging.");
+                                                ServerEventLog(string.Format("{0} enables server event logging.", clients[clientid].playername));
+                                            }
+                                            else if (ss[2].Equals("off"))
+                                            {
+                                                valid = true;
+                                                ServerEventLog(string.Format("{0} disables server event logging.", clients[clientid].playername));
+                                                config.ServerEventLogging = false;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Disabled server envent logging.");
+                                            }
+                                        }
+                                        break;
+                                    case "-c":
+                                        if (ss.Length == 2)
+                                        {
+                                            valid = true;
+                                            SendMessage(clientid, "Chat logging: " + config.ChatLogging);
+                                        }
+                                        else if (ss.Length == 3)
+                                        {
+                                            if (ss[2].Equals("on"))
+                                            {
+                                                valid = true;
+                                                config.ChatLogging = true;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Enabled server chat logging.");
+                                                ServerEventLog(string.Format("{0} enables chat logging.", clients[clientid].playername));
+                                            }
+                                            else if (ss[2].Equals("off"))
+                                            {
+                                                valid = true;
+                                                config.ChatLogging = false;
+                                                SaveConfig();
+                                                SendMessage(clientid, colorSuccess + "Disabled server chat logging.");
+                                                ServerEventLog(string.Format("{0} disables chat logging.", clients[clientid].playername));
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        SendMessage(clientid, colorError + "Invalid argument.");
+                                        break;
+                                }
+                            }
+                            if (!valid)
+                            {
+                                SendMessage(clientid, colorError + "Usage: /logging [-s | -b | -se | -c] {on | off}");
+                            }
+                            break;
+                        }
+                    }
+
                     else if (packet.Message.Message.StartsWith("/kick"))
                     {
                         if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
@@ -1967,11 +2167,12 @@ for (int i = 0; i < unknown.Count; i++)
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     string targetName = k.Value.playername;
-                                    string sourcename = clients[clientid].playername;
+                                    string sourceName = clients[clientid].playername;
                                     SendDisconnectPlayer(k.Key, "You were kicked by an administrator.");
-                                    KillPlayer(k.Key);
 
-                                    SendMessageToAll(colorError + targetName + " was kicked by " + sourcename);
+                                    SendMessageToAll(colorError + targetName + " was kicked by " + sourceName);
+                                    ServerEventLog(string.Format("{0} kicks {1}.", sourceName, targetName));
+                                    KillPlayer(k.Key);
                                     break;
                                 }
                             }
@@ -1993,12 +2194,13 @@ for (int i = 0; i < unknown.Count; i++)
                                 {
                                     //TODO: Confirm player is not a guest account.
                                     string targetName = k.Value.playername;
-                                    string sourcename = clients[clientid].playername;
+                                    string sourceName = clients[clientid].playername;
                                     config.BannedUsers.Add(k.Value.playername);
                                     SaveConfig();
-                                    SendMessageToAll(colorError + targetName + " was banned by " + sourcename);
+                                    SendMessageToAll(colorError + targetName + " was banned by " + sourceName);
 
                                     SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
+                                    ServerEventLog(string.Format("{0} bans {1}.", sourceName, targetName));
                                     KillPlayer(k.Key);
                                     break;
                                 }
@@ -2020,11 +2222,13 @@ for (int i = 0; i < unknown.Count; i++)
                                 if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     string targetName = k.Value.playername;
-                                    string sourcename = clients[clientid].playername;
+                                    string sourceName = clients[clientid].playername;
                                     config.BannedIPs.Add(((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
                                     SaveConfig();
-                                    SendMessageToAll(colorError + targetName + " was banned by " + sourcename);
+                                    SendMessageToAll(colorError + targetName + " was banned by " + sourceName);
+
                                     SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
+                                    ServerEventLog(string.Format("{0} IP bans {1}.", sourceName, targetName));
                                     KillPlayer(k.Key);
                                     break;
                                 }
@@ -2060,6 +2264,7 @@ for (int i = 0; i < unknown.Count; i++)
                                     else
                                     {
                                         SendMessage(clientid, colorSuccess + "Player " + ss[2] + " unbanned.");
+                                        ServerEventLog(string.Format("{0} unbans player {1}.", clients[clientid].playername, ss[2]));
                                     }
                                 }
                                 // unban an IP
@@ -2076,6 +2281,7 @@ for (int i = 0; i < unknown.Count; i++)
                                     else
                                     {
                                         SendMessage(clientid, colorSuccess + "IP " + ss[2] + " unbanned.");
+                                        ServerEventLog(string.Format("{0} unbans IP {1}.", clients[clientid].playername, ss[2]));
                                     }
                                 }
                             }
@@ -2182,6 +2388,21 @@ for (int i = 0; i < unknown.Count; i++)
                                         }
                                     }
                                     break;
+                                case "-mods":
+                                    valid = true;
+                                    if (!clients[clientid].IsAdmin)
+                                    {
+                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
+                                    }
+                                    else
+                                    {
+                                        SendMessage(clientid, colorHelp + "List of Mods:");
+                                        foreach (string currentMod in config.Mods)
+                                        {
+                                            SendMessage(clientid, currentMod);
+                                        }
+                                    }
+                                    break;
                                 default:
                                     SendMessage(clientid, "Invalid parameter.");
                                     break;
@@ -2192,7 +2413,7 @@ for (int i = 0; i < unknown.Count; i++)
                             string options = "";
                             if (clients[clientid].IsAdmin)
                             {
-                                options = "[-users | -builders | -admins | -areas | -bannedusers | -bannedips]";
+                                options = "[-users | -builders | -admins | -mods | -areas | -bannedusers | -bannedips]";
                             }
                             else
                             {
@@ -2265,6 +2486,7 @@ for (int i = 0; i < unknown.Count; i++)
                                     nextblock:
                                         k.Value.IsInventoryDirty = true;
                                     }
+                                    ServerEventLog(string.Format("{0} gives all to {1}.", sourcename, targetName));
                                     break;
                                 }
                             }
@@ -2375,6 +2597,7 @@ for (int i = 0; i < unknown.Count; i++)
 									nextblock:
 										k.Value.IsInventoryDirty = true;
 									}
+                                    ServerEventLog(string.Format("{0} gives {1} {2} to {3}.", sourcename, amount, blockname, targetName));
 									break;
 								}
 							}
@@ -2406,6 +2629,7 @@ for (int i = 0; i < unknown.Count; i++)
 									}
 								}
 								SendMessage(clientid, colorSuccess + "Monsters turned " + ss[1]);
+                                ServerEventLog(string.Format("{0} turns monsters {1}.", clients[clientid].playername, ss[1]));
 								break;
 							}
 						}
@@ -2429,6 +2653,7 @@ for (int i = 0; i < unknown.Count; i++)
 									    	area.PermittedUsers = ss[2];
 									    	SaveConfig();
 									    	SendMessage(clientid, "Area changed.");
+                                            ServerEventLog(string.Format("{0} changes area from {1} to {2}.", clients[clientid].playername, ss[1], ss[2]));
 											break;
 									    }
 								}
@@ -2454,6 +2679,7 @@ for (int i = 0; i < unknown.Count; i++)
 								                 });
 								SaveConfig();
 								SendMessage(clientid, "Area added.");
+                                ServerEventLog(string.Format("{0} adds area {2} {1}.", clients[clientid].playername, ss[1], ss[2]));
 								break;
 							}
 						}
@@ -2471,7 +2697,7 @@ for (int i = 0; i < unknown.Count; i++)
 							SendMessage(clientid, colorHelp + "/ban [username]");
 							SendMessage(clientid, colorHelp + "/banip [username]");
                             SendMessage(clientid, colorHelp + "/unban [-p playername | -ip ipaddress]");
-							SendMessage(clientid, colorHelp + "/list [-users | -builders | -admins | -areas | -bannedusers | -bannedips]");
+							SendMessage(clientid, colorHelp + "/list [-users | -builders | -admins | -mods | -areas | -bannedusers | -bannedips]");
 							if (!clients[clientid].IsMod)
 							{
 								SendMessage(clientid, colorHelp + "/welcome [login motd message]");
@@ -2481,6 +2707,7 @@ for (int i = 0; i < unknown.Count; i++)
 								SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
 								SendMessage(clientid, colorHelp + "/addarea username coords");
 								SendMessage(clientid, colorHelp + "/areauser olduser newuser");
+                                SendMessage(clientid, colorHelp + "/logging [-s | -b | -se | -c] {on | off}");
 							}
 						}
                     }
@@ -2510,6 +2737,7 @@ for (int i = 0; i < unknown.Count; i++)
                     else
                     {
                         SendMessageToAll(string.Format("{0}: {1}", PlayerNameColored(clientid), colorNormal + packet.Message.Message));
+                        ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
                     }
                     break;
                 case ClientPacketId.Craft:
