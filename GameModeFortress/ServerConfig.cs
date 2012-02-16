@@ -192,14 +192,14 @@ namespace GameModeFortress
 
         public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
         {
-            bool canBuild = true;
+            bool canBuild = false;
             foreach (AreaConfig area in this.Areas)
             {
                 if (area.IsInCoords(x, y))
                 {
-                    if (!area.CanUserBuild(client))
+                    if (area.CanUserBuild(client))
                     {
-                        return false;
+                        return true;
                     }
                 }
             }
@@ -295,8 +295,7 @@ namespace GameModeFortress
 
         public bool IsInCoords(int x, int y)
         {
-
-            if (x >= Math.Min(x1, x2) && x <= Math.Max(x1, x2) && y >= Math.Min(y1, y2) && y <= Math.Max(y1, y2))
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2)
             {
                 return true;
             }

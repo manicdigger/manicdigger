@@ -310,6 +310,10 @@ namespace ManicDiggerServer
                 builderArea.Coords = "0,5001,10000,10000";
                 builderArea.PermittedUsers = "[Builder]";
                 config.Areas.Add(builderArea);
+                AreaConfig adminArea = new AreaConfig();
+                adminArea.Coords = "0,0,10000,10000";
+                adminArea.PermittedUsers = "[Admin]";
+                config.Areas.Add(adminArea);
             }
 
 
