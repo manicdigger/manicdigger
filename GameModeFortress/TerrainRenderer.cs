@@ -232,6 +232,6 @@ namespace ManicDigger
             return d_Batcher.TotalTriangleCount;
         }
 
-        bool shadowssimple;
+        bool shadowssimple = true;
     }
 }
