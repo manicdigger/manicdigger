@@ -93,7 +93,7 @@ namespace ManicDigger.MapTools.Generators
                 {
                     for (int yy = 0; yy < this.ChunkSize; yy++)
                     {
-                        chunk[xx, yy, 0] = (byte)WorldGeneratorTools.TileIdAdminium;
+                        chunk[xx, yy, 0] = (byte)WorldGeneratorTools.TileIdLava;
                     }
                 }
             }

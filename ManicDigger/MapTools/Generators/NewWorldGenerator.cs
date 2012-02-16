@@ -38,6 +38,7 @@ namespace ManicDigger.MapTools.Generators
         {
             Init();
         }
+        public bool EnableCavesConfig { get; set; }
         public int ChunkSize { get; set; }
         public string DisplayName { get { return "new"; } }
         public ManicDigger.Core.SafeDictionary<int, object> GenerationOptions { get; set; }
@@ -238,6 +239,9 @@ namespace ManicDigger.MapTools.Generators
         byte BLOCK_LAVA = 11;
         public void Init()
         {
+            this.addCaveLava = EnableCavesConfig;
+            this.addCaves = EnableCavesConfig;
+
             //###### TREE GEN #####
             treenoise.Seed = (Seed + 2);
             treenoise.OctaveCount = (6);
@@ -382,7 +386,7 @@ namespace ManicDigger.MapTools.Generators
 
         float cavessize = 15;
         float cavestreshold = 0.6f;
-        bool addCaveLava = true;
-        bool addCaves = true;
+        bool addCaveLava;
+        bool addCaves;
     }
 }

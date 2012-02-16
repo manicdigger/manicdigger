@@ -30,6 +30,7 @@ namespace GameModeFortress
             // TODO: make it possible to change the world generator at run-time!
             var generator = server.config.Generator.getGenerator();
             generator.ChunkSize = map.chunksize;
+            generator.EnableCavesConfig = server.config.Generator.EnableCaves;
             // apply chunk size to generator
             map.d_Generator = generator;
             server.chunksize = 32;

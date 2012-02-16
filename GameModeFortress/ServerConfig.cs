@@ -345,11 +345,14 @@ namespace GameModeFortress
     	{
     		this.treeCount = 20;
     		this.RandomSeed = true;
+            this.EnableCaves = true;
     		this.Seed = 0;
             this.GeneratorType = "NewWorldGenerator";
+
     	}
     	
     	public bool RandomSeed { get; set; }
+        public bool EnableCaves { get; set; }
     	public int Seed { get; set; }
         public string GeneratorType { get; set; }
     	
