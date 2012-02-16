@@ -38,6 +38,10 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework, Version=2.4.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\OpenTK.dll</HintPath>
@@ -56,6 +60,7 @@
     <Compile Include="TestFont.cs" />
     <Compile Include="TestHeartbeat.cs" />
     <Compile Include="TestInventory.cs" />
+    <Compile Include="TestMyLinq.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

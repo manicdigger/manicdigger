@@ -481,6 +481,10 @@ namespace ManicDigger
             }
             return hash;
         }
+        public override string ToString()
+        {
+           return string.Format("[{0}, {1}]", x, y);
+        }
     }
     public struct Vector3i
     {
@@ -520,6 +524,10 @@ namespace ManicDigger
                 hash = hash * 37 + z;
             }
             return hash;
+        }
+        public override string ToString()
+        {
+           return string.Format("[{0}, {1}, {2}]", x, y, z);
         }
     }
     public class DependencyChecker
@@ -620,7 +628,7 @@ namespace ManicDigger
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
     }
-    class FastStack<T>
+    public class FastStack<T>
     {
         public void Initialize(int maxCount)
         {
@@ -727,6 +735,17 @@ namespace ManicDigger
                 yield return v;
                 i++;
             }
+        }
+        public static IEnumerable<T> Skip<T>(IEnumerable<T> l, int n)
+        {
+           var iterator = l.GetEnumerator();
+           for(int i=0; i<n; i++) 
+           {
+               if(iterator.MoveNext()==false)
+                  yield break;
+           }
+           while (iterator.MoveNext())
+              yield return iterator.Current;
         }
     }
     [XmlRoot("dictionary")]

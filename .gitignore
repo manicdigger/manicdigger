@@ -1,0 +1,6 @@
+output
+bin
+obj
+_ReSharper.*
+*.user
+*.suo

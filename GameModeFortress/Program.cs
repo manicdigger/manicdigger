@@ -264,7 +264,7 @@ namespace GameModeFortress
                 UseShadowsSimple();
             }
             w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w };
-
+            w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata };
             var inventoryController = clientgame;
             var inventoryUtil = new InventoryUtil();

@@ -69,6 +69,8 @@ namespace ManicDigger
         [Inject]
         public HudChat d_HudChat;
         [Inject]
+        public HudTextEditor d_HudTextEditor;
+        [Inject]
         public HudInventory d_HudInventory;
         [Inject]
         public Inventory d_Inventory;
@@ -265,7 +267,11 @@ namespace ManicDigger
                     }
                 }
             }
-       }
+            if (guistate == GuiState.EditText)
+            {
+               d_HudTextEditor.HandleKeyPress(sender, e);
+            }
+        }
         float overheadcameradistance = 10;
         float tppcameradistance = 3;
         void Mouse_WheelChanged(object sender, OpenTK.Input.MouseWheelEventArgs e)
@@ -488,13 +494,22 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key == GetKey(OpenTK.Input.Key.ShiftLeft) || e.Key == GetKey(OpenTK.Input.Key.ShiftRight))
+                IsShiftPressed = false;
             if (GuiTyping == TypingState.None)
             {
                 keyeventup = e;
             }
+            if (guistate == GuiState.EditText)
+            {
+               d_HudTextEditor.HandleKeyUp(sender, e);
+            }
         }
+        bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key ==  GetKey(OpenTK.Input.Key.ShiftLeft) ||  e.Key ==  GetKey(OpenTK.Input.Key.ShiftRight))
+                IsShiftPressed = true;
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
                 if (d_MainWindow.WindowState == WindowState.Fullscreen)
@@ -517,6 +532,13 @@ namespace ManicDigger
                     guistate = GuiState.EscapeMenu;
                     menustate = new MenuState();
                     FreeMouse = true;
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
+                {
+                   GuiTyping = TypingState.Typing;
+                   d_HudChat.IsTyping = true;
+                   d_HudChat.GuiTypingBuffer = "";
+                   return;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
                 {
@@ -552,7 +574,7 @@ namespace ManicDigger
                     }
                     return;
                 }
-                if (GuiTyping == TypingState.Typing)
+               if (GuiTyping == TypingState.Typing)
                 {
                     var key = e.Key;
                     string c = "";
@@ -725,7 +747,11 @@ namespace ManicDigger
                     if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
                     if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.F12))
+                if (e.Key == OpenTK.Input.Key.F9)
+                {
+                   guistate = GuiState.EditText;
+                }
+               if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
@@ -804,6 +830,13 @@ namespace ManicDigger
                 {
                     GuiStateBackToGame();
                 }
+            }
+            else if (guistate == GuiState.EditText) {
+               if (e.Key == GetKey(OpenTK.Input.Key.Escape))
+               {
+                  GuiStateBackToGame();
+               }
+               d_HudTextEditor.HandleKeyDown(sender, e);
             }
             else throw new Exception();
         }
@@ -1197,6 +1230,7 @@ namespace ManicDigger
             else if (guistate == GuiState.CraftingRecipes)
             {
             }
+            else if (guistate == GuiState.EditText) { }
             else throw new Exception();
             float movespeednow = MoveSpeedNow();
             Acceleration acceleration = new Acceleration();
@@ -2380,6 +2414,7 @@ namespace ManicDigger
             Inventory,
             MapLoading,
             CraftingRecipes,
+           EditText
         }
         private void DrawMouseCursor()
         {
@@ -2445,6 +2480,11 @@ namespace ManicDigger
                         DrawCraftingRecipes();
                     }
                     break;
+                case GuiState.EditText:
+                    {
+                       d_HudTextEditor.Render();
+                    }
+                    break;
                 default:
                     throw new Exception();
             }
@@ -2483,7 +2523,7 @@ namespace ManicDigger
             }
             d_The3d.PerspectiveMode();
         }
-        public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
+       public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
@@ -3808,7 +3848,7 @@ namespace ManicDigger
                 && packet.PacketId != ServerPacketId.Chunk
                 && packet.PacketId != ServerPacketId.Ping)
             {
-                Console.WriteLine(Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
+                //Console.WriteLine("read packet: " + Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
             }
             switch (packet.PacketId)
             {

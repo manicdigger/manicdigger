@@ -350,7 +350,7 @@ namespace ManicDiggerServer
                 d_Heartbeat.SendHeartbeat();
                 if (!writtenServerKey)
                 {
-                    Console.WriteLine(GetHash(d_Heartbeat.ReceivedKey)); 
+                   Console.WriteLine("hash: "+ GetHash(d_Heartbeat.ReceivedKey)); 
                     writtenServerKey = true;
                 }
                 Console.WriteLine("Heartbeat sent.");
@@ -937,7 +937,7 @@ namespace ManicDiggerServer
 
             Place(x, y, z + 4, TileIdLeaves);
         }
-        private void Place(int x, int y, int z, int blocktype)
+        public void Place(int x, int y, int z, int blocktype)
         {
             if (MapUtil.IsValidPos(d_Map, x, y, z))
             {
@@ -1557,7 +1557,7 @@ for (int i = 0; i < unknown.Count; i++)
             p.MaxHealth = 20;
             return p;
         }
-        Vector3i PlayerBlockPosition(Client c)
+        public Vector3i PlayerBlockPosition(Client c)
         {
             return new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlZ / 32, c.PositionMul32GlY / 32);
         }
@@ -1751,14 +1751,6 @@ for (int i = 0; i < unknown.Count; i++)
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                         break;
                     }
-                    BlockSetMode mode = packet.SetBlock.Mode == 0 ? BlockSetMode.Destroy : BlockSetMode.Create;
-                    byte blocktype = (byte)packet.SetBlock.BlockType;
-                    if (mode == BlockSetMode.Destroy)
-                    {
-                        blocktype = 0; //data.TileIdEmpty
-                    }
-                    //todo check block type.
-                    //map.SetBlock(x, y, z, blocktype);
                     if (!DoCommandBuild(clientid, true, packet.SetBlock))
                     {
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -2492,6 +2484,12 @@ for (int i = 0; i < unknown.Count; i++)
 							}
 						}
                     }
+                    else if (packet.Message.Message.StartsWith("/run ") && packet.Message.Message.Length > 5)
+                    {
+                       var script = packet.Message.Message.Substring(5);
+                       RunInClientSandbox(script, clientid);
+                       break;
+                    }
                     else if (packet.Message.Message.StartsWith("."))
                     {
                         break;
@@ -2503,7 +2501,10 @@ for (int i = 0; i < unknown.Count; i++)
                     }
                     else if (packet.Message.Message.StartsWith("/"))
                     {
-                        SendMessage(clientid, colorError + "Invalid command.");
+                        //SendMessage(clientid, colorError + "Invalid command.");
+                        // assume script expression or command coming
+                        var script = packet.Message.Message.Substring(1);
+                        RunInClientSandbox(script, clientid);
                         break;
                     }
                     else
@@ -2538,6 +2539,41 @@ for (int i = 0; i < unknown.Count; i++)
             }
             return lengthPrefixLength + packetLength;
         }
+
+       private void RunInClientSandbox(string script, int clientid)
+       {
+          var client = clients[clientid];
+          if (!client.IsAdmin)
+          {
+             SendMessage(clientid, "Server scripts can only be run by admin.", MessageType.Error);
+             return;
+          }
+          if (client.Interpreter == null)
+          {
+             client.Interpreter = new JavaScriptInterpreter();
+             client.Console = new ScriptConsole(this, clientid);
+             client.Console.InjectConsoleCommands(client.Interpreter);
+             client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
+             client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
+          }
+          var interpreter = client.Interpreter;
+          object result;
+          SendMessage(clientid, colorNormal + script);
+          if (interpreter.Execute(script, out result))
+          {
+             try
+             {
+                SendMessage(clientid, colorSuccess + " => " + result);
+             }
+             catch (FormatException e) // can happen
+             {
+                SendMessage(clientid, colorError + "Error. " + e.Message);
+             }
+             return;
+          }
+          SendMessage(clientid, colorError + "Error.");
+       }
+
         string PlayerNameColored(int clientid)
         {
             return (clients[clientid].CanBuild ? colorOpUsername : "")
@@ -2550,6 +2586,31 @@ for (int i = 0; i < unknown.Count; i++)
         string colorSuccess = "&2"; //green
         string colorError = "&4"; //red
         string colorAdmin = "&e"; //yellow
+        public enum MessageType { Normal, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
+        private string MessageTypeToString(MessageType type)
+        {
+           switch (type)
+           {
+              case MessageType.Normal:
+              case MessageType.White:
+                 return colorNormal;
+              case MessageType.Help:
+              case MessageType.Red:
+                 return colorHelp;
+              case MessageType.OpUsername:
+              case MessageType.Green:
+                 return colorOpUsername;
+              case MessageType.Error:
+                 return colorError;
+              case MessageType.Success:
+                 return colorSuccess;
+              case MessageType.Admin:
+              case MessageType.Yellow:
+                 return colorAdmin;
+              default:
+                 return colorNormal;
+           }
+        }
         bool CompareByteArray(byte[] a, byte[] b)
         {
             if (a.Length != b.Length) { return false; }
@@ -2951,7 +3012,7 @@ for (int i = 0; i < unknown.Count; i++)
         }
         private void SendMessageToAll(string message)
         {
-            Console.WriteLine(message);
+            Console.WriteLine("Message to all: "+ message);
             foreach (var k in clients)
             {
                 SendMessage(k.Key, message);
@@ -2999,6 +3060,10 @@ for (int i = 0; i < unknown.Count; i++)
         {
             PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
+        }
+        public void SendMessage(int clientid, string message, MessageType color)
+        {
+           SendMessage(clientid, MessageTypeToString(color) + message);
         }
         private void SendMessage(int clientid, string message)
         {
@@ -3276,9 +3341,16 @@ for (int i = 0; i < unknown.Count; i++)
             public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
             public bool IsMod;
             public ManicDigger.Timer notifyMonstersTimer;
+            public IScriptInterpreter Interpreter;
+            public ScriptConsole Console;
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
-
+        public Client GetClient(int id)
+        {
+           if (!clients.ContainsKey(id))
+              return null;
+           return clients[id];
+        }
         public int dumpmax = 30;
         public void DropItem(ref Item item, Vector3i pos)
         {

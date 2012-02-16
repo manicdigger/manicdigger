@@ -34,7 +34,7 @@ namespace ManicDigger.Renderers
     }
     public class TextRenderer
     {
-        public Bitmap MakeTextTexture(Text t)
+        public virtual Bitmap MakeTextTexture(Text t)
         {
             Font font;
         retry:
@@ -99,26 +99,26 @@ namespace ManicDigger.Renderers
                     }
                     if (NewFont)
                     {
-                        StringFormat format = StringFormat.GenericTypographic;
+                       StringFormat format = StringFormat.GenericTypographic;
 
-                        g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
-                        g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                        //g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                        Rectangle rect = new Rectangle() { X = (int)currentwidth, Y = 0 };
-                        using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
-                        {
-                            g2.SmoothingMode = SmoothingMode.AntiAlias;
-                            RectangleF off = rect;
-                            off.Offset(2, 2);
-                            using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
-                            {
-                                Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
-                                g2.FillPath(b, offPath);
-                                b.Dispose();
-                            }
-                            g2.FillPath(new SolidBrush(parts[i].color), path);
-                            g2.DrawPath(Pens.Black, path);
-                        }
+                       g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
+                       g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                       //g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                       Rectangle rect = new Rectangle() { X = (int)currentwidth, Y = 0 };
+                       using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
+                       {
+                          g2.SmoothingMode = SmoothingMode.AntiAlias;
+                          RectangleF off = rect;
+                          off.Offset(2, 2);
+                          using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
+                          {
+                             Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
+                             g2.FillPath(b, offPath);
+                             b.Dispose();
+                          }
+                          g2.FillPath(new SolidBrush(parts[i].color), path);
+                          g2.DrawPath(Pens.Black, path);
+                       }
                     }
                     else
                     {
@@ -137,7 +137,7 @@ namespace ManicDigger.Renderers
             return path;
         }
         int textalpha = 0;
-        private uint NextPowerOfTwo(uint x)
+        protected uint NextPowerOfTwo(uint x)
         {
             x--;
             x |= x >> 1;  // handle  2 bit numbers
@@ -191,7 +191,7 @@ namespace ManicDigger.Renderers
             }
             return parts;
         }
-        private Color GetColor(int currentcolor)
+        protected Color GetColor(int currentcolor)
         {
             switch (currentcolor)
             {
@@ -214,7 +214,7 @@ namespace ManicDigger.Renderers
                 default: throw new Exception();
             }
         }
-        int? HexToInt(char c)
+        protected int? HexToInt(char c)
         {
             if (c == '0') { return 0; }
             if (c == '1') { return 1; }
@@ -234,6 +234,19 @@ namespace ManicDigger.Renderers
             if (c == 'f') { return 15; }
             return null;
         }
-        public bool NewFont = true;
+        public bool NewFont = true;
+       public virtual SizeF MeasureTextSize(string text, float fontsize)
+       {
+            using (Font font = new Font("Verdana", fontsize))
+            {
+                using (Bitmap bmp = new Bitmap(1, 1))
+                {
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        return g.MeasureString(text, font);
+                    }
+                }
+            }
+       }
     }
 }
