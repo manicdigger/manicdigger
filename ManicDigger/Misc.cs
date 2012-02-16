@@ -23,12 +23,14 @@ namespace ManicDigger
 {
     public static class GameStorePath
     {
+        public static bool IsMono = Type.GetType("Mono.Runtime") != null;
+     
         public static string GetStorePath()
         {
             string apppath = Path.GetDirectoryName(Application.ExecutablePath);
             string mdfolder = "ManicDiggerUserData";
             if (apppath.Contains(
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)))
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)) && !IsMono)
             {
                 string mdpath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -37,8 +39,7 @@ namespace ManicDigger
             }
             else
             {
-                //return Path.Combine(apppath, mdfolder);
-                return mdfolder;
+                return Path.Combine(apppath, mdfolder);
             }
         }
     }
