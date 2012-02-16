@@ -28,6 +28,7 @@ namespace GameModeFortress
          try
          {
             m_engine = new JintEngine();
+            m_engine.AllowClr = false;
             Console.WriteLine("done.");
          }
          catch (Exception e)
