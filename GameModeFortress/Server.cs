@@ -1829,9 +1829,9 @@ for (int i = 0; i < unknown.Count; i++)
                     {
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                     }
+                    BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                     d_Water.BlockChange(d_Map, x, y, z);
                     d_GroundPhysics.BlockChange(d_Map, x, y, z);
-                    BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), blocktype));
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
