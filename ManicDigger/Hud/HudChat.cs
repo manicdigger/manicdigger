@@ -15,7 +15,7 @@ namespace ManicDigger.Gui
 
         public bool IsTyping;
         public string GuiTypingBuffer;
-        public float ChatFontSize = 12f;
+        public float ChatFontSize = 11f;
         public int ChatScreenExpireTimeSeconds = 20;
         public int ChatLinesMaxToDraw = 10;
         public List<Chatline> ChatLines = new List<Chatline>();

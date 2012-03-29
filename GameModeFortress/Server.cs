@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Xml;
 using GameModeFortress;
 using ManicDigger;
@@ -164,6 +165,11 @@ namespace ManicDiggerServer
                 config.Port = singleplayerport;
             }
             Start(config.Port);
+
+            LoadServerClient();
+            // allows to enter server commands in server console window
+            Thread consoleInterpreterThread = new Thread(new ThreadStart(this.ConsoleInterpreter));
+            consoleInterpreterThread.Start();
         }
         int Seed;
         private void LoadGame(string filename)
@@ -296,7 +302,7 @@ namespace ManicDiggerServer
                     StreamReader sr = new StreamReader(s);
                     XmlDocument d = new XmlDocument();
                     d.Load(sr);
-                    int format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/FormatVersion"));
+                    config.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Format"));
                     config.Name = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
                     config.Motd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
                     config.Port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
@@ -312,8 +318,6 @@ namespace ManicDiggerServer
                     }
                     config.IsCreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
                     config.Public = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-                    config.BuildPassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildPassword");
-                    config.AdminPassword = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AdminPassword");
                     if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
                     {
                         config.AllowFreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
@@ -327,6 +331,7 @@ namespace ManicDiggerServer
                     config.BuildLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildLogging"));
                     config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
                     config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
+                    config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
 
                 }
                 //Save with new version.
@@ -349,7 +354,7 @@ namespace ManicDiggerServer
 
         public ServerConfig config;
 
-        void SaveConfig()
+        public void SaveConfig()
         {
             //Verify that we have a directory to place the file into.
             if (!Directory.Exists(gamepathconfig))
@@ -365,30 +370,13 @@ namespace ManicDiggerServer
             {
                 config = new ServerConfig();
             }
-            if (config.Admins.Count == 0) { config.Admins.Add(config.DefaultPlayerName); }
-            if (config.Builders.Count == 0) { config.Builders.Add(config.DefaultPlayerName); }
-            if (config.Mods.Count == 0) { config.Mods.Add(config.DefaultPlayerName); }
             if (config.Areas.Count == 0)
             {
-                AreaConfig publicArea = new AreaConfig();
-                publicArea.Coords = "0,0,10000,5000";
-                publicArea.PermittedUsers = "[Guest]";
-                config.Areas.Add(publicArea);
-                AreaConfig builderArea = new AreaConfig();
-                builderArea.Coords = "0,5001,10000,10000";
-                builderArea.PermittedUsers = "[Builder]";
-                config.Areas.Add(builderArea);
-                AreaConfig adminArea = new AreaConfig();
-                adminArea.Coords = "0,0,10000,10000";
-                adminArea.PermittedUsers = "[Admin]";
-                config.Areas.Add(adminArea);
+                config.Areas = ServerConfigMisc.getDefaultAreas();
             }
-
-
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, config);
             textWriter.Close();
-
         }
 
         public void SendHeartbeat()
@@ -693,7 +681,7 @@ namespace ManicDiggerServer
                             int block = d_Map.GetBlock(pos2.x, pos2.y, pos2.z);
                             if (tntStack.Count < tntMax
                                 && pos2 != pos
-                                && block == (int)TileTypeMinecraft.TNT)
+                                && block == (int)TileTypeManicDigger.TNT)
                             {
                                 tntStack.Push(pos2);
                                 tntTimer.accumulator = tntTimer.INTERVAL;
@@ -701,18 +689,20 @@ namespace ManicDiggerServer
                             else
                             {
                                 if ((block != 0)
-                                    && (block != (int)TileTypeMinecraft.Adminium)
+                                    && (block != (int)TileTypeManicDigger.Adminium)
                                     && !(d_Data.IsFluid[block]))
                                 {
                             		SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
-                            		
-                            		// chance to get some of destruced blocks
-                            		if (rnd.NextDouble() < .20f)
-                            		{
-                            			var item = new Item();
-						                item.ItemClass = ItemClass.Block;
-						                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
-                            			GetInventoryUtil(inventory).GrabItem(item, 0);
+                            		if (!config.IsCreative)
+                                    {
+                                		// chance to get some of destruced blocks
+                                		if (rnd.NextDouble() < .20f)
+                                		{
+                                			var item = new Item();
+    						                item.ItemClass = ItemClass.Block;
+    						                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+                                            GetInventoryUtil(inventory).GrabItem(item, 0);
+                                         }
                             		}
                                 }
                             }
@@ -725,7 +715,7 @@ namespace ManicDiggerServer
         }
 
         public int tntRange = 4;
-        Timer tntTimer = new Timer() { INTERVAL = 5 };
+        ManicDigger.Timer tntTimer = new ManicDigger.Timer() { INTERVAL = 5 };
         Stack<Vector3i> tntStack = new Stack<Vector3i>();
         public int tntMax = 10;
 
@@ -746,7 +736,7 @@ namespace ManicDiggerServer
                 }
                 foreach (var v in d_Water.tosetempty)
                 {
-                    byte emptytype = (byte)TileTypeMinecraft.Empty;
+                    byte emptytype = (byte)TileTypeManicDigger.Empty;
                     d_Map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, emptytype);
                     foreach (var k in clients)
                     {
@@ -769,7 +759,7 @@ namespace ManicDiggerServer
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ping, Ping = p }));
         }
-        Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
+        ManicDigger.Timer pingtimer = new ManicDigger.Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
             if (clients[clientid].state == ClientStateOnServer.Connecting)
@@ -872,27 +862,27 @@ namespace ManicDiggerServer
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickCrops(pos);
                         }
-                        if (block == (int)TileTypeMinecraft.Sapling)
+                        if (block == (int)TileTypeManicDigger.Sapling)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickSapling(pos);
                         }
-                        if (block == (int)TileTypeMinecraft.BrownMushroom || block == (int)TileTypeMinecraft.RedMushroom)
+                        if (block == (int)TileTypeManicDigger.BrownMushroom || block == (int)TileTypeManicDigger.RedMushroom)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickMushroom(pos);
                         }
-                        if (block == (int)TileTypeMinecraft.YellowFlowerDecorations || block == (int)TileTypeMinecraft.RedRoseDecorations)
+                        if (block == (int)TileTypeManicDigger.YellowFlowerDecorations || block == (int)TileTypeManicDigger.RedRoseDecorations)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickFlower(pos);
                         }
-                        if (block == (int)TileTypeMinecraft.Dirt)
+                        if (block == (int)TileTypeManicDigger.Dirt)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickDirt(pos);
                         }
-                        if (block == (int)TileTypeMinecraft.Grass)
+                        if (block == (int)TileTypeManicDigger.Grass)
                         {
                             Vector3i pos = new Vector3i(p.x + xx, p.y + yy, p.z + zz);
                             BlockTickGrass(pos);
@@ -972,8 +962,8 @@ namespace ManicDiggerServer
                     return;
                 }
                 int under = d_Map.GetBlock(pos.x, pos.y, pos.z - 1);
-                if (!(under == (int)TileTypeMinecraft.Dirt
-                    || under == (int)TileTypeMinecraft.Grass
+                if (!(under == (int)TileTypeManicDigger.Dirt
+                    || under == (int)TileTypeManicDigger.Grass
                     || under == (int)TileTypeManicDigger.DirtForFarming))
                 {
                     return;
@@ -983,11 +973,11 @@ namespace ManicDiggerServer
         }
         void PlaceTree(int x, int y, int z)
         {
-            int TileIdLeaves = (int)TileTypeMinecraft.Leaves;
+            int TileIdLeaves = (int)TileTypeManicDigger.Leaves;
 
-            Place(x, y, z + 1, (int)TileTypeMinecraft.TreeTrunk);
-            Place(x, y, z + 2, (int)TileTypeMinecraft.TreeTrunk);
-            Place(x, y, z + 3, (int)TileTypeMinecraft.TreeTrunk);
+            Place(x, y, z + 1, (int)TileTypeManicDigger.TreeTrunk);
+            Place(x, y, z + 2, (int)TileTypeManicDigger.TreeTrunk);
+            Place(x, y, z + 3, (int)TileTypeManicDigger.TreeTrunk);
 
             Place(x + 1, y, z + 3, TileIdLeaves);
             Place(x - 1, y, z + 3, TileIdLeaves);
@@ -1025,13 +1015,13 @@ namespace ManicDiggerServer
                         // if 1% chance happens then 1 mushroom will grow up );
                         if (rnd.NextDouble() < 0.01)
                         {
-                            int tile = rnd.NextDouble() < 0.6 ? (int)TileTypeMinecraft.RedMushroom : (int)TileTypeMinecraft.BrownMushroom;
+                            int tile = rnd.NextDouble() < 0.6 ? (int)TileTypeManicDigger.RedMushroom : (int)TileTypeManicDigger.BrownMushroom;
                             SetBlockAndNotify(pos.x, pos.y, pos.z + 1, tile);
                         }
                     }
                     else
                     {
-                        SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Grass);
+                        SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Grass);
                     }
                 }
             }
@@ -1041,7 +1031,7 @@ namespace ManicDiggerServer
             if (IsShadow(pos.x, pos.y, pos.z) 
                 && !(reflectedSunnyLight(pos.x, pos.y, pos.z) && d_Data.IsTransparentForLight[d_Map.GetBlock(pos.x, pos.y, pos.z + 1)]))
             {
-                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Dirt);
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Dirt);
             }
         }
         private void MakeAppleTree(int cx, int cy, int cz)
@@ -1049,9 +1039,9 @@ namespace ManicDiggerServer
             int x = cx;
             int y = cy;
             int z = cz;
-            int TileIdLeaves = (int)TileTypeMinecraft.Leaves;
+            int TileIdLeaves = (int)TileTypeManicDigger.Leaves;
             int TileIdApples = (int)TileTypeManicDigger.Apples;
-            int TileIdTreeTrunk = (int)TileTypeMinecraft.TreeTrunk;
+            int TileIdTreeTrunk = (int)TileTypeManicDigger.TreeTrunk;
             int treeHeight = rnd.Next(4, 6);
             int xx = 0;
             int yy = 0;
@@ -1095,32 +1085,32 @@ namespace ManicDiggerServer
         private void BlockTickMushroom(Vector3i pos)
         {
             if (!MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z)) return;
-            if (rnd.NextDouble() < 0.2) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (rnd.NextDouble() < 0.2) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty); return; }
             if (!IsShadow(pos.x, pos.y, pos.z - 1))
             {
-                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty);
             }
             else
             {
-                if (d_Map.GetBlock(pos.x, pos.y, pos.z - 1) == (int)TileTypeMinecraft.Dirt) return;
-                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+                if (d_Map.GetBlock(pos.x, pos.y, pos.z - 1) == (int)TileTypeManicDigger.Dirt) return;
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty);
             }
         }
         // floowers will die when they have not light, dirt or grass , or 2% chance happens
         private void BlockTickFlower(Vector3i pos)
         {
             if (!MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z)) return;
-            if (rnd.NextDouble() < 0.02) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty); return; }
+            if (rnd.NextDouble() < 0.02) { SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty); return; }
             if (IsShadow(pos.x, pos.y, pos.z - 1))
             {
-                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty);
             }
             else
             {
                 int under = d_Map.GetBlock(pos.x, pos.y, pos.z - 1);
-                if ((under == (int)TileTypeMinecraft.Dirt
-                      || under == (int)TileTypeMinecraft.Grass)) return;
-                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeMinecraft.Empty);
+                if ((under == (int)TileTypeManicDigger.Dirt
+                      || under == (int)TileTypeManicDigger.Grass)) return;
+                SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Empty);
             }
         }
         private bool IsShadow(int x, int y, int z)
@@ -1643,6 +1633,7 @@ for (int i = 0; i < unknown.Count; i++)
             {
                 return;
             }
+            string coloredName = clients[clientid].ColoredPlayername(colorNormal);
             string name = clients[clientid].playername;
             clients.Remove(clientid);
             foreach (var kk in clients)
@@ -1651,7 +1642,7 @@ for (int i = 0; i < unknown.Count; i++)
             }
             if (name != "invalid")
             {
-                SendMessageToAll(string.Format("Player {0} disconnected.", name));
+                SendMessageToAll(string.Format("Player {0} disconnected.", coloredName));
                 ServerEventLog(string.Format("{0} disconnects.", name));
             }
         }
@@ -1710,12 +1701,14 @@ for (int i = 0; i < unknown.Count; i++)
                     }
 
                     bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
+                    bool verificationFailed = false;
 
                     if ((ComputeMd5(config.Key.Replace("-", "") + username) != packet.Identification.VerificationKey)
                         && (!isClientLocalhost))
                     {
                         //Account verification failed.
                         username = "~" + username;
+                        verificationFailed = true;
                     }
 
                     if (config.IsUserBanned(username))
@@ -1731,20 +1724,51 @@ for (int i = 0; i < unknown.Count; i++)
                     {
                         if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                         {
+                            // If duplicate is a registered user, kick duplicate. It is likely that the user lost connection before.
+                            if (!verificationFailed && !isClientLocalhost)
+                            {
+                                KillPlayer(k.Key);
+                                break;
+                            }
+
                             // Duplicates are handled as guests.
                             username = GenerateUsername(username);
                             if (!username.StartsWith("~")) { username = "~" + username; }
                             break;
                         }
                     }
-
-                    if (config.IsBuilder(username)) { clients[clientid].Rank = Rank.Builder; }
-                    if (config.IsAdmin(username)) { clients[clientid].Rank = Rank.Admin; }
-                    if (LocalConnectionsOnly) { clients[clientid].Rank = Rank.Admin; }
-                    
-                    clients[clientid].IsMod = config.IsMod(username);
-
                     clients[clientid].playername = username;
+
+                    // Assign group to new client
+                    //Check if client is in ServerClient.xml and assign corresponding group.
+                    bool exists = false;
+                    foreach (GameModeFortress.Client client in serverClient.Clients)
+                    {
+                        if (client.Name.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            foreach (GameModeFortress.Group clientGroup in serverClient.Groups)
+                            {
+                                if (clientGroup.Name.Equals(client.Group))
+                                {
+                                    exists = true;
+                                    clients[clientid].AssignGroup(clientGroup);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (!exists)
+                    {
+                        if (clients[clientid].playername.StartsWith("~"))
+                        {
+                            clients[clientid].AssignGroup(this.defaultGroupGuest);
+                        }
+                        else
+                        {
+                            clients[clientid].AssignGroup(this.defaultGroupRegistered);
+                        }
+                    }
                     break;
                 case ClientPacketId.RequestBlob:
 
@@ -1753,10 +1777,9 @@ for (int i = 0; i < unknown.Count; i++)
                     clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                     clients[clientid].PositionMul32GlZ = position.z;
 
-                    string username1 = clients[clientid].playername;
                     string ip = ((IPEndPoint)clients[clientid].socket.RemoteEndPoint).Address.ToString();
-                    SendMessageToAll(string.Format("Player {0} joins.", username1));
-                    ServerEventLog(string.Format("{0} {1} joins.", username1, ip));
+                    SendMessageToAll(string.Format("Player {0} joins.", clients[clientid].ColoredPlayername(colorNormal)));
+                    ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
                     SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                     SendBlobs(clientid);
 
@@ -1770,7 +1793,7 @@ for (int i = 0; i < unknown.Count; i++)
                             PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
                             {
                                 PlayerId = cc,
-                                PlayerName = username1,
+                                PlayerName = clients[clientid].playername,
                                 PositionAndOrientation = new PositionAndOrientation()
                                 {
                                     X = position.x,
@@ -1818,8 +1841,13 @@ for (int i = 0; i < unknown.Count; i++)
                     int x = packet.SetBlock.X;
                     int y = packet.SetBlock.Y;
                     int z = packet.SetBlock.Z;
-                    if ((!string.IsNullOrEmpty(config.BuildPassword))
-                        && !config.CanUserBuild(clients[clientid], x, y))
+                    if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
+                    {
+                        SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                        break;
+                    }
+                    if (!config.CanUserBuild(clients[clientid], x, y))
                     {
                         SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -1852,892 +1880,31 @@ for (int i = 0; i < unknown.Count; i++)
                     break;
                 case ClientPacketId.Message:
                     packet.Message.Message = packet.Message.Message.Trim();
-                    if (packet.Message.Message.StartsWith("/msg"))
+                    // server command
+                    if (packet.Message.Message.StartsWith("/"))
                     {
                         string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        bool messageSent = false;
-                        if (ss.Length >= 3)
-                        {
-                            foreach (var k in clients)
-                            {
-                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    string msg = string.Join(" ", ss, 2, ss.Length - 2);
-                                    SendMessage(k.Key, "msg " + c.playername + ": " + msg);
-                                    SendSound(k.Key, "message.wav");
-                                    // Private chat messages shouldn't be logged. Respect users' privacy!
-                                    //ChatLog(string.Format("msg {0} -> {1}: {2}", c.playername, k.Value.playername, msg));
-                                    messageSent = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!messageSent)
-                        {
-                            SendMessage(clientid, colorError + "Usage: /msg [username] [message]");
-                            break;
-                        }
-                        break;
+                        string command = ss[0].Replace("/","");
+                        string argument = packet.Message.Message.IndexOf(" ") < 0 ? "" : packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
+                        this.CommandInterpreter(clientid, command, argument);
                     }
-
-                    else if (packet.Message.Message.StartsWith("/addmod"))
-					{
-						if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
-						{
-							SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use mod.");
-							break;
-						}
-						string[] ss = packet.Message.Message.Split(new[] { ' ' });
-						if (ss.Length < 2)
-						{
-							SendMessage(clientid, colorError + "Usage: /addmod [username].");
-							break;
-						}
-						string argName = ss[1];
-						foreach (var k in clients)
-						{
-							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
-							{
-								if (!config.IsMod(argName)) {config.Mods.Add(argName);}
-								k.Value.IsMod = true;
-								SaveConfig();
-								SendMessageToAll(colorSuccess + k.Value.playername + " got mod permission.");
-                                ServerEventLog(string.Format("{0} gives {1} mod permission.", clients[clientid].playername, k.Value.playername));
-								break;
-							}
-						}
-						break;
-					}
-                    
-					else if (packet.Message.Message.StartsWith("/remmod"))
-					{
-						if (!clients[clientid].IsAdmin && !clients[clientid].IsMod )
-						{
-							SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use mod.");
-							break;
-						}
-						string[] ss = packet.Message.Message.Split(new[] { ' ' });
-						if (ss.Length < 2)
-						{
-							SendMessage(clientid, colorError + "Usage: /remmod [username].");
-							break;
-						}
-						string argName = ss[1];
-						foreach (var k in clients)
-						{
-							if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
-							{
-								config.RemoveMod(argName);
-								k.Value.IsMod = false;
-								SaveConfig();
-								SendMessageToAll(colorSuccess + k.Value.playername + " lost mod permission.");
-                                ServerEventLog(string.Format("{0} removes mod permission of {1}.", clients[clientid].playername, k.Value.playername));
-								break;
-							}
-						}
-						break;
-					}
-					
-					else if (packet.Message.Message.StartsWith("/op")
-                        || packet.Message.Message.StartsWith("/rank"))
-                    {
-                        if (clients[clientid].Rank != Rank.Admin)
-                        {
-                            SendMessage(clientid, colorError + "You are not logged in as an administrator and cannot use rank.");
-                            break;
-                        }
-                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        if (ss.Length < 2)
-                        {
-                            SendMessage(clientid, colorError + "Usage: /op [username] [guest/builder/admin].");
-                            break;
-                        }
-                        string argName = ss[1];
-                        foreach (var k in clients)
-                        {
-                            if (k.Value.playername.Equals(argName, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                string argRank = k.Value.Rank == Rank.Admin ? "admin" : "builder"; //don't remove admin with "/op user"
-                                if (ss.Length > 2) { argRank = ss[2]; }
-                                Rank r = Rank.Builder;
-                                if (argRank.Equals("guest", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Guest; }
-                                if (argRank.Equals("admin", StringComparison.InvariantCultureIgnoreCase)) { r = Rank.Admin; }
-
-
-                                k.Value.Rank = r;
-                                string name = k.Value.playername;
-                                if (r == Rank.Admin)
-                                {
-                                    if (!config.IsAdmin(name)) { config.Admins.Add(name); }
-                                    config.RemoveBuilder(name);
-                                    SendMessage(k.Key, "Type /help to see additional commands for administrators.");
-                                }
-                                else if (r == Rank.Builder)
-                                {
-                                    if (!config.IsBuilder(name)) { config.Builders.Add(name); }
-                                    config.RemoveAdmin(name);
-                                }
-                                else if (r == Rank.Guest)
-                                {
-                                    config.RemoveBuilder(name);
-                                    config.RemoveAdmin(name);
-                                }
-                                SaveConfig();
-
-                                SendMessageToAll(colorSuccess + "New rank for player "
-                                    + k.Value.playername + ": " + argRank + ".");
-                                ServerEventLog(string.Format("{0} sets rank of {1} to {2}.", clients[clientid].playername, k.Value.playername, r));
-                            }
-                        }
-                        break;
-                    }
-                    //for servers without global name verification
-                    else if (packet.Message.Message.StartsWith("/login"))
-                    {
-                        string password = packet.Message.Message.Replace("/login ", "");
-                        if (string.IsNullOrEmpty(config.BuildPassword))
-                        {
-                            break;
-                        }
-                        if (password.Equals(config.AdminPassword, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            clients[clientid].Rank = Rank.Admin;
-                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
-                            SendMessage(clientid, "Type /help to see additional commands for administrators.");
-                            ServerEventLog(string.Format("{0} logs in as Admin.", clients[clientid].playername));
-                        }
-                        else if (password.Equals(config.BuildPassword, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            clients[clientid].Rank = Rank.Builder;
-                            SendMessageToAll(colorSuccess + clients[clientid].playername + " can now build.");
-                            ServerEventLog(string.Format("{0} logs in as Builder.", clients[clientid].playername));
-                        }
-                        else
-                        {
-                            SendMessage(clientid, colorError + "Invalid password.");
-                            ServerEventLog(string.Format("{0} fails to log in (invalid password: {1}).", clients[clientid].playername, password));
-                        }
-                    }
-
-                    else if (packet.Message.Message.StartsWith("/welcome"))
-                    {
-                        if (!clients[clientid].IsAdmin)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot change the Welcome Message.");
-                        }
-                        else
-                        {
-                            //Monaiz
-                            string welcomeMessage = packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
-                            config.WelcomeMessage = welcomeMessage;
-                            SendMessageToAll("New Welcome Message Set: " + colorSuccess + config.WelcomeMessage);
-                            ServerEventLog(string.Format("{0} changes welcome message to {1}.", clients[clientid].playername, welcomeMessage));
-                            SaveConfig();
-                            break;
-                        }
-                    }
-
-                    else if (packet.Message.Message.StartsWith("/logging"))
-                    {
-                        if (!clients[clientid].IsAdmin)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot set logging.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            bool valid = false;
-
-                            if (ss.Length > 1)
-                            {
-                                switch (ss[1])
-                                {
-                                    // all logging state
-                                    case "-s":
-                                        if (ss.Length == 2)
-                                        {
-                                            valid = true;
-                                            SendMessage(clientid, "Build: " + config.BuildLogging);
-                                            SendMessage(clientid, "Server events: " + config.ServerEventLogging);
-                                            SendMessage(clientid, "Chat: " + config.ChatLogging);
-                                        }
-                                        break;
-                                    case "-b":
-                                        if (ss.Length == 2)
-                                        {
-                                            valid = true;
-                                            SendMessage(clientid, "Build logging: " + config.BuildLogging);
-                                        }
-                                        else if (ss.Length == 3)
-                                        {
-                                            if (ss[2].Equals("on"))
-                                            {
-                                                valid = true;
-                                                config.BuildLogging = true;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Enabled build logging.");
-                                                ServerEventLog(string.Format("{0} enables build logging.", clients[clientid].playername));
-                                            }
-                                            else if (ss[2].Equals("off"))
-                                            {
-                                                valid = true;
-                                                config.BuildLogging = false;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Disabled build logging.");
-                                                ServerEventLog(string.Format("{0} disables build logging.", clients[clientid].playername));
-                                            }
-                                        }
-                                        break;
-                                    case "-se":
-                                        if (ss.Length == 2)
-                                        {
-                                            valid = true;
-                                            SendMessage(clientid, "Server event logging: " + config.ServerEventLogging);
-                                        }
-                                        else if (ss.Length == 3)
-                                        {
-                                            if (ss[2].Equals("on"))
-                                            {
-                                                valid = true;
-                                                config.ServerEventLogging = true;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Enabled server event logging.");
-                                                ServerEventLog(string.Format("{0} enables server event logging.", clients[clientid].playername));
-                                            }
-                                            else if (ss[2].Equals("off"))
-                                            {
-                                                valid = true;
-                                                ServerEventLog(string.Format("{0} disables server event logging.", clients[clientid].playername));
-                                                config.ServerEventLogging = false;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Disabled server envent logging.");
-                                            }
-                                        }
-                                        break;
-                                    case "-c":
-                                        if (ss.Length == 2)
-                                        {
-                                            valid = true;
-                                            SendMessage(clientid, "Chat logging: " + config.ChatLogging);
-                                        }
-                                        else if (ss.Length == 3)
-                                        {
-                                            if (ss[2].Equals("on"))
-                                            {
-                                                valid = true;
-                                                config.ChatLogging = true;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Enabled server chat logging.");
-                                                ServerEventLog(string.Format("{0} enables chat logging.", clients[clientid].playername));
-                                            }
-                                            else if (ss[2].Equals("off"))
-                                            {
-                                                valid = true;
-                                                config.ChatLogging = false;
-                                                SaveConfig();
-                                                SendMessage(clientid, colorSuccess + "Disabled server chat logging.");
-                                                ServerEventLog(string.Format("{0} disables chat logging.", clients[clientid].playername));
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        SendMessage(clientid, colorError + "Invalid argument.");
-                                        break;
-                                }
-                            }
-                            if (!valid)
-                            {
-                                SendMessage(clientid, colorError + "Usage: /logging [-s | -b | -se | -c] {on | off}");
-                            }
-                            break;
-                        }
-                    }
-
-                    else if (packet.Message.Message.StartsWith("/kick"))
-                    {
-                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot kick other players.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            foreach (var k in clients)
-                            {
-                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    string targetName = k.Value.playername;
-                                    string sourceName = clients[clientid].playername;
-                                    SendDisconnectPlayer(k.Key, "You were kicked by an administrator.");
-
-                                    SendMessageToAll(colorError + targetName + " was kicked by " + sourceName);
-                                    ServerEventLog(string.Format("{0} kicks {1}.", sourceName, targetName));
-                                    KillPlayer(k.Key);
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/ban "))
-                    {
-                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            foreach (var k in clients)
-                            {
-                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    //TODO: Confirm player is not a guest account.
-                                    string targetName = k.Value.playername;
-                                    string sourceName = clients[clientid].playername;
-                                    config.BannedUsers.Add(k.Value.playername);
-                                    SaveConfig();
-                                    SendMessageToAll(colorError + targetName + " was banned by " + sourceName);
-
-                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
-                                    ServerEventLog(string.Format("{0} bans {1}.", sourceName, targetName));
-                                    KillPlayer(k.Key);
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/banip"))
-                    {
-                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot ban other players.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            foreach (var k in clients)
-                            {
-                                if (k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    string targetName = k.Value.playername;
-                                    string sourceName = clients[clientid].playername;
-                                    config.BannedIPs.Add(((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
-                                    SaveConfig();
-                                    SendMessageToAll(colorError + targetName + " was banned by " + sourceName);
-
-                                    SendDisconnectPlayer(k.Key, "You were banned by an administrator.");
-                                    ServerEventLog(string.Format("{0} IP bans {1}.", sourceName, targetName));
-                                    KillPlayer(k.Key);
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/unban"))
-                    {
-                        if (!clients[clientid].IsAdmin && !clients[clientid].IsMod)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            bool valid = false;
-
-                            if (ss.Length == 3)
-                            {
-                                // unban a playername
-                                if (ss[1].Equals("-p"))
-                                {
-                                    valid = true;
-                                    bool exists = false;
-                                    // case insensitive
-                                    exists = config.UnbanPlayer(ss[2]);
-                                    SaveConfig();
-                                    if (!exists)
-                                    {
-                                        SendMessage(clientid, colorError + "Player " + ss[2] + " not found.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorSuccess + "Player " + ss[2] + " unbanned.");
-                                        ServerEventLog(string.Format("{0} unbans player {1}.", clients[clientid].playername, ss[2]));
-                                    }
-                                }
-                                // unban an IP
-                                else if (ss[1].Equals("-ip"))
-                                {
-                                    valid = true;
-                                    bool exists = false;
-                                    exists = config.BannedIPs.Remove(ss[2]);
-                                    SaveConfig();
-                                    if (!exists)
-                                    {
-                                        SendMessage(clientid, colorError + "IP " + ss[2] + " not found.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorSuccess + "IP " + ss[2] + " unbanned.");
-                                        ServerEventLog(string.Format("{0} unbans IP {1}.", clients[clientid].playername, ss[2]));
-                                    }
-                                }
-                            }
-                            if (!valid)
-                            {
-                                SendMessage(clientid, colorError + "Usage: /unban [-p playername | -ip ipaddress]");
-                            }
-                            break;
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/list"))
-                    {
-                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        bool valid = false;
-
-                        if (ss.Length == 2)
-                        {
-                            switch (ss[1])
-                            {
-                                case "-users":
-                                case "-u":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Players:");
-                                        foreach (var k in clients)
-                                        {
-                                            SendMessage(clientid, k.Value.playername.ToString() + " " + ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString());
-                                        }
-                                    }
-                                    break;
-                                case "-areas":
-                                case "-a":
-                                    valid = true;
-                                    SendMessage(clientid, colorHelp + "List of Areas:");
-                                    foreach (AreaConfig area in config.Areas)
-                                    {
-                                        SendMessage(clientid, area.Coords + " " + area.PermittedUsers);
-                                    }
-                                    break;
-                                case "-bannedusers":
-                                case "-bu":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Banned Users:");
-                                        foreach (string currentUser in config.BannedUsers)
-                                        {
-                                            SendMessage(clientid, currentUser);
-                                        }
-                                    }
-                                    break;
-                                case "-bannedips":
-                                case "-bip":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Banned IPs:");
-                                        foreach (string currentIP in config.BannedIPs)
-                                        {
-                                            SendMessage(clientid, currentIP);
-                                        }
-                                    }
-                                    break;
-                                case "-builders":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Builders:");
-                                        foreach (string currentBuilder in config.Builders)
-                                        {
-                                            SendMessage(clientid, currentBuilder);
-                                        }
-                                    }
-                                    break;
-                                case "-admins":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Admins:");
-                                        foreach (string currentAdmin in config.Admins)
-                                        {
-                                            SendMessage(clientid, currentAdmin);
-                                        }
-                                    }
-                                    break;
-                                case "-mods":
-                                    valid = true;
-                                    if (!clients[clientid].IsAdmin)
-                                    {
-                                        SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-                                    }
-                                    else
-                                    {
-                                        SendMessage(clientid, colorHelp + "List of Mods:");
-                                        foreach (string currentMod in config.Mods)
-                                        {
-                                            SendMessage(clientid, currentMod);
-                                        }
-                                    }
-                                    break;
-                                default:
-                                    SendMessage(clientid, "Invalid parameter.");
-                                    break;
-                            }
-                        }
-                        if (!valid)
-                        {
-                            string options = "";
-                            if (clients[clientid].IsAdmin)
-                            {
-                                options = "[-users | -builders | -admins | -mods | -areas | -bannedusers | -bannedips]";
-                            }
-                            else
-                            {
-                                options = "[-areas]";
-                            }
-                            SendMessage(clientid, colorError + "Usage: /list " + options);
-                        }
-                        break;
-
-                    }
-                    else if (packet.Message.Message.StartsWith("/giveall"))
-                    {
-                        if (!clients[clientid].IsAdmin)
-                        {
-                            SendMessage(clientid, "You are not logged in as an administrator and cannot give all blocks.");
-                        }
-                        else
-                        {
-                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                            foreach (var k in clients)
-                            {
-                                if (ss.Length < 2 ||
-                                    k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    string targetName = k.Value.playername;
-                                    string sourcename = clients[clientid].playername;
-                                    for (int i = 0; i < d_Data.IsBuildable.Length; i++)
-                                    {
-                                        if (!d_Data.IsBuildable[i])
-                                        {
-                                            continue;
-                                        }
-                                        Inventory inventory = GetPlayerInventory(targetName).Inventory;
-                                        InventoryUtil util = GetInventoryUtil(inventory);
-
-                                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                                        {
-                                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                                            {
-                                                if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
-                                                {
-                                                    continue;
-                                                }
-                                                Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
-                                                if (currentItem != null
-                                                    && currentItem.ItemClass == ItemClass.Block
-                                                    && currentItem.BlockId == i)
-                                                {
-                                                    currentItem.BlockCount = 999;
-                                                    goto nextblock;
-                                                }
-                                            }
-                                        }
-                                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                                        {
-                                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                                            {
-                                                Item newItem = new Item();
-                                                newItem.ItemClass = ItemClass.Block;
-                                                newItem.BlockId = i;
-                                                newItem.BlockCount = 999;
-
-                                                if (util.ItemAtCell(new Point(xx, yy)) == null)
-                                                {
-                                                    inventory.Items[new ProtoPoint(xx, yy)] = newItem;
-                                                    goto nextblock;
-                                                }
-                                            }
-                                        }
-                                    nextblock:
-                                        k.Value.IsInventoryDirty = true;
-                                    }
-                                    ServerEventLog(string.Format("{0} gives all to {1}.", sourcename, targetName));
-                                    break;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    else if (packet.Message.Message.StartsWith("/give"))
-					{
-						if (!clients[clientid].IsAdmin)
-						{
-							SendMessage(clientid, "You are not logged in as an administrator and cannot access give command.");
-						}
-						else
-						{
-							string UsageMessage = "Usage: /give [username] blockname amount";
-							string[] ss = packet.Message.Message.Split(new[] { ' ' });
-							foreach (var k in clients)
-							{
-								if (ss.Length < 3 || ss.Length > 4)
-								{
-									SendMessage(clientid, UsageMessage);
-								}
-								else if (ss.Length < 4 ||
-								    k.Value.playername.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase))
-								{
-									string targetName = k.Value.playername;
-									string sourcename = clients[clientid].playername;
-									string blockname = (ss.Length < 4) ? ss[1] : ss[2];
-									int amount;
-									if (ss.Length < 4)
-									{
-										if (!Int32.TryParse(ss[2], out amount))
-									    {
-											SendMessage(clientid, UsageMessage);
-											break;
-										}
-									}
-									else
-									{
-										if (!Int32.TryParse(ss[3], out amount))
-									    {
-											SendMessage(clientid, UsageMessage);
-											break;
-										}
-									}
-									if (amount < 0)
-									{
-										break;
-									}
-									else if (amount > 9999)
-									{
-										amount = 9999;
-									}
-									for (int i = 0; i < d_Data.IsBuildable.Length; i++)
-									{
-										if (!d_Data.IsBuildable[i])
-										{
-											continue;
-										}
-										if (!d_Data.Name[i].Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
-										{
-											continue;
-										}
-										Inventory inventory = GetPlayerInventory(targetName).Inventory;
-										InventoryUtil util = GetInventoryUtil(inventory);
-
-										for (int xx = 0; xx < util.CellCount.X; xx++)
-										{
-											for (int yy = 0; yy < util.CellCount.Y; yy++)
-											{
-												if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
-												{
-													continue;
-												}
-												Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
-												if (currentItem != null
-												    && currentItem.ItemClass == ItemClass.Block
-												    && currentItem.BlockId == i)
-												{
-													if (amount == 0)
-													{
-														inventory.Items[new ProtoPoint(xx, yy)] = null;
-													}
-													else
-													{
-														currentItem.BlockCount = amount;
-													}
-													goto nextblock;
-												}
-											}
-										}
-										for (int xx = 0; xx < util.CellCount.X; xx++)
-										{
-											for (int yy = 0; yy < util.CellCount.Y; yy++)
-											{
-												Item newItem = new Item();
-												newItem.ItemClass = ItemClass.Block;
-												newItem.BlockId = i;
-												newItem.BlockCount = amount;
-
-												if (util.ItemAtCell(new Point(xx, yy)) == null)
-												{
-													inventory.Items[new ProtoPoint(xx, yy)] = newItem;
-													goto nextblock;
-												}
-											}
-										}
-									nextblock:
-										k.Value.IsInventoryDirty = true;
-									}
-                                    ServerEventLog(string.Format("{0} gives {1} {2} to {3}.", sourcename, amount, blockname, targetName));
-									break;
-								}
-							}
-							break;
-						}
-					}
-					else if (packet.Message.Message.StartsWith("/monsters"))
-					{
-						if (!clients[clientid].IsAdmin)
-						{
-							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-						}
-						else
-						{
-							string[] ss = packet.Message.Message.Split(new[] { ' ' });
-							if (ss.Length < 2 || (!ss[1].Equals("off") && !ss[1].Equals("on"))) {
-								SendMessage(clientid, "Usage: /monsters [on/off].");
-							}
-							else {
-								config.Monsters = ss[1].Equals("off") ? false : true;
-								SaveConfig();
-								if (!config.Monsters)
-								{
-									foreach (var k in clients) {
-										SendPacket(k.Key, Serialize(new PacketServer()
-			                               {
-			                               	PacketId = ServerPacketId.RemoveMonsters
-			                               }));
-									}
-								}
-								SendMessage(clientid, colorSuccess + "Monsters turned " + ss[1]);
-                                ServerEventLog(string.Format("{0} turns monsters {1}.", clients[clientid].playername, ss[1]));
-								break;
-							}
-						}
-					}
-					else if (packet.Message.Message.StartsWith("/areauser"))
-					{
-						if (!clients[clientid].IsAdmin)
-						{
-							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-						}
-						else
-						{
-							string[] ss = packet.Message.Message.Split(new[] { ' ' });
-							if (ss.Length < 3) {
-								SendMessage(clientid, "Usage: /areauser olduser newuser.");
-							}
-							else {
-								foreach (AreaConfig area in config.Areas)
-								{
-									if (area.PermittedUsers.Equals(ss[1], StringComparison.InvariantCultureIgnoreCase)) {
-									    	area.PermittedUsers = ss[2];
-									    	SaveConfig();
-									    	SendMessage(clientid, "Area changed.");
-                                            ServerEventLog(string.Format("{0} changes area from {1} to {2}.", clients[clientid].playername, ss[1], ss[2]));
-											break;
-									    }
-								}
-							}
-						}
-						break;
-					}
-					else if (packet.Message.Message.StartsWith("/addarea"))
-					{
-						if (!clients[clientid].IsAdmin)
-						{
-							SendMessage(clientid, "You are not logged in as an administrator and cannot access this command.");
-						}
-						else
-						{
-							string[] ss = packet.Message.Message.Split(new[] { ' ' });
-							if (ss.Length < 3) {
-								SendMessage(clientid, "Usage: /addarea username coords.");
-							}
-							else {
-								config.Areas.Add(new AreaConfig(){
-								                 	PermittedUsers = ss[1], Coords = ss[2]
-								                 });
-								SaveConfig();
-								SendMessage(clientid, "Area added.");
-                                ServerEventLog(string.Format("{0} adds area {2} {1}.", clients[clientid].playername, ss[1], ss[2]));
-								break;
-							}
-						}
-						break;
-					}
-					else if (packet.Message.Message.StartsWith("/help"))
-                    {
-                        SendMessage(clientid, colorHelp + "/login [buildpassword]");
-                        SendMessage(clientid, colorHelp + "/msg [username] text");
-                        if (clients[clientid].IsAdmin)
-                        {
-							SendMessage(clientid, colorHelp + "/addmod [username]");
-							SendMessage(clientid, colorHelp + "/remmod [username]");
-							SendMessage(clientid, colorHelp + "/kick [username]");
-							SendMessage(clientid, colorHelp + "/ban [username]");
-							SendMessage(clientid, colorHelp + "/banip [username]");
-                            SendMessage(clientid, colorHelp + "/unban [-p playername | -ip ipaddress]");
-							SendMessage(clientid, colorHelp + "/list [-users | -builders | -admins | -mods | -areas | -bannedusers | -bannedips]");
-							if (!clients[clientid].IsMod)
-							{
-								SendMessage(clientid, colorHelp + "/welcome [login motd message]");
-								SendMessage(clientid, colorHelp + "/giveall [username]");
-								SendMessage(clientid, colorHelp + "/give [username] blockname amount");
-								SendMessage(clientid, colorHelp + "/monsters [on/off]");
-								SendMessage(clientid, colorHelp + "/op [username] [guest/builder/admin]");
-								SendMessage(clientid, colorHelp + "/addarea username coords");
-								SendMessage(clientid, colorHelp + "/areauser olduser newuser");
-                                SendMessage(clientid, colorHelp + "/logging [-s | -b | -se | -c] {on | off}");
-							}
-						}
-                    }
-                    else if (packet.Message.Message.StartsWith("/run ") && packet.Message.Message.Length > 5)
-                    {
-                       var script = packet.Message.Message.Substring(5);
-                       RunInClientSandbox(script, clientid);
-                       break;
-                    }
+                    // client command
                     else if (packet.Message.Message.StartsWith("."))
                     {
                         break;
                     }
-                    else if (packet.Message.Message == "/crash")
-                    {
-                        KillPlayer(clientid);
-                        break;
-                    }
-                    else if (packet.Message.Message.StartsWith("/"))
-                    {
-                        //SendMessage(clientid, colorError + "Invalid command.");
-                        // assume script expression or command coming
-                        var script = packet.Message.Message.Substring(1);
-                        RunInClientSandbox(script, clientid);
-                        break;
-                    }
+                    // chat message
                     else
                     {
-                        SendMessageToAll(string.Format("{0}: {1}", PlayerNameColored(clientid), colorNormal + packet.Message.Message));
-                        ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                        if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
+                        {
+                            SendMessageToAll(string.Format("{0}: {1}", clients[clientid].ColoredPlayername(colorNormal), packet.Message.Message));
+                            ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                        }
+                        else
+                        {
+                            SendMessage(clientid, string.Format("{0}Insufficient privileges to chat.", colorError));
+                        }
                     }
                     break;
                 case ClientPacketId.Craft:
@@ -2771,11 +1938,17 @@ for (int i = 0; i < unknown.Count; i++)
        private void RunInClientSandbox(string script, int clientid)
        {
           var client = clients[clientid];
-          if (!client.IsAdmin)
+          if (!config.AllowScripting)
           {
-             SendMessage(clientid, "Server scripts can only be run by admin.", MessageType.Error);
+                SendMessage(clientid, "Server scripts disabled.", MessageType.Error);
+                return;
+          }
+          if (!client.privileges.Contains(ServerClientMisc.Privilege.run))
+          {
+             SendMessage(clientid, "Insufficient privileges to access this command.", MessageType.Error);
              return;
           }
+          ServerEventLog(string.Format("{0} runs script:\n{1}", clients[clientid].playername, script));
           if (client.Interpreter == null)
           {
              client.Interpreter = new JavaScriptInterpreter();
@@ -2802,17 +1975,12 @@ for (int i = 0; i < unknown.Count; i++)
           SendMessage(clientid, colorError + "Error.");
        }
 
-        string PlayerNameColored(int clientid)
-        {
-            return (clients[clientid].CanBuild ? colorOpUsername : "")
-                + (clients[clientid].IsAdmin ? colorAdmin : "")
-                + clients[clientid].playername;
-        }
         string colorNormal = "&f"; //white
         string colorHelp = "&4"; //red
         string colorOpUsername = "&2"; //green
         string colorSuccess = "&2"; //green
         string colorError = "&4"; //red
+        string colorImportant = "&4"; // red
         string colorAdmin = "&e"; //yellow
         public enum MessageType { Normal, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
         private string MessageTypeToString(MessageType type)
@@ -2889,7 +2057,7 @@ for (int i = 0; i < unknown.Count; i++)
                         for (int ii = 0; ii < ingredient.Amount; ii++)
                         {
                             //replace on table
-                            ReplaceOne(ontable, ingredient.Type, (int)TileTypeMinecraft.Empty);
+                            ReplaceOne(ontable, ingredient.Type, (int)TileTypeManicDigger.Empty);
                         }
                     }
                     //add output
@@ -2903,7 +2071,7 @@ for (int i = 0; i < unknown.Count; i++)
             }
             foreach (var v in outputtoadd)
             {
-                ReplaceOne(ontable, (int)TileTypeMinecraft.Empty, v);
+                ReplaceOne(ontable, (int)TileTypeManicDigger.Empty, v);
             }
             int zz = 0;
             if (execute)
@@ -3030,11 +2198,11 @@ for (int i = 0; i < unknown.Count; i++)
                 	GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
                 }
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
-                if (IsDoor(blockid) && IsDoor(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
+                if (GameDataManicDigger.IsDoorTile(blockid) && GameDataManicDigger.IsDoorTile(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
                 {
                     SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z + 1, SpecialBlockId.Empty);
                 }
-                if (IsDoor(blockid) && IsDoor(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z - 1)))
+                if (GameDataManicDigger.IsDoorTile(blockid) && GameDataManicDigger.IsDoorTile(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z - 1)))
                 {
                     SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z - 1, SpecialBlockId.Empty);
                 }
@@ -3044,37 +2212,35 @@ for (int i = 0; i < unknown.Count; i++)
             return true;
         }
 
-        private bool IsDoor(int blockid)
-        {
-            return blockid == 126 || blockid == 127 || blockid == 128 || blockid == 129;
-        }
-
         private void UseDoor(int x, int y, int z)
         {
-            for (int zz = -1; zz < 2; zz++)
+            if (GameDataManicDigger.IsDoorTile(d_Map.GetBlock(x, y, z)))
             {
-                if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomClosed)
+                for (int zz = -1; zz < 2; zz++)
                 {
-                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomOpen);
-                }
-                else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomOpen)
-                {
-                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomClosed);
-                }
-                if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopClosed)
-                {
-                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopOpen);
-                }
-                else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopOpen)
-                {
-                    SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopClosed);
+                    if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomClosed)
+                    {
+                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomOpen);
+                    }
+                    else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomOpen)
+                    {
+                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomClosed);
+                    }
+                    if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopClosed)
+                    {
+                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopOpen);
+                    }
+                    else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopOpen)
+                    {
+                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopClosed);
+                    }
                 }
             }
         }
 
         private void UseTnt(int x, int y, int z)
         {
-            if (d_Map.GetBlock(x, y, z) == (int)TileTypeMinecraft.TNT)
+            if (d_Map.GetBlock(x, y, z) == (int)TileTypeManicDigger.TNT)
             {
                 if (tntStack.Count < tntMax)
                 {
@@ -3527,12 +2693,6 @@ for (int i = 0; i < unknown.Count; i++)
         }
         public int SIMULATION_KEYFRAME_EVERY = 4;
         public float SIMULATION_STEP_LENGTH = 1f / 64f;
-        public enum Rank
-        {
-            Guest,
-            Builder,
-            Admin, //Does this user have the server password and can ban users?
-        }
         public struct BlobToSend
         {
             public string Name;
@@ -3563,14 +2723,29 @@ for (int i = 0; i < unknown.Count; i++)
             public bool IsInventoryDirty = true;
             public bool IsPlayerStatsDirty = true;
             //public List<byte[]> blobstosend = new List<byte[]>();
-            public Rank Rank = Rank.Guest;
-            public bool IsGuest { get { return playername.StartsWith("~"); } }
-            public bool IsAdmin { get { return Rank == Rank.Admin; } }
-            public bool CanBuild { get { return Rank == Rank.Admin || Rank == Rank.Builder; } }
-            public bool IsMod;
+            public GameModeFortress.Group clientGroup;
+            public void AssignGroup(GameModeFortress.Group newGroup)
+            {
+                this.clientGroup = newGroup;
+                this.privileges = newGroup.GroupPrivileges;
+                this.color = newGroup.GroupColorString();
+            }
+            public List<ServerClientMisc.Privilege> privileges = new List<ServerClientMisc.Privilege>();
+            public string color;
+            public string ColoredPlayername(string subsequentColor)
+            {
+                return this.color + this.playername + subsequentColor;
+            }
             public ManicDigger.Timer notifyMonstersTimer;
             public IScriptInterpreter Interpreter;
             public ScriptConsole Console;
+
+            public override string ToString()
+            {
+                // Format: Playername:Group:Privileges IP
+                return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
+                    ServerClientMisc.PrivilegesString(this.privileges), ((IPEndPoint)this.socket.RemoteEndPoint).Address.ToString());
+            }
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Client GetClient(int id)
@@ -3579,6 +2754,102 @@ for (int i = 0; i < unknown.Count; i++)
               return null;
            return clients[id];
         }
+
+        public ServerClient serverClient;
+        public GameModeFortress.Group defaultGroupGuest;
+        public GameModeFortress.Group defaultGroupRegistered;
+
+        public void LoadServerClient()
+        {
+            string filename = "ServerClient.xml";
+            if (!File.Exists(Path.Combine(gamepathconfig, filename)))
+            {
+                Console.WriteLine("Server client configuration file not found, creating new.");
+                SaveServerClient();
+            }
+            else
+            {
+                try
+                {
+                    using (TextReader textReader = new StreamReader(Path.Combine(gamepathconfig, filename)))
+                    {
+                        XmlSerializer deserializer = new XmlSerializer(typeof(ServerClient));
+                        serverClient = (ServerClient)deserializer.Deserialize(textReader);
+                        textReader.Close();
+                        serverClient.Groups.Sort();
+                        SaveServerClient();
+                    }
+                }
+                catch //This if for the original format
+                {
+                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
+                    {
+                        serverClient = new ServerClient();
+                        StreamReader sr = new StreamReader(s);
+                        XmlDocument d = new XmlDocument();
+                        d.Load(sr);
+                        serverClient.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerClient/Format"));
+                        serverClient.DefaultGroupGuests = XmlTool.XmlVal(d, "/ManicDiggerServerClient/DefaultGroupGuests");
+                        serverClient.DefaultGroupRegistered = XmlTool.XmlVal(d, "/ManicDiggerServerClient/DefaultGroupRegistered");
+                    }
+                    //Save with new version.
+                    SaveServerClient();
+                }
+            }
+            this.defaultGroupGuest = serverClient.Groups.Find(
+                delegate(GameModeFortress.Group grp)
+            {
+                return grp.Name.Equals(serverClient.DefaultGroupGuests);
+            }
+            );
+            if (this.defaultGroupGuest == null)
+            {
+                Console.WriteLine("Default guest group not found!");
+                throw new Exception();
+            }
+            this.defaultGroupRegistered = serverClient.Groups.Find(
+                delegate(GameModeFortress.Group grp)
+            {
+                return grp.Name.Equals(serverClient.DefaultGroupRegistered);
+            }
+            );
+            if (this.defaultGroupRegistered == null)
+            {
+                Console.WriteLine("Default registered group not found!");
+                throw new Exception();
+            }
+            Console.WriteLine("Server client configuration loaded.");
+        }
+
+        public void SaveServerClient()
+        {
+            //Verify that we have a directory to place the file into.
+            if (!Directory.Exists(gamepathconfig))
+            {
+                Directory.CreateDirectory(gamepathconfig);
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(ServerClient));
+            TextWriter textWriter = new StreamWriter(Path.Combine(gamepathconfig, "ServerClient.xml"));
+
+            //Check to see if config has been initialized
+            if (serverClient == null)
+            {
+                serverClient = new ServerClient();
+            }
+            if (serverClient.Groups.Count == 0)
+            {
+                serverClient.Groups = ServerClientMisc.getDefaultGroups();
+            }
+            if (serverClient.Clients.Count == 0)
+            {
+                serverClient.Clients = ServerClientMisc.getDefaultClients();
+            }
+            //Serialize the ServerConfig class to XML
+            serializer.Serialize(textWriter, serverClient);
+            textWriter.Close();
+        }
+
         public int dumpmax = 30;
         public void DropItem(ref Item item, Vector3i pos)
         {
@@ -3656,6 +2927,41 @@ for (int i = 0; i < unknown.Count; i++)
         int Length(Vector3i v)
         {
             return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+        }
+
+        private void ConsoleInterpreter()
+        {
+            // TODO: create fake client
+            string input = "";
+            while (true)
+            {
+                input = Console.ReadLine();
+                if (input == null)
+                {
+                    break;
+                }
+                input = input.Trim();
+                // server command
+                if (input.StartsWith("/"))
+                {
+                    string[] ss = input.Split(new[] { ' ' });
+                    string command = ss[0].Replace("/","");
+                    string argument = input.IndexOf(" ") < 0 ? "" : input.Substring(input.IndexOf(" ") + 1);
+                    //this.CommandInterpreter(clientid, command, argument);
+                    Console.WriteLine("Command: " + command + " Argument: " + argument);
+                }
+                // client command
+                else if (input.StartsWith("."))
+                {
+                    break;
+                }
+                // chat message
+                else
+                {
+                    SendMessageToAll(string.Format("{0}: {1}", colorAdmin + "Server", colorNormal + input));
+                    ChatLog(string.Format("{0}: {1}", "Server", input));
+                }
+            }
         }
     }
 }

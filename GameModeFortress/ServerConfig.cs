@@ -9,7 +9,6 @@ namespace GameModeFortress
     [XmlRoot(ElementName = "ManicDiggerServerConfig")]
     public class ServerConfig
     {
-
         public int Format { get; set; }             //XML Format Version Number
         public string Name { get; set; }
         public string Motd { get; set; }            //Message of the day
@@ -19,14 +18,11 @@ namespace GameModeFortress
         public bool BuildLogging { get; set; }
         public bool ServerEventLogging { get; set; }
         public bool ChatLogging { get; set; }
+        public bool AllowScripting { get; set; }
         public string Key { get; set; }             //GUID to uniquely identify the server
         [XmlElement(ElementName="Creative")]
         public bool IsCreative { get; set; }        //Is this a free build server?
         public bool Public { get; set; }            //Advertise this server?
-        [XmlElement(IsNullable = true)] //Forces element to appear -
-        public string BuildPassword { get; set; }   //Password for Anti-Vandal building
-        [XmlElement(IsNullable = true)] //Forces element to appear
-        public string AdminPassword { get; set; }   //Password for managing kicks and bans
         public bool AllowFreemove { get; set; }     //Allow character to fly?
         public bool Flooding { get; set; }          //Allow flooding water?
         public bool Monsters { get; set; }
@@ -37,97 +33,10 @@ namespace GameModeFortress
         public List<string> BannedUsers { get; set; }
         [XmlArrayItem(ElementName = "IP")]
         public List<string> BannedIPs { get; set; }
-        [XmlArrayItem(ElementName = "Admin")]
-        public List<string> Admins { get; set; }    // AutoAdmin
-        [XmlArrayItem(ElementName = "Builder")]
-        public List<string> Builders { get; set; }  // AutoBuilder
-        [XmlArrayItem(ElementName = "Mod")]
-        public List<string> Mods { get; set; }      // AutoMods
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
         [XmlElement(ElementName="MapGenerator")]
         public MapGeneratorConfig Generator { get; set; }
-
-        public bool IsAdmin(string username)
-        {
-            foreach (string admin in this.Admins)
-            {
-                if (admin.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        public bool RemoveAdmin(string username)
-        {
-            bool exists = false;
-            for (int i = this.Admins.Count - 1; i >= 0; i--)
-            {
-                string admin = this.Admins[i];
-                if (admin.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    exists = true;
-                    this.Admins.RemoveAt(i);
-                    break;
-                }
-            }
-            return exists;
-        }
-
-        public bool IsMod(string username)
-        {
-            foreach (string mod in this.Mods)
-            {
-                if (mod.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-        public bool RemoveMod(string username)
-        {
-            bool exists = false;
-            for (int i = this.Mods.Count - 1; i >= 0; i--)
-            {
-                string mod = this.Mods[i];
-                if (mod.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    exists = true;
-                    this.Mods.RemoveAt(i);
-                    break;
-                }
-            }
-            return exists;
-        }
-
-        public bool IsBuilder(string username)
-        {
-            foreach (string builder in this.Builders)
-            {
-                if (builder.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return true;
-                }
-             }
-             return false;
-        }
-        public bool RemoveBuilder(string username)
-        {
-            bool exists = false;
-            for (int i = this.Builders.Count - 1; i >= 0; i--)
-            {
-                string builder = this.Builders[i];
-                if (builder.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    exists = true;
-                    this.Builders.RemoveAt(i);
-                    break;
-                }
-            }
-            return exists;
-        }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -165,34 +74,6 @@ namespace GameModeFortress
             return exists;
         }
 
-        public bool IsAutoAdmin(string username)
-        {
-            foreach (string Adminuser in this.Admins)
-            {
-                if (username.Equals(Adminuser, StringComparison.InvariantCultureIgnoreCase))
-                    return true;
-            }
-            return false;
-       }
-
-        public bool IsAutoBuilder(string username)
-        {
-            foreach (string Builderuser in this.Builders)
-            {
-                if (username.Equals(Builderuser, StringComparison.InvariantCultureIgnoreCase))
-                    return true;
-            }
-            return false;
-        }
-
-		//Example name.
-		//Default serialized config becomes "<Admins><Admin>Player name?</Admin></Admins>"
-		//instead of "<Admins></Admins>".
-		//It makes editing xml in notepad easier.
-		//Contains "?" so nobody can use it.
-        [XmlIgnore]
-        public string DefaultPlayerName = "Player name?";
-
         public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
         {
             bool canBuild = false;
@@ -221,12 +102,11 @@ namespace GameModeFortress
             this.BuildLogging = false;
             this.ServerEventLogging = false;
             this.ChatLogging = false;
+            this.AllowScripting = false;
             this.Key = Guid.NewGuid().ToString();
             this.IsCreative = true;
             this.Public = true;
-            this.BuildPassword = "";
-            this.AdminPassword = "";
-            this.AllowFreemove = false;
+            this.AllowFreemove = true;
             this.Flooding = true;
             this.Monsters = true;
             this.MapSizeX = 10000;
@@ -234,14 +114,10 @@ namespace GameModeFortress
             this.MapSizeZ = 128;
             this.BannedIPs = new List<string>();
             this.BannedUsers = new List<string>();
-            this.Admins = new List<string>();
-            this.Builders = new List<string>();
-            this.Mods = new List<string>();
             this.Areas = new List<AreaConfig>();
             this.Generator = new MapGeneratorConfig();
         }
     }
-
 
     public class AreaConfig
     {
@@ -250,23 +126,19 @@ namespace GameModeFortress
         private int y1;
         private int y2;
         private string coords;
-        private bool isGuestAllowed;
-        private bool isUserAllowed;
-        private bool isBuilderAllowed;
-        private bool isAdminAllowed;
-        private string[] usersAllowed;
-        private string permittedUsers;
+        [XmlArrayItem(ElementName = "Group")]
+        public List<string> PermittedGroups { get; set; }
+        [XmlArrayItem(ElementName = "User")]
+        public List<string> PermittedUsers { get; set; }
+        [XmlElement(IsNullable = true)]
+        public int? Level { get; set; }
 
         public AreaConfig()
         {
-            this.isGuestAllowed = false;
-            this.isUserAllowed = false;
-            this.isBuilderAllowed = false;
-            this.isAdminAllowed = false;
             this.Coords = "0,0,0,0";
-            this.PermittedUsers = "";
+            this.PermittedGroups = new List<string>();
+            this.PermittedUsers = new List<string>();
         }
-
         public string Coords
         {
             get { return this.coords; }
@@ -280,25 +152,6 @@ namespace GameModeFortress
                 y2 = Convert.ToInt32(myCoords[3]);
             }
         }
-
-
-        public string PermittedUsers
-        {
-            get { return this.permittedUsers; }
-            set
-            {
-                this.permittedUsers = value;
-                this.isGuestAllowed = value.Contains("[Guest]");
-                this.isUserAllowed = value.Contains("[User]");
-                this.isBuilderAllowed = value.Contains("[Builder]");
-                this.isAdminAllowed = value.Contains("[Admin]");
-
-                string tmpUsers = value.Replace("[Guest]", "").Replace("[User]", "").Replace("[Builder]", "").Replace("[Admin]", "").Replace(",,", ",");
-
-                this.usersAllowed = tmpUsers.Split(new char[] { ',' });
-            }
-        }
-
         public bool IsInCoords(int x, int y)
         {
             if (x >= x1 && x <= x2 && y >= y1 && y <= y2)
@@ -310,29 +163,62 @@ namespace GameModeFortress
                 return false;
             }
         }
-
-        
-
         public bool CanUserBuild(ManicDiggerServer.Server.Client client)
         {
-            if (this.isGuestAllowed)
-                return true;
-            else if (this.isUserAllowed && !client.playername.StartsWith("~"))
-                return true;
-            else if (this.isBuilderAllowed && client.CanBuild)
-                return true;
-            else if (this.isAdminAllowed && client.IsAdmin)
-                return true;
-            else
+            if (this.Level != null)
             {
-                foreach (String user in this.usersAllowed)
+                if (client.clientGroup.Level >= this.Level)
                 {
-                    if (client.playername == user)
-                        return true;
+                    return true;
+                }
+            }
+            foreach (string allowedGroup in this.PermittedGroups)
+            {
+                if (allowedGroup.Equals(client.clientGroup.Name))
+                {
+                    return true;
+                }
+            }
+            foreach (string allowedUser in this.PermittedUsers)
+            {
+                if (allowedUser.Equals(client.playername, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public override string ToString()
+        {
+            string permittedGroupsString = "";
+
+            if (this.PermittedGroups.Count > 0)
+            {
+                permittedGroupsString = this.PermittedGroups[0].ToString();
+                for (int i = 1; i < this.PermittedGroups.Count; i++)
+                {
+                    permittedGroupsString += "," + this.PermittedGroups[i].ToString();
                 }
             }
 
-            return false;
+            string permittedUsersString = "";
+            if (this.PermittedUsers.Count > 0)
+            {
+                permittedUsersString = this.PermittedUsers[0].ToString();
+                for (int i = 1; i < this.PermittedUsers.Count; i++)
+                {
+                    permittedUsersString += "," + this.PermittedUsers[i].ToString();
+                }
+            }
+
+            string levelString = "";
+            if (Level != null)
+            {
+                levelString = this.Level.ToString();
+            }
+
+            return Coords + ":" + permittedGroupsString + ":" + permittedUsersString + ":" + levelString;
         }
     }
     
@@ -382,6 +268,30 @@ namespace GameModeFortress
                 default :
                     return new ManicDigger.MapTools.Generators.NewWorldGenerator();
             }
+        }
+    }
+
+    public static class ServerConfigMisc
+    {
+        public static List<AreaConfig> getDefaultAreas()
+        {
+            List<AreaConfig> defaultAreas = new List<AreaConfig>();
+
+            AreaConfig publicArea = new AreaConfig();
+            publicArea.Coords = "0,0,10000,5000";
+            publicArea.PermittedGroups.Add("Guest");
+            publicArea.PermittedGroups.Add("Registered");
+            defaultAreas.Add(publicArea);
+            AreaConfig builderArea = new AreaConfig();
+            builderArea.Coords = "0,5001,10000,10000";
+            builderArea.PermittedGroups.Add("Builder");
+            defaultAreas.Add(builderArea);
+            AreaConfig adminArea = new AreaConfig();
+            adminArea.Coords = "0,0,10000,10000";
+            adminArea.PermittedGroups.Add("Admin");
+            defaultAreas.Add(adminArea);
+
+            return defaultAreas;
         }
     }
 }

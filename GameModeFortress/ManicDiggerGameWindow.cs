@@ -481,8 +481,9 @@ namespace ManicDigger
             }
             else
             {
-                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
+                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 4096));
                 SendChat(chatline);
+
             }
         }
         private static bool BoolCommandArgument(string arguments)
@@ -1367,7 +1368,7 @@ namespace ManicDigger
             return new Vector3i((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y));
         }
 
-        //Todo server side
+        //TODO server side, damage parameter in Blocks.csv
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
@@ -1383,12 +1384,12 @@ namespace ManicDigger
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
             
-            //Todo d_Data.DamageToPlayer.
-            //Todo swimming in water too long.
-            if (block1 == (int)TileTypeMinecraft.Lava
-                || block1 == (int)TileTypeMinecraft.StationaryLava
-                || block2 == (int)TileTypeMinecraft.Lava
-                || block2 == (int)TileTypeMinecraft.StationaryLava)
+            //TODO d_Data.DamageToPlayer.
+            //TODO swimming in water too long.
+            if (block1 == (int)TileTypeManicDigger.Lava
+                || block1 == (int)TileTypeManicDigger.StationaryLava
+                || block2 == (int)TileTypeManicDigger.Lava
+                || block2 == (int)TileTypeManicDigger.StationaryLava)
             {
                 BlockDamageToPlayerTimer.Update(ApplyBlockDamageToPlayer);
             }
@@ -1520,7 +1521,7 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeManicDigger.DoorTopClosed
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
                 || blocktype == (int)TileTypeManicDigger.DoorTopOpen
-                || blocktype == (int)TileTypeMinecraft.TNT
+                || blocktype == (int)TileTypeManicDigger.TNT
             	|| GameDataManicDigger.IsRailTile(blocktype);
         }
         bool IsWearingWeapon()
@@ -2559,11 +2560,17 @@ namespace ManicDigger
         }
         private void DrawConnectedPlayersList()
         {
+            for (int i = 0; i < connectedplayers.Count; i++)
+            {
+                d_The3d.Draw2dText(connectedplayers[i].name + " " + connectedplayers[i].id, 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
+            }
+            /*
             List<string> l = new List<string>(ConnectedPlayers());
             for (int i = 0; i < l.Count; i++)
             {
                 d_The3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
             }
+            */
         }
         private void DrawAim()
         {
@@ -2957,9 +2964,9 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == BlockSetMode.Create)
                 {
-                	if (activematerial == (int)TileTypeMinecraft.TNT)
+                	if (GameDataManicDigger.IsDoorTile(activematerial))
                 	{
-                		if (z+1 == d_Map.MapSizeZ) return;
+                		if (z+1 == d_Map.MapSizeZ || z == 0) return;
                 	}
                     if (activematerial == (int)TileTypeManicDigger.Cuboid)
                     {
