@@ -3008,20 +3008,7 @@ namespace ManicDigger
                     }
                     if (fillarea.ContainsKey(v))// && fillarea[v])
                     {
-                        foreach (var p in fillarea)
-                        {
-                            //if (p.Value)
-                            {
-                                if (activematerial == (int)TileTypeManicDigger.FillArea)
-                                {
-                                    SendSetBlock(new Vector3(p.Key.x, p.Key.y, p.Key.z), BlockSetMode.Destroy, activematerial);
-                                }
-                                else
-                                {
-                                    SendSetBlock(new Vector3(p.Key.x, p.Key.y, p.Key.z), BlockSetMode.Create, activematerial);
-                                }
-                            }
-                        }
+                        SendFillArea(fillstart.Value, fillend.Value, ActiveMaterial);
                         ClearFillArea();
                         fillstart = null;
                         fillend = null;
@@ -3081,7 +3068,7 @@ namespace ManicDigger
             }
             else
             {
-                //todo
+                //TODO
             }
         }
         private void ClearFillArea()
@@ -3098,7 +3085,8 @@ namespace ManicDigger
         Dictionary<Vector3i, int> fillarea = new Dictionary<Vector3i, int>();
         Vector3i? fillstart;
         Vector3i? fillend;
-        int MAXFILL = 200;
+        private int fillAreaLimit = 200;
+
         private void FillFill(Vector3i a, Vector3i b)
         {
             int startx = Math.Min(a.x, b.x);
@@ -3113,7 +3101,7 @@ namespace ManicDigger
                 {
                     for (int z = startz; z <= endz; z++)
                     {
-                        if (fillarea.Count > MAXFILL)
+                        if (fillarea.Count > fillAreaLimit)
                         {
                             ClearFillArea();
                             return;
@@ -3703,6 +3691,20 @@ namespace ManicDigger
             };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
         }
+        public void SendFillArea(Vector3i start, Vector3i end, int materialslot)
+        {
+            PacketClientFillArea p = new PacketClientFillArea()
+            {
+                X1 = start.x,
+                Y1 = start.y,
+                Z1 = start.z,
+                X2 = end.x,
+                Y2 = end.y,
+                Z2 = end.z,
+                MaterialSlot = materialslot
+            };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.FillArea, FillArea = p }));
+        }
         public void SendPacketClient(PacketClient packet)
         {
             SendPacket(Serialize(packet));
@@ -3945,6 +3947,54 @@ namespace ManicDigger
                         int type = packet.SetBlock.BlockType;
                         try { SetTileAndUpdate(new Vector3(x, y, z), type); }
                         catch { Console.WriteLine("Cannot update tile!"); }
+                    }
+                    break;
+                case ServerPacketId.FillArea:
+                    {
+                        Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
+                        Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
+
+                        int startx = Math.Min(a.x, b.x);
+                        int endx = Math.Max(a.x, b.x);
+                        int starty = Math.Min(a.y, b.y);
+                        int endy = Math.Max(a.y, b.y);
+                        int startz = Math.Min(a.z, b.z);
+                        int endz = Math.Max(a.z, b.z);
+
+                        int blockCount = packet.FillArea.BlockCount;
+
+                        Action fillArea = delegate
+                        {
+                            for (int x = startx; x <= endx; ++x)
+                            {
+                                for (int y = starty; y <= endy; ++y)
+                                {
+                                    for (int z = startz; z <= endz; ++z)
+                                    {
+                                        // if creative mode is off and player run out of blocks
+                                        if (blockCount == 0)
+                                        {
+                                            return;
+                                        }
+                                        try
+                                        {
+                                            SetTileAndUpdate(new Vector3(x, y, z), packet.FillArea.BlockType);
+                                        }
+                                        catch
+                                        {
+                                            Console.WriteLine("Cannot update tile!");
+                                        }
+                                        blockCount--;
+                                    }
+                                }
+                            }
+                        };
+                        fillArea();
+                    }
+                    break;
+                case ServerPacketId.FillAreaLimit:
+                    {
+                        this.fillAreaLimit = packet.FillAreaLimit.Limit;
                     }
                     break;
                 case ServerPacketId.SpawnPlayer:

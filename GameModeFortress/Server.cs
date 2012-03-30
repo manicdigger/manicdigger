@@ -1773,6 +1773,7 @@ for (int i = 0; i < unknown.Count; i++)
                     {
                         clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
                     }
+                    this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
                     break;
                 case ClientPacketId.RequestBlob:
 
@@ -1864,6 +1865,33 @@ for (int i = 0; i < unknown.Count; i++)
                     BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                     d_Water.BlockChange(d_Map, x, y, z);
                     d_GroundPhysics.BlockChange(d_Map, x, y, z);
+                    break;
+                case ClientPacketId.FillArea:
+                    if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
+                    {
+                        SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                        break;
+                    }
+                    Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
+                    Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
+
+                    int blockCount = (Math.Abs(a.x - b.x) + 1) * (Math.Abs(a.y - b.y) + 1)* (Math.Abs(a.z - b.z) + 1);
+
+                    if (blockCount > clients[clientid].FillLimit)
+                    {
+                        SendMessage(clientid, colorError + "Fill area is too large.");
+                        break;
+                    }
+                    if (!this.IsFillAreaValid(clients[clientid], a, b))
+                    {
+                        SendMessage(clientid, colorError + "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
+                        break;
+                    }
+                    this.DoFillArea(clientid, packet.FillArea, blockCount);
+
+                    BuildLog(string.Format("{0} {1} {2} - {3} {4} {5} {6} {7} {8}", a.x, a.y, a.z, b.x, b.y, b.z,
+                        c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(),
+                        d_Map.GetBlock(a.x, a.y, a.z)));
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
@@ -2133,6 +2161,174 @@ for (int i = 0; i < unknown.Count; i++)
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
         }
+
+        private bool IsFillAreaValid(Client client, Vector3i a, Vector3i b)
+        {
+            if (!MapUtil.IsValidPos(this.d_Map, a.x, a.y, a.z) || !MapUtil.IsValidPos(this.d_Map, b.x, b.y, b.z))
+            {
+                return false;
+            }
+
+            // TODO: Is there a more efficient way?
+            int startx = Math.Min(a.x, b.x);
+            int endx = Math.Max(a.x, b.x);
+            int starty = Math.Min(a.y, b.y);
+            int endy = Math.Max(a.y, b.y);
+            //int startz = Math.Min(a.z, b.z);
+            //int endz = Math.Max(a.z, b.z);
+            for (int x = startx; x <= endx; x++)
+            {
+                for (int y = starty; y <= endy; y++)
+                {
+                    if(!config.CanUserBuild(client, x, y))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        private bool DoFillArea(int player_id, PacketClientFillArea fill, int blockCount)
+        {
+            Vector3i a = new Vector3i(fill.X1, fill.Y1, fill.Z1);
+            Vector3i b = new Vector3i(fill.X2, fill.Y2, fill.Z2);
+
+            int startx = Math.Min(a.x, b.x);
+            int endx = Math.Max(a.x, b.x);
+            int starty = Math.Min(a.y, b.y);
+            int endy = Math.Max(a.y, b.y);
+            int startz = Math.Min(a.z, b.z);
+            int endz = Math.Max(a.z, b.z);
+
+            // determine block type
+            int blockType;
+            Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
+            var item = inventory.RightHand[fill.MaterialSlot];
+            if (item == null)
+            {
+                return false;
+            }
+            blockType = d_Data.WhenPlayerPlacesGetsConvertedTo[item.BlockId];
+            if (blockType == (int)TileTypeManicDigger.FillArea)
+            {
+                blockType = SpecialBlockId.Empty;
+            }
+
+            // crafting mode
+            if (!config.IsCreative)
+            {
+                // grab items
+                if (blockType == SpecialBlockId.Empty)
+                {
+                    var newItem = new Item();
+                    newItem.ItemClass = ItemClass.Block;
+                    for (int x = startx; x <= endx; x++)
+                    {
+                        for (int y = starty; y <= endy; y++)
+                        {
+                            for (int z = startz; z <= endz; z++)
+                            {
+                                newItem.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[d_Map.GetBlock(x, y, z)];
+                                GetInventoryUtil(inventory).GrabItem(newItem, fill.MaterialSlot);
+                                d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
+                            }
+                        }
+                    }
+                }
+                // place and loose items
+                else
+                {
+                    int newBlockCount = 0;
+                    var newItem = new Item();
+                    newItem.ItemClass = ItemClass.Block;
+                    // Anon-method here to break out of the nested loop instead of using goto.
+                    Action fillArea = delegate
+                    {
+                        for (int x = startx; x <= endx; ++x)
+                        {
+                            for (int y = starty; y <= endy; ++y)
+                            {
+                                for (int z = startz; z <= endz; ++z)
+                                {
+                                    // Player got out of blocks. Stop fill here.
+                                    if (item.BlockCount == 0)
+                                    {
+                                        inventory.RightHand[fill.MaterialSlot] = null;
+                                        return;
+                                    }
+                                    // Grab item before replacing it with new block.
+                                    newItem.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[d_Map.GetBlock(x, y, z)];
+                                    GetInventoryUtil(inventory).GrabItem(newItem, fill.MaterialSlot);
+                                    item.BlockCount--;
+                                    newBlockCount++;
+                                    d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
+                                }
+                            }
+                        }
+                    };
+                    fillArea();
+                    blockCount = newBlockCount;
+                }
+                clients[player_id].IsInventoryDirty = true;
+                NotifyInventory(player_id);
+            }
+            // creative mode
+            else
+            {
+                for (int x = startx; x <= endx; x++)
+                {
+                    for (int y = starty; y <= endy; y++)
+                    {
+                        for (int z = startz; z <= endz; z++)
+                        {
+                            d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
+                        }
+                    }
+                }
+            }
+
+            // notify clients
+            foreach (var k in clients)
+            {
+                SendFillArea(k.Key, a, b, blockType, blockCount);
+            }
+            return true;
+        }
+        private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
+        {
+            Vector3i v = new Vector3i((a.x / chunksize) * chunksize,
+                (a.y / chunksize) * chunksize, (a.z / chunksize) * chunksize);
+            Vector3i w = new Vector3i((b.x / chunksize) * chunksize,
+                (b.y / chunksize) * chunksize, (b.z / chunksize) * chunksize);
+
+            // TODO: Is it sufficient to regard only start- and endpoint?
+            if (!clients[clientid].chunksseen.ContainsKey(v) && !clients[clientid].chunksseen.ContainsKey(w))
+            {
+                return;
+            }
+
+            PacketServerFillArea p = new PacketServerFillArea()
+            {
+                X1 = a.x,
+                Y1 = a.y,
+                Z1 = a.z,
+                X2 = b.x,
+                Y2 = b.y,
+                Z2 = b.z,
+                BlockType = blockType,
+                BlockCount = blockCount
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillArea, FillArea = p }));
+        }
+        private void SendFillAreaLimit(int clientid, int limit)
+        {
+            PacketServerFillAreaLimit p = new PacketServerFillAreaLimit()
+            {
+                Limit = limit
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
+        }
+
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
@@ -2187,7 +2383,7 @@ for (int i = 0; i < unknown.Count; i++)
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
                         break;
                     default:
-                        //todo
+                        //TODO
                         return false;
                 }
             }
@@ -2726,6 +2922,7 @@ for (int i = 0; i < unknown.Count; i++)
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public bool IsPlayerStatsDirty = true;
+            public int FillLimit = 500;
             //public List<byte[]> blobstosend = new List<byte[]>();
             public GameModeFortress.Group clientGroup;
             public void AssignGroup(GameModeFortress.Group newGroup)
@@ -2808,8 +3005,7 @@ for (int i = 0; i < unknown.Count; i++)
             );
             if (this.defaultGroupGuest == null)
             {
-                Console.WriteLine("Default guest group not found!");
-                throw new Exception();
+                throw new Exception("Default guest group not found!");
             }
             this.defaultGroupRegistered = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
@@ -2819,8 +3015,7 @@ for (int i = 0; i < unknown.Count; i++)
             );
             if (this.defaultGroupRegistered == null)
             {
-                Console.WriteLine("Default registered group not found!");
-                throw new Exception();
+                throw new Exception("Default registered group not found!");
             }
             Console.WriteLine("Server client configuration loaded.");
         }

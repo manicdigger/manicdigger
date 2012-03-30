@@ -227,6 +227,10 @@ namespace ManicDigger
             switch (item.ItemClass)
             {
                 case ItemClass.Block:
+                    if (item.BlockId == SpecialBlockId.Empty)
+                    {
+                        return true;
+                    }
                     //stacking
                     for (int i = 0; i < 10; i++)
                     {

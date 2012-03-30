@@ -40,6 +40,24 @@ namespace GameModeFortress
         public int MaterialSlot;
     }
     [ProtoContract]
+    public class PacketClientFillArea
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X1;
+        [ProtoMember(2, IsRequired = false)]
+        public int X2;
+        [ProtoMember(3, IsRequired = false)]
+        public int Y1;
+        [ProtoMember(4, IsRequired = false)]
+        public int Y2;
+        [ProtoMember(5, IsRequired = false)]
+        public int Z1;
+        [ProtoMember(6, IsRequired = false)]
+        public int Z2;
+        [ProtoMember(7, IsRequired = false)]
+        public int MaterialSlot;
+    }
+    [ProtoContract]
     public class PacketClientPositionAndOrientation
     {
         [ProtoMember(1, IsRequired = false)]
@@ -153,6 +171,32 @@ namespace GameModeFortress
         public int BlockType;
     }
     [ProtoContract]
+    public class PacketServerFillArea
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X1;
+        [ProtoMember(2, IsRequired = false)]
+        public int X2;
+        [ProtoMember(3, IsRequired = false)]
+        public int Y1;
+        [ProtoMember(4, IsRequired = false)]
+        public int Y2;
+        [ProtoMember(5, IsRequired = false)]
+        public int Z1;
+        [ProtoMember(6, IsRequired = false)]
+        public int Z2;
+        [ProtoMember(7, IsRequired = false)]
+        public int BlockType;
+        [ProtoMember(8, IsRequired = false)]
+        public int BlockCount;
+    }
+    [ProtoContract]
+    public class PacketServerFillAreaLimit
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int Limit;
+    }
+    [ProtoContract]
     public class PacketServerSpawnPlayer
     {
         [ProtoMember(1, IsRequired = false)]
@@ -226,6 +270,10 @@ namespace GameModeFortress
         public PacketServerLevelFinalize LevelFinalize;
         [ProtoMember(5, IsRequired = false)]
         public PacketServerSetBlock SetBlock;
+        [ProtoMember(51, IsRequired = false)]
+        public PacketServerFillArea FillArea;
+        [ProtoMember(52, IsRequired = false)]
+        public PacketServerFillAreaLimit FillAreaLimit;
         [ProtoMember(6, IsRequired = false)]
         public PacketServerSpawnPlayer SpawnPlayer;
         [ProtoMember(7, IsRequired = false)]
@@ -268,6 +316,8 @@ namespace GameModeFortress
         public PacketClientIdentification Identification;
         [ProtoMember(3, IsRequired = false)]
         public PacketClientSetBlock SetBlock;
+        [ProtoMember(31, IsRequired = false)]
+        public PacketClientFillArea FillArea;
         [ProtoMember(4, IsRequired = false)]
         public PacketClientPositionAndOrientation PositionAndOrientation;
         [ProtoMember(5, IsRequired = false)]
@@ -398,6 +448,7 @@ namespace GameModeFortress
     {
         PlayerIdentification = 0,
         SetBlock = 5,
+        FillArea = 510,
         PositionandOrientation = 8,
         Craft = 9,
         Message = 0x0d,
@@ -418,6 +469,8 @@ namespace GameModeFortress
         LevelDataChunk = 3,
         LevelFinalize = 4,
         SetBlock = 6,
+        FillArea = 61,
+        FillAreaLimit = 62,
         SpawnPlayer = 7,
         PlayerPositionAndOrientation = 8,
         PositionUpdate = 10,
