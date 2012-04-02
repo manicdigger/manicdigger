@@ -68,7 +68,6 @@
     <Compile Include="ChunkDb.cs" />
     <Compile Include="CraftingRecipes.cs" />
     <Compile Include="GameDataManicDigger.cs" />
-    <Compile Include="GameDataMinecraft.cs" />
     <Compile Include="ManicDiggerGameWindow.cs" />
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
@@ -80,7 +79,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScriptConsole.cs" />
     <Compile Include="ScriptInterpreter.cs" />
+    <Compile Include="ServeCommand.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="ServerClient.cs" />
     <Compile Include="ServerConfig.cs" />
     <Compile Include="ServerHeartbeat.cs" />
     <Compile Include="ServerMap.cs" />

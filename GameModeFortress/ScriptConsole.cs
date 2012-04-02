@@ -16,19 +16,21 @@ namespace GameModeFortress
             m_client = client_id;
         }
 
+        public delegate void Action<T1, T2, T3, T4>(T1 t1, T2 t2, T3 t3, T4 t4);
+
         public void InjectConsoleCommands (IScriptInterpreter interpreter)
         {
             interpreter.SetFunction("out", new System.Action<object>(Print));
-            interpreter.SetFunction("materials", new System.Action(PrintMaterials));
-            interpreter.SetFunction("materials_between", new System.Action<double, double>(PrintMaterials));
+            interpreter.SetFunction("materials", new Jint.Delegates.Action(PrintMaterials));
+            interpreter.SetFunction("materials_between", new Jint.Delegates.Action<double, double>(PrintMaterials));
             interpreter.SetFunction("find_material", new System.Action<string>(FindMaterial));
-            interpreter.SetFunction("position", new System.Action(PrintPosition));
-            interpreter.SetFunction("get_position", new System.Func<Vector3i>(GetPosition));
+            interpreter.SetFunction("position", new Jint.Delegates.Action(PrintPosition));
+            interpreter.SetFunction("get_position", new Jint.Delegates.Func<Vector3i>(GetPosition));
             interpreter.SetVariable("turtle", Turtle);
-            interpreter.SetFunction("set_block", new System.Action<double, double, double, double>(SetBlock));
-            interpreter.SetFunction("get_block", new System.Func<double, double, double, int>(GetBlock));
-            interpreter.SetFunction("get_height", new System.Func<double, double, double>(GetHeight));
-            interpreter.SetFunction("clear",new System.Action(Clear));
+            interpreter.SetFunction("set_block", new Action<double, double, double, double>(SetBlock));
+            interpreter.SetFunction("get_block", new Jint.Delegates.Func<double, double, double, int>(GetBlock));
+            interpreter.SetFunction("get_height", new Jint.Delegates.Func<double, double, double>(GetHeight));
+            interpreter.SetFunction("clear", new Jint.Delegates.Action(Clear));
         }
 
         private Server m_server;
