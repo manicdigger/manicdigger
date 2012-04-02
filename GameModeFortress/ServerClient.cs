@@ -18,6 +18,11 @@ namespace GameModeFortress
         [XmlArrayItem(ElementName = "Client")]
         public List<Client> Clients { get; set; }
 
+        [XmlElement(IsNullable = true)]
+        public Spawn DefaultSpawn { get; set; }
+
+        public List<Spawn> Spawns { get; set; }
+
         public ServerClient()
         {
             //Set Defaults
@@ -26,6 +31,7 @@ namespace GameModeFortress
             this.DefaultGroupRegistered = "Registered";
             this.Groups = new List<Group>();
             this.Clients = new List<Client>();
+            this.Spawns = new List<Spawn>();
         }
     }
 
@@ -41,6 +47,14 @@ namespace GameModeFortress
         public List<ServerClientMisc.Privilege> GroupPrivileges { get; set; }
 
         public ServerClientMisc.ClientColor GroupColor { get; set; }
+
+        public Group()
+        {
+            this.Name = "";
+            this.Level = 0;
+            this.GroupPrivileges = new List<ServerClientMisc.Privilege>();
+            this.GroupColor = ServerClientMisc.ClientColor.White;
+        }
 
         public string GroupColorString()
         {
@@ -79,9 +93,115 @@ namespace GameModeFortress
         public string Name { get; set; }
         public string Group { get; set; }
 
+        public Client()
+        {
+            this.Name = "";
+            this.Group = "";
+        }
+
         public override string ToString()
         {
             return string.Format("{0}:{1}", this.Name, this.Group);
+        }
+    }
+
+    [XmlInclude(typeof(GroupSpawn))]
+    [XmlInclude(typeof(ClientSpawn))]
+    public class Spawn
+    {
+        [XmlIgnoreAttribute]
+        public int x;
+        [XmlIgnoreAttribute]
+        public int y;
+        // z is optional
+        [XmlIgnoreAttribute]
+        public int? z;
+
+        public string Coords
+        {
+            get
+            {
+                string zString = "";
+                if (this.z != null)
+                {
+                    zString = "," + this.z.ToString();
+                }
+                return this.x.ToString() + "," + this.y.ToString() + zString;
+            }
+            set
+            {
+                string coords = value;
+                string[] ss = coords.Split(new char[] { ',' });
+
+                try
+                {
+                    this.x = Convert.ToInt32(ss[0]);
+                    this.y = Convert.ToInt32(ss[1]);
+                }
+                catch (FormatException e)
+                {
+                    throw new FormatException("Invalid spawn position.", e);
+                }
+                catch (OverflowException e)
+                {
+                    throw new FormatException("Invalid spawn position.", e);
+                }
+                catch(IndexOutOfRangeException ex)
+                {
+                    throw new IndexOutOfRangeException("Invalid spawn position.", ex);
+                }
+
+                try
+                {
+                    this.z = Convert.ToInt32(ss[2]);
+                }
+                catch(IndexOutOfRangeException)
+                {
+                    this.z = null;
+                }
+                catch (FormatException e)
+                {
+                    throw new FormatException("Invalid spawn position.", e);
+                }
+                catch (OverflowException e)
+                {
+                    throw new FormatException("Invalid spawn position.", e);
+                }
+            }
+        }
+
+        public Spawn()
+        {
+            this.x = 0;
+            this.y = 0;
+        }
+        public override string ToString()
+        {
+            return this.Coords;
+        }
+    }
+    public class GroupSpawn : Spawn
+    {
+        public string Group { get; set; }
+        public GroupSpawn()
+        {
+            this.Group = "";
+        }
+        public override string ToString()
+        {
+            return string.Format("{0}:{1}", this.Group, base.ToString());
+        }
+    }
+    public class ClientSpawn : Spawn
+    {
+        public string Client { get; set; }
+        public ClientSpawn()
+        {
+            this.Client = "";
+        }
+        public override string ToString()
+        {
+            return string.Format("{0}:{1}", this.Client, base.ToString());
         }
     }
 
@@ -127,7 +247,8 @@ namespace GameModeFortress
             give,
             giveall,
             monsters,
-            announcement
+            announcement,
+            set_spawn
         };
 
         public static List<Group> getDefaultGroups()

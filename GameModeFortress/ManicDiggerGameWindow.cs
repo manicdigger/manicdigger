@@ -3386,7 +3386,7 @@ namespace ManicDigger
         {
             get { yield break; }
         }
-        Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
+        private Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
         public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
         IDictionary<int, Player> players = new Dictionary<int, Player>();
@@ -3995,6 +3995,15 @@ namespace ManicDigger
                 case ServerPacketId.FillAreaLimit:
                     {
                         this.fillAreaLimit = packet.FillAreaLimit.Limit;
+                    }
+                    break;
+                case ServerPacketId.PlayerSpawnPosition:
+                    {
+                        int x = packet.PlayerSpawnPosition.X;
+                        int y = packet.PlayerSpawnPosition.Y;
+                        int z = packet.PlayerSpawnPosition.Z;
+                        this.PlayerPositionSpawn = new Vector3(x, z, y);
+                        Log("Spawn position set to: " + x + "," + y + "," + z);
                     }
                     break;
                 case ServerPacketId.SpawnPlayer:

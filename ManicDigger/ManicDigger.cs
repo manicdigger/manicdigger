@@ -124,6 +124,19 @@ namespace ManicDigger
             return true;
         }
 
+        public static bool IsValidPos(IMapStorage map, int x, int y)
+        {
+            if (x < 0 || y < 0)
+            {
+                return false;
+            }
+            if (x >= map.MapSizeX || y >= map.MapSizeY)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public static bool IsValidChunkPos(IMapStorage map, int cx, int cy, int cz, int chunksize)
         {
             return cx >= 0 && cy >= 0 && cz >= 0

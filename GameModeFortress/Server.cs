@@ -1646,22 +1646,7 @@ for (int i = 0; i < unknown.Count; i++)
                 ServerEventLog(string.Format("{0} disconnects.", name));
             }
         }
-        Vector3i DefaultSpawnPosition()
-        {
-            int x = d_Map.MapSizeX / 2;
-            int y = d_Map.MapSizeY / 2 - 1;//antivandal side
-            //for new ServerWorldManager
-            {
-                x = (x / chunksize) * chunksize;
-                y = (y / chunksize) * chunksize;
-                x += centerareasize / 2;
-                y += centerareasize / 2;
-            }
-            //spawn position randomization disabled.
-            //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-            //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-            return new Vector3i(x * 32 + 15, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32 + 15);
-        }
+
         //returns bytes read.
         private int TryReadPacket(int clientid)
         {
@@ -1776,8 +1761,38 @@ for (int i = 0; i < unknown.Count; i++)
                     this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
                     break;
                 case ClientPacketId.RequestBlob:
+                    // set player's spawn position
+                    Vector3i position;
+                    GameModeFortress.Spawn playerSpawn = null;
+                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                    {
+                        // client spawn > group spawn > default spawn
+                        if (spawn is GameModeFortress.ClientSpawn)
+                        {
+                            if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                playerSpawn = spawn;
+                                break;
+                            }
+                        }
+                        else if (spawn is GameModeFortress.GroupSpawn)
+                        {
+                            if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(clients[clientid].clientGroup.Name))
+                            {
+                                playerSpawn = spawn;
+                            }
+                        }
+                    }
 
-                    Vector3i position = DefaultSpawnPosition();
+                    if (playerSpawn == null)
+                    {
+                        position = this.defaultPlayerSpawn;
+                    }
+                    else
+                    {
+                        position = this.SpawnToVector3i(playerSpawn);
+                    }
+
                     clients[clientid].PositionMul32GlX = position.x;
                     clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                     clients[clientid].PositionMul32GlZ = position.z;
@@ -2627,6 +2642,20 @@ for (int i = 0; i < unknown.Count; i++)
             PacketServerSound p = new PacketServerSound() { Name = name };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Sound, Sound = p }));
         }
+        private void SendPlayerSpawnPosition(int clientid, int x, int y, int z)
+        {
+            PacketServerPlayerSpawnPosition p = new PacketServerPlayerSpawnPosition()
+            {
+                X = x,
+                Y = y,
+                Z = z
+            };
+            SendPacket(clientid, Serialize(new PacketServer()
+            {
+                PacketId = ServerPacketId.PlayerSpawnPosition,
+                PlayerSpawnPosition = p,
+            }));
+        }
         private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, byte heading, byte pitch)
         {
             PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
@@ -2955,10 +2984,58 @@ for (int i = 0; i < unknown.Count; i++)
               return null;
            return clients[id];
         }
+        public Client GetClient(string name)
+        {
+            foreach (var k in clients)
+            {
+                if (k.Value.playername.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return k.Value;
+                }
+            }
+            return null;
+        }
+        public int? GetClientId(Client client)
+        {
+            foreach (var k in clients)
+            {
+                if (k.Value == client)
+                {
+                    return k.Key;
+                }
+            }
+            return null;
+        }
 
         public ServerClient serverClient;
         public GameModeFortress.Group defaultGroupGuest;
         public GameModeFortress.Group defaultGroupRegistered;
+        public Vector3i defaultPlayerSpawn;
+
+        private Vector3i SpawnToVector3i(GameModeFortress.Spawn spawn)
+        {
+            int x = spawn.x;
+            int y = spawn.y;
+            int z;
+            if (!MapUtil.IsValidPos(d_Map, x, y))
+            {
+                throw new Exception("Invalid default spawn coordinates!");
+            }
+
+            if (spawn.z == null)
+            {
+                z = MapUtil.blockheight(d_Map, 0, x, y);
+            }
+            else
+            {
+                z = spawn.z.Value;
+                if (!MapUtil.IsValidPos(d_Map, x, y, z))
+                {
+                    throw new Exception("Invalid default spawn coordinates!");
+                }
+            }
+            return new Vector3i(x * 32, z * 32, y * 32);
+        }
 
         public void LoadServerClient()
         {
@@ -2997,6 +3074,30 @@ for (int i = 0; i < unknown.Count; i++)
                     SaveServerClient();
                 }
             }
+            if (serverClient.DefaultSpawn == null)
+            {
+                // server sets a default spawn
+
+                int x = d_Map.MapSizeX / 2;
+                int y = d_Map.MapSizeY / 2 - 1;//antivandal side
+                //for new ServerWorldManager
+                {
+                    x = (x / chunksize) * chunksize;
+                    y = (y / chunksize) * chunksize;
+                    x += centerareasize / 2;
+                    y += centerareasize / 2;
+                }
+                //spawn position randomization disabled.
+                //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+                //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+                // TODO: move call of DontSpawnPlayerInWater() to here!
+                this.defaultPlayerSpawn = new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
+            }
+            else
+            {
+                this.defaultPlayerSpawn = this.SpawnToVector3i(serverClient.DefaultSpawn);
+            }
+
             this.defaultGroupGuest = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
             {

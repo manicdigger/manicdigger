@@ -117,6 +117,16 @@ namespace GameModeFortress
         [ProtoMember(9, IsRequired = false)]
         public int MapSizeZ = 128;
     }
+    [ProtoContract]
+    public class PacketServerPlayerSpawnPosition
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        [ProtoMember(3, IsRequired = false)]
+        public int Z;
+    }
     //public class PacketServerPing
     [ProtoContract]
     public class PacketServerLevelInitialize
@@ -306,6 +316,8 @@ namespace GameModeFortress
         public PacketServerPlayerStats PlayerStats;
         [ProtoMember(21, IsRequired = false)]
         public PacketServerMonsters Monster;
+        [ProtoMember(22, IsRequired = false)]
+        public PacketServerPlayerSpawnPosition PlayerSpawnPosition;
     }
     [ProtoContract]
     public class PacketClient
@@ -489,10 +501,11 @@ namespace GameModeFortress
         PlayerStats = 23,
         Monster = 24,
         ActiveMonsters = 25,
-        
+        PlayerSpawnPosition = 26,
         RemoveMonsters = 50,
 
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
+
     }
 }

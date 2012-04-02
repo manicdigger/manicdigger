@@ -212,6 +212,71 @@ namespace ManicDiggerServer
                 case "crash":
                     KillPlayer(sourceClientId);
                     return;
+                case "set_spawn":
+                    //           0    1      2 3 4
+                    // agrument: type target x y z
+                    ss = argument.Split(new[] { ' ' });
+
+                    if (ss.Length < 3 || ss.Length > 5)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+
+                    // Add an empty target argument, when user sets default spawn.
+                    if (ss[0].Equals("-d") || ss[0].Equals("-default"))
+                    {
+                        string[] ssTemp = new string[ss.Length + 1];
+                        ssTemp[0] = ss[0];
+                        ssTemp[1] = "";
+                        Array.Copy(ss, 1, ssTemp, 2, ss.Length - 1);
+                        ss = ssTemp;
+                    }
+
+                    int x;
+                    int y;
+                    int? z;
+                    try
+                    {
+                        x = Convert.ToInt32(ss[2]);
+                        y = Convert.ToInt32(ss[3]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+
+                    try
+                    {
+                        z = Convert.ToInt32(ss[4]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        z = null;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    this.SetSpawnPosition(sourceClientId, ss[0], ss[1], x, y, z);
+                    return;
                 default:
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);
                     return;
@@ -278,6 +343,8 @@ namespace ManicDiggerServer
                     return "/monsters [on|off]";
                 case "announcement":
                     return "/announcement [message]";
+                case "set_spawn":
+                    return "/set_spawn [-default|-group|-player] [target] [x] [y] {z}";
                 default:
                     return "No description available.";
             }
@@ -368,7 +435,7 @@ namespace ManicDiggerServer
                     }
                     SaveServerClient();
                     SendMessageToAll(string.Format("{0}New group for {1}: {2}", colorSuccess, k.Value.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
-                    ServerEventLog(String.Format("{0} set group of {1} to {2}.", clients[sourceClientId].playername, k.Value.playername, newGroupName));
+                    ServerEventLog(String.Format("{0} sets group of {1} to {2}.", clients[sourceClientId].playername, k.Value.playername, newGroupName));
                     k.Value.AssignGroup(newGroup);
                     return true;
                 }
@@ -406,7 +473,7 @@ namespace ManicDiggerServer
 
             SaveServerClient();
             SendMessageToAll(string.Format("{0}New group for {1}: {2} (offline)", colorSuccess, target, newGroup.GroupColorString() + newGroupName));
-            ServerEventLog(String.Format("{0} set group of {1} to {2} (offline).", clients[sourceClientId].playername, target, newGroupName));
+            ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", clients[sourceClientId].playername, target, newGroupName));
             return true;
         }
 
@@ -1099,6 +1166,176 @@ namespace ManicDiggerServer
             clients[sourceClientId].Interpreter = null;
             SendMessage(sourceClientId, "Interpreter cleared.");
             return true;
+        }
+
+        public bool SetSpawnPosition(int sourceClientId, string targetType, string target, int x, int y, int? z)
+        {
+            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.set_spawn))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            // validate spawn coordinates
+            int rZ = 0;
+            if (z == null)
+            {
+                if (!MapUtil.IsValidPos(d_Map, x, y))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid spawn coordinates.", colorError));
+                    return false;
+                }
+                rZ = MapUtil.blockheight(d_Map, 0, x, y);
+            }
+            else
+            {
+                rZ = z.Value;
+            }
+            if (!MapUtil.IsValidPos(d_Map, x, y, rZ))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Invalid spawn coordinates.", colorError));
+                return false;
+            }
+
+            switch (targetType)
+            {
+                case "-default":
+                case "-d":
+                    serverClient.DefaultSpawn = new GameModeFortress.Spawn() {x = x, y = y, z = z};
+                    SaveServerClient();
+                    // Inform related players.
+                    bool hasEntry = false;
+                    foreach (var k in clients)
+                    {
+                        hasEntry = false;
+                        foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                        {
+                            if (spawn is GameModeFortress.ClientSpawn)
+                            {
+                                if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(k.Value.playername))
+                                {
+                                    hasEntry = true;
+                                    break;
+                                }
+                            }
+                            else if (spawn is GameModeFortress.GroupSpawn)
+                            {
+                                if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(k.Value.clientGroup.Name))
+                                {
+                                    hasEntry = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasEntry)
+                        {
+                            this.SendPlayerSpawnPosition(k.Key, x, y, rZ);
+                        }
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Default spawn position set to {1},{2},{3}.", colorSuccess, x, y, rZ));
+                    ServerEventLog(String.Format("{0} sets default spawn to {1},{2}{3}.", clients[sourceClientId].playername, x, y, z == null ? "" : "," + z.Value));
+                    return true;
+                case "-group":
+                case "-g":
+                    // Check if group even exists.
+                    GameModeFortress.Group targetGroup = serverClient.Groups.Find(
+                        delegate(GameModeFortress.Group grp)
+                    {
+                        return grp.Name.Equals(target);
+                    }
+                    );
+                    if (targetGroup == null)
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Group {1} not found.", colorError, target));
+                        return false;
+                    }
+                    bool groupInSpawns = false;
+                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                    {
+                        if (spawn is GameModeFortress.GroupSpawn)
+                        {
+                            if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(target))
+                            {
+                                spawn.x = x;
+                                spawn.y = y;
+                                spawn.z = z;
+                                groupInSpawns = true;
+                                break;
+                            }
+                        }
+                    }
+                    // Add a new entry.
+                    if (!groupInSpawns)
+                    {
+                        GameModeFortress.GroupSpawn newGroupSpawn = new GameModeFortress.GroupSpawn()
+                            {
+                                x = x,
+                                y = y,
+                                z = z,
+                                Group = targetGroup.Name
+                            };
+                        this.serverClient.Spawns.Add(newGroupSpawn);
+                    }
+                    SaveServerClient();
+                    // Inform related players.
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.clientGroup.Name.Equals(targetGroup.Name))
+                        {
+                            this.SendPlayerSpawnPosition(k.Key, x, y, rZ);
+                        }
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Spawn position of group {1} set to {2},{3},{4}.", colorSuccess, targetGroup.Name, x, y, rZ));
+                    ServerEventLog(String.Format("{0} sets spawn of group {1} to {2},{3}{4}.", clients[sourceClientId].playername, targetGroup.Name, x, y, z == null ? "" : "," + z.Value));
+                    return true;
+                case "-player":
+                case "-p":
+                    // Get related client.
+                    Client targetClient = this.GetClient(target);
+                    int? targetClientId = this.GetClientId(targetClient);
+                    string targetClientPlayername = targetClient == null ? target : targetClient.playername;
+
+                    bool clientInSpawns = false;
+                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                    {
+                        if (spawn is GameModeFortress.ClientSpawn)
+                        {
+                            if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                spawn.x = x;
+                                spawn.y = y;
+                                spawn.z = z;
+                                clientInSpawns = true;
+                                break;
+                            }
+                        }
+                    }
+                    // Add a new entry.
+                    if (!clientInSpawns)
+                    {
+                        this.serverClient.Spawns.Add(
+                            new GameModeFortress.ClientSpawn()
+                            {
+                                x = x,
+                                y = y,
+                                z = z,
+                                Client = targetClientPlayername
+                            }
+                        );
+                    }
+                    SaveServerClient();
+                    // Inform player if online.
+                    if (targetClientId != null)
+                    {
+                        this.SendPlayerSpawnPosition(targetClientId.Value, x, y, rZ);
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Spawn position of player {1} set to {2},{3},{4}.", colorSuccess, targetClientPlayername, x, y, rZ));
+                    ServerEventLog(String.Format("{0} sets spawn of player {1} to {2},{3}{4}.", clients[sourceClientId].playername, targetClientPlayername, x, y, z == null ? "" : "," + z.Value));
+                    return true;
+                default:
+                    SendMessage(sourceClientId, "Invalid type.");
+                    return false;
+            }
         }
     }
 }
