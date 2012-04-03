@@ -3008,7 +3008,7 @@ namespace ManicDigger
                     }
                     if (fillarea.ContainsKey(v))// && fillarea[v])
                     {
-                        SendFillArea(fillstart.Value, fillend.Value, ActiveMaterial);
+                        SendFillArea(fillstart.Value, fillend.Value, activematerial);
                         ClearFillArea();
                         fillstart = null;
                         fillend = null;
@@ -3691,7 +3691,7 @@ namespace ManicDigger
             };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
         }
-        public void SendFillArea(Vector3i start, Vector3i end, int materialslot)
+        public void SendFillArea(Vector3i start, Vector3i end, int blockType)
         {
             PacketClientFillArea p = new PacketClientFillArea()
             {
@@ -3701,7 +3701,8 @@ namespace ManicDigger
                 X2 = end.x,
                 Y2 = end.y,
                 Z2 = end.z,
-                MaterialSlot = materialslot
+                BlockType = blockType,
+                MaterialSlot = ActiveMaterial
             };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.FillArea, FillArea = p }));
         }

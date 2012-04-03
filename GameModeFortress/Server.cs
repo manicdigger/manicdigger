@@ -2215,18 +2215,18 @@ for (int i = 0; i < unknown.Count; i++)
             int startz = Math.Min(a.z, b.z);
             int endz = Math.Max(a.z, b.z);
 
-            // determine block type
-            int blockType;
+            int blockType = fill.BlockType;
+            if (blockType == (int)TileTypeManicDigger.FillArea)
+            {
+                blockType = SpecialBlockId.Empty;
+            }
+            blockType = d_Data.WhenPlayerPlacesGetsConvertedTo[blockType];
+
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             var item = inventory.RightHand[fill.MaterialSlot];
             if (item == null)
             {
                 return false;
-            }
-            blockType = d_Data.WhenPlayerPlacesGetsConvertedTo[item.BlockId];
-            if (blockType == (int)TileTypeManicDigger.FillArea)
-            {
-                blockType = SpecialBlockId.Empty;
             }
 
             // crafting mode
@@ -2527,7 +2527,10 @@ for (int i = 0; i < unknown.Count; i++)
             item.ItemClass = ItemClass.Block;
             item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blocktype];
             item.BlockCount = blockstopick;
-            GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+            if (!config.IsCreative)
+            {
+                GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+            }
             SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
 
             clients[player_id].IsInventoryDirty = true;
@@ -2539,7 +2542,7 @@ for (int i = 0; i < unknown.Count; i++)
             d_Map.SetBlockNotMakingDirty(x, y, z, blocktype);
             NotifyBlock(x, y, z, blocktype);
         }
-        int TotalAmount(Dictionary<int, int> inventory)
+        private int TotalAmount(Dictionary<int, int> inventory)
         {
             int sum = 0;
             foreach (var k in inventory)
@@ -2583,7 +2586,7 @@ for (int i = 0; i < unknown.Count; i++)
             }
             return count;
         }
-        bool EquivalentBlock(int blocktypea, int blocktypeb)
+        private bool EquivalentBlock(int blocktypea, int blocktypeb)
         {
             if (GameDataManicDigger.IsRailTile(blocktypea) && GameDataManicDigger.IsRailTile(blocktypeb))
             {

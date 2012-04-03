@@ -55,6 +55,8 @@ namespace GameModeFortress
         [ProtoMember(6, IsRequired = false)]
         public int Z2;
         [ProtoMember(7, IsRequired = false)]
+        public int BlockType;
+        [ProtoMember(8, IsRequired = false)]
         public int MaterialSlot;
     }
     [ProtoContract]
