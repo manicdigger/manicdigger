@@ -21,8 +21,6 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)]
         public Spawn DefaultSpawn { get; set; }
 
-        public List<Spawn> Spawns { get; set; }
-
         public ServerClient()
         {
             //Set Defaults
@@ -31,7 +29,6 @@ namespace GameModeFortress
             this.DefaultGroupRegistered = "Registered";
             this.Groups = new List<Group>();
             this.Clients = new List<Client>();
-            this.Spawns = new List<Spawn>();
         }
     }
 
@@ -42,6 +39,8 @@ namespace GameModeFortress
 
         [XmlElement(IsNullable = true)]
         public string Password { get; set; }
+        [XmlElement(IsNullable = true)]
+        public Spawn Spawn{ get; set; }
 
         [XmlArrayItem(ElementName = "Privilege")]
         public List<ServerClientMisc.Privilege> GroupPrivileges { get; set; }
@@ -92,6 +91,8 @@ namespace GameModeFortress
     {
         public string Name { get; set; }
         public string Group { get; set; }
+        [XmlElement(IsNullable = true)]
+        public Spawn Spawn{ get; set; }
 
         public Client()
         {
@@ -105,8 +106,6 @@ namespace GameModeFortress
         }
     }
 
-    [XmlInclude(typeof(GroupSpawn))]
-    [XmlInclude(typeof(ClientSpawn))]
     public class Spawn
     {
         [XmlIgnoreAttribute]
@@ -169,7 +168,6 @@ namespace GameModeFortress
                 }
             }
         }
-
         public Spawn()
         {
             this.x = 0;
@@ -178,30 +176,6 @@ namespace GameModeFortress
         public override string ToString()
         {
             return this.Coords;
-        }
-    }
-    public class GroupSpawn : Spawn
-    {
-        public string Group { get; set; }
-        public GroupSpawn()
-        {
-            this.Group = "";
-        }
-        public override string ToString()
-        {
-            return string.Format("{0}:{1}", this.Group, base.ToString());
-        }
-    }
-    public class ClientSpawn : Spawn
-    {
-        public string Client { get; set; }
-        public ClientSpawn()
-        {
-            this.Client = "";
-        }
-        public override string ToString()
-        {
-            return string.Format("{0}:{1}", this.Client, base.ToString());
         }
     }
 

@@ -1208,21 +1208,20 @@ namespace ManicDiggerServer
                     foreach (var k in clients)
                     {
                         hasEntry = false;
-                        foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                        if (k.Value.clientGroup.Spawn != null)
                         {
-                            if (spawn is GameModeFortress.ClientSpawn)
+                            hasEntry = true;
+                        }
+                        else
+                        {
+                            foreach (GameModeFortress.Client client in serverClient.Clients)
                             {
-                                if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(k.Value.playername))
+                                if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
                                 {
-                                    hasEntry = true;
-                                    break;
-                                }
-                            }
-                            else if (spawn is GameModeFortress.GroupSpawn)
-                            {
-                                if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(k.Value.clientGroup.Name))
-                                {
-                                    hasEntry = true;
+                                    if (client.Spawn != null)
+                                    {
+                                        hasEntry = true;
+                                    }
                                     break;
                                 }
                             }
@@ -1249,40 +1248,35 @@ namespace ManicDiggerServer
                         SendMessage(sourceClientId, string.Format("{0}Group {1} not found.", colorError, target));
                         return false;
                     }
-                    bool groupInSpawns = false;
-                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                    targetGroup.Spawn = new GameModeFortress.Spawn()
                     {
-                        if (spawn is GameModeFortress.GroupSpawn)
-                        {
-                            if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(target))
-                            {
-                                spawn.x = x;
-                                spawn.y = y;
-                                spawn.z = z;
-                                groupInSpawns = true;
-                                break;
-                            }
-                        }
-                    }
-                    // Add a new entry.
-                    if (!groupInSpawns)
-                    {
-                        GameModeFortress.GroupSpawn newGroupSpawn = new GameModeFortress.GroupSpawn()
-                            {
-                                x = x,
-                                y = y,
-                                z = z,
-                                Group = targetGroup.Name
-                            };
-                        this.serverClient.Spawns.Add(newGroupSpawn);
-                    }
+                        x = x,
+                        y = y,
+                        z = z,
+                    };
                     SaveServerClient();
                     // Inform related players.
+                    hasEntry = false;
                     foreach (var k in clients)
                     {
                         if (k.Value.clientGroup.Name.Equals(targetGroup.Name))
                         {
-                            this.SendPlayerSpawnPosition(k.Key, x, y, rZ);
+                            // Inform only if there is no spawn set under clients.
+                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            {
+                                if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    if (client.Spawn != null)
+                                    {
+                                        hasEntry = true;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (!hasEntry)
+                            {
+                                this.SendPlayerSpawnPosition(k.Key, x, y, rZ);
+                            }
                         }
                     }
                     SendMessage(sourceClientId, string.Format("{0}Spawn position of group {1} set to {2},{3},{4}.", colorSuccess, targetGroup.Name, x, y, rZ));
@@ -1295,36 +1289,26 @@ namespace ManicDiggerServer
                     int? targetClientId = this.GetClientId(targetClient);
                     string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
-                    bool clientInSpawns = false;
-                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
-                    {
-                        if (spawn is GameModeFortress.ClientSpawn)
+                    GameModeFortress.Client clientEntry = serverClient.Clients.Find(
+                        delegate(GameModeFortress.Client client)
                         {
-                            if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                spawn.x = x;
-                                spawn.y = y;
-                                spawn.z = z;
-                                clientInSpawns = true;
-                                break;
-                            }
+                            return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
                         }
-                    }
-                    // Add a new entry.
-                    if (!clientInSpawns)
+                    );
+                    if (clientEntry == null)
                     {
-                        this.serverClient.Spawns.Add(
-                            new GameModeFortress.ClientSpawn()
-                            {
-                                x = x,
-                                y = y,
-                                z = z,
-                                Client = targetClientPlayername
-                            }
-                        );
+                        SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
+                        return false;
                     }
+                    // Change or add spawn entry of client.
+                    clientEntry.Spawn = new GameModeFortress.Spawn()
+                    {
+                        x = x,
+                        y = y,
+                        z = z,
+                    };
                     SaveServerClient();
-                    // Inform player if online.
+                    // Inform player if he's online.
                     if (targetClientId != null)
                     {
                         this.SendPlayerSpawnPosition(targetClientId.Value, x, y, rZ);

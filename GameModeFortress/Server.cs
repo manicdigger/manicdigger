@@ -1761,26 +1761,24 @@ for (int i = 0; i < unknown.Count; i++)
                     this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
                     break;
                 case ClientPacketId.RequestBlob:
-                    // set player's spawn position
+                    // Set player's spawn position
                     Vector3i position;
                     GameModeFortress.Spawn playerSpawn = null;
-                    foreach (GameModeFortress.Spawn spawn in serverClient.Spawns)
+                    // Check if there is a spawn entry for his assign group
+                    if (clients[clientid].clientGroup.Spawn != null)
                     {
-                        // client spawn > group spawn > default spawn
-                        if (spawn is GameModeFortress.ClientSpawn)
+                        playerSpawn = clients[clientid].clientGroup.Spawn;
+                    }
+                    // Check if there is an entry in clients with spawn member (overrides group spawn).
+                    foreach (GameModeFortress.Client client in serverClient.Clients)
+                    {
+                        if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            if (((GameModeFortress.ClientSpawn)spawn).Client.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
+                            if (client.Spawn != null)
                             {
-                                playerSpawn = spawn;
-                                break;
+                                playerSpawn = client.Spawn;
                             }
-                        }
-                        else if (spawn is GameModeFortress.GroupSpawn)
-                        {
-                            if (((GameModeFortress.GroupSpawn)spawn).Group.Equals(clients[clientid].clientGroup.Name))
-                            {
-                                playerSpawn = spawn;
-                            }
+                            break;
                         }
                     }
 
