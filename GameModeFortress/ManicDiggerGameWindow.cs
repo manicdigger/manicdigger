@@ -3963,7 +3963,7 @@ namespace ManicDigger
 
                         int blockCount = packet.FillArea.BlockCount;
 
-                        Action fillArea = delegate
+                        Jint.Delegates.Action fillArea = delegate
                         {
                             for (int x = startx; x <= endx; ++x)
                             {

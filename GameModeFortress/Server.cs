@@ -2242,7 +2242,7 @@ for (int i = 0; i < unknown.Count; i++)
                     var newItem = new Item();
                     newItem.ItemClass = ItemClass.Block;
                     // Anon-method here to break out of the nested loop instead of using goto.
-                    Action fillArea = delegate
+                    Jint.Delegates.Action fillArea = delegate
                     {
                         for (int x = startx; x <= endx; ++x)
                         {
