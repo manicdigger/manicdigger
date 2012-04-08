@@ -85,7 +85,7 @@ namespace GameModeFortress
         }
     }
 
-    public static class ServerClientMisc
+    public class ServerClientMisc
     {
         public static string DefaultPlayerName = "Player name?";
 
