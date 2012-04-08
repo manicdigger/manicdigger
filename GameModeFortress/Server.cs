@@ -449,7 +449,6 @@ namespace ManicDiggerServer
             d_MainSocket.Bind(iep);
             d_MainSocket.Listen(10);
         }
-        int lastclient;
         public void Process()
         {
             try
@@ -471,6 +470,17 @@ namespace ManicDiggerServer
         public int SimulationCurrentFrame { get { return (int)simulationcurrentframe; } }
         double oldtime;
         double accumulator;
+        
+        private int lastClientId;
+        private int GenerateClientId()
+        {
+            int i = 0;
+            while (clients.ContainsKey(i))
+            {
+                i++;
+            }
+            return i;
+        }
         public void Process1()
         {
             if (d_MainSocket == null)
@@ -519,7 +529,8 @@ namespace ManicDiggerServer
                 c.socket = client1;
                 lock (clients)
                 {
-                    clients[lastclient++] = c;
+                    this.lastClientId = this.GenerateClientId();
+                    clients[lastClientId] = c;
                 }
                 c.notifyMapTimer = new ManicDigger.Timer()
                 {
@@ -531,14 +542,14 @@ namespace ManicDiggerServer
                 };
                 if (clients.Count > config.MaxClients)
                 {
-                    SendDisconnectPlayer(lastclient - 1, "Too many players! Try to connect later.");
-                    KillPlayer(lastclient - 1);
+                    SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
+                    KillPlayer(this.lastClientId);
                 }
                 else if (config.IsIPBanned(iep1.Address.ToString()))
                 {
-                    SendDisconnectPlayer(lastclient - 1, "Your IP has been banned from this server.");
+                    SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
                     ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
-                    KillPlayer(lastclient - 1);
+                    KillPlayer(this.lastClientId);
                 }
             }
             ArrayList copyList = new ArrayList();
@@ -570,25 +581,17 @@ namespace ManicDiggerServer
                 data = new byte[1024];
                 try
                 {
+                    //stringData = Encoding.ASCII.GetString(data, 0, recv);
                     recv = clientSocket.Receive(data);
-                }
-                catch
-                {
-                    recv = 0;
-                }
-                //stringData = Encoding.ASCII.GetString(data, 0, recv);
-
-                if (recv == 0)
-                {
-                    //client problem. disconnect client.
-                    KillPlayer(clientid);
-                }
-                else
-                {
                     for (int i = 0; i < recv; i++)
                     {
                         client.received.Add(data[i]);
                     }
+                }
+                catch
+                {
+                    //client problem. disconnect client.
+                    KillPlayer(clientid);
                 }
             }
             foreach (var k in new List<KeyValuePair<int, Client>>(clients))
@@ -628,7 +631,39 @@ namespace ManicDiggerServer
                 	k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
                 }
             }
-            pingtimer.Update(delegate { foreach (var k in clients) { SendPing(k.Key); } });
+            pingtimer.Update(
+            delegate
+            {
+                List<int > keysToDelete = new List<int>();
+                foreach (var k in clients)
+                {
+                    // Check if client is alive. Detect half-dropped connections.
+                    // TODO: check
+                    if (!k.Value.Ping.Send() && k.Value.state == ClientStateOnServer.Playing)
+                    {
+                        Console.WriteLine("Client not ready to receive ping");
+                        if (k.Value.Ping.Timeout())
+                        {
+                            Console.WriteLine("Ping timeout. Disconnecting " + k.Key);
+                            keysToDelete.Add(k.Key);
+                        }
+                        else
+                        {
+                            Console.WriteLine("no timeout");
+                        }
+                    }
+                    else
+                    {
+                        SendPing(k.Key);
+                    }
+                }
+
+                foreach (int key in keysToDelete)
+                {
+                    KillPlayer(key);
+                }
+            }
+            );
             UnloadUnusedChunks();
             for (int i = 0; i < ChunksSimulated; i++)
             {
@@ -752,6 +787,55 @@ namespace ManicDiggerServer
             d_Water.tosetwater.Clear();
             d_Water.tosetempty.Clear();
         }
+        
+        public class Ping
+        {
+            public TimeSpan RoundtripTime { get; set; }
+
+            private bool ready;
+            private DateTime timeSend;
+            private int timeout = 10; //in seconds
+
+            public Ping()
+            {
+                this.RoundtripTime = TimeSpan.MinValue;
+                this.ready = true;
+                this.timeSend = DateTime.MinValue;
+            }
+
+            public bool Send()
+            {
+                if (!ready)
+                {
+                    return false;
+                }
+                ready = false;
+                this.timeSend = DateTime.UtcNow;
+                return true;
+            }
+
+            public bool Receive()
+            {
+                if (ready)
+                {
+                    return false;
+                }
+                this.RoundtripTime = DateTime.UtcNow.Subtract(this.timeSend);
+                ready = true;
+                return true;
+            }
+
+            public bool Timeout()
+            {
+                if (DateTime.UtcNow.Subtract(this.timeSend).Seconds > this.timeout)
+                {
+                    this.ready = true;
+                    return true;
+                }
+                return false;
+            }
+        }
+
         private void SendPing(int clientid)
         {
             PacketServerPing p = new PacketServerPing()
@@ -759,6 +843,23 @@ namespace ManicDiggerServer
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ping, Ping = p }));
         }
+        private void NotifyPing(int targetClientId, int ping)
+        {
+            foreach (var k in clients)
+            {
+                SendPlayerPing(k.Key, targetClientId, ping);
+            }
+        }
+        private void SendPlayerPing(int recipientClientId, int targetClientId, int ping)
+        {
+            PacketServerPlayerPing p = new PacketServerPlayerPing()
+            {
+                ClientId = targetClientId,
+                Ping = ping
+            };
+            SendPacket(recipientClientId, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerPing, PlayerPing = p }));
+        }
+
         ManicDigger.Timer pingtimer = new ManicDigger.Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
@@ -1670,6 +1771,10 @@ for (int i = 0; i < unknown.Count; i++)
             //int totalread = 1;
             switch (packet.PacketId)
             {
+                case ClientPacketId.PingReply:
+                    clients[clientid].Ping.Receive();
+                    this.NotifyPing(clientid, clients[clientid].Ping.RoundtripTime.Milliseconds);
+                    break;
                 case ClientPacketId.PlayerIdentification:
                     SendServerIdentification(clientid);
                     string username = packet.Identification.Username;
@@ -1805,7 +1910,7 @@ for (int i = 0; i < unknown.Count; i++)
                     //send new player spawn to all players
                     foreach (var k in clients)
                     {
-                        int cc = k.Key == clientid ? byte.MaxValue : clientid;
+                        int cc = /*k.Key == clientid ? byte.MaxValue : */clientid;
                         {
                             PacketServer pp = new PacketServer();
                             PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
@@ -2890,6 +2995,7 @@ for (int i = 0; i < unknown.Count; i++)
             PacketServerIdentification p = new PacketServerIdentification()
             {
                 MdProtocolVersion = GameVersion.Version,
+                AssignedClientId = clientid,
                 ServerName = config.Name,
                 ServerMotd = config.Motd,
                 UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
@@ -2941,6 +3047,7 @@ for (int i = 0; i < unknown.Count; i++)
             public int maploadingsentchunks = 0;
             public ISocket socket;
             public List<byte> received = new List<byte>();
+            public Ping Ping = new Ping();
             public string playername = invalidplayername;
             public int PositionMul32GlX;
             public int PositionMul32GlY;

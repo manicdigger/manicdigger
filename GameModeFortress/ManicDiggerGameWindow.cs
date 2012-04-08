@@ -1258,7 +1258,7 @@ namespace ManicDigger
             Vector3 push = new Vector3();
             foreach (var k in d_Clients.Players)
             {
-                if ((k.Key == 255) ||
+                if ((k.Key == this.LocalPlayerId) ||
                     (k.Value.Position == LocalPlayerPosition)
                      || (float.IsNaN(LocalPlayerPosition.X)))
                 {
@@ -2163,7 +2163,7 @@ namespace ManicDigger
             }
             playerskindownloader.Update(players.ToArray(), playertextures, playertexturedefault);
             string playername;
-            if (playerid == 255)
+            if (playerid == this.LocalPlayerId)
             {
                 playername = connectdata.Username;
             }
@@ -2240,7 +2240,7 @@ namespace ManicDigger
             totaltime += dt;
             foreach (var k in d_Clients.Players)
             {
-                if (k.Key == 255)
+                if (k.Key == this.LocalPlayerId)
                 {
                     continue;
                 }
@@ -2562,7 +2562,7 @@ namespace ManicDigger
         {
             for (int i = 0; i < connectedplayers.Count; i++)
             {
-                d_The3d.Draw2dText(connectedplayers[i].name + " " + connectedplayers[i].id, 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
+                d_The3d.Draw2dText(connectedplayers[i].id + " " + connectedplayers[i].name + " " + connectedplayers[i].ping, 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
             }
             /*
             List<string> l = new List<string>(ConnectedPlayers());
@@ -2590,7 +2590,7 @@ namespace ManicDigger
         {
             foreach (KeyValuePair<int, Player> k in d_Clients.Players)
             {
-                if (k.Key == 255 || k.Value.Name == ""
+                if (k.Key == this.LocalPlayerId || k.Value.Name == ""
                     || (!playerdrawinfo.ContainsKey(k.Key))
                     || playerdrawinfo[k.Key].interpolation == null)
                 {
@@ -3715,6 +3715,13 @@ namespace ManicDigger
             PacketClientMessage p = new PacketClientMessage() { Message = s };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Message, Message = p }));
         }
+        private void SendPingReply()
+        {
+            PacketClientPingReply p = new PacketClientPingReply()
+            {
+            };
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.PingReply, PingReply = p }));
+        }
         private byte[] Serialize(PacketClient p)
         {
             MemoryStream ms = new MemoryStream();
@@ -3803,7 +3810,7 @@ namespace ManicDigger
         {
             PacketClientPositionAndOrientation p = new PacketClientPositionAndOrientation()
             {
-                PlayerId = 255,//self
+                PlayerId = this.LocalPlayerId,//self
                 X = (int)((position.X) * 32),
                 Y = (int)((position.Y + CharacterPhysics.characterheight) * 32),
                 Z = (int)(position.Z * 32),
@@ -3830,7 +3837,7 @@ namespace ManicDigger
         public string ServerMotd { get { return serverMotd; } set { serverMotd = value; } }
         public bool allowfreemove = true;
         public bool AllowFreemove { get { return allowfreemove; } set { allowfreemove = value; } }
-        public int LocalPlayerId = 255;
+        private int LocalPlayerId = -1;
         Stopwatch stopwatch = new Stopwatch();
         public int maxMiliseconds = 3;
         private int TryReadPacket()
@@ -3889,6 +3896,7 @@ namespace ManicDigger
                                 }
                             }
                         }
+                        this.LocalPlayerId = packet.Identification.AssignedClientId;
                         this.serverName = packet.Identification.ServerName;
                         this.ServerMotd = packet.Identification.ServerMotd;
                         this.AllowFreemove = !packet.Identification.DisallowFreemove;
@@ -3911,6 +3919,19 @@ namespace ManicDigger
                     break;
                 case ServerPacketId.Ping:
                     {
+                        this.SendPingReply();
+                    }
+                    break;
+                case ServerPacketId.PlayerPing:
+                    {
+                        foreach (var k in connectedplayers)
+                        {
+                            if (k.id == packet.PlayerPing.ClientId)
+                            {
+                                k.ping = packet.PlayerPing.Ping;
+                                break;
+                            }
+                        }
                     }
                     break;
                 case ServerPacketId.LevelInitialize:
@@ -4011,11 +4032,11 @@ namespace ManicDigger
                     {
                         int playerid = packet.SpawnPlayer.PlayerId;
                         string playername = packet.SpawnPlayer.PlayerName;
-                        connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid });
+                        connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
                         d_Clients.Players[playerid] = new Player();
                         d_Clients.Players[playerid].Name = playername;
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
-                        if (playerid == 255)
+                        if (playerid == this.LocalPlayerId)
                         {
                             spawned = true;
                         }
@@ -4226,7 +4247,7 @@ namespace ManicDigger
         }
         private void UpdatePositionDiff(byte playerid, Vector3 v)
         {
-            if (playerid == 255)
+            if (playerid == this.LocalPlayerId)
             {
                 LocalPlayerPosition += v;
                 spawned = true;
@@ -4255,7 +4276,7 @@ namespace ManicDigger
             byte heading = positionAndOrientation.Heading;
             byte pitch = positionAndOrientation.Pitch;
             Vector3 realpos = new Vector3(x, y, z);
-            if (playerid == 255)
+            if (playerid == this.LocalPlayerId)
             {
                 if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
                 {
@@ -4294,6 +4315,7 @@ namespace ManicDigger
         {
             public int id;
             public string name;
+            public int ping; // in ms
         }
         List<ConnectedPlayer> connectedplayers = new List<ConnectedPlayer>();
         public IEnumerable<string> ConnectedPlayers()

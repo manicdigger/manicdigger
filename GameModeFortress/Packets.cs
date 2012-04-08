@@ -103,20 +103,22 @@ namespace GameModeFortress
         [ProtoMember(1, IsRequired = false)]
         public string MdProtocolVersion;
         [ProtoMember(2, IsRequired = false)]
-        public string ServerName;
+        public int AssignedClientId;
         [ProtoMember(3, IsRequired = false)]
-        public string ServerMotd;
+        public string ServerName;
         [ProtoMember(4, IsRequired = false)]
-        public List<byte[]> UsedBlobsMd5; //todo, currently ignored.
+        public string ServerMotd;
         [ProtoMember(5, IsRequired = false)]
-        public byte[] TerrainTextureMd5; //todo, currently ignored.
+        public List<byte[]> UsedBlobsMd5; //todo, currently ignored.
         [ProtoMember(6, IsRequired = false)]
-        public bool DisallowFreemove;
+        public byte[] TerrainTextureMd5; //todo, currently ignored.
         [ProtoMember(7, IsRequired = false)]
-        public int MapSizeX = 10000;
+        public bool DisallowFreemove;
         [ProtoMember(8, IsRequired = false)]
-        public int MapSizeY = 10000;
+        public int MapSizeX = 10000;
         [ProtoMember(9, IsRequired = false)]
+        public int MapSizeY = 10000;
+        [ProtoMember(10, IsRequired = false)]
         public int MapSizeZ = 128;
     }
     [ProtoContract]
@@ -129,7 +131,6 @@ namespace GameModeFortress
         [ProtoMember(3, IsRequired = false)]
         public int Z;
     }
-    //public class PacketServerPing
     [ProtoContract]
     public class PacketServerLevelInitialize
     {
@@ -273,7 +274,6 @@ namespace GameModeFortress
         public ServerPacketId PacketId;
         [ProtoMember(1, IsRequired = false)]
         public PacketServerIdentification Identification;
-        //1 ping
         [ProtoMember(2, IsRequired = false)]
         public PacketServerLevelInitialize LevelInitialize;
         [ProtoMember(3, IsRequired = false)]
@@ -312,6 +312,8 @@ namespace GameModeFortress
         public PacketServerHeightmapChunk HeightmapChunk;
         [ProtoMember(18, IsRequired = false)]
         public PacketServerPing Ping;
+        [ProtoMember(181, IsRequired = false)]
+        public PacketServerPlayerPing PlayerPing;
         [ProtoMember(19, IsRequired = false)]
         public PacketServerSound Sound;
         [ProtoMember(20, IsRequired = false)]
@@ -344,6 +346,8 @@ namespace GameModeFortress
         public PacketClientInventoryAction InventoryAction;
         [ProtoMember(9, IsRequired = false)]
         public PacketClientHealth Health;
+        [ProtoMember(10, IsRequired = false)]
+        public PacketClientPingReply PingReply;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -444,6 +448,18 @@ namespace GameModeFortress
     {
     }
     [ProtoContract]
+    public class PacketServerPlayerPing
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int ClientId;
+        [ProtoMember(2, IsRequired = false)]
+        public int Ping;
+    }
+    [ProtoContract]
+    public class PacketClientPingReply
+    {
+    }
+    [ProtoContract]
     public class PacketClientCraft
     {
         [ProtoMember(1, IsRequired = false)]
@@ -461,6 +477,7 @@ namespace GameModeFortress
     public enum ClientPacketId
     {
         PlayerIdentification = 0,
+        PingReply = 1,
         SetBlock = 5,
         FillArea = 510,
         PositionandOrientation = 8,
@@ -479,6 +496,7 @@ namespace GameModeFortress
     {
         ServerIdentification = 0,
         Ping = 1,
+        PlayerPing = 111,
         LevelInitialize = 2,
         LevelDataChunk = 3,
         LevelFinalize = 4,
