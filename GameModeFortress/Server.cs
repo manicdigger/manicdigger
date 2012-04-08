@@ -1769,6 +1769,10 @@ for (int i = 0; i < unknown.Count; i++)
                             clients[clientid].AssignGroup(this.defaultGroupRegistered);
                         }
                     }
+                    if (isClientLocalhost)
+                    {
+                        clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
+                    }
                     break;
                 case ClientPacketId.RequestBlob:
 
