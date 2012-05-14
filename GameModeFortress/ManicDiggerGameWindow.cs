@@ -2065,7 +2065,7 @@ namespace ManicDigger
                 DrawCharacters((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(255), new AnimationHint());
+                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
                 }
                 foreach (IModelToDraw m in Models)
                 {
@@ -2327,7 +2327,7 @@ namespace ManicDigger
                 DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
                     NetworkHelper.HeadingByte(LocalPlayerOrientation),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
-                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(255), localplayeranimationhint);
+                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint);
                 lastlocalplayerpos = LocalPlayerPosition;
                 GL.Color3(1f, 1f, 1f);
             }
