@@ -716,39 +716,42 @@ namespace ManicDiggerServer
                     {
                         for (int zz = 0; zz < tntRange; zz++)
                         {
-                            Vector3i pos2 = new Vector3i(pos.x + xx - tntRange / 2,
+                            if (sphereEq (xx - (tntRange - 1) / 2, yy - (tntRange - 1) / 2, zz - (tntRange - 1) / 2, tntRange / 2) <= 0)
+                            {
+                                Vector3i pos2 = new Vector3i (pos.x + xx - tntRange / 2,
                                 pos.y + yy - tntRange / 2,
                                 pos.z + zz - tntRange / 2);
-                            if (!MapUtil.IsValidPos(d_Map, pos2.x, pos2.y, pos2.z))
-                            {
-                                continue;
-                            }
-                            int block = d_Map.GetBlock(pos2.x, pos2.y, pos2.z);
-                            if (tntStack.Count < tntMax
-                                && pos2 != pos
-                                && block == (int)TileTypeManicDigger.TNT)
-                            {
-                                tntStack.Push(pos2);
-                                tntTimer.accumulator = tntTimer.INTERVAL;
-                            }
-                            else
-                            {
-                                if ((block != 0)
-                                    && (block != (int)TileTypeManicDigger.Adminium)
-                                    && !(d_Data.IsFluid[block]))
+                                if (!MapUtil.IsValidPos (d_Map, pos2.x, pos2.y, pos2.z))
                                 {
-                            		SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
-                            		if (!config.IsCreative)
+                                    continue;
+                                }
+                                int block = d_Map.GetBlock (pos2.x, pos2.y, pos2.z);
+                                if (tntStack.Count < tntMax
+	                                && pos2 != pos
+	                                && block == (int)TileTypeManicDigger.TNT)
+                                {
+                                    tntStack.Push (pos2);
+                                    tntTimer.accumulator = tntTimer.INTERVAL;
+                                }
+                                else
+                                {
+                                    if ((block != 0)
+	                                    && (block != (int)TileTypeManicDigger.Adminium)
+	                                    && !(d_Data.IsFluid [block]))
                                     {
-                                		// chance to get some of destruced blocks
-                                		if (rnd.NextDouble() < .20f)
-                                		{
-                                			var item = new Item();
-    						                item.ItemClass = ItemClass.Block;
-    						                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
-                                            GetInventoryUtil(inventory).GrabItem(item, 0);
-                                         }
-                            		}
+                                        SetBlockAndNotify (pos2.x, pos2.y, pos2.z, 0);
+                                        if (!config.IsCreative)
+                                        {
+                                            // chance to get some of destruced blocks
+                                            if (rnd.NextDouble () < .20f)
+                                            {
+                                                var item = new Item ();
+                                                item.ItemClass = ItemClass.Block;
+                                                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo [block];
+                                                GetInventoryUtil (inventory).GrabItem (item, 0);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -758,8 +761,12 @@ namespace ManicDiggerServer
                 NotifyInventory(closeplayer);
             }
         }
+        private int sphereEq (int x, int y, int z, int r)
+        {
+            return x * x + y * y + z * z - r * r;
+        }
 
-        public int tntRange = 4;
+        public int tntRange = 10; // sphere diameter
         ManicDigger.Timer tntTimer = new ManicDigger.Timer() { INTERVAL = 5 };
         Stack<Vector3i> tntStack = new Stack<Vector3i>();
         public int tntMax = 10;
@@ -2422,8 +2429,16 @@ for (int i = 0; i < unknown.Count; i++)
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             if (cmd.Mode == BlockSetMode.Use)
             {
-                UseDoor(cmd.X, cmd.Y, cmd.Z);
-                UseTnt(cmd.X, cmd.Y, cmd.Z);
+                UseDoor (cmd.X, cmd.Y, cmd.Z);
+                if (d_Map.GetBlock (cmd.X, cmd.Y, cmd.Z) == (int)TileTypeManicDigger.TNT)
+                {
+                    if (!clients [player_id].privileges.Contains (ServerClientMisc.Privilege.use_tnt))
+                    {
+                        SendMessage (player_id, colorError + "Insufficient privileges to use TNT.");
+                        return false;
+                    }
+                    UseTnt (cmd.X, cmd.Y, cmd.Z);
+                }
                 return true;
             }
             if (cmd.Mode == BlockSetMode.Create

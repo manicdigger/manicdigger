@@ -222,7 +222,8 @@ namespace GameModeFortress
             giveall,
             monsters,
             announcement,
-            set_spawn
+            set_spawn,
+            use_tnt
         };
 
         public static List<Group> getDefaultGroups()
@@ -256,6 +257,7 @@ namespace GameModeFortress
             builder.GroupPrivileges.Add(Privilege.chat);
             builder.GroupPrivileges.Add(Privilege.pm);
             builder.GroupPrivileges.Add(Privilege.build);
+            builder.GroupPrivileges.Add(Privilege.use_tnt);
             builder.GroupColor = ClientColor.Green;
             defaultGroups.Add(builder);
             // default admin group
@@ -280,6 +282,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.monsters);
             admin.GroupPrivileges.Add(Privilege.give);
             admin.GroupPrivileges.Add(Privilege.giveall);
+            admin.GroupPrivileges.Add(Privilege.use_tnt);
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);
 
