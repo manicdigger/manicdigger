@@ -1886,7 +1886,7 @@ for (int i = 0; i < unknown.Count; i++)
                     //send new player spawn to all players
                     foreach (var k in clients)
                     {
-                        int cc = /*k.Key == clientid ? byte.MaxValue : */clientid;
+                        int cc = clientid;
                         {
                             PacketServer pp = new PacketServer();
                             PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
@@ -1946,7 +1946,7 @@ for (int i = 0; i < unknown.Count; i++)
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                         break;
                     }
-                    if (!config.CanUserBuild(clients[clientid], x, y))
+                    if (!config.CanUserBuild(clients[clientid], x, y, z))
                     {
                         SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
                         SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -2268,15 +2268,18 @@ for (int i = 0; i < unknown.Count; i++)
             int endx = Math.Max(a.x, b.x);
             int starty = Math.Min(a.y, b.y);
             int endy = Math.Max(a.y, b.y);
-            //int startz = Math.Min(a.z, b.z);
-            //int endz = Math.Max(a.z, b.z);
+            int startz = Math.Min(a.z, b.z);
+            int endz = Math.Max(a.z, b.z);
             for (int x = startx; x <= endx; x++)
             {
                 for (int y = starty; y <= endy; y++)
                 {
-                    if(!config.CanUserBuild(client, x, y))
+                    for (int z = startz; z <= endz; z++)
                     {
-                        return false;
+                        if(!config.CanUserBuild(client, x, y, z))
+                        {
+                            return false;
+                        }
                     }
                 }
             }

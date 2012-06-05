@@ -178,27 +178,55 @@ namespace ManicDiggerServer
                     }
                     this.Monsters(sourceClientId, argument);
                     return;
-            /*
-                     TODO: reimpliment
-                case "areauser":
-                    ss = argument.Split(new[] { ' ' });
-                    if (ss.Length == 2)
+                case "area_add":
+                    int areaId;
+                    ss = argument.Split(new [] { ' ' });
+
+                    if (ss.Length < 4 || ss.Length > 5)
                     {
-                        this.AreaUser(sourceClientId, ss[0], ss[1]);
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
                         return;
                     }
-                    SendMessage(sourceClientId, colorError + "Usage: /areauser [olduser] [newuser].");
-                    return;
-                case "addarea":
-                    ss = argument.Split(new[] { ' ' });
-                    if (ss.Length == 2)
+
+                    if (!Int32.TryParse(ss[0], out areaId))
                     {
-                        this.AddArea(sourceClientId, ss[0], ss[1]);
+                        SendMessage(sourceClientId, colorError + "Invalid argument. Type /help to see command's usage.");
                         return;
                     }
-                    SendMessage(sourceClientId, colorError + "Usage: /addarea username coords.");
+                    string coords = ss[1];
+                    string[] permittedGroups = ss[2].ToString().Split(new [] { ',' });
+                    string[] permittedUsers = ss[3].ToString().Split(new [] { ',' });
+
+                    int? areaLevel;
+                    try
+                    {
+                        areaLevel = Convert.ToInt32(ss[4]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        areaLevel = null;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+
+                    this.AreaAdd(sourceClientId, areaId, coords, permittedGroups, permittedUsers, areaLevel);
                     return;
-                    */
+                case "area_delete":
+                    if (!Int32.TryParse(argument, out areaId))
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid argument. Type /help to see command's usage.");
+                        return;
+                    }
+                    this.AreaDelete(sourceClientId, areaId);
+                    return;
                 case "help":
                     this.Help(sourceClientId);
                     return;
@@ -341,6 +369,10 @@ namespace ManicDiggerServer
                     return "/giveall [username]";
                 case "monsters":
                     return "/monsters [on|off]";
+                case "area_add":
+                    return "/area_add [ID] [x1,x2,y1,y2,z1,z2] [group1,group2,..] [user1,user2,..] {level}";
+                case "area_delete":
+                    return "/area_delete [ID]";
                 case "announcement":
                     return "/announcement [message]";
                 case "set_spawn":
@@ -844,7 +876,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Areas:");
-                    foreach (var area in config.Areas)
+                    foreach (AreaConfig area in config.Areas)
                     {
                         SendMessage(sourceClientId, area.ToString());
                     }
@@ -1086,64 +1118,66 @@ namespace ManicDiggerServer
             return true;
         }
 
-        /*
-        TODO: Reimplement
-        public bool AreaChangeUser (int sourceClientId, string oldUser, string newUser)
+        public bool AreaAdd(int sourceClientId, int id, string coords, string[] permittedGroups, string[] permittedUsers, int? level)
         {
-            if (!clients[sourceClientId].privileges.Contains(Privilege.AreaChangeUser))
+            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.area_add))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
 
-            foreach (AreaConfig area in config.Areas)
+            if (config.Areas.Find(v => v.Id == id) != null)
             {
-                if (area.PermittedUsers.Equals(oldUser, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    area.PermittedUsers = newUser;
-                    SaveConfig();
-                    SendMessage(sourceClientId, "Area changed.");
-                    ServerEventLog(string.Format("{0} changes area from {1} to {2}.", clients[sourceClientId].playername, oldUser, newUser));
-                    return true;
-                }
-            }
-            return false;
-        }
-        public bool AreaChangeGroup (int sourceClientId, string oldGroup, string newGroup)
-        {
-            if (!clients[sourceClientId].privileges.Contains(Privilege.AreaChangeGroup))
-            {
-                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                SendMessage(sourceClientId, string.Format("{0}Area ID already in use.", colorError));
                 return false;
             }
 
-            foreach (AreaConfig area in config.Areas)
+            AreaConfig newArea = new AreaConfig(){Id = id, Coords = coords};
+            if (permittedGroups != null)
             {
-                if (area.PermittedUsers.Equals(oldUser, StringComparison.InvariantCultureIgnoreCase))
+                for (int i = 0; i < permittedGroups.Length; i++)
                 {
-                    area.PermittedGroups = newUser;
-                    SaveConfig();
-                    SendMessage(sourceClientId, "Area changed.");
-                    ServerEventLog(string.Format("{0} changes area from {1} to {2}.", clients[sourceClientId].playername, oldUser, newUser));
-                    return true;
+                    newArea.PermittedGroups.Add(permittedGroups[i]);
                 }
             }
-            return false;
-        }
-        public bool AreaAdd (int sourceClientId, string permittedUsers, string coords)
-        {
-            if (!clients[sourceClientId].privileges.Contains(Privilege.AreaAdd))
+            if (permittedUsers != null)
             {
-                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
-                return false;
+                for (int i = 0; i < permittedUsers.Length; i++)
+                {
+                    newArea.PermittedUsers.Add(permittedUsers[i]);
+                }
             }
-            config.Areas.Add(new AreaConfig(){PermittedUsers = permittedUsers, Coords = coords});
+            if (level != null)
+            {
+                newArea.Level = level;
+            }
+
+            config.Areas.Add(newArea);
             SaveConfig();
-            SendMessage(sourceClientId, "Area added.");
-            ServerEventLog(string.Format("{0} adds area {2} {1}.", clients[sourceClientId].playername, permittedUsers, coords));
+            SendMessage(sourceClientId, string.Format("{0}New area added: {1}", colorSuccess, newArea.ToString()));
+            ServerEventLog(string.Format("{0} adds area: {1}.", clients[sourceClientId].playername, newArea.ToString()));
             return true;
         }
-        */
+
+        public bool AreaDelete(int sourceClientId, int id)
+        {
+            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.area_delete))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            AreaConfig targetArea = config.Areas.Find(v => v.Id == id);
+            if(targetArea == null)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Area does not exist.", colorError));
+                return false;
+            }
+            config.Areas.Remove(targetArea);
+            SaveConfig();
+            SendMessage(sourceClientId, string.Format("{0}Area deleted.", colorSuccess));
+            ServerEventLog(string.Format("{0} deletes area: {1}.", clients[sourceClientId].playername, id));
+            return true;
+        }
 
         public bool Announcement(int sourceClientId, string message)
         {

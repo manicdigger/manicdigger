@@ -221,6 +221,8 @@ namespace GameModeFortress
             give,
             giveall,
             monsters,
+            area_add,
+            area_delete,
             announcement,
             set_spawn,
             use_tnt
@@ -247,7 +249,7 @@ namespace GameModeFortress
             registered.GroupPrivileges.Add(Privilege.chat);
             registered.GroupPrivileges.Add(Privilege.pm);
             registered.GroupPrivileges.Add(Privilege.build);
-            registered.GroupColor = ClientColor.Cyan;
+            registered.GroupColor = ClientColor.Blue;
             defaultGroups.Add(registered);
             // default builder group
             GameModeFortress.Group builder = new GameModeFortress.Group();
@@ -283,6 +285,8 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.give);
             admin.GroupPrivileges.Add(Privilege.giveall);
             admin.GroupPrivileges.Add(Privilege.use_tnt);
+            admin.GroupPrivileges.Add(Privilege.area_add);
+            admin.GroupPrivileges.Add(Privilege.area_delete);
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);
 

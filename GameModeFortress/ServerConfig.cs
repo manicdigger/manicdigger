@@ -75,12 +75,13 @@ namespace GameModeFortress
             return exists;
         }
 
-        public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y)
+        public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y, int z)
         {
             bool canBuild = false;
+            // TODO: fast tree datastructure
             foreach (AreaConfig area in this.Areas)
             {
-                if (area.IsInCoords(x, y))
+                if (area.IsInCoords(x, y, z))
                 {
                     if (area.CanUserBuild(client))
                     {
@@ -97,7 +98,7 @@ namespace GameModeFortress
             this.Format = 1;
             this.Name = "Manic Digger server";
             this.Motd = "MOTD";
-            this.WelcomeMessage = "Welcome to my Manic Digger server!"; //This is just the default when nothing has been set.
+            this.WelcomeMessage = "Welcome to my Manic Digger server!";
             this.Port = 25565;
             this.MaxClients = 16;
             this.BuildLogging = false;
@@ -123,10 +124,13 @@ namespace GameModeFortress
 
     public class AreaConfig
     {
+        public int Id { get; set; }
         private int x1;
         private int x2;
         private int y1;
         private int y2;
+        private int z1;
+        private int z2;
         private string coords;
         [XmlArrayItem(ElementName = "Group")]
         public List<string> PermittedGroups { get; set; }
@@ -137,7 +141,8 @@ namespace GameModeFortress
 
         public AreaConfig()
         {
-            this.Coords = "0,0,0,0";
+            this.Id = -1;
+            this.Coords = "0,0,0,0,0,0";
             this.PermittedGroups = new List<string>();
             this.PermittedUsers = new List<string>();
         }
@@ -149,14 +154,16 @@ namespace GameModeFortress
                 this.coords = value;
                 string[] myCoords = this.Coords.Split(new char[] { ',' });
                 x1 = Convert.ToInt32(myCoords[0]);
-                x2 = Convert.ToInt32(myCoords[2]);
+                x2 = Convert.ToInt32(myCoords[3]);
                 y1 = Convert.ToInt32(myCoords[1]);
-                y2 = Convert.ToInt32(myCoords[3]);
+                y2 = Convert.ToInt32(myCoords[4]);
+                z1 = Convert.ToInt32(myCoords[2]);
+                z2 = Convert.ToInt32(myCoords[5]);
             }
         }
-        public bool IsInCoords(int x, int y)
+        public bool IsInCoords(int x, int y, int z)
         {
-            if (x >= x1 && x <= x2 && y >= y1 && y <= y2)
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2 && z >= z1 && z <= z2)
             {
                 return true;
             }
@@ -220,7 +227,7 @@ namespace GameModeFortress
                 levelString = this.Level.ToString();
             }
 
-            return Coords + ":" + permittedGroupsString + ":" + permittedUsersString + ":" + levelString;
+            return Id + ":" + Coords + ":" + permittedGroupsString + ":" + permittedUsersString + ":" + levelString;
         }
     }
     
@@ -280,16 +287,19 @@ namespace GameModeFortress
             List<AreaConfig> defaultAreas = new List<AreaConfig>();
 
             AreaConfig publicArea = new AreaConfig();
-            publicArea.Coords = "0,0,10000,5000";
+            publicArea.Id = 1;
+            publicArea.Coords = "0,0,1,10000,5000,128";
             publicArea.PermittedGroups.Add("Guest");
             publicArea.PermittedGroups.Add("Registered");
             defaultAreas.Add(publicArea);
             AreaConfig builderArea = new AreaConfig();
-            builderArea.Coords = "0,5001,10000,10000";
+            builderArea.Id = 2;
+            builderArea.Coords = "0,5001,1,10000,10000,128";
             builderArea.PermittedGroups.Add("Builder");
             defaultAreas.Add(builderArea);
             AreaConfig adminArea = new AreaConfig();
-            adminArea.Coords = "0,0,10000,10000";
+            adminArea.Id = 3;
+            adminArea.Coords = "0,0,1,10000,10000,128";
             adminArea.PermittedGroups.Add("Admin");
             defaultAreas.Add(adminArea);
 
