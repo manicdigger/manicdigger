@@ -23,6 +23,7 @@ namespace GameModeFortress
         [XmlElement(ElementName="Creative")]
         public bool IsCreative { get; set; }        //Is this a free build server?
         public bool Public { get; set; }            //Advertise this server?
+        public bool AllowGuests { get; set; }
         public bool AllowFreemove { get; set; }     //Allow character to fly?
         public bool Flooding { get; set; }          //Allow flooding water?
         public bool Monsters { get; set; }
@@ -106,6 +107,7 @@ namespace GameModeFortress
             this.Key = Guid.NewGuid().ToString();
             this.IsCreative = true;
             this.Public = true;
+            this.AllowGuests = true;
             this.AllowFreemove = true;
             this.Flooding = true;
             this.Monsters = true;

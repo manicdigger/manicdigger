@@ -318,6 +318,7 @@ namespace ManicDiggerServer
                     }
                     config.IsCreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
                     config.Public = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
+                    config.AllowGuests = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
                     if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
                     {
                         config.AllowFreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
@@ -387,6 +388,7 @@ namespace ManicDiggerServer
             }
             d_Heartbeat.Name = config.Name;
             d_Heartbeat.MaxClients = config.MaxClients;
+            d_Heartbeat.AllowGuests = config.AllowGuests;
             d_Heartbeat.Port = config.Port;
             d_Heartbeat.Version = GameVersion.Version;
             d_Heartbeat.Key = config.Key;
@@ -1759,6 +1761,13 @@ for (int i = 0; i < unknown.Count; i++)
                         //Account verification failed.
                         username = "~" + username;
                         verificationFailed = true;
+                    }
+
+                    if (!config.AllowGuests && verificationFailed)
+                    {
+                        SendDisconnectPlayer(clientid, "Guests are not allowed on this server. Login or register an account.");
+                        KillPlayer(clientid);
+                        break;
                     }
 
                     if (config.IsUserBanned(username))
