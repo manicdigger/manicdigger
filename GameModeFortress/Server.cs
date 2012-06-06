@@ -581,17 +581,25 @@ namespace ManicDiggerServer
                 data = new byte[1024];
                 try
                 {
-                    //stringData = Encoding.ASCII.GetString(data, 0, recv);
                     recv = clientSocket.Receive(data);
+                }
+                catch
+                {
+                    recv = 0;
+                }
+                //stringData = Encoding.ASCII.GetString(data, 0, recv);
+
+                if (recv == 0)
+                {
+                    //client problem. disconnect client.
+                    KillPlayer(clientid);
+                }
+                else
+                {
                     for (int i = 0; i < recv; i++)
                     {
                         client.received.Add(data[i]);
                     }
-                }
-                catch
-                {
-                    //client problem. disconnect client.
-                    KillPlayer(clientid);
                 }
             }
             foreach (var k in new List<KeyValuePair<int, Client>>(clients))
