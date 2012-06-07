@@ -795,54 +795,6 @@ namespace ManicDiggerServer
             d_Water.tosetwater.Clear();
             d_Water.tosetempty.Clear();
         }
-        
-        public class Ping
-        {
-            public TimeSpan RoundtripTime { get; set; }
-
-            private bool ready;
-            private DateTime timeSend;
-            private int timeout = 10; //in seconds
-
-            public Ping()
-            {
-                this.RoundtripTime = TimeSpan.MinValue;
-                this.ready = true;
-                this.timeSend = DateTime.MinValue;
-            }
-
-            public bool Send()
-            {
-                if (!ready)
-                {
-                    return false;
-                }
-                ready = false;
-                this.timeSend = DateTime.UtcNow;
-                return true;
-            }
-
-            public bool Receive()
-            {
-                if (ready)
-                {
-                    return false;
-                }
-                this.RoundtripTime = DateTime.UtcNow.Subtract(this.timeSend);
-                ready = true;
-                return true;
-            }
-
-            public bool Timeout()
-            {
-                if (DateTime.UtcNow.Subtract(this.timeSend).Seconds > this.timeout)
-                {
-                    this.ready = true;
-                    return true;
-                }
-                return false;
-            }
-        }
 
         private void SendPing(int clientid)
         {
@@ -3380,4 +3332,54 @@ for (int i = 0; i < unknown.Count; i++)
             }
         }
     }
+
+    public class Ping
+    {
+        public TimeSpan RoundtripTime { get; set; }
+
+        private bool ready;
+        private DateTime timeSend;
+        private int timeout = 10; //in seconds
+
+        public Ping()
+        {
+            this.RoundtripTime = TimeSpan.MinValue;
+            this.ready = true;
+            this.timeSend = DateTime.MinValue;
+        }
+
+        public bool Send()
+        {
+            if (!ready)
+            {
+                return false;
+            }
+            ready = false;
+            this.timeSend = DateTime.UtcNow;
+            return true;
+        }
+
+        public bool Receive()
+        {
+            if (ready)
+            {
+                return false;
+            }
+            this.RoundtripTime = DateTime.UtcNow.Subtract(this.timeSend);
+            ready = true;
+            return true;
+        }
+
+        public bool Timeout()
+        {
+            if (DateTime.UtcNow.Subtract(this.timeSend).Seconds > this.timeout)
+            {
+                this.ready = true;
+                return true;
+            }
+            return false;
+        }
+
+    }
+
 }

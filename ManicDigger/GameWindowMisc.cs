@@ -352,4 +352,28 @@ namespace ManicDigger
         public int Port;
         public string Auth;
     }
+    public class ConnectedPlayer
+    {
+        public int id;
+        public string name;
+        public int ping; // in ms
+    }
+    public class ServerInformation
+    {
+        public string ServerName;
+        public string ServerMotd;
+        public string ServerIp;
+        public List<ConnectedPlayer> Players;
+        public TimeSpan ServerPing;
+        public bool AllowFreemove;
+
+        public ServerInformation()
+        {
+            this.ServerName = "";
+            this.ServerMotd = "";
+            this.ServerIp = "";
+            this.Players = new List<ConnectedPlayer>();
+            this.AllowFreemove = false;
+        }
+    }
 }

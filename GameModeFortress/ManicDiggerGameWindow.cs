@@ -69,6 +69,8 @@ namespace ManicDigger
         [Inject]
         public HudChat d_HudChat;
         [Inject]
+        public HudPlayerList d_HudPlayerList;
+        [Inject]
         public HudTextEditor d_HudTextEditor;
         [Inject]
         public HudInventory d_HudInventory;
@@ -107,6 +109,9 @@ namespace ManicDigger
 
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
+
+        public ServerInformation ServerInfo = new ServerInformation();
+        public ManicDiggerServer.Ping ServerPing = new ManicDiggerServer.Ping();
 
         public void SetTileAndUpdate(Vector3 pos, int type)
         {
@@ -363,7 +368,7 @@ namespace ManicDigger
                     }
                     else if (cmd == "freemove")
                     {
-                        if (AllowFreemove)
+                        if (this.ServerInfo.AllowFreemove)
                         {
 	                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
                         }
@@ -435,7 +440,7 @@ namespace ManicDigger
                     {
                         try
                         {
-                            if (AllowFreemove)
+                            if (this.ServerInfo.AllowFreemove)
                             {
                                 if (float.Parse(arguments) <= 500)
                                 {
@@ -625,7 +630,7 @@ namespace ManicDigger
                 string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
                 if (e.Key == GetKey(OpenTK.Input.Key.F1))
                 {
-                    if (!AllowFreemove)
+                    if (!this.ServerInfo.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -635,7 +640,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F2))
                 {
-                    if (!AllowFreemove)
+                    if (!this.ServerInfo.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -645,7 +650,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
-                    if (!AllowFreemove)
+                    if (!this.ServerInfo.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -751,11 +756,17 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
                    guistate = GuiState.EditText;
+                   FreeMouse = true;
                 }
                if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.Tab))
+                {
+                    guistate = GuiState.PlayerList;
+                    FreeMouse = true;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.E))
                 {
@@ -819,6 +830,28 @@ namespace ManicDigger
                     || e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
                     GuiStateBackToGame();
+                }
+                return;
+            }
+            else if (guistate == GuiState.PlayerList)
+            {
+                if (e.Key == GetKey(OpenTK.Input.Key.Tab)
+                    || e.Key == GetKey(OpenTK.Input.Key.Escape))
+                {
+                    GuiStateBackToGame();
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.PageDown))
+                {
+                    d_HudPlayerList.NextPage();
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.PageUp))
+                {
+                    d_HudPlayerList.PreviousPage();
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.F12))
+                {
+                    d_Screenshot.SaveScreenshot();
+                    screenshotflash = 5;
                 }
                 return;
             }
@@ -900,6 +933,7 @@ namespace ManicDigger
             MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
             Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
             MapLoadingStart();
+            this.ServerInfo.ServerIp = connectdata.Ip;
         }
         void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
         {
@@ -1232,6 +1266,9 @@ namespace ManicDigger
             {
             }
             else if (guistate == GuiState.EditText) { }
+            else if (guistate == GuiState.PlayerList)
+            {
+            }
             else throw new Exception();
             float movespeednow = MoveSpeedNow();
             Acceleration acceleration = new Acceleration();
@@ -2415,7 +2452,8 @@ namespace ManicDigger
             Inventory,
             MapLoading,
             CraftingRecipes,
-           EditText
+           EditText,
+            PlayerList
         }
         private void DrawMouseCursor()
         {
@@ -2452,10 +2490,6 @@ namespace ManicDigger
                         {
                             d_HudChat.DrawTypingBuffer();
                         }
-                        if (Keyboard[GetKey(OpenTK.Input.Key.Tab)])
-                        {
-                            DrawConnectedPlayersList();
-                        }
                     }
                     break;
                 case GuiState.EscapeMenu:
@@ -2484,6 +2518,11 @@ namespace ManicDigger
                 case GuiState.EditText:
                     {
                        d_HudTextEditor.Render();
+                    }
+                    break;
+                case GuiState.PlayerList:
+                    {
+                        d_HudPlayerList.DrawHudPlayerList();
                     }
                     break;
                 default:
@@ -2556,20 +2595,6 @@ namespace ManicDigger
                 info = d_Data.Name[blocktype];
             }
             d_The3d.Draw2dText(info, Width * 0.5f - d_The3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
-            */
-        }
-        private void DrawConnectedPlayersList()
-        {
-            for (int i = 0; i < connectedplayers.Count; i++)
-            {
-                d_The3d.Draw2dText(connectedplayers[i].id + " " + connectedplayers[i].name + " " + connectedplayers[i].ping, 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
-            }
-            /*
-            List<string> l = new List<string>(ConnectedPlayers());
-            for (int i = 0; i < l.Count; i++)
-            {
-                d_The3d.Draw2dText(l[i], 200 + 200 * (i / 8), 200 + 30 * i, d_HudChat.ChatFontSize, Color.White);
-            }
             */
         }
         private void DrawAim()
@@ -2674,6 +2699,7 @@ namespace ManicDigger
         bool ENABLE_DRAWFPS = false;
         bool ENABLE_DRAWFPSHISTORY = false;
         bool ENABLE_DRAWPOSITION = false;
+
         //int targettexture = -1;
         IEnumerable<TileSide> AllTileSides
         {
@@ -3831,13 +3857,9 @@ namespace ManicDigger
             return (byte)(xx * 256);
         }
         bool spawned = false;
-        string serverName = "";
-        string serverMotd = "";
-        public string ServerName { get { return serverName; } set { serverName = value; } }
-        public string ServerMotd { get { return serverMotd; } set { serverMotd = value; } }
-        public bool allowfreemove = true;
-        public bool AllowFreemove { get { return allowfreemove; } set { allowfreemove = value; } }
+
         private int LocalPlayerId = -1;
+
         Stopwatch stopwatch = new Stopwatch();
         public int maxMiliseconds = 3;
         private int TryReadPacket()
@@ -3897,9 +3919,9 @@ namespace ManicDigger
                             }
                         }
                         this.LocalPlayerId = packet.Identification.AssignedClientId;
-                        this.serverName = packet.Identification.ServerName;
-                        this.ServerMotd = packet.Identification.ServerMotd;
-                        this.AllowFreemove = !packet.Identification.DisallowFreemove;
+                        this.ServerInfo.ServerName = packet.Identification.ServerName;
+                        this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
+                        this.ServerInfo.AllowFreemove = !packet.Identification.DisallowFreemove;
                         ChatLog("---Connected---");
                         List<byte[]> needed = new List<byte[]>();
                         foreach (byte[] b in packet.Identification.UsedBlobsMd5)
@@ -3920,14 +3942,20 @@ namespace ManicDigger
                 case ServerPacketId.Ping:
                     {
                         this.SendPingReply();
+                        this.ServerPing.Send();
                     }
                     break;
                 case ServerPacketId.PlayerPing:
                     {
-                        foreach (var k in connectedplayers)
+                        foreach(var k in this.ServerInfo.Players)
                         {
-                            if (k.id == packet.PlayerPing.ClientId)
+                            if(k.id == packet.PlayerPing.ClientId)
                             {
+                                if(k.id == this.LocalPlayerId)
+                                {
+                                    this.ServerPing.Receive();
+                                    this.ServerInfo.ServerPing = ServerPing.RoundtripTime;
+                                }
                                 k.ping = packet.PlayerPing.Ping;
                                 break;
                             }
@@ -4032,7 +4060,7 @@ namespace ManicDigger
                     {
                         int playerid = packet.SpawnPlayer.PlayerId;
                         string playername = packet.SpawnPlayer.PlayerName;
-                        connectedplayers.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
+                        this.ServerInfo.Players.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
                         d_Clients.Players[playerid] = new Player();
                         d_Clients.Players[playerid].Name = playername;
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
@@ -4087,11 +4115,11 @@ namespace ManicDigger
                 case ServerPacketId.DespawnPlayer:
                     {
                         int playerid = packet.DespawnPlayer.PlayerId;
-                        for (int i = 0; i < connectedplayers.Count; i++)
+                        for (int i = 0; i < this.ServerInfo.Players.Count; i++)
                         {
-                            if (connectedplayers[i].id == playerid)
+                            if (this.ServerInfo.Players[i].id == playerid)
                             {
-                                connectedplayers.RemoveAt(i);
+                                this.ServerInfo.Players.RemoveAt(i);
                             }
                         }
                         d_Clients.Players.Remove(playerid);
@@ -4229,7 +4257,7 @@ namespace ManicDigger
             {
                 Directory.CreateDirectory(gamepathlogs);
             }
-            string filename = Path.Combine(gamepathlogs, MakeValidFileName(serverName) + ".txt");
+            string filename = Path.Combine(gamepathlogs, MakeValidFileName(this.ServerInfo.ServerName) + ".txt");
             try
             {
                 File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
@@ -4311,20 +4339,7 @@ namespace ManicDigger
         }
         int MapLoadingPercentComplete;
         string MapLoadingStatus;
-        class ConnectedPlayer
-        {
-            public int id;
-            public string name;
-            public int ping; // in ms
-        }
-        List<ConnectedPlayer> connectedplayers = new List<ConnectedPlayer>();
-        public IEnumerable<string> ConnectedPlayers()
-        {
-            foreach (ConnectedPlayer p in connectedplayers)
-            {
-                yield return p.name;
-            }
-        }
+
         #region IClientNetwork Members
         public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
         #endregion

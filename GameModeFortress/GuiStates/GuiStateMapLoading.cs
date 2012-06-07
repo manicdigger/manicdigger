@@ -25,8 +25,8 @@ namespace ManicDigger
             }
             string progress = string.Format("{0}%\n", maploadingprogress.ProgressPercent);
             string progress1 = string.Format("{0} KB", (maploadingprogress.ProgressBytes / 1024));
-            d_The3d.Draw2dText(ServerName, xcenter(d_The3d.TextSize(ServerName, 14).Width), Height / 2 - 150, 14, Color.White);
-            d_The3d.Draw2dText(ServerMotd, xcenter(d_The3d.TextSize(ServerMotd, 14).Width), Height / 2 - 100, 14, Color.White);
+            d_The3d.Draw2dText(this.ServerInfo.ServerName, xcenter(d_The3d.TextSize(this.ServerInfo.ServerName, 14).Width), Height / 2 - 150, 14, Color.White);
+            d_The3d.Draw2dText(this.ServerInfo.ServerMotd, xcenter(d_The3d.TextSize(this.ServerInfo.ServerMotd, 14).Width), Height / 2 - 100, 14, Color.White);
             d_The3d.Draw2dText(connecting, xcenter(d_The3d.TextSize(connecting, 14).Width), Height / 2 - 50, 14, Color.White);
             if (maploadingprogress.ProgressPercent > 0)
             {
