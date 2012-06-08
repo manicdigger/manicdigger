@@ -274,7 +274,7 @@ namespace ManicDigger
             }
             if (guistate == GuiState.EditText)
             {
-               d_HudTextEditor.HandleKeyPress(sender, e);
+                d_HudTextEditor.HandleKeyPress(sender, e);
             }
         }
         float overheadcameradistance = 10;
@@ -336,7 +336,7 @@ namespace ManicDigger
                     }
                     if (cmd == "pos")
                     {
-                    	ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
+                        ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
                     }
                     else if (cmd == "fog")
                     {
@@ -370,7 +370,7 @@ namespace ManicDigger
                     {
                         if (this.ServerInfo.AllowFreemove)
                         {
-	                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
+                            ENABLE_FREEMOVE = BoolCommandArgument(arguments);
                         }
                         else
                         {
@@ -508,13 +508,13 @@ namespace ManicDigger
             }
             if (guistate == GuiState.EditText)
             {
-               d_HudTextEditor.HandleKeyUp(sender, e);
+                d_HudTextEditor.HandleKeyUp(sender, e);
             }
         }
         bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            if (e.Key ==  GetKey(OpenTK.Input.Key.ShiftLeft) ||  e.Key ==  GetKey(OpenTK.Input.Key.ShiftRight))
+            if (e.Key == GetKey(OpenTK.Input.Key.ShiftLeft) || e.Key == GetKey(OpenTK.Input.Key.ShiftRight))
                 IsShiftPressed = true;
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
@@ -541,10 +541,10 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
                 {
-                   GuiTyping = TypingState.Typing;
-                   d_HudChat.IsTyping = true;
-                   d_HudChat.GuiTypingBuffer = "";
-                   return;
+                    GuiTyping = TypingState.Typing;
+                    d_HudChat.IsTyping = true;
+                    d_HudChat.GuiTypingBuffer = "";
+                    return;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
                 {
@@ -580,7 +580,7 @@ namespace ManicDigger
                     }
                     return;
                 }
-               if (GuiTyping == TypingState.Typing)
+                if (GuiTyping == TypingState.Typing)
                 {
                     var key = e.Key;
                     string c = "";
@@ -755,10 +755,10 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
-                   guistate = GuiState.EditText;
-                   FreeMouse = true;
+                    guistate = GuiState.EditText;
+                    FreeMouse = true;
                 }
-               if (e.Key == GetKey(OpenTK.Input.Key.F12))
+                if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
@@ -770,25 +770,25 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.E))
                 {
-                	if (currentAttackedBlock != null)
-                	{
-                		Vector3 pos = new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
-                		int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
-                		if (IsUsableBlock(blocktype))
-                		{
-                			if (GameDataManicDigger.IsRailTile(blocktype))
-                			{
-                				player.playerposition.X = pos.X + .5f;
-                				player.playerposition.Y = pos.Z + 1;
-                				player.playerposition.Z = pos.Y + .5f;
-                				ENABLE_FREEMOVE = false;
-                			}
-                			else
-                			{
-                				SendSetBlock(pos, BlockSetMode.Use, 0, ActiveMaterial);
-                			}
-                		}
-                	}
+                    if (currentAttackedBlock != null)
+                    {
+                        Vector3 pos = new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                        int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                        if (IsUsableBlock(blocktype))
+                        {
+                            if (GameDataManicDigger.IsRailTile(blocktype))
+                            {
+                                player.playerposition.X = pos.X + .5f;
+                                player.playerposition.Y = pos.Z + 1;
+                                player.playerposition.Z = pos.Y + .5f;
+                                ENABLE_FREEMOVE = false;
+                            }
+                            else
+                            {
+                                SendSetBlock(pos, BlockSetMode.Use, 0, ActiveMaterial);
+                            }
+                        }
+                    }
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
@@ -865,12 +865,13 @@ namespace ManicDigger
                     GuiStateBackToGame();
                 }
             }
-            else if (guistate == GuiState.EditText) {
-               if (e.Key == GetKey(OpenTK.Input.Key.Escape))
-               {
-                  GuiStateBackToGame();
-               }
-               d_HudTextEditor.HandleKeyDown(sender, e);
+            else if (guistate == GuiState.EditText)
+            {
+                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
+                {
+                    GuiStateBackToGame();
+                }
+                d_HudTextEditor.HandleKeyDown(sender, e);
             }
             else throw new Exception();
         }
@@ -1397,7 +1398,7 @@ namespace ManicDigger
             }
         }
         DateTime lastfalldamagetime;
-        
+
         Vector3i GetPlayerEyesBlock()
         {
             var p = LocalPlayerPosition;
@@ -1420,7 +1421,7 @@ namespace ManicDigger
             {
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
-            
+
             //TODO d_Data.DamageToPlayer.
             //TODO swimming in water too long.
             if (block1 == (int)TileTypeManicDigger.Lava
@@ -1538,7 +1539,7 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
-            	|| d_Map.GetBlock(x, y, z) == 117
+                || d_Map.GetBlock(x, y, z) == 117
                 || d_Data.IsWater[d_Map.GetBlock(x, y, z)];
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
@@ -1559,7 +1560,7 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
                 || blocktype == (int)TileTypeManicDigger.DoorTopOpen
                 || blocktype == (int)TileTypeManicDigger.TNT
-            	|| GameDataManicDigger.IsRailTile(blocktype);
+                || GameDataManicDigger.IsRailTile(blocktype);
         }
         bool IsWearingWeapon()
         {
@@ -1570,7 +1571,7 @@ namespace ManicDigger
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
-            
+
             if (!leftpressedpicking)
             {
                 if (mouseleftclick)
@@ -1725,18 +1726,20 @@ namespace ManicDigger
                 return;
             }
             var ntile = pick0.Current();
-            if(IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y))) {
-            	currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
+            if (IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y)))
+            {
+                currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
             }
             if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
             {
-            	if (left && d_Inventory.RightHand[ActiveMaterial] == null) {
-            		PacketClientHealth p = new PacketClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
-	    			SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.MonsterHit, Health = p }));
-	            }
+                if (left && d_Inventory.RightHand[ActiveMaterial] == null)
+                {
+                    PacketClientHealth p = new PacketClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
+                    SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.MonsterHit, Health = p }));
+                }
                 if (left && !fastclicking)
                 {
-                	//todo animation
+                    //todo animation
                     fastclicking = false;
                 }
                 if (left || right || middle)
@@ -1819,13 +1822,13 @@ namespace ManicDigger
                             {
                                 //attack
                                 var pos = new Vector3i((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                                currentAttackedBlock = new Vector3i(pos.x,pos.y,pos.z);
+                                currentAttackedBlock = new Vector3i(pos.x, pos.y, pos.z);
                                 if (!blockhealth.ContainsKey(pos))
                                 {
                                     blockhealth[pos] = GetCurrentBlockHealth(pos.x, pos.y, pos.z);
                                 }
                                 blockhealth[pos] -= WeaponAttackStrength();
-                                float health = GetCurrentBlockHealth(pos.x,pos.y,pos.z);
+                                float health = GetCurrentBlockHealth(pos.x, pos.y, pos.z);
                                 if (health <= 0)
                                 {
                                     if (currentAttackedBlock != null)
@@ -1908,13 +1911,14 @@ namespace ManicDigger
                 int blocktype = d_Map.GetBlock(x, y, z);
                 float health = GetCurrentBlockHealth(x, y, z);
                 float progress = health / d_Data.Strength[blocktype];
-                if (IsUsableBlock(blocktype)) {
-                	DrawEnemyHealthUseInfo(d_Data.Name[blocktype], progress, true);
+                if (IsUsableBlock(blocktype))
+                {
+                    DrawEnemyHealthUseInfo(d_Data.Name[blocktype], progress, true);
                 }
                 DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
             }
         }
-        
+
         private int compassid = -1;
         private int needleid = -1;
         private float compassangle = 0;
@@ -1922,42 +1926,43 @@ namespace ManicDigger
 
         bool CompassInActiveMaterials()
         {
-        	for(int i=0; i<10; i++)
-        	{
-        		if(MaterialSlots[i]==d_Data.BlockIdCompass)
-        		{
-        			return true;
-        		}
-        	}
-        	return false;
+            for (int i = 0; i < 10; i++)
+            {
+                if (MaterialSlots[i] == d_Data.BlockIdCompass)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-        
+
         void DrawCompass()
         {
-        	if (!CompassInActiveMaterials()) return;
-        	if (compassid == -1) {
-				compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
-				needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
-        	}
-			float size = 175;
-			float posX = Width-100;
-			float posY = 100;
-			float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
-			
-			compassvertex += (playerorientation-compassangle) / 50;
-			compassvertex *= .90f;
-			compassangle += compassvertex;
-			
-			Draw2dData[] todraw = new Draw2dData[1];
-			todraw[0].x1 = posX-size/2;
-			todraw[0].y1 = posY-size/2;
-			todraw[0].width = size;
-			todraw[0].height = size;
-			todraw[0].inAtlasId = null;
-			todraw[0].color = new FastColor(Color.White);
-			
-			d_The3d.Draw2dTexture(compassid, posX-size/2, posY-size/2, size, size, null);
-			d_The3d.Draw2dTextures(todraw, needleid, compassangle);
+            if (!CompassInActiveMaterials()) return;
+            if (compassid == -1)
+            {
+                compassid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compass.png")));
+                needleid = d_The3d.LoadTexture(d_GetFile.GetFile(Path.Combine("gui", "compassneedle.png")));
+            }
+            float size = 175;
+            float posX = Width - 100;
+            float posY = 100;
+            float playerorientation = -(float)((player.playerorientation.Y / (2 * Math.PI)) * 360);
+
+            compassvertex += (playerorientation - compassangle) / 50;
+            compassvertex *= .90f;
+            compassangle += compassvertex;
+
+            Draw2dData[] todraw = new Draw2dData[1];
+            todraw[0].x1 = posX - size / 2;
+            todraw[0].y1 = posY - size / 2;
+            todraw[0].width = size;
+            todraw[0].height = size;
+            todraw[0].inAtlasId = null;
+            todraw[0].color = new FastColor(Color.White);
+
+            d_The3d.Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null);
+            d_The3d.Draw2dTextures(todraw, needleid, compassangle);
         }
 
         void DrawEnemyHealthCommon(string name, float progress)
@@ -1967,14 +1972,14 @@ namespace ManicDigger
 
         void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
         {
-        	int y = useInfo ? 55 : 35;
+            int y = useInfo ? 55 : 35;
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300, y, null, Color.Black);
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, Color.Red);
             d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 14).Width), 40, 14, null);
             if (useInfo)
             {
-            	name = "(press E to use)";
-            	d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 10).Width), 70, 10, null);
+                name = "(press E to use)";
+                d_The3d.Draw2dText(name, xcenter(d_The3d.TextSize(name, 10).Width), 70, 10, null);
             }
         }
 
@@ -2452,7 +2457,7 @@ namespace ManicDigger
             Inventory,
             MapLoading,
             CraftingRecipes,
-           EditText,
+            EditText,
             PlayerList
         }
         private void DrawMouseCursor()
@@ -2517,7 +2522,7 @@ namespace ManicDigger
                     break;
                 case GuiState.EditText:
                     {
-                       d_HudTextEditor.Render();
+                        d_HudTextEditor.Render();
                     }
                     break;
                 case GuiState.PlayerList:
@@ -2537,12 +2542,12 @@ namespace ManicDigger
             {
                 d_FpsHistoryGraphRenderer.DrawFpsHistoryGraph();
             }
-           if (ENABLE_DRAWPOSITION)
+            if (ENABLE_DRAWPOSITION)
             {
-            	string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " +  Math.Floor(player.playerposition.Y) + "; Z: " + Math.Floor(player.playerposition.Z);
+                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Y) + "; Z: " + Math.Floor(player.playerposition.Z);
                 d_The3d.Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
             }
-             if (drawblockinfo)
+            if (drawblockinfo)
             {
                 DrawBlockInfo();
             }
@@ -2563,7 +2568,7 @@ namespace ManicDigger
             }
             d_The3d.PerspectiveMode();
         }
-       public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
+        public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
             d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 0, 0, Width, Height, null, Color.White);
@@ -2640,7 +2645,7 @@ namespace ManicDigger
                         GL.Translate(pos.X, pos.Y + 1f, pos.Z);
                         if (k.Value.Type == PlayerType.Monster)
                         {
-                        	GL.Translate(0, 1f, 0);
+                            GL.Translate(0, 1f, 0);
                         }
                         GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                         GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
@@ -2650,11 +2655,11 @@ namespace ManicDigger
                         //Todo: Can't change text color because text has outline anyway.
                         if (k.Value.Type == PlayerType.Monster)
                         {
-                        	d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
-                        	d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -25, -10, 50 * (k.Value.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
+                            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
+                            d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), -25, -10, 50 * (k.Value.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
                         }
                         d_The3d.Draw2dText(name, -d_The3d.TextSize(name, 14).Width / 2, 0, 14, Color.White, true);
-//                        GL.Translate(0, 1, 0);
+                        //                        GL.Translate(0, 1, 0);
                         GL.PopMatrix();
                     }
                 }
@@ -2871,7 +2876,7 @@ namespace ManicDigger
                 return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
-		#endregion
+        #endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
         Color terraincolor { get { return WaterSwimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
         #region IKeyboard Members
@@ -2990,10 +2995,10 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == BlockSetMode.Create)
                 {
-                	if (GameDataManicDigger.IsDoorTile(activematerial))
-                	{
-                		if (z+1 == d_Map.MapSizeZ || z == 0) return;
-                	}
+                    if (GameDataManicDigger.IsDoorTile(activematerial))
+                    {
+                        if (z + 1 == d_Map.MapSizeZ || z == 0) return;
+                    }
                     if (activematerial == (int)TileTypeManicDigger.Cuboid)
                     {
                         ClearFillArea();
@@ -3605,7 +3610,7 @@ namespace ManicDigger
                     return true;
                 case ServerPacketId.RemoveMonsters:
                     {
-                    	foreach (int id in new List<int>(players.Keys))
+                        foreach (int id in new List<int>(players.Keys))
                         {
                             if (id >= MonsterIdFirst)
                             {
@@ -3947,11 +3952,11 @@ namespace ManicDigger
                     break;
                 case ServerPacketId.PlayerPing:
                     {
-                        foreach(var k in this.ServerInfo.Players)
+                        foreach (var k in this.ServerInfo.Players)
                         {
-                            if(k.id == packet.PlayerPing.ClientId)
+                            if (k.id == packet.PlayerPing.ClientId)
                             {
-                                if(k.id == this.LocalPlayerId)
+                                if (k.id == this.LocalPlayerId)
                                 {
                                     this.ServerPing.Receive();
                                     this.ServerInfo.ServerPing = ServerPing.RoundtripTime;
@@ -4493,7 +4498,7 @@ namespace ManicDigger
         }
         //public void SetChunkDirty(int x, int y, int z, bool dirty)
         //{
-            //d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
+        //d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
         //}
         #endregion
         public void SetAllChunksNotDirty()

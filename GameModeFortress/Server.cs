@@ -182,11 +182,11 @@ namespace ManicDiggerServer
                 d_Generator.treeCount = config.Generator.TreeCount;
                 if (config.Generator.RandomSeed)
                 {
-                	Seed = new Random().Next();
+                    Seed = new Random().Next();
                 }
                 else
                 {
-                	Seed = config.Generator.Seed;
+                    Seed = config.Generator.Seed;
                 }
                 d_Generator.SetSeed(Seed);
                 MemoryStream ms = new MemoryStream();
@@ -213,7 +213,7 @@ namespace ManicDiggerServer
             SaveAllLoadedChunks();
             if (!config.IsCreative)
             {
-            	save.Inventory = Inventory;
+                save.Inventory = Inventory;
             }
             save.PlayerStats = PlayerStats;
             save.Seed = Seed;
@@ -408,7 +408,7 @@ namespace ManicDiggerServer
                 d_Heartbeat.SendHeartbeat();
                 if (!writtenServerKey)
                 {
-                   Console.WriteLine("hash: "+ GetHash(d_Heartbeat.ReceivedKey)); 
+                    Console.WriteLine("hash: " + GetHash(d_Heartbeat.ReceivedKey));
                     writtenServerKey = true;
                 }
                 Console.WriteLine("Heartbeat sent.");
@@ -472,7 +472,7 @@ namespace ManicDiggerServer
         public int SimulationCurrentFrame { get { return (int)simulationcurrentframe; } }
         double oldtime;
         double accumulator;
-        
+
         private int lastClientId;
         private int GenerateClientId()
         {
@@ -638,13 +638,13 @@ namespace ManicDiggerServer
                 NotifyPlayerStats(k.Key);
                 if (config.Monsters)
                 {
-                	k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
+                    k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
                 }
             }
             pingtimer.Update(
             delegate
             {
-                List<int > keysToDelete = new List<int>();
+                List<int> keysToDelete = new List<int>();
                 foreach (var k in clients)
                 {
                     // Check if client is alive. Detect half-dropped connections.
@@ -675,7 +675,7 @@ namespace ManicDiggerServer
                 ChunkSimulation();
             }
             if (config.Flooding)
-            	UpdateWater();
+                UpdateWater();
             tntTimer.Update(UpdateTnt);
         }
 
@@ -692,58 +692,59 @@ namespace ManicDiggerServer
                 Vector3i pos = tntStack.Pop();
                 int closeplayer = -1;
                 int closedistance = -1;
-	            foreach (var k in clients)
-	        	{
-	            	int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
-                	if (closedistance == -1 || distance < closedistance)
-                	{
-                   		closedistance = distance;
-                   		closeplayer = k.Key;
+                foreach (var k in clients)
+                {
+                    int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                    if (closedistance == -1 || distance < closedistance)
+                    {
+                        closedistance = distance;
+                        closeplayer = k.Key;
                     }
-	            	if (distance < 255) {
-	            		SendSound(k.Key, "tnt.wav");
-	            	}
-	    		}
-	            Inventory inventory = GetPlayerInventory(clients[closeplayer].playername).Inventory;
+                    if (distance < 255)
+                    {
+                        SendSound(k.Key, "tnt.wav");
+                    }
+                }
+                Inventory inventory = GetPlayerInventory(clients[closeplayer].playername).Inventory;
                 for (int xx = 0; xx < tntRange; xx++)
                 {
                     for (int yy = 0; yy < tntRange; yy++)
                     {
                         for (int zz = 0; zz < tntRange; zz++)
                         {
-                            if (sphereEq (xx - (tntRange - 1) / 2, yy - (tntRange - 1) / 2, zz - (tntRange - 1) / 2, tntRange / 2) <= 0)
+                            if (sphereEq(xx - (tntRange - 1) / 2, yy - (tntRange - 1) / 2, zz - (tntRange - 1) / 2, tntRange / 2) <= 0)
                             {
-                                Vector3i pos2 = new Vector3i (pos.x + xx - tntRange / 2,
+                                Vector3i pos2 = new Vector3i(pos.x + xx - tntRange / 2,
                                 pos.y + yy - tntRange / 2,
                                 pos.z + zz - tntRange / 2);
-                                if (!MapUtil.IsValidPos (d_Map, pos2.x, pos2.y, pos2.z))
+                                if (!MapUtil.IsValidPos(d_Map, pos2.x, pos2.y, pos2.z))
                                 {
                                     continue;
                                 }
-                                int block = d_Map.GetBlock (pos2.x, pos2.y, pos2.z);
+                                int block = d_Map.GetBlock(pos2.x, pos2.y, pos2.z);
                                 if (tntStack.Count < tntMax
-	                                && pos2 != pos
-	                                && block == (int)TileTypeManicDigger.TNT)
+                                    && pos2 != pos
+                                    && block == (int)TileTypeManicDigger.TNT)
                                 {
-                                    tntStack.Push (pos2);
+                                    tntStack.Push(pos2);
                                     tntTimer.accumulator = tntTimer.INTERVAL;
                                 }
                                 else
                                 {
                                     if ((block != 0)
-	                                    && (block != (int)TileTypeManicDigger.Adminium)
-	                                    && !(d_Data.IsFluid [block]))
+                                        && (block != (int)TileTypeManicDigger.Adminium)
+                                        && !(d_Data.IsFluid[block]))
                                     {
-                                        SetBlockAndNotify (pos2.x, pos2.y, pos2.z, 0);
+                                        SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
                                         if (!config.IsCreative)
                                         {
                                             // chance to get some of destruced blocks
-                                            if (rnd.NextDouble () < .20f)
+                                            if (rnd.NextDouble() < .20f)
                                             {
-                                                var item = new Item ();
+                                                var item = new Item();
                                                 item.ItemClass = ItemClass.Block;
-                                                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo [block];
-                                                GetInventoryUtil (inventory).GrabItem (item, 0);
+                                                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+                                                GetInventoryUtil(inventory).GrabItem(item, 0);
                                             }
                                         }
                                     }
@@ -756,7 +757,7 @@ namespace ManicDiggerServer
                 NotifyInventory(closeplayer);
             }
         }
-        private int sphereEq (int x, int y, int z, int r)
+        private int sphereEq(int x, int y, int z, int r)
         {
             return x * x + y * y + z * z - r * r;
         }
@@ -768,7 +769,7 @@ namespace ManicDiggerServer
 
         private void UpdateWater()
         {
-        	d_Water.Update();
+            d_Water.Update();
             try
             {
                 foreach (var v in d_Water.tosetwater)
@@ -911,7 +912,7 @@ namespace ManicDiggerServer
         {
             if (config.Monsters)
             {
-            	AddMonsters(p);
+                AddMonsters(p);
             }
             byte[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
@@ -1093,7 +1094,7 @@ namespace ManicDiggerServer
         }
         private void BlockTickGrass(Vector3i pos)
         {
-            if (IsShadow(pos.x, pos.y, pos.z) 
+            if (IsShadow(pos.x, pos.y, pos.z)
                 && !(reflectedSunnyLight(pos.x, pos.y, pos.z) && d_Data.IsTransparentForLight[d_Map.GetBlock(pos.x, pos.y, pos.z + 1)]))
             {
                 SetBlockAndNotify(pos.x, pos.y, pos.z, (int)TileTypeManicDigger.Dirt);
@@ -1245,7 +1246,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        
+
         private void DoSaveChunk(int x, int y, int z, Chunk c)
         {
             MemoryStream ms = new MemoryStream();
@@ -1339,17 +1340,17 @@ namespace ManicDiggerServer
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
             }
          */
-            /*
+        /*
 Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
 var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
 for (int i = 0; i < around.Count; i++)
 {
-    var v = around[i];
-    d_Map.GetBlock(v.x, v.y, v.z); //force load
-    if (i % 10 == 0)
-    {
-        SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
-    }
+var v = around[i];
+d_Map.GetBlock(v.x, v.y, v.z); //force load
+if (i % 10 == 0)
+{
+    SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
+}
 }
 ChunkSimulation();
 
@@ -1357,9 +1358,9 @@ List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
 int sent = 0;
 for (int i = 0; i < unknown.Count; i++)
 {
-    sent += NotifyMapChunks(clientid, 5);
-    SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
-    if (sent >= unknown.Count) { break; }
+sent += NotifyMapChunks(clientid, 5);
+SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
+if (sent >= unknown.Count) { break; }
 }
 */
         /*
@@ -1404,7 +1405,7 @@ for (int i = 0; i < unknown.Count; i++)
         }
         private void HitMonsters(int clientid, int health)
         {
-        	Client c = clients[clientid];
+            Client c = clients[clientid];
             int mapx = c.PositionMul32GlX / 32;
             int mapy = c.PositionMul32GlZ / 32;
             int mapz = c.PositionMul32GlY / 32;
@@ -1430,22 +1431,26 @@ for (int i = 0; i < unknown.Count; i++)
                         }
                         foreach (Monster m in chunk.Monsters)
                         {
-                        	Vector3i mpos = new Vector3i { x = m.X, y = m.Y, z = m.Z };
-                        	Vector3i ppos = new Vector3i { x = clients[clientid].PositionMul32GlX / 32,
-                        		y = clients[clientid].PositionMul32GlZ / 32,
-                        		z = clients[clientid].PositionMul32GlY / 32};
-                        	if (DistanceSquared(mpos, ppos) < 15)
-                        	{
-                        		m.Health -= health;
-                        		Console.WriteLine("HIT! -2 = " + m.Health);
-                        		if (m.Health <= 0) {
-                        			chunk.Monsters.Remove(m);
-                        			SendSound(clientid, "death.wav");
-                    				break;
-                        		}
-                        		SendSound(clientid, "grunt2.wav");
-                        		break;
-                        	}
+                            Vector3i mpos = new Vector3i { x = m.X, y = m.Y, z = m.Z };
+                            Vector3i ppos = new Vector3i
+                            {
+                                x = clients[clientid].PositionMul32GlX / 32,
+                                y = clients[clientid].PositionMul32GlZ / 32,
+                                z = clients[clientid].PositionMul32GlY / 32
+                            };
+                            if (DistanceSquared(mpos, ppos) < 15)
+                            {
+                                m.Health -= health;
+                                Console.WriteLine("HIT! -2 = " + m.Health);
+                                if (m.Health <= 0)
+                                {
+                                    chunk.Monsters.Remove(m);
+                                    SendSound(clientid, "death.wav");
+                                    break;
+                                }
+                                SendSound(clientid, "grunt2.wav");
+                                break;
+                            }
                         }
                     }
                 }
@@ -1490,9 +1495,9 @@ for (int i = 0; i < unknown.Count; i++)
                             }
                             byte heading = 0;
                             if (m.WalkDirection.x == -1 && m.WalkDirection.y == 0) { heading = (byte)(((int)byte.MaxValue * 3) / 4); }
-                            if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading =  byte.MaxValue / 4; }
+                            if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading = byte.MaxValue / 4; }
                             if (m.WalkDirection.x == 0 && m.WalkDirection.y == -1) { heading = 0; }
-                            if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading =  byte.MaxValue / 2;}
+                            if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading = byte.MaxValue / 2; }
                             var mm = new PacketServerMonster()
                             {
                                 Id = m.Id,
@@ -1515,10 +1520,10 @@ for (int i = 0; i < unknown.Count; i++)
             //send only nearest monsters
             p.Sort((a, b) =>
             {
-                Vector3i posA=new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
+                Vector3i posA = new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
                 Vector3i posB = new Vector3i(b.PositionAndOrientation.X, b.PositionAndOrientation.Y, b.PositionAndOrientation.Z);
                 Client client = clients[clientid];
-                Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY,client.PositionMul32GlZ);
+                Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY, client.PositionMul32GlZ);
                 return DistanceSquared(posA, posPlayer).CompareTo(DistanceSquared(posB, posPlayer));
             }
             );
@@ -1647,20 +1652,20 @@ for (int i = 0; i < unknown.Count; i++)
             int y = 0;
             for (int i = 0; i < d_Data.StartInventoryAmount.Length; i++)
             {
-            	int amount = d_Data.StartInventoryAmount[i];
-            	if (config.IsCreative)
-            	{
-            		if (amount > 0 || d_Data.IsBuildable[i])
-            		{
-            			inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
-                    	x++;
-                    	if (x >= GetInventoryUtil(inv).CellCount.X)
-                    	{
-                        	x = 0;
-                        	y++;
-                    	}
-            		}
-            	}
+                int amount = d_Data.StartInventoryAmount[i];
+                if (config.IsCreative)
+                {
+                    if (amount > 0 || d_Data.IsBuildable[i])
+                    {
+                        inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
+                        x++;
+                        if (x >= GetInventoryUtil(inv).CellCount.X)
+                        {
+                            x = 0;
+                            y++;
+                        }
+                    }
+                }
                 else if (amount > 0)
                 {
                     inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = amount });
@@ -1964,7 +1969,7 @@ for (int i = 0; i < unknown.Count; i++)
                     Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
                     Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
 
-                    int blockCount = (Math.Abs(a.x - b.x) + 1) * (Math.Abs(a.y - b.y) + 1)* (Math.Abs(a.z - b.z) + 1);
+                    int blockCount = (Math.Abs(a.x - b.x) + 1) * (Math.Abs(a.y - b.y) + 1) * (Math.Abs(a.z - b.z) + 1);
 
                     if (blockCount > clients[clientid].FillLimit)
                     {
@@ -2005,7 +2010,7 @@ for (int i = 0; i < unknown.Count; i++)
                     if (packet.Message.Message.StartsWith("/"))
                     {
                         string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        string command = ss[0].Replace("/","");
+                        string command = ss[0].Replace("/", "");
                         string argument = packet.Message.Message.IndexOf(" ") < 0 ? "" : packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
                         this.CommandInterpreter(clientid, command, argument);
                     }
@@ -2056,45 +2061,45 @@ for (int i = 0; i < unknown.Count; i++)
             return lengthPrefixLength + packetLength;
         }
 
-       private void RunInClientSandbox(string script, int clientid)
-       {
-          var client = clients[clientid];
-          if (!config.AllowScripting)
-          {
+        private void RunInClientSandbox(string script, int clientid)
+        {
+            var client = clients[clientid];
+            if (!config.AllowScripting)
+            {
                 SendMessage(clientid, "Server scripts disabled.", MessageType.Error);
                 return;
-          }
-          if (!client.privileges.Contains(ServerClientMisc.Privilege.run))
-          {
-             SendMessage(clientid, "Insufficient privileges to access this command.", MessageType.Error);
-             return;
-          }
-          ServerEventLog(string.Format("{0} runs script:\n{1}", clients[clientid].playername, script));
-          if (client.Interpreter == null)
-          {
-             client.Interpreter = new JavaScriptInterpreter();
-             client.Console = new ScriptConsole(this, clientid);
-             client.Console.InjectConsoleCommands(client.Interpreter);
-             client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
-             client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
-          }
-          var interpreter = client.Interpreter;
-          object result;
-          SendMessage(clientid, colorNormal + script);
-          if (interpreter.Execute(script, out result))
-          {
-             try
-             {
-                SendMessage(clientid, colorSuccess + " => " + result);
-             }
-             catch (FormatException e) // can happen
-             {
-                SendMessage(clientid, colorError + "Error. " + e.Message);
-             }
-             return;
-          }
-          SendMessage(clientid, colorError + "Error.");
-       }
+            }
+            if (!client.privileges.Contains(ServerClientMisc.Privilege.run))
+            {
+                SendMessage(clientid, "Insufficient privileges to access this command.", MessageType.Error);
+                return;
+            }
+            ServerEventLog(string.Format("{0} runs script:\n{1}", clients[clientid].playername, script));
+            if (client.Interpreter == null)
+            {
+                client.Interpreter = new JavaScriptInterpreter();
+                client.Console = new ScriptConsole(this, clientid);
+                client.Console.InjectConsoleCommands(client.Interpreter);
+                client.Interpreter.SetVariables(new Dictionary<string, object>() { { "client", client }, { "server", this }, });
+                client.Interpreter.Execute("function inspect(obj) { for( property in obj) { out(property)}}");
+            }
+            var interpreter = client.Interpreter;
+            object result;
+            SendMessage(clientid, colorNormal + script);
+            if (interpreter.Execute(script, out result))
+            {
+                try
+                {
+                    SendMessage(clientid, colorSuccess + " => " + result);
+                }
+                catch (FormatException e) // can happen
+                {
+                    SendMessage(clientid, colorError + "Error. " + e.Message);
+                }
+                return;
+            }
+            SendMessage(clientid, colorError + "Error.");
+        }
 
         string colorNormal = "&f"; //white
         string colorHelp = "&4"; //red
@@ -2106,27 +2111,27 @@ for (int i = 0; i < unknown.Count; i++)
         public enum MessageType { Normal, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
         private string MessageTypeToString(MessageType type)
         {
-           switch (type)
-           {
-              case MessageType.Normal:
-              case MessageType.White:
-                 return colorNormal;
-              case MessageType.Help:
-              case MessageType.Red:
-                 return colorHelp;
-              case MessageType.OpUsername:
-              case MessageType.Green:
-                 return colorOpUsername;
-              case MessageType.Error:
-                 return colorError;
-              case MessageType.Success:
-                 return colorSuccess;
-              case MessageType.Admin:
-              case MessageType.Yellow:
-                 return colorAdmin;
-              default:
-                 return colorNormal;
-           }
+            switch (type)
+            {
+                case MessageType.Normal:
+                case MessageType.White:
+                    return colorNormal;
+                case MessageType.Help:
+                case MessageType.Red:
+                    return colorHelp;
+                case MessageType.OpUsername:
+                case MessageType.Green:
+                    return colorOpUsername;
+                case MessageType.Error:
+                    return colorError;
+                case MessageType.Success:
+                    return colorSuccess;
+                case MessageType.Admin:
+                case MessageType.Yellow:
+                    return colorAdmin;
+                default:
+                    return colorNormal;
+            }
         }
         bool CompareByteArray(byte[] a, byte[] b)
         {
@@ -2271,7 +2276,7 @@ for (int i = 0; i < unknown.Count; i++)
                 {
                     for (int z = startz; z <= endz; z++)
                     {
-                        if(!config.CanUserBuild(client, x, y, z))
+                        if (!config.CanUserBuild(client, x, y, z))
                         {
                             return false;
                         }
@@ -2427,15 +2432,15 @@ for (int i = 0; i < unknown.Count; i++)
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             if (cmd.Mode == BlockSetMode.Use)
             {
-                UseDoor (cmd.X, cmd.Y, cmd.Z);
-                if (d_Map.GetBlock (cmd.X, cmd.Y, cmd.Z) == (int)TileTypeManicDigger.TNT)
+                UseDoor(cmd.X, cmd.Y, cmd.Z);
+                if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) == (int)TileTypeManicDigger.TNT)
                 {
-                    if (!clients [player_id].privileges.Contains (ServerClientMisc.Privilege.use_tnt))
+                    if (!clients[player_id].privileges.Contains(ServerClientMisc.Privilege.use_tnt))
                     {
-                        SendMessage (player_id, colorError + "Insufficient privileges to use TNT.");
+                        SendMessage(player_id, colorError + "Insufficient privileges to use TNT.");
                         return false;
                     }
-                    UseTnt (cmd.X, cmd.Y, cmd.Z);
+                    UseTnt(cmd.X, cmd.Y, cmd.Z);
                 }
                 return true;
             }
@@ -2495,7 +2500,7 @@ for (int i = 0; i < unknown.Count; i++)
                 item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
                 if (!config.IsCreative)
                 {
-                	GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
+                    GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
                 }
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
                 if (GameDataManicDigger.IsDoorTile(blockid) && GameDataManicDigger.IsDoorTile(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
@@ -2558,7 +2563,7 @@ for (int i = 0; i < unknown.Count; i++)
             {
                 return false;
             }
-            
+
             //count how many rails will be created
             int oldrailcount = 0;
             if (GameDataManicDigger.IsRailTile(oldblock))
@@ -2690,7 +2695,7 @@ for (int i = 0; i < unknown.Count; i++)
             string defaultname = name;
             int appendNumber = 1;
             bool exists;
-    
+
             do
             {
                 exists = false;
@@ -2698,18 +2703,18 @@ for (int i = 0; i < unknown.Count; i++)
                 {
                     if (k.Value.playername.Equals(defaultname + appendNumber))
                     {
-                         exists = true;
-                         appendNumber++;
-                         break;
+                        exists = true;
+                        appendNumber++;
+                        break;
                     }
                 }
-            } while(exists);
-            
+            } while (exists);
+
             return defaultname + appendNumber;
         }
         private void SendMessageToAll(string message)
         {
-            Console.WriteLine("Message to all: "+ message);
+            Console.WriteLine("Message to all: " + message);
             foreach (var k in clients)
             {
                 SendMessage(k.Key, message);
@@ -2774,7 +2779,7 @@ for (int i = 0; i < unknown.Count; i++)
         }
         public void SendMessage(int clientid, string message, MessageType color)
         {
-           SendMessage(clientid, MessageTypeToString(color) + message);
+            SendMessage(clientid, MessageTypeToString(color) + message);
         }
         private void SendMessage(int clientid, string message)
         {
@@ -3070,9 +3075,9 @@ for (int i = 0; i < unknown.Count; i++)
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Client GetClient(int id)
         {
-           if (!clients.ContainsKey(id))
-              return null;
-           return clients[id];
+            if (!clients.ContainsKey(id))
+                return null;
+            return clients[id];
         }
         public Client GetClient(string name)
         {
@@ -3190,9 +3195,9 @@ for (int i = 0; i < unknown.Count; i++)
 
             this.defaultGroupGuest = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
-            {
-                return grp.Name.Equals(serverClient.DefaultGroupGuests);
-            }
+                {
+                    return grp.Name.Equals(serverClient.DefaultGroupGuests);
+                }
             );
             if (this.defaultGroupGuest == null)
             {
@@ -3200,9 +3205,9 @@ for (int i = 0; i < unknown.Count; i++)
             }
             this.defaultGroupRegistered = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
-            {
-                return grp.Name.Equals(serverClient.DefaultGroupRegistered);
-            }
+                {
+                    return grp.Name.Equals(serverClient.DefaultGroupRegistered);
+                }
             );
             if (this.defaultGroupRegistered == null)
             {
@@ -3335,7 +3340,7 @@ for (int i = 0; i < unknown.Count; i++)
                 if (input.StartsWith("/"))
                 {
                     string[] ss = input.Split(new[] { ' ' });
-                    string command = ss[0].Replace("/","");
+                    string command = ss[0].Replace("/", "");
                     string argument = input.IndexOf(" ") < 0 ? "" : input.Substring(input.IndexOf(" ") + 1);
                     //this.CommandInterpreter(clientid, command, argument);
                     Console.WriteLine("Command: " + command + " Argument: " + argument);
