@@ -651,15 +651,10 @@ namespace ManicDiggerServer
                     // TODO: check
                     if (!k.Value.Ping.Send() && k.Value.state == ClientStateOnServer.Playing)
                     {
-                        Console.WriteLine("Client not ready to receive ping");
                         if (k.Value.Ping.Timeout())
                         {
-                            Console.WriteLine("Ping timeout. Disconnecting " + k.Key);
+                            Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
                             keysToDelete.Add(k.Key);
-                        }
-                        else
-                        {
-                            Console.WriteLine("no timeout");
                         }
                     }
                     else

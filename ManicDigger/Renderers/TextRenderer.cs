@@ -234,7 +234,8 @@ namespace ManicDigger.Renderers
             if (c == 'f') { return 15; }
             return null;
         }
-        public bool NewFont = true;
+        public bool NewFont = true;
+
        public virtual SizeF MeasureTextSize(string text, float fontsize)
        {
             using (Font font = new Font("Verdana", fontsize))
