@@ -155,6 +155,12 @@ namespace ManicDigger
             int texture = LoadTexture(bmp);
             return new CachedTexture() { textureId = texture, size = bmp.Size };
         }
+        CachedTexture MakeTextTexture(Text t, Font font)
+        {
+            Bitmap bmp = d_TextRenderer.MakeTextTexture(t, font);
+            int texture = LoadTexture(bmp);
+            return new CachedTexture() { textureId = texture, size = bmp.Size };
+        }
         void DeleteUnusedCachedTextTextures()
         {
             List<Text> toremove = new List<Text>();
@@ -192,6 +198,38 @@ namespace ManicDigger
             if (!cachedTextTextures.ContainsKey(t))
             {
                 ct = MakeTextTexture(t);
+                if (ct == null)
+                {
+                    return;
+                }
+                cachedTextTextures.Add(t, ct);
+            }
+            ct = cachedTextTextures[t];
+            ct.lastuse = DateTime.UtcNow;
+            GL.Disable(EnableCap.AlphaTest);
+            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
+            GL.Enable(EnableCap.AlphaTest);
+            DeleteUnusedCachedTextTextures();
+        }
+        public void Draw2dText(string text, Font font, float x, float y, Color? color)
+        {
+            Draw2dText(text, font, x, y, color, false);
+        }
+        public void Draw2dText(string text, Font font, float x, float y, Color? color, bool enabledepthtest)
+        {
+            if (text == null || text.Trim() == "")
+            {
+                return;
+            }
+            if (color == null) { color = Color.White; }
+            var t = new Text();
+            t.text = text;
+            t.color = color.Value;
+            t.fontsize = font.Size;
+            CachedTexture ct;
+            if (!cachedTextTextures.ContainsKey(t))
+            {
+                ct = MakeTextTexture(t, font);
                 if (ct == null)
                 {
                     return;

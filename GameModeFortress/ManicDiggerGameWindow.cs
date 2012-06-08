@@ -840,11 +840,13 @@ namespace ManicDigger
                 {
                     GuiStateBackToGame();
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.PageDown))
+                if (e.Key == GetKey(OpenTK.Input.Key.PageDown)
+                    || e.Key == GetKey(OpenTK.Input.Key.Down))
                 {
                     d_HudPlayerList.NextPage();
                 }
-                if (e.Key == GetKey(OpenTK.Input.Key.PageUp))
+                if (e.Key == GetKey(OpenTK.Input.Key.PageUp)
+                    || e.Key == GetKey(OpenTK.Input.Key.Up))
                 {
                     d_HudPlayerList.PreviousPage();
                 }
