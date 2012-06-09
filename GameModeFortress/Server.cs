@@ -167,10 +167,57 @@ namespace ManicDiggerServer
             Start(config.Port);
 
             LoadServerClient();
-            // allows to enter server commands in server console window
-            Thread consoleInterpreterThread = new Thread(new ThreadStart(this.ConsoleInterpreter));
+
+            // set up server console interpreter
+            this.serverConsoleClient = new Client()
+            {
+                Id = this.serverConsoleId,
+                playername = "Server"
+            };
+            GameModeFortress.Group server = new GameModeFortress.Group();
+            server.Name = "Server";
+            server.Level = 255;
+            server.GroupPrivileges = new List<ServerClientMisc.Privilege>();
+            foreach (ServerClientMisc.Privilege priv in Enum.GetValues(typeof(ServerClientMisc.Privilege)))
+            {
+                server.GroupPrivileges.Add(priv);
+            }
+            server.GroupColor = ServerClientMisc.ClientColor.Red;
+            this.serverConsoleClient.AssignGroup(server);
+
+            this.serverConsole = new ServerConsole(this);
+            Thread consoleInterpreterThread = new Thread(new ThreadStart(this.serverConsole.CommandLineReader));
             consoleInterpreterThread.Start();
         }
+        private ServerConsole serverConsole;
+        private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
+        private Client serverConsoleClient;
+
+        public void ReceiveServerConsole(string message)
+        {
+            if (message == null)
+            {
+                return;
+            }
+            // server command
+            if (message.StartsWith("/"))
+            {
+                string[] ss = message.Split(new[] { ' ' });
+                string command = ss[0].Replace("/", "");
+                string argument = message.IndexOf(" ") < 0 ? "" : message.Substring(message.IndexOf(" ") + 1);
+                this.CommandInterpreter(serverConsoleId, command, argument);
+                return;
+            }
+            // client command
+            if (message.StartsWith("."))
+            {
+                return;
+            }
+            // chat message
+            SendMessageToAll(string.Format("{0}: {1}", serverConsoleClient.ColoredPlayername(colorNormal), message));
+            ChatLog(string.Format("{0}: {1}", serverConsoleClient.playername, message));
+        }
+
         int Seed;
         private void LoadGame(string filename)
         {
@@ -532,6 +579,7 @@ namespace ManicDiggerServer
                 lock (clients)
                 {
                     this.lastClientId = this.GenerateClientId();
+                    c.Id = lastClientId;
                     clients[lastClientId] = c;
                 }
                 c.notifyMapTimer = new ManicDigger.Timer()
@@ -2783,6 +2831,12 @@ if (sent >= unknown.Count) { break; }
         }
         private void SendMessage(int clientid, string message)
         {
+            if (clientid == this.serverConsoleId)
+            {
+                this.serverConsole.Receive(message);
+                return;
+            }
+
             string truncated = message; //.Substring(0, Math.Min(64, message.Length));
 
             PacketServerMessage p = new PacketServerMessage();
@@ -3030,6 +3084,7 @@ if (sent >= unknown.Count) { break; }
         }
         public class Client
         {
+            public int Id = -1;
             public ClientStateOnServer state = ClientStateOnServer.Connecting;
             public int maploadingsentchunks = 0;
             public ISocket socket;
@@ -3075,28 +3130,25 @@ if (sent >= unknown.Count) { break; }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Client GetClient(int id)
         {
+            if (id == this.serverConsoleId)
+            {
+                return this.serverConsoleClient;
+            }
             if (!clients.ContainsKey(id))
                 return null;
             return clients[id];
         }
         public Client GetClient(string name)
         {
+            if (serverConsoleClient.playername.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return serverConsoleClient;
+            }
             foreach (var k in clients)
             {
                 if (k.Value.playername.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return k.Value;
-                }
-            }
-            return null;
-        }
-        public int? GetClientId(Client client)
-        {
-            foreach (var k in clients)
-            {
-                if (k.Value == client)
-                {
-                    return k.Key;
                 }
             }
             return null;
@@ -3322,41 +3374,6 @@ if (sent >= unknown.Count) { break; }
         int Length(Vector3i v)
         {
             return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        }
-
-        private void ConsoleInterpreter()
-        {
-            // TODO: create fake client
-            string input = "";
-            while (true)
-            {
-                input = Console.ReadLine();
-                if (input == null)
-                {
-                    break;
-                }
-                input = input.Trim();
-                // server command
-                if (input.StartsWith("/"))
-                {
-                    string[] ss = input.Split(new[] { ' ' });
-                    string command = ss[0].Replace("/", "");
-                    string argument = input.IndexOf(" ") < 0 ? "" : input.Substring(input.IndexOf(" ") + 1);
-                    //this.CommandInterpreter(clientid, command, argument);
-                    Console.WriteLine("Command: " + command + " Argument: " + argument);
-                }
-                // client command
-                else if (input.StartsWith("."))
-                {
-                    break;
-                }
-                // chat message
-                else
-                {
-                    SendMessageToAll(string.Format("{0}: {1}", colorAdmin + "Server", colorNormal + input));
-                    ChatLog(string.Format("{0}: {1}", "Server", input));
-                }
-            }
         }
     }
 

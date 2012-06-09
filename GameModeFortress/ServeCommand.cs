@@ -314,7 +314,7 @@ namespace ManicDiggerServer
         public void Help(int sourceClientId)
         {
             SendMessage(sourceClientId, colorHelp + "Available privileges:");
-            foreach (ServerClientMisc.Privilege privilege in clients[sourceClientId].privileges)
+            foreach (ServerClientMisc.Privilege privilege in GetClient(sourceClientId).privileges)
             {
                 SendMessage(sourceClientId,string.Format("{0}{1}: {2}",colorHelp, privilege.ToString(), this.CommandHelp(privilege.ToString())));
             }
@@ -384,22 +384,20 @@ namespace ManicDiggerServer
 
         public bool PrivateMessage(int sourceClientId, string recipient, string message)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.pm))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.pm))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
 
-            foreach (var k in clients)
+            Client targetClient = GetClient(recipient);
+            if (targetClient != null)
             {
-                if (k.Value.playername.Equals(recipient, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    SendMessage(k.Key, string.Format("PM {0}: {1}", clients[sourceClientId].ColoredPlayername(colorNormal), message));
-                    SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", k.Value.ColoredPlayername(colorNormal), message));
-                    // TODO: move message sound to client
-                    //SendSound(k.Key, "message.wav");
-                    return true;
-                }
+                SendMessage(targetClient.Id, string.Format("PM {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
+                SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
+                // TODO: move message sound to client
+                //SendSound(k.Key, "message.wav");
+                return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, recipient));
             return false;
@@ -407,7 +405,7 @@ namespace ManicDiggerServer
 
         public bool ChangeGroup(int sourceClientId, string target, string newGroupName)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.chgrp))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.chgrp))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -427,7 +425,7 @@ namespace ManicDiggerServer
             }
 
             // Forbid to assign groups with levels higher then the source's client group level.
-            if (newGroup.IsSuperior(clients[sourceClientId].clientGroup))
+            if (newGroup.IsSuperior(GetClient(sourceClientId).clientGroup))
             {
                 SendMessage(sourceClientId, string.Format("{0}The target group is superior your group.", colorError));
                 return false;
@@ -442,35 +440,34 @@ namespace ManicDiggerServer
             );
 
             // Get related client.
-            foreach (var k in clients)
-            {
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    if (k.Value.clientGroup.IsSuperior(clients[sourceClientId].clientGroup) || k.Value.clientGroup.EqualLevel(clients[sourceClientId].clientGroup))
-                    {
-                        SendMessage(sourceClientId, string.Format("{0}Target user is superior or equal.", colorError));
-                        return false;
-                    }
-                    // Add or change group membership in config file.
+            Client targetClient = GetClient(target);
 
-                    // Client is not yet in config file. Create a new entry.
-                    if (clientConfig == null)
-                    {
-                        clientConfig = new GameModeFortress.Client();
-                        clientConfig.Name = k.Value.playername;
-                        clientConfig.Group = newGroup.Name;
-                        serverClient.Clients.Add(clientConfig);
-                    }
-                    else
-                    {
-                        clientConfig.Group = newGroup.Name;
-                    }
-                    SaveServerClient();
-                    SendMessageToAll(string.Format("{0}New group for {1}: {2}", colorSuccess, k.Value.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
-                    ServerEventLog(String.Format("{0} sets group of {1} to {2}.", clients[sourceClientId].playername, k.Value.playername, newGroupName));
-                    k.Value.AssignGroup(newGroup);
-                    return true;
+            if (targetClient != null)
+            {
+                if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Target user is superior or equal.", colorError));
+                    return false;
                 }
+                // Add or change group membership in config file.
+
+                // Client is not yet in config file. Create a new entry.
+                if (clientConfig == null)
+                {
+                    clientConfig = new GameModeFortress.Client();
+                    clientConfig.Name = targetClient.playername;
+                    clientConfig.Group = newGroup.Name;
+                    serverClient.Clients.Add(clientConfig);
+                }
+                else
+                {
+                    clientConfig.Group = newGroup.Name;
+                }
+                SaveServerClient();
+                SendMessageToAll(string.Format("{0}New group for {1}: {2}", colorSuccess, targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
+                ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
+                targetClient.AssignGroup(newGroup);
+                return true;
             }
 
             // Target is at the moment not online. Create or change anyway a entry in ServerClient
@@ -495,7 +492,7 @@ namespace ManicDiggerServer
                     SendMessage(sourceClientId, string.Format("{0}Invalid group.", colorError));
                     return false;
                 }
-                if (oldGroup.IsSuperior(clients[sourceClientId].clientGroup) || oldGroup.EqualLevel(clients[sourceClientId].clientGroup))
+                if (oldGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || oldGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
                 {
                     SendMessage(sourceClientId, string.Format("{0}Target user is superior or equal.", colorError));
                     return false;
@@ -505,13 +502,13 @@ namespace ManicDiggerServer
 
             SaveServerClient();
             SendMessageToAll(string.Format("{0}New group for {1}: {2} (offline)", colorSuccess, target, newGroup.GroupColorString() + newGroupName));
-            ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", clients[sourceClientId].playername, target, newGroupName));
+            ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId), target, newGroupName));
             return true;
         }
 
         public bool Login (int sourceClientId, string targetGroupString, string password)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.login))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.login))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -534,34 +531,34 @@ namespace ManicDiggerServer
             }
             if (targetGroup.Password.Equals(password))
             {
-                clients[sourceClientId].AssignGroup(targetGroup);
-                SendMessageToAll(string.Format("{0}{1} logs in group {2}.", colorSuccess, clients[sourceClientId].ColoredPlayername(colorSuccess), targetGroupString));
+                GetClient(sourceClientId).AssignGroup(targetGroup);
+                SendMessageToAll(string.Format("{0}{1} logs in group {2}.", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetGroupString));
                 SendMessage(sourceClientId, "Type /help see your available privileges.");
-                ServerEventLog(string.Format("{0} logs in group {1}.", clients[sourceClientId].playername, targetGroupString));
+                ServerEventLog(string.Format("{0} logs in group {1}.", GetClient(sourceClientId).playername, targetGroupString));
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Invalid password.", colorError));
-            ServerEventLog(string.Format("{0} fails to log in (invalid password: {1}).", clients[sourceClientId].playername, password));
+            ServerEventLog(string.Format("{0} fails to log in (invalid password: {1}).", GetClient(sourceClientId).playername, password));
             return false;
         }
 
         public bool WelcomeMessage(int sourceClientId, string welcomeMessage)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.welcome))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.welcome))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
             config.WelcomeMessage = welcomeMessage;
-            SendMessageToAll(string.Format("{0}{1} set new welcome message: {2}", colorSuccess, clients[sourceClientId].ColoredPlayername(colorSuccess), welcomeMessage));
-            ServerEventLog(string.Format("{0} changes welcome message to {1}.", clients[sourceClientId].playername, welcomeMessage));
+            SendMessageToAll(string.Format("{0}{1} set new welcome message: {2}", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), welcomeMessage));
+            ServerEventLog(string.Format("{0} changes welcome message to {1}.", GetClient(sourceClientId).playername, welcomeMessage));
             SaveConfig();
             return true;
         }
 
         public bool SetLogging(int sourceClientId, string type, string option)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.logging))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.logging))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -580,7 +577,7 @@ namespace ManicDiggerServer
                         config.BuildLogging = true;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Build logging enabled.", colorSuccess));
-                        ServerEventLog(string.Format("{0} enables build logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} enables build logging.", GetClient(sourceClientId).playername));
                         return true;
                     }
                     if (option.Equals("off"))
@@ -588,7 +585,7 @@ namespace ManicDiggerServer
                         config.BuildLogging = false;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Build logging disabled.", colorSuccess));
-                        ServerEventLog(string.Format("{0} disables build logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} disables build logging.", GetClient(sourceClientId).playername));
                         return true;
                     }
                     SendMessage(sourceClientId, string.Format("{0}Build logging: {1}", colorNormal, config.BuildLogging));
@@ -599,12 +596,12 @@ namespace ManicDiggerServer
                         config.ServerEventLogging = true;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Server event logging enabled.", colorSuccess));
-                        ServerEventLog(string.Format("{0} enables server event logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} enables server event logging.", GetClient(sourceClientId).playername));
                         return true;
                     }
                     if (option.Equals("off"))
                     {
-                        ServerEventLog(string.Format("{0} disables server event logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} disables server event logging.", GetClient(sourceClientId).playername));
                         config.ServerEventLogging = false;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Server event logging disabled.", colorSuccess));
@@ -618,7 +615,7 @@ namespace ManicDiggerServer
                         config.ChatLogging = true;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Chat logging enabled.", colorSuccess));
-                        ServerEventLog(string.Format("{0} enables chat logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} enables chat logging.", GetClient(sourceClientId).playername));
                         return true;
                     }
                     if (option.Equals("off"))
@@ -626,7 +623,7 @@ namespace ManicDiggerServer
                         config.ChatLogging = false;
                         SaveConfig();
                         SendMessage(sourceClientId, string.Format("{0}Chat logging disabled.", colorSuccess));
-                        ServerEventLog(string.Format("{0} disables chat logging.", clients[sourceClientId].playername));
+                        ServerEventLog(string.Format("{0} disables chat logging.", GetClient(sourceClientId).playername));
                         return true;
                     }
                     SendMessage(sourceClientId, string.Format("{0}Chat logging: {1}", colorNormal, config.ChatLogging));
@@ -644,12 +641,10 @@ namespace ManicDiggerServer
 
         public bool Kick(int sourceClientId, string target, string reason)
         {
-            foreach (var k in clients)
+            Client targetClient = GetClient(target);
+            if (targetClient != null)
             {
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return this.Kick(sourceClientId, k.Key, reason);
-                }
+                return this.Kick(sourceClientId, targetClient.Id, reason);
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
             return false;
@@ -662,7 +657,7 @@ namespace ManicDiggerServer
 
         public bool Kick(int sourceClientId, int targetClientId, string reason)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.kick))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.kick))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -671,17 +666,18 @@ namespace ManicDiggerServer
             {
                 reason = " Reason: " + reason;
             }
-            if (clients.ContainsKey(targetClientId))
+            Client targetClient = GetClient(targetClientId);
+            if (targetClient != null)
             {
-                if (clients[targetClientId].clientGroup.IsSuperior(clients[sourceClientId].clientGroup) || clients[targetClientId].clientGroup.EqualLevel(clients[sourceClientId].clientGroup))
+                if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
                 {
                     SendMessage(sourceClientId, string.Format("{0}Target is superior or equal.", colorError));
                     return false;
                 }
-                string targetName = clients[targetClientId].playername;
-                string sourceName = clients[sourceClientId].playername;
-                string targetNameColored = clients[targetClientId].ColoredPlayername(colorImportant);
-                string sourceNameColored = clients[sourceClientId].ColoredPlayername(colorImportant);
+                string targetName = targetClient.playername;
+                string sourceName = GetClient(sourceClientId).playername;
+                string targetNameColored = targetClient.ColoredPlayername(colorImportant);
+                string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
                 SendMessageToAll(string.Format("{0}{1} was kicked by {2}", colorImportant, targetNameColored, sourceNameColored));
                 ServerEventLog(string.Format("{0} kicks {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were kicked by an administrator.{0}", reason));
@@ -699,12 +695,10 @@ namespace ManicDiggerServer
 
         public bool Ban(int sourceClientId, string target, string reason)
         {
-            foreach (var k in clients)
+            Client targetClient = GetClient(target);
+            if (targetClient != null)
             {
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return this.Ban(sourceClientId, k.Key, reason);
-                }
+                return this.Ban(sourceClientId, targetClient.Id, reason);
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
             return false;
@@ -717,7 +711,7 @@ namespace ManicDiggerServer
 
         public bool Ban(int sourceClientId, int targetClientId, string reason)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.ban))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.ban))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -726,17 +720,18 @@ namespace ManicDiggerServer
             {
                 reason = " Reason: " + reason;
             }
-            if (clients.ContainsKey(targetClientId))
+            Client targetClient = GetClient(targetClientId);
+            if (targetClient != null)
             {
-                if (clients[targetClientId].clientGroup.IsSuperior(clients[sourceClientId].clientGroup) || clients[targetClientId].clientGroup.EqualLevel(clients[sourceClientId].clientGroup))
+                if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
                 {
                     SendMessage(sourceClientId, string.Format("{0}Target is superior or equal.", colorError));
                     return false;
                 }
-                string targetName = clients[targetClientId].playername;
-                string sourceName = clients[sourceClientId].playername;
-                string targetNameColored = clients[targetClientId].ColoredPlayername(colorImportant);
-                string sourceNameColored = clients[sourceClientId].ColoredPlayername(colorImportant);
+                string targetName = targetClient.playername;
+                string sourceName = GetClient(sourceClientId).playername;
+                string targetNameColored = targetClient.ColoredPlayername(colorImportant);
+                string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
                 config.BannedUsers.Add(targetName);
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was banned by {2}", colorImportant, targetNameColored, sourceNameColored));
@@ -756,12 +751,10 @@ namespace ManicDiggerServer
 
         public bool BanIP(int sourceClientId, string target, string reason)
         {
-            foreach (var k in clients)
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
             {
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return this.BanIP(sourceClientId, k.Key, reason);
-                }
+                return this.BanIP(sourceClientId, targetClient.Id, reason);
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
             return false;
@@ -774,7 +767,7 @@ namespace ManicDiggerServer
 
         public bool BanIP(int sourceClientId, int targetClientId, string reason)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.banip))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.banip))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -783,18 +776,19 @@ namespace ManicDiggerServer
             {
                 reason = " Reason: " + reason;
             }
-            if (clients.ContainsKey(targetClientId))
+            Client targetClient = GetClient(targetClientId);
+            if(targetClient != null)
             {
-                if (clients[targetClientId].clientGroup.IsSuperior(clients[sourceClientId].clientGroup) || clients[targetClientId].clientGroup.EqualLevel(clients[sourceClientId].clientGroup))
+                if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
                 {
                     SendMessage(sourceClientId, string.Format("{0}Target is superior or equal.", colorError));
                     return false;
                 }
-                string targetName = clients[targetClientId].playername;
-                string sourceName = clients[sourceClientId].playername;
-                string targetNameColored = clients[targetClientId].ColoredPlayername(colorImportant);
-                string sourceNameColored = clients[sourceClientId].ColoredPlayername(colorImportant);
-                config.BannedIPs.Add(((IPEndPoint)clients[targetClientId].socket.RemoteEndPoint).Address.ToString());
+                string targetName = targetClient.playername;
+                string sourceName = GetClient(sourceClientId).playername;
+                string targetNameColored = targetClient.ColoredPlayername(colorImportant);
+                string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
+                config.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was IP banned by {2}", colorImportant, targetNameColored, sourceNameColored));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
@@ -808,7 +802,7 @@ namespace ManicDiggerServer
 
         public bool Unban(int sourceClientId, string type, string target)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.unban))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.unban))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -826,7 +820,7 @@ namespace ManicDiggerServer
                 else
                 {
                     SendMessage(sourceClientId, string.Format("{0}Player {1} unbanned.", colorSuccess, target));
-                    ServerEventLog(string.Format("{0} unbans player {1}.", clients[sourceClientId].playername, target));
+                    ServerEventLog(string.Format("{0} unbans player {1}.", GetClient(sourceClientId).playername, target));
                 }
                 return true;
             }
@@ -842,7 +836,7 @@ namespace ManicDiggerServer
                 else
                 {
                     SendMessage(sourceClientId, string.Format("{0}IP {1} unbanned.", colorSuccess, target));
-                    ServerEventLog(string.Format("{0} unbans IP {1}.", clients[sourceClientId].playername, target));
+                    ServerEventLog(string.Format("{0} unbans IP {1}.", GetClient(sourceClientId).playername, target));
                 }
                 return true;
             }
@@ -856,7 +850,7 @@ namespace ManicDiggerServer
             {
                 case "-clients":
                 case "-c":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_clients))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_clients))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -870,7 +864,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-areas":
                 case "-a":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_areas))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_areas))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -883,7 +877,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-bannedusers":
                 case "-bu":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -896,7 +890,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-bannedips":
                 case "-bip":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -908,7 +902,7 @@ namespace ManicDiggerServer
                     }
                     return true;
                 case "-groups":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_groups))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_groups))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -920,7 +914,7 @@ namespace ManicDiggerServer
                     }
                     return true;
                 case "-saved_clients":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.list_saved_clients))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_saved_clients))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -940,66 +934,64 @@ namespace ManicDiggerServer
 
         public bool GiveAll(int sourceClientId, string target)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.giveall))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.giveall))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
-            foreach (var k in clients)
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
             {
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
+                string targetName = targetClient.playername;
+                string sourcename = GetClient(sourceClientId).playername;
+                for (int i = 0; i < d_Data.IsBuildable.Length; i++)
                 {
-                    string targetName = k.Value.playername;
-                    string sourcename = clients[sourceClientId].playername;
-                    for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+                    if (!d_Data.IsBuildable[i])
                     {
-                        if (!d_Data.IsBuildable[i])
-                        {
-                            continue;
-                        }
-                        Inventory inventory = GetPlayerInventory(targetName).Inventory;
-                        InventoryUtil util = GetInventoryUtil(inventory);
-
-                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                        {
-                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                            {
-                                if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
-                                {
-                                    continue;
-                                }
-                                Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
-                                if (currentItem != null
-                                    && currentItem.ItemClass == ItemClass.Block
-                                    && currentItem.BlockId == i)
-                                {
-                                    currentItem.BlockCount = 999;
-                                    goto nextblock;
-                                }
-                            }
-                        }
-                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                        {
-                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                            {
-                                Item newItem = new Item();
-                                newItem.ItemClass = ItemClass.Block;
-                                newItem.BlockId = i;
-                                newItem.BlockCount = 999;
-
-                                if (util.ItemAtCell(new Point(xx, yy)) == null)
-                                {
-                                    inventory.Items[new ProtoPoint(xx, yy)] = newItem;
-                                    goto nextblock;
-                                }
-                            }
-                        }
-                    nextblock:
-                        k.Value.IsInventoryDirty = true;
+                        continue;
                     }
-                    ServerEventLog(string.Format("{0} gives all to {1}.", sourcename, targetName));
-                    return true;
+                    Inventory inventory = GetPlayerInventory(targetName).Inventory;
+                    InventoryUtil util = GetInventoryUtil(inventory);
+
+                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    {
+                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        {
+                            if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
+                            {
+                                continue;
+                            }
+                            Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
+                            if (currentItem != null
+                                && currentItem.ItemClass == ItemClass.Block
+                                && currentItem.BlockId == i)
+                            {
+                                currentItem.BlockCount = 999;
+                                goto nextblock;
+                            }
+                        }
+                    }
+                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    {
+                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        {
+                            Item newItem = new Item();
+                            newItem.ItemClass = ItemClass.Block;
+                            newItem.BlockId = i;
+                            newItem.BlockCount = 999;
+
+                            if (util.ItemAtCell(new Point(xx, yy)) == null)
+                            {
+                                inventory.Items[new ProtoPoint(xx, yy)] = newItem;
+                                goto nextblock;
+                            }
+                        }
+                    }
+                nextblock:
+                    targetClient.IsInventoryDirty = true;
                 }
+                ServerEventLog(string.Format("{0} gives all to {1}.", sourcename, targetName));
+                return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
             return false;
@@ -1007,88 +999,85 @@ namespace ManicDiggerServer
 
         public bool Give(int sourceClientId, string target, string blockname, int amount)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.give))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.give))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
 
-            foreach (var k in clients)
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
             {
-
-                if (k.Value.playername.Equals(target, StringComparison.InvariantCultureIgnoreCase))
+                string targetName = targetClient.playername;
+                string sourcename = GetClient(sourceClientId).playername;
+                //int amount;
+                if (amount < 0)
                 {
-                    string targetName = k.Value.playername;
-                    string sourcename = clients[sourceClientId].playername;
-                    //int amount;
-                    if (amount < 0)
-                    {
-                        return false;
-                    }
-                    if (amount > 9999)
-                    {
-                        amount = 9999;
-                    }
-                    for (int i = 0; i < d_Data.IsBuildable.Length; i++)
-                    {
-                        if (!d_Data.IsBuildable[i])
-                        {
-                            continue;
-                        }
-                        if (!d_Data.Name[i].Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            continue;
-                        }
-                        Inventory inventory = GetPlayerInventory(targetName).Inventory;
-                        InventoryUtil util = GetInventoryUtil(inventory);
-    
-                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                        {
-                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                            {
-                                if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
-                                {
-                                    continue;
-                                }
-                                Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
-                                if (currentItem != null
-                                     && currentItem.ItemClass == ItemClass.Block
-                                     && currentItem.BlockId == i)
-                                {
-                                    if (amount == 0)
-                                    {
-                                        inventory.Items[new ProtoPoint(xx, yy)] = null;
-                                    }
-                                    else
-                                    {
-                                        currentItem.BlockCount = amount;
-                                    }
-                                    goto nextblock;
-                                }
-                            }
-                        }
-                        for (int xx = 0; xx < util.CellCount.X; xx++)
-                        {
-                            for (int yy = 0; yy < util.CellCount.Y; yy++)
-                            {
-                                Item newItem = new Item();
-                                newItem.ItemClass = ItemClass.Block;
-                                newItem.BlockId = i;
-                                newItem.BlockCount = amount;
-    
-                                if (util.ItemAtCell(new Point(xx, yy)) == null)
-                                {
-                                    inventory.Items[new ProtoPoint(xx, yy)] = newItem;
-                                    goto nextblock;
-                                }
-                            }
-                        }
-                     nextblock:
-                        k.Value.IsInventoryDirty = true;
-                    }
-                    ServerEventLog(string.Format("{0} gives {1} {2} to {3}.", sourcename, amount, blockname, targetName));
-                    return true;
+                    return false;
                 }
+                if (amount > 9999)
+                {
+                    amount = 9999;
+                }
+                for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+                {
+                    if (!d_Data.IsBuildable[i])
+                    {
+                        continue;
+                    }
+                    if (!d_Data.Name[i].Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        continue;
+                    }
+                    Inventory inventory = GetPlayerInventory(targetName).Inventory;
+                    InventoryUtil util = GetInventoryUtil(inventory);
+
+                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    {
+                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        {
+                            if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
+                            {
+                                continue;
+                            }
+                            Item currentItem = inventory.Items[new ProtoPoint(xx, yy)];
+                            if (currentItem != null
+                                 && currentItem.ItemClass == ItemClass.Block
+                                 && currentItem.BlockId == i)
+                            {
+                                if (amount == 0)
+                                {
+                                    inventory.Items[new ProtoPoint(xx, yy)] = null;
+                                }
+                                else
+                                {
+                                    currentItem.BlockCount = amount;
+                                }
+                                goto nextblock;
+                            }
+                        }
+                    }
+                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    {
+                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        {
+                            Item newItem = new Item();
+                            newItem.ItemClass = ItemClass.Block;
+                            newItem.BlockId = i;
+                            newItem.BlockCount = amount;
+
+                            if (util.ItemAtCell(new Point(xx, yy)) == null)
+                            {
+                                inventory.Items[new ProtoPoint(xx, yy)] = newItem;
+                                goto nextblock;
+                            }
+                        }
+                    }
+                 nextblock:
+                    targetClient.IsInventoryDirty = true;
+                }
+                ServerEventLog(string.Format("{0} gives {1} {2} to {3}.", sourcename, amount, blockname, targetName));
+                return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
             return false;
@@ -1096,7 +1085,7 @@ namespace ManicDiggerServer
 
         public bool Monsters(int sourceClientId, string option)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.monsters))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.monsters))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1114,13 +1103,13 @@ namespace ManicDiggerServer
                 }
             }
             SendMessage(sourceClientId, colorSuccess + "Monsters turned " + option);
-            ServerEventLog(string.Format("{0} turns monsters {1}.", clients[sourceClientId].playername, option));
+            ServerEventLog(string.Format("{0} turns monsters {1}.", GetClient(sourceClientId).playername, option));
             return true;
         }
 
         public bool AreaAdd(int sourceClientId, int id, string coords, string[] permittedGroups, string[] permittedUsers, int? level)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.area_add))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.area_add))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1155,13 +1144,13 @@ namespace ManicDiggerServer
             config.Areas.Add(newArea);
             SaveConfig();
             SendMessage(sourceClientId, string.Format("{0}New area added: {1}", colorSuccess, newArea.ToString()));
-            ServerEventLog(string.Format("{0} adds area: {1}.", clients[sourceClientId].playername, newArea.ToString()));
+            ServerEventLog(string.Format("{0} adds area: {1}.", GetClient(sourceClientId), newArea.ToString()));
             return true;
         }
 
         public bool AreaDelete(int sourceClientId, int id)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.area_delete))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.area_delete))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1175,36 +1164,36 @@ namespace ManicDiggerServer
             config.Areas.Remove(targetArea);
             SaveConfig();
             SendMessage(sourceClientId, string.Format("{0}Area deleted.", colorSuccess));
-            ServerEventLog(string.Format("{0} deletes area: {1}.", clients[sourceClientId].playername, id));
+            ServerEventLog(string.Format("{0} deletes area: {1}.", GetClient(sourceClientId).playername, id));
             return true;
         }
 
         public bool Announcement(int sourceClientId, string message)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.announcement))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.announcement))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
-            SendMessageToAll(string.Format("{0}Announcenment: {1}", colorError, message));
+            SendMessageToAll(string.Format("{0}Announcement: {1}", colorError, message));
             return true;
         }
 
         public bool ClearInterpreter(int sourceClientId)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.run))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.run))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
-            clients[sourceClientId].Interpreter = null;
+            GetClient(sourceClientId).Interpreter = null;
             SendMessage(sourceClientId, "Interpreter cleared.");
             return true;
         }
 
         public bool SetSpawnPosition(int sourceClientId, string targetType, string target, int x, int y, int? z)
         {
-            if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.set_spawn))
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.set_spawn))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1266,7 +1255,7 @@ namespace ManicDiggerServer
                         }
                     }
                     SendMessage(sourceClientId, string.Format("{0}Default spawn position set to {1},{2},{3}.", colorSuccess, x, y, rZ));
-                    ServerEventLog(String.Format("{0} sets default spawn to {1},{2}{3}.", clients[sourceClientId].playername, x, y, z == null ? "" : "," + z.Value));
+                    ServerEventLog(String.Format("{0} sets default spawn to {1},{2}{3}.", GetClient(sourceClientId).playername, x, y, z == null ? "" : "," + z.Value));
                     return true;
                 case "-group":
                 case "-g":
@@ -1314,13 +1303,17 @@ namespace ManicDiggerServer
                         }
                     }
                     SendMessage(sourceClientId, string.Format("{0}Spawn position of group {1} set to {2},{3},{4}.", colorSuccess, targetGroup.Name, x, y, rZ));
-                    ServerEventLog(String.Format("{0} sets spawn of group {1} to {2},{3}{4}.", clients[sourceClientId].playername, targetGroup.Name, x, y, z == null ? "" : "," + z.Value));
+                    ServerEventLog(String.Format("{0} sets spawn of group {1} to {2},{3}{4}.", GetClient(sourceClientId).playername, targetGroup.Name, x, y, z == null ? "" : "," + z.Value));
                     return true;
                 case "-player":
                 case "-p":
                     // Get related client.
                     Client targetClient = this.GetClient(target);
-                    int? targetClientId = this.GetClientId(targetClient);
+                    int? targetClientId = null;
+                    if(targetClient != null)
+                    {
+                        targetClientId = targetClient.Id;
+                    }
                     string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
                     GameModeFortress.Client clientEntry = serverClient.Clients.Find(
@@ -1348,7 +1341,7 @@ namespace ManicDiggerServer
                         this.SendPlayerSpawnPosition(targetClientId.Value, x, y, rZ);
                     }
                     SendMessage(sourceClientId, string.Format("{0}Spawn position of player {1} set to {2},{3},{4}.", colorSuccess, targetClientPlayername, x, y, rZ));
-                    ServerEventLog(String.Format("{0} sets spawn of player {1} to {2},{3}{4}.", clients[sourceClientId].playername, targetClientPlayername, x, y, z == null ? "" : "," + z.Value));
+                    ServerEventLog(String.Format("{0} sets spawn of player {1} to {2},{3}{4}.", GetClient(sourceClientId).playername, targetClientPlayername, x, y, z == null ? "" : "," + z.Value));
                     return true;
                 default:
                     SendMessage(sourceClientId, "Invalid type.");
