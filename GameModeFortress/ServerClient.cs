@@ -225,7 +225,9 @@ namespace GameModeFortress
             area_delete,
             announcement,
             set_spawn,
-            use_tnt
+            use_tnt,
+            privilege_add,
+            privilege_remove
         };
 
         public static List<Group> getDefaultGroups()

@@ -84,6 +84,7 @@
     <Compile Include="Shadows.cs" />
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="ServerConsole.cs" />
+    <Compile Include="ServerMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">

@@ -38,6 +38,7 @@ namespace GameModeFortress
         public List<AreaConfig> Areas { get; set; }
         [XmlElement(ElementName="MapGenerator")]
         public MapGeneratorConfig Generator { get; set; }
+        public bool ServerMonitor { get; set; }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -119,6 +120,7 @@ namespace GameModeFortress
             this.BannedUsers = new List<string>();
             this.Areas = new List<AreaConfig>();
             this.Generator = new MapGeneratorConfig();
+            this.ServerMonitor = true;
         }
     }
 

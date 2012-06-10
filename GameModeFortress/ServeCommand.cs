@@ -305,6 +305,24 @@ namespace ManicDiggerServer
                     }
                     this.SetSpawnPosition(sourceClientId, ss[0], ss[1], x, y, z);
                     return;
+                case "privilege_add":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length != 2)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    this.PrivilegeAdd(sourceClientId, ss[0], ss[1]);
+                    return;
+                case "privilege_remove":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length != 2)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    this.PrivilegeRemove(sourceClientId, ss[0], ss[1]);
+                    return;
                 default:
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);
                     return;
@@ -377,6 +395,10 @@ namespace ManicDiggerServer
                     return "/announcement [message]";
                 case "set_spawn":
                     return "/set_spawn [-default|-group|-player] [target] [x] [y] {z}";
+                case "privilege_add":
+                    return "/privilege_add [username] [privilege]";
+                case "privilege_remove":
+                    return "/privilege_remove [username] [privilege]";
                 default:
                     return "No description available.";
             }
@@ -1347,6 +1369,95 @@ namespace ManicDiggerServer
                     SendMessage(sourceClientId, "Invalid type.");
                     return false;
             }
+        }
+
+
+        private bool PrivilegeAdd(int sourceClientId, string target, string privilege)
+        {
+            try
+            {
+                ServerClientMisc.Privilege newPrivilege = (ServerClientMisc.Privilege) Enum.Parse(typeof(ServerClientMisc.Privilege), privilege);
+
+                if (Enum.IsDefined(typeof(ServerClientMisc.Privilege), newPrivilege) | newPrivilege.ToString().Contains(","))
+                {
+                    return this.PrivilegeAdd(sourceClientId, target, newPrivilege);
+                }
+                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
+                return false;
+            }
+        }
+        public bool PrivilegeAdd(int sourceClientId, string target, ServerClientMisc.Privilege privilege)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_add))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
+            {
+                if(targetClient.privileges.Contains(privilege))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Player {1} already has privilege {2}.", colorError, target, privilege.ToString()));
+                    return false;
+                }
+                targetClient.privileges.Add(privilege);
+                SendMessageToAll(string.Format("{0}New privilege for {1}: {2}", colorSuccess, targetClient.ColoredPlayername(colorSuccess), privilege.ToString()));
+                ServerEventLog(string.Format("{0} gives {1} privilege {2}.", GetClient(sourceClientId), targetClient.playername, privilege.ToString()));
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
+            return false;
+        }
+
+        private bool PrivilegeRemove(int sourceClientId, string target, string privilege)
+        {
+            try
+            {
+                ServerClientMisc.Privilege newPrivilege = (ServerClientMisc.Privilege) Enum.Parse(typeof(ServerClientMisc.Privilege), privilege);
+
+                if (Enum.IsDefined(typeof(ServerClientMisc.Privilege), newPrivilege) | newPrivilege.ToString().Contains(","))
+                {
+                    return this.PrivilegeRemove(sourceClientId, target, newPrivilege);
+                }
+                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
+                return false;
+            }
+            catch (ArgumentException)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
+                return false;
+            }
+        }
+        public bool PrivilegeRemove(int sourceClientId, string target, ServerClientMisc.Privilege privilege)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_remove))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
+            {
+                if(!targetClient.privileges.Remove(privilege))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Player {1} don't has privilege {2}.", colorError, target, privilege.ToString()));
+                    return false;
+                }
+
+                SendMessageToAll(string.Format("{0} {1} lost privilege: {2}", colorImportant, targetClient.ColoredPlayername(colorImportant), privilege.ToString()));
+                ServerEventLog(string.Format("{0} removes {1} privilege {2}.", GetClient(sourceClientId), targetClient.playername, privilege.ToString()));
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
+            return false;
         }
     }
 }

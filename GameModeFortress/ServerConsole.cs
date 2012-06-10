@@ -1,12 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using ManicDigger;
 using ManicDiggerServer;
-using ProtoBuf;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
+using System.Threading;
 
 namespace GameModeFortress
 {
@@ -17,6 +12,10 @@ namespace GameModeFortress
         public ServerConsole(Server server)
         {
             this.server = server;
+
+            // run command line reader as seperate thread
+            Thread consoleInterpreterThread = new Thread(new ThreadStart(this.CommandLineReader));
+            consoleInterpreterThread.Start();
         }
 
         public void CommandLineReader()

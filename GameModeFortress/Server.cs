@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 using System.Xml;
 using GameModeFortress;
 using ManicDigger;
@@ -168,6 +167,12 @@ namespace ManicDiggerServer
 
             LoadServerClient();
 
+            // server monitor
+            if (config.ServerMonitor)
+            {
+                this.serverMonitor = new ServerMonitor(this);
+            }
+
             // set up server console interpreter
             this.serverConsoleClient = new Client()
             {
@@ -184,13 +189,12 @@ namespace ManicDiggerServer
             }
             server.GroupColor = ServerClientMisc.ClientColor.Red;
             this.serverConsoleClient.AssignGroup(server);
-
             this.serverConsole = new ServerConsole(this);
-            Thread consoleInterpreterThread = new Thread(new ThreadStart(this.serverConsole.CommandLineReader));
-            consoleInterpreterThread.Start();
         }
+        private ServerMonitor serverMonitor;
         private ServerConsole serverConsole;
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
+        public int ServerConsoleId {get { return serverConsoleId; } }
         private Client serverConsoleClient;
 
         public void ReceiveServerConsole(string message)
@@ -380,7 +384,7 @@ namespace ManicDiggerServer
                     config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
                     config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
                     config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
-
+                    config.ServerMonitor = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerMonitor"));
                 }
                 //Save with new version.
                 SaveConfig();
@@ -1786,6 +1790,11 @@ if (sent >= unknown.Count) { break; }
             PacketClient packet = Serializer.DeserializeWithLengthPrefix<PacketClient>(ms, PrefixStyle.Base128);
             //int packetid = br.ReadByte();
             //int totalread = 1;
+
+            if (config.ServerMonitor && !this.serverMonitor.CheckPacket(clientid, packet))
+            {
+                return lengthPrefixLength + packetLength;
+            }
             switch (packet.PacketId)
             {
                 case ClientPacketId.PingReply:
@@ -2156,7 +2165,7 @@ if (sent >= unknown.Count) { break; }
         string colorError = "&4"; //red
         string colorImportant = "&4"; // red
         string colorAdmin = "&e"; //yellow
-        public enum MessageType { Normal, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
+        public enum MessageType { Normal, Important, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
         private string MessageTypeToString(MessageType type)
         {
             switch (type)
@@ -2164,6 +2173,8 @@ if (sent >= unknown.Count) { break; }
                 case MessageType.Normal:
                 case MessageType.White:
                     return colorNormal;
+                case MessageType.Important:
+                    return colorImportant;
                 case MessageType.Help:
                 case MessageType.Red:
                     return colorHelp;
@@ -2760,6 +2771,11 @@ if (sent >= unknown.Count) { break; }
 
             return defaultname + appendNumber;
         }
+        public void ServerMessageToAll(string message, MessageType color)
+        {
+            this.SendMessageToAll(MessageTypeToString(color) + message);
+            ServerEventLog(string.Format("SERVER MESSAGE: {0}.", message));
+        }
         private void SendMessageToAll(string message)
         {
             Console.WriteLine("Message to all: " + message);
@@ -2825,6 +2841,7 @@ if (sent >= unknown.Count) { break; }
             PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
         }
+
         public void SendMessage(int clientid, string message, MessageType color)
         {
             SendMessage(clientid, MessageTypeToString(color) + message);
@@ -3122,9 +3139,14 @@ if (sent >= unknown.Count) { break; }
 
             public override string ToString()
             {
+                string ip = "";
+                if (this.socket != null)
+                {
+                    ip = ((IPEndPoint)this.socket.RemoteEndPoint).Address.ToString();
+                }
                 // Format: Playername:Group:Privileges IP
                 return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
-                    ServerClientMisc.PrivilegesString(this.privileges), ((IPEndPoint)this.socket.RemoteEndPoint).Address.ToString());
+                    ServerClientMisc.PrivilegesString(this.privileges), ip);
             }
         }
         Dictionary<int, Client> clients = new Dictionary<int, Client>();
