@@ -103,7 +103,7 @@ namespace GameModeFortress
                 new Thread(ServerThreadStart).Start();
                 connectdata.Username = "Local";
             }
-            while (!StartedSinglePlayerServer)
+            while (issingleplayer && !StartedSinglePlayerServer)
             {
                 Thread.Sleep(1);
             }

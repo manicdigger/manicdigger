@@ -227,7 +227,8 @@ namespace GameModeFortress
             set_spawn,
             use_tnt,
             privilege_add,
-            privilege_remove
+            privilege_remove,
+            restart,
         };
 
         public static List<Group> getDefaultGroups()
@@ -289,6 +290,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.use_tnt);
             admin.GroupPrivileges.Add(Privilege.area_add);
             admin.GroupPrivileges.Add(Privilege.area_delete);
+            admin.GroupPrivileges.Add(Privilege.restart);
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);
 

@@ -233,6 +233,7 @@ namespace ManicDiggerServer
             {
                 this.serverMonitor = new ServerMonitor(this);
                 this.serverMonitor.Exit = exit;
+                this.serverMonitor.Start();
             }
 
             // set up server console interpreter
@@ -584,6 +585,15 @@ namespace ManicDiggerServer
                 Console.WriteLine(e);
             }
         }
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                d_MainSocket.Disconnect(false);
+            }
+            disposed = true;
+        }
+        bool disposed = false;
         double starttime = gettime();
         static double gettime()
         {

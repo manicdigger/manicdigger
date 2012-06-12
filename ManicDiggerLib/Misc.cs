@@ -1173,7 +1173,8 @@ namespace ManicDigger
         }
         public void Disconnect(bool p)
         {
-            d_Socket.Disconnect(p);
+            d_Socket.Close();
+            //d_Socket.Disconnect(p);
         }
         public void BeginSend(byte[] data, int pos, int dataLength, SocketFlags flags, AsyncCallback callback, object o)
         {

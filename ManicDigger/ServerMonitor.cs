@@ -23,7 +23,10 @@ namespace GameModeFortress
         {
             this.server = server;
             this.monitorClients = new Dictionary<int, MonitorClient>();
+        }
 
+        public void Start()
+        {
             Thread serverMonitorThread = new Thread(new ThreadStart(this.Process));
             serverMonitorThread.Start();
         }
