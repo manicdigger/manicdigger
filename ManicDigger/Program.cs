@@ -103,6 +103,10 @@ namespace GameModeFortress
                 new Thread(ServerThreadStart).Start();
                 connectdata.Username = "Local";
             }
+            while (!StartedSinglePlayerServer)
+            {
+                Thread.Sleep(1);
+            }
             ManicDiggerGameWindow w = new ManicDiggerGameWindow();
             if (issingleplayer)
             {
@@ -126,6 +130,7 @@ namespace GameModeFortress
 
         string savefilename;
         public IGameExit exit = new GameExitDummy();
+        bool StartedSinglePlayerServer = false;
         public void ServerThreadStart()
         {
             try
@@ -140,6 +145,7 @@ namespace GameModeFortress
                 {
                     server.Process();
                     Thread.Sleep(1);
+                    StartedSinglePlayerServer = true;
                     if (exit != null && exit.exit) { server.SaveAll(); return; }
                 }
             }
