@@ -15,6 +15,7 @@ using ProtoBuf;
 using System.Xml.Serialization;
 using System.Drawing;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace ManicDiggerServer
 {
@@ -144,9 +145,68 @@ namespace ManicDiggerServer
             }
         }
 
+        public bool Public;
+
         public void Start()
         {
-            LoadConfig();
+            Server server = this;
+            server.LoadConfig();
+            var map = new ManicDiggerServer.ServerMap();
+            map.d_CurrentTime = server;
+            map.chunksize = 32;
+
+            // TODO: make it possible to change the world generator at run-time!
+            var generator = server.config.Generator.getGenerator();
+            generator.ChunkSize = map.chunksize;
+            generator.EnableCavesConfig = server.config.Generator.EnableCaves;
+            // apply chunk size to generator
+            map.d_Generator = generator;
+            server.chunksize = 32;
+
+            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, d_Map = map };
+            map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
+            server.d_Map = map;
+            server.d_Generator = generator;
+            string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+            string[] datapathspublic = new[] { Path.Combine(datapaths[0], "public"), Path.Combine(datapaths[1], "public") };
+            server.PublicDataPaths = datapathspublic;
+            var getfile = new GetFileStream(datapaths);
+            var data = new GameDataCsv();
+            data.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
+                MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")),
+                MyStream.ReadAllLines(getfile.GetFile("lightlevels.csv")));
+            var craftingrecipes = new CraftingRecipes();
+            craftingrecipes.data = data;
+            craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
+            server.d_CraftingRecipes = craftingrecipes;
+            server.d_Data = data;
+            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
+            server.LocalConnectionsOnly = !Public;
+            server.d_GetFile = getfile;
+            var networkcompression = new CompressionGzip();
+            var diskcompression = new CompressionGzip();
+            var chunkdb = new ChunkDbCompressed() { d_ChunkDb = new ChunkDbSqlite(), d_Compression = diskcompression };
+            server.d_ChunkDb = chunkdb;
+            map.d_ChunkDb = chunkdb;
+            server.d_NetworkCompression = networkcompression;
+            map.d_Data = server.d_Data;
+            server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
+            server.d_Water = new WaterFinite() { data = server.d_Data };
+            server.d_GroundPhysics = new GroundPhysics() { data = server.d_Data };
+            server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
+            if (d_MainSocket == null)
+            {
+                server.d_MainSocket = new SocketNet()
+                {
+                    d_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                };
+            }
+            server.d_Heartbeat = new ServerHeartbeat();
+            if ((Public) && (server.config.Public))
+            {
+                new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+            }
+
             {
                 if (!Directory.Exists(gamepathsaves))
                 {
@@ -181,16 +241,16 @@ namespace ManicDiggerServer
                 Id = this.serverConsoleId,
                 playername = "Server"
             };
-            GameModeFortress.Group server = new GameModeFortress.Group();
-            server.Name = "Server";
-            server.Level = 255;
-            server.GroupPrivileges = new List<ServerClientMisc.Privilege>();
+            GameModeFortress.Group serverGroup = new GameModeFortress.Group();
+            serverGroup.Name = "Server";
+            serverGroup.Level = 255;
+            serverGroup.GroupPrivileges = new List<ServerClientMisc.Privilege>();
             foreach (ServerClientMisc.Privilege priv in Enum.GetValues(typeof(ServerClientMisc.Privilege)))
             {
-                server.GroupPrivileges.Add(priv);
+                serverGroup.GroupPrivileges.Add(priv);
             }
-            server.GroupColor = ServerClientMisc.ClientColor.Red;
-            this.serverConsoleClient.AssignGroup(server);
+            serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
+            this.serverConsoleClient.AssignGroup(serverGroup);
             this.serverConsole = new ServerConsole(this);
         }
         private ServerMonitor serverMonitor;
@@ -309,23 +369,31 @@ namespace ManicDiggerServer
         public string gamepathconfig = GameStorePath.GetStorePath();
         public string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
         public string SaveFilenameWithoutExtension = "default";
+        public string SaveFilenameOverride;
         string GetSaveFilename()
         {
+            if (SaveFilenameOverride != null)
+            {
+                return SaveFilenameOverride;
+            }
             return Path.Combine(gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
         }
         public void Process11()
         {
             if ((DateTime.Now - lastsave).TotalMinutes > 2)
             {
-                MemoryStream ms = new MemoryStream();
                 DateTime start = DateTime.UtcNow;
-
-                SaveGame(ms);
-                d_ChunkDb.SetGlobalData(ms.ToArray());
-
+                SaveGlobalData();
                 Console.WriteLine("Game saved. ({0} seconds)", (DateTime.UtcNow - start));
                 lastsave = DateTime.Now;
             }
+        }
+
+        private void SaveGlobalData()
+        {
+            MemoryStream ms = new MemoryStream();
+            SaveGame(ms);
+            d_ChunkDb.SetGlobalData(ms.ToArray());
         }
         DateTime lastsave = DateTime.Now;
 
@@ -1299,6 +1367,25 @@ namespace ManicDiggerServer
                     return;
                 }
             }
+        }
+
+        //on exit
+        public void SaveAll()
+        {
+            for (int x = 0; x < d_Map.MapSizeX / chunksize; x++)
+            {
+                for (int y = 0; y < d_Map.MapSizeY / chunksize; y++)
+                {
+                    for (int z = 0; z < d_Map.MapSizeZ / chunksize; z++)
+                    {
+                        if (d_Map.chunks[x, y, z] != null)
+                        {
+                            DoSaveChunk(x, y, z, d_Map.chunks[x, y, z]);
+                        }
+                    }
+                }
+            }
+            SaveGlobalData();
         }
 
         private void DoSaveChunk(int x, int y, int z, Chunk c)

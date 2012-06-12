@@ -110,7 +110,7 @@
             this.openFileDialog1.CheckFileExists = false;
             this.openFileDialog1.DefaultExt = "mddbs";
             this.openFileDialog1.FileName = "Default";
-            this.openFileDialog1.Filter = "Manic Digger Savegame|mddbs|All files|*.*";
+            this.openFileDialog1.Filter = "Manic Digger Savegame|*.mddbs|All files|*.*";
             // 
             // pictureBox1
             // 

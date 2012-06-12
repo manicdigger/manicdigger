@@ -92,6 +92,7 @@ namespace GameModeFortress
                     singleplayerpath = null;
                 }
             }
+            savefilename = singleplayerpath;
             StartGameWindowAndConnect(IsSinglePlayer, connectdata, singleplayerpath);
         }
 
@@ -123,16 +124,24 @@ namespace GameModeFortress
 
         SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
 
+        string savefilename;
         public IGameExit exit = new GameExitDummy();
         public void ServerThreadStart()
         {
             try
             {
-                ServerProgram server = new ServerProgram();
-                server.d_Exit = exit;
+                Server server = new Server();
+                server.SaveFilenameOverride = savefilename;
+                server.exit = exit;
                 var socket = new SocketDummy(dummyNetwork);
-                ServerProgram.Socket = socket;
+                server.d_MainSocket = socket;
                 server.Start();
+                for (; ; )
+                {
+                    server.Process();
+                    Thread.Sleep(1);
+                    if (exit != null && exit.exit) { server.SaveAll(); return; }
+                }
             }
             catch (Exception e)
             {

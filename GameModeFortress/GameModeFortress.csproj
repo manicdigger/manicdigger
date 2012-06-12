@@ -90,7 +90,6 @@
     <Compile Include="ServerConfig.cs" />
     <Compile Include="ServerHeartbeat.cs" />
     <Compile Include="ServerMap.cs" />
-    <Compile Include="ServerProgram.cs" />
     <Compile Include="ServerWorldManager.cs" />
     <Compile Include="Shadows.cs" />
     <Compile Include="TerrainRenderer.cs" />

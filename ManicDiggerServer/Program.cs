@@ -13,10 +13,20 @@ namespace ManicDiggerServer
     {
         static void Main(string[] args)
         {
-            ServerProgram server = new ServerProgram();
-            server.d_Exit = new GameExitDummy();
-            ServerProgram.Public = true;
-            new CrashReporter().Start(server.Start);
+            new CrashReporter().Start(Main2);
+        }
+        static void Main2()
+        {
+            Server server = new Server();
+            server.exit = new GameExitDummy();
+            server.Public = true;
+            server.Start();
+            for (; ; )
+            {
+                server.Process();
+                Thread.Sleep(1);
+                if (server.exit != null && server.exit.exit) { return; }
+            }
         }
     }
 }
