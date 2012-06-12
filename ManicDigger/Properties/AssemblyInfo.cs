@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Manic Digger")]
+[assembly: AssemblyTitle("GameModeFortress")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Manic Digger")]
+[assembly: AssemblyProduct("GameModeFortress")]
 [assembly: AssemblyCopyright("Copyright ©  2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("8495b9b8-6974-45de-b896-87f195304ede")]
+[assembly: Guid("782e0587-e211-4a27-a5ac-3ecb057860dc")]
 
 // Version information for an assembly consists of the following four values:
 //

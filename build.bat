@@ -5,11 +5,11 @@ copy OpenAL32.dll output\
 xcopy /s data output\data\
 
 REM Dll
-xcopy /s ManicDigger\bin\release\*.dll output\
+xcopy /s ManicDiggerLib\bin\release\*.dll output\
 
 REM Fortress mode
-xcopy /s /y GameModeFortress\bin\release\*.dll output\
-xcopy /s /y GameModeFortress\bin\release\*.exe output\
+xcopy /s /y ManicDigger\bin\release\*.dll output\
+xcopy /s /y ManicDigger\bin\release\*.exe output\
 REM Server
 xcopy /s /y ManicDiggerServer\bin\release\*.dll output\
 xcopy /s /y ManicDiggerServer\bin\release\*.exe output\

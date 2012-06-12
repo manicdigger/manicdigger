@@ -5,8 +5,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{08056549-3BE8-454C-A09A-67EDCDC81261}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{650BC108-C744-4DA1-AEFD-CD8F011483B3}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ManicDigger</RootNamespace>
     <AssemblyName>ManicDigger</AssemblyName>
@@ -14,7 +14,7 @@
     <TargetFrameworkSubset>
     </TargetFrameworkSubset>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>c.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>a.snk</AssemblyOriginatorKeyFile>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -25,7 +25,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,22 +33,17 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Jint, Version=0.9.2.0, Culture=neutral, PublicKeyToken=6dc783a0f985a74b, processorArchitecture=MSIL" />
     <Reference Include="System" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="csogg">
-      <HintPath>..\csogg.dll</HintPath>
-    </Reference>
-    <Reference Include="csvorbis">
-      <HintPath>..\csvorbis.dll</HintPath>
-    </Reference>
-    <Reference Include="LibNoise">
-      <HintPath>..\LibNoise.dll</HintPath>
+    <Reference Include="Antlr3.Runtime">
+      <HintPath>..\Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK">
       <HintPath>..\OpenTK.dll</HintPath>
@@ -57,69 +51,81 @@
     <Reference Include="protobuf-net">
       <HintPath>..\protobuf-net\protobuf-net.dll</HintPath>
     </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="Jint">
+      <HintPath>..\Jint.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Audio.cs" />
-    <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="Core\SafeDictionary.cs" />
-    <Compile Include="DirtyChunks.cs" />
-    <Compile Include="FrustumCulling.cs" />
-    <Compile Include="GameData.cs" />
-    <Compile Include="Hud\Hud.cs" />
-    <Compile Include="Hud\HudChat.cs" />
-    <Compile Include="Hud\HudInventory.cs" />
-    <Compile Include="Hud\HudTextEditor.cs" />
-    <Compile Include="Interpolation.cs" />
-    <Compile Include="Inventory.cs" />
-    <Compile Include="IterableSet.cs" />
-    <Compile Include="MapTools\FcraftVector.cs" />
-    <Compile Include="MapTools\Forester.cs" />
-    <Compile Include="MapTools\Generators\ExperimentalWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\FlatMapGenerator.cs" />
-    <Compile Include="MapTools\Generators\GenerationOption.cs" />
-    <Compile Include="MapTools\Generators\NewWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\Noise3DWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\WorldGeneratorBase.cs" />
-    <Compile Include="MapTools\GroundPhysics.cs" />
-    <Compile Include="MapTools\IWorldGenerator.cs" />
-    <Compile Include="MapTools\NoiseTools.cs" />
-    <Compile Include="MapTools\PopulationTools.cs" />
-    <Compile Include="MapTools\WaterFinite.cs" />
-    <Compile Include="MapTools\WorldGeneratorTools.cs" />
-    <Compile Include="Network\LoginClient.cs" />
-    <Compile Include="MeshBatcher.cs" />
-    <Compile Include="Hud\HudFpsHistoryGraphRenderer.cs" />
-    <Compile Include="OggDecoder.cs" />
-    <Compile Include="Renderers\CharacterRendererMonsterCode.cs" />
-    <Compile Include="Renderers\MonospacedTextRenderer.cs" />
-    <Compile Include="Renderers\MinecartRenderer.cs" />
-    <Compile Include="Network\NetworkClient.cs" />
-    <Compile Include="Collisions.cs" />
-    <Compile Include="GameWindowMisc.cs" />
-    <Compile Include="ManicDigger.cs" />
+    <Compile Include="ChunkDb.cs" />
+    <Compile Include="CraftingRecipes.cs" />
+    <Compile Include="GameDataManicDigger.cs" />
+    <Compile Include="ManicDiggerGameWindow.cs" />
+    <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
+    <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
+    <Compile Include="GuiStates\GuiStateMapLoading.cs" />
+    <Compile Include="Menu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Menu.Designer.cs">
+      <DependentUpon>Menu.cs</DependentUpon>
+    </Compile>
     <Compile Include="Misc.cs" />
-    <Compile Include="Network\NetworkClientMinecraft.cs" />
-    <Compile Include="Network\PlayerSkinDownloader.cs" />
+    <Compile Include="ModeFortressRail.cs" />
+    <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rail.cs" />
-    <Compile Include="MapTools\Shadows.cs" />
-    <Compile Include="Renderers\ParticleEffectBlockBreak.cs" />
-    <Compile Include="Renderers\SkySphere.cs" />
-    <Compile Include="Renderers\SunMoonRenderer.cs" />
-    <Compile Include="Renderers\TerrainChunkTesselator.cs" />
-    <Compile Include="Renderers\TerrainRenderer.cs" />
-    <Compile Include="Renderers\TextRenderer.cs" />
-    <Compile Include="TextureAtlasConverter.cs" />
-    <Compile Include="The3d.cs" />
-    <Compile Include="MapTools\WaterSimple.cs" />
-    <Compile Include="Renderers\WeaponRenderer.cs" />
-    <Compile Include="Hud\HudPlayerList.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptConsole.cs" />
+    <Compile Include="ScriptInterpreter.cs" />
+    <Compile Include="ServeCommand.cs" />
+    <Compile Include="Server.cs" />
+    <Compile Include="ServerClient.cs" />
+    <Compile Include="ServerConfig.cs" />
+    <Compile Include="ServerHeartbeat.cs" />
+    <Compile Include="ServerMap.cs" />
+    <Compile Include="ServerWorldManager.cs" />
+    <Compile Include="Shadows.cs" />
+    <Compile Include="TerrainRenderer.cs" />
+    <Compile Include="ServerConsole.cs" />
+    <Compile Include="ServerMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="a.snk" />
     <None Include="app.config" />
-    <None Include="c.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\sqlite3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\OpenAL32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Jint.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Menu.resx">
+      <DependentUpon>Menu.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ManicDiggerLib\ManicDiggerLib.csproj">
+      <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
+      <Name>ManicDiggerLib</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

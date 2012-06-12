@@ -1,131 +1,152 @@
-﻿using System;
+﻿#region Using Statements
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Threading;
 using System.Windows.Forms;
+using System.Xml;
+using ManicDigger;
+using ManicDigger.MapTools;
+using ManicDigger.MapTools.Generators;
+using ManicDigger.Network;
+using ManicDigger.Renderers;
+using ManicDiggerServer;
+using System.Text;
+using ManicDigger.Hud;
+using System.Net.Sockets;
+#endregion
 
-namespace ManicDigger
+namespace GameModeFortress
 {
-    public class InjectAttribute : Attribute
+    public interface IResetMap
     {
+        void Reset(int sizex, int sizey, int sizez);
     }
-    public interface IGetFileStream
+    public class ManicDiggerProgram
     {
-        Stream GetFile(string p);
-    }
-    public class GetFileStreamDummy : IGetFileStream
-    {
-        #region IGetFilePath Members
-        public Stream GetFile(string p)
+        [STAThread]
+        public static void Main(string[] args)
         {
-			throw new FileNotFoundException();
+            new ManicDiggerProgram(args);
         }
-        #endregion
-    }
-    public class GetFileStream : IGetFileStream
-    {
-        public GetFileStream(IEnumerable<string> datapaths)
+        public ManicDiggerProgram(string[] args)
         {
-            this.DataPaths = new List<string>(datapaths).ToArray();
+            new CrashReporter().Start(delegate { Start(args); });
         }
-        public string[] DataPaths;
-        Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
-        Dictionary<string, string> remap = new Dictionary<string, string>();
-        public Stream GetFile(string filename)
+        private void Start(string[] args)
         {
-        retry:
-            if (remap.ContainsKey(filename))
-            {
-                filename = remap[filename];
-            }
-            if (!cache.ContainsKey(filename))
-            {
-                foreach (string path in DataPaths)
-                {
-                    try
-                    {
-                        if (!Directory.Exists(path))
-                        {
-                            continue;
-                        }
-                        foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
-                        {
-                            try
-                            {
-                                FileInfo f = new FileInfo(s);
-                                cache[f.Name] = File.ReadAllBytes(s);
-                            }
-                            catch
-                            {
-                            }
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
-            }
-            string origfilename = filename;
-            for (int i = 0; i < 2; i++)
-            {
-                if (cache.ContainsKey(filename)) { return new MemoryStream(cache[filename]); }
-
-                string f1 = filename.Replace(".png", ".jpg");
-                if (cache.ContainsKey(f1)) { remap[origfilename] = f1; goto retry; }
-
-                string f2 = filename.Replace(".jpg", ".png");
-                if (cache.ContainsKey(f2)) { remap[origfilename] = f2; goto retry; }
-
-                string f3 = filename.Replace(".wav", ".ogg");
-                if (cache.ContainsKey(f3)) { remap[origfilename] = f3; goto retry; }
-
-                string f4 = filename.Replace(".ogg", ".wav");
-                if (cache.ContainsKey(f4)) { remap[origfilename] = f4; goto retry; }
-
-                filename = new FileInfo(filename).Name; //handles GetFile(GetFile(file)) use.
-            }
-
-            throw new FileNotFoundException(filename);
-        }
-		public void SetFile(string name, byte[] data)
-		{
-			cache[name] = data;
-		}
-	}
-    public class CrashReporter
-    {
-        public void Start(System.Threading.ThreadStart start)
-        {
+            string appPath = Path.GetDirectoryName(Application.ExecutablePath);
             if (!Debugger.IsAttached)
             {
-                try
+                System.Environment.CurrentDirectory = appPath;
+            }
+            bool IsSinglePlayer;
+            string singleplayerpath;
+            ConnectData connectdata = new ConnectData();
+            if (args.Length > 0)
+            {
+                if (args[0].EndsWith(".mdlink", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    start();
+                    XmlDocument d = new XmlDocument();
+                    d.Load(args[0]);
+                    string mode = XmlTool.XmlVal(d, "/ManicDiggerLink/GameMode");
+                    if (mode != "Fortress")
+                    {
+                        throw new Exception("Invalid game mode: " + mode);
+                    }
+                    connectdata.Ip = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
+                    connectdata.Port = port;
+                    connectdata.Username = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                    IsSinglePlayer = false;
+                    singleplayerpath = null;
                 }
-                catch (Exception e)
+                else
                 {
-                    Crash(e);
+                    connectdata = ConnectData.FromUri(new MyUri(args[0]));
+                    IsSinglePlayer = false;
+                    singleplayerpath = null;
                 }
             }
             else
             {
-                start();
+                //new Thread(ServerThreadStart).Start();
+                //p.GameUrl = "127.0.0.1:25570";
+                //p.User = "Local";
+                Menu form = new Menu();
+                Application.Run(form);
+                if (form.Chosen == ChosenGameType.None)
+                {
+                    return;
+                }
+                IsSinglePlayer = form.Chosen == ChosenGameType.Singleplayer;
+                if (IsSinglePlayer)
+                {
+                    singleplayerpath = form.SinglePlayerSaveGamePath;
+                }
+                else
+                {
+                    connectdata = form.MultiplayerConnectData;
+                    singleplayerpath = null;
+                }
             }
+            savefilename = singleplayerpath;
+            StartGameWindowAndConnect(IsSinglePlayer, connectdata, singleplayerpath);
         }
-        public static string gamepathcrash = GameStorePath.GetStorePath();
-        public static void Crash(Exception e)
+
+        void StartGameWindowAndConnect(bool issingleplayer, ConnectData connectdata, string singleplayersavepath)
         {
-            string crashfile = Path.Combine(gamepathcrash, "ManicDiggerCrash.txt");
-            File.WriteAllText(crashfile, e.ToString());
-            for (int i = 0; i < 5; i++)
+            if (issingleplayer)
             {
-                System.Windows.Forms.Cursor.Show();
-                System.Threading.Thread.Sleep(100);
-                Application.DoEvents();
+                new Thread(ServerThreadStart).Start();
+                connectdata.Username = "Local";
             }
-            System.Windows.Forms.MessageBox.Show(e.ToString());
-            Environment.Exit(1);
+            ManicDiggerGameWindow w = new ManicDiggerGameWindow();
+            if (issingleplayer)
+            {
+                var socket = new SocketDummy() { network = this.dummyNetwork };
+                w.main = socket;
+            }
+            else
+            {
+                w.main = new SocketNet(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+            }
+            var glwindow = new GlWindow(w);
+            w.d_GlWindow = glwindow;
+            w.d_Exit = exit;
+            w.connectdata = connectdata;
+            w.Start();
+            w.Run();
+            exit.exit = true;
+        }
+
+        SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
+
+        string savefilename;
+        public IGameExit exit = new GameExitDummy();
+        public void ServerThreadStart()
+        {
+            try
+            {
+                Server server = new Server();
+                server.SaveFilenameOverride = savefilename;
+                server.exit = exit;
+                var socket = new SocketDummy(dummyNetwork);
+                server.d_MainSocket = socket;
+                server.Start();
+                for (; ; )
+                {
+                    server.Process();
+                    Thread.Sleep(1);
+                    if (exit != null && exit.exit) { server.SaveAll(); return; }
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString());
+            }
         }
     }
 }

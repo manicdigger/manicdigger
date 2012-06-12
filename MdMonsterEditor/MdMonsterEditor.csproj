@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{DE9E0B36-6171-4DA3-9495-0A82445B6D74}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -75,9 +75,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ManicDigger\ManicDigger.csproj">
+    <ProjectReference Include="..\ManicDiggerLib\ManicDiggerLib.csproj">
       <Project>{08056549-3BE8-454C-A09A-67EDCDC81261}</Project>
-      <Name>ManicDigger</Name>
+      <Name>ManicDiggerLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

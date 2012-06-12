@@ -9,11 +9,11 @@ cp OpenAL32.dll ouput
 cp -R data output
 
 # Dll
-cp ManicDigger/bin/Release/*.dll output
+cp ManicDiggerLib/bin/Release/*.dll output
 
 # Fortress mode
-cp GameModeFortress/bin/Release/*.dll output
-cp GameModeFortress/bin/Release/*.exe output
+cp ManicDigger/bin/Release/*.dll output
+cp ManicDigger/bin/Release/*.exe output
 
 # Server
 cp ManicDiggerServer/bin/Release/*.dll output

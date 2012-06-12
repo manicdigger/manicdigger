@@ -1,10 +1,10 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C# Express 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameModeFortress", "GameModeFortress\GameModeFortress.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger\ManicDigger.csproj", "{650BC108-C744-4DA1-AEFD-CD8F011483B3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerServer", "ManicDiggerServer\ManicDiggerServer.csproj", "{46D2CD51-9603-48B4-87D1-7377B5F1E51E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDigger", "ManicDigger\ManicDigger.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerLib", "ManicDiggerLib\ManicDiggerLib.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{37A8D68F-2BCE-487F-A708-D911884EDD9D}"
 EndProject
