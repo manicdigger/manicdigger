@@ -744,11 +744,11 @@ namespace ManicDiggerServer
                         }
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     //client problem. disconnect client.
-                    Console.WriteLine(e.ToString());
-                    SendDisconnectPlayer(k.Key, "exception");
+                    Console.WriteLine("Exception at client " + k.Key + ". Disconnecting client.");
+                    SendDisconnectPlayer(k.Key, "Your client throwed an exception at server.");
                     KillPlayer(k.Key);
                 }
             }
@@ -797,8 +797,11 @@ namespace ManicDiggerServer
                 ChunkSimulation();
             }
             if (config.Flooding)
+            {
                 UpdateWater();
+            }
             tntTimer.Update(UpdateTnt);
+            NotifyGroundPhysics();
         }
 
         private void UpdateTnt()
@@ -888,6 +891,18 @@ namespace ManicDiggerServer
         ManicDigger.Timer tntTimer = new ManicDigger.Timer() { INTERVAL = 5 };
         Stack<Vector3i> tntStack = new Stack<Vector3i>();
         public int tntMax = 10;
+
+        private void NotifyGroundPhysics()
+        {
+            foreach (var v in d_GroundPhysics.blocksToNotify)
+            {
+                foreach (var k in clients)
+                {
+                    SendSetBlock(k.Key, (int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, v.type);
+                }
+            }
+            d_GroundPhysics.blocksToNotify.Clear();
+        }
 
         private void UpdateWater()
         {
@@ -1426,6 +1441,7 @@ namespace ManicDiggerServer
         {
             d_Map.GetBlock(v.x, v.y, v.z);
         }
+
         /*
         private int NotifyMapChunks(int clientid, int limit)
         {
@@ -1480,7 +1496,8 @@ namespace ManicDiggerServer
                 };
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
             }
-         */
+        }
+         
         /*
 Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
 var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
@@ -1582,7 +1599,7 @@ if (sent >= unknown.Count) { break; }
                             if (DistanceSquared(mpos, ppos) < 15)
                             {
                                 m.Health -= health;
-                                Console.WriteLine("HIT! -2 = " + m.Health);
+                                //Console.WriteLine("HIT! -2 = " + m.Health);
                                 if (m.Health <= 0)
                                 {
                                     chunk.Monsters.Remove(m);
@@ -1897,7 +1914,7 @@ if (sent >= unknown.Count) { break; }
                     // allowed characters in username: a-z,A-Z,0-9,-,_ length: 1-16
                     Regex allowedUsername = new Regex(@"^(\w|-){1,16}$");
 
-                    if (!allowedUsername.IsMatch(username))
+                    if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
                     {
                         SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
                         ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
@@ -2541,6 +2558,8 @@ if (sent >= unknown.Count) { break; }
         }
         private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
         {
+            // TODO: better to send a chunk?
+
             Vector3i v = new Vector3i((a.x / chunksize) * chunksize,
                 (a.y / chunksize) * chunksize, (a.z / chunksize) * chunksize);
             Vector3i w = new Vector3i((b.x / chunksize) * chunksize,
@@ -3213,7 +3232,7 @@ if (sent >= unknown.Count) { break; }
             public void AssignGroup(GameModeFortress.Group newGroup)
             {
                 this.clientGroup = newGroup;
-                this.privileges = newGroup.GroupPrivileges;
+                this.privileges.AddRange(newGroup.GroupPrivileges);
                 this.color = newGroup.GroupColorString();
             }
             public List<ServerClientMisc.Privilege> privileges = new List<ServerClientMisc.Privilege>();

@@ -10,6 +10,13 @@ namespace ManicDigger.MapTools
         [Inject]
         public IGameData data;
 
+        public List<ToNotify> blocksToNotify = new List<ToNotify>();
+        public struct ToNotify
+        {
+            public Vector3 pos;
+            public int type;
+        }
+
         public void BlockChange(IMapStorage map, int x, int y, int z)
         {
             this.map = map;
@@ -65,7 +72,9 @@ namespace ManicDigger.MapTools
         private void BlockMoveDown(int x, int y, int z, int depth)
         {
             this.map.SetBlock(x, y, z - depth, this.map.GetBlock(x, y, z + 1));
+            this.blocksToNotify.Add(new ToNotify() { pos = new Vector3(x,y,z - depth), type = this.map.GetBlock(x, y, z + 1) });
             this.map.SetBlock(x, y, z + 1, SpecialBlockId.Empty);
+            this.blocksToNotify.Add(new ToNotify() { pos = new Vector3(x,y,z + 1), type = SpecialBlockId.Empty });
         }
 
         private bool IsDestroyOfBase(int x, int y, int z, int blockType)

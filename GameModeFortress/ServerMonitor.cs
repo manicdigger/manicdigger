@@ -10,7 +10,7 @@ namespace GameModeFortress
     public class ServerMonitor
     {
         public int MaxPackets = 100; // max number of packets - packet flood protection
-        public int MaxBlocks = 20; // max number of blocks which can be set within the time intervall
+        public int MaxBlocks = 30; // max number of blocks which can be set within the time intervall
         public int MaxMessages = 3; // max number of chat messages per time intervall
         public int TimeIntervall = 3; // in seconds, resets count values
         public IGameExit Exit;

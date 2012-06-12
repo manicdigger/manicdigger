@@ -15,6 +15,7 @@ namespace GameModeFortress
         public string WelcomeMessage { get; set; }  //Displays when the user logs in.
         public int Port { get; set; }               //Port the server runs on
         public int MaxClients { get; set; }
+        public bool ServerMonitor { get; set; }
         public bool BuildLogging { get; set; }
         public bool ServerEventLogging { get; set; }
         public bool ChatLogging { get; set; }
@@ -38,7 +39,6 @@ namespace GameModeFortress
         public List<AreaConfig> Areas { get; set; }
         [XmlElement(ElementName="MapGenerator")]
         public MapGeneratorConfig Generator { get; set; }
-        public bool ServerMonitor { get; set; }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -102,6 +102,7 @@ namespace GameModeFortress
             this.WelcomeMessage = "Welcome to my Manic Digger server!";
             this.Port = 25565;
             this.MaxClients = 16;
+            this.ServerMonitor = true;
             this.BuildLogging = false;
             this.ServerEventLogging = false;
             this.ChatLogging = false;
@@ -112,7 +113,7 @@ namespace GameModeFortress
             this.AllowGuests = true;
             this.AllowFreemove = true;
             this.Flooding = true;
-            this.Monsters = true;
+            this.Monsters = false;
             this.MapSizeX = 10000;
             this.MapSizeY = 10000;
             this.MapSizeZ = 128;
@@ -120,7 +121,6 @@ namespace GameModeFortress
             this.BannedUsers = new List<string>();
             this.Areas = new List<AreaConfig>();
             this.Generator = new MapGeneratorConfig();
-            this.ServerMonitor = true;
         }
     }
 
