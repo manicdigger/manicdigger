@@ -16,6 +16,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>a.snk</AssemblyOriginatorKeyFile>
     <PlatformTarget>x86</PlatformTarget>
+    <ApplicationIcon>md.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -110,6 +111,7 @@
     <Content Include="..\Jint.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="md.ico" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Menu.resx">
