@@ -312,11 +312,11 @@ namespace ManicDigger
     //because it would be very noticeable (new window in Windows, 5-10 seconds).
     //So there is just one MainGameWindow (never deleted) that delegates
     //its tasks to IMyGameWindow which can be replaced at runtime.
-    public class MainGameWindow : GameWindow
+    public class GlWindow : GameWindow
     {
         public IMyGameWindow mywindow;
         const bool ENABLE_FULLSCREEN = false;
-        public MainGameWindow(IMyGameWindow mywindow)
+        public GlWindow(IMyGameWindow mywindow)
             : base(800, 600, GraphicsMode.Default, "",
                 ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { this.mywindow = mywindow; }
         protected override void OnLoad(EventArgs e)
@@ -351,6 +351,27 @@ namespace ManicDigger
         public string Ip;
         public int Port;
         public string Auth;
+        public static ConnectData FromUri(MyUri uri)
+        {
+            ConnectData c = new ConnectData();
+            c = new ConnectData();
+            c.Ip = uri.Ip;
+            c.Port = 25565;
+            c.Username = "gamer";
+            if (uri.Port != -1)
+            {
+                c.Port = uri.Port;
+            }
+            if (uri.Get.ContainsKey("user"))
+            {
+                c.Username = uri.Get["user"];
+            }
+            if (uri.Get.ContainsKey("auth"))
+            {
+                c.Auth = uri.Get["auth"];
+            }
+            return c;
+        }
     }
     public class ConnectedPlayer
     {

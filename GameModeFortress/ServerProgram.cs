@@ -22,6 +22,7 @@ namespace GameModeFortress
         public void Start()
         {
             Server server = new Server();
+            server.exit = d_Exit;
             server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
             map.d_CurrentTime = server;

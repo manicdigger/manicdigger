@@ -49,6 +49,7 @@ namespace ManicDiggerServer
     }
     public partial class Server : ICurrentTime, IDropItem
     {
+        public IGameExit exit;
         [Inject]
         public ServerMap d_Map;
         [Inject]
@@ -171,6 +172,7 @@ namespace ManicDiggerServer
             if (config.ServerMonitor)
             {
                 this.serverMonitor = new ServerMonitor(this);
+                this.serverMonitor.Exit = exit;
             }
 
             // set up server console interpreter

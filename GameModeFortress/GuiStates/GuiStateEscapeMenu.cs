@@ -56,7 +56,7 @@ namespace ManicDigger
                 AddButton("Exit", (a, b) =>
                 {
                     d_Exit.exit = true;
-                    this.d_MainWindow.Exit();
+                    this.d_GlWindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);
             }

@@ -27,10 +27,179 @@ namespace ManicDigger
         IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
-        IMapStoragePortion, IShadows
+        IMapStoragePortion, IShadows, ICurrentShadows, IResetMap
     {
+        public void Start()
+        {
+            d_Audio = new AudioOpenAl();
+            string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+            var getfile = new GetFileStream(datapaths);
+            var w = this;
+            var gamedata = new GameDataCsv();
+            var clientgame = w;
+            ICurrentSeason currentseason = clientgame;
+            gamedata.CurrentSeason = currentseason;
+            var network = w;
+            var mapstorage = clientgame;
+            var config3d = new Config3d();
+            var mapManipulator = new MapManipulator();
+            var the3d = new The3d();
+            the3d.d_GetFile = getfile;
+            the3d.d_Config3d = config3d;
+            the3d.d_ViewportSize = w;
+            w.d_The3d = the3d;
+            var localplayerposition = w;
+            var physics = new CharacterPhysics();
+            var internetgamefactory = this;
+            ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
+            network.d_Compression = compression;
+            //network.d_ResetMap = this;
+            var terrainTextures = new TerrainTextures();
+            terrainTextures.d_GetFile = getfile;
+            terrainTextures.d_The3d = the3d;
+            bool IsMono = Type.GetType("Mono.Runtime") != null;
+            terrainTextures.d_TextureAtlasConverter = new TextureAtlasConverter();
+            if (IsMono)
+            {
+                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmapDummy(); };
+            }
+            else
+            {
+                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmap(); };
+            }
+            terrainTextures.Start();
+            w.d_TerrainTextures = terrainTextures;
+            var blockrenderertorch = new BlockRendererTorch();
+            blockrenderertorch.d_TerainRenderer = terrainTextures;
+            blockrenderertorch.d_Data = gamedata;
+            //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
+            var map = w;
+            var terrainchunktesselator = new TerrainChunkTesselator();
+            terrainchunktesselator.d_Config3d = config3d;
+            terrainchunktesselator.d_Data = gamedata;
+            terrainchunktesselator.d_MapStorage = clientgame;
+            terrainchunktesselator.d_MapStoragePortion = map;
+            terrainchunktesselator.d_MapStorageLight = clientgame;
+            w.d_TerrainChunkTesselator = terrainchunktesselator;
+            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
+            w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
+            w.d_FrustumCulling = frustumculling;
+            w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
+            terrainchunktesselator.d_BlockRendererTorch = blockrenderertorch;
+            terrainchunktesselator.d_TerrainTextures = terrainTextures;
+            //w.d_Map = clientgame.mapforphysics;
+            w.d_Physics = physics;
+            w.d_Clients = clientgame;
+            w.d_Data = gamedata;
+            w.d_DataMonsters = new GameDataMonsters(getfile);
+            w.d_GetFile = getfile;
+            w.d_Config3d = config3d;
+            w.d_MapManipulator = mapManipulator;
+            w.PickDistance = 4.5f;
+            var skysphere = new SkySphere();
+            skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
+            skysphere.d_LocalPlayerPosition = localplayerposition;
+            skysphere.d_The3d = the3d;
+            w.skysphere = skysphere;
+            var textrenderer = new ManicDigger.Renderers.TextRenderer();
+            w.d_TextRenderer = textrenderer;
+            Inventory inventory = Inventory.Create();
+            var weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = w, d_Inventory = inventory, d_LocalPlayerPosition = w };
+            w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
+            var playerrenderer = new CharacterRendererMonsterCode();
+            playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
+            w.d_CharacterRenderer = playerrenderer;
+            var particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
+            w.particleEffectBlockBreak = particle;
+            w.ENABLE_FINITEINVENTORY = false;
+            w.d_Shadows = w;
+            clientgame.d_Data = gamedata;
+            clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
+            clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
+            clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
+            clientgame.d_TerrainTextures = terrainTextures;
+            clientgame.d_GetFile = getfile;
+            var craftingrecipes = new CraftingRecipes();
+            craftingrecipes.data = gamedata;
+            w.d_CraftingRecipes = craftingrecipes;
+            network.d_CraftingRecipes = craftingrecipes;
+            w.Reset(10 * 1000, 10 * 1000, 128);
+            clientgame.d_Map = map;
+            PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
+            playerskindownloader.d_Exit = d_Exit;
+            playerskindownloader.d_The3d = the3d;
+            playerskindownloader.skinserver = "http://manicdigger.sourceforge.net/play/skins/";
+            w.playerskindownloader = playerskindownloader;
+            w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w };
+            w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
+            w.d_FrustumCulling = frustumculling;
+            physics.d_Map = clientgame.mapforphysics;
+            physics.d_Data = gamedata;
+            d_Audio.d_GetFile = getfile;
+            d_Audio.d_GameExit = d_Exit;
+            the3d.d_Terrain = terrainTextures;
+            the3d.d_TextRenderer = textrenderer;
+            //w.d_CurrentShadows = this;
+            var sunmoonrenderer = new SunMoonRenderer() { d_Draw2d = the3d, d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d };
+            w.d_SunMoonRenderer = sunmoonrenderer;
+            clientgame.d_SunMoonRenderer = sunmoonrenderer;
+            this.d_Heightmap = new InfiniteMapChunked2d() { d_Map = map };
+            d_Heightmap.Restart();
+            network.d_Heightmap = d_Heightmap;
+            //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
+            //light.Restart();
+            w.d_TerrainChunkTesselator = terrainchunktesselator;
+            terrainchunktesselator.d_Shadows = w;
+            /*
+            if (fullshadows)
+            {
+                UseShadowsFull();
+            }
+            else
+            {
+                UseShadowsSimple();
+            }
+            */
+            w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w };
+            w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w };
+            w.d_HudPlayerList = new HudPlayerList() { ServerInfo = w.ServerInfo, d_ViewportSize = w };
+            var dataItems = new GameDataItemsBlocks() { d_Data = gamedata };
+            var inventoryController = clientgame;
+            var inventoryUtil = new InventoryUtil();
+            var hudInventory = new HudInventory();
+            hudInventory.dataItems = dataItems;
+            hudInventory.inventory = inventory;
+            hudInventory.inventoryUtil = inventoryUtil;
+            hudInventory.controller = inventoryController;
+            hudInventory.viewport_size = w;
+            hudInventory.mouse_current = w;
+            hudInventory.the3d = the3d;
+            hudInventory.getfile = getfile;
+            hudInventory.ActiveMaterial = w;
+            hudInventory.viewport3d = w;
+            w.d_Inventory = inventory;
+            w.d_InventoryController = inventoryController;
+            w.d_InventoryUtil = inventoryUtil;
+            inventoryUtil.d_Inventory = inventory;
+            inventoryUtil.d_Items = dataItems;
+
+            clientgame.d_Inventory = inventory;
+            w.d_HudInventory = hudInventory;
+            w.d_CurrentShadows = this;
+            w.d_ResetMap = this;
+            if (Debugger.IsAttached)
+            {
+                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
+                    w, d_Audio, gamedata, clientgame, network, mapstorage, getfile,
+                    config3d, mapManipulator, w, the3d, d_Exit,
+                    localplayerposition, physics,
+                    internetgamefactory, blockrenderertorch, playerrenderer,
+                    map, terrainchunktesselator);
+            }
+        }
+
         [Inject]
-        public MainGameWindow d_MainWindow;
+        public GlWindow d_GlWindow;
         [Inject]
         public The3d d_The3d;
         [Inject]
@@ -43,7 +212,7 @@ namespace ManicDigger
         public CharacterPhysics d_Physics;
 
         [Inject]
-        public IAudio d_Audio;
+        public AudioOpenAl d_Audio;
         [Inject]
         public GetFileStream d_GetFile;
         [Inject]
@@ -149,8 +318,10 @@ namespace ManicDigger
             else { throw new Exception(); }
             //..base.OnFocusedChanged(e);
         }
+
         public void OnLoad(EventArgs e)
         {
+            //Start();
             Connect();
 
             string version = GL.GetString(StringName.Version);
@@ -160,17 +331,17 @@ namespace ManicDigger
             {
                 System.Windows.Forms.MessageBox.Show("You need at least OpenGL 1.5 to run this example. Aborting.", "VBOs not supported",
                 System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
-                d_MainWindow.Exit();
+                d_GlWindow.Exit();
             }
             if (!d_Config3d.ENABLE_VSYNC)
             {
-                d_MainWindow.TargetRenderFrequency = 0;
+                d_GlWindow.TargetRenderFrequency = 0;
             }
             GL.ClearColor(Color.Black);
-            d_MainWindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
-            d_MainWindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
-            d_MainWindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
-            d_MainWindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
+            d_GlWindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
+            d_GlWindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
+            d_GlWindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
+            d_GlWindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
             if (d_Config3d.ENABLE_BACKFACECULLING)
             {
                 GL.DepthMask(true);
@@ -178,10 +349,10 @@ namespace ManicDigger
                 GL.CullFace(CullFaceMode.Back);
                 GL.Enable(EnableCap.CullFace);
             }
-            d_MainWindow.Keyboard.KeyRepeat = true;
-            d_MainWindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
-            d_MainWindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
-            d_MainWindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
+            d_GlWindow.Keyboard.KeyRepeat = true;
+            d_GlWindow.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(ManicDiggerGameWindow_KeyPress);
+            d_GlWindow.Keyboard.KeyDown += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyDown);
+            d_GlWindow.Keyboard.KeyUp += new EventHandler<OpenTK.Input.KeyboardKeyEventArgs>(Keyboard_KeyUp);
 
             GL.Enable(EnableCap.Lighting);
             //SetAmbientLight(terraincolor);
@@ -194,12 +365,12 @@ namespace ManicDigger
             }
             else
             {
-                d_MainWindow.CursorVisible = false;
+                d_GlWindow.CursorVisible = false;
             }
         }
         void Mouse_ButtonUp(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!d_MainWindow.Focused)
+            if (!d_GlWindow.Focused)
             {
                 return;
             }
@@ -218,7 +389,7 @@ namespace ManicDigger
         }
         void Mouse_ButtonDown(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
-            if (!d_MainWindow.Focused)
+            if (!d_GlWindow.Focused)
             {
                 return;
             }
@@ -518,13 +689,13 @@ namespace ManicDigger
                 IsShiftPressed = true;
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
             {
-                if (d_MainWindow.WindowState == WindowState.Fullscreen)
+                if (d_GlWindow.WindowState == WindowState.Fullscreen)
                 {
-                    d_MainWindow.WindowState = WindowState.Normal;
+                    d_GlWindow.WindowState = WindowState.Normal;
                 }
                 else
                 {
-                    d_MainWindow.WindowState = WindowState.Fullscreen;
+                    d_GlWindow.WindowState = WindowState.Fullscreen;
                 }
             }
             if (GuiTyping == TypingState.None)
@@ -748,7 +919,7 @@ namespace ManicDigger
                 {
                     ENABLE_LAG++;
                     ENABLE_LAG = ENABLE_LAG % 3;
-                    d_MainWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+                    d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
                     if (ENABLE_LAG == 0) { Log("Frame rate: vsync."); }
                     if (ENABLE_LAG == 1) { Log("Frame rate: unlimited."); }
                     if (ENABLE_LAG == 2) { Log("Frame rate: lag simulation."); }
@@ -999,7 +1170,7 @@ namespace ManicDigger
             {
                 if (IsMac)
                 {
-                    d_MainWindow.CursorVisible = value;
+                    d_GlWindow.CursorVisible = value;
                     System.Windows.Forms.Cursor.Hide();
                 }
                 freemouse = value;
@@ -1007,7 +1178,7 @@ namespace ManicDigger
         }
         void UpdateMouseButtons()
         {
-            if (!d_MainWindow.Focused)
+            if (!d_GlWindow.Focused)
             {
                 return;
             }
@@ -1023,10 +1194,10 @@ namespace ManicDigger
             mouse_current = System.Windows.Forms.Cursor.Position;
             if (FreeMouse)
             {
-                mouse_current.Offset(-d_MainWindow.X, -d_MainWindow.Y);
+                mouse_current.Offset(-d_GlWindow.X, -d_GlWindow.Y);
                 mouse_current.Offset(0, -System.Windows.Forms.SystemInformation.CaptionHeight);
             }
-            if (!d_MainWindow.Focused)
+            if (!d_GlWindow.Focused)
             {
                 return;
             }
@@ -1059,8 +1230,8 @@ namespace ManicDigger
                 if (!IsMac)
                 {
                     //a)
-                    int centerx = d_MainWindow.Bounds.Left + (d_MainWindow.Bounds.Width / 2);
-                    int centery = d_MainWindow.Bounds.Top + (d_MainWindow.Bounds.Height / 2);
+                    int centerx = d_GlWindow.Bounds.Left + (d_GlWindow.Bounds.Width / 2);
+                    int centery = d_GlWindow.Bounds.Top + (d_GlWindow.Bounds.Height / 2);
 
                     mouse_delta = new Point(mouse_current.X - mouse_previous.X,
                         mouse_current.Y - mouse_previous.Y);
@@ -1181,7 +1352,7 @@ namespace ManicDigger
             bool angledown = false;
             float overheadcameraanglemovearea = 0.05f;
             float overheadcameraspeed = 3;
-            if (guistate == GuiState.Normal && d_MainWindow.Focused && cameratype == CameraType.Overhead)
+            if (guistate == GuiState.Normal && d_GlWindow.Focused && cameratype == CameraType.Overhead)
             {
                 if (mouse_current.X > Width - Width * overheadcameraanglemovearea)
                 {
@@ -2140,7 +2311,7 @@ namespace ManicDigger
             Draw2d();
 
             //OnResize(new EventArgs());
-            d_MainWindow.SwapBuffers();
+            d_GlWindow.SwapBuffers();
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
         }
@@ -2837,7 +3008,7 @@ namespace ManicDigger
             }
             if (!titleset)
             {
-                d_MainWindow.Title = applicationname;
+                d_GlWindow.Title = applicationname;
                 titleset = true;
             }
         }
@@ -2915,13 +3086,13 @@ namespace ManicDigger
         public string LocalPlayerName { get { return connectdata.Username; } }
         #endregion
         public Options Options { get { return options; } set { options = value; } }
-        public int Height { get { return d_MainWindow.Height; } }
-        public int Width { get { return d_MainWindow.Width; } }
-        public OpenTK.Input.KeyboardDevice Keyboard { get { return d_MainWindow.Keyboard; } }
-        public OpenTK.Input.MouseDevice Mouse { get { return d_MainWindow.Mouse; } }
+        public int Height { get { return d_GlWindow.Height; } }
+        public int Width { get { return d_GlWindow.Width; } }
+        public OpenTK.Input.KeyboardDevice Keyboard { get { return d_GlWindow.Keyboard; } }
+        public OpenTK.Input.MouseDevice Mouse { get { return d_GlWindow.Mouse; } }
         public void Run()
         {
-            d_MainWindow.Run();
+            d_GlWindow.Run();
         }
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
@@ -4580,6 +4751,21 @@ namespace ManicDigger
         public int maxlight
         {
             get { return 15; }
+        }
+
+        #endregion
+
+        #region ICurrentShadows Members
+
+        public bool ShadowsFull
+        {
+            get
+            {
+                return false;
+            }
+            set
+            {
+            }
         }
 
         #endregion

@@ -13,7 +13,7 @@ namespace GameModeFortress
         public int MaxBlocks = 20; // max number of blocks which can be set within the time intervall
         public int MaxMessages = 3; // max number of chat messages per time intervall
         public int TimeIntervall = 3; // in seconds, resets count values
-        public bool Exit = false;
+        public IGameExit Exit;
         public TimeSpan MessageBanTime = new TimeSpan(0, 1, 0);// 1 minute
 
         private Server server;
@@ -30,7 +30,7 @@ namespace GameModeFortress
 
         private void Process()
         {
-            while(!Exit)
+            while(!Exit.exit)
             {
                 Thread.Sleep(TimeSpan.FromSeconds(TimeIntervall));
                 foreach (var k in monitorClients)
