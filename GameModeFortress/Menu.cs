@@ -23,6 +23,8 @@ namespace GameModeFortress
         {
             InitializeComponent();
         }
+        string lastserverpath = Path.Combine(GameStorePath.GetStorePath(), "lastserver.txt");
+
         public ChosenGameType Chosen;
         public string SinglePlayerSaveGamePath;
         public ConnectData MultiplayerConnectData;
@@ -53,6 +55,13 @@ namespace GameModeFortress
             {
                 Chosen = ChosenGameType.Multiplayer;
                 MultiplayerConnectData = ConnectData.FromUri(new MyUri(textBox1.Text));
+                try
+                {
+                    File.WriteAllText(lastserverpath, textBox1.Text);
+                }
+                catch
+                {
+                }
                 Close();
             }
             catch
@@ -81,6 +90,16 @@ namespace GameModeFortress
                     catch
                     {
                     }
+                }
+            }
+            catch
+            {
+            }
+            try
+            {
+                if (File.Exists(lastserverpath))
+                {
+                    textBox1.Text = File.ReadAllText(lastserverpath);
                 }
             }
             catch
