@@ -153,6 +153,8 @@ namespace ManicDiggerServer
 
         Stopwatch RoutineRestartStopwatch;
 
+        public bool IsMono = Type.GetType("Mono.Runtime") != null;
+
         private void Restart()
         {
             if (ServerProcess != null && (!ServerProcess.HasExited))
@@ -161,12 +163,23 @@ namespace ManicDiggerServer
                 ServerProcess = null;
             }
             ProcessStartInfo p = new ProcessStartInfo();
-            p.FileName = System.Windows.Forms.Application.ExecutablePath;
-            p.Arguments = Process.GetCurrentProcess().Id.ToString();
+            if (!IsMono)
+            {
+                p.FileName = System.Windows.Forms.Application.ExecutablePath;
+                p.Arguments = Process.GetCurrentProcess().Id.ToString();
+            }
+            else
+            {
+                p.FileName = "mono";
+                p.Arguments = System.Windows.Forms.Application.ExecutablePath + " " + Process.GetCurrentProcess().Id.ToString();
+            }
+            
             //p.WindowStyle = ProcessWindowStyle.Hidden;
+            
             p.RedirectStandardOutput = true;
             p.RedirectStandardInput = true;
             p.UseShellExecute = false;
+            
             ServerProcess = Process.Start(p);
         }
 
