@@ -7,6 +7,8 @@ using ManicDigger.MapTools;
 using ManicDigger.MapTools.Generators;
 using System.IO;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Net;
 
 namespace ManicDiggerServer
 {
@@ -16,44 +18,122 @@ namespace ManicDiggerServer
         {
             new Program(args);
         }
+        
         public Program(string[] args)
         {
+            if (args.Length > 0)
+            {
+                IsAutoRestarter = false;
+                parentid = int.Parse(args[0]);
+            }
             new CrashReporter().Start(Main2);
         }
+
+        bool ENABLE_AUTORESTARTER = true;
+        int parentid;
+        bool IsAutoRestarter = true;
+
         void Main2()
         {
-            new Thread(AutoRestarter).Start();
+            if (ENABLE_AUTORESTARTER)
+            {
+                if (IsAutoRestarter)
+                {
+                    new Thread(ConsoleOutput).Start();
+                    new Thread(ConsoleInput).Start();
+                    ParentAutoRestarter();
+                }
+                else
+                {
+                    ChildServer();
+                }
+            }
+            else
+            {
+                ChildServer();
+            }
         }
-        private void Server()
+
+        private void ChildServer()
         {
-            server = new Server();
+            Server server = new Server();
             server.exit = new GameExitDummy();
             server.Public = true;
             server.Start();
             for (; ; )
             {
-                stopwatch = new Stopwatch();
-                stopwatch.Start();
                 port = server.config.Port;
                 server.Process();
                 Thread.Sleep(1);
                 if (server.exit != null && server.exit.exit) { return; }
+
+                if (!ENABLE_AUTORESTARTER)
+                {
+                    continue;
+                }
+                if (parentCheckStopwatch == null)
+                {
+                    parentCheckStopwatch = new Stopwatch();
+                    parentCheckStopwatch.Start();
+                }
+                if (parentCheckStopwatch.Elapsed.Milliseconds > 100)
+                {
+                    try
+                    {
+                        Process.GetProcessById(parentid);
+                    }
+                    catch
+                    {
+                        server.Exit();
+                        return;
+                    }
+                    parentCheckStopwatch = new Stopwatch();
+                    parentCheckStopwatch.Start();
+                }
             }
         }
+
+        Stopwatch parentCheckStopwatch;
         Stopwatch stopwatch = new Stopwatch();
-        Thread ServerThread;
-        Server server;
+        Process ServerProcess;
         int port;
-        void AutoRestarter()
+        
+        void ConsoleOutput()
+        {
+            for (; ; )
+            {
+                if (ServerProcess != null && !ServerProcess.HasExited)
+                {
+                    Console.WriteLine(ServerProcess.StandardOutput.ReadLine());
+                }
+                Thread.Sleep(1);
+            }
+        }
+
+        void ConsoleInput()
+        {
+            for (; ; )
+            {
+                if (ServerProcess != null && !ServerProcess.HasExited)
+                {
+                    string s = Console.ReadLine();
+                    ServerProcess.StandardInput.WriteLine(s);
+                }
+                Thread.Sleep(1);
+            }
+        }
+
+        void ParentAutoRestarter()
         {
             Restart();
             for (; ; )
             {
-                //a) server.Process() too long
-                if (stopwatch.Elapsed.Seconds > 15)
+                //a) server process not found
+                if (ServerProcess.HasExited)
                 {
                     Restart();
                 }
+
                 //b) routine restart
                 if (RoutineRestartStopwatch == null)
                 {
@@ -66,38 +146,30 @@ namespace ManicDiggerServer
                     RoutineRestartStopwatch.Start();
                     Restart();
                 }
-                //c) admin command /restart
-                if (server != null && server.restartserver)
-                {
-                    server.restartserver = false;
-                    Restart();
-                }
 
                 Thread.Sleep(1);
             }
         }
+
         Stopwatch RoutineRestartStopwatch;
 
         private void Restart()
         {
-            if (ServerThread != null)
+            if (ServerProcess != null && (!ServerProcess.HasExited))
             {
-                ServerThread.Abort();
-                while (ServerThread.ThreadState != System.Threading.ThreadState.Stopped)
-                {
-                    Thread.Sleep(1);
-                }
-                try
-                {
-                    server.Dispose();
-                }
-                catch
-                {
-                }
+                ServerProcess.Kill();
+                ServerProcess = null;
             }
-            ServerThread = new Thread(Server);
-            ServerThread.Start();
-            stopwatch = new Stopwatch();
+            ProcessStartInfo p = new ProcessStartInfo();
+            p.FileName = System.Windows.Forms.Application.ExecutablePath;
+            p.Arguments = Process.GetCurrentProcess().Id.ToString();
+            //p.WindowStyle = ProcessWindowStyle.Hidden;
+            p.RedirectStandardOutput = true;
+            p.RedirectStandardInput = true;
+            p.UseShellExecute = false;
+            ServerProcess = Process.Start(p);
         }
+
+        
     }
 }

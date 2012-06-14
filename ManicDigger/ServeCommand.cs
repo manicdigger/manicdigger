@@ -10,7 +10,6 @@ namespace ManicDiggerServer
 {
     public partial class Server
     {
-        public bool restartserver = false;
         public void CommandInterpreter(int sourceClientId, string command, string argument)
         {
             string[] ss;
@@ -22,9 +21,9 @@ namespace ManicDiggerServer
                     if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.restart))
                     {
                         SendMessage(sourceClientId, colorError + "Insufficient privileges to restart server.");
-                        break;
+                        //break;
                     }
-                    restartserver = true;
+                    Exit();
                     break;
                 //case "crashserver": for (; ; ) ;
                 case "msg":

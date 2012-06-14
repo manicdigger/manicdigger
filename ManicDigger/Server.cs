@@ -82,6 +82,11 @@ namespace ManicDiggerServer
         public int SpawnPositionRandomizationRange = 96;
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
 
+        public void Exit()
+        {
+            exit.exit = true;
+            System.Diagnostics.Process.GetCurrentProcess().Kill(); //stops Console.ReadLine() in ServerConsole thread.
+        }
 
         public string serverpathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
         private void BuildLog(string p)
