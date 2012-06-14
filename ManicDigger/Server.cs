@@ -3030,7 +3030,11 @@ if (sent >= unknown.Count) { break; }
                 {
                     for (int z = 0; z < d_Map.MapSizeZ / chunksize; z++)
                     {
-                        yield return new Vector3i(playerpos.x + x * chunksize, playerpos.y + y * chunksize, z * chunksize);
+                        var p = new Vector3i(playerpos.x + x * chunksize, playerpos.y + y * chunksize, z * chunksize);
+                        if (MapUtil.IsValidPos(d_Map, p.x, p.y, p.z))
+                        {
+                            yield return p;
+                        }
                     }
                 }
             }

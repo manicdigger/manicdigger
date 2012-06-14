@@ -221,7 +221,11 @@ namespace ManicDiggerServer
                 {
                     for (int z = 0; z < d_Map.MapSizeZ / chunksize; z++)
                     {
-                        yield return new Vector3i(p.X + x * chunksize, p.Y + y * chunksize, z * chunksize);
+                        var v = new Vector3i(p.X + x * chunksize, p.Y + y * chunksize, z * chunksize);
+                        if (MapUtil.IsValidPos(d_Map, v.x, v.y, v.z))
+                        {
+                            yield return v;
+                        }
                     }
                 }
             }
