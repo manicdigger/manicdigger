@@ -17,10 +17,6 @@ namespace ManicDiggerServer
 
             switch (command)
             {
-                case "restart":
-                    this.RestartServer(sourceClientId);
-                    break;
-                //case "crashserver": for (; ; ) ;
                 case "msg":
                 case "pm":
                     ss = argument.Split(new[] { ' ' });
@@ -327,6 +323,60 @@ namespace ManicDiggerServer
                     }
                     this.PrivilegeRemove(sourceClientId, ss[0], ss[1]);
                     return;
+                case "restart":
+                    this.RestartServer(sourceClientId);
+                    break;
+                //case "crashserver": for (; ; ) ;
+                case "teleport_player":
+                    ss = argument.Split(new[] { ' ' });
+
+                    if (ss.Length < 3 || ss.Length > 4)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+
+                    try
+                    {
+                        x = Convert.ToInt32(ss[1]);
+                        y = Convert.ToInt32(ss[2]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+
+                    try
+                    {
+                        z = Convert.ToInt32(ss[3]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        z = null;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    this.TeleportPlayer(sourceClientId, ss[0], x, y, z);
+                    break;
                 default:
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);
                     return;
@@ -403,6 +453,10 @@ namespace ManicDiggerServer
                     return "/privilege_add [username] [privilege]";
                 case "privilege_remove":
                     return "/privilege_remove [username] [privilege]";
+                case "restart":
+                    return "/restart";
+                case "teleport_player":
+                    return "/teleport_player [target] [x] [y] {z}";
                 default:
                     return "No description available.";
             }
@@ -1201,6 +1255,7 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
+            ServerEventLog(String.Format("{0} announced: {1}.", GetClient(sourceClientId).playername, message));
             SendMessageToAll(string.Format("{0}Announcement: {1}", colorError, message));
             return true;
         }
@@ -1413,7 +1468,7 @@ namespace ManicDiggerServer
                 }
                 targetClient.privileges.Add(privilege);
                 SendMessageToAll(string.Format("{0}New privilege for {1}: {2}", colorSuccess, targetClient.ColoredPlayername(colorSuccess), privilege.ToString()));
-                ServerEventLog(string.Format("{0} gives {1} privilege {2}.", GetClient(sourceClientId), targetClient.playername, privilege.ToString()));
+                ServerEventLog(string.Format("{0} gives {1} privilege {2}.", GetClient(sourceClientId).playername, targetClient.playername, privilege.ToString()));
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
@@ -1457,7 +1512,7 @@ namespace ManicDiggerServer
                 }
 
                 SendMessageToAll(string.Format("{0} {1} lost privilege: {2}", colorImportant, targetClient.ColoredPlayername(colorImportant), privilege.ToString()));
-                ServerEventLog(string.Format("{0} removes {1} privilege {2}.", GetClient(sourceClientId), targetClient.playername, privilege.ToString()));
+                ServerEventLog(string.Format("{0} removes {1} privilege {2}.", GetClient(sourceClientId).playername, targetClient.playername, privilege.ToString()));
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
@@ -1471,8 +1526,51 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
+            SendMessageToAll(string.Format("{0}{1} restarted server.", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+            ServerEventLog(string.Format("{0} restarts server.", GetClient(sourceClientId).playername));
             Exit();
             return true;
+        }
+
+        public bool TeleportPlayer(int sourceClientId, string target, int x, int y, int? z)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.teleport_player))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            // validate target position
+            int rZ = 0;
+            if (z == null)
+            {
+                if (!MapUtil.IsValidPos(d_Map, x, y))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid coordinates.", colorError));
+                    return false;
+                }
+                rZ = MapUtil.blockheight(d_Map, 0, x, y);
+            }
+            else
+            {
+                rZ = z.Value;
+            }
+            if (!MapUtil.IsValidPos(d_Map, x, y, rZ))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Invalid coordinates.", colorError));
+                return false;
+            }
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
+            {
+                SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch);
+                SendMessage(targetClient.Id, string.Format("{0}You have been teleported to ({1},{2},{3}) by {4}.", colorImportant, x, y, rZ, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+                SendMessage(sourceClientId, string.Format("{0}You teleported {1} to ({2},{3},{4}).", colorSuccess, targetClient.ColoredPlayername(colorSuccess), x, y, rZ));
+                ServerEventLog(string.Format("{0} teleports {1} to {2} {3} {4}.", GetClient(sourceClientId).playername, targetClient.playername, x, y, rZ));
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
+            return false;
         }
     }
 }

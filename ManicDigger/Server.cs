@@ -2172,7 +2172,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             if (k.Key != clientid)
                             {
-                                SendPlayerTeleport(k.Key, (byte)clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
+                                SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
                             }
                         }
                     }
@@ -2931,7 +2931,7 @@ if (sent >= unknown.Count) { break; }
                 PlayerSpawnPosition = p,
             }));
         }
-        private void SendPlayerTeleport(int clientid, byte playerid, int x, int y, int z, byte heading, byte pitch)
+        private void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
         {
             PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
             {
