@@ -351,6 +351,8 @@ namespace ManicDigger
         public string Ip;
         public int Port;
         public string Auth;
+        public string ServerPassword;
+        public bool IsServePasswordProtected;
         public static ConnectData FromUri(MyUri uri)
         {
             ConnectData c = new ConnectData();
@@ -370,6 +372,10 @@ namespace ManicDigger
             {
                 c.Auth = uri.Get["auth"];
             }
+            if (uri.Get.ContainsKey("serverPassword"))
+            {
+                c.IsServePasswordProtected = Misc.ReadBool(uri.Get["serverPassword"]);
+            }
             return c;
         }
     }
@@ -383,7 +389,7 @@ namespace ManicDigger
     {
         public string ServerName;
         public string ServerMotd;
-        public string ServerIp;
+        public ConnectData connectdata;
         public List<ConnectedPlayer> Players;
         public TimeSpan ServerPing;
         public bool AllowFreemove;
@@ -392,7 +398,7 @@ namespace ManicDigger
         {
             this.ServerName = "";
             this.ServerMotd = "";
-            this.ServerIp = "";
+            this.connectdata = new ConnectData();
             this.Players = new List<ConnectedPlayer>();
             this.AllowFreemove = false;
         }

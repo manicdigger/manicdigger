@@ -184,6 +184,11 @@ namespace ManicDigger
 
         void SetChunkDirty(int cx, int cy, int cz, bool dirty)
         {
+            if (RendererMap == null)
+            {
+                return;
+            }
+
             int x = cx * chunksize;
             int y = cy * chunksize;
             int z = cz * chunksize;

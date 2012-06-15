@@ -15,6 +15,7 @@ namespace GameModeFortress
         public string WelcomeMessage { get; set; }  //Displays when the user logs in.
         public int Port { get; set; }               //Port the server runs on
         public int MaxClients { get; set; }
+        public int AutoRestartCycle { get; set; }
         public bool ServerMonitor { get; set; }
         public bool BuildLogging { get; set; }
         public bool ServerEventLogging { get; set; }
@@ -24,6 +25,8 @@ namespace GameModeFortress
         [XmlElement(ElementName="Creative")]
         public bool IsCreative { get; set; }        //Is this a free build server?
         public bool Public { get; set; }            //Advertise this server?
+        [XmlElement(IsNullable = true)]
+        public string Password { get; set; }
         public bool AllowGuests { get; set; }
         public bool AllowFreemove { get; set; }     //Allow character to fly?
         public bool Flooding { get; set; }          //Allow flooding water?
@@ -39,6 +42,11 @@ namespace GameModeFortress
         public List<AreaConfig> Areas { get; set; }
         [XmlElement(ElementName="MapGenerator")]
         public MapGeneratorConfig Generator { get; set; }
+
+        public bool IsPasswordProtected()
+        {
+            return !string.IsNullOrEmpty(this.Password);
+        }
 
         public bool IsIPBanned(string ipAddress)
         {
@@ -114,12 +122,13 @@ namespace GameModeFortress
             this.AllowFreemove = true;
             this.Flooding = true;
             this.Monsters = false;
-            this.MapSizeX = 10000;
-            this.MapSizeY = 10000;
+            this.MapSizeX = 9984;
+            this.MapSizeY = 9984;
             this.MapSizeZ = 128;
             this.BannedIPs = new List<string>();
             this.BannedUsers = new List<string>();
             this.Areas = new List<AreaConfig>();
+            this.AutoRestartCycle = 6;
             this.Generator = new MapGeneratorConfig();
         }
     }
@@ -290,18 +299,18 @@ namespace GameModeFortress
 
             AreaConfig publicArea = new AreaConfig();
             publicArea.Id = 1;
-            publicArea.Coords = "0,0,1,10000,5000,128";
+            publicArea.Coords = "0,0,1,9984,5000,128";
             publicArea.PermittedGroups.Add("Guest");
             publicArea.PermittedGroups.Add("Registered");
             defaultAreas.Add(publicArea);
             AreaConfig builderArea = new AreaConfig();
             builderArea.Id = 2;
-            builderArea.Coords = "0,5001,1,10000,10000,128";
+            builderArea.Coords = "0,5001,1,9984,9984,128";
             builderArea.PermittedGroups.Add("Builder");
             defaultAreas.Add(builderArea);
             AreaConfig adminArea = new AreaConfig();
             adminArea.Id = 3;
-            adminArea.Coords = "0,0,1,10000,10000,128";
+            adminArea.Coords = "0,0,1,9984,9984,128";
             adminArea.PermittedGroups.Add("Admin");
             defaultAreas.Add(adminArea);
 

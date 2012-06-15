@@ -60,6 +60,7 @@ namespace GameModeFortress
                     int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
                     connectdata.Port = port;
                     connectdata.Username = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
+                    connectdata.IsServePasswordProtected = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerLink/PasswordProtected"));
                     IsSinglePlayer = false;
                     singleplayerpath = null;
                 }
@@ -85,6 +86,7 @@ namespace GameModeFortress
                 if (IsSinglePlayer)
                 {
                     singleplayerpath = form.SinglePlayerSaveGamePath;
+                    connectdata.IsServePasswordProtected = false;
                 }
                 else
                 {
@@ -93,6 +95,24 @@ namespace GameModeFortress
                 }
             }
             savefilename = singleplayerpath;
+
+            string serverPassword = "";
+            if(connectdata.IsServePasswordProtected)
+            {
+                PasswordForm passwordForm = new PasswordForm();
+                DialogResult dialogResult = passwordForm.ShowDialog();
+
+                if (dialogResult == DialogResult.OK)
+                {
+                    serverPassword = passwordForm.Password;
+                }
+                if (dialogResult == DialogResult.Cancel)
+                {
+                    // TODO: go back to main menu
+                    throw new Exception();
+                }
+            }
+            connectdata.ServerPassword = serverPassword;
             StartGameWindowAndConnect(IsSinglePlayer, connectdata, singleplayerpath);
         }
 

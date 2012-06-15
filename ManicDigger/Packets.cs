@@ -15,6 +15,8 @@ namespace GameModeFortress
         public string Username;
         [ProtoMember(3, IsRequired = false)]
         public string VerificationKey;
+        [ProtoMember(4, IsRequired = false)]
+        public string ServerPassword;
     }
     [ProtoContract]
     public class PacketClientRequestBlob

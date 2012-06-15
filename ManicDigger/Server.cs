@@ -236,8 +236,7 @@ namespace ManicDiggerServer
             // server monitor
             if (config.ServerMonitor)
             {
-                this.serverMonitor = new ServerMonitor(this);
-                this.serverMonitor.Exit = exit;
+                this.serverMonitor = new ServerMonitor(this, exit);
                 this.serverMonitor.Start();
             }
 
@@ -257,7 +256,7 @@ namespace ManicDiggerServer
             }
             serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
             this.serverConsoleClient.AssignGroup(serverGroup);
-            this.serverConsole = new ServerConsole(this);
+            this.serverConsole = new ServerConsole(this, exit);
         }
         private ServerMonitor serverMonitor;
         private ServerConsole serverConsole;
@@ -443,12 +442,12 @@ namespace ManicDiggerServer
                     {
                         config.Key = key;
                     }
-                    config.IsCreative = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
-                    config.Public = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-                    config.AllowGuests = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
+                    config.IsCreative = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
+                    config.Public = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
+                    config.AllowGuests = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
                     if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
                     {
-                        config.AllowFreemove = ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
+                        config.AllowFreemove = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
                     }
                     if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
                     {
@@ -466,18 +465,6 @@ namespace ManicDiggerServer
                 SaveConfig();
             }
             Console.WriteLine("Server configuration loaded.");
-        }
-        private bool ReadBool(string str)
-        {
-            if (str == null)
-            {
-                return false;
-            }
-            else
-            {
-                return (str != "0"
-                    && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
-            }
         }
 
         public ServerConfig config;
@@ -515,6 +502,7 @@ namespace ManicDiggerServer
             }
             d_Heartbeat.Name = config.Name;
             d_Heartbeat.MaxClients = config.MaxClients;
+            d_Heartbeat.PasswordProtected = config.IsPasswordProtected();
             d_Heartbeat.AllowGuests = config.AllowGuests;
             d_Heartbeat.Port = config.Port;
             d_Heartbeat.Version = GameVersion.Version;
@@ -763,7 +751,7 @@ namespace ManicDiggerServer
                 {
                     //client problem. disconnect client.
                     Console.WriteLine("Exception at client " + k.Key + ". Disconnecting client.");
-                    SendDisconnectPlayer(k.Key, "Your client throwed an exception at server.");
+                    SendDisconnectPlayer(k.Key, "Your client threw an exception at server.");
                     KillPlayer(k.Key);
                 }
             }
@@ -1061,7 +1049,7 @@ namespace ManicDiggerServer
         }
 
         private void ChunkUpdate(Vector3i p, long lastupdate)
-        {
+        {          
             if (config.Monsters)
             {
                 AddMonsters(p);
@@ -1923,6 +1911,13 @@ if (sent >= unknown.Count) { break; }
                     this.NotifyPing(clientid, clients[clientid].Ping.RoundtripTime.Milliseconds);
                     break;
                 case ClientPacketId.PlayerIdentification:
+                    if (config.IsPasswordProtected() && packet.Identification.ServerPassword != config.Password)
+                    {
+                        SendDisconnectPlayer(clientid, "invalid server password.");
+                        ServerEventLog(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
+                        KillPlayer(clientid);
+                        break;
+                    }
                     SendServerIdentification(clientid);
                     string username = packet.Identification.Username;
 
@@ -1958,7 +1953,7 @@ if (sent >= unknown.Count) { break; }
                     if (config.IsUserBanned(username))
                     {
                         SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
-                        ServerEventLog(string.Format("{0} can't join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
+                        ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
                         KillPlayer(clientid);
                         break;
                     }
@@ -3372,20 +3367,9 @@ if (sent >= unknown.Count) { break; }
             }
             if (serverClient.DefaultSpawn == null)
             {
-                // server sets a default spawn
-
+                // server sets a default spawn (middle of map)
                 int x = d_Map.MapSizeX / 2;
-                int y = d_Map.MapSizeY / 2 - 1;//antivandal side
-                //for new ServerWorldManager
-                {
-                    x = (x / chunksize) * chunksize;
-                    y = (y / chunksize) * chunksize;
-                    x += centerareasize / 2;
-                    y += centerareasize / 2;
-                }
-                //spawn position randomization disabled.
-                //x += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
-                //y += rnd.Next(SpawnPositionRandomizationRange) - SpawnPositionRandomizationRange / 2;
+                int y = d_Map.MapSizeY / 2;
                 // TODO: move call of DontSpawnPlayerInWater() to here!
                 this.defaultPlayerSpawn = new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
             }

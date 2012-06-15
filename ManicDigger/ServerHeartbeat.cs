@@ -13,6 +13,7 @@ namespace GameModeFortress
 
         int MaxClients { get; set; }
         bool Public { get; set; }
+        bool PasswordProtected {get;set; }
         bool AllowGuests {get; set; }
         int Port { get; set; }
         string Version { get; set; }
@@ -48,6 +49,7 @@ namespace GameModeFortress
         
         public int MaxClients {get;set;}
         public bool Public {get;set;}
+        public bool PasswordProtected {get;set; }
         public bool AllowGuests {get; set; }
         public int Port { get; set; }
         public string Version { get; set; }
@@ -60,9 +62,9 @@ namespace GameModeFortress
         public void SendHeartbeat()
         {
             StringWriter sw = new StringWriter();//&salt={4}
-            string staticData = String.Format("name={0}&max={1}&public={2}&allowGuests={3}&port={4}&version={5}&fingerprint={6}"
+            string staticData = String.Format("name={0}&max={1}&public={2}&passwordProtected={3}&allowGuests={4}&port={5}&version={6}&fingerprint={7}"
                 , System.Web.HttpUtility.UrlEncode(Name),
-                MaxClients, Public, AllowGuests, Port, Version, Key.Replace("-", ""));
+                MaxClients, Public, PasswordProtected, AllowGuests, Port, Version, Key.Replace("-", ""));
 
             string requestString = staticData +
                                     "&users=" + UsersCount +

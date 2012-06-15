@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -85,7 +85,6 @@
     </Compile>
     <Compile Include="ScriptConsole.cs" />
     <Compile Include="ScriptInterpreter.cs" />
-    <Compile Include="ServeCommand.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="ServerClient.cs" />
     <Compile Include="ServerConfig.cs" />
@@ -96,10 +95,14 @@
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="ServerConsole.cs" />
     <Compile Include="ServerMonitor.cs" />
+    <Compile Include="PasswordForm.cs" />
+    <Compile Include="PasswordForm.Designer.cs" />
+    <Compile Include="ServerCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="a.snk" />
     <None Include="app.config" />
+    <None Include="PasswordForm.resx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\sqlite3.dll">

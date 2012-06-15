@@ -18,12 +18,7 @@ namespace ManicDiggerServer
             switch (command)
             {
                 case "restart":
-                    if (!clients[sourceClientId].privileges.Contains(ServerClientMisc.Privilege.restart))
-                    {
-                        SendMessage(sourceClientId, colorError + "Insufficient privileges to restart server.");
-                        //break;
-                    }
-                    Exit();
+                    this.RestartServer(sourceClientId);
                     break;
                 //case "crashserver": for (; ; ) ;
                 case "msg":
@@ -446,7 +441,7 @@ namespace ManicDiggerServer
             GameModeFortress.Group newGroup = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
                 {
-                    return grp.Name.Equals(newGroupName);
+                    return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
                 }
             );
             if (newGroup == null)
@@ -1467,6 +1462,17 @@ namespace ManicDiggerServer
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
             return false;
+        }
+
+        public bool RestartServer(int sourceClientId)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.restart))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            Exit();
+            return true;
         }
     }
 }

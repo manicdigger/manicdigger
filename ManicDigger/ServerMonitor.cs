@@ -19,9 +19,10 @@ namespace GameModeFortress
         private Server server;
         private Dictionary<int, MonitorClient> monitorClients;
 
-        public ServerMonitor(Server server)
+        public ServerMonitor(Server server, IGameExit exit)
         {
             this.server = server;
+            this.Exit = exit;
             this.monitorClients = new Dictionary<int, MonitorClient>();
         }
 

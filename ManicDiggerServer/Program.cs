@@ -32,6 +32,7 @@ namespace ManicDiggerServer
         bool ENABLE_AUTORESTARTER = true;
         int parentid;
         bool IsAutoRestarter = true;
+        int autoRestartCycle = 6;
 
         void Main2()
         {
@@ -60,6 +61,7 @@ namespace ManicDiggerServer
             server.exit = new GameExitDummy();
             server.Public = true;
             server.Start();
+            autoRestartCycle = server.config.AutoRestartCycle;
             for (; ; )
             {
                 port = server.config.Port;
@@ -140,7 +142,7 @@ namespace ManicDiggerServer
                     RoutineRestartStopwatch = new Stopwatch();
                     RoutineRestartStopwatch.Start();
                 }
-                if (RoutineRestartStopwatch.Elapsed.Hours > 6)
+                if (RoutineRestartStopwatch.Elapsed.Hours > autoRestartCycle)
                 {
                     RoutineRestartStopwatch = new Stopwatch();
                     RoutineRestartStopwatch.Start();

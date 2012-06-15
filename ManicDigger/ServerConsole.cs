@@ -8,10 +8,12 @@ namespace GameModeFortress
     public class ServerConsole
     {
         private Server server;
+        public IGameExit Exit;
 
-        public ServerConsole(Server server)
+        public ServerConsole(Server server, IGameExit exit)
         {
             this.server = server;
+            this.Exit = exit;
 
             // run command line reader as seperate thread
             Thread consoleInterpreterThread = new Thread(new ThreadStart(this.CommandLineReader));
@@ -21,7 +23,7 @@ namespace GameModeFortress
         public void CommandLineReader()
         {
             string input = "";
-            while(true)
+            while(!Exit.exit)
             {
                 input = Console.ReadLine();
                 if(input == null)

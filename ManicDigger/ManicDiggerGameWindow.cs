@@ -1105,9 +1105,15 @@ namespace ManicDigger
             LoadOptions();
             MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
             MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
-            Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
+            if (string.IsNullOrEmpty(connectdata.ServerPassword))
+            {
+                Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
+            }
+            else
+            {
+                Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth, connectdata.ServerPassword);
+            }
             MapLoadingStart();
-            this.ServerInfo.ServerIp = connectdata.Ip;
         }
         void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
         {
@@ -3849,6 +3855,15 @@ namespace ManicDigger
             byte[] n = CreateLoginPacket(username, auth);
             main.Send(n);
         }
+        public void Connect(string serverAddress, int port, string username, string auth, string serverPassword)
+        {
+            iep = new IPEndPoint(IPAddress.Any, port);
+            main.Connect(serverAddress, port);
+            this.username = username;
+            this.auth = auth;
+            byte[] n = CreateLoginPacket(username, auth, serverPassword);
+            main.Send(n);
+        }
         string username;
         string auth;
         private byte[] CreateLoginPacket(string username, string verificationKey)
@@ -3858,6 +3873,17 @@ namespace ManicDigger
                 Username = username,
                 MdProtocolVersion = GameVersion.Version,
                 VerificationKey = verificationKey
+            };
+            return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
+        }
+        private byte[] CreateLoginPacket(string username, string verificationKey, string serverPassword)
+        {
+            PacketClientIdentification p = new PacketClientIdentification()
+            {
+                Username = username,
+                MdProtocolVersion = GameVersion.Version,
+                VerificationKey = verificationKey,
+                ServerPassword = serverPassword
             };
             return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
         }
@@ -4097,6 +4123,7 @@ namespace ManicDigger
                             }
                         }
                         this.LocalPlayerId = packet.Identification.AssignedClientId;
+                        this.ServerInfo.connectdata = this.connectdata;
                         this.ServerInfo.ServerName = packet.Identification.ServerName;
                         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
                         this.ServerInfo.AllowFreemove = !packet.Identification.DisallowFreemove;
@@ -4333,6 +4360,7 @@ namespace ManicDigger
                                     }
                                 }
                             }
+
                             d_Map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
                             for (int xx = 0; xx < 2; xx++)
                             {
@@ -4535,6 +4563,11 @@ namespace ManicDigger
         public int MapSizeZ { get; set; }
         public int GetBlock(int x, int y, int z)
         {
+            if (!MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                return 0;
+            }
+
             int cx = x / chunksize;
             int cy = y / chunksize;
             int cz = z / chunksize;
