@@ -18,13 +18,13 @@ namespace ManicDigger
         private void MapLoadingDraw()
         {
             d_The3d.Draw2dBitmapFile(Path.Combine("gui", "background.png"), 0, 0, 1024 * ((float)Width / 800), 1024 * ((float)Height / 600));
-            string connecting = "Connecting...";
+            string connecting = Language.Connecting;
             if (maploadingprogress.ProgressStatus != null)
             {
                 connecting = maploadingprogress.ProgressStatus;
             }
-            string progress = string.Format("{0}%\n", maploadingprogress.ProgressPercent);
-            string progress1 = string.Format("{0} KB", (maploadingprogress.ProgressBytes / 1024));
+            string progress = string.Format(Language.ConnectingProgressPercent, maploadingprogress.ProgressPercent);
+            string progress1 = string.Format(Language.ConnectingProgressKilobytes, (maploadingprogress.ProgressBytes / 1024));
             d_The3d.Draw2dText(this.ServerInfo.ServerName, xcenter(d_The3d.TextSize(this.ServerInfo.ServerName, 14).Width), Height / 2 - 150, 14, Color.White);
             d_The3d.Draw2dText(this.ServerInfo.ServerMotd, xcenter(d_The3d.TextSize(this.ServerInfo.ServerMotd, 14).Width), Height / 2 - 100, 14, Color.White);
             d_The3d.Draw2dText(connecting, xcenter(d_The3d.TextSize(connecting, 14).Width), Height / 2 - 50, 14, Color.White);

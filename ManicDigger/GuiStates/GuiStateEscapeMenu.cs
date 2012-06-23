@@ -51,9 +51,9 @@ namespace ManicDigger
             widgets.Clear();
             if (state == EscapeMenuState.Main)
             {
-                AddButton("Return to game",(a, b) => { GuiStateBackToGame(); });
-                AddButton("Options", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
-                AddButton("Exit", (a, b) =>
+                AddButton(Language.ReturnToGame,(a, b) => { GuiStateBackToGame(); });
+                AddButton(Language.Options, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(Language.Exit, (a, b) =>
                 {
                     d_Exit.exit = true;
                     this.d_GlWindow.Exit();
@@ -62,47 +62,47 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Options)
             {
-                AddButton("Graphics", (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
-                AddButton("Keys", (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
-                AddButton("Other", (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
-                AddButton("Return to main menu", (a, b) => { SaveOptions(); SetEscapeMenuState(EscapeMenuState.Main); });
+                AddButton(Language.Graphics, (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
+                AddButton(Language.Keys, (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
+                AddButton(Language.Other, (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
+                AddButton(Language.ReturnToMainMenu, (a, b) => { SaveOptions(); SetEscapeMenuState(EscapeMenuState.Main); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Graphics)
             {
-                AddButton("Shadows: " + (d_CurrentShadows.ShadowsFull ? "ON" : "OFF"),
+                AddButton(string.Format(Language.ShadowsOption, (d_CurrentShadows.ShadowsFull ? Language.On : Language.Off)),
                     (a, b) =>
                     {
                         d_CurrentShadows.ShadowsFull = !d_CurrentShadows.ShadowsFull;
                         RedrawAllBlocks();
                     });
-                AddButton("View distance: " + (d_Config3d.viewdistance),
+                AddButton(string.Format(Language.ViewDistanceOption, (d_Config3d.viewdistance)),
                     (a, b) =>
                     {
                         ToggleFog();
                     });
-                AddButton("Use server textures (restart): " + (options.UseServerTextures ? "ON" : "OFF"),
+                AddButton(string.Format(Language.UseServerTexturesOption, (options.UseServerTextures ? Language.On : Language.Off)),
                     (a, b) =>
                     {
                         options.UseServerTextures = !options.UseServerTextures;
                     });
-                AddButton("Font: " + (d_TextRenderer.NewFont ? "2" : "1"),
+                AddButton(string.Format(Language.FontOption, (d_TextRenderer.NewFont ? "2" : "1")),
                     (a, b) =>
                     {
                         d_TextRenderer.NewFont = !d_TextRenderer.NewFont;
                         d_The3d.cachedTextTextures.Clear();
                     });
-                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Other)
             {
-                AddButton("Sound: " + (d_Audio.Enabled ? "ON" : "OFF"),
+                AddButton(string.Format(Language.SoundOption, (d_Audio.Enabled ? Language.On : Language.Off)),
                     (a, b) =>
                     {
                         d_Audio.Enabled = !d_Audio.Enabled;
                     });
-                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Keys)
@@ -118,10 +118,10 @@ namespace ManicDigger
                     {
                         key = options.Keys[defaultkey];
                     }
-                    AddButton(keyhelps[i].Text + ": " + KeyName(key), (a, b) => { keyselectid = ii; });
+                    AddButton(string.Format(Language.KeyChange, keyhelps[i].Text, KeyName(key)), (a, b) => { keyselectid = ii; });
                 }
-                AddButton("Default keys", (a, b) => { options.Keys.Clear(); });
-                AddButton("Return to options menu", (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(Language.DefaultKeys, (a, b) => { options.Keys.Clear(); });
+                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(fontsize, textheight);
             }
         }
@@ -203,30 +203,30 @@ namespace ManicDigger
         }
         KeyHelp[] keyhelps = new KeyHelp[]
         {
-            new KeyHelp(){Text="Move foward", DefaultKey=(int)OpenTK.Input.Key.W},
-            new KeyHelp(){Text="Move back", DefaultKey=(int)OpenTK.Input.Key.S},
-            new KeyHelp(){Text="Move left", DefaultKey=(int)OpenTK.Input.Key.A},
-            new KeyHelp(){Text="Move right", DefaultKey=(int)OpenTK.Input.Key.D},
-            new KeyHelp(){Text="Jump", DefaultKey=(int)OpenTK.Input.Key.Space},
+            new KeyHelp(){Text=Language.KeyMoveFoward, DefaultKey=(int)OpenTK.Input.Key.W},
+            new KeyHelp(){Text=Language.KeyMoveBack, DefaultKey=(int)OpenTK.Input.Key.S},
+            new KeyHelp(){Text=Language.KeyMoveLeft, DefaultKey=(int)OpenTK.Input.Key.A},
+            new KeyHelp(){Text=Language.KeyMoveRight, DefaultKey=(int)OpenTK.Input.Key.D},
+            new KeyHelp(){Text=Language.KeyJump, DefaultKey=(int)OpenTK.Input.Key.Space},
             //new KeyHelp(){Text="Remove block", DefaultKey=(int)SpecialKey.MouseLeftClick},
             //new KeyHelp(){Text="Place block", DefaultKey=(int)SpecialKey.MouseRightClick},
-            new KeyHelp(){Text="Show material selector", DefaultKey=(int)OpenTK.Input.Key.B},
-            new KeyHelp(){Text="Set spawn position", DefaultKey=(int)OpenTK.Input.Key.P},
-            new KeyHelp(){Text="Respawn", DefaultKey=(int)OpenTK.Input.Key.R},
-            new KeyHelp(){Text="Toggle fog distance", DefaultKey=(int)OpenTK.Input.Key.F},
-            new KeyHelp(){Text="1x move speed", DefaultKey=(int)OpenTK.Input.Key.F1},
-            new KeyHelp(){Text="10x move speed", DefaultKey=(int)OpenTK.Input.Key.F2},
-            new KeyHelp(){Text="Free move", DefaultKey=(int)OpenTK.Input.Key.F3},
-            new KeyHelp(){Text="Third-person camera", DefaultKey=(int)OpenTK.Input.Key.F5},
-            new KeyHelp(){Text="Fullscreen", DefaultKey=(int)OpenTK.Input.Key.F11},
-            new KeyHelp(){Text="Screenshot", DefaultKey=(int)OpenTK.Input.Key.F12},
-            new KeyHelp(){Text="Players list", DefaultKey=(int)OpenTK.Input.Key.Tab},
-            new KeyHelp(){Text="Chat", DefaultKey=(int)OpenTK.Input.Key.Enter},
+            new KeyHelp(){Text=Language.KeyShowMaterialSelector, DefaultKey=(int)OpenTK.Input.Key.B},
+            new KeyHelp(){Text=Language.KeySetSpawnPosition, DefaultKey=(int)OpenTK.Input.Key.P},
+            new KeyHelp(){Text=Language.KeyRespawn, DefaultKey=(int)OpenTK.Input.Key.R},
+            new KeyHelp(){Text=Language.KeyToggleFogDistance, DefaultKey=(int)OpenTK.Input.Key.F},
+            new KeyHelp(){Text=string.Format(Language.KeyMoveSpeed, "1"), DefaultKey=(int)OpenTK.Input.Key.F1},
+            new KeyHelp(){Text=string.Format(Language.KeyMoveSpeed, "10"), DefaultKey=(int)OpenTK.Input.Key.F2},
+            new KeyHelp(){Text=Language.KeyFreeMove, DefaultKey=(int)OpenTK.Input.Key.F3},
+            new KeyHelp(){Text=Language.KeyThirdPersonCamera, DefaultKey=(int)OpenTK.Input.Key.F5},
+            new KeyHelp(){Text=Language.KeyFullscreen, DefaultKey=(int)OpenTK.Input.Key.F11},
+            new KeyHelp(){Text=Language.KeyScreenshot, DefaultKey=(int)OpenTK.Input.Key.F12},
+            new KeyHelp(){Text=Language.KeyPlayersList, DefaultKey=(int)OpenTK.Input.Key.Tab},
+            new KeyHelp(){Text=Language.KeyChat, DefaultKey=(int)OpenTK.Input.Key.Enter},
             new KeyHelp(){Text="Unload blocks", DefaultKey=(int)OpenTK.Input.Key.U},
             new KeyHelp(){Text="Craft", DefaultKey=(int)OpenTK.Input.Key.C},
             new KeyHelp(){Text="Load blocks", DefaultKey=(int)OpenTK.Input.Key.L},
             new KeyHelp(){Text="Enter/leave minecart", DefaultKey=(int)OpenTK.Input.Key.V},
-            new KeyHelp(){Text="Reverse minecart", DefaultKey=(int)OpenTK.Input.Key.Q},
+            new KeyHelp(){Text=Language.KeyReverseMinecart, DefaultKey=(int)OpenTK.Input.Key.Q},
             //new KeyHelp(){Text="Swap mouse up-down", BoolId="SwapMouseUpDown"},
         };
         int keyselectid = -1;

@@ -47,7 +47,7 @@ namespace ManicDigger
             int menustarty = ycenter(okrecipes.Count * 80);
             if (okrecipes.Count == 0)
             {
-                d_The3d.Draw2dText("No materials for crafting.", xcenter(200), ycenter(20), 12, Color.White);
+                d_The3d.Draw2dText(Language.NoMaterialsForCrafting, xcenter(200), ycenter(20), 12, Color.White);
                 return;
             }
             for (int i = 0; i < okrecipes.Count; i++)

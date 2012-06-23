@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -95,7 +95,9 @@
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="ServerConsole.cs" />
     <Compile Include="ServerMonitor.cs" />
-    <Compile Include="PasswordForm.cs" />
+    <Compile Include="PasswordForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="PasswordForm.Designer.cs" />
     <Compile Include="ServerCommand.cs" />
   </ItemGroup>
