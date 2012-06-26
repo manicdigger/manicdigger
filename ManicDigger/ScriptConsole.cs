@@ -30,6 +30,12 @@ namespace GameModeFortress
             interpreter.SetFunction("set_block", new Action<double, double, double, double>(SetBlock));
             interpreter.SetFunction("get_block", new Jint.Delegates.Func<double, double, double, int>(GetBlock));
             interpreter.SetFunction("get_height", new Jint.Delegates.Func<double, double, double>(GetHeight));
+            interpreter.SetFunction("get_mapsize", new Jint.Delegates.Func<int[]>(GetMapSize));
+            interpreter.SetFunction("set_chunk", new System.Action<double, double, double, byte[]>(SetChunk));
+            interpreter.SetFunction("get_chunk", new Jint.Delegates.Func<double, double, double, byte[]>(GetChunk));
+            interpreter.SetFunction("delete_chunk", new System.Action<double, double, double>(DeleteChunk));
+            interpreter.SetFunction("delete_chunk_range", new Action<double, double, double, double, double, double>(DeleteChunkRange));
+            interpreter.SetFunction("backup_database", new Action<string>(BackupDatabase));
             interpreter.SetFunction("clear", new Jint.Delegates.Action(Clear));
         }
 
@@ -83,17 +89,59 @@ namespace GameModeFortress
         public void SetBlock (double x,double y, double z, double material)
         {
             //m_server.CreateBlock((int)x, (int)y, (int)z, m_client, new Item() { BlockId = (int)material, ItemClass = ItemClass.Block, BlockCount = 1 });
-            m_server.Place((int)x, (int)y, (int)z, (int)material);
+            m_server.SetBlock((int)x, (int)y, (int)z, (int)material);
         }
 
         public int GetBlock (double x, double y, double z)
         {
-            return m_server.d_Map.GetBlock((int)x, (int)y, (int)z);
+            return m_server.GetBlock((int)x, (int)y, (int)z);
         }
 
         public double GetHeight (double x, double y)
         {
-            return (double)ManicDigger.MapUtil.blockheight(m_server.d_Map, 0, (int)x, (int)y);
+            return (double)m_server.GetHeight((int)x, (int)y);
+        }
+
+        public void DeleteChunk (double x, double y, double z)
+        {
+            m_server.DeleteChunk((int)x, (int)y, (int)z);
+        }
+
+        public void DeleteChunkRange (double x1, double y1, double z1, double x2, double y2, double z2)
+        {
+            List<Vector3i> chunkPositions = new List<Vector3i>();
+            int chunksize = m_server.chunksize;
+            for (int x=(int)x1; x<(int)x2; x=x+chunksize)
+            {
+                for (int y=(int)y1; y<(int)y2; y=y+chunksize)
+                {
+                    for (int z=(int)z1; z<(int)z2; z=z+chunksize)
+                    {
+                        chunkPositions.Add(new Vector3i() {x=x, y=y, z=z});
+                    }
+                }
+            }
+            m_server.DeleteChunks(chunkPositions);
+        }
+
+        public void SetChunk (double x, double y, double z, byte[] data)
+        {
+            m_server.SetChunk((int)x, (int)y, (int)z, data);
+        }
+
+        public byte[] GetChunk (double x, double y, double z)
+        {
+            return m_server.GetChunk((int)x, (int)y, (int)z);
+        }
+
+        public void BackupDatabase(string backupFilename)
+        {
+            m_server.BackupDatabase(backupFilename);
+        }
+
+        public int[] GetMapSize()
+        {
+            return m_server.GetMapSize();
         }
 
         public void Clear()
@@ -253,5 +301,6 @@ namespace GameModeFortress
 
     }
 
-    public delegate void Action<T1,T2, T3, T4> (T1 t1, T2 t2, T3 t3, T4 t4);
+    public delegate void Action<T1, T2, T3, T4> (T1 t1, T2 t2, T3 t3, T4 t4);
+    public delegate void Action<T1, T2, T3, T4, T5, T6>(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6);
 }

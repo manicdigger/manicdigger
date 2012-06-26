@@ -230,6 +230,104 @@ namespace ManicDiggerServer
                         }
                     }
                 }
+
+        // Interfaces to manipulate server's map.
+        public void SetBlock(int x, int y, int z, int blocktype)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                SetBlockAndNotify(x, y, z, blocktype);
+            }
+        }
+        public int GetBlock(int x, int y, int z)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                return d_Map.GetBlock(x, y, z);
+            }
+            return 0;
+        }
+        public int GetHeight(int x, int y)
+        {
+            return MapUtil.blockheight(d_Map, 0, x, y);
+        }
+        public void SetChunk(int x, int y, int z, byte[] data)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                x = x / chunksize;
+                y = y / chunksize;
+                z = z / chunksize;
+                Chunk c = d_Map.chunks[x,y,z];
+                if (c == null)
+                {
+                    c = new Chunk();
+                }
+                c.data = data;
+                c.DirtyForSaving = true;
+                d_Map.chunks[x,y,z] = c;
+                // update related chunk at clients
+                foreach (var k in clients)
+                {
+                    k.Value.chunksseen.Clear();
+                }
+            }
+        }
+        public byte[] GetChunk(int x, int y, int z)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                x = x / chunksize;
+                y = y / chunksize;
+                z = z / chunksize;
+                return d_Map.chunks[x,y,z].data;
+            }
+            return null;
+        }
+        public void DeleteChunk(int x, int y, int z)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                x = x / chunksize;
+                y = y / chunksize;
+                z = z / chunksize;
+                ChunkDb.DeleteChunk(d_ChunkDb, x, y, z);
+                d_Map.chunks[x,y,z] = null;
+                // update related chunk at clients
+                foreach (var k in clients)
+                {
+                    k.Value.chunksseen.Clear();
+                }
+            }
+        }
+        public void DeleteChunks(List<Vector3i> chunkPositions)
+        {
+            List<Xyz> chunks = new List<Xyz>();
+            foreach (Vector3i pos in chunkPositions)
+            {
+                if (MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z))
+                {
+                    int x = pos.x / chunksize;
+                    int y = pos.y / chunksize;
+                    int z = pos.z / chunksize;
+                    d_Map.chunks[x,y,z] = null;
+                    chunks.Add(new Xyz(){X = x, Y = y, Z = z});
+                }
+            }
+            if (chunks.Count != 0)
+            {
+                ChunkDb.DeleteChunks(d_ChunkDb, chunks);
+                // force to update chunks at clients
+                foreach (var k in clients)
+                {
+                    k.Value.chunksseen.Clear();
+                }
+            }
+        }
+        public int[] GetMapSize()
+        {
+            return new int[] {d_Map.MapSizeX, d_Map.MapSizeY, d_Map.MapSizeZ};
+        }
             }
         }
     }

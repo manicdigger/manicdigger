@@ -163,7 +163,6 @@ namespace ManicDiggerServer
             // TODO: make it possible to change the world generator at run-time!
             var generator = server.config.Generator.getGenerator();
             generator.ChunkSize = map.chunksize;
-            generator.EnableCavesConfig = server.config.Generator.EnableCaves;
             // apply chunk size to generator
             map.d_Generator = generator;
             server.chunksize = 32;
@@ -338,6 +337,10 @@ namespace ManicDiggerServer
             save.SimulationCurrentFrame = simulationcurrentframe;
             save.LastMonsterId = LastMonsterId;
             Serializer.Serialize(s, save);
+        }
+        public void BackupDatabase(string backupFilename)
+        {
+            d_ChunkDb.Backup(backupFilename);
         }
         private void SaveAllLoadedChunks()
         {
@@ -2507,7 +2510,7 @@ if (sent >= unknown.Count) { break; }
                         }
                     }
                 }
-                // place and loose items
+                // place and lose items
                 else
                 {
                     int newBlockCount = 0;
@@ -3556,7 +3559,5 @@ if (sent >= unknown.Count) { break; }
             }
             return false;
         }
-
     }
-
 }

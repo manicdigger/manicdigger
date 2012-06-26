@@ -38,6 +38,13 @@ namespace ManicDigger.MapTools.Generators
         {
             Init();
         }
+        public NewWorldGenerator(bool cave, bool caveLava)
+        {
+            this.addCaveLava = caveLava;
+            this.addCaves = cave;
+            Init();
+        }
+        private bool cavesEnabled;
         public bool EnableCavesConfig { get; set; }
         public int ChunkSize { get; set; }
         public string DisplayName { get { return "new"; } }
@@ -239,9 +246,6 @@ namespace ManicDigger.MapTools.Generators
         byte BLOCK_LAVA = 11;
         public void Init()
         {
-            this.addCaveLava = EnableCavesConfig;
-            this.addCaves = EnableCavesConfig;
-
             //###### TREE GEN #####
             treenoise.Seed = (Seed + 2);
             treenoise.OctaveCount = (6);
@@ -386,7 +390,7 @@ namespace ManicDigger.MapTools.Generators
 
         float cavessize = 15;
         float cavestreshold = 0.6f;
-        bool addCaveLava;
-        bool addCaves;
+        bool addCaveLava = true;
+        bool addCaves = true;
     }
 }

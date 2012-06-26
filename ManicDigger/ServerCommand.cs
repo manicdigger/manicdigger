@@ -377,6 +377,15 @@ namespace ManicDiggerServer
                     }
                     this.TeleportPlayer(sourceClientId, ss[0], x, y, z);
                     break;
+                case "backup_database":
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.backup))
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                        break;
+                    }
+                    this.BackupDatabase(argument);
+                    SendMessage(sourceClientId, string.Format("{0}Backup created.", colorSuccess));
+                    break;
                 default:
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);
                     return;
@@ -457,6 +466,8 @@ namespace ManicDiggerServer
                     return "/restart";
                 case "teleport_player":
                     return "/teleport_player [target] [x] [y] {z}";
+                case "backup":
+                    return "/backup [filename]";
                 default:
                     return "No description available.";
             }
@@ -596,7 +607,7 @@ namespace ManicDiggerServer
             GameModeFortress.Group targetGroup = serverClient.Groups.Find(
                 delegate(GameModeFortress.Group grp)
                 {
-                    return grp.Name.Equals(targetGroupString);
+                    return grp.Name.Equals(targetGroupString, StringComparison.InvariantCultureIgnoreCase);
                 }
             );
             if (targetGroup == null)
@@ -1344,7 +1355,7 @@ namespace ManicDiggerServer
                     GameModeFortress.Group targetGroup = serverClient.Groups.Find(
                         delegate(GameModeFortress.Group grp)
                     {
-                        return grp.Name.Equals(target);
+                        return grp.Name.Equals(target,StringComparison.InvariantCultureIgnoreCase);
                     }
                     );
                     if (targetGroup == null)

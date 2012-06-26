@@ -245,40 +245,44 @@ namespace GameModeFortress
     
     public class MapGeneratorConfig
     {
-    	int treeCount;
-    	
-    	public MapGeneratorConfig()
-    	{
-    		this.treeCount = 20;
-    		this.RandomSeed = true;
+        int treeCount;
+        public MapGeneratorConfig()
+        {
+            this.treeCount = 20;
+            this.RandomSeed = true;
             this.EnableCaves = true;
-    		this.Seed = 0;
+            this.Seed = 0;
             this.GeneratorType = "NewWorldGenerator";
-
-    	}
-    	
-    	public bool RandomSeed { get; set; }
+        }
+        public bool RandomSeed { get; set; }
         public bool EnableCaves { get; set; }
-    	public int Seed { get; set; }
+        public int Seed { get; set; }
         public string GeneratorType { get; set; }
-    	
-    	public int TreeCount
-    	{
-    		get { return this.treeCount; }
-    		set
-    		{
-    			if (value < 0) this.treeCount = 0;
-    			else if (value > 100) this.treeCount = 100;
-    			else this.treeCount = value;
-    		}
-    	}
 
+        public int TreeCount
+        {
+            get { return this.treeCount; }
+            set
+            {
+                if (value < 0) this.treeCount = 0;
+                else if (value > 100) this.treeCount = 100;
+                else this.treeCount = value;
+            }
+        }
         public ManicDigger.MapTools.IWorldGenerator getGenerator()
         {
+            bool caves = false;
+            bool lavaCaves = false;
+            if (EnableCaves)
+            {
+                caves = true;
+                lavaCaves = true;
+            }
+
             switch(this.GeneratorType)
             {
                 case "NewWorldGenerator":
-                    return new ManicDigger.MapTools.Generators.NewWorldGenerator();
+                    return new ManicDigger.MapTools.Generators.NewWorldGenerator(caves, lavaCaves);
                 case "Noise2DWorldGenerator":
                     return new ManicDigger.MapTools.Generators.Noise2DWorldGenerator();
                 case "FlatMapGenerator":
@@ -286,7 +290,7 @@ namespace GameModeFortress
                 case "Noise3DWorldGenerator":
                     return new ManicDigger.MapTools.Generators.Noise3DWorldGenerator();
                 default :
-                    return new ManicDigger.MapTools.Generators.NewWorldGenerator();
+                    return new ManicDigger.MapTools.Generators.NewWorldGenerator(caves, lavaCaves);
             }
         }
     }

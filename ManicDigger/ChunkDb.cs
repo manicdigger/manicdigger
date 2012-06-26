@@ -52,12 +52,22 @@ namespace GameModeFortress
         {
             db.SetChunks(new DbChunk[] { new DbChunk() { Position = new Xyz() { X = x, Y = y, Z = z }, Chunk = c } });
         }
+        public static void DeleteChunk(IChunkDb db, int x, int y, int z)
+        {
+            db.DeleteChunks(new Xyz[] { new Xyz() { X = x, Y = y, Z = z } });
+        }
+        public static void DeleteChunks(IChunkDb db, List<Xyz> chunks)
+        {
+            db.DeleteChunks(chunks.ToArray());
+        }
     }
     public interface IChunkDb
     {
         void Open(string filename);
+        void Backup(string backupFilename);
         IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions);
         void SetChunks(IEnumerable<DbChunk> chunks);
+        void DeleteChunks(IEnumerable<Xyz> chunkpositions);
         byte[] GetGlobalData();
         void SetGlobalData(byte[] data);
     }
@@ -72,6 +82,10 @@ namespace GameModeFortress
         {
             d_ChunkDb.Open(filename);
         }
+        public void Backup(string backupFilename)
+        {
+            d_ChunkDb.Backup(backupFilename);
+        }
         public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions)
         {
             foreach(byte[] b in d_ChunkDb.GetChunks(chunkpositions))
@@ -85,6 +99,10 @@ namespace GameModeFortress
                     yield return d_Compression.Decompress(b);
                 }
             }
+        }
+        public void DeleteChunks(IEnumerable<Xyz> chunkpositions)
+        {
+            d_ChunkDb.DeleteChunks(chunkpositions);
         }
         public void SetChunks(IEnumerable<DbChunk> chunks)
         {
@@ -142,6 +160,10 @@ namespace GameModeFortress
                 chunks.Clear();
             }
         }
+        public void Backup(string backupFilename)
+        {
+            // TODO: what to do here?
+        }
         public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions)
         {
             foreach (Xyz pos in chunkpositions)
@@ -155,6 +177,13 @@ namespace GameModeFortress
                 {
                     yield return null;
                 }
+            }
+        }
+        public void DeleteChunks(IEnumerable<Xyz> chunkpositions)
+        {
+            foreach(Xyz pos in chunkpositions)
+            {
+                chunks[pos] = null;
             }
         }
         public void SetChunks(IEnumerable<DbChunk> chunks)
@@ -178,9 +207,10 @@ namespace GameModeFortress
     public class ChunkDbSqlite : IChunkDb
     {
         SQLiteConnection sqliteConn;
+        string databasefile;
         public void Open(string filename)
         {
-            string databasefile = filename;
+            databasefile = filename;
             bool newdatabase = false;
             if (!File.Exists(databasefile))
             {
@@ -198,10 +228,17 @@ namespace GameModeFortress
             {
                 CreateTables();
             }
+            if (!integrityCheck(sqliteConn))
+            {
+                Console.WriteLine("Database is possibly corrupted.");
+                //repair(sqliteConn);
+            }
+            //vacuum(sqliteBckConn);
         }
         public void Close()
         {
             sqliteConn.Close();
+            sqliteConn.Dispose();
         }
         private void CreateTables()
         {
@@ -209,6 +246,73 @@ namespace GameModeFortress
             sqlite_cmd = sqliteConn.CreateCommand();
             sqlite_cmd.CommandText = "CREATE TABLE chunks (position integer PRIMARY KEY, data BLOB);";
             sqlite_cmd.ExecuteNonQuery();
+        }
+        public void Backup(string backupFilename)
+        {
+            if (databasefile == backupFilename)
+            {
+                Console.WriteLine(string.Format("Cannot overwrite current running database. Chose another destination."));
+                return;
+            }
+            if (File.Exists(backupFilename))
+            {
+                Console.WriteLine(string.Format("File {0} exists. Overwriting file.", backupFilename));
+            }
+            StringBuilder b = new StringBuilder();
+            DbConnectionStringBuilder.AppendKeyValuePair(b, "Data Source", backupFilename);
+            DbConnectionStringBuilder.AppendKeyValuePair(b, "Version", "3");
+            DbConnectionStringBuilder.AppendKeyValuePair(b, "New", "True");
+            DbConnectionStringBuilder.AppendKeyValuePair(b, "Compress", "True");
+            DbConnectionStringBuilder.AppendKeyValuePair(b, "Journal Mode", "Off");
+            SQLiteConnection sqliteBckConn = new SQLiteConnection(b.ToString());
+            sqliteBckConn.Open();
+            sqliteConn.BackupDatabase(sqliteBckConn,sqliteBckConn.Database,sqliteConn.Database,-1,null,10);
+            // shrink database
+            vacuum(sqliteBckConn);
+            sqliteBckConn.Close();
+            sqliteBckConn.Dispose();
+        }
+        private void vacuum(SQLiteConnection sqliteConn)
+        {
+            using (SQLiteCommand command = sqliteConn.CreateCommand())
+            {
+                command.CommandText = "vacuum;";
+                command.ExecuteNonQuery();
+            }
+        }
+        private bool integrityCheck(SQLiteConnection sqliteConn)
+        {
+            bool okay = false;
+            using (SQLiteCommand command = sqliteConn.CreateCommand())
+            {
+                command.CommandText = "PRAGMA integrity_check";
+                SQLiteDataReader sqlite_datareader = command.ExecuteReader();
+                Console.WriteLine(string.Format("Database: {0}. Running SQLite integrity check:", sqliteConn.DataSource));
+                while (sqlite_datareader.Read())
+                {
+                    Console.WriteLine(sqlite_datareader[0].ToString());
+                    if (sqlite_datareader[0].ToString() == "ok")
+                    {
+                        okay = true;
+                        break;
+                    }
+                }
+            }
+            return okay;
+        }
+        private void repair(SQLiteConnection sqliteConn)
+        {
+            Console.WriteLine(string.Format("Database: {0}. Repairing database:", sqliteConn.DataSource));
+            /*
+            SQLiteCommand cmd = sqliteConn.CreateCommand();
+            cmd.CommandText = "SELECT data FROM chunks";
+            SQLiteDataReader sqlite_datareader = cmd.ExecuteReader();
+            while (sqlite_datareader.Read())
+            {
+                object data = sqlite_datareader["data"];
+                //return data as byte[];
+            }
+            */
         }
         #region IChunkDb Members
         public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions)
@@ -235,6 +339,24 @@ namespace GameModeFortress
                 return data as byte[];
             }
             return null;
+        }
+        public void DeleteChunks(IEnumerable<Xyz> chunkpositions)
+        {
+            using (SQLiteTransaction transaction = sqliteConn.BeginTransaction())
+            {
+                foreach (var xyz in chunkpositions)
+                {
+                    DeleteChunk(ManicDigger.MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z));
+                }
+                transaction.Commit();
+            }
+        }
+        public void DeleteChunk(ulong position)
+        {
+            DbCommand cmd = sqliteConn.CreateCommand();
+            cmd.CommandText = "DELETE FROM chunks WHERE position=?";
+            cmd.Parameters.Add(CreateParameter("position", DbType.UInt64, position, cmd));
+            cmd.ExecuteNonQuery();
         }
         public void SetChunks(IEnumerable<DbChunk> chunks)
         {

@@ -16,7 +16,6 @@ namespace ManicDigger.MapTools.Generators
         /// Returns a string representing the display name of this world generator (for GUI purposes only).
         /// </summary>
         public abstract string DisplayName { get; }
-        public bool EnableCavesConfig { get; set; }
         /// <summary>
         /// Gets/sets whether or not to enable the generation of cave systems inside chunks.
         /// </summary>

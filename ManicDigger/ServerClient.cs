@@ -229,7 +229,8 @@ namespace GameModeFortress
             privilege_add,
             privilege_remove,
             restart,
-            teleport_player
+            teleport_player,
+            backup
         };
 
         public static List<Group> getDefaultGroups()
