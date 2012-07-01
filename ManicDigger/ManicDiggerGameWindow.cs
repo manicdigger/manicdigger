@@ -1475,12 +1475,22 @@ namespace ManicDigger
                     };
                 }
             }
-            float jumpstartacceleration = 2.1f * d_Physics.gravity;
+            float jumpstartacceleration = 13.333f * d_Physics.gravity;
             if (blockunderplayer != null && blockunderplayer == d_Data.BlockIdTrampoline
                 && (!player.isplayeronground))
             {
                 wantsjump = true;
-                jumpstartacceleration = 5f * d_Physics.gravity;
+                jumpstartacceleration = 16.666f * d_Physics.gravity;
+            }
+            //no aircontrol
+            if (!player.isplayeronground)
+            {
+                acceleration = new Acceleration()
+                {
+                    acceleration1 = 0.99f,
+                    acceleration2 = 0.2f,
+                    acceleration3 = 70f,
+                };
             }
             Vector3 push = new Vector3();
             foreach (var k in d_Clients.Players)

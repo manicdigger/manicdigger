@@ -54,6 +54,7 @@ namespace ManicDigger
         public float gravity = 0.3f;
         public float WaterGravityMultiplier = 3;
         public bool enable_acceleration = true;
+        public int iteration = 0;
         public class MoveInfo
         {
             public bool ENABLE_FREEMOVE;
@@ -160,23 +161,25 @@ namespace ManicDigger
             {
                 state.isplayeronground = state.playerposition.Y == previousposition.Y;
                 {
-                    if (move.wantsjump && state.isplayeronground && state.jumpacceleration <= 0)
+                    if (move.wantsjump && state.isplayeronground && state.jumpacceleration == 0)
                     {
                         state.jumpacceleration = move.jumpstartacceleration;
                         soundnow = true;
                     }
-                    if (state.jumpacceleration < 0)
+                    if (iteration > 61 && state.isplayeronground)
                     {
                         state.jumpacceleration = 0;
                         state.movedz = 0;
+                        iteration = 0;
                     }
                     if (state.jumpacceleration > 0)
                     {
-                        state.jumpacceleration -= (float)dt * 2.8f;
+                        state.jumpacceleration = state.jumpacceleration / 2;
+                        iteration += 1;
                     }
                     if (!this.reachedceiling)
                     {
-                        state.movedz += state.jumpacceleration * 2;
+                        state.movedz += state.jumpacceleration * 2.1f;
                     }
                 }
             }
