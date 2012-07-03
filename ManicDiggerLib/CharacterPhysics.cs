@@ -54,7 +54,7 @@ namespace ManicDigger
         public float gravity = 0.3f;
         public float WaterGravityMultiplier = 3;
         public bool enable_acceleration = true;
-        public int iteration = 0;
+        public bool standingontheground;
         public class MoveInfo
         {
             public bool ENABLE_FREEMOVE;
@@ -71,6 +71,7 @@ namespace ManicDigger
         }
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push)
         {
+            
             soundnow = false;
             Vector3 diff1 = VectorTool.ToVectorInFixedSystem
                 (move.movedx * move.movespeednow * (float)dt,
@@ -161,25 +162,26 @@ namespace ManicDigger
             {
                 state.isplayeronground = state.playerposition.Y == previousposition.Y;
                 {
-                    if (move.wantsjump && state.isplayeronground && state.jumpacceleration == 0)
+                    if (standingontheground && state.isplayeronground)
+                    {
+                        state.jumpacceleration = 0;
+                        state.movedz = 0f;
+                    }
+                    if (move.wantsjump && state.jumpacceleration == 0 && standingontheground)
                     {
                         state.jumpacceleration = move.jumpstartacceleration;
                         soundnow = true;
                     }
-                    if (iteration > 61 && state.isplayeronground)
-                    {
-                        state.jumpacceleration = 0;
-                        state.movedz = 0;
-                        iteration = 0;
-                    }
+                    
                     if (state.jumpacceleration > 0)
                     {
+                        standingontheground = false;
                         state.jumpacceleration = state.jumpacceleration / 2;
-                        iteration += 1;
                     }
-                    if (!this.reachedceiling)
+                   
+                    //if (!this.reachedceiling)
                     {
-                        state.movedz += state.jumpacceleration * 2.1f;
+                       state.movedz += state.jumpacceleration * 2.1f;
                     }
                 }
             }
@@ -314,7 +316,9 @@ namespace ManicDigger
                     if (newfull)
                     {
                         playerposition.Y = oldposition.Y;
+                        standingontheground = true;
                     }
+                    
                 }
             }
             //right

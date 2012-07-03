@@ -1480,7 +1480,7 @@ namespace ManicDigger
                 && (!player.isplayeronground))
             {
                 wantsjump = true;
-                jumpstartacceleration = 16.666f * d_Physics.gravity;
+                jumpstartacceleration = 20.666f * d_Physics.gravity;
             }
             //no aircontrol
             if (!player.isplayeronground)
