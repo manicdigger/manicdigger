@@ -638,7 +638,7 @@ namespace ManicDigger
         public int Count;
         public void Push(T value)
         {
-            if (Count >= values.Length)
+            while (Count >= values.Length)
             {
                 Array.Resize(ref values, values.Length * 2);
             }

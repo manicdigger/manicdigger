@@ -41,10 +41,10 @@ namespace ManicDigger.Renderers
         int mapsizex; //cache
         int mapsizey;
         int mapsizez;
-        void Start()
+        public void Start()
         {
             currentChunk = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
-            currentChunkShadows = new byte[chunksize + 2, chunksize + 2, chunksize + 2];
+            currentChunkShadows = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
             currentChunkDraw = new byte[chunksize, chunksize, chunksize];
             currentChunkDrawCount = new byte[chunksize, chunksize, chunksize, 6];
             mapsizex = d_MapStorage.MapSizeX;
@@ -79,7 +79,7 @@ namespace ManicDigger.Renderers
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0) { yield break; }
-            if (!started) { Start(); }
+            if (!started) { throw new Exception("not started"); }
             if (x >= mapsizex / chunksize
                 || y >= mapsizey / chunksize
                 || z >= mapsizez / chunksize) { yield break; }
@@ -109,7 +109,7 @@ namespace ManicDigger.Renderers
             }
             GetExtendedChunk(x, y, z);
             if (IsSolidChunk(currentChunk)) { FreeVi(); yield break; }
-            ResetCurrentShadows();
+            //ResetCurrentShadows();
             d_Shadows.OnMakeChunk(x, y, z);
             CalculateVisibleFaces(currentChunk);
             CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
@@ -277,7 +277,7 @@ namespace ManicDigger.Renderers
             }
             return true;
         }
-        byte[, ,] currentChunkShadows;
+        public byte[] currentChunkShadows;
         byte[, ,] currentChunkDraw;
         byte[, , ,] currentChunkDrawCount;
         void CalculateVisibleFaces(byte[] currentChunk)
@@ -976,6 +976,8 @@ namespace ManicDigger.Renderers
         //Calculate shadows lazily, many blocks don't need them.
         int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
         {
+            return currentChunkShadows[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+            /*
             if (currentChunkShadows[xx, yy, zz] == 0)
             {
                 if (IsValidPos(globalx, globaly, globalz))
@@ -988,6 +990,7 @@ namespace ManicDigger.Renderers
                 }
             }
             return currentChunkShadows[xx, yy, zz] - 1;
+            */
         }
         private bool CanSupportTorch(byte blocktype)
         {

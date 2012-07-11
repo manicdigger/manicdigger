@@ -24,20 +24,8 @@ namespace ManicDigger
         {
         }
 
-        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
-        {
-        }
-
-        public int sunlight
-        {
-            get
-            {
-                return 15;
-            }
-            set
-            {
-            }
-        }
+        public int sunlight_ = 15;
+        public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
 
         public void OnSetChunk(int x, int y, int z)
         {

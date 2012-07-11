@@ -82,7 +82,7 @@ namespace ManicDigger
         public bool ENABLE_MIPMAPS = true;
         public bool ENABLE_VSYNC = false;
         public bool ENABLE_VISIBILITY_CULLING = false;
-        public float viewdistance = 256;
+        public float viewdistance = 128;
     }
     public interface IGetCameraMatrix
     {

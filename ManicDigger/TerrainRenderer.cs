@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace ManicDigger
 {
@@ -29,7 +30,11 @@ namespace ManicDigger
             {
                 RendererMap[i] = new RenderedChunk();
             }
+            d_TerrainChunkTesselator.Start();
+            shadows = new Shadows3x3x3();
+            shadows.Start();
         }
+        IShadows3x3x3 shadows;
 
         public void DrawTerrain()
         {
@@ -123,6 +128,21 @@ namespace ManicDigger
 
             TryRemap();
 
+            if (lastplacedblock != null)
+            {
+                int pos1 = MapUtil.Index3d((lastplacedblock.Value.x - CurrentRendererMapPositionG.x) / chunksize,
+                   ( lastplacedblock.Value.y - CurrentRendererMapPositionG.y) / chunksize,
+                   ( lastplacedblock.Value.z - CurrentRendererMapPositionG.z) / chunksize,
+                    mapAreaSize / chunksize, mapAreaSize / chunksize);
+                if (RendererMap[pos1].dirty)
+                {
+                    RedrawChunk((lastplacedblock.Value.x - CurrentRendererMapPositionG.x) / chunksize,
+                      (  lastplacedblock.Value.y - CurrentRendererMapPositionG.y )/ chunksize,
+                      (  lastplacedblock.Value.z - CurrentRendererMapPositionG.z) / chunksize);
+                }
+                lastplacedblock = null;
+            }
+
             int updated = 0;
             for (int x = 0; x < mapAreaSize / chunksize; x++)
             {
@@ -133,29 +153,8 @@ namespace ManicDigger
                         int pos = MapUtil.Index3d(x, y, z, mapAreaSize / chunksize, mapAreaSize / chunksize);
                         if (RendererMap[pos].dirty)
                         {
-                            if (RendererMap[pos].ids != null)
-                            {
-                                foreach (int loadedSubmesh in RendererMap[pos].ids)
-                                {
-                                    d_Batcher.Remove(loadedSubmesh);
-                                }
-                            }
-                            RendererMap[pos].dirty = false;
-                            chunkupdates++;
-                            List<int> ids = new List<int>();
-                            var a = d_TerrainChunkTesselator.MakeChunk(CurrentRendererMapPositionG.x / chunksize + x,
-                                CurrentRendererMapPositionG.y / chunksize + y, z);
-                            foreach (var submesh in a)
-                            {
-                                if (submesh.indices.Length != 0)
-                                {
-                                    Vector3 center = new Vector3(submesh.position.X + chunksize / 2, submesh.position.Z + chunksize / 2, submesh.position.Y + chunksize / 2);
-                                    float radius = chunksize;
-                                    ids.Add(d_Batcher.Add(submesh.indices, submesh.indicesCount, submesh.vertices, submesh.verticesCount, submesh.transparent, submesh.texture, center, radius));
-                                }
-                            }
-                            RendererMap[pos].ids = ids.ToArray();
-                            if ((updated++) > 2 && framestopwatch.ElapsedMilliseconds > 5)
+                            RedrawChunk(x, y, z);
+                            if (framestopwatch.ElapsedMilliseconds > 5)
                             {
                                 goto exit;
                             }
@@ -167,6 +166,94 @@ namespace ManicDigger
             ;
         }
 
+        void RedrawChunk(int x, int y, int z)
+        {
+            int pos = MapUtil.Index3d(x, y, z, mapAreaSize / chunksize, mapAreaSize / chunksize);
+            if (RendererMap[pos].ids != null)
+            {
+                foreach (int loadedSubmesh in RendererMap[pos].ids)
+                {
+                    d_Batcher.Remove(loadedSubmesh);
+                }
+            }
+            RendererMap[pos].dirty = false;
+            chunkupdates++;
+
+            List<int> ids = new List<int>();
+            var a = d_TerrainChunkTesselator.MakeChunk(CurrentRendererMapPositionG.x / chunksize + x,
+                CurrentRendererMapPositionG.y / chunksize + y, z);
+            foreach (var submesh in a)
+            {
+                if (submesh.indices.Length != 0)
+                {
+                    Vector3 center = new Vector3(submesh.position.X + chunksize / 2, submesh.position.Z + chunksize / 2, submesh.position.Y + chunksize / 2);
+                    float radius = chunksize;
+                    ids.Add(d_Batcher.Add(submesh.indices, submesh.indicesCount, submesh.vertices, submesh.verticesCount, submesh.transparent, submesh.texture, center, radius));
+                }
+            }
+            RendererMap[pos].ids = ids.ToArray();
+            //if ((updated++) > 2 && framestopwatch.ElapsedMilliseconds > 5)
+        }
+
+        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
+        {
+            CalculateShadows(chunkx, chunky, chunkz);
+        }
+
+        unsafe byte** chunks3x3x3 = null;
+        unsafe byte** heightchunks3x3 = null;
+        private unsafe void CalculateShadows(int cx,int cy,int cz)
+        {
+            if (chunks3x3x3 == null)
+            {
+                chunks3x3x3 = (byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
+                heightchunks3x3 = (byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
+            }
+            for (int i = 0; i < 3 * 3 * 3; i++)
+            {
+                chunks3x3x3[i] = null;
+            }
+            for (int i = 0; i < 3 * 3; i++)
+            {
+                heightchunks3x3[i] = null;
+            }
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    for (int z = 0; z < 3; z++)
+                    {
+                        if (cx + x - 1 < 0 || cx + x - 1 >= MapSizeX / chunksize
+                            || cy + y - 1 < 0 || cy + y - 1 >= MapSizeY / chunksize
+                            || cz + z - 1 < 0 || cz + z - 1 >= MapSizeZ / chunksize)
+                        {
+                            continue;
+                        }
+                        Chunk chunk = chunks[MapUtil.Index3d(cx + x-1, cy + y-1, cz + z-1, MapSizeX / chunksize, MapSizeY / chunksize)];
+                        if (chunk != null)
+                        {
+                            chunks3x3x3[MapUtil.Index3d(x, y, z, 3, 3)] = chunk.data;
+                        }
+                        else
+                        {
+                            //chunks[0] = null;
+                        }
+                    }
+                }
+            }
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    byte* chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x-1, cy + y-1, d_Map.MapSizeX / chunksize)];
+                    heightchunks3x3[MapUtil.Index2d(x, y, 3)] = chunk;
+                }
+            }
+
+            shadows.Update(d_TerrainChunkTesselator.currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparent, sunlight, cz * chunksize - chunksize);
+        }
+        public static bool aaa;
+        public static int bbb;
         public void RedrawBlock(int x, int y, int z)
         {
             foreach (var a in MapUtil.BlocksAround(new Vector3(x, y, z)))
@@ -237,6 +324,6 @@ namespace ManicDigger
             return d_Batcher.TotalTriangleCount;
         }
 
-        bool shadowssimple = true;
+        bool shadowssimple = false;
     }
 }

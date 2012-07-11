@@ -65,7 +65,7 @@ namespace ManicDigger
         void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
         void SetMapPortion(int x, int y, int z, byte[, ,] chunk);
         void UseMap(byte[, ,] map);
-        byte[] GetChunk(int x, int y, int z);
+        unsafe byte* GetChunk(int x, int y, int z);
     }
     public interface IMapStorageLight
     {
@@ -273,67 +273,6 @@ namespace ManicDigger
             yield return new Vector3(pos + new Vector3(0, 0, -1));
         }
     }
-    public class MapStorage : IMapStorage, IMapStoragePortion
-    {
-        byte[, ,] map;
-        public object mapupdate = new object();
-        public byte[, ,] Map { get { return map; } set { map = value; } }
-        public int MapSizeX { get; set; }
-        public int MapSizeY { get; set; }
-        public int MapSizeZ { get; set; }
-        #region IMapStorage Members
-        public void SetBlock(int x, int y, int z, int tileType)
-        {
-            map[x, y, z] = (byte)tileType;
-        }
-        #endregion
-        #region IMapStorage Members
-        public int GetBlock(int x, int y, int z)
-        {
-            return map[x, y, z];
-        }
-        #endregion
-        #region IMapStorage Members
-        public void UseMap(byte[, ,] map)
-        {
-            this.map = map;
-        }
-        #endregion
-        #region IMapStorage Members
-        public void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
-        {
-            throw new NotImplementedException();
-        }
-        #endregion
-        public void Reset(int sizex, int sizey, int sizez)
-        {
-        }
-        public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
-        {
-            Array.Clear(outPortion, 0, outPortion.Length);
-            for (int xx = 0; xx < portionsizex; xx++)
-            {
-                for (int yy = 0; yy < portionsizey; yy++)
-                {
-                    for (int zz = 0; zz < portionsizez; zz++)
-                    {
-                        if (MapUtil.IsValidPos(this, x + xx, y + yy, z + zz))
-                        {
-                            int pos = MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey);
-                            outPortion[pos] = map[x + xx, y + yy, z + zz];
-                        }
-                    }
-                }
-            }
-        }
-        public int chunksize = 16;
-        public byte[] GetChunk(int x, int y, int z)
-        {
-            byte[] chunk = new byte[chunksize * chunksize * chunksize];
-            GetMapPortion(chunk, x, y, z, chunksize, chunksize, chunksize);
-            return chunk;
-        }
-    }
     public class XmlTool
     {
         public static string XmlVal(XmlDocument d, string path)
@@ -452,23 +391,6 @@ namespace ManicDigger
         IMapStorage Map { get; }
         void SetTileAndUpdate(Vector3 pos, int type);
         void RedrawAllBlocks();
-    }
-    public class MapDummy : ManicDigger.IMap
-    {
-        #region IMap Members
-        public void SetTileAndUpdate(OpenTK.Vector3 pos, int type)
-        {
-        }
-        #endregion
-        IMapStorage map = new MapStorage();
-        #region IMap Members
-        public IMapStorage Map { get { return map; } }
-        #endregion
-        #region IMap Members
-        public void RedrawAllBlocks()
-        {
-        }
-        #endregion
     }
     public interface ILocalPlayerPosition
     {

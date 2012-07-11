@@ -175,7 +175,9 @@ namespace ManicDiggerServer
             else
             {
                 compressedchunk = CompressChunkNetwork(chunk);
-                if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
+                //todo!
+                //commented because it was being sent too early, before full column was generated.
+                //if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
                 {
                     byte[] heightmapchunk = d_Map.GetHeightmapChunk(v.x, v.y);
                     byte[] compressedHeightmapChunk = d_NetworkCompression.Compress(heightmapchunk);
@@ -188,7 +190,7 @@ namespace ManicDiggerServer
                         CompressedHeightmap = compressedHeightmapChunk,
                     };
                     SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.HeightmapChunk, HeightmapChunk = p1 }));
-                    c.heightmapchunksseen.Add(new Vector2i(v.x, v.y), (int)simulationcurrentframe);
+                    c.heightmapchunksseen[new Vector2i(v.x, v.y)] = (int)simulationcurrentframe;
                 }
             }
             PacketServerChunk p = new PacketServerChunk()

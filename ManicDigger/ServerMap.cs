@@ -228,16 +228,16 @@ namespace ManicDiggerServer
         #endregion
         [Inject]
         public InfiniteMapChunked2d d_Heightmap;
-        public byte[] GetHeightmapChunk(int x, int y)
+        public unsafe byte[] GetHeightmapChunk(int x, int y)
         {
             //todo don't copy
-            byte[,] chunk2d = d_Heightmap.GetChunk(x, y);
+            byte* chunk2d = d_Heightmap.GetChunk(x, y);
             byte[] chunk = new byte[chunksize * chunksize];
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
-                    chunk[MapUtil.Index2d(xx, yy, chunksize)] = chunk2d[xx, yy];
+                    chunk[MapUtil.Index2d(xx, yy, chunksize)] = chunk2d[MapUtil.Index2d(xx, yy, chunksize)];
                 }
             }
             //todo ushort[]

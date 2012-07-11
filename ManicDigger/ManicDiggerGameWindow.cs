@@ -19,6 +19,7 @@ using System.Net.Sockets;
 using System.Diagnostics;
 using ProtoBuf;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace ManicDigger
 {
@@ -848,6 +849,7 @@ namespace ManicDigger
                 {
                     drawblockinfo = !drawblockinfo;
                 }
+                    performanceinfo["height"]="height:"+d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z);
                 if (e.Key == GetKey(OpenTK.Input.Key.F5))
                 {
                     if (cameratype == CameraType.Fpp)
@@ -1048,7 +1050,7 @@ namespace ManicDigger
             }
             else throw new Exception();
         }
-        public int[] drawDistances = { 32, 64, 128, 256, 512 };
+        public int[] drawDistances = { 32, 64, 128 };//, 256, 512 };
         private void ToggleFog()
         {
             for (int i = 0; i < drawDistances.Length; i++)
@@ -1344,7 +1346,7 @@ namespace ManicDigger
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
-            UpdateTerrain();
+            //UpdateTerrain();
             OnNewFrame(e.Time);
             UpdateMousePosition();
             if (guistate == GuiState.Normal)
@@ -2202,6 +2204,7 @@ namespace ManicDigger
         {
             framestopwatch = new Stopwatch();
             framestopwatch.Start();
+            UpdateTerrain();
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
 
             //Sleep is required in Mono for running the terrain background thread.
@@ -2221,7 +2224,7 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
-
+            
             if (guistate == GuiState.MapLoading) { goto draw2d; }
 
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
@@ -4561,7 +4564,7 @@ namespace ManicDigger
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
-        public int GetBlock(int x, int y, int z)
+        public unsafe int GetBlock(int x, int y, int z)
         {
             if (!MapUtil.IsValidPos(d_Map, x, y, z))
             {
@@ -4571,22 +4574,82 @@ namespace ManicDigger
             int cx = x / chunksize;
             int cy = y / chunksize;
             int cz = z / chunksize;
-            Chunk chunk = chunks[MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize)];
-            if (chunk == null)
+            int chunkpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
+            if (chunks[chunkpos] == null)
             {
                 return 0;
             }
-            return chunk.data[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            else
+            {
+                return chunks[chunkpos].data[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            }
         }
-        public void SetBlock(int x, int y, int z, int tileType)
+
+        public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
-            byte[] chunk = GetChunk(x, y, z);
+            byte* chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             d_Shadows.OnSetBlock(x, y, z);
+            ShadowsOnSetBlock(x, y, z);
+            lastplacedblock = new Vector3i(x, y, z);
         }
+        Vector3i? lastplacedblock=null;
+        public void ShadowsOnSetBlock(int x, int y, int z)
+        {
+            int oldheight = d_Heightmap.GetBlock(x, y);
+            UpdateColumnHeight(x, y);
+            //update shadows in all chunks below
+            int newheight = d_Heightmap.GetBlock(x, y);
+            int min = Math.Min(oldheight, newheight);
+            int max = Math.Max(oldheight, newheight);
+            for (int i = min; i < max; i++)
+            {
+                if (i / chunksize != z / chunksize)
+                {
+                    SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true);
+                }
+            }
+            //Todo: too many redraws. Optimize.
+            //Now placing a single block updates 27 chunks,
+            //and each of those chunk updates calculates light from 27 chunks.
+            //So placing a block is often 729x slower than it should be.
+            for (int xx = 0; xx < 3; xx++)
+            {
+                for (int yy = 0; yy < 3; yy++)
+                {
+                    for (int zz = 0; zz < 3; zz++)
+                    {
+                        int cx = x / chunksize + xx - 1;
+                        int cy = y / chunksize + yy - 1;
+                        int cz = z / chunksize + zz - 1;
+                        if (MapUtil.IsValidChunkPos(this, cx, cy, cz, chunksize))
+                        {
+                            SetChunkDirty(cx, cy, cz, true);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void UpdateColumnHeight(int x, int y)
+        {
+            //todo faster
+            int height = d_Map.MapSizeZ - 1;
+            for (int i = d_Map.MapSizeZ - 1; i >= 0; i--)
+            {
+                height = i;
+                if (!d_Data.IsTransparentForLight[d_Map.GetBlock(x, y, i)])
+                {
+                    break;
+                }
+            }
+            d_Heightmap.SetBlock(x, y, height);
+        }
+
+
         #endregion
-        public byte[] GetChunk(int x, int y, int z)
+        public unsafe byte* GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
@@ -4604,7 +4667,7 @@ namespace ManicDigger
                 //}
                 //else
                 {
-                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
+                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = (byte*)Marshal.AllocHGlobal(chunksize * chunksize * chunksize) };
                 }
                 return chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
             }
@@ -4620,7 +4683,7 @@ namespace ManicDigger
             SetAllChunksNotDirty();
         }
         #region IMapStorage Members
-        public void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
+        public unsafe void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
         {
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
@@ -4628,7 +4691,7 @@ namespace ManicDigger
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            byte*[, ,] localchunks = new byte*[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -4669,7 +4732,7 @@ namespace ManicDigger
                 && yy < MapSizeY / chunksize
                 && zz < MapSizeZ / chunksize;
         }
-        private void FillChunk(byte[] destination, int destinationchunksize,
+        private unsafe void FillChunk(byte* destination, int destinationchunksize,
             int sourcex, int sourcey, int sourcez, byte[, ,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
@@ -4711,7 +4774,7 @@ namespace ManicDigger
         {
             //d_IsChunkReady.SetAllChunksNotDirty();
         }
-        public void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+        public unsafe void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {
             Array.Clear(outPortion, 0, outPortion.Length);
 
@@ -4803,9 +4866,10 @@ namespace ManicDigger
 
         #endregion
     }
+    [StructLayout(LayoutKind.Sequential)]
     public class Chunk
     {
-        public byte[] data;
+        public unsafe byte* data;
         public int LastUpdate;
         public bool IsPopulated;
         public int LastChange;
