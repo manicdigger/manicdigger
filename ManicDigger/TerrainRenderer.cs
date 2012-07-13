@@ -154,6 +154,27 @@ namespace ManicDigger
                 lastplacedblock = null;
             }
 
+            for (; ; )
+            {
+                Vector3i? v = NearestDirty();
+                if (v == null)
+                {
+                    break;
+                }
+                RedrawChunk(v.Value.x, v.Value.y, v.Value.z);
+                if (framestopwatch.ElapsedMilliseconds > 5)
+                {
+                    break;
+                }
+            }
+        }
+        Vector3i? NearestDirty()
+        {
+            int nearestdist = int.MaxValue;
+            Vector3i? nearestpos = null;
+            int px = ((int)player.playerposition.X - CurrentRendererMapPositionG.x) / chunksize;
+            int py = ((int)player.playerposition.Z - CurrentRendererMapPositionG.y) / chunksize;
+            int pz = ((int)player.playerposition.Y - CurrentRendererMapPositionG.z) / chunksize;
             for (int x = 0; x < mapAreaSize / chunksize; x++)
             {
                 for (int y = 0; y < mapAreaSize / chunksize; y++)
@@ -163,17 +184,20 @@ namespace ManicDigger
                         int pos = MapUtil.Index3d(x, y, z, mapAreaSize / chunksize, mapAreaSize / chunksize);
                         if (RendererMap[pos].dirty)
                         {
-                            RedrawChunk(x, y, z);
-                            if (framestopwatch.ElapsedMilliseconds > 5)
+                            int dx = px - x;
+                            int dy = py - y;
+                            int dz = pz - z;
+                            int dist = dx * dx + dy * dy + dz * dz;
+                            if (dist < nearestdist)
                             {
-                                goto exit;
+                                nearestdist = dist;
+                                nearestpos = new Vector3i(x, y, z);
                             }
                         }
                     }
                 }
             }
-        exit:
-            ;
+            return nearestpos;
         }
 
         void RedrawChunk(int x, int y, int z)
