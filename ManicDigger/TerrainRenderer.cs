@@ -14,6 +14,7 @@ namespace ManicDigger
 
         int mapAreaSize { get { return (int)d_Config3d.viewdistance * 2; } }
         int centerAreaSize { get { return (int)d_Config3d.viewdistance / 2; } }
+        int mapAreaSizeZ { get { return MapSizeZ; } }
 
         public void StartTerrain()
         {
@@ -130,20 +131,29 @@ namespace ManicDigger
 
             if (lastplacedblock != null)
             {
-                int pos1 = MapUtil.Index3d((lastplacedblock.Value.x - CurrentRendererMapPositionG.x) / chunksize,
-                   ( lastplacedblock.Value.y - CurrentRendererMapPositionG.y) / chunksize,
-                   ( lastplacedblock.Value.z - CurrentRendererMapPositionG.z) / chunksize,
-                    mapAreaSize / chunksize, mapAreaSize / chunksize);
-                if (RendererMap[pos1].dirty)
+                Dictionary<Vector3i, bool> ChunksToRedraw = new Dictionary<Vector3i,bool>();
+                foreach (var a in MapUtil.BlocksAround(new Vector3(lastplacedblock.Value.x,lastplacedblock.Value.y,lastplacedblock.Value.z)))
                 {
-                    RedrawChunk((lastplacedblock.Value.x - CurrentRendererMapPositionG.x) / chunksize,
-                      (  lastplacedblock.Value.y - CurrentRendererMapPositionG.y )/ chunksize,
-                      (  lastplacedblock.Value.z - CurrentRendererMapPositionG.z) / chunksize);
+                    ChunksToRedraw[new Vector3i((int)a.X / chunksize, (int)a.Y / chunksize, (int)a.Z / chunksize)] = true;
+                }
+                foreach (var c in ChunksToRedraw.Keys)
+                {
+                    int xx = c.x - (CurrentRendererMapPositionG.x / chunksize);
+                    int yy = c.y - (CurrentRendererMapPositionG.y / chunksize);
+                    int zz = c.z - (CurrentRendererMapPositionG.z / chunksize);
+                    if (xx >= 0 && yy >= 0 && zz >= 0
+                        && xx < mapAreaSize / chunksize && yy < mapAreaSize / chunksize && zz < mapAreaSizeZ / chunksize)
+                    {
+                        int pos1 = MapUtil.Index3d(xx, yy, zz, mapAreaSize / chunksize, mapAreaSize / chunksize);
+                        if (RendererMap[pos1].dirty)
+                        {
+                            RedrawChunk(xx, yy, zz);
+                        }
+                    }
                 }
                 lastplacedblock = null;
             }
 
-            int updated = 0;
             for (int x = 0; x < mapAreaSize / chunksize; x++)
             {
                 for (int y = 0; y < mapAreaSize / chunksize; y++)
