@@ -230,7 +230,8 @@ namespace ManicDiggerServer
                         }
                     }
                 }
-
+            }
+        }
         // Interfaces to manipulate server's map.
         public void SetBlock(int x, int y, int z, int blocktype)
         {
@@ -327,8 +328,6 @@ namespace ManicDiggerServer
         public int[] GetMapSize()
         {
             return new int[] {d_Map.MapSizeX, d_Map.MapSizeY, d_Map.MapSizeZ};
-        }
-            }
         }
     }
 }

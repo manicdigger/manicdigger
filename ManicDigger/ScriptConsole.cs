@@ -31,9 +31,10 @@ namespace GameModeFortress
             interpreter.SetFunction("get_block", new Jint.Delegates.Func<double, double, double, int>(GetBlock));
             interpreter.SetFunction("get_height", new Jint.Delegates.Func<double, double, double>(GetHeight));
             interpreter.SetFunction("get_mapsize", new Jint.Delegates.Func<int[]>(GetMapSize));
-            interpreter.SetFunction("set_chunk", new System.Action<double, double, double, byte[]>(SetChunk));
+
+            interpreter.SetFunction("set_chunk", new Action<double, double, double, byte[]>(SetChunk));
             interpreter.SetFunction("get_chunk", new Jint.Delegates.Func<double, double, double, byte[]>(GetChunk));
-            interpreter.SetFunction("delete_chunk", new System.Action<double, double, double>(DeleteChunk));
+            interpreter.SetFunction("delete_chunk", new Action<double, double, double>(DeleteChunk));
             interpreter.SetFunction("delete_chunk_range", new Action<double, double, double, double, double, double>(DeleteChunkRange));
             interpreter.SetFunction("backup_database", new Action<string>(BackupDatabase));
             interpreter.SetFunction("clear", new Jint.Delegates.Action(Clear));
