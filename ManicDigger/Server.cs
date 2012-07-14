@@ -3254,6 +3254,7 @@ if (sent >= unknown.Count) { break; }
             public void AssignGroup(GameModeFortress.Group newGroup)
             {
                 this.clientGroup = newGroup;
+                this.privileges.Clear();
                 this.privileges.AddRange(newGroup.GroupPrivileges);
                 this.color = newGroup.GroupColorString();
             }
