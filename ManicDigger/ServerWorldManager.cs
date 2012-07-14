@@ -73,6 +73,7 @@ namespace ManicDiggerServer
                     {
                         SendLevelFinalize(k.Key);
                         clients[k.Key].state = ClientStateOnServer.Playing;
+                        clients[k.Key].Ping.TimeoutValue = config.ClientPlayingTimeout;
                     }
                 }
                 else //b)

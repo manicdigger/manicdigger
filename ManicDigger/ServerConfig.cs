@@ -17,6 +17,8 @@ namespace GameModeFortress
         public int MaxClients { get; set; }
         public int AutoRestartCycle { get; set; }
         public bool ServerMonitor { get; set; }
+        public int ClientConnectionTimeout { get; set; }
+        public int ClientPlayingTimeout { get; set; }
         public bool BuildLogging { get; set; }
         public bool ServerEventLogging { get; set; }
         public bool ChatLogging { get; set; }
@@ -111,6 +113,8 @@ namespace GameModeFortress
             this.Port = 25565;
             this.MaxClients = 16;
             this.ServerMonitor = true;
+            this.ClientConnectionTimeout = 600;
+            this.ClientPlayingTimeout = 60;
             this.BuildLogging = false;
             this.ServerEventLogging = false;
             this.ChatLogging = false;

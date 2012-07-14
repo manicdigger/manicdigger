@@ -212,9 +212,9 @@ namespace ManicDiggerServer
             }
 
             {
-                if (!Directory.Exists(gamepathsaves))
+                if (!Directory.Exists(GameStorePath.gamepathsaves))
                 {
-                    Directory.CreateDirectory(gamepathsaves);
+                    Directory.CreateDirectory(GameStorePath.gamepathsaves);
                 }
                 Console.WriteLine("Loading savegame...");
                 if (!File.Exists(GetSaveFilename()))
@@ -374,8 +374,7 @@ namespace ManicDiggerServer
             }
             d_ChunkDb.SetChunks(tosave);
         }
-        public string gamepathconfig = GameStorePath.GetStorePath();
-        public string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
+
         public string SaveFilenameWithoutExtension = "default";
         public string SaveFilenameOverride;
         string GetSaveFilename()
@@ -384,7 +383,7 @@ namespace ManicDiggerServer
             {
                 return SaveFilenameOverride;
             }
-            return Path.Combine(gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
+            return Path.Combine(GameStorePath.gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
         }
         public void Process11()
         {
@@ -408,7 +407,7 @@ namespace ManicDiggerServer
         public void LoadConfig()
         {
             string filename = "ServerConfig.xml";
-            if (!File.Exists(Path.Combine(gamepathconfig, filename)))
+            if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
                 Console.WriteLine("Server configuration file not found, creating new.");
                 SaveConfig();
@@ -416,7 +415,7 @@ namespace ManicDiggerServer
             }
             try
             {
-                using (TextReader textReader = new StreamReader(Path.Combine(gamepathconfig, filename)))
+                using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
                 {
                     XmlSerializer deserializer = new XmlSerializer(typeof(ServerConfig));
                     config = (ServerConfig)deserializer.Deserialize(textReader);
@@ -425,7 +424,7 @@ namespace ManicDiggerServer
             }
             catch //This if for the original format
             {
-                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
+                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
                 {
                     config = new ServerConfig();
                     StreamReader sr = new StreamReader(s);
@@ -463,6 +462,8 @@ namespace ManicDiggerServer
                     config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
                     config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
                     config.ServerMonitor = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerMonitor"));
+                    config.ClientConnectionTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientConnectionTimeout"));
+                    config.ClientPlayingTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientPlayingTimeout"));
                 }
                 //Save with new version.
                 SaveConfig();
@@ -475,13 +476,13 @@ namespace ManicDiggerServer
         public void SaveConfig()
         {
             //Verify that we have a directory to place the file into.
-            if (!Directory.Exists(gamepathconfig))
+            if (!Directory.Exists(GameStorePath.gamepathconfig))
             {
-                Directory.CreateDirectory(gamepathconfig);
+                Directory.CreateDirectory(GameStorePath.gamepathconfig);
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
-            TextWriter textWriter = new StreamWriter(Path.Combine(gamepathconfig, "ServerConfig.xml"));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.xml"));
 
             //Check to see if config has been initialized
             if (config == null)
@@ -656,6 +657,7 @@ namespace ManicDiggerServer
 
                 Client c = new Client();
                 c.socket = client1;
+                c.Ping.TimeoutValue = config.ClientConnectionTimeout;
                 lock (clients)
                 {
                     this.lastClientId = this.GenerateClientId();
@@ -776,8 +778,7 @@ namespace ManicDiggerServer
                 foreach (var k in clients)
                 {
                     // Check if client is alive. Detect half-dropped connections.
-                    // TODO: check
-                    if (!k.Value.Ping.Send() && k.Value.state == ClientStateOnServer.Playing)
+                    if (!k.Value.Ping.Send()/*&& k.Value.state == ClientStateOnServer.Playing*/)
                     {
                         if (k.Value.Ping.Timeout())
                         {
@@ -3338,7 +3339,7 @@ if (sent >= unknown.Count) { break; }
         public void LoadServerClient()
         {
             string filename = "ServerClient.xml";
-            if (!File.Exists(Path.Combine(gamepathconfig, filename)))
+            if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
                 Console.WriteLine("Server client configuration file not found, creating new.");
                 SaveServerClient();
@@ -3347,7 +3348,7 @@ if (sent >= unknown.Count) { break; }
             {
                 try
                 {
-                    using (TextReader textReader = new StreamReader(Path.Combine(gamepathconfig, filename)))
+                    using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
                     {
                         XmlSerializer deserializer = new XmlSerializer(typeof(ServerClient));
                         serverClient = (ServerClient)deserializer.Deserialize(textReader);
@@ -3358,7 +3359,7 @@ if (sent >= unknown.Count) { break; }
                 }
                 catch //This if for the original format
                 {
-                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
+                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
                     {
                         serverClient = new ServerClient();
                         StreamReader sr = new StreamReader(s);
@@ -3410,13 +3411,13 @@ if (sent >= unknown.Count) { break; }
         public void SaveServerClient()
         {
             //Verify that we have a directory to place the file into.
-            if (!Directory.Exists(gamepathconfig))
+            if (!Directory.Exists(GameStorePath.gamepathconfig))
             {
-                Directory.CreateDirectory(gamepathconfig);
+                Directory.CreateDirectory(GameStorePath.gamepathconfig);
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(ServerClient));
-            TextWriter textWriter = new StreamWriter(Path.Combine(gamepathconfig, "ServerClient.xml"));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerClient.xml"));
 
             //Check to see if config has been initialized
             if (serverClient == null)
@@ -3523,6 +3524,11 @@ if (sent >= unknown.Count) { break; }
         private bool ready;
         private DateTime timeSend;
         private int timeout = 10; //in seconds
+        public int TimeoutValue
+        {
+            get { return timeout; }
+            set { timeout = value; }
+        }
 
         public Ping()
         {

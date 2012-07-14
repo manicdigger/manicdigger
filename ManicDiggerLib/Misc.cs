@@ -42,6 +42,9 @@ namespace ManicDigger
                 return Path.Combine(apppath, mdfolder);
             }
         }
+
+        public static string gamepathconfig = Path.Combine(GameStorePath.GetStorePath(), "Configuration");
+        public static string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
     }
     public interface IScreenshot
     {
