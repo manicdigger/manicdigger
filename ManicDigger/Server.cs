@@ -1914,254 +1914,254 @@ if (sent >= unknown.Count) { break; }
                     this.NotifyPing(clientid, clients[clientid].Ping.RoundtripTime.Milliseconds);
                     break;
                 case ClientPacketId.PlayerIdentification:
-                    if (config.IsPasswordProtected() && packet.Identification.ServerPassword != config.Password)
                     {
-                        SendDisconnectPlayer(clientid, "invalid server password.");
-                        ServerEventLog(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
-                        KillPlayer(clientid);
-                        break;
-                    }
-                    SendServerIdentification(clientid);
-                    string username = packet.Identification.Username;
-
-                    // allowed characters in username: a-z,A-Z,0-9,-,_ length: 1-16
-                    Regex allowedUsername = new Regex(@"^(\w|-){1,16}$");
-
-                    if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
-                    {
-                        SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
-                        ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
-                        KillPlayer(clientid);
-                        break;
-                    }
-
-                    bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
-                    bool verificationFailed = false;
-
-                    if ((ComputeMd5(config.Key.Replace("-", "") + username) != packet.Identification.VerificationKey)
-                        && (!isClientLocalhost))
-                    {
-                        //Account verification failed.
-                        username = "~" + username;
-                        verificationFailed = true;
-                    }
-
-                    if (!config.AllowGuests && verificationFailed)
-                    {
-                        SendDisconnectPlayer(clientid, "Guests are not allowed on this server. Login or register an account.");
-                        KillPlayer(clientid);
-                        break;
-                    }
-
-                    if (config.IsUserBanned(username))
-                    {
-                        SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
-                        ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
-                        KillPlayer(clientid);
-                        break;
-                    }
-
-                    //When a duplicate user connects, append a number to name.
-                    foreach (var k in clients)
-                    {
-                        if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                        if (config.IsPasswordProtected() && packet.Identification.ServerPassword != config.Password)
                         {
-                            // If duplicate is a registered user, kick duplicate. It is likely that the user lost connection before.
-                            if (!verificationFailed && !isClientLocalhost)
-                            {
-                                KillPlayer(k.Key);
-                                break;
-                            }
-
-                            // Duplicates are handled as guests.
-                            username = GenerateUsername(username);
-                            if (!username.StartsWith("~")) { username = "~" + username; }
+                            Console.WriteLine(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
+                            ServerEventLog(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
+                            SendDisconnectPlayer(clientid, "Invalid server password.");
+                            KillPlayer(clientid);
                             break;
                         }
-                    }
-                    clients[clientid].playername = username;
+                        SendServerIdentification(clientid);
+                        string username = packet.Identification.Username;
 
-                    // Assign group to new client
-                    //Check if client is in ServerClient.xml and assign corresponding group.
-                    bool exists = false;
-                    foreach (GameModeFortress.Client client in serverClient.Clients)
-                    {
-                        if (client.Name.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                        // allowed characters in username: a-z,A-Z,0-9,-,_ length: 1-16
+                        Regex allowedUsername = new Regex(@"^(\w|-){1,16}$");
+
+                        if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
                         {
-                            foreach (GameModeFortress.Group clientGroup in serverClient.Groups)
+                            SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
+                            ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
+                            KillPlayer(clientid);
+                            break;
+                        }
+
+                        bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
+                        bool verificationFailed = false;
+
+                        if ((ComputeMd5(config.Key.Replace("-", "") + username) != packet.Identification.VerificationKey)
+                            && (!isClientLocalhost))
+                        {
+                            //Account verification failed.
+                            username = "~" + username;
+                            verificationFailed = true;
+                        }
+
+                        if (!config.AllowGuests && verificationFailed)
+                        {
+                            SendDisconnectPlayer(clientid, "Guests are not allowed on this server. Login or register an account.");
+                            KillPlayer(clientid);
+                            break;
+                        }
+
+                        if (config.IsUserBanned(username))
+                        {
+                            SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                            ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
+                            KillPlayer(clientid);
+                            break;
+                        }
+
+                        //When a duplicate user connects, append a number to name.
+                        foreach (var k in clients)
+                        {
+                            if (k.Value.playername.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                if (clientGroup.Name.Equals(client.Group))
+                                // If duplicate is a registered user, kick duplicate. It is likely that the user lost connection before.
+                                if (!verificationFailed && !isClientLocalhost)
                                 {
-                                    exists = true;
-                                    clients[clientid].AssignGroup(clientGroup);
+                                    KillPlayer(k.Key);
                                     break;
                                 }
+
+                                // Duplicates are handled as guests.
+                                username = GenerateUsername(username);
+                                if (!username.StartsWith("~")) { username = "~" + username; }
+                                break;
                             }
-                            break;
                         }
-                    }
-                    if (!exists)
-                    {
-                        if (clients[clientid].playername.StartsWith("~"))
+                        clients[clientid].playername = username;
+
+                        // Assign group to new client
+                        //Check if client is in ServerClient.xml and assign corresponding group.
+                        bool exists = false;
+                        foreach (GameModeFortress.Client client in serverClient.Clients)
                         {
-                            clients[clientid].AssignGroup(this.defaultGroupGuest);
+                            if (client.Name.Equals(username, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                foreach (GameModeFortress.Group clientGroup in serverClient.Groups)
+                                {
+                                    if (clientGroup.Name.Equals(client.Group))
+                                    {
+                                        exists = true;
+                                        clients[clientid].AssignGroup(clientGroup);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        if (!exists)
+                        {
+                            if (clients[clientid].playername.StartsWith("~"))
+                            {
+                                clients[clientid].AssignGroup(this.defaultGroupGuest);
+                            }
+                            else
+                            {
+                                clients[clientid].AssignGroup(this.defaultGroupRegistered);
+                            }
+                        }
+                        if (isClientLocalhost)
+                        {
+                            clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
+                        }
+                        this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
+                    }
+                    break;
+                case ClientPacketId.RequestBlob:
+                    {
+                        // Set player's spawn position
+                        Vector3i position;
+                        GameModeFortress.Spawn playerSpawn = null;
+                        // Check if there is a spawn entry for his assign group
+                        if (clients[clientid].clientGroup.Spawn != null)
+                        {
+                            playerSpawn = clients[clientid].clientGroup.Spawn;
+                        }
+                        // Check if there is an entry in clients with spawn member (overrides group spawn).
+                        foreach (GameModeFortress.Client client in serverClient.Clients)
+                        {
+                            if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                if (client.Spawn != null)
+                                {
+                                    playerSpawn = client.Spawn;
+                                }
+                                break;
+                            }
+                        }
+
+                        if (playerSpawn == null)
+                        {
+                            position = this.defaultPlayerSpawn;
                         }
                         else
                         {
-                            clients[clientid].AssignGroup(this.defaultGroupRegistered);
+                            position = this.SpawnToVector3i(playerSpawn);
                         }
-                    }
-                    if (isClientLocalhost)
-                    {
-                        clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
-                    }
-                    this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
-                    break;
-                case ClientPacketId.RequestBlob:
-                    // Set player's spawn position
-                    Vector3i position;
-                    GameModeFortress.Spawn playerSpawn = null;
-                    // Check if there is a spawn entry for his assign group
-                    if (clients[clientid].clientGroup.Spawn != null)
-                    {
-                        playerSpawn = clients[clientid].clientGroup.Spawn;
-                    }
-                    // Check if there is an entry in clients with spawn member (overrides group spawn).
-                    foreach (GameModeFortress.Client client in serverClient.Clients)
-                    {
-                        if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
+
+                        clients[clientid].PositionMul32GlX = position.x;
+                        clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
+                        clients[clientid].PositionMul32GlZ = position.z;
+
+                        string ip = ((IPEndPoint)clients[clientid].socket.RemoteEndPoint).Address.ToString();
+                        SendMessageToAll(string.Format("Player {0} joins.", clients[clientid].ColoredPlayername(colorNormal)));
+                        ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
+                        SendMessage(clientid, colorSuccess + config.WelcomeMessage);
+                        SendBlobs(clientid);
+
+                        //notify all players about new player spawn
+                        PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
                         {
-                            if (client.Spawn != null)
+                            PlayerId = clientid,
+                            PlayerName = clients[clientid].playername,
+                            PositionAndOrientation = new PositionAndOrientation()
                             {
-                                playerSpawn = client.Spawn;
+                                X = position.x,
+                                Y = position.y + (int)(0.5 * 32),
+                                Z = position.z,
+                                Heading = 0,
+                                Pitch = 0,
                             }
-                            break;
-                        }
-                    }
-
-                    if (playerSpawn == null)
-                    {
-                        position = this.defaultPlayerSpawn;
-                    }
-                    else
-                    {
-                        position = this.SpawnToVector3i(playerSpawn);
-                    }
-
-                    clients[clientid].PositionMul32GlX = position.x;
-                    clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
-                    clients[clientid].PositionMul32GlZ = position.z;
-
-                    string ip = ((IPEndPoint)clients[clientid].socket.RemoteEndPoint).Address.ToString();
-                    SendMessageToAll(string.Format("Player {0} joins.", clients[clientid].ColoredPlayername(colorNormal)));
-                    ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
-                    SendMessage(clientid, colorSuccess + config.WelcomeMessage);
-                    SendBlobs(clientid);
-
-                    //.players.Players[clientid] = new Player() { Name = username };
-                    //send new player spawn to all players
-                    foreach (var k in clients)
-                    {
-                        int cc = clientid;
+                        };
+                        PacketServer pp = new PacketServer() {PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p};
+                        foreach (var k in clients)
                         {
-                            PacketServer pp = new PacketServer();
-                            PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
-                            {
-                                PlayerId = cc,
-                                PlayerName = clients[clientid].playername,
-                                PositionAndOrientation = new PositionAndOrientation()
-                                {
-                                    X = position.x,
-                                    Y = position.y + (int)(0.5 * 32),
-                                    Z = position.z,
-                                    Heading = 0,
-                                    Pitch = 0,
-                                }
-                            };
-                            pp.PacketId = ServerPacketId.SpawnPlayer;
-                            pp.SpawnPlayer = p;
                             SendPacket(k.Key, Serialize(pp));
                         }
-                    }
-                    //send all players spawn to new player
-                    foreach (var k in clients)
-                    {
-                        if (k.Key != clientid)// || ENABLE_FORTRESS)
+
+                        //send all players spawn to new player
+                        foreach (var k in clients)
                         {
+                            if (k.Key != clientid)
                             {
-                                PacketServer pp = new PacketServer();
-                                PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
+                                p = new PacketServerSpawnPlayer()
                                 {
                                     PlayerId = k.Key,
                                     PlayerName = k.Value.playername,
                                     PositionAndOrientation = new PositionAndOrientation()
                                     {
-                                        X = 0,
-                                        Y = 0,
-                                        Z = 0,
-                                        Heading = 0,
-                                        Pitch = 0,
+                                        X = k.Value.PositionMul32GlX,
+                                        Y = k.Value.PositionMul32GlY,
+                                        Z = k.Value.PositionMul32GlZ,
+                                        Heading = (byte)k.Value.positionheading,
+                                        Pitch = (byte)k.Value.positionpitch,
                                     }
                                 };
-                                pp.PacketId = ServerPacketId.SpawnPlayer;
-                                pp.SpawnPlayer = p;
+                                pp = new PacketServer() {PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p};
                                 SendPacket(clientid, Serialize(pp));
                             }
                         }
+                        clients[clientid].state = ClientStateOnServer.LoadingGenerating;
+                        NotifySeason(clientid);
                     }
-                    clients[clientid].state = ClientStateOnServer.LoadingGenerating;
-                    NotifySeason(clientid);
                     break;
                 case ClientPacketId.SetBlock:
-                    int x = packet.SetBlock.X;
-                    int y = packet.SetBlock.Y;
-                    int z = packet.SetBlock.Z;
-                    if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
                     {
-                        SendMessage(clientid, colorError + "Insufficient privileges to build.");
-                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                        break;
+                        int x = packet.SetBlock.X;
+                        int y = packet.SetBlock.Y;
+                        int z = packet.SetBlock.Z;
+                        if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
+                        {
+                            SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            break;
+                        }
+                        if (!config.CanUserBuild(clients[clientid], x, y, z))
+                        {
+                            SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
+                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            break;
+                        }
+                        if (!DoCommandBuild(clientid, true, packet.SetBlock))
+                        {
+                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                        }
+                        BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
+                        d_Water.BlockChange(d_Map, x, y, z);
+                        d_GroundPhysics.BlockChange(d_Map, x, y, z);
                     }
-                    if (!config.CanUserBuild(clients[clientid], x, y, z))
-                    {
-                        SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
-                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                        break;
-                    }
-                    if (!DoCommandBuild(clientid, true, packet.SetBlock))
-                    {
-                        SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                    }
-                    BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
-                    d_Water.BlockChange(d_Map, x, y, z);
-                    d_GroundPhysics.BlockChange(d_Map, x, y, z);
                     break;
                 case ClientPacketId.FillArea:
-                    if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
                     {
-                        SendMessage(clientid, colorError + "Insufficient privileges to build.");
-                        break;
-                    }
-                    Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
-                    Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
+                        if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
+                        {
+                            SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                            break;
+                        }
+                        Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
+                        Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
 
-                    int blockCount = (Math.Abs(a.x - b.x) + 1) * (Math.Abs(a.y - b.y) + 1) * (Math.Abs(a.z - b.z) + 1);
+                        int blockCount = (Math.Abs(a.x - b.x) + 1) * (Math.Abs(a.y - b.y) + 1) * (Math.Abs(a.z - b.z) + 1);
 
-                    if (blockCount > clients[clientid].FillLimit)
-                    {
-                        SendMessage(clientid, colorError + "Fill area is too large.");
-                        break;
-                    }
-                    if (!this.IsFillAreaValid(clients[clientid], a, b))
-                    {
-                        SendMessage(clientid, colorError + "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
-                        break;
-                    }
-                    this.DoFillArea(clientid, packet.FillArea, blockCount);
+                        if (blockCount > clients[clientid].FillLimit)
+                        {
+                            SendMessage(clientid, colorError + "Fill area is too large.");
+                            break;
+                        }
+                        if (!this.IsFillAreaValid(clients[clientid], a, b))
+                        {
+                            SendMessage(clientid, colorError + "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
+                            break;
+                        }
+                        this.DoFillArea(clientid, packet.FillArea, blockCount);
 
-                    BuildLog(string.Format("{0} {1} {2} - {3} {4} {5} {6} {7} {8}", a.x, a.y, a.z, b.x, b.y, b.z,
-                        c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(),
-                        d_Map.GetBlock(a.x, a.y, a.z)));
+                        BuildLog(string.Format("{0} {1} {2} - {3} {4} {5} {6} {7} {8}", a.x, a.y, a.z, b.x, b.y, b.z,
+                            c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(),
+                            d_Map.GetBlock(a.x, a.y, a.z)));
+                    }
                     break;
                 case ClientPacketId.PositionandOrientation:
                     {
@@ -2181,31 +2181,33 @@ if (sent >= unknown.Count) { break; }
                     }
                     break;
                 case ClientPacketId.Message:
-                    packet.Message.Message = packet.Message.Message.Trim();
-                    // server command
-                    if (packet.Message.Message.StartsWith("/"))
                     {
-                        string[] ss = packet.Message.Message.Split(new[] { ' ' });
-                        string command = ss[0].Replace("/", "");
-                        string argument = packet.Message.Message.IndexOf(" ") < 0 ? "" : packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
-                        this.CommandInterpreter(clientid, command, argument);
-                    }
-                    // client command
-                    else if (packet.Message.Message.StartsWith("."))
-                    {
-                        break;
-                    }
-                    // chat message
-                    else
-                    {
-                        if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
+                        packet.Message.Message = packet.Message.Message.Trim();
+                        // server command
+                        if (packet.Message.Message.StartsWith("/"))
                         {
-                            SendMessageToAll(string.Format("{0}: {1}", clients[clientid].ColoredPlayername(colorNormal), packet.Message.Message));
-                            ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                            string[] ss = packet.Message.Message.Split(new[] { ' ' });
+                            string command = ss[0].Replace("/", "");
+                            string argument = packet.Message.Message.IndexOf(" ") < 0 ? "" : packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
+                            this.CommandInterpreter(clientid, command, argument);
                         }
+                        // client command
+                        else if (packet.Message.Message.StartsWith("."))
+                        {
+                            break;
+                        }
+                        // chat message
                         else
                         {
-                            SendMessage(clientid, string.Format("{0}Insufficient privileges to chat.", colorError));
+                            if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
+                            {
+                                SendMessageToAll(string.Format("{0}: {1}", clients[clientid].ColoredPlayername(colorNormal), packet.Message.Message));
+                                ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                            }
+                            else
+                            {
+                                SendMessage(clientid, string.Format("{0}Insufficient privileges to chat.", colorError));
+                            }
                         }
                     }
                     break;
@@ -2216,16 +2218,18 @@ if (sent >= unknown.Count) { break; }
                     DoCommandInventory(clientid, packet.InventoryAction);
                     break;
                 case ClientPacketId.Health:
-                    //todo server side
-                    var stats = GetPlayerStats(clients[clientid].playername);
-                    stats.CurrentHealth = packet.Health.CurrentHealth;
-                    if (stats.CurrentHealth < 1)
                     {
-                        //death
-                        //todo respawn
-                        stats.CurrentHealth = stats.MaxHealth;
+                        //todo server side
+                        var stats = GetPlayerStats(clients[clientid].playername);
+                        stats.CurrentHealth = packet.Health.CurrentHealth;
+                        if (stats.CurrentHealth < 1)
+                        {
+                            //death
+                            //todo respawn
+                            stats.CurrentHealth = stats.MaxHealth;
+                        }
+                        clients[clientid].IsPlayerStatsDirty = true;
                     }
-                    clients[clientid].IsPlayerStatsDirty = true;
                     break;
                 case ClientPacketId.MonsterHit:
                     HitMonsters(clientid, packet.Health.CurrentHealth);
@@ -3373,8 +3377,7 @@ if (sent >= unknown.Count) { break; }
                 // server sets a default spawn (middle of map)
                 int x = d_Map.MapSizeX / 2;
                 int y = d_Map.MapSizeY / 2;
-                // TODO: move call of DontSpawnPlayerInWater() to here!
-                this.defaultPlayerSpawn = new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32);
+                this.defaultPlayerSpawn =  DontSpawnPlayerInWater(new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32));
             }
             else
             {

@@ -608,6 +608,14 @@ namespace ManicDigger
                             AddChatline("USE: .tp [player | [x] {y} [z]]");
                         }
                     }
+                    else if (cmd == "clients")
+                    {
+                        Log ("Clients:");
+                        foreach (var k in d_Clients.Players)
+                        {
+                            Log (string.Format("{0} {1}", k.Key, k.Value.Name));
+                        }
+                    }
                     else if (cmd == "movespeed")
                     {
                         try
@@ -4503,7 +4511,7 @@ namespace ManicDigger
         }
         private static void InvalidPlayerWarning(int playerid)
         {
-            Console.WriteLine("Position update of nonexistent player {0}." + playerid);
+            Console.WriteLine(string.Format("Position update of nonexistent player {0}.",playerid));
         }
         private void ReadAndUpdatePlayerPosition(PositionAndOrientation positionAndOrientation, int playerid)
         {

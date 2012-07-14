@@ -71,7 +71,6 @@ namespace ManicDiggerServer
                     bool sent_all_in_range = (k.Value.maploadingsentchunks == chunksAround.Count);
                     if (sent_all_in_range)
                     {
-                        DontSpawnPlayerInWater(k.Key);
                         SendLevelFinalize(k.Key);
                         clients[k.Key].state = ClientStateOnServer.Playing;
                     }
@@ -99,21 +98,21 @@ namespace ManicDiggerServer
             }
         }
 
-        private void DontSpawnPlayerInWater(int clientId)
+        // generates a new spawn near initial spawn if initial spawn is in water
+        private Vector3i DontSpawnPlayerInWater(Vector3i initialSpawn)
         {
-            Vector3i pos1 = PlayerBlockPosition(clients[clientId]);
-            if (IsPlayerPositionDry(pos1.x, pos1.y, pos1.z))
+            if (IsPlayerPositionDry(initialSpawn.x, initialSpawn.y, initialSpawn.z))
             {
-                return;
+                return initialSpawn;
             }
-            
+
             //find shore
             //bonus +10 because player shouldn't be spawned too close to shore.
             bool bonusset = false;
             int bonus = -1;
+            Vector3i pos = initialSpawn;
             for (int i = 0; i < playerareasize / 4 - 5; i++)
             {
-                Vector3i pos = PlayerBlockPosition(clients[clientId]);
                 if (IsPlayerPositionDry(pos.x, pos.y, pos.z))
                 {
                     if (!bonusset)
@@ -126,22 +125,13 @@ namespace ManicDiggerServer
                 {
                     break;
                 }
-                clients[clientId].PositionMul32GlX += 32;
+                pos.x += 32;
                 int newblockheight = MapUtil.blockheight(d_Map, 0,
-                    clients[clientId].PositionMul32GlX / 32,
-                    clients[clientId].PositionMul32GlZ / 32);
-                clients[clientId].PositionMul32GlY = newblockheight * 32 + 16;
+                    pos.x / 32,
+                    pos.z/ 32);
+                pos.y = newblockheight * 32 + 16;
             }
-            foreach (var k in clients)
-            {
-                int clientId2 = clientId;
-                if (k.Key == clientId)
-                {
-                    clientId2 = 255;
-                }
-                SendPlayerTeleport(k.Key, (byte)clientId2, k.Value.PositionMul32GlX, k.Value.PositionMul32GlY,
-                    k.Value.PositionMul32GlZ, (byte)k.Value.positionheading, (byte)k.Value.positionpitch);
-            }
+            return pos;
         }
 
         bool IsPlayerPositionDry(int x, int y, int z)
