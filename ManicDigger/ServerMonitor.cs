@@ -188,11 +188,10 @@ namespace GameModeFortress
                 this.TimeIntervall = 3;
             }
         }
-        string gamepathconfig = GameStorePath.GetStorePath();
         string filename = "ServerMonitor.xml";
         private void LoadConfig()
         {
-            if (!File.Exists(Path.Combine(gamepathconfig, filename)))
+            if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
                 Console.WriteLine("Server monitor configuration file not found, creating new.");
                 SaveConfig();
@@ -201,7 +200,7 @@ namespace GameModeFortress
             {
                 try
                 {
-                    using (TextReader textReader = new StreamReader(Path.Combine(gamepathconfig, filename)))
+                    using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
                     {
                         XmlSerializer deserializer = new XmlSerializer(typeof(ServerMonitorConfig));
                         this.config = (ServerMonitorConfig)deserializer.Deserialize(textReader);
@@ -211,7 +210,7 @@ namespace GameModeFortress
                 }
                 catch //This if for the original format
                 {
-                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(gamepathconfig, filename))))
+                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
                     {
                         this.config = new ServerMonitorConfig();
                         StreamReader sr = new StreamReader(s);
@@ -227,13 +226,13 @@ namespace GameModeFortress
         public void SaveConfig()
         {
             //Verify that we have a directory to place the file into.
-            if (!Directory.Exists(gamepathconfig))
+            if (!Directory.Exists(GameStorePath.gamepathconfig))
             {
-                Directory.CreateDirectory(gamepathconfig);
+                Directory.CreateDirectory(GameStorePath.gamepathconfig);
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(ServerMonitorConfig));
-            TextWriter textWriter = new StreamWriter(Path.Combine(gamepathconfig, filename));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, filename));
 
             //Check to see if config has been initialized.
             if (this.config == null)

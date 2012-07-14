@@ -313,7 +313,7 @@ namespace GameModeFortress
             defaultAreas.Add(publicArea);
             AreaConfig builderArea = new AreaConfig();
             builderArea.Id = 2;
-            builderArea.Coords = "0,5001,1,9984,9984,128";
+            builderArea.Coords = "0,0,1,9984,9984,128";
             builderArea.PermittedGroups.Add("Builder");
             defaultAreas.Add(builderArea);
             AreaConfig adminArea = new AreaConfig();
