@@ -2046,7 +2046,7 @@ if (sent >= unknown.Count) { break; }
 
                         if (playerSpawn == null)
                         {
-                            position = this.defaultPlayerSpawn;
+                            position = new Vector3i(this.defaultPlayerSpawn.x * 32, this.defaultPlayerSpawn.z * 32, this.defaultPlayerSpawn.y * 32);
                         }
                         else
                         {
@@ -3379,7 +3379,7 @@ if (sent >= unknown.Count) { break; }
                 // server sets a default spawn (middle of map)
                 int x = d_Map.MapSizeX / 2;
                 int y = d_Map.MapSizeY / 2;
-                this.defaultPlayerSpawn =  DontSpawnPlayerInWater(new Vector3i(x * 32, MapUtil.blockheight(d_Map, 0, x, y) * 32, y * 32));
+                this.defaultPlayerSpawn =  DontSpawnPlayerInWater(new Vector3i(x, y, MapUtil.blockheight(d_Map, 0, x, y)));
             }
             else
             {

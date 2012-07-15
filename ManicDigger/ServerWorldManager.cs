@@ -126,11 +126,9 @@ namespace ManicDiggerServer
                 {
                     break;
                 }
-                pos.x += 32;
-                int newblockheight = MapUtil.blockheight(d_Map, 0,
-                    pos.x / 32,
-                    pos.z/ 32);
-                pos.y = newblockheight * 32 + 16;
+                pos.x ++;
+                int newblockheight = MapUtil.blockheight(d_Map, 0, pos.x, pos.y);
+                pos.z = newblockheight + 1;
             }
             return pos;
         }
