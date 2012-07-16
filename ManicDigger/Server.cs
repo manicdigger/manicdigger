@@ -1873,7 +1873,7 @@ if (sent >= unknown.Count) { break; }
             clients.Remove(clientid);
             foreach (var kk in clients)
             {
-                SendDespawnPlayer(kk.Key, (byte)clientid);
+                SendDespawnPlayer(kk.Key, clientid);
             }
             if (name != "invalid")
             {
@@ -2962,7 +2962,7 @@ if (sent >= unknown.Count) { break; }
         //SendPositionAndOrientationUpdate //delta
         //SendPositionUpdate //delta
         //SendOrientationUpdate
-        private void SendDespawnPlayer(int clientid, byte playerid)
+        private void SendDespawnPlayer(int clientid, int playerid)
         {
             PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
