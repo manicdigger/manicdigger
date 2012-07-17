@@ -256,7 +256,22 @@ namespace ManicDiggerServer
             serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
             this.serverConsoleClient.AssignGroup(serverGroup);
             this.serverConsole = new ServerConsole(this, exit);
+            LoadMods();
         }
+
+        private void LoadMods()
+        {
+            ModManager m = new ModManager();
+            m.Start(this);
+            //todo
+            new ManicDigger.Mods.Default().Start(m);
+            new ManicDigger.Mods.Doors().Start(m);
+            new ManicDigger.Mods.GroundPhysics().Start(m);
+            new ManicDigger.Mods.Monsters().Start(m);
+            new ManicDigger.Mods.Tnt().Start(m);
+            new ManicDigger.Mods.Vegetation().Start(m);
+        }
+
         private ServerMonitor serverMonitor;
         private ServerConsole serverConsole;
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID

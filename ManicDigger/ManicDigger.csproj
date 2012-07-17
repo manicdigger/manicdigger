@@ -77,6 +77,13 @@
     </Compile>
     <Compile Include="Misc.cs" />
     <Compile Include="ModeFortressRail.cs" />
+    <Compile Include="Mod.cs" />
+    <Compile Include="Mods\Default.cs" />
+    <Compile Include="Mods\Doors.cs" />
+    <Compile Include="Mods\GroundPhysics.cs" />
+    <Compile Include="Mods\Monsters.cs" />
+    <Compile Include="Mods\Vegetation.cs" />
+    <Compile Include="Mods\Tnt.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
