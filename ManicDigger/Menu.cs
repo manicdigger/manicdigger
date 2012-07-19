@@ -49,8 +49,10 @@ namespace GameModeFortress
             }
         }
 
+        MultiplayerForm m;
         private void button1_Click(object sender, EventArgs e)
         {
+            /*
             try
             {
                 Chosen = ChosenGameType.Multiplayer;
@@ -68,6 +70,7 @@ namespace GameModeFortress
             {
                 MessageBox.Show("Invalid sever address.");
             }
+            */
         }
 
         private void Menu_Load(object sender, EventArgs e)
@@ -95,6 +98,7 @@ namespace GameModeFortress
             catch
             {
             }
+            /*
             try
             {
                 if (File.Exists(lastserverpath))
@@ -105,11 +109,23 @@ namespace GameModeFortress
             catch
             {
             }
+            */
         }
 
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void button3_Click(object sender, EventArgs e)
         {
-            Process.Start("http://manicdigger.sourceforge.net/play/");
+            m = new MultiplayerForm();
+            m.ShowDialog();
+            if (m.ConnectNow)
+            {
+                Chosen = ChosenGameType.Multiplayer;
+                MultiplayerConnectData = new ConnectData();
+                MultiplayerConnectData.Auth = m.LoginAuthcode;
+                MultiplayerConnectData.Ip = m.LoginIp;
+                MultiplayerConnectData.Port = int.Parse(m.LoginPort);
+                MultiplayerConnectData.Username = m.LoginUser;
+                Close();
+            }
         }
     }
 }

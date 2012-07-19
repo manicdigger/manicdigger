@@ -84,6 +84,12 @@
     <Compile Include="Mods\Monsters.cs" />
     <Compile Include="Mods\Vegetation.cs" />
     <Compile Include="Mods\Tnt.cs" />
+    <Compile Include="MultiplayerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MultiplayerForm.Designer.cs">
+      <DependentUpon>MultiplayerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -130,6 +136,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Menu.resx">
       <DependentUpon>Menu.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MultiplayerForm.resx">
+      <DependentUpon>MultiplayerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
