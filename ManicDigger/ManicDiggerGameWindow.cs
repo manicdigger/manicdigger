@@ -31,7 +31,7 @@ namespace ManicDigger
         IMapStoragePortion, IShadows, ICurrentShadows, IResetMap
     {
         public void Start()
-        {
+        {            
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
@@ -322,6 +322,18 @@ namespace ManicDigger
 
         public void OnLoad(EventArgs e)
         {
+            if (resolutions == null)
+            {
+                resolutions = new List<DisplayResolution>();
+                foreach (var r in DisplayDevice.Default.AvailableResolutions)
+                {
+                    if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel == 8)
+                    {
+                        continue;
+                    }
+                    resolutions.Add(r);
+                }
+            }
             //Start();
             Connect();
 
@@ -701,10 +713,14 @@ namespace ManicDigger
                 if (d_GlWindow.WindowState == WindowState.Fullscreen)
                 {
                     d_GlWindow.WindowState = WindowState.Normal;
+                    RestoreResolution();
+                    SaveOptions();
                 }
                 else
                 {
                     d_GlWindow.WindowState = WindowState.Fullscreen;
+                    UseResolution();
+                    SaveOptions();
                 }
             }
             if (GuiTyping == TypingState.None)
@@ -927,9 +943,7 @@ namespace ManicDigger
                 }
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
-                    ENABLE_LAG++;
-                    ENABLE_LAG = ENABLE_LAG % 3;
-                    d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+                    ToggleVsync();
                     if (ENABLE_LAG == 0) { Log(Language.FrameRateVsync); }
                     if (ENABLE_LAG == 1) { Log(Language.FrameRateUnlimited); }
                     if (ENABLE_LAG == 2) { Log(Language.FrameRateLagSimulation); }
@@ -1058,6 +1072,19 @@ namespace ManicDigger
             }
             else throw new Exception();
         }
+
+        private void ToggleVsync()
+        {
+            ENABLE_LAG++;
+            ENABLE_LAG = ENABLE_LAG % 3;
+            UseVsync();
+        }
+
+        private void UseVsync()
+        {
+            d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
+        }
+
         public int[] drawDistances = { 32, 64, 128 };//, 256, 512 };
         private void ToggleFog()
         {

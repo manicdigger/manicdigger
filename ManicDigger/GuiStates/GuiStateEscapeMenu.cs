@@ -4,6 +4,7 @@ using System.Text;
 using System.Drawing;
 using System.Xml.Serialization;
 using System.IO;
+using OpenTK;
 
 namespace ManicDigger
 {
@@ -14,6 +15,9 @@ namespace ManicDigger
         public int DrawDistance = 256;
         public bool UseServerTextures = true;
         public bool EnableSound = true;
+        public int Framerate = 0;
+        public int Resolution = 0;
+        public bool Fullscreen = false;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }
     partial class ManicDiggerGameWindow
@@ -55,6 +59,7 @@ namespace ManicDigger
                 AddButton(Language.Options, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 AddButton(Language.Exit, (a, b) =>
                 {
+                    RestoreResolution();
                     d_Exit.exit = true;
                     this.d_GlWindow.Exit();
                 });
@@ -70,16 +75,33 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Graphics)
             {
+                /*
                 AddButton(string.Format(Language.ShadowsOption, (d_CurrentShadows.ShadowsFull ? Language.On : Language.Off)),
                     (a, b) =>
                     {
                         d_CurrentShadows.ShadowsFull = !d_CurrentShadows.ShadowsFull;
                         RedrawAllBlocks();
                     });
+                */
                 AddButton(string.Format(Language.ViewDistanceOption, (d_Config3d.viewdistance)),
                     (a, b) =>
                     {
                         ToggleFog();
+                    });
+                AddButton(string.Format("Framerate: {0}", (VsyncString())),
+                    (a, b) =>
+                    {
+                        ToggleVsync();
+                    });
+                AddButton(string.Format("Resolution: {0}", (ResolutionString())),
+                    (a, b) =>
+                    {
+                        ToggleResolution();
+                    });
+                AddButton(string.Format("Fullscreen: {0}", options.Fullscreen ? Language.On : Language.Off),
+                    (a, b) =>
+                    {
+                        options.Fullscreen = !options.Fullscreen;
                     });
                 AddButton(string.Format(Language.UseServerTexturesOption, (options.UseServerTextures ? Language.On : Language.Off)),
                     (a, b) =>
@@ -92,7 +114,7 @@ namespace ManicDigger
                         d_TextRenderer.NewFont = !d_TextRenderer.NewFont;
                         d_The3d.cachedTextTextures.Clear();
                     });
-                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(Language.ReturnToOptionsMenu, (a, b) => { UseFullscreen(); UseResolution(); SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Other)
@@ -125,6 +147,78 @@ namespace ManicDigger
                 MakeSimpleOptions(fontsize, textheight);
             }
         }
+
+        private void UseFullscreen()
+        {
+            if (options.Fullscreen)
+            {
+                d_GlWindow.WindowState = WindowState.Fullscreen;
+                UseResolution();
+            }
+            else
+            {
+                d_GlWindow.WindowState = WindowState.Normal;
+                RestoreResolution();
+            }
+        }
+
+        private string VsyncString()
+        {
+            if (ENABLE_LAG == 0) { return "Vsync"; }
+            else if (ENABLE_LAG == 1) { return "Unlimited"; }
+            else if (ENABLE_LAG == 2) { return "Lag"; }
+            else throw new Exception();
+        }
+
+        private string ResolutionString()
+        {
+            DisplayResolution res = resolutions[options.Resolution];
+            return string.Format("{0}x{1}, {2}, {3} Hz", res.Width, res.Height, res.BitsPerPixel, res.RefreshRate);
+        }
+
+        List<DisplayResolution> resolutions;
+        private void ToggleResolution()
+        {
+            options.Resolution++;
+            if (options.Resolution >= resolutions.Count)
+            {
+                options.Resolution = 0;
+            }
+        }
+        Size originalResolution;
+        bool changedResolution = false;
+        void RestoreResolution()
+        {
+            if (changedResolution)
+            {
+                DisplayDevice.Default.ChangeResolution(originalResolution.Width, originalResolution.Height, 32, -1);
+            }
+        }
+        private void UseResolution()
+        {
+            if (!changedResolution)
+            {
+                originalResolution = new Size(DisplayDevice.Default.Width, DisplayDevice.Default.Height);
+                changedResolution = true;
+            }
+            if (options.Resolution >= resolutions.Count)
+            {
+                options.Resolution = 0;
+            }
+            DisplayResolution res = resolutions[options.Resolution];
+            if (d_GlWindow.WindowState == WindowState.Fullscreen)
+            {
+                DisplayDevice.Default.ChangeResolution(res.Width, res.Height, res.BitsPerPixel, res.RefreshRate);
+                d_GlWindow.WindowState = WindowState.Normal;
+                d_GlWindow.WindowState = WindowState.Fullscreen;
+            }
+            else
+            {
+                d_GlWindow.Width = res.Width;
+                d_GlWindow.Height = res.Height;
+            }
+        }
+
         private string KeyName(int key)
         {
             if (Enum.IsDefined(typeof(OpenTK.Input.Key), key))
@@ -279,6 +373,10 @@ namespace ManicDigger
             //d_Terrain.UpdateAllTiles();
             d_Config3d.viewdistance = options.DrawDistance;
             d_Audio.Enabled = options.EnableSound;
+            ENABLE_LAG = options.Framerate;
+            UseFullscreen();
+            UseVsync();
+            UseResolution();
         }
         void SaveOptions()
         {
@@ -286,6 +384,8 @@ namespace ManicDigger
             options.Shadows = d_CurrentShadows.ShadowsFull;
             options.DrawDistance = (int)d_Config3d.viewdistance;
             options.EnableSound = d_Audio.Enabled;
+            options.Framerate = ENABLE_LAG;
+            options.Fullscreen = d_GlWindow.WindowState == WindowState.Fullscreen;
             
             string path = Path.Combine(gamepathconfig, filename);
             MemoryStream ms = new MemoryStream();
