@@ -4850,39 +4850,6 @@ namespace ManicDigger
             int dz = z1 - z2;
             return dx * dx + dy * dy + dz * dz;
         }
-
-        #region IShadowsGetLight Members
-
-        public int? MaybeGetLight(int x, int y, int z)
-        {
-            return 15;
-        }
-
-        #endregion
-
-        #region IShadowsGetLight Members
-
-        public int maxlight
-        {
-            get { return 15; }
-        }
-
-        #endregion
-
-        #region ICurrentShadows Members
-
-        public bool ShadowsFull
-        {
-            get
-            {
-                return false;
-            }
-            set
-            {
-            }
-        }
-
-        #endregion
     }
     [StructLayout(LayoutKind.Sequential)]
     public class Chunk

@@ -144,7 +144,7 @@ namespace ManicDigger.Renderers
             	curmaterial = item.BlockId == 151 ? 128 : item.BlockId;
             }
             float curlight = d_Info.Light;
-            if (curmaterial != oldMaterial || curlight != oldLight)
+            if (curmaterial != oldMaterial || curlight != oldLight || myelements == null)
             {
                 myelements = new List<ushort>();
                 myvertices = new List<VertexPositionTexture>();

@@ -285,6 +285,13 @@ namespace ManicDigger
             }
 
             shadows.Update(d_TerrainChunkTesselator.currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparent, sunlight, cz * chunksize - chunksize);
+            
+            //for MaybeGetLight
+            Array.Copy(d_TerrainChunkTesselator.currentChunkShadows,
+                RendererMap[MapUtil.Index3d(cx - CurrentRendererMapPositionG.x / chunksize,
+                cy - CurrentRendererMapPositionG.y / chunksize,
+                cz - CurrentRendererMapPositionG.z / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].light,
+                d_TerrainChunkTesselator.currentChunkShadows.Length);
         }
         public static bool aaa;
         public static int bbb;
@@ -331,6 +338,7 @@ namespace ManicDigger
         {
             public int[] ids;
             public bool dirty = true;
+            public byte[] light = new byte[(16 + 2) * (16 + 2) * (16 + 2)];
         }
 
         RenderedChunk[] RendererMap;
@@ -359,5 +367,55 @@ namespace ManicDigger
         }
 
         bool shadowssimple = false;
+        int minlight = 0;
+        public int? MaybeGetLight(int x, int y, int z)
+        {
+            int xx = x - CurrentRendererMapPositionG.x;
+            int yy = y - CurrentRendererMapPositionG.y;
+            int zz = z - CurrentRendererMapPositionG.z;
+            int l;
+            if (xx < 0 || yy < 0 || zz < 0 || xx >= mapAreaSize || yy >= mapAreaSize || zz >= MapSizeZ)
+            {
+                l = 0;
+            }
+            else
+            {
+                // returns 0 when unknown
+                byte[] light = RendererMap[MapUtil.Index3d(xx / chunksize, yy / chunksize, zz / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].light;
+                l = light[MapUtil.Index3d((x % chunksize) + 1, (y % chunksize) + 1, (z % chunksize) + 1, chunksize + 2, chunksize + 2)];
+            }
+            if (l == 0)
+            {
+                if (z >= d_Heightmap.GetBlock(x, y))
+                {
+                    return sunlight_;
+                }
+                else
+                {
+                    return minlight;
+                }
+            }
+            else
+            {
+                //return l - 1;
+                return l;
+            }
+        }
+
+        public int maxlight
+        {
+            get { return 15; }
+        }
+
+        public bool ShadowsFull
+        {
+            get
+            {
+                return false;
+            }
+            set
+            {
+            }
+        }
     }
 }
