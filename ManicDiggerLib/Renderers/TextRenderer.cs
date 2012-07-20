@@ -61,6 +61,7 @@ namespace ManicDigger.Renderers
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using(Graphics g2 = Graphics.FromImage(bmp2))
             {
+                g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
                 float currentwidth = 0;
                 for(int i = 0; i < parts.Count; i++)
                 {
