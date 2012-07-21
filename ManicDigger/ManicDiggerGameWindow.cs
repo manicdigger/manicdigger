@@ -2274,7 +2274,7 @@ namespace ManicDigger
 
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
-            if (d_Config3d.viewdistance < 256)
+            if (d_Config3d.viewdistance < 128)
             {
                 SetFog();
             }
