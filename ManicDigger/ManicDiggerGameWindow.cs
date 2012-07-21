@@ -4632,7 +4632,7 @@ namespace ManicDigger
 
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
-            byte* chunk = GetChunk(x, y, z);
+            byte[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             d_Shadows.OnSetBlock(x, y, z);
@@ -4694,7 +4694,7 @@ namespace ManicDigger
 
 
         #endregion
-        public unsafe byte* GetChunk(int x, int y, int z)
+        public byte[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
@@ -4712,7 +4712,7 @@ namespace ManicDigger
                 //}
                 //else
                 {
-                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = (byte*)Marshal.AllocHGlobal(chunksize * chunksize * chunksize) };
+                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
                 }
                 return chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
             }
@@ -4736,7 +4736,7 @@ namespace ManicDigger
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            byte*[, ,] localchunks = new byte*[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize];
+            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -4777,7 +4777,7 @@ namespace ManicDigger
                 && yy < MapSizeY / chunksize
                 && zz < MapSizeZ / chunksize;
         }
-        private unsafe void FillChunk(byte* destination, int destinationchunksize,
+        private unsafe void FillChunk(byte[] destination, int destinationchunksize,
             int sourcex, int sourcey, int sourcez, byte[, ,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
@@ -4881,7 +4881,7 @@ namespace ManicDigger
     [StructLayout(LayoutKind.Sequential)]
     public class Chunk
     {
-        public unsafe byte* data;
+        public byte[] data;
         public int LastUpdate;
         public bool IsPopulated;
         public int LastChange;

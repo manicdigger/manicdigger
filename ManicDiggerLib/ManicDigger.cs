@@ -65,7 +65,7 @@ namespace ManicDigger
         void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
         void SetMapPortion(int x, int y, int z, byte[, ,] chunk);
         void UseMap(byte[, ,] map);
-        unsafe byte* GetChunk(int x, int y, int z);
+        byte[] GetChunk(int x, int y, int z);
     }
     public interface IMapStorageLight
     {

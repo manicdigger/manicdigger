@@ -234,14 +234,14 @@ namespace ManicDigger
             CalculateShadows(chunkx, chunky, chunkz);
         }
 
-        unsafe byte** chunks3x3x3 = null;
-        unsafe byte** heightchunks3x3 = null;
+        unsafe byte[][] chunks3x3x3 = null;
+        unsafe byte[][] heightchunks3x3 = null;
         private unsafe void CalculateShadows(int cx,int cy,int cz)
         {
             if (chunks3x3x3 == null)
             {
-                chunks3x3x3 = (byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
-                heightchunks3x3 = (byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
+                chunks3x3x3 = new byte[3*3*3][]; //(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
+                heightchunks3x3 = new byte[3*3][];//(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
             }
             for (int i = 0; i < 3 * 3 * 3; i++)
             {
@@ -279,7 +279,7 @@ namespace ManicDigger
             {
                 for (int y = 0; y < 3; y++)
                 {
-                    byte* chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x-1, cy + y-1, d_Map.MapSizeX / chunksize)];
+                    byte[] chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x-1, cy + y-1, d_Map.MapSizeX / chunksize)];
                     heightchunks3x3[MapUtil.Index2d(x, y, 3)] = chunk;
                 }
             }

@@ -11,7 +11,7 @@ namespace ManicDigger
     {
         void Start();
         unsafe void Update(byte[] outputChunkLight,
-            byte** inputMapChunks, byte** inputHeightmapChunks,
+            byte[][] inputMapChunks, byte[][] inputHeightmapChunks,
             int[] dataLightRadius, bool[] dataTransparent, int currentSunlight, int baseheight);
     }
     public class Shadows3x3x3 : IShadows3x3x3
@@ -27,7 +27,7 @@ namespace ManicDigger
         {
         }
         public unsafe void Update(byte[] outputChunkLight,
-            byte** inputMapChunks, byte** inputHeightmapChunks,
+            byte[][] inputMapChunks, byte[][] inputHeightmapChunks,
             int[] dataLightRadius, bool[] dataTransparent, int currentSunlight, int baseheight)
         {
             this.outputChunkLight = outputChunkLight;
@@ -39,7 +39,7 @@ namespace ManicDigger
             this.baseheight = baseheight;
 
             lighttoflood.Clear();
-
+            Array.Clear(workportion, 0, workportion.Length);
             GetPortion();
             Array.Clear(worklight, 0, worklight.Length);
             ApplySunlight();
@@ -50,8 +50,8 @@ namespace ManicDigger
         }
         
         byte[] outputChunkLight;
-        unsafe byte** inputMapChunks;
-        unsafe byte** inputHeightmapChunks;
+        unsafe byte[][] inputMapChunks;
+        unsafe byte[][] inputHeightmapChunks;
         int[] dataLightRadius;
         bool[] dataTransparent;
         int sunlight;
@@ -71,7 +71,7 @@ namespace ManicDigger
                     for (int zz = 0; zz < 3; zz++)
                     {
                         //if (IsValidChunkPos(x / chunksize + xx, y / chunksize + yy, z / chunksize + zz))
-                        byte* chunk=inputMapChunks[MapUtil.Index3d(xx,yy,zz,3,3)];
+                        byte[] chunk=inputMapChunks[MapUtil.Index3d(xx,yy,zz,3,3)];
                         if(chunk!=null)
                         {
                             CopyChunk(workportion,
@@ -84,14 +84,14 @@ namespace ManicDigger
             }
         }
 
-        private unsafe void CopyChunk(byte[] portionArr, byte* chunk, int x, int y, int z,
+        private unsafe void CopyChunk(byte[] portionArr, byte[] chunk, int x, int y, int z,
             int portionsizex, int portionsizey, int portionsizez)
         {
-            fixed (byte* portion = portionArr)
+            //fixed (byte* portion = portionArr)
             {
             //fixed (byte* chunk = chunkArr)
-            int* portionInt=(int*)portion;
-            int* chunkInt = (int*)chunk;
+            //int* portionInt=(int*)portion;
+            //int* chunkInt = (int*)chunk;
                 for (int zz = 0; zz < 16; zz++)
                 {
                     for (int yy = 0; yy < 16; yy++)
@@ -99,21 +99,23 @@ namespace ManicDigger
                         int pos = MapUtil.Index3d(0, yy, zz, 16, 16);
                         int pos2 = MapUtil.Index3d(x + 0, y + yy, z + zz, portionsizex, portionsizey);
 
+                        /*
                         pos /= 4;
                         pos2 /= 4;
                         portionInt[pos2+0] = chunkInt[pos+0];
                         portionInt[pos2+1] = chunkInt[pos+1];
                         portionInt[pos2+2] = chunkInt[pos+2];
                         portionInt[pos2+3] = chunkInt[pos+3];
-                        /*
+                        */
+                        
                         for (int xx = 0; xx < 16; xx++)
                         {
                             byte orig = chunk[pos];
-                            portion[pos2] = (byte)orig;
+                            portionArr[pos2] = (byte)orig;
                             pos++;
                             pos2++;
                         }
-                        */
+                        
                     }
                 }
             }
@@ -154,9 +156,9 @@ namespace ManicDigger
             }
         }
 
-        private unsafe int GetLightHeight(int xx, int yy)
+        private int GetLightHeight(int xx, int yy)
         {
-            byte* chunk = inputHeightmapChunks[MapUtil.Index2d(xx / chunksize, yy / chunksize, 3)];
+            byte[] chunk = inputHeightmapChunks[MapUtil.Index2d(xx / chunksize, yy / chunksize, 3)];
             if (chunk == null)
             {
                 //throw new Exception();
@@ -166,45 +168,46 @@ namespace ManicDigger
             return chunk[MapUtil.Index2d(xx % chunksize, yy % chunksize, chunksize)];
         }
         
-        private unsafe void ApplyLightEmitting()
+        private void ApplyLightEmitting()
         {
             int[] radiusArr = dataLightRadius;
             int portionsize = 16 * 3;
             int portionsize3 = MyMath.Pow3(portionsize);
-            fixed (byte* portion = workportion)
-            fixed (byte* light = worklight)
-            fixed (int* radius = radiusArr)
+            //fixed (byte* portion = workportion)
+            //fixed (byte* light = worklight)
+            //fixed (int* radius = radiusArr)
             {
-                int* portionInt = (int*)portion;
-                int portionsize3div4 = portionsize3 / 4;
-                for (int pos1 = 0; pos1 < portionsize3div4; pos1++)
+                //int* portionInt = (int*)portion;
+                //int portionsize3div4 = portionsize3 / 4;
+                //for (int pos1 = 0; pos1 < portionsize3div4; pos1++)
+                for (int pos = 0; pos < portionsize3; pos++)
                 //for (int xx = 0; xx < portionsize; xx++)
                 {
                     //for (int yy = 0; yy < portionsize; yy++)
                     {
                         // for (int zz = 0; zz < portionsize; zz++)
-                        if (portionInt[pos1] == 0)
-                        {
-                            continue;
-                        }
-                        for(int pos=pos1*4;pos<pos1*4+4;pos++)
-                        if (portion[pos] >= 10) //optimization
-                            if (radius[portion[pos]] != 0) //optimization
+                        //if (portionInt[pos1] == 0)
+                        //{
+                        //    continue;
+                        //}
+                        //for(int pos=pos1*4;pos<pos1*4+4;pos++)
+                        //if (portion[pos] >= 10) //optimization
+                            if (radiusArr[workportion[pos]] != 0) //optimization
                             {
                                 //var pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
-                                if (radius[portion[pos]] > light[pos])
+                                if (radiusArr[workportion[pos]] > worklight[pos])
                                 {
                                     var p = MapUtil.Pos(pos, portionsize, portionsize);
                                     int xx = p.x;
                                     int yy = p.y;
                                     int zz = p.z;
-                                    int l = radius[portion[pos]];
+                                    int l = radiusArr[workportion[pos]];
                                     if (xx > 1 && yy > 1 && zz > 1
                                         && xx < portionsize - 1 && yy < portionsize - 1 && zz < portionsize - 1)
                                     {
                                         lighttoflood.Push(new Vector3i(xx, yy, zz));
                                     }
-                                    light[pos] = (byte)Math.Max(l, light[pos]);
+                                    worklight[pos] = (byte)Math.Max(l, worklight[pos]);
                                 }
                             }
                     }
@@ -212,7 +215,7 @@ namespace ManicDigger
             }
         }
 
-        private unsafe void FloodSunlight()
+        private void FloodSunlight()
         {
             int portionsize = 16 * 3;
             int portionsize3 = MyMath.Pow3(portionsize);
@@ -221,10 +224,10 @@ namespace ManicDigger
             //int startz = z;
             int[] radiusArr = dataLightRadius;
             bool[] transparentArr = dataTransparent;
-            fixed (byte* portion = workportion)
-            fixed (byte* light = worklight)
-            fixed (int* radius = radiusArr)
-            fixed (bool* transparent = transparentArr)
+            //fixed (byte* portion = workportion)
+            //fixed (byte* light = worklight)
+            //fixed (int* radius = radiusArr)
+            //fixed (bool* transparent = transparentArr)
             {
                 for (int pos = 0; pos < portionsize3 - portionsize; pos++)
                 //for (int zz = 1; zz < portionsize - 1; zz++)
@@ -234,13 +237,13 @@ namespace ManicDigger
                         //for (int yy = 1; yy < portionsize - 1; yy++)
                         {
                             //int pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
-                            if (!transparent[portion[pos]])
+                            if (!transparentArr[workportion[pos]])
                             {
                                 continue;
                             }
-                            int curlight = light[pos];
-                            if ((light[pos + 1] != curlight && transparent[portion[pos + 1]])
-                                || (light[pos + portionsize] != curlight && transparent[portion[pos + portionsize]]))
+                            int curlight = worklight[pos];
+                            if ((worklight[pos + 1] != curlight && transparentArr[workportion[pos + 1]])
+                                || (worklight[pos + portionsize] != curlight && transparentArr[workportion[pos + portionsize]]))
                             {
                                 var p = MapUtil.Pos(pos, portionsize, portionsize);
                                 int xx = p.x;
@@ -269,7 +272,7 @@ namespace ManicDigger
             }
         }
 
-        FastQueue<int> q = new FastQueue<int>();
+        FastQueue<Vector3i> q = new FastQueue<Vector3i>();
         public void FloodLight(byte[] portion, byte[] light, int startx, int starty, int startz)
         {
             const int portionsize = 16 * 3;
@@ -294,11 +297,11 @@ namespace ManicDigger
             }
 
             q.Clear();
-            //Vector3i start = new Vector3i();
-            //start.x = startx;
-            //start.y = starty;
-            //start.z = startz;
-            int start = MapUtil.Index3d(startx, starty, startz, portionsize, portionsize);
+            Vector3i start = new Vector3i();
+            start.x = startx;
+            start.y = starty;
+            start.z = startz;
+            //int start = MapUtil.Index3d(startx, starty, startz, portionsize, portionsize);
             q.Push(start);
             for (; ; )
             {
@@ -306,8 +309,9 @@ namespace ManicDigger
                 {
                     break;
                 }
-                int vpos = q.Pop();
-                //int vpos = MapUtil.Index3d(v.x, v.y, v.z, portionsize, portionsize);
+                //int vpos = q.Pop();
+                var v = q.Pop();
+                int vpos = MapUtil.Index3d(v.x, v.y, v.z, portionsize, portionsize);
                 int vlight = light[vpos];
                 if (vlight == minlight)
                 {
@@ -321,8 +325,8 @@ namespace ManicDigger
                 }
                 for (int i = 0; i < blocksnear.Length; i++)
                 {
-                    int n = vpos + blocksnear[i];
-                    /*
+                    //int n = vpos + blocksnear[i];
+                    
                     int nx = v.x + blocksnear[i].x;
                     int ny = v.y + blocksnear[i].y;
                     int nz = v.z + blocksnear[i].z;
@@ -330,14 +334,14 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    */
-                    //int npos = MapUtil.Index3d(nx, ny, nz, portionsize, portionsize);
+                    
+                    int n = MapUtil.Index3d(nx, ny, nz, portionsize, portionsize);
                     if (n < 0 || n >= light.Length) { continue; }
                     if (light[n] < vlight - 1)
                     {
                         light[n] = (byte)(vlight - 1);
-                        //q.Push(new Vector3i(nx, ny, nz));
-                        q.Push(n);
+                        q.Push(new Vector3i(nx, ny, nz));
+                        //q.Push(n);
                     }
                 }
             }
@@ -351,10 +355,10 @@ namespace ManicDigger
             return vx >= 0 && vy >= 0 && vz >= 0
                 && vx < chunksizeportion && vy < chunksizeportion && vz < chunksizeportion;
         }
-
+        /*
         int[] blocksnear = new int[] { -1, +1, -chunksizeportion, +chunksizeportion,
             -chunksizeportion * chunksizeportion, +chunksizeportion * chunksizeportion };
-        /*
+        */
         Vector3i[] blocksnear = new Vector3i[6]
         {
             new Vector3i(-1, 0, 0),
@@ -364,7 +368,7 @@ namespace ManicDigger
             new Vector3i(0, 0, -1),
             new Vector3i(0, 0, 1),
         };
-        */
+        
 
         private void SetPortion()
         {
@@ -407,41 +411,6 @@ namespace ManicDigger
 
         FastStack<Vector3i> lighttoflood = new FastStack<Vector3i>();
     }
-    public class Shadows3x3x3Native : IShadows3x3x3
-    {
-        public Shadows3x3x3Native()
-        {
-            ptr = ShadowsNew();
-        }
-        IntPtr ptr;
-        [DllImport("MdNative.dll")]
-        extern static IntPtr ShadowsNew();
-        [DllImport("MdNative.dll")]
-        extern static void ShadowsStart(IntPtr ptr);
-        [DllImport("MdNative.dll")]
-        unsafe extern static void ShadowsUpdate(IntPtr ptr, byte* outputChunkLight,
-            byte** inputMapChunks, byte** inputHeightmapChunks,
-            int* dataLightRadius, byte* dataTransparent, int currentSunlight, int baseheight);
-
-        public void Start()
-        {
-            ShadowsStart(ptr);
-        }
-
-        public unsafe void Update(byte[] outputChunkLight,
-            byte** inputMapChunks, byte** inputHeightmapChunks,
-            int[] dataLightRadius, bool[] dataTransparent, int currentSunlight, int baseheight)
-        {
-            fixed (byte* outputchunklight = outputChunkLight)
-            fixed (int* radius = dataLightRadius)
-            fixed (bool* transparent = dataTransparent)
-            {
-                byte* transparentByte = (byte*)transparent;
-                ShadowsUpdate(ptr, outputchunklight, inputMapChunks, inputHeightmapChunks,
-                    radius, transparentByte, currentSunlight, baseheight);
-            }
-        }
-    }
 
     public interface IShadows : IShadowsGetLight
     {
@@ -465,20 +434,20 @@ namespace ManicDigger
         [Inject]
         public IMapStorage d_Map;
         public int chunksize = 16;
-        public unsafe byte** chunks;
+        public byte[][] chunks;
         public unsafe int GetBlock(int x, int y)
         {
-            byte* chunk = GetChunk(x, y);
+            byte[] chunk = GetChunk(x, y);
             return chunk[MapUtil.Index2d(x % chunksize, y % chunksize, chunksize)];
         }
-        public unsafe byte* GetChunk(int x, int y)
+        public byte[] GetChunk(int x, int y)
         {
-            byte* chunk = null;
+            byte[] chunk = null;
             int kx = x / chunksize;
             int ky = y / chunksize;
             if (chunks[MapUtil.Index2d(kx, ky, d_Map.MapSizeX / chunksize)] == null)
             {
-                chunk = (byte*)Marshal.AllocHGlobal(chunksize * chunksize);
+                chunk = new byte[chunksize * chunksize];// (byte*)Marshal.AllocHGlobal(chunksize * chunksize);
                 for (int i = 0; i < chunksize * chunksize; i++)
                 {
                     chunk[i] = 0;
@@ -496,7 +465,7 @@ namespace ManicDigger
         {
             //chunks = new byte[d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize][,];
             int n = (d_Map.MapSizeX / chunksize) * (d_Map.MapSizeY / chunksize);
-            chunks = (byte**)Marshal.AllocHGlobal(n * sizeof(IntPtr));
+            chunks = new byte[n][];//(byte**)Marshal.AllocHGlobal(n * sizeof(IntPtr));
             for (int i = 0; i < n; i++)
             {
                 chunks[i] = null;
