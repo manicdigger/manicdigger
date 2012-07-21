@@ -327,7 +327,7 @@ namespace ManicDigger
                 resolutions = new List<DisplayResolution>();
                 foreach (var r in DisplayDevice.Default.AvailableResolutions)
                 {
-                    if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel == 8)
+                    if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel < 16)
                     {
                         continue;
                     }
