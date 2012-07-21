@@ -90,10 +90,11 @@ namespace ManicDiggerServer
                         {
                             SendChunk(k.Key, v);
                         }
-                        if (s.ElapsedMilliseconds > 10)
+                        if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
                         {
                             return;
                         }
+                        d_Map.wasChunkGenerated = false;
                     }
                 }
             }

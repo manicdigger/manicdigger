@@ -53,6 +53,7 @@ namespace ManicDiggerServer
         public Chunk[, ,] chunks;
         [Inject]
         public IGameData d_Data;
+        public bool wasChunkGenerated;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -104,6 +105,7 @@ namespace ManicDiggerServer
             Chunk chunk = chunks[x, y, z];
             if (chunk == null)
             {
+                wasChunkGenerated = true;
                 byte[] serializedChunk = ChunkDb.GetChunk(d_ChunkDb, x, y, z);
                 if (serializedChunk != null)
                 {
