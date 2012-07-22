@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerServer", "ManicD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManicDiggerLib", "ManicDiggerLib\ManicDiggerLib.csproj", "{08056549-3BE8-454C-A09A-67EDCDC81261}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{37A8D68F-2BCE-487F-A708-D911884EDD9D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MdMonsterEditor", "MdMonsterEditor\MdMonsterEditor.csproj", "{DE9E0B36-6171-4DA3-9495-0A82445B6D74}"
 EndProject
 Global
@@ -28,10 +26,6 @@ Global
 		{08056549-3BE8-454C-A09A-67EDCDC81261}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08056549-3BE8-454C-A09A-67EDCDC81261}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08056549-3BE8-454C-A09A-67EDCDC81261}.Release|Any CPU.Build.0 = Release|Any CPU
-		{37A8D68F-2BCE-487F-A708-D911884EDD9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{37A8D68F-2BCE-487F-A708-D911884EDD9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{37A8D68F-2BCE-487F-A708-D911884EDD9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{37A8D68F-2BCE-487F-A708-D911884EDD9D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DE9E0B36-6171-4DA3-9495-0A82445B6D74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE9E0B36-6171-4DA3-9495-0A82445B6D74}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9E0B36-6171-4DA3-9495-0A82445B6D74}.Release|Any CPU.ActiveCfg = Release|Any CPU
