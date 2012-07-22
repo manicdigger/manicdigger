@@ -472,12 +472,14 @@ namespace ManicDigger
             }
             else if (pos.type == InventoryPositionType.Ground)
             {
+                /*
                 if (d_Inventory.DragDropItem != null)
                 {
                     d_DropItem.DropItem(ref d_Inventory.DragDropItem,
                         new Vector3i(pos.GroundPositionX, pos.GroundPositionY, pos.GroundPositionZ));
                     SendInventory();
                 }
+                */
             }
             else if (pos.type == InventoryPositionType.MaterialSelector)
             {
