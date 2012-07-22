@@ -97,7 +97,7 @@ namespace ManicDigger {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}%\n.
+        ///   Looks up a localized string similar to {0}%.
         /// </summary>
         public static string ConnectingProgressPercent {
             get {

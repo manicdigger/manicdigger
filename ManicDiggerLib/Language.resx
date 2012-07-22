@@ -130,7 +130,7 @@
     <value>{0} KB</value>
   </data>
   <data name="ConnectingProgressPercent" xml:space="preserve">
-    <value>{0}%\n</value>
+    <value>{0}%</value>
   </data>
   <data name="DefaultKeys" xml:space="preserve">
     <value>Default keys</value>
