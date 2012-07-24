@@ -1405,7 +1405,10 @@ namespace ManicDiggerServer
                     }
                     if (unload)
                     {
-                        DoSaveChunk(v.x, v.y, v.z, c);
+                        if (c.DirtyForSaving)
+                        {
+                            DoSaveChunk(v.x, v.y, v.z, c);
+                        }
                         d_Map.chunks[v.x, v.y, v.z] = null;
                         stop = true;
                     }
