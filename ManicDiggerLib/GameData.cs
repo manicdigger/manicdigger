@@ -240,17 +240,16 @@ namespace ManicDigger
             {
                 return;
             }
-            if (id == 150)
-            {
-            }
             //public bool[] IsFluid { get { return mIsFluid; } }
             //public bool[] IsWater { get { return mIsWater; } }
-            IsTransparent[id] = b.DrawType != DrawType.Solid;
+            IsFluid[id] = b.DrawType == DrawType.Fluid;
+            IsWater[id] = b.Name.Contains("Water"); //todo
+            IsTransparent[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Fluid);
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
             IsTransparentForLight[id] = b.DrawType != DrawType.Solid;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
             IsEmptyForPhysics[id] = b.WalkableType != WalkableType.Solid;
-            IsTransparentFully[id] = IsTransparent[id] && (b.DrawType != DrawType.Plant);
+            IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant);
             //Indexed by block id and TileSide.
             TextureId[id, 0] = b.TextureIdTop;
             TextureId[id, 1] = b.TextureIdBottom;

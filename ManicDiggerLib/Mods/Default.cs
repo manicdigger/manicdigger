@@ -156,7 +156,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(18, "Leaves", new BlockType()
             {
                 AllTextures = 22,
-                DrawType = DrawType.Solid,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
