@@ -97,6 +97,14 @@ namespace ManicDiggerServer
         {
         }
         #endregion
+        public void LoadChunk(int cx, int cy, int cz)
+        {
+            Chunk chunk = chunks[cx, cy, cz];
+            if (chunk == null)
+            {
+                GetChunk(cx * chunksize, cy * chunksize, cz * chunksize);
+            }
+        }
         public byte[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;

@@ -168,9 +168,9 @@ namespace ManicDiggerServer
             generator.ChunkSize = map.chunksize;
             // apply chunk size to generator
             map.d_Generator = generator;
-            server.chunksize = 32;
+            //server.chunksize = 32;
 
-            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = server.chunksize, d_Map = map };
+            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = Server.chunksize, d_Map = map };
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.d_Map = map;
             server.d_Generator = generator;
@@ -689,6 +689,7 @@ namespace ManicDiggerServer
                 Client c = new Client();
                 c.socket = client1;
                 c.Ping.TimeoutValue = config.ClientConnectionTimeout;
+                c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
                 lock (clients)
                 {
                     this.lastClientId = this.GenerateClientId();
@@ -1478,9 +1479,9 @@ namespace ManicDiggerServer
             return tosend;
         }
         */
-        private void LoadChunk(Vector3i v)
+        private void LoadChunk(int cx, int cy, int cz)
         {
-            d_Map.GetBlock(v.x, v.y, v.z);
+            d_Map.LoadChunk(cx, cy, cz);
         }
 
         /*
@@ -1599,7 +1600,7 @@ if (sent >= unknown.Count) { break; }
             {
                 PacketServerPlayerStats p = GetPlayerStats(c.playername);
                 SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerStats, PlayerStats = p }));
-                c.IsInventoryDirty = false;
+                c.IsPlayerStatsDirty = false;
             }
         }
         private void HitMonsters(int clientid, int health)
@@ -2612,6 +2613,17 @@ if (sent >= unknown.Count) { break; }
             }
             return true;
         }
+        bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
+        {
+            int pos = MapUtil.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            return clients[clientid].chunksseen[pos];
+        }
+        void ClientSeenChunkSet(int clientid, int vx, int vy, int vz, int time)
+        {
+            int pos = MapUtil.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            clients[clientid].chunksseen[pos] = true;
+            clients[clientid].chunksseenTime[pos] = time;
+        }
         private void SendFillArea(int clientid, Vector3i a, Vector3i b, int blockType, int blockCount)
         {
             // TODO: better to send a chunk?
@@ -2622,7 +2634,7 @@ if (sent >= unknown.Count) { break; }
                 (b.y / chunksize) * chunksize, (b.z / chunksize) * chunksize);
 
             // TODO: Is it sufficient to regard only start- and endpoint?
-            if (!clients[clientid].chunksseen.ContainsKey(v) && !clients[clientid].chunksseen.ContainsKey(w))
+            if (!ClientSeenChunk(clientid, v.x, v.y, v.z) && !ClientSeenChunk(clientid, w.x, w.y, w.z))
             {
                 return;
             }
@@ -2950,8 +2962,8 @@ if (sent >= unknown.Count) { break; }
         }
         private void SendSetBlock(int clientid, int x, int y, int z, int blocktype)
         {
-            if (!clients[clientid].chunksseen.ContainsKey(new Vector3i((x / chunksize) * chunksize,
-                (y / chunksize) * chunksize, (z / chunksize) * chunksize)))
+            if (!ClientSeenChunk(clientid, (x / chunksize) * chunksize,
+                (y / chunksize) * chunksize, (z / chunksize) * chunksize))
             {
                 return;
             }
@@ -3059,7 +3071,7 @@ if (sent >= unknown.Count) { break; }
         {
         }
         int drawdistance = 128;
-        public int chunksize = 32;
+        public const int chunksize = 32;
         int chunkdrawdistance { get { return drawdistance / chunksize; } }
         IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)
         {
@@ -3301,7 +3313,8 @@ if (sent >= unknown.Count) { break; }
             public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
-            public Dictionary<Vector3i, int> chunksseen = new Dictionary<Vector3i, int>();
+            public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();
+            public bool[] chunksseen;
             public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
             public ManicDigger.Timer notifyMapTimer;
             public bool IsInventoryDirty = true;

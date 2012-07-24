@@ -111,7 +111,7 @@ namespace GameModeFortress
         public void DeleteChunkRange (double x1, double y1, double z1, double x2, double y2, double z2)
         {
             List<Vector3i> chunkPositions = new List<Vector3i>();
-            int chunksize = m_server.chunksize;
+            int chunksize = Server.chunksize;
             for (int x=(int)x1; x<(int)x2; x=x+chunksize)
             {
                 for (int y=(int)y1; y<(int)y2; y=y+chunksize)

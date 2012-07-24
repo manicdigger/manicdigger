@@ -18,23 +18,28 @@ namespace ManicDiggerServer
         {
             Stopwatch s = new Stopwatch();
             s.Start();
+            int areasizechunks = playerareasize / chunksize;
+            int areasizeZchunks = d_Map.MapSizeZ / chunksize;
+            int mapsizeXchunks = d_Map.MapSizeX / chunksize;
+            int mapsizeYchunks = d_Map.MapSizeY / chunksize;
+            int mapsizeZchunks = d_Map.MapSizeZ / chunksize;
             foreach (var k in clients)
             {
                 if (k.Value.state == ClientStateOnServer.Connecting)
                 {
                     continue;
                 }
-                var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
                 Vector3i playerpos = PlayerBlockPosition(k.Value);
                 //a) if player is loading, then first generate all (LoadingGenerating), and then send all (LoadingSending)
                 //b) if player is playing, then load 1, send 1.
                 if (k.Value.state == ClientStateOnServer.LoadingGenerating)
                 {
+                    var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
                     //load
                     for (int i = 0; i < chunksAround.Count; i++)
                     {
                         Vector3i v = chunksAround[i];
-                        LoadChunk(v);
+                        LoadChunk(v.x / chunksize, v.y / chunksize, v.z / chunksize);
                         if (k.Value.state == ClientStateOnServer.LoadingGenerating)
                         {
                             //var a = PlayerArea(k.Key);
@@ -52,12 +57,12 @@ namespace ManicDiggerServer
                 }
                 else if (k.Value.state == ClientStateOnServer.LoadingSending)
                 {
+                    var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
                     //send
                     for (int i = 0; i < chunksAround.Count; i++)
                     {
                         Vector3i v = chunksAround[i];
-
-                        if (!k.Value.chunksseen.ContainsKey(v))
+                        if (!ClientSeenChunk(k.Key, v.x, v.y, v.z))
                         {
                             SendChunk(k.Key, v);
                             SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), "Downloading map...");
@@ -78,25 +83,74 @@ namespace ManicDiggerServer
                 }
                 else //b)
                 {
-                    chunksAround.AddRange(ChunksAroundPlayer(playerpos));
-                    //chunksAround.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
-                    for (int i = 0; i < chunksAround.Count; i++)
+                    //inlined PlayerAreaChunks
+                    PointG p = PlayerArea(k.Key);
+                    Client c = clients[k.Key];
+                    int pchunksx = p.X / chunksize;
+                    int pchunksy = p.Y / chunksize;
+                    for (int x = 0; x < areasizechunks; x++)
                     {
-                        Vector3i v = chunksAround[i];
-                        //load
-                        LoadChunk(v);
-                        //send
-                        if (!k.Value.chunksseen.ContainsKey(v))
+                        for (int y = 0; y < areasizechunks; y++)
                         {
-                            SendChunk(k.Key, v);
+                            for (int z = 0; z < areasizeZchunks; z++)
+                            {
+                                int vx = pchunksx + x;
+                                int vy = pchunksy + y;
+                                int vz = z;
+                                //if (MapUtil.IsValidPos(d_Map, vx, vy, vz))
+                                if (vx >= 0 && vy >= 0 && vz >= 0
+                                    && vx < mapsizeXchunks && vy < mapsizeYchunks && vz < mapsizeZchunks)
+                                {
+                                    LoadAndSendChunk(c, k.Key, vx, vy, vz, s);
+                                    if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
+                                    {
+                                        return;
+                                    }
+                                    d_Map.wasChunkGenerated = false;
+                                }
+                            }
                         }
-                        if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
+                    }
+                    //inlined ChunksAroundPlayer
+                    //ChunksAroundPlayer is needed for preloading terrain behind current MapArea edges.
+                    //chunksAround.AddRange(ChunksAroundPlayer(playerpos));
+                    int playerpos2xchunks = (playerpos.x / chunksize);
+                    int playerpos2ychunks = (playerpos.y / chunksize);
+                    for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
+                    {
+                        for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
                         {
-                            return;
+                            for (int z = 0; z < areasizeZchunks; z++)
+                            {
+                                int p2x = playerpos2xchunks + x;
+                                int p2y = playerpos2ychunks + y;
+                                int p2z = z;
+                                if (p2x >= 0 && p2y >= 0 && p2z >= 0
+                                    && p2x < mapsizeXchunks && p2y < mapsizeYchunks && p2z < mapsizeZchunks)
+                                {
+                                    LoadAndSendChunk(c, k.Key, p2x, p2y, p2z, s);
+                                    if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
+                                    {
+                                        return;
+                                    }
+                                    d_Map.wasChunkGenerated = false;
+                                }
+                            }
                         }
-                        d_Map.wasChunkGenerated = false;
                     }
                 }
+            }
+        }
+
+        void LoadAndSendChunk(Client c, int kKey, int vx, int vy, int vz, Stopwatch s)
+        {
+            //load
+            LoadChunk(vx, vy, vz);
+            //send
+            int pos = MapUtil.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            if (!c.chunksseen[pos])
+            {
+                SendChunk(kKey, new Vector3i(vx * chunksize, vy * chunksize, vz * chunksize));
             }
         }
 
@@ -154,7 +208,7 @@ namespace ManicDiggerServer
         {
             Client c = clients[clientid];
             byte[] chunk = d_Map.GetChunk(v.x, v.y, v.z);
-            c.chunksseen[v] = (int)simulationcurrentframe;
+            ClientSeenChunkSet(clientid, v.x, v.y, v.z, (int)simulationcurrentframe);
             //sent++;
             byte[] compressedchunk;
             if (MapUtil.IsSolidChunk(chunk) && chunk[0] == 0)
@@ -260,7 +314,9 @@ namespace ManicDiggerServer
                 // update related chunk at clients
                 foreach (var k in clients)
                 {
-                    k.Value.chunksseen.Clear();
+                    //todo wrong
+                    //k.Value.chunksseen.Clear();
+                    Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
                 }
             }
         }
@@ -287,7 +343,9 @@ namespace ManicDiggerServer
                 // update related chunk at clients
                 foreach (var k in clients)
                 {
-                    k.Value.chunksseen.Clear();
+                    //todo wrong
+                    //k.Value.chunksseen.Clear();
+                    Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
                 }
             }
         }
@@ -311,7 +369,9 @@ namespace ManicDiggerServer
                 // force to update chunks at clients
                 foreach (var k in clients)
                 {
-                    k.Value.chunksseen.Clear();
+                    //todo wrong
+                    //k.Value.chunksseen.Clear();
+                    Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
                 }
             }
         }
