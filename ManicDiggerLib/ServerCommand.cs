@@ -482,9 +482,10 @@ namespace ManicDiggerServer
             }
 
             Client targetClient = GetClient(recipient);
+            Client sourceClient = GetClient(sourceClientId);
             if (targetClient != null)
             {
-                SendMessage(targetClient.Id, string.Format("PM {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
+                SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
                 SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
                 // TODO: move message sound to client
                 //SendSound(k.Key, "message.wav");

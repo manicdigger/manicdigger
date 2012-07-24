@@ -3454,7 +3454,16 @@ if (sent >= unknown.Count) { break; }
             }
             else
             {
-                this.defaultPlayerSpawn = this.SpawnToVector3i(serverClient.DefaultSpawn);
+                int z;
+                if (serverClient.DefaultSpawn.z == null)
+                {
+                    z = MapUtil.blockheight(d_Map, 0, serverClient.DefaultSpawn.x, serverClient.DefaultSpawn.y);
+                }
+                else
+                {
+                    z = serverClient.DefaultSpawn.z.Value;
+                }
+                this.defaultPlayerSpawn = new Vector3i(serverClient.DefaultSpawn.x, serverClient.DefaultSpawn.y, z);
             }
 
             this.defaultGroupGuest = serverClient.Groups.Find(
