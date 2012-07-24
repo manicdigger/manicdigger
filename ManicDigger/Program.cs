@@ -20,10 +20,6 @@ using System.Net.Sockets;
 
 namespace GameModeFortress
 {
-    public interface IResetMap
-    {
-        void Reset(int sizex, int sizey, int sizez);
-    }
     public class ManicDiggerProgram
     {
         [STAThread]

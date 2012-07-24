@@ -23,44 +23,6 @@ namespace ManicDigger.Renderers
         int terrainTexturesPerAtlas { get; }
         void UseTerrainTextureAtlas2d(Bitmap atlas2d);
     }
-    public class TerrainTextures : ITerrainTextures
-    {
-        [Inject]
-        public IThe3d d_The3d;
-        [Inject]
-        public TextureAtlasConverter d_TextureAtlasConverter;
-        [Inject]
-        public IGetFileStream d_GetFile;
-        public int texturesPacked { get { return 16; } } //16x16
-        public int terrainTexture { get; set; }
-        public void Start()
-        {
-            GL.Enable(EnableCap.Texture2D);
-            using (var atlas2d = new Bitmap(d_GetFile.GetFile("terrain.png")))
-            {
-                UseTerrainTextureAtlas2d(atlas2d);
-            }
-        }
-        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
-        {
-            terrainTexture = d_The3d.LoadTexture(atlas2d);
-            List<int> terrainTextures1d = new List<int>();
-            {
-                terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
-                List<Bitmap> atlases1d = d_TextureAtlasConverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
-                foreach (Bitmap bmp in atlases1d)
-                {
-                    terrainTextures1d.Add(d_The3d.LoadTexture(bmp));
-                    bmp.Dispose();
-                }
-            }
-            this.terrainTextures1d = terrainTextures1d.ToArray();
-        }
-        public int atlas1dheight = 2048;
-        public int atlas2dtiles = 16; // 16x16
-        public int[] terrainTextures1d { get; set; }
-        public int terrainTexturesPerAtlas { get; set; }
-    }
     public class TextureAtlas
     {
         public static RectangleF TextureCoords2d(int textureId, int texturesPacked)

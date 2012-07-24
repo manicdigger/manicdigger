@@ -74,155 +74,20 @@ namespace ManicDigger
         public int CurrentSeason { get { return 0; } }
         #endregion
     }
-    public class Csv
+    public class GameData : IGameData
     {
-        public string[][] data;
-
-        public void LoadCsv(string[] csv)
+        public void Start()
         {
-            List<string[]> table = new List<string[]>();
-            for (int i = 0; i < csv.Length; i++)
-            {
-                string s = csv[i];
-                s = s.Replace("\"", "");
-                string[] ss = s.Split(new char[] { ',', ';' });
-                table.Add(ss);
-            }
-            data = table.ToArray();
-        }
-
-        public string Get(int row, string column)
-        {
-            string[] rowStrings = data[row];
-            return rowStrings[Column(column).Value];
-        }
-
-        public int? Column(string columnHeader)
-        {
-            string[] headers = data[0];
-            for (int i = 0; i < headers.Length; i++)
-            {
-                if (headers[i].Equals(columnHeader, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return i;
-                }
-            }
-            return null;
-        }
-
-        public int GetInt(int row, string columnHeader)
-        {
-            return (int)DoubleParse(Get(row, columnHeader));
-        }
-
-        public bool GetBool(int row, string columnHeader)
-        {
-            return BoolParse(Get(row, columnHeader));
-        }
-
-        public double GetDouble(int row, string column)
-        {
-            return DoubleParse(Get(row, column));
-        }
-
-        private double DoubleParse(string s)
-        {
-            double result;
-            if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
-            {
-                return result;
-            }
-            return 0;
-        }
-
-        private bool BoolParse(string s)
-        {
-            return !(s == "" || s == "0" || s.Equals("false", StringComparison.InvariantCultureIgnoreCase));
-        }
-    }
-    public class GameDataCsv : IGameData
-    {
-        public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
-        public void Load(string[] csv, string[] defaultmaterialslots, string[] lightlevels)
-        {
-            this.csv = new Csv();
-            this.csv.LoadCsv(csv);
             int count = 256;
             Initialize(count);
-            Update();
-            for (int i = 0; i < 10; i++)
-            {
-                mDefaultMaterialSlots[i] = int.Parse(defaultmaterialslots[i]);
-            }
-            for (int i = 0; i < 16; i++)
-            {
-                mLightLevels[i] = float.Parse(lightlevels[i], System.Globalization.CultureInfo.InvariantCulture);
-            }
         }
+        public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
         public void Update()
         {
-        	if (csv == null) return;
-            for (int i = 1; i < csv.data.Length; i++)
-            {
-                string id_ = csv.Get(i, "Id");
-                if (id_.Contains("_")) { continue; }//todo
-                int id = int.Parse(id_);
-                mName[id] = csv.Get(i, "Name");
-                mIsValid[id] = true;
-                if (csv.Get(i, "Season").Trim() != "")
-                {
-                    if (CurrentSeason.CurrentSeason != int.Parse(csv.Get(i, "Season")))
-                    {
-                        continue;
-                    }
-                }
-                mTextureId[id, 0] = csv.GetInt(i, "TextureIdTop");
-                mTextureId[id, 1] = csv.GetInt(i, "TextureIdBottom");
-                mTextureId[id, 2] = csv.GetInt(i, "TextureIdFront");
-                mTextureId[id, 3] = csv.GetInt(i, "TextureIdBack");
-                mTextureId[id, 4] = csv.GetInt(i, "TextureIdLeft");
-                mTextureId[id, 5] = csv.GetInt(i, "TextureIdRight");
-                mTextureIdForInventory[id] = csv.GetInt(i, "TextureIdForInventory");
-                mIsBuildable[id] = csv.GetBool(i, "IsBuildable");
-                mWhenPlayerPlacesGetsConvertedTo[id] = csv.GetInt(i, "WhenPlayerPlacesGetsConvertedTo");
-                mIsFlower[id] = csv.GetBool(i, "IsFlower");
-                mRail[id] = (RailDirectionFlags)csv.GetInt(i, "Rail");
-                mWalkSpeed[id] = (float)csv.GetDouble(i, "WalkSpeed");
-                mIsTransparentForLight[id] = csv.GetBool(i, "IsTransparentForLight");
-                mIsSlipperyWalk[id] = csv.GetBool(i, "IsSlipperyWalk");
-                LoadSound(mWalkSound, "WalkSound", i, id);
-                LoadSound(mBreakSound, "BreakSound", i, id);
-                LoadSound(mBuildSound, "BuildSound", i, id);
-                LoadSound(mCloneSound, "CloneSound", i, id);
-                mIsFluid[id] = csv.GetBool(i, "IsFluid");
-                mIsWater[id] = (id == 8 || id == 9 || (id >= 118 && id <= 125)) && mIsFluid[id];
-                mIsTransparent[id] = csv.GetBool(i, "IsTransparent");
-                mIsTransparentFully[id] = csv.GetBool(i, "IsTransparentFully");
-                mIsEmptyForPhysics[id] = csv.GetBool(i, "IsEmptyForPhysics");
-                mLightRadius[id] = csv.GetInt(i, "LightRadius");
-                mStartInventoryAmount[id] = csv.GetInt(i, "StartInventoryAmount");
-                mStrength[id] = (float)csv.GetDouble(i, "Strength");
-            }
         }
-        private void LoadSound(string[][] t, string s, int i, int id)
-        {
-            t[id] = csv.Get(i, s).Split(new char[] { ' ' });
-            if (t[id].Length == 1 && t[id][0].Length == 0)
-            {
-                t[id] = new string[0];
-            }
-            for (int k = 0; k < t[id].Length; k++)
-            {
-                if (!t[id][k].Contains("."))
-                {
-                    t[id][k] += ".wav";
-                }
-            }
-        }
-        Csv csv;
         private void Initialize(int count)
         {
-        	mIsFluid = new bool[count];
+            mIsFluid = new bool[count];
             mIsWater = new bool[count];
             mIsTransparent = new bool[count];
             mIsValid = new bool[count];
@@ -356,6 +221,75 @@ namespace ManicDigger
         private int mBlockIdAdminium = 7;
         private int mBlockIdCompass = 151;
         private int mBlockIdLadder = 152;
+
+        public void UseBlockTypes(BlockType[] blocktypes)
+        {
+            for (int i = 0; i < blocktypes.Length; i++)
+            {
+                if (blocktypes[i] != null)
+                {
+                    UseBlockType(i, blocktypes[i]);
+                }
+            }
+        }
+
+        public void UseBlockType(int id, BlockType b)
+        {
+            IsValid[id] = b.Name != null;//b.IsValid;
+            if (b.Name == null)//!b.IsValid)
+            {
+                return;
+            }
+            if (id == 150)
+            {
+            }
+            //public bool[] IsFluid { get { return mIsFluid; } }
+            //public bool[] IsWater { get { return mIsWater; } }
+            IsTransparent[id] = b.DrawType != DrawType.Solid;
+            //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
+            IsTransparentForLight[id] = b.DrawType != DrawType.Solid;
+            //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
+            IsEmptyForPhysics[id] = b.WalkableType != WalkableType.Solid;
+            IsTransparentFully[id] = IsTransparent[id] && (b.DrawType != DrawType.Plant);
+            //Indexed by block id and TileSide.
+            TextureId[id, 0] = b.TextureIdTop;
+            TextureId[id, 1] = b.TextureIdBottom;
+            TextureId[id, 2] = b.TextureIdFront;
+            TextureId[id, 3] = b.TextureIdBack;
+            TextureId[id, 4] = b.TextureIdLeft;
+            TextureId[id, 5] = b.TextureIdRight;
+            TextureIdForInventory[id] = b.TextureIdForInventory;
+            IsBuildable[id] = b.IsBuildable; // todo
+            WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
+            IsFlower[id] = b.DrawType == DrawType.Plant;
+            Rail[id] = (RailDirectionFlags)b.Rail;
+            Name[id] = b.Name;
+            WalkSpeed[id] = b.WalkSpeed;
+            IsSlipperyWalk[id] = b.IsSlipperyWalk;
+            WalkSound[id] = (string[])b.Sounds.Walk.Clone();
+            for (int i = 0; i < WalkSound[id].Length; i++)
+            {
+                WalkSound[id][i] += ".wav";
+            }
+            BreakSound[id] = (string[])b.Sounds.Break.Clone();
+            for (int i = 0; i < BreakSound[id].Length; i++)
+            {
+                BreakSound[id][i] += ".wav";
+            }
+            BuildSound[id] = (string[])b.Sounds.Build.Clone();
+            for (int i = 0; i < BuildSound[id].Length; i++)
+            {
+                BuildSound[id][i] += ".wav";
+            }
+            CloneSound[id] = (string[])b.Sounds.Clone.Clone();
+            for (int i = 0; i < CloneSound[id].Length; i++)
+            {
+                CloneSound[id][i] += ".wav";
+            }
+            LightRadius[id] = b.LightRadius;
+            //StartInventoryAmount { get; }
+            Strength[id] = b.Strength;
+        }
     }
 
     public class GameDataMonsters

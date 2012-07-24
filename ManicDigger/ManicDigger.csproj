@@ -62,35 +62,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChunkDb.cs" />
-    <Compile Include="CraftingRecipes.cs" />
-    <Compile Include="GameDataManicDigger.cs" />
-    <Compile Include="ManicDiggerGameWindow.cs" />
-    <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
-    <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
-    <Compile Include="GuiStates\GuiStateMapLoading.cs" />
-    <Compile Include="Menu.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Menu.Designer.cs">
-      <DependentUpon>Menu.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Misc.cs" />
-    <Compile Include="ModeFortressRail.cs" />
-    <Compile Include="Mod.cs" />
-    <Compile Include="Mods\Default.cs" />
-    <Compile Include="Mods\Doors.cs" />
-    <Compile Include="Mods\GroundPhysics.cs" />
-    <Compile Include="Mods\Monsters.cs" />
-    <Compile Include="Mods\Vegetation.cs" />
-    <Compile Include="Mods\Tnt.cs" />
-    <Compile Include="MultiplayerForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MultiplayerForm.Designer.cs">
-      <DependentUpon>MultiplayerForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Packets.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -98,28 +69,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="ScriptConsole.cs" />
-    <Compile Include="ScriptInterpreter.cs" />
-    <Compile Include="Server.cs" />
-    <Compile Include="ServerClient.cs" />
-    <Compile Include="ServerConfig.cs" />
-    <Compile Include="ServerHeartbeat.cs" />
-    <Compile Include="ServerMap.cs" />
-    <Compile Include="ServerWorldManager.cs" />
-    <Compile Include="Shadows.cs" />
-    <Compile Include="TerrainRenderer.cs" />
-    <Compile Include="ServerConsole.cs" />
-    <Compile Include="ServerMonitor.cs" />
-    <Compile Include="PasswordForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PasswordForm.Designer.cs" />
-    <Compile Include="ServerCommand.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="a.snk" />
     <None Include="app.config" />
-    <None Include="PasswordForm.resx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\sqlite3.dll">
@@ -134,12 +87,6 @@
     <Content Include="md.ico" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Menu.resx">
-      <DependentUpon>Menu.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MultiplayerForm.resx">
-      <DependentUpon>MultiplayerForm.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
