@@ -1906,6 +1906,10 @@ if (sent >= unknown.Count) { break; }
             string coloredName = clients[clientid].ColoredPlayername(colorNormal);
             string name = clients[clientid].playername;
             clients.Remove(clientid);
+            if (config.ServerMonitor)
+            {
+                this.serverMonitor.RemoveMonitorClient(clientid);
+            }
             foreach (var kk in clients)
             {
                 SendDespawnPlayer(kk.Key, clientid);

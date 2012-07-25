@@ -25,6 +25,11 @@ namespace GameModeFortress
             this.monitorClients = new Dictionary<int, MonitorClient>();
         }
 
+        public bool RemoveMonitorClient(int clientid)
+        {
+            return this.monitorClients.Remove(clientid);
+        }
+
         public void Start()
         {
             Thread serverMonitorThread = new Thread(new ThreadStart(this.Process));
@@ -182,7 +187,7 @@ namespace GameModeFortress
             {
                 //Set Defaults
                 this.MaxPackets = 500;
-                this.MaxBlocks = 30;
+                this.MaxBlocks = 50;
                 this.MaxMessages = 3;
                 this.MessageBanTime = 60;
                 this.TimeIntervall = 3;
