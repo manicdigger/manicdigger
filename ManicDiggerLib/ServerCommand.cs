@@ -38,6 +38,15 @@ namespace ManicDiggerServer
                     }
                     SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
                     return;
+                case "remove_client":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length == 1)
+                    {
+                        this.RemoveClientFromConfig(sourceClientId, ss[0]);
+                        return;
+                    }
+                    SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                    return;
                 case "login":
                      // enables to change temporary group with a group's password (only if group allows it)
                     ss = argument.Split(new[] { ' ' });
@@ -136,6 +145,15 @@ namespace ManicDiggerServer
                         return;
                     }
                     this.Ban(sourceClientId, argument);
+                    return;
+                case "ban_offline":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length >= 2)
+                    {
+                        this.BanOffline(sourceClientId, ss[0], string.Join(" ", ss, 1, ss.Length - 1));
+                        return;
+                    }
+                    this.BanOffline(sourceClientId, argument);
                     return;
                 case "unban":
                     ss = argument.Split(new[] { ' ' });
@@ -420,6 +438,8 @@ namespace ManicDiggerServer
                     return "/banip [username] {reason}";
                 case "banip_id":
                     return "/banip_id [player id] {reason}";
+                case "ban_offline":
+                    return "/ban_offline [username] {reason}";
                 case "unban":
                     return "/unban [-p playername | -ip ipaddress]";
                 case "run":
@@ -428,6 +448,8 @@ namespace ManicDiggerServer
                     return "/op [username] [group]";
                 case "chgrp":
                     return "/chgrp [username] [group]";
+                case "remove_client":
+                    return "/remove_client [username]";
                 case "login":
                     return "/login [group] [password]";
                 case "welcome":
@@ -556,7 +578,7 @@ namespace ManicDiggerServer
                     clientConfig.Group = newGroup.Name;
                 }
                 SaveServerClient();
-                SendMessageToAll(string.Format("{0}New group for {1}: {2}", colorSuccess, targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
+                SendMessageToAll(string.Format("{0}{1} set group of {2} to {3}.", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
                 ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
                 targetClient.AssignGroup(newGroup);
                 return true;
@@ -593,9 +615,62 @@ namespace ManicDiggerServer
             }
 
             SaveServerClient();
-            SendMessageToAll(string.Format("{0}New group for {1}: {2} (offline)", colorSuccess, target, newGroup.GroupColorString() + newGroupName));
-            ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId), target, newGroupName));
+            SendMessageToAll(string.Format("{0}{1} set group of {2} to {3} (offline).", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), target, newGroup.GroupColorString() + newGroupName));
+            ServerEventLog(String.Format("{0} sets group of {1} to {2} (offline).", GetClient(sourceClientId).playername, target, newGroupName));
             return true;
+        }
+
+        public bool RemoveClientFromConfig(int sourceClientId, string target)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.remove_client))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            // Get related client from config file
+            GameModeFortress.Client targetClient = serverClient.Clients.Find(
+                delegate(GameModeFortress.Client client)
+                {
+                    return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
+                }
+            );
+            // Entry exists.
+            if (targetClient != null)
+            {
+                // Get target's group.
+                GameModeFortress.Group targetGroup = serverClient.Groups.Find(
+                    delegate(GameModeFortress.Group grp)
+                {
+                    return grp.Name.Equals(targetClient.Group);
+                }
+                );
+                if (targetGroup == null)
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid group.", colorError));
+                    return false;
+                }
+                // Check if target's group is superior.
+                if (targetGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Target user is superior or equal.", colorError));
+                    return false;
+                }
+                // Remove target's entry.
+                serverClient.Clients.Remove(targetClient);
+                this.SaveServerClient();
+                // If client is online, change his group
+                if(GetClient(target) != null)
+                {
+                    GetClient(target).AssignGroup(this.defaultGroupGuest);
+                    SendMessageToAll(string.Format("{0}{1} set group of {2} to {3}.", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), GetClient(target).ColoredPlayername(colorSuccess), this.defaultGroupGuest.GroupColorString() + defaultGroupGuest.Name));
+                }
+                SendMessage(sourceClientId, string.Format("{0}Client {1} removed from config.", colorSuccess, target));
+                ServerEventLog(string.Format("{0} removes client {1} from config.", GetClient(sourceClientId).playername, target));
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}No entry of client {1} found.", colorError, target));
+            return false;
         }
 
         public bool Login (int sourceClientId, string targetGroupString, string password)
@@ -756,7 +831,7 @@ namespace ManicDiggerServer
             }
             if (!reason.Equals(""))
             {
-                reason = " Reason: " + reason;
+                reason = " Reason: " + reason + ".";
             }
             Client targetClient = GetClient(targetClientId);
             if (targetClient != null)
@@ -770,7 +845,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                SendMessageToAll(string.Format("{0}{1} was kicked by {2}", colorImportant, targetNameColored, sourceNameColored));
+                SendMessageToAll(string.Format("{0}{1} was kicked by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} kicks {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were kicked by an administrator.{0}", reason));
                 KillPlayer(targetClientId);
@@ -810,7 +885,7 @@ namespace ManicDiggerServer
             }
             if (!reason.Equals(""))
             {
-                reason = " Reason: " + reason;
+                reason = " Reason: " + reason + ".";
             }
             Client targetClient = GetClient(targetClientId);
             if (targetClient != null)
@@ -826,7 +901,7 @@ namespace ManicDiggerServer
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
                 config.BannedUsers.Add(targetName);
                 SaveConfig();
-                SendMessageToAll(string.Format("{0}{1} was banned by {2}", colorImportant, targetNameColored, sourceNameColored));
+                SendMessageToAll(string.Format("{0}{1} was banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} bans {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were banned by an administrator.{0}", reason));
                 KillPlayer(targetClientId);
@@ -866,7 +941,7 @@ namespace ManicDiggerServer
             }
             if (!reason.Equals(""))
             {
-                reason = " Reason: " + reason;
+                reason = " Reason: " + reason + ".";
             }
             Client targetClient = GetClient(targetClientId);
             if(targetClient != null)
@@ -882,7 +957,7 @@ namespace ManicDiggerServer
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
                 config.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
                 SaveConfig();
-                SendMessageToAll(string.Format("{0}{1} was IP banned by {2}", colorImportant, targetNameColored, sourceNameColored));
+                SendMessageToAll(string.Format("{0}{1} was IP banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were IP banned by an administrator.{0}", reason));
                 KillPlayer(targetClientId);
@@ -890,6 +965,74 @@ namespace ManicDiggerServer
             }
             SendMessage(sourceClientId, string.Format("{0}Player ID {1} does not exist.", colorError, targetClientId));
             return false;
+        }
+
+        public bool BanOffline(int sourceClientId, string target)
+        {
+            return this.BanOffline(sourceClientId, target, "");
+        }
+        public bool BanOffline(int sourceClientId, string target, string reason)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.ban_offline))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            if (!reason.Equals(""))
+            {
+                reason = " Reason: " + reason;
+            }
+
+            if( GetClient(target) != null)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Player {1} is online. Use /ban command.", colorError, target));
+                return false;
+            }
+
+            // Target is at the moment not online. Check if there is an entry in ServerClient
+
+            // Get related client from config file
+            GameModeFortress.Client targetClient = serverClient.Clients.Find(
+                delegate(GameModeFortress.Client client)
+                {
+                    return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
+                }
+            );
+
+            // Entry exists.
+            if (targetClient != null)
+            {
+                // Get target's group.
+                GameModeFortress.Group targetGroup = serverClient.Groups.Find(
+                    delegate(GameModeFortress.Group grp)
+                {
+                    return grp.Name.Equals(targetClient.Group);
+                }
+                );
+                if (targetGroup == null)
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid group.", colorError));
+                    return false;
+                }
+
+                // Check if target's group is superior.
+                if (targetGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Target user is superior or equal.", colorError));
+                    return false;
+                }
+
+                // Remove target's entry.
+                serverClient.Clients.Remove(targetClient);
+                this.SaveServerClient();
+            }
+
+            // Finally ban user.
+            config.BannedUsers.Add(target);
+            SaveConfig();
+            SendMessageToAll(string.Format("{0}{1} (offline) was banned by {2}.{3}", colorImportant, target, GetClient(sourceClientId).ColoredPlayername(colorImportant), reason));
+            ServerEventLog(string.Format("{0} bans {1}.{2}", GetClient(sourceClientId).playername, target, reason));
+            return true;
         }
 
         public bool Unban(int sourceClientId, string type, string target)
@@ -1194,7 +1337,7 @@ namespace ManicDiggerServer
                         }));
                 }
             }
-            SendMessage(sourceClientId, colorSuccess + "Monsters turned " + option);
+            SendMessageToAll(string.Format("{0} turned monsters {1}.", GetClient(sourceClientId).ColoredPlayername(colorSuccess), option));
             ServerEventLog(string.Format("{0} turns monsters {1}.", GetClient(sourceClientId).playername, option));
             return true;
         }

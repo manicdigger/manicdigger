@@ -207,9 +207,11 @@ namespace GameModeFortress
             ban_id,
             banip,
             banip_id,
+            ban_offline,
             unban,
             run,
             chgrp,
+            remove_client,
             login,
             welcome,
             logging,
@@ -277,6 +279,8 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.build);
             admin.GroupPrivileges.Add(Privilege.kick);
             admin.GroupPrivileges.Add(Privilege.ban);
+            admin.GroupPrivileges.Add(Privilege.banip);
+            admin.GroupPrivileges.Add(Privilege.ban_offline);
             admin.GroupPrivileges.Add(Privilege.unban);
             admin.GroupPrivileges.Add(Privilege.announcement);
             admin.GroupPrivileges.Add(Privilege.welcome);
@@ -286,6 +290,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.list_banned_users);
             admin.GroupPrivileges.Add(Privilege.list_areas);
             admin.GroupPrivileges.Add(Privilege.chgrp);
+            admin.GroupPrivileges.Add(Privilege.remove_client);
             admin.GroupPrivileges.Add(Privilege.monsters);
             admin.GroupPrivileges.Add(Privilege.give);
             admin.GroupPrivileges.Add(Privilege.giveall);
