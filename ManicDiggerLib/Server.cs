@@ -3592,7 +3592,7 @@ if (sent >= unknown.Count) { break; }
         {
             BlockTypes[id] = block;
             block.Name = name;
-            d_Data.UseBlockType(id, block);
+            d_Data.UseBlockType(id, block, null);
         }
         public void SetBlockType(string name, BlockType block)
         {

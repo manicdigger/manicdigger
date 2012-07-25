@@ -24,374 +24,386 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(1, "Stone", new BlockType()
             {
-                AllTextures = 1,//"Stone",
+                AllTextures = "Stone",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(2, "Grass", new BlockType()
             {
-                TextureIdTop = 0, //"Grass",
-                TextureIdBack = 3,//"GrassSide",
-                TextureIdFront = 3, //"GrassSide",
-                TextureIdLeft = 3,//"GrassSide",
-                TextureIdRight = 3,//"GrassSide",
-                TextureIdForInventory = 3,//"GrassSide",
-                TextureIdBottom = 2, //"Dirt",
+                TextureIdTop = "Grass",
+                TextureIdBack = "GrassSide",
+                TextureIdFront = "GrassSide",
+                TextureIdLeft = "GrassSide",
+                TextureIdRight = "GrassSide",
+                TextureIdForInventory = "GrassSide",
+                TextureIdBottom = "Dirt",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(3, "Dirt", new BlockType()
             {
-                AllTextures = 2,//"Dirt",
+                AllTextures = "Dirt",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(4, "Cobblestone", new BlockType()
             {
-                AllTextures = 16,//"Cobblestone",
+                AllTextures = "Cobblestone",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(5, "Wood", new BlockType()
             {
-                AllTextures = 4,//"Wood",
+                AllTextures = "Wood",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(6, "Sapling", new BlockType()
             {
-                AllTextures = 15,//"Sapling",
+                AllTextures = "Sapling",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(7, "Adminium", new BlockType()
             {
-                AllTextures = 17,//"Adminium",
+                AllTextures = "Adminium",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(8, "Water", new BlockType()
             {
-                AllTextures = 14, //"Water",
+                AllTextures = "Water",
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
             });
             m.SetBlockType(9, "StationaryWater", new BlockType()
             {
-                AllTextures = 14,//"StationaryWater",
+                AllTextures = "Water",
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
             });
             m.SetBlockType(10, "Lava", new BlockType()
             {
-                AllTextures = 30,
+                AllTextures = "Lava",
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
             });
             m.SetBlockType(11, "StationaryLava", new BlockType()
             {
-                AllTextures = 30,
+                AllTextures = "Lava",
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
             });
             m.SetBlockType(12, "Sand", new BlockType()
             {
-                AllTextures = 18,
+                AllTextures = "Sand",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(13, "Gravel", new BlockType()
             {
-                AllTextures = 19,
+                AllTextures = "Gravel",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(14, "GoldOre", new BlockType()
             {
-                AllTextures = 32,
+                AllTextures = "GoldOre",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(15, "IronOre", new BlockType()
             {
-                AllTextures = 33,
+                AllTextures = "IronOre",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(16, "CoalOre", new BlockType()
             {
-                AllTextures = 34,
+                AllTextures = "CoalOre",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(17, "TreeTrunk", new BlockType()
             {
-                TextureIdTop = 21,
-                TextureIdBottom = 21,
-                TextureIdBack = 20,
-                TextureIdFront = 20,
-                TextureIdLeft = 20,
-                TextureIdRight = 20,
-                TextureIdForInventory = 20,
+                TextureIdTop = "TreeTrunkTopBottom",
+                TextureIdBottom = "TreeTrunkTopBottom",
+                TextureIdBack = "TreeTrunk",
+                TextureIdFront = "TreeTrunk",
+                TextureIdLeft = "TreeTrunk",
+                TextureIdRight = "TreeTrunk",
+                TextureIdForInventory = "TreeTrunk",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(18, "Leaves", new BlockType()
             {
-                AllTextures = 22,
+                AllTextures = "Leaves",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(19, "Sponge", new BlockType()
             {
-                AllTextures = 48,
+                AllTextures = "Sponge",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(20, "Glass", new BlockType()
             {
-                AllTextures = 49,
+                AllTextures = "Glass",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(21, "RedCloth", new BlockType()
             {
-                AllTextures = 64,
+                AllTextures = "RedCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(22, "OrangeCloth", new BlockType()
             {
-                AllTextures = 65,
+                AllTextures = "OrangeCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(23, "YellowCloth", new BlockType()
             {
-                AllTextures = 66,
+                AllTextures = "YellowCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(24, "LightGreenCloth", new BlockType()
             {
-                AllTextures = 67,
+                AllTextures = "LightGreenCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(25, "GreenCloth", new BlockType()
             {
-                AllTextures = 68,
+                AllTextures = "GreenCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(26, "AquaGreenCloth", new BlockType()
             {
-                AllTextures = 69,
+                AllTextures = "AquaGreenCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(27, "CyanCloth", new BlockType()
             {
-                AllTextures = 70,
+                AllTextures = "CyanCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(28, "BlueCloth", new BlockType()
             {
-                AllTextures = 71,
+                AllTextures = "BlueCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(29, "PurpleCloth", new BlockType()
             {
-                AllTextures = 72,
+                AllTextures = "PurpleCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(30, "IndigoCloth", new BlockType()
             {
-                AllTextures = 73,
+                AllTextures = "IndigoCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(31, "VioletCloth", new BlockType()
             {
-                AllTextures = 74,
+                AllTextures = "VioletCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(32, "MagnetaCloth", new BlockType()
             {
-                AllTextures = 75,
+                AllTextures = "MagnetaCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(33, "PinkCloth", new BlockType()
             {
-                AllTextures = 76,
+                AllTextures = "PinkCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(34, "BlackCloth", new BlockType()
             {
-                AllTextures = 77,
+                AllTextures = "BlackCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(35, "GrayCloth", new BlockType()
             {
-                AllTextures = 78,
+                AllTextures = "GrayCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(36, "WhiteCloth", new BlockType()
             {
-                AllTextures = 79,
+                AllTextures = "WhiteCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(37, "YellowFlowerDecorations", new BlockType()
             {
-                AllTextures = 13,
+                AllTextures = "YellowFlowerDecorations",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(38, "RedRoseDecorations", new BlockType()
             {
-                AllTextures = 12,
+                AllTextures = "RedRoseDecorations",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(39, "RedMushroom", new BlockType()
             {
-                AllTextures = 28,
+                AllTextures = "RedMushroom",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(40, "BrownMushroom", new BlockType()
             {
-                AllTextures = 29,
+                AllTextures = "BrownMushroom",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(41, "GoldBlock", new BlockType()
             {
-                AllTextures = 24,
+                AllTextures = "GoldBlock",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(42, "IronBlock", new BlockType()
             {
-                AllTextures = 23,
+                AllTextures = "IronBlock",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(43, "DoubleStair", new BlockType()
             {
-                AllTextures = 6,
+                TextureIdTop = "Stair",
+                TextureIdBottom = "Stair",
+                TextureIdBack = "DoubleStairSide",
+                TextureIdFront = "DoubleStairSide",
+                TextureIdLeft = "DoubleStairSide",
+                TextureIdRight = "DoubleStairSide",
+                TextureIdForInventory = "DoubleStairSide",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(44, "Stair", new BlockType()
             {
-                AllTextures = 6,
+                AllTextures = "Stair",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(45, "Brick", new BlockType()
             {
-                AllTextures = 103,
+                AllTextures = "Brick",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(46, "TNT", new BlockType()
             {
-                AllTextures = 9,
+                TextureIdTop = "TNTTop",
+                TextureIdBottom = "WoodBlock",
+                TextureIdBack = "TNT",
+                TextureIdFront = "TNT",
+                TextureIdLeft = "TNT",
+                TextureIdRight = "TNT",
+                TextureIdForInventory = "TNT",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(47, "Bookcase", new BlockType()
             {
-                TextureIdTop = 4,
-                TextureIdBottom = 4,
-                TextureIdBack = 35,
-                TextureIdFront = 35,
-                TextureIdLeft = 35,
-                TextureIdRight = 35,
-                TextureIdForInventory = 35,
+                TextureIdTop = "Wood",
+                TextureIdBottom = "Wood",
+                TextureIdBack = "Bookcase",
+                TextureIdFront = "Bookcase",
+                TextureIdLeft = "Bookcase",
+                TextureIdRight = "Bookcase",
+                TextureIdForInventory = "Bookcase",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(48, "MossyCobblestone", new BlockType()
             {
-                AllTextures = 36,
+                AllTextures = "MossyCobblestone",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(49, "Obsidian", new BlockType()
             {
-                AllTextures = 37,
+                AllTextures = "Obsidian",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(50, "Torch", new BlockType()
             {
-                TextureIdTop = 126,
-                TextureIdBottom = 125,
-                TextureIdBack = 125,
-                TextureIdFront = 125,
-                TextureIdLeft = 125,
-                TextureIdRight = 125,
-                TextureIdForInventory = 125,
+                TextureIdTop = "TorchTop",
+                TextureIdBottom = "Torch",
+                TextureIdBack = "Torch",
+                TextureIdFront = "Torch",
+                TextureIdLeft = "Torch",
+                TextureIdRight = "Torch",
+                TextureIdForInventory = "Torch",
                 LightRadius = 15,
                 DrawType = DrawType.Torch,
                 WalkableType = WalkableType.Empty,
@@ -399,266 +411,266 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(51, "FireBlock", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(52, "InfiniteWaterSource", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(53, "InfiniteLavaSource", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(54, "Chest", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(55, "Gear", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(56, "DiamondPre", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(57, "DiamondBlock", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(58, "CraftingTable1", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(59, "Crops", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(60, "Soil", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(61, "Furnace", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(62, "BurningFurnace", new BlockType()
             {
-                AllTextures = 0,
+                AllTextures = "Unknown",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
             {
-                AllTextures = 80,
+                AllTextures = "BrushedMetal",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(101, "ChemicalGreen", new BlockType()
             {
-                AllTextures = 81,
+                AllTextures = "ChemicalGreen",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(102, "Salt", new BlockType()
             {
-                AllTextures = 82,
+                AllTextures = "Salt",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(103, "Roof", new BlockType()
             {
-                AllTextures = 83,
+                AllTextures = "Roof",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(104, "Camouflage", new BlockType()
             {
-                AllTextures = 84,
+                AllTextures = "Camouflage",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(105, "DirtForFarming", new BlockType()
             {
-                AllTextures = 85,
+                AllTextures = "DirtForFarming",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(106, "Apples", new BlockType()
             {
-                AllTextures = 86,
+                AllTextures = "Apples",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(107, "Hay", new BlockType()
             {
-                AllTextures = 87,
+                AllTextures = "Hay",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(108, "Crops1", new BlockType()
             {
-                AllTextures = 88,
+                AllTextures = "Crops1",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(109, "Crops2", new BlockType()
             {
-                AllTextures = 89,
+                AllTextures = "Crops2",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(110, "Crops3", new BlockType()
             {
-                AllTextures = 90,
+                AllTextures = "Crops3",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(111, "Crops4", new BlockType()
             {
-                AllTextures = 91,
+                AllTextures = "Crops4",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(112, "CraftingTable", new BlockType()
             {
-                AllTextures = 112,
+                AllTextures = "CraftingTable",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(113, "Minecart", new BlockType()
             {
-                AllTextures = 113,
+                AllTextures = "Minecart",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(114, "Trampoline", new BlockType()
             {
-                AllTextures = 121,
+                AllTextures = "Trampoline",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(115, "FillStart", new BlockType()
             {
-                AllTextures = 122,
+                AllTextures = "FillStart",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(116, "Cuboid", new BlockType()
             {
-                AllTextures = 123,
+                AllTextures = "FillEnd",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(117, "FillArea", new BlockType()
             {
-                AllTextures = 124,
+                AllTextures = "FillArea",
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(118, "Water0", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(119, "Water1", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(120, "Water2", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(121, "Water3", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(122, "Water4", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(123, "Water5", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(124, "Water6", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(125, "Water7", new BlockType()
             {
-                AllTextures = 127,
+                AllTextures = "Water",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
@@ -667,13 +679,13 @@ namespace ManicDigger.Mods
             {
                 m.SetBlockType(176 + i, "Rail" + i.ToString(), new BlockType()
                 {
-                    TextureIdTop = 176 + i,
-                    TextureIdBottom = 16,
-                    TextureIdBack = 16,
-                    TextureIdFront = 16,
-                    TextureIdLeft = 16,
-                    TextureIdRight = 16,
-                    TextureIdForInventory = 176 + i,
+                    TextureIdTop = "Rail" + i.ToString(),
+                    TextureIdBottom = "Cobblestone",
+                    TextureIdBack = "Cobblestone",
+                    TextureIdFront = "Cobblestone",
+                    TextureIdLeft = "Cobblestone",
+                    TextureIdRight = "Cobblestone",
+                    TextureIdForInventory = "Rail" + i.ToString(),
                     DrawType = DrawType.Solid,
                     WalkableType = WalkableType.Solid,
                     Sounds = solidSounds,
@@ -682,163 +694,169 @@ namespace ManicDigger.Mods
             }
             m.SetBlockType(126, "DoorBottomClosed", new BlockType()
             {
-                AllTextures = 130,
+                AllTextures = "DoorBottom",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(127, "DoorTopClosed", new BlockType()
             {
-                AllTextures = 131,
+                AllTextures = "DoorTop",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(128, "DoorBottomOpen", new BlockType()
             {
-                AllTextures = 130,
+                AllTextures = "DoorBottom",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(129, "DoorTopOpen", new BlockType()
             {
-                AllTextures = 131,
+                AllTextures = "DoorTop",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(130, "GrassTrap", new BlockType()
             {
-                TextureIdTop = 0, //"Grass",
-                TextureIdBack = 3,//"GrassSide",
-                TextureIdFront = 3, //"GrassSide",
-                TextureIdLeft = 3,//"GrassSide",
-                TextureIdRight = 3,//"GrassSide",
-                TextureIdForInventory = 3,//"GrassSide",
-                TextureIdBottom = 2, //"Dirt",
+                TextureIdTop = "Grass",
+                TextureIdBack = "GrassSide",
+                TextureIdFront = "GrassSide",
+                TextureIdLeft = "GrassSide",
+                TextureIdRight = "GrassSide",
+                TextureIdForInventory = "GrassSide",
+                TextureIdBottom = "Dirt",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(131, "GoldCoin", new BlockType()
             {
-                AllTextures = 134,
+                AllTextures = "GoldCoin",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(132, "GoldBar", new BlockType()
             {
-                AllTextures = 120,
+                TextureIdTop = "GoldBarTopBottom",
+                TextureIdBack = "GoldBarSide",
+                TextureIdFront = "GoldBarSide",
+                TextureIdLeft = "GoldBarSide",
+                TextureIdRight = "GoldBarSide",
+                TextureIdForInventory = "GoldBarInvetory",
+                TextureIdBottom = "GoldBarTopBottom",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(133, "SilverOre", new BlockType()
             {
-                AllTextures = 50,
+                AllTextures = "SilverOre",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(135, "SilverCoin", new BlockType()
             {
-                AllTextures = 132,
+                AllTextures = "SilverCoin",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(140, "DirtBrick", new BlockType()
             {
-                AllTextures = 7,
+                AllTextures = "DirtBrick",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(141, "LuxuryRoof", new BlockType()
             {
-                AllTextures = 53,
+                AllTextures = "LuxuryRoof",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(142, "SandBrick", new BlockType()
             {
-                AllTextures = 54,
+                AllTextures = "SandBrick",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(143, "FakeBookcase", new BlockType()
             {
-                TextureIdTop = 4,
-                TextureIdBottom = 4,
-                TextureIdBack = 35,
-                TextureIdFront = 35,
-                TextureIdLeft = 35,
-                TextureIdRight = 35,
-                TextureIdForInventory=35,
+                TextureIdTop = "Wood",
+                TextureIdBottom = "Wood",
+                TextureIdBack = "Bookcase",
+                TextureIdFront = "Bookcase",
+                TextureIdLeft = "Bookcase",
+                TextureIdRight = "Bookcase",
+                TextureIdForInventory = "Bookcase",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(144, "WoodDesk", new BlockType()
             {
-                TextureIdTop = 10,
-                TextureIdBottom = 26,
-                TextureIdBack = 11,
-                TextureIdFront = 11,
-                TextureIdLeft = 11,
-                TextureIdRight = 11,
-                TextureIdForInventory = 10,
+                TextureIdTop = "WoodBlock",
+                TextureIdBottom = "Empty",
+                TextureIdBack = "GlassDeskSide",
+                TextureIdFront = "GlassDeskSide",
+                TextureIdLeft = "GlassDeskSide",
+                TextureIdRight = "GlassDeskSide",
+                TextureIdForInventory = "WoodBlock",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(145, "GlassDesk", new BlockType()
             {
-                TextureIdTop = 49,
-                TextureIdBottom = 26,
-                TextureIdBack = 11,
-                TextureIdFront = 11,
-                TextureIdLeft = 11,
-                TextureIdRight = 11,
-                TextureIdForInventory = 11,
+                TextureIdTop = "Glass",
+                TextureIdBottom = "Empty",
+                TextureIdBack = "GlassDeskSide",
+                TextureIdFront = "GlassDeskSide",
+                TextureIdLeft = "GlassDeskSide",
+                TextureIdRight = "GlassDeskSide",
+                TextureIdForInventory = "GlassDeskSide",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(146, "Mosaik", new BlockType()
             {
-                AllTextures = 96,
+                AllTextures = "Mosaik",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(147, "Asphalt", new BlockType()
             {
-                AllTextures = 97,
+                AllTextures = "Asphalt",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(148, "Cake", new BlockType()
             {
-                TextureIdTop = 144,
-                TextureIdBottom = 146,
-                TextureIdBack = 145,
-                TextureIdFront = 145,
-                TextureIdLeft = 145,
-                TextureIdRight = 145,
-                TextureIdForInventory=144,
+                TextureIdTop = "CakeTop",
+                TextureIdBottom = "CakeSide",
+                TextureIdBack = "CakeSide",
+                TextureIdFront = "CakeSide",
+                TextureIdLeft = "CakeSide",
+                TextureIdRight = "CakeSide",
+                TextureIdForInventory = "CakeTop",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(149, "Fire", new BlockType()
             {
-                AllTextures = 31,
+                AllTextures = "Fire",
                 LightRadius = 15,
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
@@ -846,24 +864,31 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(150, "Fence", new BlockType()
             {
-                AllTextures = 56,
+                AllTextures = "Fence",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(151, "Compass", new BlockType()
             {
-                AllTextures = 147,
+                AllTextures = "Compass",
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(152, "Ladder", new BlockType()
             {
-                AllTextures = 158,
+                AllTextures = "RailPart9",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
+            });
+            m.SetBlockType(153, "EmptyHand", new BlockType()
+            {
+                AllTextures = "YellowThing",
+                DrawType = DrawType.Torch,
+                WalkableType = WalkableType.Empty,
+                Sounds = noSound,
             });
 
 

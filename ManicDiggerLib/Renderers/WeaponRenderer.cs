@@ -33,8 +33,8 @@ namespace ManicDigger.Renderers
             if (item == null || IsCompass())
             {
                 //empty hand
-                if (side == TileSide.Top) { return 129; }
-                return 128;
+                if (side == TileSide.Top) { return d_Data.TextureId[d_Data.BlockIdEmptyHand, (int)TileSide.Top]; }
+                return d_Data.TextureId[d_Data.BlockIdEmptyHand, (int)TileSide.Front];
             }
             if (item.ItemClass == ItemClass.Block)
             {

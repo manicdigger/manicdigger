@@ -4,6 +4,7 @@ using System.Text;
 using System.Drawing;
 using OpenTK;
 using OpenTK.Input;
+using ManicDigger.Renderers;
 
 namespace ManicDigger.Hud
 {
@@ -46,6 +47,7 @@ namespace ManicDigger.Hud
         public InventoryUtil inventoryUtil;
         public IInventoryController controller;
         public IViewport3dSelectedBlock viewport3d;
+        public ITerrainTextures terraintextures;
 
         public int CellDrawSize = 28;
 
@@ -173,18 +175,6 @@ namespace ManicDigger.Hud
             Draw();
         }
 
-        int terraintexture = -1;
-        int TerrainTexture
-        {
-            get
-            {
-                if (terraintexture == -1)
-                {
-                    terraintexture = the3d.LoadTexture(getfile.GetFile("terrain.png"));
-                }
-                return terraintexture;
-            }
-        }
         public void Draw()
         {
             Point scaledMouse = mouse_current.MouseCurrent;
@@ -374,7 +364,7 @@ namespace ManicDigger.Hud
             }
             if (item.ItemClass == ItemClass.Block)
             {
-                the3d.Draw2dTexture(TerrainTexture, screenpos.X, screenpos.Y,
+                the3d.Draw2dTexture(terraintextures.terrainTexture, screenpos.X, screenpos.Y,
                     drawsize.Value.X, drawsize.Value.Y, dataItems.TextureIdForInventory[item.BlockId]);
                 if (item.BlockCount > 1)
                 {

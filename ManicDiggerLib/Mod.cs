@@ -44,26 +44,19 @@ namespace ManicDigger
         {
         }
         [ProtoMember(1)]
-        public int TextureIdTop;
-        //public string TextureIdTop = "unknown";
+        public string TextureIdTop = "Unknown";
         [ProtoMember(2)]
-        public int TextureIdBottom;
-        //public string TextureIdBottom = "unknown";
+        public string TextureIdBottom = "Unknown";
         [ProtoMember(3)]
-        public int TextureIdFront;
-        //public string TextureIdFront = "unknown";
+        public string TextureIdFront = "Unknown";
         [ProtoMember(4)]
-        public int TextureIdBack;
-        //public string TextureIdBack = "unknown";
+        public string TextureIdBack = "Unknown";
         [ProtoMember(5)]
-        public int TextureIdLeft;
-        //public string TextureIdLeft = "unknown";
+        public string TextureIdLeft = "Unknown";
         [ProtoMember(6)]
-        public int TextureIdRight;
-        //public string TextureIdRight = "unknown";
+        public string TextureIdRight = "Unknown";
         [ProtoMember(7)]
-        public int TextureIdForInventory;
-        //public string TextureIdForInventory = "unknown";
+        public string TextureIdForInventory = "Unknown";
 
         //public bool IsBuildable = true;
         //public string WhenPlayerPlacesGetsConvertedTo;
@@ -96,7 +89,7 @@ namespace ManicDigger
         public string Name;
         [ProtoMember(18)]
         public bool IsBuildable;
-        public int AllTextures
+        public string AllTextures
         {
             set
             {
@@ -142,7 +135,7 @@ namespace ManicDigger
                 throw new Exception(blockType);
             }
             server.BlockTypes[id].IsBuildable = true;
-            server.d_Data.UseBlockType(id, server.BlockTypes[id]);
+            server.d_Data.UseBlockType(id, server.BlockTypes[id], null);
         }
 
         public void OnBlockBuild(Jint.Delegates.Func<int, int, int> f)

@@ -178,6 +178,7 @@ namespace ManicDigger
             hudInventory.getfile = getfile;
             hudInventory.ActiveMaterial = w;
             hudInventory.viewport3d = w;
+            hudInventory.terraintextures = d_TerrainTextures;
             w.d_Inventory = inventory;
             w.d_InventoryController = inventoryController;
             w.d_InventoryUtil = inventoryUtil;
@@ -3816,6 +3817,7 @@ namespace ManicDigger
                 case ServerPacketId.BlobFinalize:
                     {
                         byte[] downloaded = blobdownload.ToArray();
+                        /*
                         if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
                         {
                             if (blobdownloadhash == serverterraintexture)
@@ -3826,6 +3828,7 @@ namespace ManicDigger
                                 }
                             }
                         }
+                        */
                         if (blobdownloadname != null) // old servers
                         {
                             d_GetFile.SetFile(blobdownloadname, downloaded);
@@ -3855,7 +3858,31 @@ namespace ManicDigger
                     }
                     return true;
                 case ServerPacketId.BlockTypes:
-                    d_Data.UseBlockTypes(packet.BlockTypes.blocktypes);
+                    Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
+                    this.blocktypes = packet.BlockTypes.blocktypes;
+                    int lastTextureId = 0;
+                    for (int i = 0; i < blocktypes.Length; i++)
+                    {
+                        string[] to_load = new string[]
+                        {
+                            blocktypes[i].TextureIdLeft,
+                            blocktypes[i].TextureIdRight,
+                            blocktypes[i].TextureIdFront,
+                            blocktypes[i].TextureIdBack,
+                            blocktypes[i].TextureIdTop,
+                            blocktypes[i].TextureIdBottom,
+                            blocktypes[i].TextureIdForInventory,
+                        };
+                        for (int k = 0; k < to_load.Length; k++)
+                        {
+                            if (!textureInAtlasIds.ContainsKey(to_load[k]))
+                            {
+                                textureInAtlasIds[to_load[k]] = lastTextureId++;
+                            }
+                        }
+                    }
+                    d_Data.UseBlockTypes(packet.BlockTypes.blocktypes, textureInAtlasIds);
+                    UseTerrainTextures(textureInAtlasIds);
                     return true;
                 case ServerPacketId.SunLevels:
                     NightLevels = packet.SunLevels.sunlevels;
@@ -3870,6 +3897,7 @@ namespace ManicDigger
                     return false;
             }
         }
+        BlockType[] blocktypes;
         public int HourDetail = 4;
         public int[] NightLevels;
         public bool ENABLE_PER_SERVER_TEXTURES = false;
@@ -4905,10 +4933,45 @@ namespace ManicDigger
         public void StartTerrainTextures()
         {
             GL.Enable(EnableCap.Texture2D);
+            /*
             using (var atlas2d = new Bitmap(d_GetFile.GetFile("terrain.png")))
             {
                 UseTerrainTextureAtlas2d(atlas2d);
             }
+            */
+        }
+        public void UseTerrainTextures(Dictionary<string, int> textureIds)
+        {
+            //todo bigger than 32x32
+            int tilesize = 32;
+            Bitmap atlas2d = new Bitmap(tilesize * atlas2dtiles, tilesize * atlas2dtiles);
+            IFastBitmap atlas2dFast;
+            if (IsMono) { atlas2dFast = new FastBitmapDummy(); } else { atlas2dFast = new FastBitmap(); }
+            atlas2dFast.bmp = atlas2d;
+            atlas2dFast.Lock();
+            foreach (var k in textureIds)
+            {
+                using (Bitmap bmp = new Bitmap(d_GetFile.GetFile(k.Key + ".png")))
+                {
+                    IFastBitmap bmpFast;
+                    if (IsMono) { bmpFast = new FastBitmapDummy(); } else { bmpFast = new FastBitmap(); }
+                    bmpFast.bmp = bmp;
+                    bmpFast.Lock();
+                    int x = k.Value % texturesPacked;
+                    int y = k.Value / texturesPacked;
+                    for (int xx = 0; xx < tilesize; xx++)
+                    {
+                        for (int yy = 0; yy < tilesize; yy++)
+                        {
+                            int c = bmpFast.GetPixel(xx, yy);
+                            atlas2dFast.SetPixel(x * tilesize + xx, y * tilesize + yy, c);
+                        }
+                    }
+                    bmpFast.Unlock();
+                }
+            }
+            atlas2dFast.Unlock();
+            UseTerrainTextureAtlas2d(atlas2d);
         }
         public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
         {

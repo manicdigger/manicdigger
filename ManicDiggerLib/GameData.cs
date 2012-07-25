@@ -59,6 +59,7 @@ namespace ManicDigger
         int BlockIdAdminium { get; }
         int BlockIdCompass { get; }
         int BlockIdLadder { get; }
+        int BlockIdEmptyHand { get; }
     }
     public class SpecialBlockId
     {
@@ -179,6 +180,7 @@ namespace ManicDigger
         public int BlockIdAdminium { get { return mBlockIdAdminium; } set { mBlockIdAdminium = value; } }
         public int BlockIdCompass { get { return mBlockIdCompass; } set { mBlockIdCompass = value; } }
         public int BlockIdLadder { get { return mBlockIdLadder; } set { mBlockIdLadder = value; } }
+        public int BlockIdEmptyHand { get { return mBlockIdEmptyHand; } set { mBlockIdEmptyHand = value; } }
 
         private bool[] mIsFluid;
         private bool[] mIsWater;
@@ -221,19 +223,20 @@ namespace ManicDigger
         private int mBlockIdAdminium = 7;
         private int mBlockIdCompass = 151;
         private int mBlockIdLadder = 152;
+        private int mBlockIdEmptyHand = 153;
 
-        public void UseBlockTypes(BlockType[] blocktypes)
+        public void UseBlockTypes(BlockType[] blocktypes, Dictionary<string,int> textureInAtlasIds)
         {
             for (int i = 0; i < blocktypes.Length; i++)
             {
                 if (blocktypes[i] != null)
                 {
-                    UseBlockType(i, blocktypes[i]);
+                    UseBlockType(i, blocktypes[i], textureInAtlasIds);
                 }
             }
         }
 
-        public void UseBlockType(int id, BlockType b)
+        public void UseBlockType(int id, BlockType b, Dictionary<string,int> textureIds)
         {
             IsValid[id] = b.Name != null;//b.IsValid;
             if (b.Name == null)//!b.IsValid)
@@ -251,13 +254,16 @@ namespace ManicDigger
             IsEmptyForPhysics[id] = b.WalkableType != WalkableType.Solid;
             IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant);
             //Indexed by block id and TileSide.
-            TextureId[id, 0] = b.TextureIdTop;
-            TextureId[id, 1] = b.TextureIdBottom;
-            TextureId[id, 2] = b.TextureIdFront;
-            TextureId[id, 3] = b.TextureIdBack;
-            TextureId[id, 4] = b.TextureIdLeft;
-            TextureId[id, 5] = b.TextureIdRight;
-            TextureIdForInventory[id] = b.TextureIdForInventory;
+            if (textureIds != null)
+            {
+                TextureId[id, 0] = textureIds[b.TextureIdTop];
+                TextureId[id, 1] = textureIds[b.TextureIdBottom];
+                TextureId[id, 2] = textureIds[b.TextureIdFront];
+                TextureId[id, 3] = textureIds[b.TextureIdBack];
+                TextureId[id, 4] = textureIds[b.TextureIdLeft];
+                TextureId[id, 5] = textureIds[b.TextureIdRight];
+                TextureIdForInventory[id] = textureIds[b.TextureIdForInventory];
+            }
             IsBuildable[id] = b.IsBuildable; // todo
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
             IsFlower[id] = b.DrawType == DrawType.Plant;
