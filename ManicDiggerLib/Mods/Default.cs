@@ -355,19 +355,6 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
-            m.SetBlockType(46, "TNT", new BlockType()
-            {
-                TextureIdTop = "TNTTop",
-                TextureIdBottom = "WoodBlock",
-                TextureIdBack = "TNT",
-                TextureIdFront = "TNT",
-                TextureIdLeft = "TNT",
-                TextureIdRight = "TNT",
-                TextureIdForInventory = "TNT",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-            });
             m.SetBlockType(47, "Bookcase", new BlockType()
             {
                 TextureIdTop = "Wood",
@@ -909,7 +896,6 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("DoubleStair");
             m.AddToCreativeInventory("Stair");
             m.AddToCreativeInventory("Brick");
-            m.AddToCreativeInventory("TNT");
             m.AddToCreativeInventory("Bookcase");
             m.AddToCreativeInventory("MossyCobblestone");
             m.AddToCreativeInventory("Obsidian");
@@ -962,7 +948,6 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("CraftingTable", 1, "Wood", 3);
             m.AddCraftingRecipe("Stair", 1, "Stone", 2);
             m.AddCraftingRecipe("DoubleStair", 1, "Stone", 2);
-            m.AddCraftingRecipe("TNT", 1, "GoldBlock", 1);
             m.AddCraftingRecipe("Glass", 1, "Sand", 2);
             m.AddCraftingRecipe("RedRoseDecorations", 1, "Leaves", 10);
             m.AddCraftingRecipe("YellowFlowerDecorations", 1, "Leaves", 10);

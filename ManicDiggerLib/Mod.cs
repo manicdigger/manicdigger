@@ -4,6 +4,7 @@ using System.Text;
 using ManicDiggerServer;
 using ProtoBuf;
 using GameModeFortress;
+using Jint.Delegates;
 
 namespace ManicDigger
 {
@@ -247,6 +248,84 @@ namespace ManicDigger
         public bool IsValidPos(int x, int y, int z)
         {
             return MapUtil.IsValidPos(server.d_Map, x, y, z);
+        }
+
+        public void SetTimer(Action a, int interval)
+        {
+            server.timers[new ManicDigger.Timer() { INTERVAL = 5 }] = delegate { a(); };
+        }
+
+        public void PlaySoundAt(Vector3i pos, string sound)
+        {
+            foreach (var k in server.clients)
+            {
+                int distance = server.DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                if (distance < 255)
+                {
+                    server.SendSound(k.Key, sound);
+                }
+            }
+        }
+
+        public int NearestPlayer(int x, int y, int z)
+        {
+            int closeplayer = -1;
+            int closedistance = -1;
+            foreach (var k in server.clients)
+            {
+                int distance = server.DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), new Vector3i(x, y, z));
+                if (closedistance == -1 || distance < closedistance)
+                {
+                    closedistance = distance;
+                    closeplayer = k.Key;
+                }
+            }
+            return closeplayer;
+        }
+
+        public void GrabBlock(int player, int block)
+        {
+            Inventory inventory = server.GetPlayerInventory(server.clients[player].playername).Inventory;
+            
+            var item = new Item();
+            item.ItemClass = ItemClass.Block;
+            item.BlockId = server.d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+            server.GetInventoryUtil(inventory).GrabItem(item, 0);
+        }
+
+        public bool PlayerHasPrivilege(int player, string p)
+        {
+            return server.clients[player].privileges.Contains(p);
+        }
+
+        public bool IsCreative()
+        {
+            return server.config.IsCreative;
+        }
+
+        public bool IsBlockFluid(int block)
+        {
+            return server.d_Data.IsFluid[block];
+        }
+
+        public void NotifyInventory(int player)
+        {
+            server.clients[player].IsInventoryDirty = true;
+            server.NotifyInventory(player);
+        }
+
+        public string colorError()
+        {
+            return server.colorError;
+        }
+
+        public void SendMessage(int player, string p)
+        {
+            server.SendMessage(player, p);
+        }
+
+        public void SetPrivilege(string p)
+        {
         }
     }
 }

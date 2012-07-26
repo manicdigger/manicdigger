@@ -413,7 +413,7 @@ namespace ManicDiggerServer
         public void Help(int sourceClientId)
         {
             SendMessage(sourceClientId, colorHelp + "Available privileges:");
-            foreach (ServerClientMisc.Privilege privilege in GetClient(sourceClientId).privileges)
+            foreach (string privilege in GetClient(sourceClientId).privileges)
             {
                 SendMessage(sourceClientId,string.Format("{0}{1}: {2}",colorHelp, privilege.ToString(), this.CommandHelp(privilege.ToString())));
             }
@@ -1585,27 +1585,7 @@ namespace ManicDiggerServer
             }
         }
 
-
-        private bool PrivilegeAdd(int sourceClientId, string target, string privilege)
-        {
-            try
-            {
-                ServerClientMisc.Privilege newPrivilege = (ServerClientMisc.Privilege) Enum.Parse(typeof(ServerClientMisc.Privilege), privilege);
-
-                if (Enum.IsDefined(typeof(ServerClientMisc.Privilege), newPrivilege) | newPrivilege.ToString().Contains(","))
-                {
-                    return this.PrivilegeAdd(sourceClientId, target, newPrivilege);
-                }
-                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
-                return false;
-            }
-            catch (ArgumentException)
-            {
-                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
-                return false;
-            }
-        }
-        public bool PrivilegeAdd(int sourceClientId, string target, ServerClientMisc.Privilege privilege)
+        public bool PrivilegeAdd(int sourceClientId, string target, string privilege)
         {
             if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_add))
             {
@@ -1630,26 +1610,7 @@ namespace ManicDiggerServer
             return false;
         }
 
-        private bool PrivilegeRemove(int sourceClientId, string target, string privilege)
-        {
-            try
-            {
-                ServerClientMisc.Privilege newPrivilege = (ServerClientMisc.Privilege) Enum.Parse(typeof(ServerClientMisc.Privilege), privilege);
-
-                if (Enum.IsDefined(typeof(ServerClientMisc.Privilege), newPrivilege) | newPrivilege.ToString().Contains(","))
-                {
-                    return this.PrivilegeRemove(sourceClientId, target, newPrivilege);
-                }
-                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
-                return false;
-            }
-            catch (ArgumentException)
-            {
-                SendMessage(sourceClientId, string.Format("{0}Privilege {1} does not exist.", colorError, privilege));
-                return false;
-            }
-        }
-        public bool PrivilegeRemove(int sourceClientId, string target, ServerClientMisc.Privilege privilege)
+        public bool PrivilegeRemove(int sourceClientId, string target, string privilege)
         {
             if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_remove))
             {

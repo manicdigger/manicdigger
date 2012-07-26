@@ -16,6 +16,7 @@ using System.Xml.Serialization;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Jint.Delegates;
 
 namespace ManicDiggerServer
 {
@@ -213,8 +214,8 @@ namespace ManicDiggerServer
             {
                 new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
             }
-            
-            
+
+            all_privileges.AddRange(ServerClientMisc.Privilege.All());
             LoadMods();
 
 
@@ -255,15 +256,14 @@ namespace ManicDiggerServer
             GameModeFortress.Group serverGroup = new GameModeFortress.Group();
             serverGroup.Name = "Server";
             serverGroup.Level = 255;
-            serverGroup.GroupPrivileges = new List<ServerClientMisc.Privilege>();
-            foreach (ServerClientMisc.Privilege priv in Enum.GetValues(typeof(ServerClientMisc.Privilege)))
-            {
-                serverGroup.GroupPrivileges.Add(priv);
-            }
+            serverGroup.GroupPrivileges = new List<string>();
+            serverGroup.GroupPrivileges = all_privileges;
             serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
             this.serverConsoleClient.AssignGroup(serverGroup);
             this.serverConsole = new ServerConsole(this, exit);
         }
+
+        List<string> all_privileges = new List<string>();
 
         private void LoadMods()
         {
@@ -839,97 +839,14 @@ namespace ManicDiggerServer
             {
                 UpdateWater();
             }
-            tntTimer.Update(UpdateTnt);
+            foreach (var k in timers)
+            {
+                k.Key.Update(k.Value);
+            }
             NotifyGroundPhysics();
         }
 
-        private void UpdateTnt()
-        {
-            int startQueueCount = tntStack.Count;
-            int now = 0;
-            while (now++ < 3)
-            {
-                if (tntStack.Count == 0)
-                {
-                    return;
-                }
-                Vector3i pos = tntStack.Pop();
-                int closeplayer = -1;
-                int closedistance = -1;
-                foreach (var k in clients)
-                {
-                    int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
-                    if (closedistance == -1 || distance < closedistance)
-                    {
-                        closedistance = distance;
-                        closeplayer = k.Key;
-                    }
-                    if (distance < 255)
-                    {
-                        SendSound(k.Key, "tnt.wav");
-                    }
-                }
-                Inventory inventory = GetPlayerInventory(clients[closeplayer].playername).Inventory;
-                for (int xx = 0; xx < tntRange; xx++)
-                {
-                    for (int yy = 0; yy < tntRange; yy++)
-                    {
-                        for (int zz = 0; zz < tntRange; zz++)
-                        {
-                            if (sphereEq(xx - (tntRange - 1) / 2, yy - (tntRange - 1) / 2, zz - (tntRange - 1) / 2, tntRange / 2) <= 0)
-                            {
-                                Vector3i pos2 = new Vector3i(pos.x + xx - tntRange / 2,
-                                pos.y + yy - tntRange / 2,
-                                pos.z + zz - tntRange / 2);
-                                if (!MapUtil.IsValidPos(d_Map, pos2.x, pos2.y, pos2.z))
-                                {
-                                    continue;
-                                }
-                                int block = d_Map.GetBlock(pos2.x, pos2.y, pos2.z);
-                                if (tntStack.Count < tntMax
-                                    && pos2 != pos
-                                    && block == (int)TileTypeManicDigger.TNT)
-                                {
-                                    tntStack.Push(pos2);
-                                    tntTimer.accumulator = tntTimer.INTERVAL;
-                                }
-                                else
-                                {
-                                    if ((block != 0)
-                                        && (block != (int)TileTypeManicDigger.Adminium)
-                                        && !(d_Data.IsFluid[block]))
-                                    {
-                                        SetBlockAndNotify(pos2.x, pos2.y, pos2.z, 0);
-                                        if (!config.IsCreative)
-                                        {
-                                            // chance to get some of destruced blocks
-                                            if (rnd.NextDouble() < .20f)
-                                            {
-                                                var item = new Item();
-                                                item.ItemClass = ItemClass.Block;
-                                                item.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[block];
-                                                GetInventoryUtil(inventory).GrabItem(item, 0);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                clients[closeplayer].IsInventoryDirty = true;
-                NotifyInventory(closeplayer);
-            }
-        }
-        private int sphereEq(int x, int y, int z, int r)
-        {
-            return x * x + y * y + z * z - r * r;
-        }
-
-        public int tntRange = 10; // sphere diameter
-        ManicDigger.Timer tntTimer = new ManicDigger.Timer() { INTERVAL = 5 };
-        Stack<Vector3i> tntStack = new Stack<Vector3i>();
-        public int tntMax = 10;
+        public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
 
         private void NotifyGroundPhysics()
         {
@@ -1569,7 +1486,7 @@ if (sent >= unknown.Count) { break; }
         }
         */
         const string invalidplayername = "invalid";
-        private void NotifyInventory(int clientid)
+        public void NotifyInventory(int clientid)
         {
             Client c = clients[clientid];
             if (c.IsInventoryDirty && c.playername != invalidplayername)
@@ -1804,7 +1721,7 @@ if (sent >= unknown.Count) { break; }
             m.WalkDirection = dir;
             m.WalkProgress = 0;
         }
-        PacketServerInventory GetPlayerInventory(string playername)
+        public PacketServerInventory GetPlayerInventory(string playername)
         {
             if (Inventory == null)
             {
@@ -1890,7 +1807,7 @@ if (sent >= unknown.Count) { break; }
         {
             return new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlZ / 32, c.PositionMul32GlY / 32);
         }
-        int DistanceSquared(Vector3i a, Vector3i b)
+        public int DistanceSquared(Vector3i a, Vector3i b)
         {
             int dx = a.x - b.x;
             int dy = a.y - b.y;
@@ -2325,13 +2242,13 @@ if (sent >= unknown.Count) { break; }
             SendMessage(clientid, colorError + "Error.");
         }
 
-        string colorNormal = "&f"; //white
-        string colorHelp = "&4"; //red
-        string colorOpUsername = "&2"; //green
-        string colorSuccess = "&2"; //green
-        string colorError = "&4"; //red
-        string colorImportant = "&4"; // red
-        string colorAdmin = "&e"; //yellow
+        public string colorNormal = "&f"; //white
+        public string colorHelp = "&4"; //red
+        public string colorOpUsername = "&2"; //green
+        public string colorSuccess = "&2"; //green
+        public string colorError = "&4"; //red
+        public string colorImportant = "&4"; // red
+        public string colorAdmin = "&e"; //yellow
         public enum MessageType { Normal, Important, Help, OpUsername, Success, Error, Admin, White, Red, Green, Yellow }
         private string MessageTypeToString(MessageType type)
         {
@@ -2448,7 +2365,7 @@ if (sent >= unknown.Count) { break; }
             }
         }
         public IGameDataItems d_DataItems;
-        InventoryUtil GetInventoryUtil(Inventory inventory)
+        public InventoryUtil GetInventoryUtil(Inventory inventory)
         {
             InventoryUtil util = new InventoryUtil();
             util.d_Inventory = inventory;
@@ -2678,15 +2595,6 @@ if (sent >= unknown.Count) { break; }
                 {
                     onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
                 }
-                if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) == (int)TileTypeManicDigger.TNT)
-                {
-                    if (!clients[player_id].privileges.Contains(ServerClientMisc.Privilege.use_tnt))
-                    {
-                        SendMessage(player_id, colorError + "Insufficient privileges to use TNT.");
-                        return false;
-                    }
-                    UseTnt(cmd.X, cmd.Y, cmd.Z);
-                }
                 return true;
             }
             if (cmd.Mode == BlockSetMode.Create
@@ -2752,17 +2660,6 @@ if (sent >= unknown.Count) { break; }
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
             return true;
-        }
-
-        private void UseTnt(int x, int y, int z)
-        {
-            if (d_Map.GetBlock(x, y, z) == (int)TileTypeManicDigger.TNT)
-            {
-                if (tntStack.Count < tntMax)
-                {
-                    tntStack.Push(new Vector3i(x, y, z));
-                }
-            }
         }
 
         private bool DoCommandBuildRail(int player_id, bool execute, PacketClientSetBlock cmd)
@@ -2946,7 +2843,7 @@ if (sent >= unknown.Count) { break; }
             PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
         }
-        private void SendSound(int clientid, string name)
+        public void SendSound(int clientid, string name)
         {
             PacketServerSound p = new PacketServerSound() { Name = name };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Sound, Sound = p }));
@@ -2998,7 +2895,8 @@ if (sent >= unknown.Count) { break; }
         {
             SendMessage(clientid, MessageTypeToString(color) + message);
         }
-        private void SendMessage(int clientid, string message)
+
+        public void SendMessage(int clientid, string message)
         {
             if (clientid == this.serverConsoleId)
             {
@@ -3305,7 +3203,7 @@ if (sent >= unknown.Count) { break; }
                 this.privileges.AddRange(newGroup.GroupPrivileges);
                 this.color = newGroup.GroupColorString();
             }
-            public List<ServerClientMisc.Privilege> privileges = new List<ServerClientMisc.Privilege>();
+            public List<string> privileges = new List<string>();
             public string color;
             public string ColoredPlayername(string subsequentColor)
             {
@@ -3327,7 +3225,7 @@ if (sent >= unknown.Count) { break; }
                     ServerClientMisc.PrivilegesString(this.privileges), ip);
             }
         }
-        Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Client GetClient(int id)
         {
             if (id == this.serverConsoleId)

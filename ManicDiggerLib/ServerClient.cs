@@ -43,7 +43,7 @@ namespace GameModeFortress
         public Spawn Spawn{ get; set; }
 
         [XmlArrayItem(ElementName = "Privilege")]
-        public List<ServerClientMisc.Privilege> GroupPrivileges { get; set; }
+        public List<string> GroupPrivileges { get; set; }
 
         public ServerClientMisc.ClientColor GroupColor { get; set; }
 
@@ -51,7 +51,7 @@ namespace GameModeFortress
         {
             this.Name = "";
             this.Level = 0;
-            this.GroupPrivileges = new List<ServerClientMisc.Privilege>();
+            this.GroupPrivileges = new List<string>();
             this.GroupColor = ServerClientMisc.ClientColor.White;
         }
 
@@ -196,43 +196,50 @@ namespace GameModeFortress
             Grey
         };
 
-        public enum Privilege
+        public class Privilege
         {
-            build,
-            chat,
-            pm,
-            kick,
-            kick_id,
-            ban,
-            ban_id,
-            banip,
-            banip_id,
-            ban_offline,
-            unban,
-            run,
-            chgrp,
-            remove_client,
-            login,
-            welcome,
-            logging,
-            list_clients,
-            list_saved_clients,
-            list_groups,
-            list_banned_users,
-            list_areas,
-            give,
-            giveall,
-            monsters,
-            area_add,
-            area_delete,
-            announcement,
-            set_spawn,
-            use_tnt,
-            privilege_add,
-            privilege_remove,
-            restart,
-            teleport_player,
-            backup
+            public static string[] All()
+            {
+                return new string[]
+                {
+                    build,
+                };
+            }
+            public static string build = "build";
+            public static string chat = "chat";
+            public static string pm = "pm";
+            public static string kick = "kick";
+            public static string kick_id = "kick_id";
+            public static string ban = "ban";
+            public static string ban_id = "ban_id";
+            public static string banip = "banip";
+            public static string banip_id = "banip_id";
+            public static string ban_offline = "ban_offline";
+            public static string unban = "unban";
+            public static string run = "run";
+            public static string chgrp = "chgrp";
+            public static string remove_client = "remove_client";
+            public static string login = "login";
+            public static string welcome = "welcome";
+            public static string logging = "logging";
+            public static string list_clients = "list_clients";
+            public static string list_saved_clients = "list_saved_clients";
+            public static string list_groups = "list_groups";
+            public static string list_banned_users = "list_banned_users";
+            public static string list_areas = "list_areas";
+            public static string give = "give";
+            public static string giveall = "giveall";
+            public static string monsters = "monsters";
+            public static string area_add = "area_add";
+            public static string area_delete = "area_delete";
+            public static string announcement = "announcement";
+            public static string set_spawn = "set_spawn";
+            public static string use_tnt = "use_tnt";
+            public static string privilege_add = "privilege_add";
+            public static string privilege_remove = "privilege_remove";
+            public static string restart = "restart";
+            public static string teleport_player = "teleport_player";
+            public static string backup = "backup";
         };
 
         public static List<Group> getDefaultGroups()
@@ -242,7 +249,7 @@ namespace GameModeFortress
             GameModeFortress.Group guest = new GameModeFortress.Group();
             guest.Name = "Guest";
             guest.Level = 0;
-            guest.GroupPrivileges = new List<Privilege>();
+            guest.GroupPrivileges = new List<string>();
             guest.GroupPrivileges.Add(Privilege.chat);
             guest.GroupPrivileges.Add(Privilege.pm);
             guest.GroupPrivileges.Add(Privilege.build);
@@ -252,7 +259,7 @@ namespace GameModeFortress
             GameModeFortress.Group registered = new GameModeFortress.Group();
             registered.Name = "Registered";
             registered.Level = 0;
-            registered.GroupPrivileges = new List<Privilege>();
+            registered.GroupPrivileges = new List<string>();
             registered.GroupPrivileges.Add(Privilege.chat);
             registered.GroupPrivileges.Add(Privilege.pm);
             registered.GroupPrivileges.Add(Privilege.build);
@@ -262,7 +269,7 @@ namespace GameModeFortress
             GameModeFortress.Group builder = new GameModeFortress.Group();
             builder.Name = "Builder";
             builder.Level = 1;
-            builder.GroupPrivileges = new List<Privilege>();
+            builder.GroupPrivileges = new List<string>();
             builder.GroupPrivileges.Add(Privilege.chat);
             builder.GroupPrivileges.Add(Privilege.pm);
             builder.GroupPrivileges.Add(Privilege.build);
@@ -273,7 +280,7 @@ namespace GameModeFortress
             GameModeFortress.Group admin = new GameModeFortress.Group();
             admin.Name = "Admin";
             admin.Level = 2;
-            admin.GroupPrivileges = new List<Privilege>();
+            admin.GroupPrivileges = new List<string>();
             admin.GroupPrivileges.Add(Privilege.chat);
             admin.GroupPrivileges.Add(Privilege.pm);
             admin.GroupPrivileges.Add(Privilege.build);
@@ -316,7 +323,7 @@ namespace GameModeFortress
             return defaultClients;
         }
 
-        public static string PrivilegesString(List<Privilege> privileges)
+        public static string PrivilegesString(List<string> privileges)
         {
             string privilegesString = "";
             if (privileges.Count > 0)
