@@ -16,28 +16,28 @@ namespace GameModeFortress
             m_client = client_id;
         }
 
-        public delegate void Action<T1, T2, T3, T4>(T1 t1, T2 t2, T3 t3, T4 t4);
+
 
         public void InjectConsoleCommands (IScriptInterpreter interpreter)
         {
-            interpreter.SetFunction("out", new System.Action<object>(Print));
-            interpreter.SetFunction("materials", new Jint.Delegates.Action(PrintMaterials));
-            interpreter.SetFunction("materials_between", new Jint.Delegates.Action<double, double>(PrintMaterials));
-            interpreter.SetFunction("find_material", new System.Action<string>(FindMaterial));
-            interpreter.SetFunction("position", new Jint.Delegates.Action(PrintPosition));
-            interpreter.SetFunction("get_position", new Jint.Delegates.Func<Vector3i>(GetPosition));
+            interpreter.SetFunction("out", new ManicDigger.Action<object>(Print));
+            interpreter.SetFunction("materials", new ManicDigger.Action(PrintMaterials));
+            interpreter.SetFunction("materials_between", new ManicDigger.Action<double, double>(PrintMaterials));
+            interpreter.SetFunction("find_material", new ManicDigger.Action<string>(FindMaterial));
+            interpreter.SetFunction("position", new ManicDigger.Action(PrintPosition));
+            interpreter.SetFunction("get_position", new ManicDigger.Func<Vector3i>(GetPosition));
             interpreter.SetVariable("turtle", Turtle);
-            interpreter.SetFunction("set_block", new Action<double, double, double, double>(SetBlock));
-            interpreter.SetFunction("get_block", new Jint.Delegates.Func<double, double, double, int>(GetBlock));
-            interpreter.SetFunction("get_height", new Jint.Delegates.Func<double, double, double>(GetHeight));
-            interpreter.SetFunction("get_mapsize", new Jint.Delegates.Func<int[]>(GetMapSize));
+            interpreter.SetFunction("set_block", new ManicDigger.Action<double, double, double, double>(SetBlock));
+            interpreter.SetFunction("get_block", new ManicDigger.Func<double, double, double, int>(GetBlock));
+            interpreter.SetFunction("get_height", new ManicDigger.Func<double, double, double>(GetHeight));
+            interpreter.SetFunction("get_mapsize", new ManicDigger.Func<int[]>(GetMapSize));
 
-            interpreter.SetFunction("set_chunk", new Action<double, double, double, byte[]>(SetChunk));
-            interpreter.SetFunction("get_chunk", new Jint.Delegates.Func<double, double, double, byte[]>(GetChunk));
-            interpreter.SetFunction("delete_chunk", new Action<double, double, double>(DeleteChunk));
-            interpreter.SetFunction("delete_chunk_range", new Action<double, double, double, double, double, double>(DeleteChunkRange));
-            interpreter.SetFunction("backup_database", new Action<string>(BackupDatabase));
-            interpreter.SetFunction("clear", new Jint.Delegates.Action(Clear));
+            interpreter.SetFunction("set_chunk", new ManicDigger.Action<double, double, double, byte[]>(SetChunk));
+            interpreter.SetFunction("get_chunk", new ManicDigger.Func<double, double, double, byte[]>(GetChunk));
+            interpreter.SetFunction("delete_chunk", new ManicDigger.Action<double, double, double>(DeleteChunk));
+            interpreter.SetFunction("delete_chunk_range", new ManicDigger.Action<double, double, double, double, double, double>(DeleteChunkRange));
+            interpreter.SetFunction("backup_database", new ManicDigger.Action<string>(BackupDatabase));
+            interpreter.SetFunction("clear", new ManicDigger.Action(Clear));
         }
 
         private Server m_server;
@@ -301,7 +301,4 @@ namespace GameModeFortress
         //}
 
     }
-
-    public delegate void Action<T1, T2, T3, T4> (T1 t1, T2 t2, T3 t3, T4 t4);
-    public delegate void Action<T1, T2, T3, T4, T5, T6>(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6);
 }

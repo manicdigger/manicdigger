@@ -148,12 +148,12 @@ namespace ManicDigger
             server.onbuild.Add(f);
         }
 
-        public void RegisterOnBlockDelete(ManicDiggerServer.Server.Action<int, int, int, int, int> f)
+        public void RegisterOnBlockDelete(ManicDigger.Action<int, int, int, int, int> f)
         {
             server.ondelete.Add(f);
         }
 
-        public void RegisterOnBlockUse(Action<int, int, int, int> f)
+        public void RegisterOnBlockUse(ManicDigger.Action<int, int, int, int> f)
         {
             server.onuse.Add(f);
         }
@@ -251,7 +251,7 @@ namespace ManicDigger
             return MapUtil.IsValidPos(server.d_Map, x, y, z);
         }
 
-        public void RegisterTimer(Action a, int interval)
+        public void RegisterTimer(ManicDigger.Action a, int interval)
         {
             server.timers[new ManicDigger.Timer() { INTERVAL = 5 }] = delegate { a(); };
         }

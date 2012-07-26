@@ -1015,7 +1015,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        public List<Action<int, int, int>> blockticks = new List<Action<int, int, int>>();
+        public List<ManicDigger.Action<int, int, int>> blockticks = new List<ManicDigger.Action<int, int, int>>();
 
         public int[] MonsterTypesUnderground = new int[] { 1, 2 };
         public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
@@ -2255,7 +2255,7 @@ if (sent >= unknown.Count) { break; }
                     var newItem = new Item();
                     newItem.ItemClass = ItemClass.Block;
                     // Anon-method here to break out of the nested loop instead of using goto.
-                    Jint.Delegates.Action fillArea = delegate
+                    ManicDigger.Action fillArea = delegate
                     {
                         for (int x = startx; x <= endx; ++x)
                         {
@@ -2354,10 +2354,10 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
         }
-        public List<Action<int, int, int, int>> onuse = new List<Action<int, int, int, int>>();
-        public List<Action<int, int, int, int>> onbuild = new List<Action<int, int, int, int>>();
-        public List<Action<int, int, int, int, int>> ondelete = new List<Action<int, int, int, int, int>>();
-        public delegate void Action<T1, T2, T3, T4, T5>(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5);
+        public List<ManicDigger.Action<int, int, int, int>> onuse = new List<ManicDigger.Action<int, int, int, int>>();
+        public List<ManicDigger.Action<int, int, int, int>> onbuild = new List<ManicDigger.Action<int, int, int, int>>();
+        public List<ManicDigger.Action<int, int, int, int, int>> ondelete = new List<ManicDigger.Action<int, int, int, int, int>>();
+
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);

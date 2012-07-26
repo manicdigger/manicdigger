@@ -676,7 +676,7 @@ namespace ManicDigger.Hud
       }
 
       private string m_clip_buffer;
-      public event Action<object> ClipBufferChanged; // <-- forwarding internal clipbuffer to system clipboard can be hooked into here
+      public event ManicDigger.Action<object> ClipBufferChanged; // <-- forwarding internal clipbuffer to system clipboard can be hooked into here
       public string ClipBuffer
       {
          get { return m_clip_buffer; }

@@ -21,7 +21,7 @@ namespace ManicDigger
         #endregion
         public CraftingRecipe[] craftingrecipes2;
         List<int> craftingblocks;
-        Action<int?> craftingrecipeselected;
+        ManicDigger.Action<int?> craftingrecipeselected;
 
         int craftingselectedrecipe = 0;
         List<int> okrecipes;
