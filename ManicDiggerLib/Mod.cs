@@ -142,17 +142,17 @@ namespace ManicDigger
             server.d_Data.UseBlockType(id, server.BlockTypes[id], null);
         }
 
-        public void SetOnBlockBuild(Action<int, int, int, int> f)
+        public void RegisterOnBlockBuild(Action<int, int, int, int> f)
         {
             server.onbuild.Add(f);
         }
 
-        public void SetOnBlockDelete(ManicDiggerServer.Server.Action<int, int, int, int, int> f)
+        public void RegisterOnBlockDelete(ManicDiggerServer.Server.Action<int, int, int, int, int> f)
         {
             server.ondelete.Add(f);
         }
 
-        public void SetOnBlockUse(Action<int, int, int, int> f)
+        public void RegisterOnBlockUse(Action<int, int, int, int> f)
         {
             server.onuse.Add(f);
         }
@@ -250,7 +250,7 @@ namespace ManicDigger
             return MapUtil.IsValidPos(server.d_Map, x, y, z);
         }
 
-        public void SetTimer(Action a, int interval)
+        public void RegisterTimer(Action a, int interval)
         {
             server.timers[new ManicDigger.Timer() { INTERVAL = 5 }] = delegate { a(); };
         }
@@ -324,8 +324,18 @@ namespace ManicDigger
             server.SendMessage(player, p);
         }
 
-        public void SetPrivilege(string p)
+        public void RegisterPrivilege(string p)
         {
+        }
+
+        public void RegisterOnBlockUpdate(Action<int, int, int> f)
+        {
+            server.blockticks.Add(f);
+        }
+
+        internal bool IsTransparentForLight(int p)
+        {
+            return server.d_Data.IsTransparentForLight[p];
         }
     }
 }

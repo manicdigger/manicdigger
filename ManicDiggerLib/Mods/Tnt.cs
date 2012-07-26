@@ -33,9 +33,9 @@ namespace ManicDigger.Mods
             adminium = m.GetBlockId("Adminium");
             m.AddToCreativeInventory("TNT");
             m.AddCraftingRecipe("TNT", 1, "GoldBlock", 1);
-            m.SetOnBlockUse(UseTnt);
-            m.SetPrivilege("use_tnt");
-            m.SetTimer(UpdateTnt, 5);
+            m.RegisterOnBlockUse(UseTnt);
+            m.RegisterPrivilege("use_tnt");
+            m.RegisterTimer(UpdateTnt, 5);
         }
         ModManager m;
         int tnt;

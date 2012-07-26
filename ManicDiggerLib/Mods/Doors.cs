@@ -10,9 +10,9 @@ namespace ManicDigger.Mods
         {
             this.m = m;
 
-            m.SetOnBlockBuild(OnBuild);
-            m.SetOnBlockDelete(OnDelete);
-            m.SetOnBlockUse(OnUse);
+            m.RegisterOnBlockBuild(OnBuild);
+            m.RegisterOnBlockDelete(OnDelete);
+            m.RegisterOnBlockUse(OnUse);
 
             m.SetString("en", "DoorBottomClosed", "Closed Door");
             m.SetString("en", "DoorTopClosed", "Closed Door");
