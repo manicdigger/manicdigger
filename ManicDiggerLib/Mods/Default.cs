@@ -692,34 +692,6 @@ namespace ManicDigger.Mods
                     Rail = i,
                 });
             }
-            m.SetBlockType(126, "DoorBottomClosed", new BlockType()
-            {
-                AllTextures = "DoorBottom",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-            });
-            m.SetBlockType(127, "DoorTopClosed", new BlockType()
-            {
-                AllTextures = "DoorTop",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-            });
-            m.SetBlockType(128, "DoorBottomOpen", new BlockType()
-            {
-                AllTextures = "DoorBottom",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-            });
-            m.SetBlockType(129, "DoorTopOpen", new BlockType()
-            {
-                AllTextures = "DoorTop",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-            });
             m.SetBlockType(130, "GrassTrap", new BlockType()
             {
                 TextureIdTop = "Grass",
@@ -956,7 +928,6 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("FillStart");
             m.AddToCreativeInventory("Cuboid");
             m.AddToCreativeInventory("FillArea");
-            m.AddToCreativeInventory("DoorBottomClosed");
             m.AddToCreativeInventory("GrassTrap");
             m.AddToCreativeInventory("GoldCoin");
             m.AddToCreativeInventory("GoldBar");
@@ -1031,7 +1002,6 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("Minecart", 1, "BrushedMetal", 5);
             m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "Wood", 1);
             m.AddCraftingRecipe2("Torch", 1, "Wood", 1, "CoalOre", 1);
-            m.AddCraftingRecipe("DoorBottomClosed", 1, "Wood", 2);
             m.AddCraftingRecipe2("GrassTrap", 1, "Dirt", 10, "Camouflage", 5);
             m.AddCraftingRecipe2("Sapling", 10, "Apples", 5, "DirtForFarming", 1);
             m.AddCraftingRecipe2("DirtBrick", 1, "Dirt", 2, "Stone", 1);

@@ -284,7 +284,7 @@ namespace ManicDigger
                 }
             }
 
-            shadows.Update(d_TerrainChunkTesselator.currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparent, sunlight, cz * chunksize - chunksize);
+            shadows.Update(d_TerrainChunkTesselator.currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparentForLight, sunlight, cz * chunksize - chunksize);
             
             //for MaybeGetLight
             Array.Copy(d_TerrainChunkTesselator.currentChunkShadows,

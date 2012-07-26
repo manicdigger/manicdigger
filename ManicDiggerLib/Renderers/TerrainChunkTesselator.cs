@@ -474,13 +474,13 @@ namespace ManicDigger.Renderers
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (d_Data.IsFlower[tiletype])
+            if (d_Data.IsFlower[tiletype] || d_Data.DrawType1[tiletype] == DrawType.ClosedDoor)
             {
                 drawtop = 0;
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (tiletype == 128 || tiletype == 129) //open door
+            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoor) //open door
             {
                 flowerfix = 0.9f;
                 //x-1, x+1

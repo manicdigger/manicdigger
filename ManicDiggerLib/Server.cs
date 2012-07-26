@@ -2664,14 +2664,20 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
         }
-
+        public List<Action<int, int, int, int>> onuse = new List<Action<int, int, int, int>>();
+        public List<Action<int, int, int, int>> onbuild = new List<Action<int, int, int, int>>();
+        public List<Action<int, int, int, int, int>> ondelete = new List<Action<int, int, int, int, int>>();
+        public delegate void Action<T1, T2, T3, T4, T5>(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5);
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             if (cmd.Mode == BlockSetMode.Use)
             {
-                UseDoor(cmd.X, cmd.Y, cmd.Z);
+                for (int i = 0; i < onuse.Count; i++)
+                {
+                    onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                }
                 if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) == (int)TileTypeManicDigger.TNT)
                 {
                     if (!clients[player_id].privileges.Contains(ServerClientMisc.Privilege.use_tnt))
@@ -2716,15 +2722,11 @@ if (sent >= unknown.Count) { break; }
                         if (d_Data.Rail[item.BlockId] != 0)
                         {
                         }
-                        if (item.BlockId == (int)TileTypeManicDigger.DoorBottomClosed)
-                        {
-                            if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1) != 0)
-                            {
-                                return false;
-                            }
-                            SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z + 1, (int)TileTypeManicDigger.DoorTopClosed);
-                        }
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
+                        for (int i = 0; i < onbuild.Count; i++)
+                        {
+                            onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                        }
                         break;
                     default:
                         //TODO
@@ -2742,44 +2744,14 @@ if (sent >= unknown.Count) { break; }
                     GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
                 }
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
-                if (GameDataManicDigger.IsDoorTile(blockid) && GameDataManicDigger.IsDoorTile(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z + 1)))
+                for (int i = 0; i < ondelete.Count; i++)
                 {
-                    SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z + 1, SpecialBlockId.Empty);
-                }
-                if (GameDataManicDigger.IsDoorTile(blockid) && GameDataManicDigger.IsDoorTile(d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z - 1)))
-                {
-                    SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z - 1, SpecialBlockId.Empty);
+                    ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
                 }
             }
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
             return true;
-        }
-
-        private void UseDoor(int x, int y, int z)
-        {
-            if (GameDataManicDigger.IsDoorTile(d_Map.GetBlock(x, y, z)))
-            {
-                for (int zz = -1; zz < 2; zz++)
-                {
-                    if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomClosed)
-                    {
-                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomOpen);
-                    }
-                    else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorBottomOpen)
-                    {
-                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorBottomClosed);
-                    }
-                    if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopClosed)
-                    {
-                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopOpen);
-                    }
-                    else if (d_Map.GetBlock(x, y, z + zz) == (int)TileTypeManicDigger.DoorTopOpen)
-                    {
-                        SetBlockAndNotify(x, y, z + zz, (int)TileTypeManicDigger.DoorTopClosed);
-                    }
-                }
-            }
         }
 
         private void UseTnt(int x, int y, int z)
@@ -2866,7 +2838,7 @@ if (sent >= unknown.Count) { break; }
             NotifyInventory(player_id);
             return true;
         }
-        void SetBlockAndNotify(int x, int y, int z, int blocktype)
+        public void SetBlockAndNotify(int x, int y, int z, int blocktype)
         {
             d_Map.SetBlockNotMakingDirty(x, y, z, blocktype);
             NotifyBlock(x, y, z, blocktype);

@@ -40,6 +40,7 @@ namespace ManicDigger
         string[][] CloneSound { get; }
         int[] StartInventoryAmount { get; }
         float[] Strength { get; }
+        DrawType[] DrawType1 { get; }
 
         int[] DefaultMaterialSlots { get; }
         float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
@@ -131,6 +132,7 @@ namespace ManicDigger
             mLightRadius = new int[count];
             mStartInventoryAmount = new int[count];
             mStrength = new float[count];
+            mDrawType = new DrawType[count];
 
             mDefaultMaterialSlots = new int[10];
             mLightLevels = new float[16];
@@ -161,6 +163,7 @@ namespace ManicDigger
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
         public float[] Strength { get { return mStrength; } }
+        public DrawType[] DrawType1 { get { return mDrawType; } }
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
@@ -205,6 +208,7 @@ namespace ManicDigger
         private int[] mLightRadius;
         private int[] mStartInventoryAmount;
         private float[] mStrength;
+        private DrawType[] mDrawType;
 
         private int[] mDefaultMaterialSlots;
         private float[] mLightLevels;
@@ -249,10 +253,11 @@ namespace ManicDigger
             IsWater[id] = b.Name.Contains("Water"); //todo
             IsTransparent[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Fluid);
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
-            IsTransparentForLight[id] = b.DrawType != DrawType.Solid;
+            IsTransparentForLight[id] = b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
             IsEmptyForPhysics[id] = b.WalkableType != WalkableType.Solid;
-            IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant);
+            IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant)
+                 && (b.DrawType != DrawType.OpenDoor) && (b.DrawType != DrawType.ClosedDoor);
             //Indexed by block id and TileSide.
             if (textureIds != null)
             {
@@ -266,7 +271,7 @@ namespace ManicDigger
             }
             IsBuildable[id] = b.IsBuildable; // todo
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
-            IsFlower[id] = b.DrawType == DrawType.Plant;
+            IsFlower[id] = b.DrawType == DrawType.Plant || b.DrawType == DrawType.OpenDoor || b.DrawType == DrawType.ClosedDoor;
             Rail[id] = (RailDirectionFlags)b.Rail;
             Name[id] = b.Name;
             WalkSpeed[id] = b.WalkSpeed;
@@ -294,6 +299,7 @@ namespace ManicDigger
             LightRadius[id] = b.LightRadius;
             //StartInventoryAmount { get; }
             Strength[id] = b.Strength;
+            DrawType1[id] = b.DrawType;
         }
     }
 

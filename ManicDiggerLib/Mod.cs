@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDiggerServer;
 using ProtoBuf;
+using GameModeFortress;
 
 namespace ManicDigger
 {
@@ -18,6 +19,8 @@ namespace ManicDigger
         Fluid,
         Torch,
         Plant,
+        OpenDoor,
+        ClosedDoor,
     }
     public enum WalkableType
     {
@@ -138,16 +141,19 @@ namespace ManicDigger
             server.d_Data.UseBlockType(id, server.BlockTypes[id], null);
         }
 
-        public void OnBlockBuild(Jint.Delegates.Func<int, int, int> f)
+        public void SetOnBlockBuild(Action<int, int, int, int> f)
         {
+            server.onbuild.Add(f);
         }
 
-        public void OnBlockDelete(Jint.Delegates.Func<int, int, int> f)
+        public void SetOnBlockDelete(ManicDiggerServer.Server.Action<int, int, int, int, int> f)
         {
+            server.ondelete.Add(f);
         }
 
-        public void OnBlockUse(Jint.Delegates.Func<int, int, int> f)
+        public void SetOnBlockUse(Action<int, int, int, int> f)
         {
+            server.onuse.Add(f);
         }
 
         public int MapSizeX { get; set; }
@@ -156,11 +162,22 @@ namespace ManicDigger
 
         public int GetBlock(int x, int y, int z)
         {
-            return 0;
+            return server.d_Map.GetBlock(x,y,z);
+        }
+
+        public string GetBlockName(int blockType)
+        {
+            return "";
+        }
+
+        public string GetBlockNameAt(int x, int y, int z)
+        {
+            return "";
         }
 
         public void SetBlock(int x, int y, int z, int tileType)
         {
+            server.SetBlockAndNotify(x, y, z, tileType);
         }
 
         private Server server;
@@ -221,6 +238,15 @@ namespace ManicDigger
             };
             r.output = new Ingredient() { Type = GetBlockId(output), Amount = outputAmount };
             server.craftingrecipes.Add(r);
+        }
+
+        public void SetString(string language, string text, string translation)
+        {
+        }
+
+        public bool IsValidPos(int x, int y, int z)
+        {
+            return MapUtil.IsValidPos(server.d_Map, x, y, z);
         }
     }
 }
