@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ManicDigger.Mods
 {
-    public class Vegetation : IMod
+    public class VegetationGrowth : IMod
     {
         public void Start(ModManager m)
         {

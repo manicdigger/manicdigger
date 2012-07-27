@@ -107,7 +107,7 @@ namespace ManicDigger
             }
         }
     }
-    public class ModManager : IMapStorage
+    public class ModManager
     {
         public void SetBlockType(int id, string name, BlockType block)
         {
@@ -128,7 +128,8 @@ namespace ManicDigger
                     return i;
                 }
             }
-            return -1;
+            //return -1;
+            throw new Exception(name);
         }
 
         public void AddToCreativeInventory(string blockType)
@@ -157,9 +158,9 @@ namespace ManicDigger
             server.onuse.Add(f);
         }
 
-        public int MapSizeX { get; set; }
-        public int MapSizeY { get; set; }
-        public int MapSizeZ { get; set; }
+        public int GetMapSizeX() { return server.d_Map.MapSizeX; }
+        public int GetMapSizeY() { return server.d_Map.MapSizeY; }
+        public int GetMapSizeZ() { return server.d_Map.MapSizeZ; }
 
         public int GetBlock(int x, int y, int z)
         {
@@ -333,9 +334,46 @@ namespace ManicDigger
             server.blockticks.Add(f);
         }
 
-        internal bool IsTransparentForLight(int p)
+        public bool IsTransparentForLight(int p)
         {
             return server.d_Data.IsTransparentForLight[p];
+        }
+
+        public void RegisterWorldGenerator(Action<int, int, int, byte[]> f)
+        {
+            server.d_Map.getchunk.Add(f);
+        }
+
+        public void RegisterOptionBool(string optionname, bool default_)
+        {
+            modoptions[optionname] = default_;
+        }
+
+        Dictionary<string, object> modoptions = new Dictionary<string, object>();
+
+        public int GetChunkSize()
+        {
+            return Server.chunksize;
+        }
+
+        public object GetOption(string optionname)
+        {
+            return modoptions[optionname];
+        }
+
+        public int GetSeed()
+        {
+            return server.Seed;
+        }
+
+        public static int Index3d(int x, int y, int h, int sizex, int sizey)
+        {
+            return (h * sizey + y) * sizex + x;
+        }
+
+        public void RegisterPopulateChunk(Action<int, int, int> f)
+        {
+            server.populatechunk.Add(f);
         }
     }
 }

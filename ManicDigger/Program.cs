@@ -9,7 +9,6 @@ using System.Windows.Forms;
 using System.Xml;
 using ManicDigger;
 using ManicDigger.MapTools;
-using ManicDigger.MapTools.Generators;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
 using ManicDiggerServer;

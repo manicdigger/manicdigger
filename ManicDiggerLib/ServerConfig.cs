@@ -273,30 +273,6 @@ namespace GameModeFortress
                 else this.treeCount = value;
             }
         }
-        public ManicDigger.MapTools.IWorldGenerator getGenerator()
-        {
-            bool caves = false;
-            bool lavaCaves = false;
-            if (EnableCaves)
-            {
-                caves = true;
-                lavaCaves = true;
-            }
-
-            switch(this.GeneratorType)
-            {
-                case "NewWorldGenerator":
-                    return new ManicDigger.MapTools.Generators.NewWorldGenerator(caves, lavaCaves);
-                case "Noise2DWorldGenerator":
-                    return new ManicDigger.MapTools.Generators.Noise2DWorldGenerator();
-                case "FlatMapGenerator":
-                    return new ManicDigger.MapTools.Generators.FlatMapGenerator();
-                case "Noise3DWorldGenerator":
-                    return new ManicDigger.MapTools.Generators.Noise3DWorldGenerator();
-                default :
-                    return new ManicDigger.MapTools.Generators.NewWorldGenerator(caves, lavaCaves);
-            }
-        }
     }
 
     public static class ServerConfigMisc

@@ -67,7 +67,6 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="Core\SafeDictionary.cs" />
     <Compile Include="DirtyChunks.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
@@ -101,10 +100,13 @@
     <Compile Include="Mods\Default.cs" />
     <Compile Include="Mods\DefaultWorldGenerator.cs" />
     <Compile Include="Mods\Doors.cs" />
+    <Compile Include="Mods\FlatWorldGenerator.cs" />
+    <Compile Include="Mods\OreGenerator.cs" />
     <Compile Include="Mods\SandPhysics.cs" />
     <Compile Include="Mods\Monsters.cs" />
     <Compile Include="Mods\Tnt.cs" />
-    <Compile Include="Mods\Vegetation.cs" />
+    <Compile Include="Mods\TreeGenerator.cs" />
+    <Compile Include="Mods\VegetationGrowth.cs" />
     <Compile Include="Mods\WaterFinite.cs" />
     <Compile Include="Forms\MultiplayerForm.cs">
       <SubType>Form</SubType>
@@ -134,14 +136,6 @@
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="MapTools\FcraftVector.cs" />
     <Compile Include="MapTools\Forester.cs" />
-    <Compile Include="MapTools\Generators\ExperimentalWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\FlatMapGenerator.cs" />
-    <Compile Include="MapTools\Generators\GenerationOption.cs" />
-    <Compile Include="MapTools\Generators\NewWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\Noise2DWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\Noise3DWorldGenerator.cs" />
-    <Compile Include="MapTools\Generators\WorldGeneratorBase.cs" />
-    <Compile Include="MapTools\IWorldGenerator.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
     <Compile Include="MapTools\WaterFinite.cs" />

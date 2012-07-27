@@ -6,6 +6,7 @@ using ManicDigger;
 using ManicDigger.MapTools;
 using ProtoBuf;
 using System.Collections.Generic;
+using Jint.Delegates;
 #endregion
 
 namespace ManicDiggerServer
@@ -46,8 +47,7 @@ namespace ManicDiggerServer
     {
         [Inject]
         public IChunkDb d_ChunkDb;
-        [Inject]
-        public IWorldGenerator d_Generator;
+        public List<Action<int, int, int, byte[]>> getchunk = new List<Action<int,int,int,byte[]>>();
         [Inject]
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
@@ -123,17 +123,13 @@ namespace ManicDiggerServer
                     return chunks[x, y, z].data;
                 }
 
-                // update chunk size and get chunk
-                d_Generator.ChunkSize = chunksize;
-                byte[, ,] newchunk = d_Generator.GetChunk(x, y, z);
-                if (newchunk != null)
+                // get chunk
+                byte[] newchunk = new byte[chunksize * chunksize * chunksize];
+                for (int i = 0; i < getchunk.Count; i++)
                 {
-                    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
+                    getchunk[i](x, y, z, newchunk);
                 }
-                else
-                {
-                    chunks[x, y, z] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
-                }
+                chunks[x, y, z] = new Chunk() { data = newchunk };
                 chunks[x, y, z].DirtyForSaving = true;
                 UpdateChunkHeight(x, y, z);
                 return chunks[x, y, z].data;

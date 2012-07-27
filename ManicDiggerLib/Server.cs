@@ -63,8 +63,6 @@ namespace ManicDiggerServer
         [Inject]
         public IChunkDb d_ChunkDb;
         [Inject]
-        public IWorldGenerator d_Generator;
-        [Inject]
         public ICompression d_NetworkCompression;
         [Inject]
         public WaterFinite d_Water;
@@ -162,17 +160,9 @@ namespace ManicDiggerServer
                 BlockTypes[i] = new BlockType() { };
             }
 
-            // TODO: make it possible to change the world generator at run-time!
-            var generator = server.config.Generator.getGenerator();
-            generator.ChunkSize = map.chunksize;
-            // apply chunk size to generator
-            map.d_Generator = generator;
-            //server.chunksize = 32;
-
             map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = Server.chunksize, d_Map = map };
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.d_Map = map;
-            server.d_Generator = generator;
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             string[] datapathspublic = new[] { Path.Combine(datapaths[0], "public"), Path.Combine(datapaths[1], "public") };
             server.PublicDataPaths = datapathspublic;
@@ -271,7 +261,10 @@ namespace ManicDiggerServer
             {
                 new ManicDigger.Mods.Default(),
                 new ManicDigger.Mods.DefaultWorldGenerator(),
-                new ManicDigger.Mods.Vegetation(),
+                //new ManicDigger.Mods.FlatWorldGenerator(),
+                new ManicDigger.Mods.TreeGenerator(),
+                new ManicDigger.Mods.OreGenerator(),
+                new ManicDigger.Mods.VegetationGrowth(),
                 new ManicDigger.Mods.Doors(),
                 new ManicDigger.Mods.SandPhysics(),
                 new ManicDigger.Mods.Monsters(),
@@ -317,7 +310,7 @@ namespace ManicDiggerServer
             ChatLog(string.Format("{0}: {1}", serverConsoleClient.playername, message));
         }
 
-        int Seed;
+        public int Seed;
         private void LoadGame(string filename)
         {
             d_ChunkDb.Open(filename);
@@ -325,7 +318,7 @@ namespace ManicDiggerServer
             if (globaldata == null)
             {
                 //no savegame
-                d_Generator.treeCount = config.Generator.TreeCount;
+                //d_Generator.treeCount = config.Generator.TreeCount;
                 if (config.Generator.RandomSeed)
                 {
                     Seed = new Random().Next();
@@ -334,14 +327,14 @@ namespace ManicDiggerServer
                 {
                     Seed = config.Generator.Seed;
                 }
-                d_Generator.SetSeed(Seed);
+                //d_Generator.SetSeed(Seed);
                 MemoryStream ms = new MemoryStream();
                 SaveGame(ms);
                 d_ChunkDb.SetGlobalData(ms.ToArray());
                 return;
             }
             ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
-            d_Generator.SetSeed(save.Seed);
+            //d_Generator.SetSeed(save.Seed);
             Seed = save.Seed;
             d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
             if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>();
@@ -988,9 +981,15 @@ namespace ManicDiggerServer
             }
         }
 
+        public List<Action<int, int, int>> populatechunk = new List<Action<int, int, int>>();
+
         private void PopulateChunk(Vector3i p)
         {
-            d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
+            for (int i = 0; i < populatechunk.Count; i++)
+            {
+                populatechunk[i](p.x / chunksize, p.y / chunksize, p.z / chunksize);
+            }
+            //d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
         }
 
         private void ChunkUpdate(Vector3i p, long lastupdate)
