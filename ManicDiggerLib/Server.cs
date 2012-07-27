@@ -981,7 +981,7 @@ namespace ManicDiggerServer
             }
         }
 
-        public List<Action<int, int, int>> populatechunk = new List<Action<int, int, int>>();
+        public List<ManicDigger.Action<int, int, int>> populatechunk = new List<ManicDigger.Action<int, int, int>>();
 
         private void PopulateChunk(Vector3i p)
         {
