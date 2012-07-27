@@ -69,8 +69,6 @@ namespace ManicDiggerServer
         [Inject]
         public WaterFinite d_Water;
         [Inject]
-        public GroundPhysics d_GroundPhysics;
-        [Inject]
         public ISocket d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
@@ -200,7 +198,6 @@ namespace ManicDiggerServer
             map.d_Data = server.d_Data;
             server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
             server.d_Water = new WaterFinite() { data = server.d_Data };
-            server.d_GroundPhysics = new GroundPhysics() { data = server.d_Data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
@@ -276,11 +273,12 @@ namespace ManicDiggerServer
                 new ManicDigger.Mods.DefaultWorldGenerator(),
                 new ManicDigger.Mods.Vegetation(),
                 new ManicDigger.Mods.Doors(),
-                new ManicDigger.Mods.GroundPhysics(),
+                new ManicDigger.Mods.SandPhysics(),
                 new ManicDigger.Mods.Monsters(),
                 new ManicDigger.Mods.Tnt(),
                 new ManicDigger.Mods.CraftingTable(),
                 new ManicDigger.Mods.WaterFinite(),
+                new ManicDigger.Mods.SandPhysics(),
             };
             for (int i = 0; i < mods.Length; i++)
             {
@@ -843,7 +841,6 @@ namespace ManicDiggerServer
             {
                 k.Key.Update(k.Value);
             }
-            NotifyGroundPhysics();
             if ((DateTime.UtcNow - statsupdate).TotalSeconds >= 2)
             {
                 statsupdate = DateTime.UtcNow;
@@ -854,18 +851,6 @@ namespace ManicDiggerServer
         DateTime statsupdate;
 
         public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
-
-        private void NotifyGroundPhysics()
-        {
-            foreach (var v in d_GroundPhysics.blocksToNotify)
-            {
-                foreach (var k in clients)
-                {
-                    SendSetBlock(k.Key, (int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, v.type);
-                }
-            }
-            d_GroundPhysics.blocksToNotify.Clear();
-        }
 
         private void UpdateWater()
         {
@@ -1877,7 +1862,6 @@ if (sent >= unknown.Count) { break; }
                         }
                         BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                         d_Water.BlockChange(d_Map, x, y, z);
-                        d_GroundPhysics.BlockChange(d_Map, x, y, z);
                     }
                     break;
                 case ClientPacketId.FillArea:
