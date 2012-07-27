@@ -1914,7 +1914,10 @@ if (sent >= unknown.Count) { break; }
                         {
                             if (k.Key != clientid)
                             {
-                                SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
+                                if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
+                                {
+                                    SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
+                                }
                             }
                         }
                     }
@@ -1979,6 +1982,8 @@ if (sent >= unknown.Count) { break; }
             }
             return lengthPrefixLength + packetLength;
         }
+
+        public int PlayerDrawDistance = 128;
 
         private void RunInClientSandbox(string script, int clientid)
         {

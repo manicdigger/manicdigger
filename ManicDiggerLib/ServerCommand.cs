@@ -345,6 +345,31 @@ namespace ManicDiggerServer
                     this.RestartServer(sourceClientId);
                     break;
                 //case "crashserver": for (; ; ) ;
+                case "tp":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length != 1)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.playername.Equals(ss[0], StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            this.TeleportToPlayer(sourceClientId, k.Key);
+                            return;
+                        }
+                    }
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.playername.StartsWith(ss[0], StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            this.TeleportToPlayer(sourceClientId, k.Key);
+                            return;
+                        }
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, ss[0]));
+                    break;
                 case "teleport_player":
                     ss = argument.Split(new[] { ' ' });
 
@@ -1645,6 +1670,19 @@ namespace ManicDiggerServer
             SendMessageToAll(string.Format("{0}{1} restarted server.", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} restarts server.", GetClient(sourceClientId).playername));
             Exit();
+            return true;
+        }
+
+        public bool TeleportToPlayer(int sourceClientId, int clientTo)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.tp))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            Client t = clients[clientTo];
+            SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
+                t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch);
             return true;
         }
 

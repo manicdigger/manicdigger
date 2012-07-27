@@ -238,6 +238,7 @@ namespace GameModeFortress
             public static string privilege_add = "privilege_add";
             public static string privilege_remove = "privilege_remove";
             public static string restart = "restart";
+            public static string tp = "tp";
             public static string teleport_player = "teleport_player";
             public static string backup = "backup";
         };
@@ -273,7 +274,7 @@ namespace GameModeFortress
             builder.GroupPrivileges.Add(Privilege.chat);
             builder.GroupPrivileges.Add(Privilege.pm);
             builder.GroupPrivileges.Add(Privilege.build);
-            builder.GroupPrivileges.Add(Privilege.use_tnt);
+            builder.GroupPrivileges.Add(Privilege.tp);
             builder.GroupColor = ClientColor.Green;
             defaultGroups.Add(builder);
             // default admin group
@@ -305,6 +306,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.area_add);
             admin.GroupPrivileges.Add(Privilege.area_delete);
             admin.GroupPrivileges.Add(Privilege.restart);
+            admin.GroupPrivileges.Add(Privilege.tp);
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);
 

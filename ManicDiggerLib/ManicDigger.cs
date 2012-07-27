@@ -82,7 +82,7 @@ namespace ManicDigger
     }
     public class Player
     {
-        public Vector3 Position;
+        public Vector3? Position;
         public byte Heading;
         public byte Pitch;
         public string Name;
@@ -90,6 +90,7 @@ namespace ManicDigger
         public PlayerType Type;
         public int MonsterType;
         public int Health;
+        public DateTime LastUpdate;
     }
     public static class MapUtil
     {

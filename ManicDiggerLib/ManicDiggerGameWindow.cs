@@ -575,51 +575,6 @@ namespace ManicDigger
                         d_The3d.fov = fov;
                         OnResize(new EventArgs());
                     }
-                    else if (cmd == "tp" || cmd == "teleport")
-                    {
-                        Regex playerRegex = new Regex(@"^(?<player>(~\w+?|\w+?))$");
-                        Regex coordinateRegex = new Regex(@"^(?<x>\d+)(\s(?<y>\d+))?\s(?<z>\d+)$");
-
-                        if (playerRegex.IsMatch(arguments))
-                        {
-                            bool tp = false;
-                            foreach (var k in d_Clients.Players)
-                            {
-                                if (k.Value.Name.Equals(arguments, StringComparison.InvariantCultureIgnoreCase))
-                                {
-                                    player.playerposition = k.Value.Position;
-                                    tp = true;
-                                    break;
-                                }
-                            }
-                            if (!tp)
-                            {
-                                Log(string.Format("No such player: {0}.", arguments));
-                            }
-                        }
-                        else if (coordinateRegex.IsMatch(arguments))
-                        {
-                            Match match = coordinateRegex.Match(arguments);
-                            int x = int.Parse(match.Groups["x"].Value);
-                            int z = int.Parse(match.Groups["z"].Value);
-                            // when y is not given, set player to highest map point on (x|z)
-                            int y = match.Groups["y"].Value.Equals("") ? MapUtil.blockheight(d_Map, 0, x, z) : int.Parse(match.Groups["y"].Value);
-
-                            if (MapUtil.IsValidPos(d_Map, x, z, y))
-                            {
-                                player.playerposition = new Vector3(x, y, z);
-                            }
-                            else
-                            {
-                                Log(string.Format("Invalid coordinates: {0}.", arguments));
-                            }
-                        }
-                        else
-                        {
-                            AddChatline("Invalid argument!");
-                            AddChatline("USE: .tp [player | [x] {y} [z]]");
-                        }
-                    }
                     else if (cmd == "clients")
                     {
                         Log ("Clients:");
@@ -1522,15 +1477,16 @@ namespace ManicDigger
             Vector3 push = new Vector3();
             foreach (var k in d_Clients.Players)
             {
-                if ((k.Key == this.LocalPlayerId) ||
+                if ((k.Value.Position == null) ||
+                    (k.Key == this.LocalPlayerId) ||
                     (k.Value.Position == LocalPlayerPosition)
                      || (float.IsNaN(LocalPlayerPosition.X)))
                 {
                     continue;
                 }
-                if ((k.Value.Position - LocalPlayerPosition).Length < PlayerPushDistance)
+                if ((k.Value.Position.Value - LocalPlayerPosition).Length < PlayerPushDistance)
                 {
-                    Vector3 diff = LocalPlayerPosition - k.Value.Position;
+                    Vector3 diff = LocalPlayerPosition - k.Value.Position.Value;
                     push += diff;
                 }
             }
@@ -2513,6 +2469,10 @@ namespace ManicDigger
                 {
                     continue;
                 }
+                if (k.Value.Position == null)
+                {
+                    continue;
+                }
                 if (!playerdrawinfo.ContainsKey(k.Key))
                 {
                     playerdrawinfo[k.Key] = new PlayerDrawInfo();
@@ -2524,7 +2484,7 @@ namespace ManicDigger
                     playerdrawinfo[k.Key].interpolation = n;
                 }
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
-                Vector3 realpos = k.Value.Position;
+                Vector3 realpos = k.Value.Position.Value;
                 if (realpos != info.lastrealpos
                     || k.Value.Heading != info.lastrealheading
                     || k.Value.Pitch != info.lastrealpitch)
@@ -2546,7 +2506,7 @@ namespace ManicDigger
                 //do not interpolate player position if player is controlled by game world
                 if (EnablePlayerUpdatePosition.ContainsKey(k.Key) && !EnablePlayerUpdatePosition[k.Key])
                 {
-                    curstate.position = k.Value.Position;
+                    curstate.position = k.Value.Position.Value;
                 }
                 Vector3 curpos = curstate.position;
                 bool moves = curpos != info.lastcurpos;
@@ -2847,14 +2807,15 @@ namespace ManicDigger
         {
             foreach (KeyValuePair<int, Player> k in d_Clients.Players)
             {
-                if (k.Key == this.LocalPlayerId || k.Value.Name == ""
+                if ((k.Value.Position == null) ||
+                    (k.Key == this.LocalPlayerId) || (k.Value.Name == "")
                     || (!playerdrawinfo.ContainsKey(k.Key))
-                    || playerdrawinfo[k.Key].interpolation == null)
+                    || (playerdrawinfo[k.Key].interpolation == null))
                 {
                     continue;
                 }
                 //todo if picking
-                if (((LocalPlayerPosition - k.Value.Position).Length < 20)
+                if (((LocalPlayerPosition - k.Value.Position.Value).Length < 20)
                     || Keyboard[GetKey(OpenTK.Input.Key.AltLeft)] || Keyboard[GetKey(OpenTK.Input.Key.AltRight)])
                 {
                     string name = k.Value.Name;
@@ -2866,7 +2827,7 @@ namespace ManicDigger
                         //do not interpolate player position if player is controlled by game world
                         if (EnablePlayerUpdatePosition.ContainsKey(k.Key) && !EnablePlayerUpdatePosition[k.Key])
                         {
-                            pos = k.Value.Position;
+                            pos = k.Value.Position.Value;
                         }
                         GL.PushMatrix();
                         GL.Translate(pos.X, pos.Y + 1f, pos.Z);
@@ -3433,10 +3394,13 @@ namespace ManicDigger
         {
             foreach (var k in players)
             {
-                Vector3 playerpos = k.Value.Position;
-                if (IsPlayerInPos(playerpos, blockpos))
+                if (k.Value.Position != null)
                 {
-                    return true;
+                    Vector3 playerpos = k.Value.Position.Value;
+                    if (IsPlayerInPos(playerpos, blockpos))
+                    {
+                        return true;
+                    }
                 }
             }
             return IsPlayerInPos(LocalPlayerPosition, blockpos);
@@ -3587,9 +3551,12 @@ namespace ManicDigger
                             {
                                 foreach (var player in players)
                                 {
-                                    if ((player.Value.Position - new Vector3(xx, zz, yy)).Length < 3)
+                                    if (player.Value.Position != null)
                                     {
-                                        playernear = true;
+                                        if ((player.Value.Position.Value - new Vector3(xx, zz, yy)).Length < 3)
+                                        {
+                                            playernear = true;
+                                        }
                                     }
                                 }
                             }
@@ -4127,6 +4094,15 @@ namespace ManicDigger
                 lastpositionsent = DateTime.UtcNow;
                 SendPosition(LocalPlayerPosition, LocalPlayerOrientation);
             }
+            DateTime now = DateTime.UtcNow;
+            foreach (var k in players)
+            {
+                if ((now - k.Value.LastUpdate).TotalSeconds > 2)
+                {
+                    playerdrawinfo.Remove(k.Key);
+                    k.Value.Position = null;
+                }
+            }
         }
         public int mapreceivedsizex;
         public int mapreceivedsizey;
@@ -4628,6 +4604,7 @@ namespace ManicDigger
                 }
                 d_Clients.Players[playerid].Heading = heading;
                 d_Clients.Players[playerid].Pitch = pitch;
+                d_Clients.Players[playerid].LastUpdate = DateTime.UtcNow;
             }
         }
         List<byte> received = new List<byte>();
