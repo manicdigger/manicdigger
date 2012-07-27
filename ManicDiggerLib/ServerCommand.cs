@@ -345,6 +345,11 @@ namespace ManicDiggerServer
                     this.RestartServer(sourceClientId);
                     break;
                 //case "crashserver": for (; ; ) ;
+                case "stats":
+                    double seconds = (DateTime.UtcNow - statsupdate).TotalSeconds;
+                    SendMessage(sourceClientId, "Packets/s:" + decimal.Round((decimal)(StatTotalPackets / seconds), 2, MidpointRounding.AwayFromZero));
+                    SendMessage(sourceClientId, "Total KBytes/s:" + decimal.Round((decimal)(StatTotalPacketsLength / seconds / 1024), 2, MidpointRounding.AwayFromZero));
+                    break;
                 case "tp":
                     ss = argument.Split(new[] { ' ' });
                     if (ss.Length != 1)

@@ -844,7 +844,14 @@ namespace ManicDiggerServer
                 k.Key.Update(k.Value);
             }
             NotifyGroundPhysics();
+            if ((DateTime.UtcNow - statsupdate).TotalSeconds >= 2)
+            {
+                statsupdate = DateTime.UtcNow;
+                StatTotalPackets = 0;
+                StatTotalPacketsLength = 0;
+            }
         }
+        DateTime statsupdate;
 
         public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
 
@@ -2699,8 +2706,12 @@ if (sent >= unknown.Count) { break; }
             PacketServerDisconnectPlayer p = new PacketServerDisconnectPlayer() { DisconnectReason = disconnectReason };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DisconnectPlayer, DisconnectPlayer = p }));
         }
+        int StatTotalPackets = 0;
+        int StatTotalPacketsLength = 0;
         public void SendPacket(int clientid, byte[] packet)
         {
+            StatTotalPackets++;
+            StatTotalPacketsLength += packet.Length;
             try
             {
                 //if (IsMono)
