@@ -427,6 +427,7 @@ namespace ManicDigger
         Destroy,
         Create,
         Use, //open doors, use crafting table, etc.
+        UseWithTool,
     }
     public interface ILogger
     {

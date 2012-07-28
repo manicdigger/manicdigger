@@ -15,6 +15,7 @@ namespace ManicDigger.Mods
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
             };
+            m.SetDefaultSounds(solidSounds);
             SoundSet noSound = new SoundSet();
             m.SetBlockType(0, "Empty", new BlockType()
             {

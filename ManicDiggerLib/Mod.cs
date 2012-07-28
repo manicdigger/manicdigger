@@ -5,6 +5,7 @@ using ManicDiggerServer;
 using ProtoBuf;
 using GameModeFortress;
 using Jint.Delegates;
+using System.Net;
 
 namespace ManicDigger
 {
@@ -93,6 +94,10 @@ namespace ManicDigger
         public string Name;
         [ProtoMember(18)]
         public bool IsBuildable;
+        [ProtoMember(19)]
+        public bool IsUsable;
+        [ProtoMember(20)]
+        public bool IsTool;
         public string AllTextures
         {
             set
@@ -111,11 +116,19 @@ namespace ManicDigger
     {
         public void SetBlockType(int id, string name, BlockType block)
         {
+            if (block.Sounds == null)
+            {
+                block.Sounds = defaultSounds;
+            }
             server.SetBlockType(id, name, block);
         }
 
         public void SetBlockType(string name, BlockType block)
         {
+            if (block.Sounds == null)
+            {
+                block.Sounds = defaultSounds;
+            }
             server.SetBlockType(name, block);
         }
 
@@ -158,6 +171,11 @@ namespace ManicDigger
             server.onuse.Add(f);
         }
 
+        public void RegisterOnBlockUseWithTool(ManicDigger.Action<int, int, int, int, int> f)
+        {
+            server.onusewithtool.Add(f);
+        }
+
         public int GetMapSizeX() { return server.d_Map.MapSizeX; }
         public int GetMapSizeY() { return server.d_Map.MapSizeY; }
         public int GetMapSizeZ() { return server.d_Map.MapSizeZ; }
@@ -169,12 +187,12 @@ namespace ManicDigger
 
         public string GetBlockName(int blockType)
         {
-            return "";
+            return server.BlockTypes[blockType].Name;
         }
 
         public string GetBlockNameAt(int x, int y, int z)
         {
-            return "";
+            return GetBlockName(GetBlock(x,y,z));
         }
 
         public void SetBlock(int x, int y, int z, int tileType)
@@ -374,6 +392,46 @@ namespace ManicDigger
         public void RegisterPopulateChunk(Action<int, int, int> f)
         {
             server.populatechunk.Add(f);
+        }
+
+        public void SetDefaultSounds(SoundSet defaultSounds)
+        {
+            this.defaultSounds = defaultSounds;
+        }
+        SoundSet defaultSounds;
+
+        public byte[] GetGlobalData(string name)
+        {
+            if (server.moddata.ContainsKey(name))
+            {
+                return server.moddata[name];
+            }
+            return null;
+        }
+
+        public void SetGlobalData(string name, byte[] value)
+        {
+            server.moddata[name] = value;
+        }
+
+        public void RegisterOnLoad(Action f)
+        {
+            server.onload.Add(f);
+        }
+
+        public void RegisterOnSave(Action f)
+        {
+            server.onsave.Add(f);
+        }
+
+        public string GetPlayerIp(int player)
+        {
+            return ((IPEndPoint)server.clients[player].socket.RemoteEndPoint).Address.ToString();
+        }
+
+        public string GetPlayerName(int player)
+        {
+            return server.clients[player].playername;
         }
     }
 }

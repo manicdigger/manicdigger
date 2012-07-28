@@ -48,6 +48,8 @@ namespace ManicDiggerServer
         public Dictionary<string, PacketServerPlayerStats> PlayerStats;
         [ProtoMember(10, IsRequired = false)]
         public int LastMonsterId;
+        [ProtoMember(11, IsRequired = false)]
+        public Dictionary<string, byte[]> moddata;
     }
     public partial class Server : ICurrentTime, IDropItem
     {
@@ -272,6 +274,7 @@ namespace ManicDiggerServer
                 new ManicDigger.Mods.CraftingTable(),
                 new ManicDigger.Mods.WaterFinite(),
                 new ManicDigger.Mods.SandPhysics(),
+                new ManicDigger.Mods.VandalFinder(),
             };
             for (int i = 0; i < mods.Length; i++)
             {
@@ -342,12 +345,24 @@ namespace ManicDiggerServer
             this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
             this.LastMonsterId = save.LastMonsterId;
+            this.moddata = save.moddata;
+            if (moddata == null) { moddata = new Dictionary<string, byte[]>(); }
+            for (int i = 0; i < onload.Count; i++)
+            {
+                onload[i]();
+            }
         }
+        public List<ManicDigger.Action> onload = new List<ManicDigger.Action>();
+        public List<ManicDigger.Action> onsave = new List<ManicDigger.Action>();
         public int LastMonsterId;
         public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>();
         public Dictionary<string, PacketServerPlayerStats> PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
         public void SaveGame(Stream s)
         {
+            for (int i = 0; i < onsave.Count; i++)
+            {
+                onsave[i]();
+            }
             ManicDiggerSave save = new ManicDiggerSave();
             SaveAllLoadedChunks();
             if (!config.IsCreative)
@@ -358,8 +373,10 @@ namespace ManicDiggerServer
             save.Seed = Seed;
             save.SimulationCurrentFrame = simulationcurrentframe;
             save.LastMonsterId = LastMonsterId;
+            save.moddata = moddata;
             Serializer.Serialize(s, save);
         }
+        public Dictionary<string, byte[]> moddata = new Dictionary<string, byte[]>();
         public void BackupDatabase(string backupFilename)
         {
             d_ChunkDb.Backup(backupFilename);
@@ -2357,6 +2374,7 @@ if (sent >= unknown.Count) { break; }
         public List<ManicDigger.Action<int, int, int, int>> onuse = new List<ManicDigger.Action<int, int, int, int>>();
         public List<ManicDigger.Action<int, int, int, int>> onbuild = new List<ManicDigger.Action<int, int, int, int>>();
         public List<ManicDigger.Action<int, int, int, int, int>> ondelete = new List<ManicDigger.Action<int, int, int, int, int>>();
+        public List<ManicDigger.Action<int, int, int, int, int>> onusewithtool = new List<ManicDigger.Action<int, int, int, int, int>>();
 
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
@@ -2367,6 +2385,14 @@ if (sent >= unknown.Count) { break; }
                 for (int i = 0; i < onuse.Count; i++)
                 {
                     onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                }
+                return true;
+            }
+            if (cmd.Mode == BlockSetMode.UseWithTool)
+            {
+                for (int i = 0; i < onusewithtool.Count; i++)
+                {
+                    onusewithtool[i](player_id, cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
                 }
                 return true;
             }
@@ -3258,7 +3284,7 @@ if (sent >= unknown.Count) { break; }
         {
             for (int i = 0; i < BlockTypes.Length; i++)
             {
-                if (BlockTypes[i] == null)
+                if (BlockTypes[i].Name == null)
                 {
                     SetBlockType(i, name, block);
                     return;

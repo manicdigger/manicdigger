@@ -1742,7 +1742,8 @@ namespace ManicDigger
                 || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
                 || blocktype == (int)TileTypeManicDigger.DoorTopOpen
                 || blocktype == (int)TileTypeManicDigger.TNT
-                || GameDataManicDigger.IsRailTile(blocktype);
+                || GameDataManicDigger.IsRailTile(blocktype)
+                || blocktypes[blocktype].IsUsable;
         }
         bool IsWearingWeapon()
         {
@@ -3138,9 +3139,9 @@ namespace ManicDigger
             }
             return new Vector3i((int)pos.X, (int)pos.Z, (int)pos.Y);
         }
-        private void OnPickUse(Vector3 pos)
+        private void OnPickUseWithTool(Vector3 pos)
         {
-            SendSetBlock(new Vector3(pos.X, pos.Z, pos.Y), BlockSetMode.Use, 0, ActiveMaterial);
+            SendSetBlock(new Vector3(pos.X, pos.Y, pos.Z), BlockSetMode.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
         }
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
@@ -3183,6 +3184,11 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == BlockSetMode.Create)
                 {
+                    if (blocktypes[activematerial].IsTool)
+                    {
+                        OnPickUseWithTool(blockpos);
+                        return;
+                    }
                     if (GameDataManicDigger.IsDoorTile(activematerial))
                     {
                         if (z + 1 == d_Map.MapSizeZ || z == 0) return;
@@ -3236,6 +3242,11 @@ namespace ManicDigger
                 }
                 else
                 {
+                    if (blocktypes[activematerial].IsTool)
+                    {
+                        OnPickUseWithTool(blockpos);
+                        return;
+                    }
                     //delete fill start
                     if (fillstart != null && fillstart == v)
                     {
