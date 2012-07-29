@@ -2231,14 +2231,6 @@ namespace ManicDigger
 
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
-            if (d_Config3d.viewdistance < 128)
-            {
-                SetFog();
-            }
-            else
-            {
-                GL.Disable(EnableCap.Fog);
-            }
 
             if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
             {
@@ -2277,7 +2269,12 @@ namespace ManicDigger
             bool drawgame = guistate != GuiState.MapLoading;
             if (drawgame)
             {
+                GL.Disable(EnableCap.Fog);
                 DrawSkySphere();
+                if (d_Config3d.viewdistance < 128)
+                {
+                    SetFog();
+                }
                 DrawPlayers((float)e.Time);
                 d_SunMoonRenderer.Draw((float)e.Time);
                 DrawTerrain();
