@@ -307,6 +307,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.area_delete);
             admin.GroupPrivileges.Add(Privilege.restart);
             admin.GroupPrivileges.Add(Privilege.tp);
+            admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);
 

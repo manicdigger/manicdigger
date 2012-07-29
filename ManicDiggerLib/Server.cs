@@ -274,7 +274,9 @@ namespace ManicDiggerServer
                 new ManicDigger.Mods.CraftingTable(),
                 new ManicDigger.Mods.WaterFinite(),
                 new ManicDigger.Mods.SandPhysics(),
+                new ManicDigger.Mods.BuildLog(),
                 new ManicDigger.Mods.VandalFinder(),
+                new ManicDigger.Mods.Revert(),
             };
             for (int i = 0; i < mods.Length; i++)
             {
@@ -287,7 +289,7 @@ namespace ManicDiggerServer
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
         public int ServerConsoleId {get { return serverConsoleId; } }
         private Client serverConsoleClient;
-
+        public List<ManicDigger.Func<int, string, string, bool>> oncommand = new List<ManicDigger.Func<int, string, string, bool>>();
         public void ReceiveServerConsole(string message)
         {
             if (message == null)
@@ -2624,7 +2626,7 @@ if (sent >= unknown.Count) { break; }
             this.SendMessageToAll(MessageTypeToString(color) + message);
             ServerEventLog(string.Format("SERVER MESSAGE: {0}.", message));
         }
-        private void SendMessageToAll(string message)
+        public void SendMessageToAll(string message)
         {
             Console.WriteLine("Message to all: " + message);
             foreach (var k in clients)

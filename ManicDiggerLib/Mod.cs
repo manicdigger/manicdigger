@@ -11,6 +11,7 @@ namespace ManicDigger
 {
     public interface IMod
     {
+        void PreStart(ModManager m);
         void Start(ModManager m);
     }
     public enum DrawType
@@ -424,6 +425,11 @@ namespace ManicDigger
             server.onsave.Add(f);
         }
 
+        public void RegisterOnCommand(Func<int,string,string,bool> f)
+        {
+            server.oncommand.Add(f);
+        }
+
         public string GetPlayerIp(int player)
         {
             return ((IPEndPoint)server.clients[player].socket.RemoteEndPoint).Address.ToString();
@@ -432,6 +438,31 @@ namespace ManicDigger
         public string GetPlayerName(int player)
         {
             return server.clients[player].playername;
+        }
+
+        public void RequireMod(string modname)
+        {
+        }
+
+        public void SetGlobalDataNotSaved(string name, object value)
+        {
+            notsaved[name] = value;
+        }
+
+        public object GetGlobalDataNotSaved(string name)
+        {
+            return notsaved[name];
+        }
+        Dictionary<string, object> notsaved = new Dictionary<string, object>();
+
+        public void SendMessageToAll(string message)
+        {
+            server.SendMessageToAll(message);
+        }
+
+        public void RegisterCommandHelp(string command, string help)
+        {
+            server.commandhelps[command] = help;
         }
     }
 }

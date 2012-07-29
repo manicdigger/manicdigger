@@ -6,6 +6,9 @@ namespace ManicDigger.Mods
 {
     public class Default : IMod
     {
+        public void PreStart(ModManager m)
+        {
+        }
         public void Start(ModManager m)
         {
             SoundSet solidSounds = new SoundSet()

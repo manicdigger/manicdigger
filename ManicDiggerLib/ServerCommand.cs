@@ -435,6 +435,13 @@ namespace ManicDiggerServer
                     SendMessage(sourceClientId, string.Format("{0}Backup created.", colorSuccess));
                     break;
                 default:
+                    for (int i = 0; i < oncommand.Count; i++)
+                    {
+                        if (oncommand[i](sourceClientId, command, argument))
+                        {
+                            return;
+                        }
+                    }
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);
                     return;
             }
@@ -521,9 +528,14 @@ namespace ManicDiggerServer
                 case "backup":
                     return "/backup [filename]";
                 default:
+                    if (commandhelps.ContainsKey(command))
+                    {
+                        return commandhelps[command];
+                    }
                     return "No description available.";
             }
         }
+        public Dictionary<string, string> commandhelps = new Dictionary<string, string>();
 
         public bool PrivateMessage(int sourceClientId, string recipient, string message)
         {

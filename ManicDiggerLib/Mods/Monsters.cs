@@ -6,6 +6,10 @@ namespace ManicDigger.Mods
 {
     public class Monsters : IMod
     {
+        public void PreStart(ModManager m)
+        {
+            m.RequireMod("Default");
+        }
         public void Start(ModManager m)
         {
         }

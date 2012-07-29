@@ -97,12 +97,14 @@
     </Compile>
     <Compile Include="Misc2.cs" />
     <Compile Include="ModeFortressRail.cs" />
+    <Compile Include="Mods\BuildLog.cs" />
     <Compile Include="Mods\CraftingTable.cs" />
     <Compile Include="Mods\Default.cs" />
     <Compile Include="Mods\DefaultWorldGenerator.cs" />
     <Compile Include="Mods\Doors.cs" />
     <Compile Include="Mods\FlatWorldGenerator.cs" />
     <Compile Include="Mods\OreGenerator.cs" />
+    <Compile Include="Mods\Revert.cs" />
     <Compile Include="Mods\SandPhysics.cs" />
     <Compile Include="Mods\Monsters.cs" />
     <Compile Include="Mods\Tnt.cs" />

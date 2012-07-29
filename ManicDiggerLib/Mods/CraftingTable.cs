@@ -6,6 +6,10 @@ namespace ManicDigger.Mods
 {
     public class CraftingTable : IMod
     {
+        public void PreStart(ModManager m)
+        {
+            m.RequireMod("Default");
+        }
         public void Start(ModManager m)
         {
         }
