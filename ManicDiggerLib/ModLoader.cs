@@ -29,16 +29,26 @@ namespace ManicDigger
                         string errors = "";
                         foreach (CompilerError error in results.Errors)
                         {
-                            if (error.IsWarning)
+                            //mono is treating warnings as errors.
+                            //if (error.IsWarning)
                             {
-                                continue;
+                                //continue;
                             }
                             errors += string.Format("{0} Line:{1} {2}",error.ErrorNumber, error.Line, error.ErrorText);
                         }
-                        System.Windows.Forms.MessageBox.Show("Can't load mod: " + k.Key + "\n"+errors);
+                        string errormsg = "Can't load mod: " + k.Key + "\n" + errors;
+                        try
+                        {
+                            System.Windows.Forms.MessageBox.Show(errormsg);
+                        }
+                        catch
+                        {
+                        }
+                        Console.WriteLine(errormsg);
                     }
-                    catch
+                    catch (Exception e)
                     {
+                        Console.WriteLine(e.ToString());
                     }
                     continue;
                 }
@@ -47,6 +57,7 @@ namespace ManicDigger
                     if (typeof(IMod).IsAssignableFrom(t))
                     {
                         mods[t.Name] = (IMod)results.CompiledAssembly.CreateInstance(t.FullName);
+                        Console.WriteLine("Loaded mod: {0}", t.Name);
                     }
                 }
             }

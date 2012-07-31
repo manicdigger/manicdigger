@@ -77,7 +77,7 @@ namespace ManicDigger.Mods
 
         private void UpdateTnt()
         {
-            int startQueueCount = tntStack.Count;
+            //int startQueueCount = tntStack.Count;
             int now = 0;
             while (now++ < 3)
             {

@@ -86,7 +86,7 @@ namespace ManicDigger.Mods
                     //biomecoun[biome]++;
 
                     int stoneHeight = (int)currentHeight - ((64 - (currentHeight % 64)) / 8) + 1;
-                    int bYbX = ((y << 7) + (x << 11));
+                    //int bYbX = ((y << 7) + (x << 11));
 
                     if (ymax < seaLevel)
                     {
@@ -290,7 +290,7 @@ namespace ManicDigger.Mods
             finalTerrain.SetBounds(-0.3, 1.0);
             flowers.Seed = (Seed + 10);
             flowers.Frequency = (3);
-            winterEnabled = false;
+            //winterEnabled = false;
 
 
             // Set up us the Perlin-noise module.
@@ -316,9 +316,9 @@ namespace ManicDigger.Mods
         Select secondTerrain;
         Constant plain = new Constant(0);
         Billow jaggieControl = new Billow();
-        bool winterEnabled;
+        //bool winterEnabled;
 
-        Random _rnd = new Random();
+        //Random _rnd = new Random();
 
         RidgedMultifractal caveNoise = new RidgedMultifractal();
 
