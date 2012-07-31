@@ -99,35 +99,5 @@ namespace ManicDigger.MapTools
                 }
             }
         }
-
-        /// <summary>
-        /// Creates some trees all over the chunk.
-        /// </summary>
-        /// <param name="map"></param>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
-        /// <param name="chunksize"></param>
-        /// <param name="rnd"></param>
-        public static void MakeTrees(IMapStorage map, int x, int y, int z, int chunksize, Random rnd)
-        {
-            if (z != 0) { return; }
-            //if (rnd.Next(100) > 30) { return; }
-            var foresterArgs = new fCraft.Forester.ForesterArgs();
-            if (rnd.Next(100) < 15)
-            {
-                foresterArgs.SHAPE = fCraft.Forester.TreeShape.Procedural;
-            }
-            else
-            {
-                foresterArgs.SHAPE = (fCraft.Forester.TreeShape)rnd.Next(9);
-                foresterArgs.HEIGHT = rnd.Next(5, 10);
-                foresterArgs.TREECOUNT = 3;
-            }
-            fCraft.Forester forester = new fCraft.Forester(foresterArgs);
-            foresterArgs.inMap = map;
-            foresterArgs.outMap = map;
-            forester.Generate(x, y, z, chunksize);
-        }
     }
 }

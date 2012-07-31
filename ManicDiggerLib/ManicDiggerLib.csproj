@@ -140,8 +140,6 @@
     <Compile Include="ServerWorldManager.cs" />
     <Compile Include="Shadows.cs" />
     <Compile Include="TerrainRenderer.cs" />
-    <Compile Include="MapTools\FcraftVector.cs" />
-    <Compile Include="MapTools\Forester.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
     <Compile Include="MapTools\WaterFinite.cs" />
