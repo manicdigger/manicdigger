@@ -15,12 +15,12 @@ namespace ManicDigger.Mods
             this.m = m;
             m.RegisterPrivilege("revert");
             m.RegisterCommandHelp("revert", "/revert [playername] [number of changes]");
-            lines = (List<ManicDigger.Mods.BuildLog.LogLine>)m.GetGlobalDataNotSaved("LogLines");
+            lines = (List<object[]>)m.GetGlobalDataNotSaved("LogLines");
             m.RegisterOnCommand(OnCommand);
         }
         ModManager m;
         public int MaxRevert = 2000;
-        List<ManicDigger.Mods.BuildLog.LogLine> lines = new List<BuildLog.LogLine>();
+        List<object[]> lines = new List<object[]>();
         bool OnCommand(int player, string command, string argument)
         {
             if (command.Equals("revert", StringComparison.InvariantCultureIgnoreCase))
@@ -51,16 +51,22 @@ namespace ManicDigger.Mods
                 int reverted = 0;
                 for (int i = lines.Count - 1; i >= 0; i--)
                 {
-                    ManicDigger.Mods.BuildLog.LogLine l = lines[i];
-                    if (l.Playername.Equals(targetplayername, StringComparison.InvariantCultureIgnoreCase))
+                    object[] l = lines[i];
+                    string lplayername = (string)l[6];
+                    int lx = ((short)l[1]);
+                    int ly = ((short)l[2]);
+                    int lz = ((short)l[3]);
+                    bool lbuild = (bool)l[5];
+                    short lblocktype = ((short)l[4]);
+                    if (lplayername.Equals(targetplayername, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (l.build)
+                        if (lbuild)
                         {
-                            m.SetBlock(l.x, l.y, l.z, 0);
+                            m.SetBlock(lx, ly, lz, 0);
                         }
                         else
                         {
-                            m.SetBlock(l.x, l.y, l.z, l.blocktype);
+                            m.SetBlock(lx, ly, lz, lblocktype);
                         }
                         reverted++;
                         if (reverted >= n)

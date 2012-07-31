@@ -197,7 +197,7 @@ namespace ManicDigger.Mods
                                 curBlock = BLOCK_ICE;
                             }
                         }
-                        chunk[ModManager.Index3d(xx, yy, bY - z, chunksize, chunksize)] = (byte)curBlock;
+                        chunk[m.Index3d(xx, yy, bY - z, chunksize, chunksize)] = (byte)curBlock;
                     }
                 }
             }

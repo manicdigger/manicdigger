@@ -1,11 +1,10 @@
 del /s /q output
 mkdir output
 
-copy OpenAL32.dll output\
 xcopy /s data output\data\
 
 REM Dll
-xcopy /s ManicDiggerLib\bin\release\*.dll output\
+REM xcopy /s ManicDiggerLib\bin\release\*.dll output\
 
 REM Fortress mode
 xcopy /s /y ManicDigger\bin\release\*.dll output\
@@ -21,6 +20,10 @@ xcopy /s /y Start\bin\release\*.exe output\
 REM Monster editor
 xcopy /s /y MdMonsterEditor\bin\Release\*.dll output\
 xcopy /s /y MdMonsterEditor\bin\Release\*.exe output\
+
+REM Mods
+mkdir output\Mods
+xcopy /s ManicDiggerLib\Mods output\Mods\
 
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe

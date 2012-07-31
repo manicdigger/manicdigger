@@ -25,11 +25,11 @@ namespace ManicDigger.Mods
             });
             m.AddToCreativeInventory("VandalFinder");
             m.RegisterOnBlockUseWithTool(OnUseWithTool);
-            lines = (List<ManicDigger.Mods.BuildLog.LogLine>)m.GetGlobalDataNotSaved("LogLines");
+            lines = (List<object[]>)m.GetGlobalDataNotSaved("LogLines");
         }
         
         ModManager m;
-        List<ManicDigger.Mods.BuildLog.LogLine> lines = new List<BuildLog.LogLine>();
+        List<object[]> lines = new List<object[]>();
 
         void OnUseWithTool(int player, int x, int y, int z, int tool)
         {
@@ -44,10 +44,17 @@ namespace ManicDigger.Mods
             List<string> messages = new List<string>();
             for (int i = lines.Count - 1; i >= 0; i--)
             {
-                ManicDigger.Mods.BuildLog.LogLine l = lines[i];
-                if (l.x == x && l.y == y && l.z == z)
+                object[] l = lines[i];
+                int lx = (short)l[1];
+                int ly = (short)l[2];
+                int lz = (short)l[3];
+                DateTime ltimestamp = (DateTime)l[0];
+                string lplayername = (string)l[6];
+                int lblocktype = (short)l[4];
+                bool lbuild = (bool)l[5];
+                if (lx == x && ly == y && lz == z)
                 {
-                    messages.Add(string.Format("{0} {1} {2} {3}", l.timestamp.ToString(), l.Playername, m.GetBlockName(l.blocktype), l.build ? "build" : "delete"));
+                    messages.Add(string.Format("{0} {1} {2} {3}", ltimestamp.ToString(), lplayername, m.GetBlockName(lblocktype), lbuild ? "build" : "delete"));
                     if (messages.Count > 10)
                     {
                         return;

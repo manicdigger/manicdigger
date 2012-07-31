@@ -207,7 +207,6 @@ namespace ManicDiggerServer
             all_privileges.AddRange(ServerClientMisc.Privilege.All());
             LoadMods();
 
-
             {
                 if (!Directory.Exists(GameStorePath.gamepathsaves))
                 {
@@ -254,10 +253,30 @@ namespace ManicDiggerServer
 
         List<string> all_privileges = new List<string>();
 
+        ModLoader modloader = new ModLoader();
         private void LoadMods()
         {
-            ModManager m = new ModManager();
+            ModManager1 m = new ModManager1();
             m.Start(this);
+            string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
+            Dictionary<string, string> scripts = new Dictionary<string, string>();
+            foreach (string modpath in modpaths)
+            {
+                if (!Directory.Exists(modpath))
+                {
+                    continue;
+                }
+                string[] files = Directory.GetFiles(modpath);
+                foreach (string s in files)
+                {
+                    string scripttext = File.ReadAllText(s);
+                    string filename = new FileInfo(s).Name;
+                    scripts[filename] = scripttext;
+                }
+            }
+            modloader.CompileScripts(scripts);
+            modloader.Start(m, m.required);
+            /*
             //todo
             IMod[] mods = new IMod[]
             {
@@ -282,6 +301,7 @@ namespace ManicDiggerServer
             {
                 mods[i].Start(m);
             }
+            */
         }
 
         private ServerMonitor serverMonitor;

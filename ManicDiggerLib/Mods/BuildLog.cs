@@ -22,19 +22,21 @@ namespace ManicDigger.Mods
         }
         ModManager m;
         public int MaxEntries = 50 * 1000;
+        /*
         public class LogLine
         {
             public DateTime timestamp;
             public short x;
             public short y;
             public short z;
-            public int blocktype;
+            public short blocktype;
             public bool build;
             public string Playername;
             public string ip;
         }
-
-        List<LogLine> lines = new List<LogLine>();
+        */
+        //can't pass LogLine object between mods. Store object as an array of fields instead.
+        List<object[]> lines = new List<object[]>();
 
         void OnLoad()
         {
@@ -48,15 +50,15 @@ namespace ManicDigger.Mods
                     int count = br.ReadInt32();
                     for (int i = 0; i < count; i++)
                     {
-                        var l = new LogLine();
-                        l.timestamp = new DateTime(br.ReadInt64());
-                        l.x = br.ReadInt16();
-                        l.y = br.ReadInt16();
-                        l.z = br.ReadInt16();
-                        l.blocktype = br.ReadInt16();
-                        l.build = br.ReadBoolean();
-                        l.Playername = br.ReadString();
-                        l.ip = br.ReadString();
+                        var l = new object[8];
+                        l[0] = new DateTime(br.ReadInt64());//timestamp
+                        l[1] = br.ReadInt16();//x
+                        l[2] = br.ReadInt16();//y
+                        l[3] = br.ReadInt16();//z
+                        l[4] = br.ReadInt16();//blocktype
+                        l[5] = br.ReadBoolean();//build
+                        l[6] = br.ReadString();//playername
+                        l[7] = br.ReadString();//ip
                         lines.Add(l);
                     }
                 }
@@ -75,30 +77,32 @@ namespace ManicDigger.Mods
             bw.Write((int)lines.Count);
             for (int i = 0; i < lines.Count; i++)
             {
-                bw.Write((long)lines[i].timestamp.Ticks);
-                bw.Write((short)lines[i].x);
-                bw.Write((short)lines[i].y);
-                bw.Write((short)lines[i].z);
-                bw.Write((short)lines[i].blocktype);
-                bw.Write((bool)lines[i].build);
-                bw.Write((string)lines[i].Playername);
-                bw.Write((string)lines[i].ip);
+                object[] l = lines[i];
+                bw.Write((long)((DateTime)l[0]).Ticks);//timestamp
+                bw.Write((short)l[1]);//x
+                bw.Write((short)l[2]);//y
+                bw.Write((short)l[3]);//z
+                bw.Write((short)l[4]);//blocktype
+                bw.Write((bool)l[5]);//build
+                bw.Write((string)l[6]);//playername
+                bw.Write((string)l[7]);//ip
             }
             m.SetGlobalData("BuildLog", ms.ToArray());
         }
 
         void OnBuild(int player, int x, int y, int z)
         {
-            lines.Add(new LogLine()
+            lines.Add(new object[]
             {
-                ip = m.GetPlayerIp(player),
-                blocktype = m.GetBlock(x, y, z),
-                build = true,
-                x = (short)x,
-                y = (short)y,
-                z = (short)z,
-                Playername = m.GetPlayerName(player),
-                timestamp = DateTime.UtcNow,
+                DateTime.UtcNow,//timestamp
+                (short)x, //x
+                (short)y, //y
+                (short)z, //z
+                (short)m.GetBlock(x, y, z), //blocktype
+                true, //build
+                m.GetPlayerName(player),
+                m.GetPlayerIp(player), //ip
+
             });
             if (lines.Count > MaxEntries)
             {
@@ -108,16 +112,16 @@ namespace ManicDigger.Mods
 
         void OnDelete(int player, int x, int y, int z, int oldblock)
         {
-            lines.Add(new LogLine()
+            lines.Add(new object[]
             {
-                ip = m.GetPlayerIp(player),
-                blocktype = oldblock,
-                build = false,
-                x = (short)x,
-                y = (short)y,
-                z = (short)z,
-                Playername = m.GetPlayerName(player),
-                timestamp = DateTime.UtcNow,
+                DateTime.UtcNow, //timestamp
+                (short)x, //x
+                (short)y, //y
+                (short)z, //z
+                (short)oldblock, //blocktype
+                false, //build
+                m.GetPlayerName(player), //playername
+                m.GetPlayerIp(player), //ip
             });
             if (lines.Count > MaxEntries)
             {

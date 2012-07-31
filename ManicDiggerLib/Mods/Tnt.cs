@@ -46,6 +46,19 @@ namespace ManicDigger.Mods
         int adminium;
         Random rnd = new Random();
 
+        struct Vector3i
+        {
+            public Vector3i(int x, int y, int z)
+            {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            public int x;
+            public int y;
+            public int z;
+        }
+
         private void UseTnt(int player, int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == tnt)
@@ -74,7 +87,7 @@ namespace ManicDigger.Mods
                 }
                 Vector3i pos = tntStack.Pop();
                 int nearestplayer = m.NearestPlayer(pos.x, pos.y, pos.z);
-                m.PlaySoundAt(pos, "tnt.wav");
+                m.PlaySoundAt(pos.x, pos.y, pos.z, "tnt.wav");
 
                 for (int xx = 0; xx < tntRange; xx++)
                 {
@@ -93,7 +106,7 @@ namespace ManicDigger.Mods
                                 }
                                 int block = m.GetBlock(pos2.x, pos2.y, pos2.z);
                                 if (tntStack.Count < tntMax
-                                    && pos2 != pos
+                                    && (pos2.x != pos.x || pos2.y != pos.y || pos2.z != pos.z)
                                     && block == tnt)
                                 {
                                     tntStack.Push(pos2);

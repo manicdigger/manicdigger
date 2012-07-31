@@ -9,111 +9,7 @@ using System.Net;
 
 namespace ManicDigger
 {
-    public interface IMod
-    {
-        void PreStart(ModManager m);
-        void Start(ModManager m);
-    }
-    public enum DrawType
-    {
-        Empty,
-        Solid,
-        Transparent,
-        Fluid,
-        Torch,
-        Plant,
-        OpenDoor,
-        ClosedDoor,
-    }
-    public enum WalkableType
-    {
-        Empty,
-        Fluid,
-        Solid,
-    }
-    [ProtoContract]
-    public class SoundSet
-    {
-        [ProtoMember(1)]
-        public string[] Walk = new string[0];
-        [ProtoMember(2)]
-        public string[] Break = new string[0];
-        [ProtoMember(3)]
-        public string[] Build = new string[0];
-        [ProtoMember(4)]
-        public string[] Clone = new string[0];
-    }
-    [ProtoContract]
-    public class BlockType
-    {
-        public BlockType()
-        {
-        }
-        [ProtoMember(1)]
-        public string TextureIdTop = "Unknown";
-        [ProtoMember(2)]
-        public string TextureIdBottom = "Unknown";
-        [ProtoMember(3)]
-        public string TextureIdFront = "Unknown";
-        [ProtoMember(4)]
-        public string TextureIdBack = "Unknown";
-        [ProtoMember(5)]
-        public string TextureIdLeft = "Unknown";
-        [ProtoMember(6)]
-        public string TextureIdRight = "Unknown";
-        [ProtoMember(7)]
-        public string TextureIdForInventory = "Unknown";
-
-        //public bool IsBuildable = true;
-        //public string WhenPlayerPlacesGetsConvertedTo;
-        //public bool IsFlower;
-        [ProtoMember(8)]
-        public DrawType DrawType;
-        [ProtoMember(9)]
-        public WalkableType WalkableType;
-        [ProtoMember(10)]
-        public int Rail;
-        [ProtoMember(11)]
-        public float WalkSpeed = 1;
-        //public bool IsTransparentForLight;
-        [ProtoMember(12)]
-        public bool IsSlipperyWalk;
-        [ProtoMember(13)]
-        public SoundSet Sounds;
-        //public bool IsFluid;
-        //public bool IsTransparent;
-        //public bool IsTransparentFully;
-        //public bool IsEmptyForPhysics;
-        //public int Season;
-        [ProtoMember(14)]
-        public int LightRadius;
-        [ProtoMember(15)]
-        public int StartInventoryAmount;
-        [ProtoMember(16)]
-        public int Strength;
-        [ProtoMember(17)]
-        public string Name;
-        [ProtoMember(18)]
-        public bool IsBuildable;
-        [ProtoMember(19)]
-        public bool IsUsable;
-        [ProtoMember(20)]
-        public bool IsTool;
-        public string AllTextures
-        {
-            set
-            {
-                TextureIdTop = value;
-                TextureIdBottom = value;
-                TextureIdFront = value;
-                TextureIdBack = value;
-                TextureIdLeft = value;
-                TextureIdRight = value;
-                TextureIdForInventory = value;
-            }
-        }
-    }
-    public class ModManager
+    public class ModManager1 : ModManager
     {
         public void SetBlockType(int id, string name, BlockType block)
         {
@@ -275,8 +171,9 @@ namespace ManicDigger
             server.timers[new ManicDigger.Timer() { INTERVAL = 5 }] = delegate { a(); };
         }
 
-        public void PlaySoundAt(Vector3i pos, string sound)
+        public void PlaySoundAt(int posx, int posy, int posz, string sound)
         {
+            Vector3i pos = new Vector3i(posx, posy, posz);
             foreach (var k in server.clients)
             {
                 int distance = server.DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
@@ -385,7 +282,7 @@ namespace ManicDigger
             return server.Seed;
         }
 
-        public static int Index3d(int x, int y, int h, int sizex, int sizey)
+        public int Index3d(int x, int y, int h, int sizex, int sizey)
         {
             return (h * sizey + y) * sizex + x;
         }
@@ -440,8 +337,11 @@ namespace ManicDigger
             return server.clients[player].playername;
         }
 
+        public List<string> required = new List<string>();
+
         public void RequireMod(string modname)
         {
+            required.Add(modname);
         }
 
         public void SetGlobalDataNotSaved(string name, object value)
