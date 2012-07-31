@@ -119,7 +119,7 @@ namespace GameModeFortress
                 connectdata.Username = "Local";
             }
             ManicDiggerGameWindow w = new ManicDiggerGameWindow();
-            w.issingleplayer = true;
+            w.issingleplayer = issingleplayer;
             this.curw = w;
             if (issingleplayer)
             {
