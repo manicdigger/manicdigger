@@ -118,11 +118,9 @@ namespace GameModeFortress
                 new Thread(ServerThreadStart).Start();
                 connectdata.Username = "Local";
             }
-            while (issingleplayer && !StartedSinglePlayerServer)
-            {
-                Thread.Sleep(1);
-            }
             ManicDiggerGameWindow w = new ManicDiggerGameWindow();
+            w.issingleplayer = true;
+            this.curw = w;
             if (issingleplayer)
             {
                 var socket = new SocketDummy() { network = this.dummyNetwork };
@@ -140,12 +138,13 @@ namespace GameModeFortress
             w.Run();
             exit.exit = true;
         }
+        ManicDiggerGameWindow curw;
 
         SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
 
         string savefilename;
         public IGameExit exit = new GameExitDummy();
-        bool StartedSinglePlayerServer = false;
+        //bool StartedSinglePlayerServer = false;
         public void ServerThreadStart()
         {
             try
@@ -160,7 +159,11 @@ namespace GameModeFortress
                 {
                     server.Process();
                     Thread.Sleep(1);
-                    StartedSinglePlayerServer = true;
+                    while (curw == null)
+                    {
+                        Thread.Sleep(1);
+                    }
+                    curw.StartedSinglePlayerServer = true;
                     if (exit != null && exit.exit) { server.SaveAll(); return; }
                 }
             }

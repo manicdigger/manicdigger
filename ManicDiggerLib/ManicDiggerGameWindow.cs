@@ -335,7 +335,8 @@ namespace ManicDigger
                 }
             }
             //Start();
-            Connect();
+            //Connect();
+            MapLoadingStart();
 
             string version = GL.GetString(StringName.Version);
             int major = (int)version[0];
@@ -1092,11 +1093,19 @@ namespace ManicDigger
         TypingState GuiTyping = TypingState.None;
 
         public ConnectData connectdata;
+        public bool issingleplayer;
+        public bool StartedSinglePlayerServer;
         private void Connect()
         {
             LoadOptions();
             MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
             MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
+
+            while (issingleplayer && !StartedSinglePlayerServer)
+            {
+                Thread.Sleep(1);
+            }
+
             if (string.IsNullOrEmpty(connectdata.ServerPassword))
             {
                 Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
@@ -2322,7 +2331,9 @@ namespace ManicDigger
             d_GlWindow.SwapBuffers();
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
+            if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
+        bool startedconnecting;
         private void SetFog()
         {
             float density = 0.3f;
