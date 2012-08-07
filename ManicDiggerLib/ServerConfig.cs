@@ -5,7 +5,6 @@ using System.Xml.Serialization;
 
 namespace GameModeFortress
 {
-
     [XmlRoot(ElementName = "ManicDiggerServerConfig")]
     public class ServerConfig
     {
@@ -31,7 +30,6 @@ namespace GameModeFortress
         public string Password { get; set; }
         public bool AllowGuests { get; set; }
         public bool AllowFreemove { get; set; }     //Allow character to fly?
-        public bool Flooding { get; set; }          //Allow flooding water?
         public bool Monsters { get; set; }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -124,7 +122,6 @@ namespace GameModeFortress
             this.Public = true;
             this.AllowGuests = true;
             this.AllowFreemove = true;
-            this.Flooding = true;
             this.Monsters = false;
             this.MapSizeX = 9984;
             this.MapSizeY = 9984;

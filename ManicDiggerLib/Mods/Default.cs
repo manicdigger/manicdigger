@@ -410,8 +410,8 @@ namespace ManicDigger.Mods
             m.SetBlockType(52, "InfiniteWaterSource", new BlockType()
             {
                 AllTextures = "Unknown",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(53, "InfiniteLavaSource", new BlockType()
@@ -613,57 +613,57 @@ namespace ManicDigger.Mods
             m.SetBlockType(118, "Water0", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(119, "Water1", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(120, "Water2", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(121, "Water3", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(122, "Water4", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(123, "Water5", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(124, "Water6", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             m.SetBlockType(125, "Water7", new BlockType()
             {
                 AllTextures = "Water",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                DrawType = DrawType.Fluid,
+                WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
             for (int i = 0; i < 64; i++)

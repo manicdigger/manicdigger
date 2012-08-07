@@ -67,8 +67,6 @@ namespace ManicDiggerServer
         [Inject]
         public ICompression d_NetworkCompression;
         [Inject]
-        public WaterFinite d_Water;
-        [Inject]
         public ISocket d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
@@ -189,7 +187,6 @@ namespace ManicDiggerServer
             server.d_NetworkCompression = networkcompression;
             map.d_Data = server.d_Data;
             server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
-            server.d_Water = new WaterFinite() { data = server.d_Data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
@@ -865,10 +862,6 @@ namespace ManicDiggerServer
             {
                 ChunkSimulation();
             }
-            if (config.Flooding)
-            {
-                UpdateWater();
-            }
             foreach (var k in timers)
             {
                 k.Key.Update(k.Value);
@@ -883,40 +876,6 @@ namespace ManicDiggerServer
         DateTime statsupdate;
 
         public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
-
-        private void UpdateWater()
-        {
-            d_Water.Update();
-            try
-            {
-                foreach (var v in d_Water.tosetwater)
-                {
-                    byte watertype = (byte)(TileTypeManicDigger.Water1 + v.level - 1);
-                    d_Map.SetBlock((int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, watertype);
-                    foreach (var k in clients)
-                    {
-                        SendSetBlock(k.Key, (int)v.pos.X, (int)v.pos.Y, (int)v.pos.Z, watertype);
-                        //SendSetBlock(k.Key, x, z, y, watertype);
-                    }
-                }
-                foreach (var v in d_Water.tosetempty)
-                {
-                    byte emptytype = (byte)TileTypeManicDigger.Empty;
-                    d_Map.SetBlock((int)v.X, (int)v.Y, (int)v.Z, emptytype);
-                    foreach (var k in clients)
-                    {
-                        SendSetBlock(k.Key, (int)v.X, (int)v.Y, (int)v.Z, emptytype);
-                        //SendSetBlock(k.Key, x, z, y, watertype);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-            d_Water.tosetwater.Clear();
-            d_Water.tosetempty.Clear();
-        }
 
         private void SendPing(int clientid)
         {
@@ -1899,7 +1858,6 @@ if (sent >= unknown.Count) { break; }
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                         }
                         BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
-                        d_Water.BlockChange(d_Map, x, y, z);
                     }
                     break;
                 case ClientPacketId.FillArea:

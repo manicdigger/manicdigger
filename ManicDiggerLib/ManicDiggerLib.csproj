@@ -142,7 +142,6 @@
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
-    <Compile Include="MapTools\WaterFinite.cs" />
     <Compile Include="MapTools\WorldGeneratorTools.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Network\LoginClient.cs" />
