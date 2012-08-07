@@ -364,5 +364,10 @@ namespace ManicDigger
         {
             server.commandhelps[command] = help;
         }
+
+        public void AddToStartInventory(string blocktype, int amount)
+        {
+            server.d_Data.StartInventoryAmount[GetBlockId(blocktype)] = amount;
+        }
     }
 }

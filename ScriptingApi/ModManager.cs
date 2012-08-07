@@ -62,6 +62,7 @@ namespace ManicDigger
         object GetGlobalDataNotSaved(string name);
         void SendMessageToAll(string message);
         void RegisterCommandHelp(string command, string help);
+        void AddToStartInventory(string blocktype, int amount);
     }
 
     public class ModInfo

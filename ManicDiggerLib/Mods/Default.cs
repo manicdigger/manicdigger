@@ -939,6 +939,13 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("Rail3");
             m.AddToCreativeInventory("Rail60");
 
+            m.AddToStartInventory("Torch", 6);
+            m.AddToStartInventory("Crops1", 1);
+            m.AddToStartInventory("CraftingTable", 6);
+            m.AddToStartInventory("GoldCoin", 2);
+            m.AddToStartInventory("GoldBar", 5);
+            m.AddToStartInventory("SilverCoin", 1);
+            m.AddToStartInventory("Compass", 1);
 
 
             m.AddCraftingRecipe("Cobblestone", 1, "Stone", 2);
