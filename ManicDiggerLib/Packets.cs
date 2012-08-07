@@ -468,8 +468,8 @@ namespace GameModeFortress
     [ProtoContract]
     public class PacketServerSeason
     {
-        [ProtoMember(1, IsRequired = false)]
-        public int Season;
+        //[ProtoMember(1, IsRequired = false)]
+        //public int Season;
         [ProtoMember(2, IsRequired = false)]
         public int Hour; //1-24*4
         [ProtoMember(3, IsRequired = false)]

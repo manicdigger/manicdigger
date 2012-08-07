@@ -166,9 +166,9 @@ namespace ManicDigger
             return MapUtil.IsValidPos(server.d_Map, x, y, z);
         }
 
-        public void RegisterTimer(ManicDigger.Action a, int interval)
+        public void RegisterTimer(ManicDigger.Action a, double interval)
         {
-            server.timers[new ManicDigger.Timer() { INTERVAL = 5 }] = delegate { a(); };
+            server.timers[new ManicDigger.Timer() { INTERVAL = interval }] = delegate { a(); };
         }
 
         public void PlaySoundAt(int posx, int posy, int posz, string sound)
@@ -368,6 +368,53 @@ namespace ManicDigger
         public void AddToStartInventory(string blocktype, int amount)
         {
             server.d_Data.StartInventoryAmount[GetBlockId(blocktype)] = amount;
+        }
+
+        public long GetCurrentTick()
+        {
+            return server.SimulationCurrentFrame;
+        }
+
+        GameTime t = new GameTime();
+
+        public double GetCurrentYearTotal()
+        {
+            t.Ticks = server.SimulationCurrentFrame;
+            return t.YearTotal;
+        }
+
+        public double GetCurrentHourTotal()
+        {
+            t.Ticks = server.SimulationCurrentFrame;
+            return t.HourTotal;
+        }
+
+        public void UpdateBlockTypes()
+        {
+            foreach (var k in server.clients)
+            {
+                server.SendBlockTypes(k.Key);
+            }
+        }
+
+        public double GetGameYearRealHours()
+        {
+            return t.GameYearRealHours;
+        }
+
+        public void SetGameYearRealHours(double hours)
+        {
+            t.GameYearRealHours = hours;
+        }
+
+        public double GetGameDayRealHours()
+        {
+            return t.GameDayRealHours;
+        }
+
+        public void SetGameDayRealHours(double hours)
+        {
+            t.GameDayRealHours = hours;
         }
     }
 }

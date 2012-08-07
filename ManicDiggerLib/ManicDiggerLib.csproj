@@ -113,7 +113,6 @@
     <Compile Include="Mods\TreeGenerator.cs" />
     <Compile Include="Mods\VandalFinder.cs" />
     <Compile Include="Mods\VegetationGrowth.cs" />
-    <Compile Include="Mods\WaterFinite.cs" />
     <Compile Include="Forms\MultiplayerForm.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -3740,15 +3740,6 @@ namespace ManicDigger
                     return true;
                 case ServerPacketId.Season:
                     {
-                        if (packet.Season.Season != CurrentSeason)
-                        {
-                            CurrentSeason = packet.Season.Season;
-                            d_Data.Update();
-                            if (CurrentSeason >= 0 && CurrentSeason <= 3)
-                            {
-                                RedrawAllBlocks();
-                            }
-                        }
                         packet.Season.Hour -= 1;
                         if (packet.Season.Hour < 0)
                         {
@@ -3869,12 +3860,14 @@ namespace ManicDigger
                     }
                     d_Data.UseBlockTypes(packet.BlockTypes.blocktypes, textureInAtlasIds);
                     UseTerrainTextures(textureInAtlasIds);
+                    d_Weapon.redraw = true;
+                    RedrawAllBlocks();
                     return true;
                 case ServerPacketId.SunLevels:
                     NightLevels = packet.SunLevels.sunlevels;
                     return true;
                 case ServerPacketId.LightLevels:
-                    Array.Copy(packet.LightLevels.lightlevels,d_Data.LightLevels, packet.LightLevels.lightlevels.Length);
+                    Array.Copy(packet.LightLevels.lightlevels, d_Data.LightLevels, packet.LightLevels.lightlevels.Length);
                     return true;
                 case ServerPacketId.CraftingRecipes:
                     d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;

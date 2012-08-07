@@ -29,7 +29,7 @@ namespace ManicDigger
         void AddCraftingRecipe3(string output, int outputAmount, string Input0, int Input0Amount, string Input1, int Input1Amount, string Input2, int Input2Amount);
         void SetString(string language, string text, string translation);
         bool IsValidPos(int x, int y, int z);
-        void RegisterTimer(ManicDigger.Action a, int interval);
+        void RegisterTimer(ManicDigger.Action a, double interval);
         void PlaySoundAt(int x, int y, int z, string sound);
         int NearestPlayer(int x, int y, int z);
         void GrabBlock(int player, int block);
@@ -63,6 +63,14 @@ namespace ManicDigger
         void SendMessageToAll(string message);
         void RegisterCommandHelp(string command, string help);
         void AddToStartInventory(string blocktype, int amount);
+        long GetCurrentTick();
+        double GetCurrentYearTotal();
+        double GetCurrentHourTotal();
+        double GetGameYearRealHours();
+        void SetGameYearRealHours(double hours);
+        double GetGameDayRealHours();
+        void SetGameDayRealHours(double hours);
+        void UpdateBlockTypes();
     }
 
     public class ModInfo

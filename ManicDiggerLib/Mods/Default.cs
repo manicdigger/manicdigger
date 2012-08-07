@@ -11,15 +11,23 @@ namespace ManicDigger.Mods
         }
         public void Start(ModManager m)
         {
-            SoundSet solidSounds = new SoundSet()
+            this.m = m;
+            solidSounds = new SoundSet()
             {
                 Walk = new string[] { "walk1", "walk2", "walk3", "walk4" },
                 Break = new string[] { "destruct" },
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
             };
+            snowSounds = new SoundSet()
+            {
+                Walk = new string[] { "walksnow1", "walksnow2", "walksnow3", "walksnow4" },
+                Break = new string[] { "destruct" },
+                Build = new string[] { "build" },
+                Clone = new string[] { "clone" },
+            };
             m.SetDefaultSounds(solidSounds);
-            SoundSet noSound = new SoundSet();
+            noSound = new SoundSet();
             m.SetBlockType(0, "Empty", new BlockType()
             {
                 DrawType = DrawType.Empty,
@@ -854,8 +862,10 @@ namespace ManicDigger.Mods
                 Sounds = noSound,
             });
 
+            m.RegisterTimer(UpdateSeasons, 1);
 
-            //todo seasons
+            m.SetGameDayRealHours(1);
+            m.SetGameYearRealHours(24);
 
             //Creative inventory
             m.AddToCreativeInventory("Stone");
@@ -1021,12 +1031,131 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("Ladder", 1, "Wood", 4);
 
 
-
-
-
             m.SetSunLevels(sunLevels);
             m.SetLightLevels(lightLevels);
         }
+
+        ModManager m;
+        SoundSet solidSounds;
+        SoundSet snowSounds;
+        SoundSet noSound;
+
+        int lastseason;
+        void UpdateSeasons()
+        {
+            int currentSeason = (int)((m.GetCurrentYearTotal() % 1) * 4);
+            if (currentSeason != lastseason)
+            {
+                if (currentSeason == 0)
+                {
+                    m.SetBlockType(2, "Grass", new BlockType()
+                    {
+                        TextureIdTop = "Grass",
+                        TextureIdBack = "GrassSide",
+                        TextureIdFront = "GrassSide",
+                        TextureIdLeft = "GrassSide",
+                        TextureIdRight = "GrassSide",
+                        TextureIdForInventory = "GrassSide",
+                        TextureIdBottom = "Dirt",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(18, "Leaves", new BlockType()
+                    {
+                        AllTextures = "Leaves",
+                        DrawType = DrawType.Transparent,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(106, "Apples", new BlockType()
+                    {
+                        AllTextures = "Apples",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(8, "Water", new BlockType()
+                    {
+                        AllTextures = "Water",
+                        DrawType = DrawType.Fluid,
+                        WalkableType = WalkableType.Fluid,
+                        Sounds = noSound,
+                    });
+                }
+                if (currentSeason == 2)
+                {
+                    m.SetBlockType(2, "Grass", new BlockType()
+                    {
+                        TextureIdTop = "AutumnGrass",
+                        TextureIdBack = "AutumnGrassSide",
+                        TextureIdFront = "AutumnGrassSide",
+                        TextureIdLeft = "AutumnGrassSide",
+                        TextureIdRight = "AutumnGrassSide",
+                        TextureIdForInventory = "AutumnGrassSide",
+                        TextureIdBottom = "Dirt",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = snowSounds,
+                    });
+                    m.SetBlockType(18, "Leaves", new BlockType()
+                    {
+                        AllTextures = "AutumnLeaves",
+                        DrawType = DrawType.Transparent,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(106, "Apples", new BlockType()
+                    {
+                        AllTextures = "AutumnApples",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                }
+                if (currentSeason == 3)
+                {
+                    m.SetBlockType(2, "Grass", new BlockType()
+                    {
+                        TextureIdTop = "WinterGrass",
+                        TextureIdBack = "WinterGrassSide",
+                        TextureIdFront = "WinterGrassSide",
+                        TextureIdLeft = "WinterGrassSide",
+                        TextureIdRight = "WinterGrassSide",
+                        TextureIdForInventory = "WinterGrassSide",
+                        TextureIdBottom = "Dirt",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = snowSounds,
+                    });
+                    m.SetBlockType(18, "Leaves", new BlockType()
+                    {
+                        AllTextures = "WinterLeaves",
+                        DrawType = DrawType.Transparent,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(106, "Apples", new BlockType()
+                    {
+                        AllTextures = "WinterApples",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(8, "Water", new BlockType()
+                    {
+                        AllTextures = "Ice",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = snowSounds,
+                        IsSlipperyWalk = true,
+                    });
+                }
+                m.UpdateBlockTypes();
+                lastseason = currentSeason;
+            }
+        }
+
         float[] lightLevels = new float[]
         {
 0f,

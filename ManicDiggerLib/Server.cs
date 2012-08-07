@@ -693,8 +693,9 @@ namespace ManicDiggerServer
                         }
                     }
                     */
-                    if ((GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
-                        || GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
+                    if (//(GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
+                        //||
+                        GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
                     {
                         foreach (var c in clients)
                         {
@@ -910,7 +911,7 @@ namespace ManicDiggerServer
             }
             PacketServerSeason p = new PacketServerSeason()
             {
-                Season = GetSeason(simulationcurrentframe),
+                //Season = GetSeason(simulationcurrentframe),
                 Hour = GetHour(simulationcurrentframe) + 1,
                 DayNightCycleSpeedup = (60 * 60 * 24) / DAY_EVERY_SECONDS,
                 //Moon = GetMoon(simulationcurrentframe),
@@ -918,12 +919,7 @@ namespace ManicDiggerServer
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season = p }));
         }
-        int SEASON_EVERY_SECONDS = 60 * 60;//1 hour
-        int GetSeason(long frame)
-        {
-            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * SEASON_EVERY_SECONDS;
-            return (int)((frame / everyframes) % 4);
-        }
+
         int DAY_EVERY_SECONDS = 60 * 60;//1 hour
         public int HourDetail = 4;
         public int GameStartHour = 9; //9 am
@@ -2870,7 +2866,7 @@ if (sent >= unknown.Count) { break; }
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobFinalize, BlobFinalize = p }));
         }
         public BlockType[] BlockTypes = new BlockType[256];
-        private void SendBlockTypes(int clientid)
+        public void SendBlockTypes(int clientid)
         {
             PacketServerBlockTypes p = new PacketServerBlockTypes() { blocktypes = BlockTypes };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlockTypes, BlockTypes = p }));
@@ -3336,5 +3332,26 @@ if (sent >= unknown.Count) { break; }
             }
             return false;
         }
+    }
+    public class GameTime
+    {
+            public long Ticks;
+            public int TicksPerSecond = 64;
+            public double GameYearRealHours = 24;
+            public double GameDayRealHours = 1;
+            public double HourTotal // 0 - 23
+            {
+                get
+                {
+                    return ((double)Ticks / TicksPerSecond) / (GameDayRealHours * 60 * 60);
+                }
+            }
+            public double YearTotal
+            {
+                get
+                {
+                    return ((double)Ticks / TicksPerSecond) / (GameYearRealHours * 60 * 60);
+                }
+            }
     }
 }

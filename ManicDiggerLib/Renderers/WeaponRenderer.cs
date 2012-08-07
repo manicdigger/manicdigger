@@ -117,6 +117,7 @@ namespace ManicDigger.Renderers
         int oldMaterial;
         float oldLight;
         float slowdownTimer;
+        public bool redraw;
         public void DrawWeapon(float dt)
         {
             int light;
@@ -144,8 +145,9 @@ namespace ManicDigger.Renderers
             	curmaterial = item.BlockId == 151 ? 128 : item.BlockId;
             }
             float curlight = d_Info.Light;
-            if (curmaterial != oldMaterial || curlight != oldLight || myelements == null)
+            if (curmaterial != oldMaterial || curlight != oldLight || myelements == null || redraw)
             {
+                redraw = false;
                 myelements = new List<ushort>();
                 myvertices = new List<VertexPositionTexture>();
                 int x = 0;
