@@ -467,7 +467,7 @@ namespace ManicDiggerServer
 
         public void LoadConfig()
         {
-            string filename = "ServerConfig.xml";
+            string filename = "ServerConfig.txt";
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
                 Console.WriteLine("Server configuration file not found, creating new.");
@@ -543,7 +543,7 @@ namespace ManicDiggerServer
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(ServerConfig));
-            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.xml"));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"));
 
             //Check to see if config has been initialized
             if (config == null)
@@ -3109,7 +3109,7 @@ if (sent >= unknown.Count) { break; }
 
         public void LoadServerClient()
         {
-            string filename = "ServerClient.xml";
+            string filename = "ServerClient.txt";
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
                 Console.WriteLine("Server client configuration file not found, creating new.");
@@ -3197,7 +3197,7 @@ if (sent >= unknown.Count) { break; }
             }
 
             XmlSerializer serializer = new XmlSerializer(typeof(ServerClient));
-            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerClient.xml"));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerClient.txt"));
 
             //Check to see if config has been initialized
             if (serverClient == null)

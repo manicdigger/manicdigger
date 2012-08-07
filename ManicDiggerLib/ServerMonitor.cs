@@ -193,7 +193,7 @@ namespace GameModeFortress
                 this.TimeIntervall = 3;
             }
         }
-        string filename = "ServerMonitor.xml";
+        string filename = "ServerMonitor.txt";
         private void LoadConfig()
         {
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))

@@ -356,7 +356,7 @@ namespace ManicDigger
         Options options = new Options();
         XmlSerializer x = new XmlSerializer(typeof(Options));
         public string gamepathconfig = GameStorePath.GetStorePath();
-        string filename = "ClientConfig.xml";
+        string filename = "ClientConfig.txt";
         void LoadOptions()
         {
             string path = Path.Combine(gamepathconfig, filename);
