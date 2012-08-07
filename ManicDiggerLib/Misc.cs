@@ -28,7 +28,7 @@ namespace ManicDigger
         public static string GetStorePath()
         {
             string apppath = Path.GetDirectoryName(Application.ExecutablePath);
-            string mdfolder = "ManicDiggerUserData";
+            string mdfolder = "UserData";
             if (apppath.Contains(
                 Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles)) && !IsMono)
             {

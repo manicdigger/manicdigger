@@ -11,7 +11,7 @@ AppVerName=Manic Digger
 AppPublisherURL=http://www.manicdigger.sourceforge.net/
 AppSupportURL=http://www.manicdigger.sourceforge.net/
 AppUpdatesURL=http://www.manicdigger.sourceforge.net/
-DefaultDirName={pf}\Manic Digger
+DefaultDirName={sd}\Manic Digger
 DefaultGroupName=Manic Digger
 AllowNoIcons=yes
 OutputBaseFilename=setup
@@ -29,6 +29,7 @@ Source: "output\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs create
 [Icons]
 Name: "{group}\{cm:UninstallProgram,Manic Digger}"; Filename: "{uninstallexe}"
 Name: "{group}\Manic Digger"; Filename: "{app}\ManicDigger.exe"
+Name: "{group}\Configuration"; Filename: "{app}\UserData"
 
 [Registry]
 Root: HKCR; Subkey: ".mdlink"; ValueType: string; ValueName: ""; ValueData: "ManicDigger"; Flags: uninsdeletevalue
