@@ -3052,7 +3052,7 @@ namespace ManicDigger
                 {
                     return p.Y < WaterLevel;
                 }
-                return d_Data.IsFluid[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+                return d_Data.WalkableType1[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)] == WalkableType.Fluid;
             }
         }
         public bool WaterSwimming

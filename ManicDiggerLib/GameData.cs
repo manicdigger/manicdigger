@@ -133,6 +133,7 @@ namespace ManicDigger
             mStartInventoryAmount = new int[count];
             mStrength = new float[count];
             mDrawType = new DrawType[count];
+            mWalkableType = new WalkableType[count];
 
             mDefaultMaterialSlots = new int[10];
             mLightLevels = new float[16];
@@ -164,6 +165,7 @@ namespace ManicDigger
         public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
         public float[] Strength { get { return mStrength; } }
         public DrawType[] DrawType1 { get { return mDrawType; } }
+        public WalkableType[] WalkableType1 { get { return mWalkableType; } }
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
@@ -209,6 +211,7 @@ namespace ManicDigger
         private int[] mStartInventoryAmount;
         private float[] mStrength;
         private DrawType[] mDrawType;
+        private WalkableType[] mWalkableType;
 
         private int[] mDefaultMaterialSlots;
         private float[] mLightLevels;
@@ -300,6 +303,7 @@ namespace ManicDigger
             //StartInventoryAmount { get; }
             Strength[id] = b.Strength;
             DrawType1[id] = b.DrawType;
+            WalkableType1[id] = b.WalkableType;
         }
     }
 
