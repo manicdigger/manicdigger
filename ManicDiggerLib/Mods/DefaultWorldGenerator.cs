@@ -15,7 +15,6 @@ namespace ManicDigger.Mods
         public void Start(ModManager m)
         {
             this.m = m;
-            Init();
             m.RegisterWorldGenerator(GetChunk);
             m.RegisterOptionBool("DefaultGenCaves", true);
             m.RegisterOptionBool("DefaultGenLavaCaves", true);
@@ -23,8 +22,14 @@ namespace ManicDigger.Mods
 
         ModManager m;
 
+        bool started = false;
         public void GetChunk(int x, int y, int z, byte[] chunk)
         {
+            if (!started)
+            {
+                Init();
+                started = true;
+            }
             bool addCaves = (bool)m.GetOption("DefaultGenCaves");
             bool addCaveLava = (bool)m.GetOption("DefaultGenLavaCaves");
             int ChunkSize=m.GetChunkSize();
