@@ -524,35 +524,38 @@ namespace ManicDigger.Renderers
                 	drawleft = 1;
                 }
             }
-            if (tiletype == d_Data.BlockIdLadder) // try to fit ladder to best wall or existing ladder
+            if (d_Data.DrawType1[tiletype] == DrawType.Ladder) // try to fit ladder to best wall or existing ladder
             {
-            	flowerfix = 0.95f;
-            	drawfront = 0;
-            	drawback = 0;
-            	drawleft = 0;
-            	drawright = 0;
-            	int matchwall;
-            	int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
-                if (ladderAtPositionMatchWall < 0) {
-                	
-                	int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
-                	int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, +1);
-                	
-                	if (ladderbelow != 0)
-                	{
-                		ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz+ladderbelow, currentChunk);
-                	}
-                	else if (ladderabove != 0)
-                	{
-                		ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz+ladderabove, currentChunk);
-                	}
+                drawtop = 0;
+                drawbottom = 0;
+                flowerfix = 0.95f;
+                drawfront = 0;
+                drawback = 0;
+                drawleft = 0;
+                drawright = 0;
+                int matchwall;
+                int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
+                if (ladderAtPositionMatchWall < 0)
+                {
+
+                    int ladderbelow = getBestLadderInDirection(xx, yy, zz, currentChunk, -1);
+                    int ladderabove = getBestLadderInDirection(xx, yy, zz, currentChunk, +1);
+
+                    if (ladderbelow != 0)
+                    {
+                        ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz + ladderbelow, currentChunk);
+                    }
+                    else if (ladderabove != 0)
+                    {
+                        ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz + ladderabove, currentChunk);
+                    }
                 }
                 switch (ladderAtPositionMatchWall)
                 {
-            		case 1: drawleft = 1; break;
-            		case 2: drawback = 1; break;
-            		case 3: drawfront = 1; break;
-            		default: drawright = 1; break;
+                    case 1: drawleft = 1; break;
+                    case 2: drawback = 1; break;
+                    case 3: drawfront = 1; break;
+                    default: drawright = 1; break;
                 }
             }
             //doors are drawed using a bug with flower drawing.

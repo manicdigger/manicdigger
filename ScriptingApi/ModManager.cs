@@ -95,6 +95,7 @@ namespace ManicDigger
         Plant,
         OpenDoor,
         ClosedDoor,
+        Ladder,
     }
 
     public enum WalkableType

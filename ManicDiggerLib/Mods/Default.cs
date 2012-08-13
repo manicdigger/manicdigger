@@ -850,7 +850,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(152, "Ladder", new BlockType()
             {
                 AllTextures = "RailPart9",
-                DrawType = DrawType.Transparent,
+                DrawType = DrawType.Ladder,
                 WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
             });
