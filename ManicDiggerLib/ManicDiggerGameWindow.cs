@@ -120,10 +120,6 @@ namespace ManicDigger
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
             clientgame.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
-            //var craftingrecipes = new CraftingRecipes();
-            //craftingrecipes.data = gamedata;
-            //w.d_CraftingRecipes = craftingrecipes;
-            //network.d_CraftingRecipes = craftingrecipes;
             w.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.d_Map = map;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
@@ -3718,170 +3714,11 @@ namespace ManicDigger
         #endregion
         public IMapStorage mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
-        #region INetworkPacketReceived Members
-        public bool NetworkPacketReceived(PacketServer packet)
-        {
-            switch (packet.PacketId)
-            {
-                case ServerPacketId.FiniteInventory:
-                    {
-                        //check for null so it's possible to connect
-                        //to old versions of game (before 2011-05-05)
-                        if (packet.Inventory.Inventory != null)
-                        {
-                            d_Inventory.CopyFrom(packet.Inventory.Inventory);
-                        }
-                        /*
-                        FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
-                        ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
-                        FiniteInventoryMax = packet.FiniteInventory.Max;
-                        */
-                    }
-                    return true;
-                case ServerPacketId.Season:
-                    {
-                        packet.Season.Hour -= 1;
-                        if (packet.Season.Hour < 0)
-                        {
-                            //shouldn't happen
-                            packet.Season.Hour = 12 * HourDetail;
-                        }
-                        if (NightLevels == null)
-                        {
-                            string[] l = MyStream.ReadAllLines(d_GetFile.GetFile("sunlevels.csv"));
-                            NightLevels = new int[24 * HourDetail];
-                            for (int i = 0; i < 24 * HourDetail; i++)
-                            {
-                                string s = l[i];
-                                if (s.Contains(";")) { s = s.Substring(0, s.IndexOf(";")); }
-                                if (s.Contains(",")) { s = s.Substring(0, s.IndexOf(",")); }
-                                s = s.Trim();
-                                NightLevels[i] = int.Parse(s);
-                            }
-                        }
-                        int sunlight = NightLevels[packet.Season.Hour];
-                        SkySphereNight = sunlight < 8;
-                        d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
-                        int hour = packet.Season.Hour / HourDetail;
-                        if (d_SunMoonRenderer.Hour != hour)
-                        {
-                            d_SunMoonRenderer.Hour = hour;
-                        }
-
-                        if (d_Shadows.sunlight != sunlight)
-                        {
-                            d_Shadows.sunlight = sunlight;
-                            d_Shadows.ResetShadows();
-                            RedrawAllBlocks();
-                        }
-                    }
-                    return true;
-                case ServerPacketId.BlobInitialize:
-                    {
-                        blobdownload = new MemoryStream();
-                        blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
-                        blobdownloadname = packet.BlobInitialize.name;
-                        ReceivedMapLength = 0; //todo
-                    }
-                    return true;
-                case ServerPacketId.BlobPart:
-                    {
-                        BinaryWriter bw = new BinaryWriter(blobdownload);
-                        bw.Write(packet.BlobPart.data);
-                        ReceivedMapLength += packet.BlobPart.data.Length; //todo
-                    }
-                    return true;
-                case ServerPacketId.BlobFinalize:
-                    {
-                        byte[] downloaded = blobdownload.ToArray();
-                        /*
-                        if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
-                        {
-                            if (blobdownloadhash == serverterraintexture)
-                            {
-                                using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
-                                {
-                                    d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
-                                }
-                            }
-                        }
-                        */
-                        if (blobdownloadname != null) // old servers
-                        {
-                            d_GetFile.SetFile(blobdownloadname, downloaded);
-                        }
-                        blobdownload = null;
-                    }
-                    return true;
-                case ServerPacketId.ServerIdentification:
-                    {
-                        serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
-                    }
-                    return true;
-                case ServerPacketId.Sound:
-                    {
-                        d_Audio.Play(packet.Sound.Name);
-                    }
-                    return true;
-                case ServerPacketId.RemoveMonsters:
-                    {
-                        foreach (int id in new List<int>(players.Keys))
-                        {
-                            if (id >= MonsterIdFirst)
-                            {
-                                players.Remove(id);
-                            }
-                        }
-                    }
-                    return true;
-                case ServerPacketId.BlockTypes:
-                    Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
-                    this.blocktypes = packet.BlockTypes.blocktypes;
-                    int lastTextureId = 0;
-                    for (int i = 0; i < blocktypes.Length; i++)
-                    {
-                        string[] to_load = new string[]
-                        {
-                            blocktypes[i].TextureIdLeft,
-                            blocktypes[i].TextureIdRight,
-                            blocktypes[i].TextureIdFront,
-                            blocktypes[i].TextureIdBack,
-                            blocktypes[i].TextureIdTop,
-                            blocktypes[i].TextureIdBottom,
-                            blocktypes[i].TextureIdForInventory,
-                        };
-                        for (int k = 0; k < to_load.Length; k++)
-                        {
-                            if (!textureInAtlasIds.ContainsKey(to_load[k]))
-                            {
-                                textureInAtlasIds[to_load[k]] = lastTextureId++;
-                            }
-                        }
-                    }
-                    d_Data.UseBlockTypes(packet.BlockTypes.blocktypes, textureInAtlasIds);
-                    UseTerrainTextures(textureInAtlasIds);
-                    d_Weapon.redraw = true;
-                    RedrawAllBlocks();
-                    return true;
-                case ServerPacketId.SunLevels:
-                    NightLevels = packet.SunLevels.sunlevels;
-                    return true;
-                case ServerPacketId.LightLevels:
-                    Array.Copy(packet.LightLevels.lightlevels, d_Data.LightLevels, packet.LightLevels.lightlevels.Length);
-                    return true;
-                case ServerPacketId.CraftingRecipes:
-                    d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
-                    return true;
-                default:
-                    return false;
-            }
-        }
         BlockType[] blocktypes;
         public int HourDetail = 4;
         public int[] NightLevels;
         public bool ENABLE_PER_SERVER_TEXTURES = false;
         string serverterraintexture;
-        #endregion
         public static string ByteArrayToString(byte[] ba)
         {
             string hex = BitConverter.ToString(ba);
@@ -4226,6 +4063,7 @@ namespace ManicDigger
                                 packet.Identification.MapSizeY,
                                 packet.Identification.MapSizeZ);
                         }
+                        serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
                     }
                     break;
                 case ServerPacketId.Ping:
@@ -4481,15 +4319,152 @@ namespace ManicDigger
                         this.PlayerStats = p;
                     }
                     break;
+                case ServerPacketId.FiniteInventory:
+                    {
+                        //check for null so it's possible to connect
+                        //to old versions of game (before 2011-05-05)
+                        if (packet.Inventory.Inventory != null)
+                        {
+                            d_Inventory.CopyFrom(packet.Inventory.Inventory);
+                        }
+                        /*
+                        FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
+                        ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
+                        FiniteInventoryMax = packet.FiniteInventory.Max;
+                        */
+                    }
+                    break;
+                case ServerPacketId.Season:
+                    {
+                        packet.Season.Hour -= 1;
+                        if (packet.Season.Hour < 0)
+                        {
+                            //shouldn't happen
+                            packet.Season.Hour = 12 * HourDetail;
+                        }
+                        if (NightLevels == null)
+                        {
+                            string[] l = MyStream.ReadAllLines(d_GetFile.GetFile("sunlevels.csv"));
+                            NightLevels = new int[24 * HourDetail];
+                            for (int i = 0; i < 24 * HourDetail; i++)
+                            {
+                                string s = l[i];
+                                if (s.Contains(";")) { s = s.Substring(0, s.IndexOf(";")); }
+                                if (s.Contains(",")) { s = s.Substring(0, s.IndexOf(",")); }
+                                s = s.Trim();
+                                NightLevels[i] = int.Parse(s);
+                            }
+                        }
+                        int sunlight = NightLevels[packet.Season.Hour];
+                        SkySphereNight = sunlight < 8;
+                        d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
+                        int hour = packet.Season.Hour / HourDetail;
+                        if (d_SunMoonRenderer.Hour != hour)
+                        {
+                            d_SunMoonRenderer.Hour = hour;
+                        }
+
+                        if (d_Shadows.sunlight != sunlight)
+                        {
+                            d_Shadows.sunlight = sunlight;
+                            d_Shadows.ResetShadows();
+                            RedrawAllBlocks();
+                        }
+                    }
+                    break;
+                case ServerPacketId.BlobInitialize:
+                    {
+                        blobdownload = new MemoryStream();
+                        blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
+                        blobdownloadname = packet.BlobInitialize.name;
+                        ReceivedMapLength = 0; //todo
+                    }
+                    break;
+                case ServerPacketId.BlobPart:
+                    {
+                        BinaryWriter bw = new BinaryWriter(blobdownload);
+                        bw.Write(packet.BlobPart.data);
+                        ReceivedMapLength += packet.BlobPart.data.Length; //todo
+                    }
+                    break;
+                case ServerPacketId.BlobFinalize:
+                    {
+                        byte[] downloaded = blobdownload.ToArray();
+                        /*
+                        if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
+                        {
+                            if (blobdownloadhash == serverterraintexture)
+                            {
+                                using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
+                                {
+                                    d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
+                                }
+                            }
+                        }
+                        */
+                        if (blobdownloadname != null) // old servers
+                        {
+                            d_GetFile.SetFile(blobdownloadname, downloaded);
+                        }
+                        blobdownload = null;
+                    }
+                    break;
+                case ServerPacketId.Sound:
+                    {
+                        d_Audio.Play(packet.Sound.Name);
+                    }
+                    break;
+                case ServerPacketId.RemoveMonsters:
+                    {
+                        foreach (int id in new List<int>(players.Keys))
+                        {
+                            if (id >= MonsterIdFirst)
+                            {
+                                players.Remove(id);
+                            }
+                        }
+                    }
+                    break;
+                case ServerPacketId.BlockTypes:
+                    Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
+                    this.blocktypes = packet.BlockTypes.blocktypes;
+                    int lastTextureId = 0;
+                    for (int i = 0; i < blocktypes.Length; i++)
+                    {
+                        string[] to_load = new string[]
+                        {
+                            blocktypes[i].TextureIdLeft,
+                            blocktypes[i].TextureIdRight,
+                            blocktypes[i].TextureIdFront,
+                            blocktypes[i].TextureIdBack,
+                            blocktypes[i].TextureIdTop,
+                            blocktypes[i].TextureIdBottom,
+                            blocktypes[i].TextureIdForInventory,
+                        };
+                        for (int k = 0; k < to_load.Length; k++)
+                        {
+                            if (!textureInAtlasIds.ContainsKey(to_load[k]))
+                            {
+                                textureInAtlasIds[to_load[k]] = lastTextureId++;
+                            }
+                        }
+                    }
+                    d_Data.UseBlockTypes(packet.BlockTypes.blocktypes, textureInAtlasIds);
+                    UseTerrainTextures(textureInAtlasIds);
+                    d_Weapon.redraw = true;
+                    RedrawAllBlocks();
+                    break;
+                case ServerPacketId.SunLevels:
+                    NightLevels = packet.SunLevels.sunlevels;
+                    break;
+                case ServerPacketId.LightLevels:
+                    Array.Copy(packet.LightLevels.lightlevels, d_Data.LightLevels, packet.LightLevels.lightlevels.Length);
+                    break;
+                case ServerPacketId.CraftingRecipes:
+                    d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
+                    break;
                 default:
                     break;
-            }
-            {
-                bool handled = NetworkPacketReceived(packet);
-                if (!handled)
-                {
-                    //Console.WriteLine("Invalid packet id: " + packet.PacketId);
-                }
             }
             LastReceived = currentTime;
             return lengthPrefixLength + packetLength;
