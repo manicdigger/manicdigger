@@ -414,7 +414,63 @@ namespace ManicDigger
 
         FastStack<Vector3i> lighttoflood = new FastStack<Vector3i>();
     }
+    public class Shadows3x3x3Simple : IShadows3x3x3
+    {
+        public void Start()
+        {
+        }
 
+        const int shadowlight = 10;
+        const int maxlight = 15;
+
+        public unsafe void Update(byte[] outputChunkLight, byte[][] inputMapChunks, byte[][] inputHeightmapChunks, int[] dataLightRadius, bool[] dataTransparent, int currentSunlight, int baseheight)
+        {
+            this.inputHeightmapChunks = inputHeightmapChunks;
+
+            for (int i = 0; i < outputChunkLight.Length; i++)
+            {
+                outputChunkLight[i] = (byte)shadowlight;
+            }
+            int zplus = 18 * 18;
+            for (int xx = 0; xx < 18; xx++)
+            {
+                for (int yy = 0; yy < 18; yy++)
+                {
+                    int height = GetLightHeight(16 - 1 + xx, 16 - 1 + yy) - 16;
+                    int h = height - baseheight;
+                    if (h < 0) { h = 0; }
+                    if (h > 18) { continue; }
+                    int pos = MapUtil.Index3d(xx, yy, h, 18, 18);
+                    /*
+                    for (int zz = 0; zz < h; zz++)
+                    {
+                        worklight[pos] = (byte)minlight;
+                        pos += zplus;
+                    }
+                    */
+                    for (int zz = h; zz < 18; zz++)
+                    {
+                        //int pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
+                        outputChunkLight[pos] = (byte)maxlight;
+                        pos += zplus;
+                    }
+                }
+            }
+        }
+        byte[][] inputHeightmapChunks;
+        int chunksize = 16;
+        int GetLightHeight(int xx, int yy)
+        {
+            byte[] chunk = inputHeightmapChunks[MapUtil.Index2d(xx / chunksize, yy / chunksize, 3)];
+            if (chunk == null)
+            {
+                //throw new Exception();
+                //return 64;
+                return 0;
+            }
+            return chunk[MapUtil.Index2d(xx % chunksize, yy % chunksize, chunksize)];
+        }
+    }
     public interface IShadows : IShadowsGetLight
     {
         void OnLocalBuild(int x, int y, int z);

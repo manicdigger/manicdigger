@@ -4064,6 +4064,7 @@ namespace ManicDigger
                                 packet.Identification.MapSizeZ);
                         }
                         serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
+                        shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
                     }
                     break;
                 case ServerPacketId.Ping:

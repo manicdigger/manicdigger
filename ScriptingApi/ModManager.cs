@@ -71,6 +71,7 @@ namespace ManicDigger
         double GetGameDayRealHours();
         void SetGameDayRealHours(double hours);
         void UpdateBlockTypes();
+        void EnableShadows(bool value);
     }
 
     public class ModInfo

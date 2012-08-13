@@ -148,6 +148,8 @@ namespace ManicDiggerServer
 
         public bool Public;
 
+        public bool enableshadows = true;
+
         public void Start()
         {
             Server server = this;
@@ -2915,6 +2917,7 @@ if (sent >= unknown.Count) { break; }
                 MapSizeX = d_Map.MapSizeX,
                 MapSizeY = d_Map.MapSizeY,
                 MapSizeZ = d_Map.MapSizeZ,
+                DisableShadows = enableshadows ? 0 : 1,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }

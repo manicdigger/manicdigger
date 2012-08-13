@@ -416,5 +416,10 @@ namespace ManicDigger
         {
             t.GameDayRealHours = hours;
         }
+
+        public void EnableShadows(bool value)
+        {
+            server.enableshadows = value;
+        }
     }
 }

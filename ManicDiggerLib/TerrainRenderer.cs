@@ -32,7 +32,14 @@ namespace ManicDigger
                 RendererMap[i] = new RenderedChunk();
             }
             d_TerrainChunkTesselator.Start();
-            shadows = new Shadows3x3x3();
+            if (shadowssimple)
+            {
+                shadows = new Shadows3x3x3Simple();
+            }
+            else
+            {
+                shadows = new Shadows3x3x3();
+            }
             shadows.Start();
         }
         IShadows3x3x3 shadows;
