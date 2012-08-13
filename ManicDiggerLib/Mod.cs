@@ -421,5 +421,39 @@ namespace ManicDigger
         {
             server.enableshadows = value;
         }
+
+        public float GetPlayerPositionX(int player)
+        {
+            return server.clients[player].PositionMul32GlX / 32;
+        }
+
+        public float GetPlayerPositionY(int player)
+        {
+            return server.clients[player].PositionMul32GlZ / 32;
+        }
+
+        public float GetPlayerPositionZ(int player)
+        {
+            return server.clients[player].PositionMul32GlY / 32;
+        }
+
+        public void SetPlayerPosition(int player, float x, float y, float z)
+        {
+            foreach(var k in server.clients)
+            {
+                server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
+                    (byte)server.clients[player].positionheading, (byte)server.clients[player].positionpitch);
+            }
+        }
+
+        public int[] AllPlayers()
+        {
+            List<int> players = new List<int>();
+            foreach (var k in server.clients)
+            {
+                players.Add(k.Key);
+            }
+            return players.ToArray();
+        }
     }
 }

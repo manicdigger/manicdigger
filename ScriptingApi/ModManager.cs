@@ -72,6 +72,11 @@ namespace ManicDigger
         void SetGameDayRealHours(double hours);
         void UpdateBlockTypes();
         void EnableShadows(bool value);
+        float GetPlayerPositionX(int player);
+        float GetPlayerPositionY(int player);
+        float GetPlayerPositionZ(int player);
+        void SetPlayerPosition(int player, float x, float y, float z);
+        int[] AllPlayers();
     }
 
     public class ModInfo

@@ -2638,7 +2638,7 @@ if (sent >= unknown.Count) { break; }
                 PlayerSpawnPosition = p,
             }));
         }
-        private void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
+        public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
         {
             PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
             {
