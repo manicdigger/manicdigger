@@ -121,9 +121,9 @@ namespace ManicDigger
                     ToAdd t = toadd.Dequeue();
                     GL.NewList(GetList(t.id), ListMode.Compile);
                     
-                    GL.EnableClientState(EnableCap.TextureCoordArray);
-                    GL.EnableClientState(EnableCap.VertexArray);
-                    GL.EnableClientState(EnableCap.ColorArray);
+                    GL.EnableClientState(ArrayCap.TextureCoordArray);
+                    GL.EnableClientState(ArrayCap.VertexArray);
+                    GL.EnableClientState(ArrayCap.ColorArray);
                     unsafe
                     {
                         fixed (VertexPositionTexture* p = t.vertices)
@@ -134,9 +134,9 @@ namespace ManicDigger
                             GL.DrawElements(BeginMode.Triangles, t.indicesCount, DrawElementsType.UnsignedShort, t.indices);
                         }
                     }
-                    GL.DisableClientState(EnableCap.TextureCoordArray);
-                    GL.DisableClientState(EnableCap.VertexArray);
-                    GL.DisableClientState(EnableCap.ColorArray);
+                    GL.DisableClientState(ArrayCap.TextureCoordArray);
+                    GL.DisableClientState(ArrayCap.VertexArray);
+                    GL.DisableClientState(ArrayCap.ColorArray);
 
                     GL.EndList();
                     ListInfo li = GetListInfo(t.id);

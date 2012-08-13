@@ -269,7 +269,6 @@ namespace ManicDigger.Renderers
         }
         private double getval(object ss2, Dictionary<string, object> variables)
         {
-            double d = 0;
             if (ss2 is double)
             {
                 return (double)ss2;

@@ -533,7 +533,6 @@ namespace ManicDigger.Renderers
                 drawback = 0;
                 drawleft = 0;
                 drawright = 0;
-                int matchwall;
                 int ladderAtPositionMatchWall = getBestLadderWall(xx, yy, zz, currentChunk);
                 if (ladderAtPositionMatchWall < 0)
                 {
@@ -1005,7 +1004,7 @@ namespace ManicDigger.Renderers
         	bool front=false;
         	bool back=false;
         	bool left=false;
-        	bool right=false;
+        	//bool right=false;
         	int wallscount = 0;
             if (currentChunk[MapUtil.Index3d(x, y - 1, z, chunksize + 2, chunksize + 2)] != 0)
             {
@@ -1025,7 +1024,7 @@ namespace ManicDigger.Renderers
             }
             if (currentChunk[MapUtil.Index3d(x + 1, y, z, chunksize + 2, chunksize + 2)] != 0)
             {
-                right = true;
+                //right = true;
             	wallscount++;
             }
             if (wallscount != 1) {

@@ -297,7 +297,6 @@ namespace ManicDigger
                         }
                     }
                     return false;
-                    break;
                 default:
                     throw new NotImplementedException();
             }

@@ -36,7 +36,7 @@ namespace GameModeFortress
         [ProtoMember(4, IsRequired = false)]
         public BlockSetMode Mode;
         [ProtoMember(5, IsRequired = false)]
-        [Obsolete]
+        //[Obsolete]
         public int BlockType;
         [ProtoMember(6, IsRequired = false)]
         public int MaterialSlot;

@@ -709,7 +709,6 @@ namespace ManicDiggerServer
                 oldtime = currenttime;
             }
             byte[] data = new byte[1024];
-            string stringData;
             int recv;
             if (d_MainSocket.Poll(0, SelectMode.SelectRead)) //Test for new connections
             {
@@ -2717,7 +2716,7 @@ if (sent >= unknown.Count) { break; }
                 //    }
                 //}
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 KillPlayer(clientid);
             }

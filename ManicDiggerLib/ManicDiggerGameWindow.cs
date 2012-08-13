@@ -731,7 +731,6 @@ namespace ManicDigger
                 if (GuiTyping == TypingState.Typing)
                 {
                     var key = e.Key;
-                    string c = "";
                     if (key == GetKey(OpenTK.Input.Key.BackSpace))
                     {
                         if (d_HudChat.GuiTypingBuffer.Length > 0)
@@ -1123,9 +1122,9 @@ namespace ManicDigger
             GuiStateBackToGame();
             OnNewMap();
         }
-        [Obsolete]
+        //[Obsolete]
         int[] materialSlots;
-        [Obsolete]
+        //[Obsolete]
         public int[] MaterialSlots
         {
             get
@@ -1330,7 +1329,7 @@ namespace ManicDigger
             False,
         }
         CharacterPhysicsState player = new CharacterPhysicsState();
-        DateTime lasttodo;
+        //DateTime lasttodo;
         bool mouseleftclick = false;
         bool mouseleftdeclick = false;
         bool wasmouseleft = false;
@@ -3456,156 +3455,8 @@ namespace ManicDigger
                     }
                 }
             }
-            if (KeyPressed(GetKey(OpenTK.Input.Key.U)) || KeyPressed(GetKey(OpenTK.Input.Key.L)))
-            {
-                if (PickCubePos != new Vector3(-1, -1, -1))
-                {
-                    Vector3i pos = new Vector3i((int)PickCubePos.X,
-                        (int)PickCubePos.Z,
-                        (int)PickCubePos.Y);
-                    {
-                        DoCommandDumpOrLoad(pos.x, pos.y, pos.z, KeyPressed(GetKey(OpenTK.Input.Key.U)),
-                            MaterialSlots[ActiveMaterial]);
-                    }
-                }
-            }
-            FiniteInventory = FiniteInventory;
             ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
             RailOnNewFrame((float)dt);
-        }
-        private bool DoCommandDumpOrLoad(int x, int y, int z, bool dump, int blocktype)
-        {
-            if (!ENABLE_FINITEINVENTORY)
-            {
-                return false;
-            }
-            bool execute = true;
-            Dictionary<int, int> inventory = FiniteInventory;
-            int dumpcount = 0;
-            if (inventory.ContainsKey(blocktype))
-            {
-                dumpcount = inventory[blocktype];
-            }
-            if (dumpcount > 50) { dumpcount = 50; }
-            Vector3i pos = new Vector3i(x, y, z);
-            if (execute)
-            {
-                if (d_Map.GetBlock(pos.x, pos.y, pos.z) == (int)TileTypeManicDigger.CraftingTable)
-                {
-                    List<Vector3i> table = d_CraftingTableTool.GetTable(pos);
-                    if (dump)
-                    {
-                        int dumped = 0;
-                        foreach (Vector3i v in table)
-                        {
-                            if (dumped >= table.Count / 2 || dumped >= dumpcount)
-                            {
-                                break;
-                            }
-                            if (GetBlock(v.x, v.y, v.z + 1) == SpecialBlockId.Empty)
-                            {
-                                SendSetBlockAndUpdateSpeculative(blocktype, v.x, v.y, v.z + 1, BlockSetMode.Create);
-                                dumped++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (Vector3i v in table)
-                        {
-                            if (TotalAmount(inventory) + 1 > FiniteInventoryMax)
-                            {
-                                break;
-                            }
-                            int b = GetBlock(v.x, v.y, v.z + 1);
-                            if (b != SpecialBlockId.Empty)
-                            {
-                                SendSetBlockAndUpdateSpeculative(0, v.x, v.y, v.z + 1, BlockSetMode.Destroy);
-                            }
-                        }
-                    }
-                    return true;
-                }
-                if (dump)
-                {
-                    for (int i = 0; i < dumpcount; i++)
-                    {
-                        //find empty position that is nearest to dump place AND has a block under.
-                        Vector3i? nearpos = FindDumpPlace(pos);
-                        if (nearpos == null)
-                        {
-                            break;
-                        }
-                        SendSetBlockAndUpdateSpeculative(blocktype, nearpos.Value.x, nearpos.Value.y, nearpos.Value.z, BlockSetMode.Create);
-                    }
-                }
-            }
-            return true;
-        }
-        private Vector3i? FindDumpPlace(Vector3i pos)
-        {
-            List<Vector3i> l = new List<Vector3i>();
-            for (int x = 0; x < 10; x++)
-            {
-                for (int y = 0; y < 10; y++)
-                {
-                    for (int z = 0; z < 10; z++)
-                    {
-                        int xx = pos.x + x - 10 / 2;
-                        int yy = pos.y + y - 10 / 2;
-                        int zz = pos.z + z - 10 / 2;
-                        if (!MapUtil.IsValidPos(d_Map, xx, yy, zz))
-                        {
-                            continue;
-                        }
-                        if (GetBlock(xx, yy, zz) == SpecialBlockId.Empty
-                            && GetBlock(xx, yy, zz - 1) != SpecialBlockId.Empty)
-                        {
-                            bool playernear = false;
-                            if (players != null)
-                            {
-                                foreach (var player in players)
-                                {
-                                    if (player.Value.Position != null)
-                                    {
-                                        if ((player.Value.Position.Value - new Vector3(xx, zz, yy)).Length < 3)
-                                        {
-                                            playernear = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (!playernear)
-                            {
-                                l.Add(new Vector3i(xx, yy, zz));
-                            }
-                        }
-                    }
-                }
-            }
-            l.Sort((a, b) => Length(Minus(a, pos)).CompareTo(Length(Minus(b, pos))));
-            if (l.Count > 0)
-            {
-                return l[0];
-            }
-            return null;
-        }
-        private Vector3i Minus(Vector3i a, Vector3i b)
-        {
-            return new Vector3i(a.x - b.x, a.y - b.y, a.z - b.z);
-        }
-        int Length(Vector3i v)
-        {
-            return (int)Math.Sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        }
-        int TotalAmount(Dictionary<int, int> inventory)
-        {
-            int sum = 0;
-            foreach (var k in inventory)
-            {
-                sum += k.Value;
-            }
-            return sum;
         }
         void CraftingRecipeSelected(Vector3i pos, int? recipe)
         {
@@ -3629,8 +3480,6 @@ namespace ManicDigger
             return keydepressed != null && keydepressed.Key == key;
         }
         Dictionary<int, int> finiteinventory = new Dictionary<int, int>();
-        [Obsolete]
-        public Dictionary<int, int> FiniteInventory { get { return finiteinventory; } set { finiteinventory = value; } }
         public IEnumerable<ICharacterToDraw> Characters
         {
             get { yield break; }
@@ -3668,16 +3517,6 @@ namespace ManicDigger
             MapSizeZ = map.GetUpperBound(2) + 1;
             shadows.ResetShadows();
             */
-        }
-        #endregion
-        #region IGameMode Members
-        public int FiniteInventoryAmount(int blocktype)
-        {
-            if (!FiniteInventory.ContainsKey(blocktype))
-            {
-                return 0;
-            }
-            return FiniteInventory[blocktype];
         }
         #endregion
         #region IGameMode Members

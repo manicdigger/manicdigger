@@ -476,7 +476,6 @@ namespace ManicDigger
         void OnLocalBuild(int x, int y, int z);
         void OnSetBlock(int x, int y, int z);
         void ResetShadows();
-        int GetLight(int x, int y, int z);
         void OnGetTerrainBlock(int x, int y, int z);
         void OnMakeChunk(int chunkx, int chunky, int chunkz);
         int sunlight { get; set; }
