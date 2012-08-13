@@ -286,7 +286,12 @@ namespace ManicDigger
             {
                 for (int y = 0; y < 3; y++)
                 {
-                    byte[] chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x-1, cy + y-1, d_Map.MapSizeX / chunksize)];
+                    if (cx + x - 1 < 0 || cx + x - 1 >= MapSizeX / chunksize
+                        || cy + y - 1 < 0 || cy + y - 1 >= MapSizeY / chunksize)
+                    {
+                        continue;
+                    }
+                    byte[] chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x - 1, cy + y - 1, d_Map.MapSizeX / chunksize)];
                     heightchunks3x3[MapUtil.Index2d(x, y, 3)] = chunk;
                 }
             }
