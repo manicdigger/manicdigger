@@ -42,7 +42,7 @@ namespace ManicDigger
         void RegisterPrivilege(string p);
         void RegisterOnBlockUpdate(ManicDigger.Action<int, int, int> f);
         bool IsTransparentForLight(int p);
-        void RegisterWorldGenerator(ManicDigger.Action<int, int, int, byte[]> f);
+        void RegisterWorldGenerator(ManicDigger.Action<int, int, int, ushort[]> f);
         void RegisterOptionBool(string optionname, bool default_);
         int GetChunkSize();
         object GetOption(string optionname);

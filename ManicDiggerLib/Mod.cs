@@ -255,7 +255,7 @@ namespace ManicDigger
             return server.d_Data.IsTransparentForLight[p];
         }
 
-        public void RegisterWorldGenerator(Action<int, int, int, byte[]> f)
+        public void RegisterWorldGenerator(Action<int, int, int, ushort[]> f)
         {
             server.d_Map.getchunk.Add(f);
         }

@@ -23,7 +23,7 @@ namespace ManicDigger.Mods
         ModManager m;
 
         bool started = false;
-        public void GetChunk(int x, int y, int z, byte[] chunk)
+        public void GetChunk(int x, int y, int z, ushort[] chunk)
         {
             if (!started)
             {
@@ -202,7 +202,7 @@ namespace ManicDigger.Mods
                                 curBlock = BLOCK_ICE;
                             }
                         }
-                        chunk[m.Index3d(xx, yy, bY - z, chunksize, chunksize)] = (byte)curBlock;
+                        chunk[m.Index3d(xx, yy, bY - z, chunksize, chunksize)] = (ushort)curBlock;
                     }
                 }
             }

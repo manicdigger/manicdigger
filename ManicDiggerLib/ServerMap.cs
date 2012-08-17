@@ -32,7 +32,9 @@ namespace ManicDiggerServer
     public class Chunk
     {
         [ProtoMember(1, IsRequired = false)]
-        public byte[] data;
+        public byte[] dataOld;
+        [ProtoMember(6, IsRequired = false)]
+        public ushort[] data;
         [ProtoMember(2, IsRequired = false)]
         public long LastUpdate;
         [ProtoMember(3, IsRequired = false)]
@@ -47,7 +49,7 @@ namespace ManicDiggerServer
     {
         [Inject]
         public IChunkDb d_ChunkDb;
-        public List<Action<int, int, int, byte[]>> getchunk = new List<Action<int,int,int,byte[]>>();
+        public List<Action<int, int, int, ushort[]>> getchunk = new List<Action<int, int, int, ushort[]>>();
         [Inject]
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
@@ -60,12 +62,12 @@ namespace ManicDiggerServer
         public int MapSizeZ { get; set; }
         public int GetBlock(int x, int y, int z)
         {
-            byte[] chunk = GetChunk(x, y, z);
+            ushort[] chunk = GetChunk(x, y, z);
             return chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
         public void SetBlock(int x, int y, int z, int tileType)
         {
-            byte[] chunk = GetChunk(x, y, z);
+            ushort[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunks[x / chunksize, y / chunksize, z / chunksize].LastChange = d_CurrentTime.SimulationCurrentFrame;
             chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
@@ -87,7 +89,7 @@ namespace ManicDiggerServer
         }
         public void SetBlockNotMakingDirty(int x, int y, int z, int tileType)
         {
-            byte[] chunk = GetChunk(x, y, z);
+            ushort[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             chunks[x / chunksize, y / chunksize, z / chunksize].DirtyForSaving = true;
             UpdateColumnHeight(x, y);
@@ -105,7 +107,7 @@ namespace ManicDiggerServer
                 GetChunk(cx * chunksize, cy * chunksize, cz * chunksize);
             }
         }
-        public byte[] GetChunk(int x, int y, int z)
+        public ushort[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
@@ -124,7 +126,7 @@ namespace ManicDiggerServer
                 }
 
                 // get chunk
-                byte[] newchunk = new byte[chunksize * chunksize * chunksize];
+                ushort[] newchunk = new ushort[chunksize * chunksize * chunksize];
                 for (int i = 0; i < getchunk.Count; i++)
                 {
                     getchunk[i](x, y, z, newchunk);
@@ -153,7 +155,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        private int GetColumnHeightInChunk(byte[] chunk, int xx, int yy)
+        private int GetColumnHeightInChunk(ushort[] chunk, int xx, int yy)
         {
             int height = chunksize - 1;
             for (int i = chunksize - 1; i >= 0; i--)
@@ -168,7 +170,18 @@ namespace ManicDiggerServer
         }
         private Chunk DeserializeChunk(byte[] serializedChunk)
         {
-            return Serializer.Deserialize<Chunk>(new MemoryStream(serializedChunk));
+            Chunk c = Serializer.Deserialize<Chunk>(new MemoryStream(serializedChunk));
+            //convert savegame to new format
+            if (c.dataOld != null)
+            {
+                c.data = new ushort[chunksize * chunksize * chunksize];
+                for (int i = 0; i < c.dataOld.Length; i++)
+                {
+                    c.data[i] = c.dataOld[i];
+                }
+                c.dataOld = null;
+            }
+            return c;
         }
         public int chunksize = 16;
         public void Reset(int sizex, int sizey, int sizez)
@@ -180,7 +193,7 @@ namespace ManicDiggerServer
             d_Heightmap.Restart();
         }
         #region IMapStorage Members
-        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        public void SetChunk(int x, int y, int z, ushort[, ,] chunk)
         {
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
@@ -188,7 +201,7 @@ namespace ManicDiggerServer
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            ushort[, ,][] localchunks = new ushort[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -211,8 +224,8 @@ namespace ManicDiggerServer
                 }
             }
         }
-        private void FillChunk(byte[] destination, int destinationchunksize,
-            int sourcex, int sourcey, int sourcez, byte[, ,] source)
+        private void FillChunk(ushort[] destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, ushort[, ,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
             {
@@ -234,11 +247,11 @@ namespace ManicDiggerServer
         #endregion
         [Inject]
         public InfiniteMapChunked2d d_Heightmap;
-        public unsafe byte[] GetHeightmapChunk(int x, int y)
+        public unsafe ushort[] GetHeightmapChunk(int x, int y)
         {
             //todo don't copy
-            byte[] chunk2d = d_Heightmap.GetChunk(x, y);
-            byte[] chunk = new byte[chunksize * chunksize];
+            ushort[] chunk2d = d_Heightmap.GetChunk(x, y);
+            ushort[] chunk = new ushort[chunksize * chunksize];
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)

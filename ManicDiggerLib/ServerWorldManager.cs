@@ -207,7 +207,7 @@ namespace ManicDiggerServer
         void SendChunk(int clientid, Vector3i v)
         {
             Client c = clients[clientid];
-            byte[] chunk = d_Map.GetChunk(v.x, v.y, v.z);
+            ushort[] chunk = d_Map.GetChunk(v.x, v.y, v.z);
             ClientSeenChunkSet(clientid, v.x, v.y, v.z, (int)simulationcurrentframe);
             //sent++;
             byte[] compressedchunk;
@@ -223,7 +223,7 @@ namespace ManicDiggerServer
                 //commented because it was being sent too early, before full column was generated.
                 //if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
                 {
-                    byte[] heightmapchunk = d_Map.GetHeightmapChunk(v.x, v.y);
+                    byte[] heightmapchunk = Misc.UshortArrayToByteArray(d_Map.GetHeightmapChunk(v.x, v.y));
                     byte[] compressedHeightmapChunk = d_NetworkCompression.Compress(heightmapchunk);
                     PacketServerHeightmapChunk p1 = new PacketServerHeightmapChunk()
                     {
@@ -296,7 +296,7 @@ namespace ManicDiggerServer
         {
             return MapUtil.blockheight(d_Map, 0, x, y);
         }
-        public void SetChunk(int x, int y, int z, byte[] data)
+        public void SetChunk(int x, int y, int z, ushort[] data)
         {
             if (MapUtil.IsValidPos(d_Map, x, y, z))
             {
@@ -320,7 +320,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        public byte[] GetChunk(int x, int y, int z)
+        public ushort[] GetChunk(int x, int y, int z)
         {
             if (MapUtil.IsValidPos(d_Map, x, y, z))
             {

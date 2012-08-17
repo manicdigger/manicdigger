@@ -62,10 +62,10 @@ namespace ManicDigger
     }
     public interface IMapStoragePortion
     {
-        void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
-        void SetMapPortion(int x, int y, int z, byte[, ,] chunk);
+        void GetMapPortion(ushort[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
+        void SetMapPortion(int x, int y, int z, ushort[, ,] chunk);
         void UseMap(byte[, ,] map);
-        byte[] GetChunk(int x, int y, int z);
+        ushort[] GetChunk(int x, int y, int z);
     }
     public interface IMapStorageLight
     {
@@ -214,7 +214,7 @@ namespace ManicDigger
             return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
         }
 
-        public static bool IsSolidChunk(byte[] chunk)
+        public static bool IsSolidChunk(ushort[] chunk)
         {
             for (int i = 0; i <= chunk.GetUpperBound(0); i++)
             {
@@ -226,7 +226,7 @@ namespace ManicDigger
             return true;
         }
 
-        public static bool IsSolidChunk(byte[, ,] chunk)
+        public static bool IsSolidChunk(ushort[, ,] chunk)
         {
             for (int x = 0; x <= chunk.GetUpperBound(0); x++)
             {

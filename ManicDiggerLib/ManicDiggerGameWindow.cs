@@ -3491,7 +3491,7 @@ namespace ManicDigger
         public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
 
         #region IMapStorage Members
-        public void SetChunk(int x, int y, int z, byte[, ,] chunk)
+        public void SetChunk(int x, int y, int z, ushort[, ,] chunk)
         {
             d_Map.SetMapPortion(x, y, z, chunk);
         }
@@ -4108,7 +4108,7 @@ namespace ManicDigger
                         if (p.CompressedChunk != null)
                         {
                             byte[] decompressedchunk = d_Compression.Decompress(p.CompressedChunk);
-                            byte[, ,] receivedchunk = new byte[p.SizeX, p.SizeY, p.SizeZ];
+                            ushort[, ,] receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
                             {
                                 BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
                                 for (int zz = 0; zz < p.SizeZ; zz++)
@@ -4117,7 +4117,7 @@ namespace ManicDigger
                                     {
                                         for (int xx = 0; xx < p.SizeX; xx++)
                                         {
-                                            receivedchunk[xx, yy, zz] = br2.ReadByte();
+                                            receivedchunk[xx, yy, zz] = br2.ReadUInt16();
                                         }
                                     }
                                 }
@@ -4143,11 +4143,12 @@ namespace ManicDigger
                     {
                         var p = packet.HeightmapChunk;
                         byte[] decompressedchunk = d_Compression.Decompress(p.CompressedHeightmap);
+                        ushort[] decompressedchunk1 = Misc.ByteArrayToUshortArray(decompressedchunk);
                         for (int xx = 0; xx < p.SizeX; xx++)
                         {
                             for (int yy = 0; yy < p.SizeY; yy++)
                             {
-                                int height = decompressedchunk[MapUtil.Index2d(xx, yy, p.SizeX)];
+                                int height = decompressedchunk1[MapUtil.Index2d(xx, yy, p.SizeX)];
                                 d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
                             }
                         }
@@ -4484,7 +4485,7 @@ namespace ManicDigger
 
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
-            byte[] chunk = GetChunk(x, y, z);
+            ushort[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             d_Shadows.OnSetBlock(x, y, z);
@@ -4546,7 +4547,7 @@ namespace ManicDigger
 
 
         #endregion
-        public byte[] GetChunk(int x, int y, int z)
+        public ushort[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
@@ -4564,7 +4565,7 @@ namespace ManicDigger
                 //}
                 //else
                 {
-                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new byte[chunksize * chunksize * chunksize] };
+                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new ushort[chunksize * chunksize * chunksize] };
                 }
                 return chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
             }
@@ -4580,7 +4581,7 @@ namespace ManicDigger
             SetAllChunksNotDirty();
         }
         #region IMapStorage Members
-        public unsafe void SetMapPortion(int x, int y, int z, byte[, ,] chunk)
+        public unsafe void SetMapPortion(int x, int y, int z, ushort[, ,] chunk)
         {
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
@@ -4588,7 +4589,7 @@ namespace ManicDigger
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            byte[, ,][] localchunks = new byte[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            ushort[, ,][] localchunks = new ushort[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -4629,8 +4630,8 @@ namespace ManicDigger
                 && yy < MapSizeY / chunksize
                 && zz < MapSizeZ / chunksize;
         }
-        private unsafe void FillChunk(byte[] destination, int destinationchunksize,
-            int sourcex, int sourcey, int sourcez, byte[, ,] source)
+        private unsafe void FillChunk(ushort[] destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, ushort[, ,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
             {
@@ -4671,7 +4672,7 @@ namespace ManicDigger
         {
             //d_IsChunkReady.SetAllChunksNotDirty();
         }
-        public unsafe void GetMapPortion(byte[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+        public unsafe void GetMapPortion(ushort[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {
             Array.Clear(outPortion, 0, outPortion.Length);
 
@@ -4800,7 +4801,7 @@ namespace ManicDigger
     [StructLayout(LayoutKind.Sequential)]
     public class Chunk
     {
-        public byte[] data;
+        public ushort[] data;
         public int LastUpdate;
         public bool IsPopulated;
         public int LastChange;

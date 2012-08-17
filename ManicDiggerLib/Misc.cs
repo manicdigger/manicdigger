@@ -1464,5 +1464,31 @@ namespace ManicDigger
                     && (!str.Equals(bool.FalseString, StringComparison.InvariantCultureIgnoreCase)));
             }
         }
+        public static unsafe byte[] UshortArrayToByteArray(ushort[] a)
+        {
+            byte[] output = new byte[a.Length * 2];
+            fixed (ushort* a1 = a)
+            {
+                byte* a2 = (byte*)a1;
+                for (int i = 0; i < a.Length * 2; i++)
+                {
+                    output[i] = a2[i];
+                }
+            }
+            return output;
+        }
+        public static unsafe ushort[] ByteArrayToUshortArray(byte[] a)
+        {
+            ushort[] output = new ushort[a.Length / 2];
+            fixed (byte* a1 = a)
+            {
+                ushort* a2 = (ushort*)a1;
+                for (int i = 0; i < a.Length / 2; i++)
+                {
+                    output[i] = a2[i];
+                }
+            }
+            return output;
+        }
     }
 }

@@ -32,8 +32,8 @@ namespace GameModeFortress
             interpreter.SetFunction("get_height", new ManicDigger.Func<double, double, double>(GetHeight));
             interpreter.SetFunction("get_mapsize", new ManicDigger.Func<int[]>(GetMapSize));
 
-            interpreter.SetFunction("set_chunk", new ManicDigger.Action<double, double, double, byte[]>(SetChunk));
-            interpreter.SetFunction("get_chunk", new ManicDigger.Func<double, double, double, byte[]>(GetChunk));
+            interpreter.SetFunction("set_chunk", new ManicDigger.Action<double, double, double, ushort[]>(SetChunk));
+            interpreter.SetFunction("get_chunk", new ManicDigger.Func<double, double, double, ushort[]>(GetChunk));
             interpreter.SetFunction("delete_chunk", new ManicDigger.Action<double, double, double>(DeleteChunk));
             interpreter.SetFunction("delete_chunk_range", new ManicDigger.Action<double, double, double, double, double, double>(DeleteChunkRange));
             interpreter.SetFunction("backup_database", new ManicDigger.Action<string>(BackupDatabase));
@@ -125,12 +125,12 @@ namespace GameModeFortress
             m_server.DeleteChunks(chunkPositions);
         }
 
-        public void SetChunk (double x, double y, double z, byte[] data)
+        public void SetChunk(double x, double y, double z, ushort[] data)
         {
             m_server.SetChunk((int)x, (int)y, (int)z, data);
         }
 
-        public byte[] GetChunk (double x, double y, double z)
+        public ushort[] GetChunk(double x, double y, double z)
         {
             return m_server.GetChunk((int)x, (int)y, (int)z);
         }

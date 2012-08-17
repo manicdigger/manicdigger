@@ -993,7 +993,7 @@ namespace ManicDiggerServer
             {
                 AddMonsters(p);
             }
-            byte[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
+            ushort[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
@@ -2746,9 +2746,9 @@ if (sent >= unknown.Count) { break; }
                 }
             }
         }
-        byte[] CompressChunkNetwork(byte[] chunk)
+        byte[] CompressChunkNetwork(ushort[] chunk)
         {
-            return d_NetworkCompression.Compress(chunk);
+            return d_NetworkCompression.Compress(Misc.UshortArrayToByteArray(chunk));
         }
         byte[] CompressChunkNetwork(byte[, ,] chunk)
         {

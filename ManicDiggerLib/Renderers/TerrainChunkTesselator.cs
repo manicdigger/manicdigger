@@ -36,14 +36,14 @@ namespace ManicDigger.Renderers
         public float BlockShadow = 0.6f;
         public bool ENABLE_ATLAS1D = true;
         int maxblocktypes = 256;
-        byte[] currentChunk;
+        ushort[] currentChunk;
         bool started = false;
         int mapsizex; //cache
         int mapsizey;
         int mapsizez;
         public void Start()
         {
-            currentChunk = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
+            currentChunk = new ushort[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
             currentChunkShadows = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
             currentChunkDraw = new byte[chunksize, chunksize, chunksize];
             currentChunkDrawCount = new byte[chunksize, chunksize, chunksize, 6];
@@ -232,7 +232,7 @@ namespace ManicDigger.Renderers
         {
             Array.Clear(currentChunkShadows, 0, currentChunkShadows.Length);
         }
-        private bool IsSolidChunk(byte[] currentChunk)
+        private bool IsSolidChunk(ushort[] currentChunk)
         {
             int block = currentChunk[0];
             for (int i = 0; i < currentChunk.Length; i++)
@@ -280,13 +280,13 @@ namespace ManicDigger.Renderers
         public byte[] currentChunkShadows;
         byte[, ,] currentChunkDraw;
         byte[, , ,] currentChunkDrawCount;
-        void CalculateVisibleFaces(byte[] currentChunk)
+        void CalculateVisibleFaces(ushort[] currentChunk)
         {
             int chunksize = this.chunksize;
             int movez = (chunksize + 2) * (chunksize + 2);
             unsafe
             {
-                fixed (byte* currentChunk_ = currentChunk )
+                fixed (ushort* currentChunk_ = currentChunk )
                 fixed (bool* iswater_ = iswater)
                 fixed (bool* istransparent_ = istransparent)
                 {
@@ -298,7 +298,7 @@ namespace ManicDigger.Renderers
                             for (int xx = 1; xx < chunksize + 1; xx++)
                             {
                                 int pos = posstart + xx;
-                                byte tt = currentChunk_[pos];
+                                int tt = currentChunk_[pos];
                                 if (tt == 0) { continue; }
                                 int draw = (int)TileSideFlags.None;
                                 //Instead of calculating position index with MapUtil.Index(),
@@ -307,7 +307,7 @@ namespace ManicDigger.Renderers
                                 //z+1
                                 {
                                     int pos2 = pos + movez;
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -318,7 +318,7 @@ namespace ManicDigger.Renderers
                                 //z-1
                                 {
                                     int pos2 = pos - movez;
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -329,7 +329,7 @@ namespace ManicDigger.Renderers
                                 //x-1
                                 {
                                     int pos2 = pos - 1;
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -340,7 +340,7 @@ namespace ManicDigger.Renderers
                                 //x+1
                                 {
                                     int pos2 = pos + 1;
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -351,7 +351,7 @@ namespace ManicDigger.Renderers
                                 //y-1
                                 {
                                     int pos2 = pos - (chunksize + 2);
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -362,7 +362,7 @@ namespace ManicDigger.Renderers
                                 //y-1
                                 {
                                     int pos2 = pos + (chunksize + 2);
-                                    byte tt2 = currentChunk_[pos2];
+                                    int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
                                         || (iswater_[tt2] && (!iswater_[tt]))
                                         || istransparent_[tt2])
@@ -377,12 +377,12 @@ namespace ManicDigger.Renderers
                 }
             }
         }
-        private void CalculateTilingCount(byte[] currentChunk, int startx, int starty, int startz)
+        private void CalculateTilingCount(ushort[] currentChunk, int startx, int starty, int startz)
         {
             Array.Clear(currentChunkDrawCount, 0, currentChunkDrawCount.Length);
             unsafe
             {
-                fixed(byte* currentChunk_ = currentChunk)
+                fixed(ushort* currentChunk_ = currentChunk)
                 for (int zz = 1; zz < chunksize + 1; zz++)
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
@@ -390,7 +390,7 @@ namespace ManicDigger.Renderers
                         int pos = MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
                         for (int xx = 1; xx < chunksize + 1; xx++)
                         {
-                            byte tt = currentChunk_[pos + xx];
+                            int tt = currentChunk_[pos + xx];
                             if (tt == 0) { continue; } //faster
                             int x = startx + xx - 1;
                             int y = starty + yy - 1;
@@ -437,7 +437,7 @@ namespace ManicDigger.Renderers
         float texrecWidth;
         float texrecHeight;
         FastColor ColorWhite = new FastColor(Color.White);
-        private void BlockPolygons(int x, int y, int z, byte[] currentChunk)
+        private void BlockPolygons(int x, int y, int z, ushort[] currentChunk)
         {
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
@@ -876,7 +876,7 @@ namespace ManicDigger.Renderers
         {
             return Math.Max(Math.Max(Math.Max(a, b), c), d);
         }
-        private int GetWaterLevel(byte tt)
+        private int GetWaterLevel(int tt)
         {
             if (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
             {
@@ -893,7 +893,7 @@ namespace ManicDigger.Renderers
             return -1;
         }
         //Texture tiling in one direction.
-        private int GetTilingCount(byte[] currentChunk, int xx, int yy, int zz, byte tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
+        private int GetTilingCount(ushort[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
             //fixes tree Z-fighting
             if (istransparent[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
@@ -950,7 +950,7 @@ namespace ManicDigger.Renderers
                 return newxx - xx;
             }
         }
-        private VerticesIndices GetToReturn(byte tiletype, int textureid)
+        private VerticesIndices GetToReturn(int tiletype, int textureid)
         {
             if (ENABLE_ATLAS1D)
             {
@@ -994,12 +994,12 @@ namespace ManicDigger.Renderers
             return currentChunkShadows[xx, yy, zz] - 1;
             */
         }
-        private bool CanSupportTorch(byte blocktype)
+        private bool CanSupportTorch(int blocktype)
         {
             return blocktype != SpecialBlockId.Empty
                 && blocktype != d_Data.BlockIdTorch;
         }
-         private int getBestLadderWall(int x, int y, int z, byte[] currentChunk)
+         private int getBestLadderWall(int x, int y, int z, ushort[] currentChunk)
         {
         	bool front=false;
         	bool back=false;
@@ -1044,7 +1044,7 @@ namespace ManicDigger.Renderers
             	}
             }
         }
-        int getBestLadderInDirection(int x, int y, int z, byte[] currentChunk, int dir) {
+        int getBestLadderInDirection(int x, int y, int z, ushort[] currentChunk, int dir) {
         	int dz = dir;
         	int result = 0;
         	try
