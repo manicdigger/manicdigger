@@ -330,6 +330,18 @@ namespace ManicDigger
                     resolutions.Add(r);
                 }
             }
+            try
+            {
+                GL.GetInteger(GetPName.MaxTextureSize, out maxTextureSize);
+            }
+            catch
+            {
+                maxTextureSize = 1024;
+            }
+            if (maxTextureSize < 1024)
+            {
+                maxTextureSize = 1024;
+            }
             //Start();
             //Connect();
             MapLoadingStart();
@@ -4793,7 +4805,8 @@ namespace ManicDigger
             }
             this.terrainTextures1d = terrainTextures1d.ToArray();
         }
-        public int atlas1dheight = 2048;
+        int maxTextureSize; // detected at runtime
+        public int atlas1dheight { get { return maxTextureSize; } }
         public int atlas2dtiles = 16; // 16x16
         public int[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get; set; }
