@@ -2252,7 +2252,19 @@ namespace ManicDigger
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
 
-            if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
+            if (d_HudInventory.IsMouseOverCells())
+            {
+                int delta = Mouse.WheelDelta;
+                if (delta > 0)
+                {
+                    d_HudInventory.ScrollUp();
+                }
+                if (delta < 0)
+                {
+                    d_HudInventory.ScrollDown();
+                }
+            }
+            else if (!keyboardstate[GetKey(OpenTK.Input.Key.LControl)])
             {
                 ActiveMaterial -= Mouse.WheelDelta;
                 ActiveMaterial = ActiveMaterial % 10;

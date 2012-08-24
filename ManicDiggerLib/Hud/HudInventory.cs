@@ -198,13 +198,18 @@ namespace ManicDigger.Hud
             }
         }
 
-        private void ScrollUp()
+        public bool IsMouseOverCells()
+        {
+            return SelectedCellOrScrollbar(mouse_current.MouseCurrent);
+        }
+
+        public void ScrollUp()
         {
             ScrollLine--;
             if (ScrollLine < 0) { ScrollLine = 0; }
         }
 
-        private void ScrollDown()
+        public void ScrollDown()
         {
             ScrollLine++;
             int max = CellCountTotal.Y - CellCountInPage.Y;
@@ -242,6 +247,17 @@ namespace ManicDigger.Hud
             Point cell = new Point((scaledMouse.X - CellsStart.X) / CellDrawSize,
                 (scaledMouse.Y - CellsStart.Y) / CellDrawSize);
             return cell;
+        }
+
+        private bool SelectedCellOrScrollbar(Point scaledMouse)
+        {
+            if (scaledMouse.X < CellsStart.X || scaledMouse.Y < CellsStart.Y
+                || scaledMouse.X > CellsStart.X + (CellCountInPage.X + 1) * CellDrawSize
+                || scaledMouse.Y > CellsStart.Y + CellCountInPage.Y * CellDrawSize)
+            {
+                return false;
+            }
+            return true;
         }
 
         public int ScrollLine;
