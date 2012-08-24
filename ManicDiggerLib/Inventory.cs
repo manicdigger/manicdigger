@@ -47,6 +47,7 @@ namespace ManicDigger
         [OnDeserialized()]
         void OnDeserialized()
         {
+            /*
             LeftHand = new Item[10];
             if (LeftHandProto != null)
             {
@@ -58,6 +59,7 @@ namespace ManicDigger
                     }
                 }
             }
+            */
             RightHand = new Item[10];
             if (RightHandProto != null)
             {
@@ -73,7 +75,8 @@ namespace ManicDigger
         [OnSerializing()]
         void OnSerializing()
         {
-            Dictionary<int, Item> d = new Dictionary<int, Item>();
+            Dictionary<int, Item> d;// = new Dictionary<int, Item>();
+            /*
             for (int i = 0; i < 10; i++)
             {
                 if (LeftHand[i] != null)
@@ -82,7 +85,7 @@ namespace ManicDigger
                 }
             }
             LeftHandProto = d;
-
+            */
             d = new Dictionary<int, Item>();
             for (int i = 0; i < 10; i++)
             {
@@ -94,11 +97,11 @@ namespace ManicDigger
             RightHandProto = d;
         }
         //dictionary because protobuf-net can't serialize array of nulls.
-        [ProtoMember(1, IsRequired = false)]
-        public Dictionary<int, Item> LeftHandProto;
+        //[ProtoMember(1, IsRequired = false)]
+        //public Dictionary<int, Item> LeftHandProto;
         [ProtoMember(2, IsRequired = false)]
         public Dictionary<int, Item> RightHandProto;
-        public Item[] LeftHand = new Item[10];
+        //public Item[] LeftHand = new Item[10];
         public Item[] RightHand = new Item[10];
         [ProtoMember(3, IsRequired = false)]
         public Item MainArmor;
@@ -114,7 +117,7 @@ namespace ManicDigger
         public Item DragDropItem;
         public void CopyFrom(Inventory inventory)
         {
-            this.LeftHand = inventory.LeftHand;
+            //this.LeftHand = inventory.LeftHand;
             this.RightHand = inventory.RightHand;
             this.MainArmor = inventory.MainArmor;
             this.Boots = inventory.Boots;
@@ -126,7 +129,7 @@ namespace ManicDigger
         public static Inventory Create()
         {
             Inventory i = new Inventory();
-            i.LeftHand = new Item[10];
+            //i.LeftHand = new Item[10];
             i.RightHand = new Item[10];
             return i;
         }
@@ -138,7 +141,7 @@ namespace ManicDigger
         public Inventory d_Inventory;
         public IGameDataItems d_Items;
 
-        public Point CellCount = new Point(12, 7);
+        public Point CellCount = new Point(12, 7 * 3);
 
         //returns null if area is invalid.
         public Point[] ItemsAtArea(Point p, Point size)
@@ -198,7 +201,7 @@ namespace ManicDigger
         {
             switch (wearPlace)
             {
-                case WearPlace.LeftHand: return d_Inventory.LeftHand[activeMaterial];
+                //case WearPlace.LeftHand: return d_Inventory.LeftHand[activeMaterial];
                 case WearPlace.RightHand: return d_Inventory.RightHand[activeMaterial];
                 case WearPlace.MainArmor: return d_Inventory.MainArmor;
                 case WearPlace.Boots: return d_Inventory.Boots;
@@ -212,7 +215,7 @@ namespace ManicDigger
         {
             switch (wearPlace)
             {
-                case WearPlace.LeftHand: d_Inventory.LeftHand[activeMaterial] = item; break;
+                //case WearPlace.LeftHand: d_Inventory.LeftHand[activeMaterial] = item; break;
                 case WearPlace.RightHand: d_Inventory.RightHand[activeMaterial] = item; break;
                 case WearPlace.MainArmor: d_Inventory.MainArmor = item; break;
                 case WearPlace.Boots: d_Inventory.Boots = item; break;
@@ -310,16 +313,16 @@ namespace ManicDigger
             {
                 if (d_Inventory.RightHand[i] == null)
                 {
-                    freehand = i;
+                    return freehand;
                 }
             }
-            return freehand;
+            return null;
         }
     }
 
     public enum WearPlace
     {
-        LeftHand,
+        //LeftHand,
         RightHand,
         MainArmor,
         Boots,
@@ -627,7 +630,7 @@ namespace ManicDigger
             if (item == null) { return true; }
             switch (selectedWear)
             {
-                case WearPlace.LeftHand: return false;
+                //case WearPlace.LeftHand: return false;
                 case WearPlace.RightHand: return item.ItemClass == ItemClass.Block;
                 case WearPlace.MainArmor: return false;
                 case WearPlace.Boots: return false;

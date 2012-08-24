@@ -81,7 +81,8 @@ namespace ManicDigger.Hud
                 return new Point(viewport_size.Width / 2 - 512 / 2, viewport_size.Height - 90);
             }
         }
-        Point CellCount = new Point(12, 7);
+        Point CellCountInPage = new Point(12, 7);
+        Point CellCountTotal = new Point(12, 7 * 3);
         public int ActiveMaterialCellSize = 48;
 
         public void OnKeyPress(KeyPressEventArgs e)
@@ -92,21 +93,36 @@ namespace ManicDigger.Hud
                 if (ActiveMaterial.ActiveMaterial == -1) { ActiveMaterial.ActiveMaterial = 9; }
             }
         }
+        int ScrollButtonSize { get { return CellDrawSize; } }
+        Point ScrollUpButton
+        {
+            get
+            {
+                Point p = CellsStart; p.Offset(CellCountInPage.X * CellDrawSize, 0); return p;
+            }
+        }
+        Point ScrollDownButton
+        {
+            get
+            {
+                Point p = CellsStart; p.Offset(CellCountInPage.X * CellDrawSize, (CellCountInPage.Y - 1) * CellDrawSize); return p;
+            }
+        }
 
         public void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
         {
             Point scaledMouse = mouse_current.MouseCurrent;
 
             //main inventory
-            Point? cell = SelectedCell(scaledMouse);
+            Point? cellInPage = SelectedCell(scaledMouse);
             //grab from inventory
-            if (cell != null)
+            if (cellInPage != null)
             {
                 controller.InventoryClick(new InventoryPosition()
                 {
                     type = InventoryPositionType.MainArea,
-                    AreaX = cell.Value.X,
-                    AreaY = cell.Value.Y,
+                    AreaX = cellInPage.Value.X,
+                    AreaY = cellInPage.Value.Y + ScrollLine,
                 });
             }
             //drop items on ground
@@ -144,6 +160,40 @@ namespace ManicDigger.Hud
                     ActiveMaterial = ActiveMaterial.ActiveMaterial,
                 });
             }
+            if (scaledMouse.X >= ScrollUpButton.X && scaledMouse.X < ScrollUpButton.X + ScrollButtonSize
+                && scaledMouse.Y >= ScrollUpButton.Y && scaledMouse.Y < ScrollUpButton.Y + ScrollButtonSize)
+            {
+                ScrollUp();
+                ScrollingUpTime = DateTime.UtcNow;
+            }
+            if (scaledMouse.X >= ScrollDownButton.X && scaledMouse.X < ScrollDownButton.X + ScrollButtonSize
+                && scaledMouse.Y >= ScrollDownButton.Y && scaledMouse.Y < ScrollDownButton.Y + ScrollButtonSize)
+            {
+                ScrollDown();
+                ScrollingDownTime = DateTime.UtcNow;
+            }
+        }
+
+        private void ScrollUp()
+        {
+            ScrollLine--;
+            if (ScrollLine < 0) { ScrollLine = 0; }
+        }
+
+        private void ScrollDown()
+        {
+            ScrollLine++;
+            int max = CellCountTotal.Y - CellCountInPage.Y;
+            if (ScrollLine >= max) { ScrollLine = max; }
+        }
+
+        DateTime ScrollingUpTime;
+        DateTime ScrollingDownTime;
+
+        public void Mouse_ButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            ScrollingUpTime = new DateTime();
+            ScrollingDownTime = new DateTime();
         }
 
         private int? SelectedMaterialSelectorSlot(Point scaledMouse)
@@ -160,8 +210,8 @@ namespace ManicDigger.Hud
         private Point? SelectedCell(Point scaledMouse)
         {
             if (scaledMouse.X < CellsStart.X || scaledMouse.Y < CellsStart.Y
-                || scaledMouse.X > CellsStart.X + CellCount.X * CellDrawSize
-                || scaledMouse.Y > CellsStart.Y + CellCount.Y * CellDrawSize)
+                || scaledMouse.X > CellsStart.X + CellCountInPage.X * CellDrawSize
+                || scaledMouse.Y > CellsStart.Y + CellCountInPage.Y * CellDrawSize)
             {
                 return null;
             }
@@ -170,13 +220,21 @@ namespace ManicDigger.Hud
             return cell;
         }
 
-        public void OnRenderFrame(FrameEventArgs e)
-        {
-            Draw();
-        }
+        public int ScrollLine;
 
         public void Draw()
         {
+            if (ScrollingUpTime.Ticks != 0 && (DateTime.UtcNow - ScrollingUpTime).TotalSeconds > 0.25)
+            {
+                ScrollingUpTime = DateTime.UtcNow;
+                ScrollUp();
+            }
+            if (ScrollingDownTime.Ticks != 0 && (DateTime.UtcNow - ScrollingDownTime).TotalSeconds > 0.25)
+            {
+                ScrollingDownTime = DateTime.UtcNow;
+                ScrollDown();
+            }
+
             Point scaledMouse = mouse_current.MouseCurrent;
 
             the3d.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 512, 1024);
@@ -187,23 +245,27 @@ namespace ManicDigger.Hud
             //main inventory
             foreach (var k in inventory.Items)
             {
-                DrawItem(new Point(CellsStart.X + k.Key.X * CellDrawSize, CellsStart.Y + k.Key.Y * CellDrawSize), k.Value, null);
+                int screeny = k.Key.Y - ScrollLine;
+                if (screeny >= 0 && screeny < CellCountInPage.Y)
+                {
+                    DrawItem(new Point(CellsStart.X + k.Key.X * CellDrawSize, CellsStart.Y + screeny * CellDrawSize), k.Value, null);
+                }
             }
 
             //draw area selection
             if (inventory.DragDropItem != null)
             {
-                Point? selected = SelectedCell(scaledMouse);
-                if (selected != null)
+                Point? selectedInPage = SelectedCell(scaledMouse);
+                if (selectedInPage != null)
                 {
-                    int x = (selected.Value.X) * CellDrawSize + CellsStart.X;
-                    int y = (selected.Value.Y) * CellDrawSize + CellsStart.Y;
+                    int x = (selectedInPage.Value.X) * CellDrawSize + CellsStart.X;
+                    int y = (selectedInPage.Value.Y) * CellDrawSize + CellsStart.Y;
                     Point size = dataItems.ItemSize(inventory.DragDropItem);
-                    if (selected.Value.X + size.X <= CellCount.X
-                        && selected.Value.Y + size.Y <= CellCount.Y)
+                    if (selectedInPage.Value.X + size.X <= CellCountInPage.X
+                        && selectedInPage.Value.Y + size.Y <= CellCountInPage.Y)
                     {
                         Color c;
-                        Point[] itemsAtArea = inventoryUtil.ItemsAtArea(selected.Value, size);
+                        Point[] itemsAtArea = inventoryUtil.ItemsAtArea(new Point(selectedInPage.Value.X, selectedInPage.Value.Y + ScrollLine), size);
                         if (itemsAtArea == null || itemsAtArea.Length > 1)
                         {
                             c = Color.Red;
@@ -243,7 +305,7 @@ namespace ManicDigger.Hud
             DrawMaterialSelector();
 
             //wear
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.LeftHand], InventoryStart), inventory.LeftHand[ActiveMaterial.ActiveMaterial], null);
+            //DrawItem(Offset(wearPlaceStart[(int)WearPlace.LeftHand], InventoryStart), inventory.LeftHand[ActiveMaterial.ActiveMaterial], null);
             DrawItem(Offset(wearPlaceStart[(int)WearPlace.RightHand], InventoryStart), inventory.RightHand[ActiveMaterial.ActiveMaterial], null);
             DrawItem(Offset(wearPlaceStart[(int)WearPlace.MainArmor], InventoryStart), inventory.MainArmor, null);
             DrawItem(Offset(wearPlaceStart[(int)WearPlace.Boots], InventoryStart), inventory.Boots, null);
@@ -254,6 +316,7 @@ namespace ManicDigger.Hud
             if (SelectedCell(scaledMouse) != null)
             {
                 Point selected = SelectedCell(scaledMouse).Value;
+                selected.Offset(0, ScrollLine);
                 Point? itemAtCell = inventoryUtil.ItemAtCell(selected);
                 if (itemAtCell != null)
                 {
@@ -296,11 +359,13 @@ namespace ManicDigger.Hud
             the3d.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStart.X, MaterialSelectorBackgroundStart.Y, 1024, 128);
             for (int i = 0; i < 10; i++)
             {
+                /*
                 if (inventory.LeftHand[i] != null)
                 {
                     DrawItem(new Point(MaterialSelectorStart.X + i * ActiveMaterialCellSize, MaterialSelectorStart.Y),
                         inventory.LeftHand[i], new Point(ActiveMaterialCellSize, ActiveMaterialCellSize));
                 }
+                */
                 if (inventory.RightHand[i] != null)
                 {
                     DrawItem(new Point(MaterialSelectorStart.X + i * ActiveMaterialCellSize, MaterialSelectorStart.Y),
@@ -332,7 +397,7 @@ namespace ManicDigger.Hud
         //indexed by enum WearPlace
         Point[] wearPlaceStart = new Point[]
         {
-            new Point(282,85), //LeftHand,
+            //new Point(282,85), //LeftHand,
             new Point(55,85), //RightHand,
             new Point(174,106), //MainArmor,
             new Point(278,233), //Boots,
@@ -343,7 +408,7 @@ namespace ManicDigger.Hud
         //indexed by enum WearPlace
         Point[] wearPlaceCells = new Point[]
         {
-            new Point(2,4), //LeftHand,
+            //new Point(2,4), //LeftHand,
             new Point(2,4), //RightHand,
             new Point(2,4), //MainArmor,
             new Point(2,2), //Boots,

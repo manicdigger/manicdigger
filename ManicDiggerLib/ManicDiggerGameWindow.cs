@@ -408,6 +408,10 @@ namespace ManicDigger
             {
                 UpdatePicking();
             }
+            if (guistate == GuiState.Inventory)
+            {
+                d_HudInventory.Mouse_ButtonUp(sender, e);
+            }
         }
         void Mouse_ButtonDown(object sender, OpenTK.Input.MouseButtonEventArgs e)
         {
