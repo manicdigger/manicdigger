@@ -685,7 +685,7 @@ namespace ManicDigger.Mods
                     TextureIdLeft = "Cobblestone",
                     TextureIdRight = "Cobblestone",
                     TextureIdForInventory = "Rail" + i.ToString(),
-                    DrawType = DrawType.Solid,
+                    DrawType = DrawType.Transparent,
                     WalkableType = WalkableType.Solid,
                     Sounds = solidSounds,
                     Rail = i,
