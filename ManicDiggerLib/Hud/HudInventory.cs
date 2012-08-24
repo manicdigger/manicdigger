@@ -49,20 +49,20 @@ namespace ManicDigger.Hud
         public IViewport3dSelectedBlock viewport3d;
         public ITerrainTextures terraintextures;
 
-        public int CellDrawSize = 28;
+        public int CellDrawSize = 40;
 
         public Point InventoryStart
         {
             get
             {
-                return new Point(viewport_size.Width / 2 - 400 / 2, viewport_size.Height / 2 - 600 / 2);
+                return new Point(viewport_size.Width / 2 - 560 / 2, viewport_size.Height / 2 - 600 / 2);
             }
         }
         public Point CellsStart
         {
             get
             {
-                Point p = new Point(33, 309); p.Offset(InventoryStart); return p;
+                Point p = new Point(33, 180); p.Offset(InventoryStart); return p;
             }
         }
         Point MaterialSelectorStart
@@ -118,12 +118,36 @@ namespace ManicDigger.Hud
             //grab from inventory
             if (cellInPage != null)
             {
-                controller.InventoryClick(new InventoryPosition()
+                if (e.Button == MouseButton.Left)
                 {
-                    type = InventoryPositionType.MainArea,
-                    AreaX = cellInPage.Value.X,
-                    AreaY = cellInPage.Value.Y + ScrollLine,
-                });
+                    controller.InventoryClick(new InventoryPosition()
+                    {
+                        type = InventoryPositionType.MainArea,
+                        AreaX = cellInPage.Value.X,
+                        AreaY = cellInPage.Value.Y + ScrollLine,
+                    });
+                }
+                else
+                {
+                    controller.InventoryClick(new InventoryPosition()
+                    {
+                        type = InventoryPositionType.MainArea,
+                        AreaX = cellInPage.Value.X,
+                        AreaY = cellInPage.Value.Y + ScrollLine,
+                    });
+                    controller.InventoryClick(new InventoryPosition()
+                    {
+                        type = InventoryPositionType.WearPlace,
+                        WearPlace = (int)WearPlace.RightHand,
+                        ActiveMaterial = ActiveMaterial.ActiveMaterial,
+                    });
+                    controller.InventoryClick(new InventoryPosition()
+                    {
+                        type = InventoryPositionType.MainArea,
+                        AreaX = cellInPage.Value.X,
+                        AreaY = cellInPage.Value.Y + ScrollLine,
+                    });
+                }
             }
             //drop items on ground
             if (scaledMouse.X < CellsStart.X && scaledMouse.Y < MaterialSelectorStart.Y)
@@ -140,9 +164,9 @@ namespace ManicDigger.Hud
             //material selector
             if (SelectedMaterialSelectorSlot(scaledMouse) != null)
             {
-                int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
+                //int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
                 ActiveMaterial.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).Value;
-                if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
+                //if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
                 {
                     controller.InventoryClick(new InventoryPosition()
                     {
@@ -237,7 +261,7 @@ namespace ManicDigger.Hud
 
             Point scaledMouse = mouse_current.MouseCurrent;
 
-            the3d.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 512, 1024);
+            the3d.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 1024, 1024);
 
             //the3d.Draw2dTexture(terrain, 50, 50, 50, 50, 0);
             //the3d.Draw2dBitmapFile("inventory_weapon_shovel.png", 100, 100, 60 * 2, 60 * 4);
@@ -398,22 +422,22 @@ namespace ManicDigger.Hud
         Point[] wearPlaceStart = new Point[]
         {
             //new Point(282,85), //LeftHand,
-            new Point(55,85), //RightHand,
-            new Point(174,106), //MainArmor,
-            new Point(278,233), //Boots,
-            new Point(174,33), //Helmet,
-            new Point(56,231), //Gauntlet,
+            new Point(34,100), //RightHand,
+            new Point(74,100), //MainArmor,
+            new Point(194,100), //Boots,
+            new Point(114,100), //Helmet,
+            new Point(154,100), //Gauntlet,
         };
 
         //indexed by enum WearPlace
         Point[] wearPlaceCells = new Point[]
         {
             //new Point(2,4), //LeftHand,
-            new Point(2,4), //RightHand,
-            new Point(2,4), //MainArmor,
-            new Point(2,2), //Boots,
-            new Point(2,2), //Helmet,
-            new Point(2,2), //Gauntlet,
+            new Point(1,1), //RightHand,
+            new Point(1,1), //MainArmor,
+            new Point(1,1), //Boots,
+            new Point(1,1), //Helmet,
+            new Point(1,1), //Gauntlet,
         };
 
         private void DrawItem(Point screenpos, Item item, Point? drawsize)
