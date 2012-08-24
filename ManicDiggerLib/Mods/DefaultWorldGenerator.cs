@@ -16,8 +16,8 @@ namespace ManicDigger.Mods
         {
             this.m = m;
             m.RegisterWorldGenerator(GetChunk);
-            m.RegisterOptionBool("DefaultGenCaves", true);
-            m.RegisterOptionBool("DefaultGenLavaCaves", true);
+            m.RegisterOptionBool("DefaultGenCaves", false);
+            m.RegisterOptionBool("DefaultGenLavaCaves", false);
         }
 
         ModManager m;
