@@ -1051,15 +1051,20 @@ namespace ManicDigger
         {
             d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
         }
-
-        public int[] drawDistances = { 32, 64, 128 };//, 256, 512 };
+        int maxdrawdistance; 
         private void ToggleFog()
         {
-            for (int i = 0; i < drawDistances.Length; i++)
+            List<int> drawDistances = new List<int>();
+            drawDistances.Add(32);
+            if (maxdrawdistance >= 64) { drawDistances.Add(64); }
+            if (maxdrawdistance >= 128) { drawDistances.Add(128); }
+            if (maxdrawdistance >= 256) { drawDistances.Add(256); }
+            if (maxdrawdistance >= 512) { drawDistances.Add(512); }
+            for (int i = 0; i < drawDistances.Count; i++)
             {
                 if (d_Config3d.viewdistance == drawDistances[i])
                 {
-                    d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Length];
+                    d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistances.Count];
                     goto end;
                 }
             }
@@ -3932,6 +3937,11 @@ namespace ManicDigger
                         }
                         serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
                         shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
+                        maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
+                        if (maxdrawdistance == 0)
+                        {
+                            maxdrawdistance = 128;
+                        }
                     }
                     break;
                 case ServerPacketId.Ping:

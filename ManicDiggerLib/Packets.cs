@@ -124,6 +124,8 @@ namespace GameModeFortress
         public int MapSizeZ = 128;
         [ProtoMember(11, IsRequired = false)]
         public int DisableShadows;
+        [ProtoMember(12, IsRequired = false)]
+        public int PlayerAreaSize;
     }
     [ProtoContract]
     public class PacketServerPlayerSpawnPosition

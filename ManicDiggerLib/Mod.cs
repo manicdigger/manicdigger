@@ -455,5 +455,17 @@ namespace ManicDigger
             }
             return players.ToArray();
         }
+
+        public void SetPlayerAreaSize(int size)
+        {
+            server.playerareasize = size;
+            server.centerareasize = size / 2;
+            server.drawdistance = size / 2;
+        }
+
+        public bool IsSinglePlayer()
+        {
+            return server.IsSinglePlayer;
+        }
     }
 }

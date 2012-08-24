@@ -12,6 +12,14 @@ namespace ManicDigger.Mods
         public void Start(ModManager m)
         {
             this.m = m;
+            if (m.IsSinglePlayer())
+            {
+                m.SetPlayerAreaSize(512);
+            }
+            else
+            {
+                m.SetPlayerAreaSize(256);
+            }
             solidSounds = new SoundSet()
             {
                 Walk = new string[] { "walk1", "walk2", "walk3", "walk4" },

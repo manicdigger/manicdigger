@@ -2724,7 +2724,7 @@ if (sent >= unknown.Count) { break; }
         void EmptyCallback(IAsyncResult result)
         {
         }
-        int drawdistance = 128;
+        public int drawdistance = 128;
         public const int chunksize = 32;
         int chunkdrawdistance { get { return drawdistance / chunksize; } }
         IEnumerable<Vector3i> ChunksAroundPlayer(Vector3i playerpos)
@@ -2917,6 +2917,7 @@ if (sent >= unknown.Count) { break; }
                 MapSizeY = d_Map.MapSizeY,
                 MapSizeZ = d_Map.MapSizeZ,
                 DisableShadows = enableshadows ? 0 : 1,
+                PlayerAreaSize = playerareasize,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }
@@ -3281,6 +3282,11 @@ if (sent >= unknown.Count) { break; }
             this.lightlevels = lightLevels;
         }
         public List<CraftingRecipe> craftingrecipes = new List<CraftingRecipe>();
+
+        public bool IsSinglePlayer
+        {
+            get { return d_MainSocket.GetType() == typeof(SocketDummy); }
+        }
     }
 
     public class Ping

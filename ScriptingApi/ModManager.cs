@@ -77,6 +77,8 @@ namespace ManicDigger
         float GetPlayerPositionZ(int player);
         void SetPlayerPosition(int player, float x, float y, float z);
         int[] AllPlayers();
+        void SetPlayerAreaSize(int size);
+        bool IsSinglePlayer();
     }
 
     public class ModInfo

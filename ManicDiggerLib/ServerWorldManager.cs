@@ -250,8 +250,8 @@ namespace ManicDiggerServer
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
         }
 
-        int playerareasize = 256;
-        int centerareasize = 128;
+        public int playerareasize = 256;
+        public int centerareasize = 128;
 
         PointG PlayerArea(int playerId)
         {

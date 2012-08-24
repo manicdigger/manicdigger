@@ -416,7 +416,17 @@ namespace ManicDigger
             GL.LoadMatrix(ref perpective);
         }
         public float znear = 0.1f;
-        float zfar { get { return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999; } }
+        float zfar
+        {
+            get
+            {
+                if (d_Config3d.viewdistance >= 256)
+                {
+                    return d_Config3d.viewdistance * 2;
+                }
+                return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999;
+            }
+        }
         public bool ENABLE_ZFAR = true;
         public void OrthoMode(int width, int height)
         {
