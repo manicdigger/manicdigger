@@ -206,6 +206,7 @@ namespace GameModeFortress
                 };
             }
             public static string build = "build";
+            public static string freemove = "freemove";
             public static string chat = "chat";
             public static string pm = "pm";
             public static string kick = "kick";
@@ -254,6 +255,7 @@ namespace GameModeFortress
             guest.GroupPrivileges.Add(Privilege.chat);
             guest.GroupPrivileges.Add(Privilege.pm);
             guest.GroupPrivileges.Add(Privilege.build);
+            guest.GroupPrivileges.Add(Privilege.freemove);
             guest.GroupColor = ClientColor.Cyan;
             defaultGroups.Add(guest);
             // default registered group
@@ -264,6 +266,7 @@ namespace GameModeFortress
             registered.GroupPrivileges.Add(Privilege.chat);
             registered.GroupPrivileges.Add(Privilege.pm);
             registered.GroupPrivileges.Add(Privilege.build);
+            registered.GroupPrivileges.Add(Privilege.freemove);
             registered.GroupColor = ClientColor.Blue;
             defaultGroups.Add(registered);
             // default builder group
@@ -285,6 +288,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.chat);
             admin.GroupPrivileges.Add(Privilege.pm);
             admin.GroupPrivileges.Add(Privilege.build);
+            admin.GroupPrivileges.Add(Privilege.freemove);
             admin.GroupPrivileges.Add(Privilege.kick);
             admin.GroupPrivileges.Add(Privilege.ban);
             admin.GroupPrivileges.Add(Privilege.banip);

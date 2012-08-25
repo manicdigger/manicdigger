@@ -277,7 +277,7 @@ namespace ManicDigger
         //float angle;
 
         public ServerInformation ServerInfo = new ServerInformation();
-        public ManicDiggerServer.Ping ServerPing = new ManicDiggerServer.Ping();
+        public bool AllowFreemove = true;
 
         public void SetTileAndUpdate(Vector3 pos, int type)
         {
@@ -565,7 +565,7 @@ namespace ManicDigger
                     }
                     else if (cmd == "freemove")
                     {
-                        if (this.ServerInfo.AllowFreemove)
+                        if (this.AllowFreemove)
                         {
                             ENABLE_FREEMOVE = BoolCommandArgument(arguments);
                         }
@@ -600,7 +600,7 @@ namespace ManicDigger
                     {
                         try
                         {
-                            if (this.ServerInfo.AllowFreemove)
+                            if (this.AllowFreemove)
                             {
                                 if (float.Parse(arguments) <= 500)
                                 {
@@ -790,10 +790,12 @@ namespace ManicDigger
                     }
                     return;
                 }
-                string strFreemoveNotAllowed = "Freemove is not allowed on this server.";
+
+                string strFreemoveNotAllowed = "You are not allowed to enable freemove.";
+
                 if (e.Key == GetKey(OpenTK.Input.Key.F1))
                 {
-                    if (!this.ServerInfo.AllowFreemove)
+                    if (!this.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -803,7 +805,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F2))
                 {
-                    if (!this.ServerInfo.AllowFreemove)
+                    if (!this.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -813,7 +815,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
-                    if (!this.ServerInfo.AllowFreemove)
+                    if (!this.AllowFreemove)
                     {
                         Log(strFreemoveNotAllowed);
                         return;
@@ -3919,7 +3921,6 @@ namespace ManicDigger
                         this.ServerInfo.connectdata = this.connectdata;
                         this.ServerInfo.ServerName = packet.Identification.ServerName;
                         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
-                        this.ServerInfo.AllowFreemove = !packet.Identification.DisallowFreemove;
                         ChatLog("---Connected---");
                         List<byte[]> needed = new List<byte[]>();
                         foreach (byte[] b in packet.Identification.UsedBlobsMd5)
@@ -3947,7 +3948,7 @@ namespace ManicDigger
                 case ServerPacketId.Ping:
                     {
                         this.SendPingReply();
-                        this.ServerPing.Send();
+                        this.ServerInfo.ServerPing.Send();
                     }
                     break;
                 case ServerPacketId.PlayerPing:
@@ -3958,8 +3959,7 @@ namespace ManicDigger
                             {
                                 if (k.id == this.LocalPlayerId)
                                 {
-                                    this.ServerPing.Receive();
-                                    this.ServerInfo.ServerPing = ServerPing.RoundtripTime;
+                                    this.ServerInfo.ServerPing.Receive();
                                 }
                                 k.ping = packet.PlayerPing.Ping;
                                 break;
@@ -4050,6 +4050,17 @@ namespace ManicDigger
                 case ServerPacketId.FillAreaLimit:
                     {
                         this.fillAreaLimit = packet.FillAreaLimit.Limit;
+                    }
+                    break;
+                case ServerPacketId.Freemove:
+                    {
+                        this.AllowFreemove = packet.Freemove.IsEnabled;
+                        if (!this.AllowFreemove)
+                        {
+                            ENABLE_FREEMOVE = false;
+                            ENABLE_NOCLIP = false;
+                            Log(Language.MoveNormal);
+                        }
                     }
                     break;
                 case ServerPacketId.PlayerSpawnPosition:

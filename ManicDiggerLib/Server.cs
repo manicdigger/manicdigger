@@ -343,13 +343,13 @@ namespace ManicDiggerServer
             {
                 //no savegame
                 //d_Generator.treeCount = config.Generator.TreeCount;
-                if (config.Generator.RandomSeed)
+                if (config.RandomSeed)
                 {
                     Seed = new Random().Next();
                 }
                 else
                 {
-                    Seed = config.Generator.Seed;
+                    Seed = config.Seed;
                 }
                 //d_Generator.SetSeed(Seed);
                 MemoryStream ms = new MemoryStream();
@@ -507,10 +507,6 @@ namespace ManicDiggerServer
                     config.IsCreative = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
                     config.Public = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
                     config.AllowGuests = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
-                    if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove") != null)
-                    {
-                        config.AllowFreemove = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowFreemove"));
-                    }
                     if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
                     {
                         config.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
@@ -1739,6 +1735,7 @@ if (sent >= unknown.Count) { break; }
                             clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
                         }
                         this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
+                        this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
                     }
                     break;
                 case ClientPacketId.RequestBlob:
@@ -2912,7 +2909,6 @@ if (sent >= unknown.Count) { break; }
                 ServerMotd = config.Motd,
                 UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
                 TerrainTextureMd5 = terrainTextureMd5,
-                DisallowFreemove = !config.AllowFreemove,
                 MapSizeX = d_Map.MapSizeX,
                 MapSizeY = d_Map.MapSizeY,
                 MapSizeZ = d_Map.MapSizeZ,
@@ -2921,6 +2917,15 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }
+        private void SendFreemoveState(int clientid, bool isEnabled)
+        {
+            PacketServerFreemove p = new PacketServerFreemove()
+            {
+                IsEnabled = isEnabled
+            };
+            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Freemove, Freemove = p }));
+        }
+
         byte[] terrainTextureMd5 { get { byte[] b = new byte[16]; b[0] = 1; return b; } }
         MD5 md5 = System.Security.Cryptography.MD5.Create();
         byte[] ComputeMd5(byte[] b)

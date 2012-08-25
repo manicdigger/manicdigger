@@ -17,11 +17,11 @@ namespace ManicDigger
 
         // fonts
         public readonly Color TEXT_COLOR = Color.Black;
-        public Font HeadingFont = new Font("Arial", 11f, FontStyle.Bold);
-        public Font NormalFont = new Font("Arial", 10f);
-        public Font NormalFontBold = new Font("Arial", 10f, FontStyle.Bold);
-        public Font SmallFont = new Font("Arial", 8f);
-        public Font SmallFontBold = new Font("Arial", 8f, FontStyle.Bold);
+        public Font HeadingFont = new Font("Verdana", 11f, FontStyle.Bold);
+        public Font NormalFont = new Font("Verdana", 10f);
+        public Font NormalFontBold = new Font("Verdana", 10f, FontStyle.Bold);
+        public Font SmallFont = new Font("Verdana", 8f);
+        public Font SmallFontBold = new Font("Verdana", 8f, FontStyle.Bold);
 
         // playerlist (table) alignment and settings
         private float tableX;
@@ -62,7 +62,7 @@ namespace ManicDigger
 
 
             string row3_1 = "IP: " + ServerInfo.connectdata.Ip + ":" + ServerInfo.connectdata.Port;
-            string row3_2 = ServerInfo.ServerPing.Milliseconds + "ms";
+            string row3_2 = ServerInfo.ServerPing.RoundtripTime.Milliseconds + "ms";
 
             string row4_1 = "Players: " + ServerInfo.Players.Count;
             string row4_2 = "Page: " + (page + 1) + "/" + (pageCount + 1);

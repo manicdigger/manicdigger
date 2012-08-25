@@ -525,6 +525,8 @@ namespace ManicDiggerServer
                     return "/restart";
                 case "teleport_player":
                     return "/teleport_player [target] [x] [y] {z}";
+                case "tp":
+                    return "/tp [username]";
                 case "backup":
                     return "/backup [filename]";
                 default:
@@ -623,6 +625,7 @@ namespace ManicDiggerServer
                 SendMessageToAll(string.Format("{0}{1} set group of {2} to {3}.", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetClient.ColoredPlayername(colorSuccess), newGroup.GroupColorString() + newGroupName));
                 ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
                 targetClient.AssignGroup(newGroup);
+                SendFreemoveState(targetClient.Id, targetClient.privileges.Contains(ServerClientMisc.Privilege.freemove));
                 return true;
             }
 
@@ -741,6 +744,7 @@ namespace ManicDiggerServer
             if (targetGroup.Password.Equals(password))
             {
                 GetClient(sourceClientId).AssignGroup(targetGroup);
+                SendFreemoveState(sourceClientId, GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.freemove));
                 SendMessageToAll(string.Format("{0}{1} logs in group {2}.", colorSuccess, GetClient(sourceClientId).ColoredPlayername(colorSuccess), targetGroupString));
                 SendMessage(sourceClientId, "Type /help see your available privileges.");
                 ServerEventLog(string.Format("{0} logs in group {1}.", GetClient(sourceClientId).playername, targetGroupString));
@@ -1644,6 +1648,10 @@ namespace ManicDiggerServer
                     return false;
                 }
                 targetClient.privileges.Add(privilege);
+                if (privilege.Equals(ServerClientMisc.Privilege.freemove))
+                {
+                    SendFreemoveState(targetClient.Id, targetClient.privileges.Contains(ServerClientMisc.Privilege.freemove));
+                }
                 SendMessageToAll(string.Format("{0}New privilege for {1}: {2}", colorSuccess, targetClient.ColoredPlayername(colorSuccess), privilege.ToString()));
                 ServerEventLog(string.Format("{0} gives {1} privilege {2}.", GetClient(sourceClientId).playername, targetClient.playername, privilege.ToString()));
                 return true;
@@ -1668,7 +1676,10 @@ namespace ManicDiggerServer
                     SendMessage(sourceClientId, string.Format("{0}Player {1} don't has privilege {2}.", colorError, target, privilege.ToString()));
                     return false;
                 }
-
+                if (privilege.Equals(ServerClientMisc.Privilege.freemove))
+                {
+                    SendFreemoveState(targetClient.Id, targetClient.privileges.Contains(ServerClientMisc.Privilege.freemove));
+                }
                 SendMessageToAll(string.Format("{0} {1} lost privilege: {2}", colorImportant, targetClient.ColoredPlayername(colorImportant), privilege.ToString()));
                 ServerEventLog(string.Format("{0} removes {1} privilege {2}.", GetClient(sourceClientId).playername, targetClient.playername, privilege.ToString()));
                 return true;

@@ -115,12 +115,10 @@ namespace GameModeFortress
         [ProtoMember(6, IsRequired = false)]
         public byte[] TerrainTextureMd5; //todo, currently ignored.
         [ProtoMember(7, IsRequired = false)]
-        public bool DisallowFreemove;
-        [ProtoMember(8, IsRequired = false)]
         public int MapSizeX = 10000;
-        [ProtoMember(9, IsRequired = false)]
+        [ProtoMember(8, IsRequired = false)]
         public int MapSizeY = 10000;
-        [ProtoMember(10, IsRequired = false)]
+        [ProtoMember(9, IsRequired = false)]
         public int MapSizeZ = 128;
         [ProtoMember(11, IsRequired = false)]
         public int DisableShadows;
@@ -240,6 +238,12 @@ namespace GameModeFortress
         public int Limit;
     }
     [ProtoContract]
+    public class PacketServerFreemove
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public bool IsEnabled;
+    }
+    [ProtoContract]
     public class PacketServerSpawnPlayer
     {
         [ProtoMember(1, IsRequired = false)]
@@ -316,6 +320,8 @@ namespace GameModeFortress
         public PacketServerFillArea FillArea;
         [ProtoMember(52, IsRequired = false)]
         public PacketServerFillAreaLimit FillAreaLimit;
+        [ProtoMember(53, IsRequired = false)]
+        public PacketServerFreemove Freemove;
         [ProtoMember(6, IsRequired = false)]
         public PacketServerSpawnPlayer SpawnPlayer;
         [ProtoMember(7, IsRequired = false)]
@@ -565,7 +571,7 @@ namespace GameModeFortress
         LightLevels,
         CraftingRecipes,
         RemoveMonsters = 50,
-
+        Freemove,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

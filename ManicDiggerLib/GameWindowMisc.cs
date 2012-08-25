@@ -391,8 +391,7 @@ namespace ManicDigger
         public string ServerMotd;
         public ConnectData connectdata;
         public List<ConnectedPlayer> Players;
-        public TimeSpan ServerPing;
-        public bool AllowFreemove;
+        public ManicDiggerServer.Ping ServerPing;
 
         public ServerInformation()
         {
@@ -400,7 +399,7 @@ namespace ManicDigger
             this.ServerMotd = "";
             this.connectdata = new ConnectData();
             this.Players = new List<ConnectedPlayer>();
-            this.AllowFreemove = false;
+            this.ServerPing = new ManicDiggerServer.Ping();
         }
     }
 }

@@ -29,7 +29,6 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)]
         public string Password { get; set; }
         public bool AllowGuests { get; set; }
-        public bool AllowFreemove { get; set; }     //Allow character to fly?
         public bool Monsters { get; set; }
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
@@ -40,8 +39,8 @@ namespace GameModeFortress
         public List<string> BannedIPs { get; set; }
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
-        [XmlElement(ElementName="MapGenerator")]
-        public MapGeneratorConfig Generator { get; set; }
+        public int Seed { get; set; }
+        public bool RandomSeed { get; set; }
 
         public bool IsPasswordProtected()
         {
@@ -121,7 +120,6 @@ namespace GameModeFortress
             this.IsCreative = true;
             this.Public = true;
             this.AllowGuests = true;
-            this.AllowFreemove = true;
             this.Monsters = false;
             this.MapSizeX = 9984;
             this.MapSizeY = 9984;
@@ -130,7 +128,8 @@ namespace GameModeFortress
             this.BannedUsers = new List<string>();
             this.Areas = new List<AreaConfig>();
             this.AutoRestartCycle = 6;
-            this.Generator = new MapGeneratorConfig();
+            this.Seed = 0;
+            this.RandomSeed = true;
         }
     }
 
@@ -240,35 +239,6 @@ namespace GameModeFortress
             }
 
             return Id + ":" + Coords + ":" + permittedGroupsString + ":" + permittedUsersString + ":" + levelString;
-        }
-    }
-    
-    
-    public class MapGeneratorConfig
-    {
-        int treeCount;
-        public MapGeneratorConfig()
-        {
-            this.treeCount = 20;
-            this.RandomSeed = true;
-            this.EnableCaves = true;
-            this.Seed = 0;
-            this.GeneratorType = "NewWorldGenerator";
-        }
-        public bool RandomSeed { get; set; }
-        public bool EnableCaves { get; set; }
-        public int Seed { get; set; }
-        public string GeneratorType { get; set; }
-
-        public int TreeCount
-        {
-            get { return this.treeCount; }
-            set
-            {
-                if (value < 0) this.treeCount = 0;
-                else if (value > 100) this.treeCount = 100;
-                else this.treeCount = value;
-            }
         }
     }
 
