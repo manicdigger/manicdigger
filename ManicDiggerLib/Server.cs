@@ -398,9 +398,20 @@ namespace ManicDiggerServer
             Serializer.Serialize(s, save);
         }
         public Dictionary<string, byte[]> moddata = new Dictionary<string, byte[]>();
-        public void BackupDatabase(string backupFilename)
+        public bool BackupDatabase(string backupFilename)
         {
-            d_ChunkDb.Backup(backupFilename);
+            if (!GameStorePath.IsValidName(backupFilename))
+            {
+                Console.WriteLine("Invalid backup filename: " + backupFilename);
+                return false;
+            }
+            if (!Directory.Exists(GameStorePath.gamepathbackup))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathbackup);
+            }
+            string finalFilename = Path.Combine(GameStorePath.gamepathbackup, backupFilename + MapManipulator.BinSaveExtension);
+            d_ChunkDb.Backup(finalFilename);
+            return true;
         }
         private void SaveAllLoadedChunks()
         {

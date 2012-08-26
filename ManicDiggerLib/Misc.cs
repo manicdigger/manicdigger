@@ -45,6 +45,25 @@ namespace ManicDigger
 
         public static string gamepathconfig = Path.Combine(GameStorePath.GetStorePath(), "Configuration");
         public static string gamepathsaves = Path.Combine(GameStorePath.GetStorePath(), "Saves");
+        public static string gamepathbackup = Path.Combine(GameStorePath.GetStorePath(), "Backup");
+
+        public static bool IsValidName (string s)
+        {
+            if (s.Length < 1 || s.Length > 8)
+            {
+                return false;
+            }
+            for (int i=0; i<s.Length; i++)
+            {
+                if (!AllowedNameChars.Contains(s[i].ToString()))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public static string AllowedNameChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_-";
+
     }
     public interface IScreenshot
     {

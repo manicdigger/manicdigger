@@ -241,7 +241,7 @@ namespace GameModeFortress
             public static string restart = "restart";
             public static string tp = "tp";
             public static string teleport_player = "teleport_player";
-            public static string backup = "backup";
+            public static string backup_database = "backup_database";
         };
 
         public static List<Group> getDefaultGroups()

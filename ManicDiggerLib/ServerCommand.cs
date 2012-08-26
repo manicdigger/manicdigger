@@ -426,13 +426,19 @@ namespace ManicDiggerServer
                     this.TeleportPlayer(sourceClientId, ss[0], x, y, z);
                     break;
                 case "backup_database":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.backup))
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.backup_database))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         break;
                     }
-                    this.BackupDatabase(argument);
-                    SendMessage(sourceClientId, string.Format("{0}Backup created.", colorSuccess));
+                    if (!BackupDatabase(argument))
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Backup could not be created. Check filename.", colorError));
+                    }
+                    else
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Backup created.", colorSuccess));
+                    }
                     break;
                 default:
                     for (int i = 0; i < oncommand.Count; i++)
@@ -527,8 +533,8 @@ namespace ManicDiggerServer
                     return "/teleport_player [target] [x] [y] {z}";
                 case "tp":
                     return "/tp [username]";
-                case "backup":
-                    return "/backup [filename]";
+                case "backup_database":
+                    return "/backup_database [filename]";
                 default:
                     if (commandhelps.ContainsKey(command))
                     {
