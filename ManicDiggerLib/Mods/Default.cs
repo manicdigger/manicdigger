@@ -709,7 +709,7 @@ namespace ManicDigger.Mods
                 TextureIdForInventory = "GrassSide",
                 TextureIdBottom = "Dirt",
                 DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(131, "GoldCoin", new BlockType()
@@ -777,7 +777,7 @@ namespace ManicDigger.Mods
                 TextureIdRight = "Bookcase",
                 TextureIdForInventory = "Bookcase",
                 DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(144, "WoodDesk", new BlockType()
@@ -789,7 +789,7 @@ namespace ManicDigger.Mods
                 TextureIdLeft = "GlassDeskSide",
                 TextureIdRight = "GlassDeskSide",
                 TextureIdForInventory = "WoodBlock",
-                DrawType = DrawType.Plant,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -802,7 +802,7 @@ namespace ManicDigger.Mods
                 TextureIdLeft = "GlassDeskSide",
                 TextureIdRight = "GlassDeskSide",
                 TextureIdForInventory = "GlassDeskSide",
-                DrawType = DrawType.Plant,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -881,7 +881,7 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("Cobblestone");
             m.AddToCreativeInventory("Wood");
             m.AddToCreativeInventory("Sapling");
-            m.AddToCreativeInventory("Adminium");
+            //m.AddToCreativeInventory("Adminium");
             m.AddToCreativeInventory("Water");
             m.AddToCreativeInventory("Lava");
             m.AddToCreativeInventory("Sand");

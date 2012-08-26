@@ -361,7 +361,7 @@ namespace ManicDiggerServer
             //d_Generator.SetSeed(save.Seed);
             Seed = save.Seed;
             d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
-            if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>();
+            if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
             else this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
             this.simulationcurrentframe = save.SimulationCurrentFrame;
@@ -376,8 +376,8 @@ namespace ManicDiggerServer
         public List<ManicDigger.Action> onload = new List<ManicDigger.Action>();
         public List<ManicDigger.Action> onsave = new List<ManicDigger.Action>();
         public int LastMonsterId;
-        public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>();
-        public Dictionary<string, PacketServerPlayerStats> PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
+        public Dictionary<string, PacketServerInventory> Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
+        public Dictionary<string, PacketServerPlayerStats> PlayerStats = new Dictionary<string, PacketServerPlayerStats>(StringComparer.InvariantCultureIgnoreCase);
         public void SaveGame(Stream s)
         {
             for (int i = 0; i < onsave.Count; i++)
@@ -1496,7 +1496,7 @@ if (sent >= unknown.Count) { break; }
         {
             if (Inventory == null)
             {
-                Inventory = new Dictionary<string, PacketServerInventory>();
+                Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
             }
             if (!Inventory.ContainsKey(playername))
             {
@@ -1515,7 +1515,7 @@ if (sent >= unknown.Count) { break; }
         {
             if (Inventory == null)
             {
-                Inventory = new Dictionary<string, PacketServerInventory>();
+                Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
             }
             this.Inventory[playername] = new PacketServerInventory()
             {
@@ -1527,7 +1527,7 @@ if (sent >= unknown.Count) { break; }
         {
             if (PlayerStats == null)
             {
-                PlayerStats = new Dictionary<string, PacketServerPlayerStats>();
+                PlayerStats = new Dictionary<string, PacketServerPlayerStats>(StringComparer.InvariantCultureIgnoreCase);
             }
             if (!PlayerStats.ContainsKey(playername))
             {
@@ -2283,10 +2283,10 @@ if (sent >= unknown.Count) { break; }
                                         inventory.RightHand[fill.MaterialSlot] = null;
                                         return;
                                     }
+                                    item.BlockCount--;
                                     // Grab item before replacing it with new block.
                                     newItem.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[d_Map.GetBlock(x, y, z)];
                                     GetInventoryUtil(inventory).GrabItem(newItem, fill.MaterialSlot);
-                                    item.BlockCount--;
                                     newBlockCount++;
                                     d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
                                 }
