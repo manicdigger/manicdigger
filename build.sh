@@ -2,10 +2,10 @@
 
 # build script
 
-rm -R -f ouput
+rm -R -f output
 mkdir output
 
-cp OpenAL32.dll ouput
+cp OpenAL32.dll output
 cp -R data output
 
 # Dll
@@ -27,6 +27,9 @@ cp ServerConfig.xml output
 # Monster editor
 cp MdMonsterEditor/bin/Release/*.dll output
 cp MdMonsterEditor/bin/Release/*.exe output
+
+# Mods
+cp -R ManicDiggerLib/Mods output
 
 #cp lib/*.dll output
 rm -f output/*vshost.exe
