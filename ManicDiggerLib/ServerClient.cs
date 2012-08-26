@@ -26,7 +26,7 @@ namespace GameModeFortress
             //Set Defaults
             this.Format = 1;
             this.DefaultGroupGuests = "Guest";
-            this.DefaultGroupRegistered = "Registered";
+            this.DefaultGroupRegistered = "Guest";
             this.Groups = new List<Group>();
             this.Clients = new List<Client>();
         }
@@ -87,7 +87,7 @@ namespace GameModeFortress
 
     }
 
-    public class Client
+    public class Client : IComparable<Client>
     {
         public string Name { get; set; }
         public string Group { get; set; }
@@ -103,6 +103,12 @@ namespace GameModeFortress
         public override string ToString()
         {
             return string.Format("{0}:{1}", this.Name, this.Group);
+        }
+
+        // Clients are sorted by groups.
+        public int CompareTo(Client other)
+        {
+            return Group.CompareTo(other.Group);
         }
     }
 
@@ -219,6 +225,7 @@ namespace GameModeFortress
             public static string unban = "unban";
             public static string run = "run";
             public static string chgrp = "chgrp";
+            public static string chgrp_offline = "chgrp_offline";
             public static string remove_client = "remove_client";
             public static string login = "login";
             public static string welcome = "welcome";
@@ -240,8 +247,10 @@ namespace GameModeFortress
             public static string privilege_remove = "privilege_remove";
             public static string restart = "restart";
             public static string tp = "tp";
+            public static string tp_pos = "tp_pos";
             public static string teleport_player = "teleport_player";
             public static string backup_database = "backup_database";
+            public static string reset_inventory = "reset_inventory";
         };
 
         public static List<Group> getDefaultGroups()
@@ -255,20 +264,12 @@ namespace GameModeFortress
             guest.GroupPrivileges.Add(Privilege.chat);
             guest.GroupPrivileges.Add(Privilege.pm);
             guest.GroupPrivileges.Add(Privilege.build);
+            guest.GroupPrivileges.Add(Privilege.login);
+            guest.GroupPrivileges.Add(Privilege.tp);
+            guest.GroupPrivileges.Add(Privilege.tp_pos);
             guest.GroupPrivileges.Add(Privilege.freemove);
-            guest.GroupColor = ClientColor.Cyan;
+            guest.GroupColor = ClientColor.Grey;
             defaultGroups.Add(guest);
-            // default registered group
-            GameModeFortress.Group registered = new GameModeFortress.Group();
-            registered.Name = "Registered";
-            registered.Level = 0;
-            registered.GroupPrivileges = new List<string>();
-            registered.GroupPrivileges.Add(Privilege.chat);
-            registered.GroupPrivileges.Add(Privilege.pm);
-            registered.GroupPrivileges.Add(Privilege.build);
-            registered.GroupPrivileges.Add(Privilege.freemove);
-            registered.GroupColor = ClientColor.Blue;
-            defaultGroups.Add(registered);
             // default builder group
             GameModeFortress.Group builder = new GameModeFortress.Group();
             builder.Name = "Builder";
@@ -277,13 +278,45 @@ namespace GameModeFortress
             builder.GroupPrivileges.Add(Privilege.chat);
             builder.GroupPrivileges.Add(Privilege.pm);
             builder.GroupPrivileges.Add(Privilege.build);
+            builder.GroupPrivileges.Add(Privilege.login);
             builder.GroupPrivileges.Add(Privilege.tp);
+            builder.GroupPrivileges.Add(Privilege.tp_pos);
+            builder.GroupPrivileges.Add(Privilege.freemove);
             builder.GroupColor = ClientColor.Green;
             defaultGroups.Add(builder);
+            // default moderator group
+            GameModeFortress.Group moderator = new GameModeFortress.Group();
+            moderator.Name = "Moderator";
+            moderator.Level = 2;
+            moderator.GroupPrivileges = new List<string>();
+            moderator.GroupPrivileges.Add(Privilege.chat);
+            moderator.GroupPrivileges.Add(Privilege.pm);
+            moderator.GroupPrivileges.Add(Privilege.build);
+            moderator.GroupPrivileges.Add(Privilege.freemove);
+            moderator.GroupPrivileges.Add(Privilege.kick);
+            moderator.GroupPrivileges.Add(Privilege.ban);
+            moderator.GroupPrivileges.Add(Privilege.banip);
+            moderator.GroupPrivileges.Add(Privilege.ban_offline);
+            moderator.GroupPrivileges.Add(Privilege.unban);
+            moderator.GroupPrivileges.Add(Privilege.list_clients);
+            moderator.GroupPrivileges.Add(Privilege.list_saved_clients);
+            moderator.GroupPrivileges.Add(Privilege.list_groups);
+            moderator.GroupPrivileges.Add(Privilege.list_banned_users);
+            moderator.GroupPrivileges.Add(Privilege.list_areas);
+            moderator.GroupPrivileges.Add(Privilege.chgrp);
+            moderator.GroupPrivileges.Add(Privilege.chgrp_offline);
+            moderator.GroupPrivileges.Add(Privilege.remove_client);
+            moderator.GroupPrivileges.Add(Privilege.use_tnt);
+            moderator.GroupPrivileges.Add(Privilege.restart);
+            moderator.GroupPrivileges.Add(Privilege.login);
+            moderator.GroupPrivileges.Add(Privilege.tp);
+            moderator.GroupPrivileges.Add(Privilege.tp_pos);
+            moderator.GroupColor = ClientColor.Cyan;
+            defaultGroups.Add(moderator);
             // default admin group
             GameModeFortress.Group admin = new GameModeFortress.Group();
             admin.Name = "Admin";
-            admin.Level = 2;
+            admin.Level = 3;
             admin.GroupPrivileges = new List<string>();
             admin.GroupPrivileges.Add(Privilege.chat);
             admin.GroupPrivileges.Add(Privilege.pm);
@@ -302,6 +335,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.list_banned_users);
             admin.GroupPrivileges.Add(Privilege.list_areas);
             admin.GroupPrivileges.Add(Privilege.chgrp);
+            admin.GroupPrivileges.Add(Privilege.chgrp_offline);
             admin.GroupPrivileges.Add(Privilege.remove_client);
             admin.GroupPrivileges.Add(Privilege.monsters);
             admin.GroupPrivileges.Add(Privilege.give);
@@ -310,7 +344,9 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.area_add);
             admin.GroupPrivileges.Add(Privilege.area_delete);
             admin.GroupPrivileges.Add(Privilege.restart);
+            admin.GroupPrivileges.Add(Privilege.login);
             admin.GroupPrivileges.Add(Privilege.tp);
+            admin.GroupPrivileges.Add(Privilege.tp_pos);
             admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);

@@ -1511,6 +1511,18 @@ if (sent >= unknown.Count) { break; }
             }
             return Inventory[playername];
         }
+        public void ResetPlayerInventory(string playername)
+        {
+            if (Inventory == null)
+            {
+                Inventory = new Dictionary<string, PacketServerInventory>();
+            }
+            this.Inventory[playername] = new PacketServerInventory()
+            {
+                Inventory = StartInventory(),
+            };
+        }
+
         PacketServerPlayerStats GetPlayerStats(string playername)
         {
             if (PlayerStats == null)
@@ -3177,6 +3189,7 @@ if (sent >= unknown.Count) { break; }
             {
                 serverClient = new ServerClient();
             }
+            serverClient.Clients.Sort();
             if (serverClient.Groups.Count == 0)
             {
                 serverClient.Groups = ServerClientMisc.getDefaultGroups();

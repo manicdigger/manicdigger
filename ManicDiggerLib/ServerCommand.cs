@@ -38,6 +38,17 @@ namespace ManicDiggerServer
                     }
                     SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
                     return;
+                case "op_offline":
+                case "chgrp_offline":
+                case "cg_offline":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length == 2)
+                    {
+                        this.ChangeGroupOffline(sourceClientId, ss[0], ss[1]);
+                        return;
+                    }
+                    SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                    return;
                 case "remove_client":
                     ss = argument.Split(new[] { ' ' });
                     if (ss.Length == 1)
@@ -375,6 +386,55 @@ namespace ManicDiggerServer
                     }
                     SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, ss[0]));
                     break;
+                case "tp_pos":
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length < 2 || ss.Length > 3)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+
+                    try
+                    {
+                        x = Convert.ToInt32(ss[0]);
+                        y = Convert.ToInt32(ss[1]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+
+                    try
+                    {
+                        z = Convert.ToInt32(ss[2]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        z = null;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid position.");
+                        return;
+                    }
+                    this.TeleportToPosition(sourceClientId, x, y, z);
+                    break;
                 case "teleport_player":
                     ss = argument.Split(new[] { ' ' });
 
@@ -438,8 +498,12 @@ namespace ManicDiggerServer
                     else
                     {
                         SendMessage(sourceClientId, string.Format("{0}Backup created.", colorSuccess));
+                        ServerEventLog(String.Format("{0} backups database: {1}.", GetClient(sourceClientId).playername, argument));
                     }
                     break;
+                case "reset_inventory":
+                    this.ResetInventory(sourceClientId, argument);
+                    return;
                 default:
                     for (int i = 0; i < oncommand.Count; i++)
                     {
@@ -491,6 +555,10 @@ namespace ManicDiggerServer
                     return "/op [username] [group]";
                 case "chgrp":
                     return "/chgrp [username] [group]";
+                case "op_offline":
+                    return "/op_offline [username] [group]";
+                case "chgrp_offline":
+                    return "/chgrp_offline [username] [group]";
                 case "remove_client":
                     return "/remove_client [username]";
                 case "login":
@@ -533,8 +601,12 @@ namespace ManicDiggerServer
                     return "/teleport_player [target] [x] [y] {z}";
                 case "tp":
                     return "/tp [username]";
+                case "tp_pos":
+                    return "/tp_pos [x] [y] {z}";
                 case "backup_database":
                     return "/backup_database [filename]";
+                case "reset_inventory":
+                    return "/reset_inventory [target]";
                 default:
                     if (commandhelps.ContainsKey(command))
                     {
@@ -635,7 +707,57 @@ namespace ManicDiggerServer
                 return true;
             }
 
-            // Target is at the moment not online. Create or change anyway a entry in ServerClient
+            // Target is at the moment not online.
+            SendMessage(sourceClientId, string.Format("{0}Player {1} is online. Use /chgrp_offline command.", colorError, target));
+            return false;
+        }
+
+        public bool ChangeGroupOffline(int sourceClientId, string target, string newGroupName)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.chgrp_offline))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            // Get related group from config file.
+            GameModeFortress.Group newGroup = serverClient.Groups.Find(
+                delegate(GameModeFortress.Group grp)
+                {
+                    return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
+                }
+            );
+            if (newGroup == null)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Group {1} not found.", colorError, newGroupName));
+                return false;
+            }
+
+            // Forbid to assign groups with levels higher then the source's client group level.
+            if (newGroup.IsSuperior(GetClient(sourceClientId).clientGroup))
+            {
+                SendMessage(sourceClientId, string.Format("{0}The target group is superior your group.", colorError));
+                return false;
+            }
+
+            // Get related client from config file.
+            GameModeFortress.Client clientConfig = serverClient.Clients.Find(
+                delegate(GameModeFortress.Client client)
+                {
+                    return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
+                }
+            );
+
+            // Get related client.
+            Client targetClient = GetClient(target);
+
+            if (targetClient != null)
+            {
+                SendMessage(sourceClientId, string.Format("{0}Player {1} is online. Use /chgrp command.", colorError, target));
+                return false;
+            }
+
+            // Target is at the moment not online. Create or change a entry in ServerClient.
             if (clientConfig == null)
             {
                 clientConfig = new GameModeFortress.Client();
@@ -1145,8 +1267,22 @@ namespace ManicDiggerServer
                     SendMessage(sourceClientId, colorImportant + "List of Players:");
                     foreach (var k in clients)
                     {
+                        // Format: Key Playername IP
+                        SendMessage(sourceClientId, string.Format("[{0}] {1} {2}", k.Key, k.Value.ColoredPlayername(colorNormal), ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString()));
+                    }
+                    return true;
+                case "-clients2":
+                case "-c2":
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_clients))
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                        return false;
+                    }
+                    SendMessage(sourceClientId, colorImportant + "List of Players:");
+                    foreach (var k in clients)
+                    {
                         // Format: Key Playername:Group:Privileges IP
-                        SendMessage(sourceClientId, string.Format("{0} {1}", k.Key, k.Value.ToString()));
+                        SendMessage(sourceClientId, string.Format("[{0}] {1}", k.Key, k.Value.ToString()));
                     }
                     return true;
                 case "-areas":
@@ -1364,6 +1500,33 @@ namespace ManicDiggerServer
                     targetClient.IsInventoryDirty = true;
                 }
                 ServerEventLog(string.Format("{0} gives {1} {2} to {3}.", sourcename, amount, blockname, targetName));
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
+            return false;
+        }
+
+        public bool ResetInventory(int sourceClientId, string target)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.reset_inventory))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            Client targetClient = GetClient(target);
+            if(targetClient != null)
+            {
+                ResetPlayerInventory(targetClient.playername);
+                SendMessageToAll(string.Format("{0}{1}reset inventory of {2}.", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant), targetClient.ColoredPlayername(colorImportant)));
+                ServerEventLog(string.Format("{0} resets inventory of {1}.", GetClient(sourceClientId).playername, targetClient.playername));
+                return true;
+            }
+            // Player is not online.
+            if (Inventory != null && Inventory.ContainsKey(target))
+            {
+                Inventory.Remove(target);
+                SendMessageToAll(string.Format("{0}{1}reset inventory of {2} (offline).", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+                ServerEventLog(string.Format("{0} resets inventory of {1} (offline).", GetClient(sourceClientId).playername, target));
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
@@ -1717,6 +1880,41 @@ namespace ManicDiggerServer
             Client t = clients[clientTo];
             SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
                 t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch);
+            return true;
+        }
+
+        public bool TeleportToPosition(int sourceClientId, int x, int y, int? z)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.tp_pos))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            // validate target position
+            int rZ = 0;
+            if (z == null)
+            {
+                if (!MapUtil.IsValidPos(d_Map, x, y))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid coordinates.", colorError));
+                    return false;
+                }
+                rZ = MapUtil.blockheight(d_Map, 0, x, y);
+            }
+            else
+            {
+                rZ = z.Value;
+            }
+            if (!MapUtil.IsValidPos(d_Map, x, y, rZ))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Invalid coordinates.", colorError));
+                return false;
+            }
+
+            Client client = GetClient(sourceClientId);
+            SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch);
+            SendMessage(client.Id, string.Format("{0}New Position ({1},{2},{3}).", colorSuccess, x, y, rZ));
             return true;
         }
 
