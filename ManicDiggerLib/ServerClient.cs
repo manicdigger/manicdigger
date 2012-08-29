@@ -21,6 +21,9 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)]
         public Spawn DefaultSpawn { get; set; }
 
+        [XmlElement(IsNullable = true)]
+        public int? DefaultFillLimit { get; set; }
+
         public ServerClient()
         {
             //Set Defaults
@@ -40,7 +43,9 @@ namespace GameModeFortress
         [XmlElement(IsNullable = true)]
         public string Password { get; set; }
         [XmlElement(IsNullable = true)]
-        public Spawn Spawn{ get; set; }
+        public Spawn Spawn { get; set; }
+        [XmlElement(IsNullable = true)]
+        public int? FillLimit { get; set; }
 
         [XmlArrayItem(ElementName = "Privilege")]
         public List<string> GroupPrivileges { get; set; }
@@ -93,6 +98,8 @@ namespace GameModeFortress
         public string Group { get; set; }
         [XmlElement(IsNullable = true)]
         public Spawn Spawn{ get; set; }
+        [XmlElement(IsNullable = true)]
+        public int? FillLimit { get; set; }
 
         public Client()
         {
@@ -240,6 +247,7 @@ namespace GameModeFortress
                     area_delete,
                     announcement,
                     set_spawn,
+                    set_home,
                     use_tnt,
                     privilege_add,
                     privilege_remove,
@@ -248,7 +256,8 @@ namespace GameModeFortress
                     tp_pos,
                     teleport_player,
                     backup_database,
-                    reset_inventory
+                    reset_inventory,
+                    fill_limit
                 };
             }
             public static string build = "build";
@@ -282,6 +291,7 @@ namespace GameModeFortress
             public static string area_delete = "area_delete";
             public static string announcement = "announcement";
             public static string set_spawn = "set_spawn";
+            public static string set_home = "set_home";
             public static string use_tnt = "use_tnt";
             public static string privilege_add = "privilege_add";
             public static string privilege_remove = "privilege_remove";
@@ -291,6 +301,7 @@ namespace GameModeFortress
             public static string teleport_player = "teleport_player";
             public static string backup_database = "backup_database";
             public static string reset_inventory = "reset_inventory";
+            public static string fill_limit = "fill_limit";
         };
 
         public static List<Group> getDefaultGroups()
@@ -321,6 +332,7 @@ namespace GameModeFortress
             builder.GroupPrivileges.Add(Privilege.login);
             builder.GroupPrivileges.Add(Privilege.tp);
             builder.GroupPrivileges.Add(Privilege.tp_pos);
+            builder.GroupPrivileges.Add(Privilege.set_home);
             builder.GroupPrivileges.Add(Privilege.freemove);
             builder.GroupColor = ClientColor.Green;
             defaultGroups.Add(builder);
@@ -351,6 +363,7 @@ namespace GameModeFortress
             moderator.GroupPrivileges.Add(Privilege.login);
             moderator.GroupPrivileges.Add(Privilege.tp);
             moderator.GroupPrivileges.Add(Privilege.tp_pos);
+            moderator.GroupPrivileges.Add(Privilege.set_home);
             moderator.GroupColor = ClientColor.Cyan;
             defaultGroups.Add(moderator);
             // default admin group
@@ -387,6 +400,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.login);
             admin.GroupPrivileges.Add(Privilege.tp);
             admin.GroupPrivileges.Add(Privilege.tp_pos);
+            admin.GroupPrivileges.Add(Privilege.set_home);
             admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);

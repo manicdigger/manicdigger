@@ -334,6 +334,66 @@ namespace ManicDiggerServer
                     }
                     this.SetSpawnPosition(sourceClientId, ss[0], ss[1], x, y, z);
                     return;
+                case "set_home":
+                    // When no coordinates are given, set spawn to players current position.
+                    if (string.IsNullOrEmpty(argument))
+                    {
+                        this.SetSpawnPosition(sourceClientId,
+                                          (int) GetClient(sourceClientId).PositionMul32GlX / 32,
+                                          (int) GetClient(sourceClientId).PositionMul32GlZ / 32,
+                                          (int) GetClient(sourceClientId).PositionMul32GlY / 32);
+                        return;
+                    }
+                    //            0 1 2
+                    // agrument:  x y z
+                    ss = argument.Split(new[] { ' ' });
+
+                    if (ss.Length < 2 || ss.Length > 3)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    try
+                    {
+                        x = Convert.ToInt32(ss[0]);
+                        y = Convert.ToInt32(ss[1]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+
+                    try
+                    {
+                        z = Convert.ToInt32(ss[2]);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        z = null;
+                    }
+                    catch (FormatException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    catch (OverflowException)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid spawn position.");
+                        return;
+                    }
+                    this.SetSpawnPosition(sourceClientId, x, y, z);
+                    return;
                 case "privilege_add":
                     ss = argument.Split(new[] { ' ' });
                     if (ss.Length != 2)
@@ -504,6 +564,35 @@ namespace ManicDiggerServer
                 case "reset_inventory":
                     this.ResetInventory(sourceClientId, argument);
                     return;
+                case "fill_limit":
+                    //           0    1      2
+                    // agrument: type target maxFill
+                    ss = argument.Split(new[] { ' ' });
+                    if (ss.Length < 2 || ss.Length > 3)
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    // Add an empty target argument, when user sets default max-fill.
+                    if (ss[0].Equals("-d") || ss[0].Equals("-default"))
+                    {
+                        string[] ssTemp = new string[ss.Length + 1];
+                        ssTemp[0] = ss[0];
+                        ssTemp[1] = "";
+                        Array.Copy(ss, 1, ssTemp, 2, ss.Length - 1);
+                        ss = ssTemp;
+                    }
+                    int maxFill;
+                    if (!Int32.TryParse(ss[2], out maxFill))
+                    {
+                        SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
+                        return;
+                    }
+                    else
+                    {
+                        this.SetFillAreaLimit(sourceClientId, ss[0], ss[1], maxFill);
+                    }
+                    return;
                 default:
                     for (int i = 0; i < oncommand.Count; i++)
                     {
@@ -591,6 +680,8 @@ namespace ManicDiggerServer
                     return "/announcement [message]";
                 case "set_spawn":
                     return "/set_spawn [-default|-group|-player] [target] [x] [y] {z}";
+                case "set_home":
+                    return "/set_home {[x] [y] {z}}";
                 case "privilege_add":
                     return "/privilege_add [username] [privilege]";
                 case "privilege_remove":
@@ -607,6 +698,8 @@ namespace ManicDiggerServer
                     return "/backup_database [filename]";
                 case "reset_inventory":
                     return "/reset_inventory [target]";
+                case "fill_limit":
+                    return "/fill_limit [-default|-group|-player] [target] [x] [y] {z}";
                 default:
                     if (commandhelps.ContainsKey(command))
                     {
@@ -1800,6 +1893,64 @@ namespace ManicDiggerServer
             }
         }
 
+        public bool SetSpawnPosition(int sourceClientId, int x, int y, int? z)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.set_home))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            Console.WriteLine(x + " " + y + " " + z);
+
+            // Validate spawn position.
+            int rZ = 0;
+            if (z == null)
+            {
+                if (!MapUtil.IsValidPos(d_Map, x, y))
+                {
+                    SendMessage(sourceClientId, string.Format("{0}Invalid spawn coordinates.", colorError));
+                    return false;
+                }
+                rZ = MapUtil.blockheight(d_Map, 0, x, y);
+            }
+            else
+            {
+                rZ = z.Value;
+            }
+            if (!MapUtil.IsValidPos(d_Map, x, y, rZ))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Invalid spawn coordinates.", colorError));
+                return false;
+            }
+
+            // Get related client entry.
+            GameModeFortress.Client clientEntry = serverClient.Clients.Find(
+                delegate(GameModeFortress.Client client)
+                {
+                    return client.Name.Equals(GetClient(sourceClientId).playername, StringComparison.InvariantCultureIgnoreCase);
+                }
+            );
+            // TODO: When guests have "set_home" privilege, count of client entries can quickly grow.
+            if (clientEntry == null)
+            {
+                clientEntry = new GameModeFortress.Client();
+                clientEntry.Name = GetClient(sourceClientId).playername;
+                clientEntry.Group = GetClient(sourceClientId).clientGroup.Name;
+                serverClient.Clients.Add(clientEntry);
+            }
+            // Change or add spawn entry of client.
+            clientEntry.Spawn = new GameModeFortress.Spawn()
+            {
+                x = x,
+                y = y,
+                z = z,
+            };
+            SaveServerClient();
+            // Send player new spawn position.
+            this.SendPlayerSpawnPosition(sourceClientId, x, y, rZ);
+            return true;
+        }
+
         public bool PrivilegeAdd(int sourceClientId, string target, string privilege)
         {
             if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_add))
@@ -1957,6 +2108,133 @@ namespace ManicDiggerServer
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} does not exist.", colorError, target));
             return false;
+        }
+
+        public bool SetFillAreaLimit(int sourceClientId, string targetType, string target, int maxFill)
+        {
+            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.fill_limit))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+
+            switch (targetType)
+            {
+                case "-default":
+                case "-d":
+                    serverClient.DefaultFillLimit = maxFill;
+                    SaveServerClient();
+                    // Inform related players.
+                    bool hasEntry = false;
+                    foreach (var k in clients)
+                    {
+                        hasEntry = false;
+                        if (k.Value.clientGroup.FillLimit != null)
+                        {
+                            hasEntry = true;
+                        }
+                        else
+                        {
+                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            {
+                                if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    if (client.FillLimit != null)
+                                    {
+                                        hasEntry = true;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasEntry)
+                        {
+                            this.SetFillAreaLimit(k.Key);
+                        }
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Default fill area limit set to {1}.", colorSuccess, maxFill));
+                    ServerEventLog(String.Format("{0} sets default fill area limit to {1}.", GetClient(sourceClientId).playername, maxFill));
+                    return true;
+                case "-group":
+                case "-g":
+                    // Check if group even exists.
+                    GameModeFortress.Group targetGroup = serverClient.Groups.Find(
+                        delegate(GameModeFortress.Group grp)
+                    {
+                        return grp.Name.Equals(target,StringComparison.InvariantCultureIgnoreCase);
+                    }
+                    );
+                    if (targetGroup == null)
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Group {1} not found.", colorError, target));
+                        return false;
+                    }
+                    targetGroup.FillLimit = maxFill;
+                    SaveServerClient();
+                    // Inform related players.
+                    hasEntry = false;
+                    foreach (var k in clients)
+                    {
+                        if (k.Value.clientGroup.Name.Equals(targetGroup.Name))
+                        {
+                            // Inform only if there is no spawn set under clients.
+                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            {
+                                if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    if (client.FillLimit != null)
+                                    {
+                                        hasEntry = true;
+                                    }
+                                    break;
+                                }
+                            }
+                            if (!hasEntry)
+                            {
+                                this.SetFillAreaLimit(k.Key);
+                            }
+                        }
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Fill area limit of group {1} set to {2}.", colorSuccess, targetGroup.Name, maxFill));
+                    ServerEventLog(String.Format("{0} sets spawn of group {1} to {2}.", GetClient(sourceClientId).playername, targetGroup.Name, maxFill));
+                    return true;
+                case "-player":
+                case "-p":
+                    // Get related client.
+                    Client targetClient = this.GetClient(target);
+                    int? targetClientId = null;
+                    if(targetClient != null)
+                    {
+                        targetClientId = targetClient.Id;
+                    }
+                    string targetClientPlayername = targetClient == null ? target : targetClient.playername;
+
+                    GameModeFortress.Client clientEntry = serverClient.Clients.Find(
+                        delegate(GameModeFortress.Client client)
+                        {
+                            return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
+                        }
+                    );
+                    if (clientEntry == null)
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
+                        return false;
+                    }
+                    // Change or add spawn entry of client.
+                    clientEntry.FillLimit = maxFill;
+                    SaveServerClient();
+                    // Inform player if he's online.
+                    if (targetClientId != null)
+                    {
+                        this.SetFillAreaLimit(targetClientId.Value);
+                    }
+                    SendMessage(sourceClientId, string.Format("{0}Fill area limit of player {1} set to {2}.", colorSuccess, targetClientPlayername, maxFill));
+                    ServerEventLog(String.Format("{0} sets fill area limit of player {1} to {2}.", GetClient(sourceClientId).playername, targetClientPlayername, maxFill));
+                    return true;
+                default:
+                    SendMessage(sourceClientId, "Invalid type.");
+                    return false;
+            }
         }
     }
 }

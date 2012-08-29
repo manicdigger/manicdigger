@@ -2770,7 +2770,7 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWPOSITION)
             {
-                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Y) + "; Z: " + Math.Floor(player.playerposition.Z);
+                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Z) + "; Z: " + Math.Floor(player.playerposition.Y);
                 d_The3d.Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
             }
             if (drawblockinfo)
@@ -4050,6 +4050,10 @@ namespace ManicDigger
                 case ServerPacketId.FillAreaLimit:
                     {
                         this.fillAreaLimit = packet.FillAreaLimit.Limit;
+                        if (this.fillAreaLimit > 100000)
+                        {
+                            this.fillAreaLimit = 100000;
+                        }
                     }
                     break;
                 case ServerPacketId.Freemove:

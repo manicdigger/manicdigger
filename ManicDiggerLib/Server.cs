@@ -1757,7 +1757,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             clients[clientid].AssignGroup(serverClient.Groups.Find(v => v.Name == "Admin"));
                         }
-                        this.SendFillAreaLimit(clientid, clients[clientid].FillLimit);
+                        this.SetFillAreaLimit(clientid);
                         this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
                     }
                     break;
@@ -2360,6 +2360,44 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillArea, FillArea = p }));
         }
+        private void SetFillAreaLimit(int clientid)
+        {
+            Client client = GetClient(clientid);
+            if (client == null)
+            {
+                return;
+            }
+
+            int maxFill = 500;
+            if (serverClient.DefaultFillLimit != null)
+            {
+                maxFill = serverClient.DefaultFillLimit.Value;
+            }
+
+            // Check if there is a fill-limit entry for his assigned group.
+            if (client.clientGroup.FillLimit != null)
+            {
+                maxFill = client.clientGroup.FillLimit.Value;
+            }
+
+            // Check if there is an entry in clients with fill-limit member (overrides group fill-limit).
+            foreach (GameModeFortress.Client clientConfig in serverClient.Clients)
+            {
+                if (clientConfig.Name.Equals(client.playername, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (clientConfig.FillLimit != null)
+                    {
+                        maxFill = clientConfig.FillLimit.Value;
+                    }
+                    break;
+                }
+            }
+            client.FillLimit = maxFill;
+            SendFillAreaLimit(clientid, maxFill);
+        }
+
+
+
         private void SendFillAreaLimit(int clientid, int limit)
         {
             PacketServerFillAreaLimit p = new PacketServerFillAreaLimit()

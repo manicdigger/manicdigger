@@ -252,18 +252,14 @@ namespace GameModeFortress
             publicArea.Id = 1;
             publicArea.Coords = "0,0,1,9984,5000,128";
             publicArea.PermittedGroups.Add("Guest");
-            publicArea.PermittedGroups.Add("Registered");
             defaultAreas.Add(publicArea);
-            AreaConfig builderArea = new AreaConfig();
-            builderArea.Id = 2;
-            builderArea.Coords = "0,0,1,9984,9984,128";
-            builderArea.PermittedGroups.Add("Builder");
-            defaultAreas.Add(builderArea);
-            AreaConfig adminArea = new AreaConfig();
-            adminArea.Id = 3;
-            adminArea.Coords = "0,0,1,9984,9984,128";
-            adminArea.PermittedGroups.Add("Admin");
-            defaultAreas.Add(adminArea);
+            AreaConfig protectedArea = new AreaConfig();
+            protectedArea.Id = 2;
+            protectedArea.Coords = "0,0,1,9984,9984,128";
+            protectedArea.PermittedGroups.Add("Builder");
+            protectedArea.PermittedGroups.Add("Moderator");
+            protectedArea.PermittedGroups.Add("Admin");
+            defaultAreas.Add(protectedArea);
 
             return defaultAreas;
         }
