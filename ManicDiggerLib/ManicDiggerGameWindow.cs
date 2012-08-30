@@ -2259,7 +2259,8 @@ namespace ManicDigger
             if (ENABLE_LAG == 2) { Thread.SpinWait(20 * 1000 * 1000); }
             //..base.OnRenderFrame(e);
 
-            if (d_HudInventory.IsMouseOverCells())
+
+            if (d_HudInventory.IsMouseOverCells() && guistate == GuiState.Inventory)
             {
                 int delta = Mouse.WheelDelta;
                 if (delta > 0)
