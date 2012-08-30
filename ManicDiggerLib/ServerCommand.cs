@@ -699,7 +699,7 @@ namespace ManicDiggerServer
                 case "reset_inventory":
                     return "/reset_inventory [target]";
                 case "fill_limit":
-                    return "/fill_limit [-default|-group|-player] [target] [x] [y] {z}";
+                    return "/fill_limit [-default|-group|-player] [limit]";
                 default:
                     if (commandhelps.ContainsKey(command))
                     {
