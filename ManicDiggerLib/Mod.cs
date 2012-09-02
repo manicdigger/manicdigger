@@ -467,5 +467,32 @@ namespace ManicDigger
         {
             return server.IsSinglePlayer;
         }
+
+        public void AddPermissionArea(int x1, int y1, int z1, int x2, int y2, int z2, int permissionLevel)
+        {
+            AreaConfig area = new AreaConfig();
+            area.Level = permissionLevel;
+            area.Coords = string.Format("{0},{1},{2},{3},{4},{5}", x1, y1, z1, x2, y2, z2);
+            server.config.Areas.Add(area);
+            server.SaveConfig();
+        }
+
+        public void RemovePermissionArea(int x1, int y1, int z1, int x2, int y2, int z2)
+        {
+            for (int i = server.config.Areas.Count - 1; i >= 0; i--)
+            {
+                string coords = string.Format("{0},{1},{2},{3},{4},{5}", x1, y1, z1, x2, y2, z2);
+                if (server.config.Areas[i].Coords == coords)
+                {
+                    server.config.Areas.RemoveAt(i);
+                    server.SaveConfig();
+                }
+            }
+        }
+
+        public int GetPlayerPermissionLevel(int playerid)
+        {
+            return server.clients[playerid].clientGroup.Level;
+        }
     }
 }

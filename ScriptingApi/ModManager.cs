@@ -79,6 +79,9 @@ namespace ManicDigger
         int[] AllPlayers();
         void SetPlayerAreaSize(int size);
         bool IsSinglePlayer();
+        void AddPermissionArea(int x1, int y1, int z1, int x2, int y2, int z2, int permissionLevel);
+        void RemovePermissionArea(int x1, int y1, int z1, int x2, int y2, int z2);
+        int GetPlayerPermissionLevel(int playerid);
     }
 
     public class ModInfo

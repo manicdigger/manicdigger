@@ -106,6 +106,7 @@
     <Compile Include="Mods\DefaultWorldGenerator.cs" />
     <Compile Include="Mods\Doors.cs" />
     <Compile Include="Mods\OreGenerator.cs" />
+    <Compile Include="Mods\PermissionBlock.cs" />
     <Compile Include="Mods\Revert.cs" />
     <Compile Include="Mods\SandPhysics.cs" />
     <Compile Include="Mods\Monsters.cs" />
