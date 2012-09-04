@@ -202,7 +202,7 @@ namespace ManicDigger
 
         public void GrabBlock(int player, int block)
         {
-            Inventory inventory = server.GetPlayerInventory(server.clients[player].playername).Inventory;
+            Inventory inventory = server.GetPlayerInventory(server.GetClient(player).playername).Inventory;
             
             var item = new Item();
             item.ItemClass = ItemClass.Block;
@@ -212,7 +212,7 @@ namespace ManicDigger
 
         public bool PlayerHasPrivilege(int player, string p)
         {
-            return server.clients[player].privileges.Contains(p);
+            return server.GetClient(player).privileges.Contains(p);
         }
 
         public bool IsCreative()
@@ -227,7 +227,7 @@ namespace ManicDigger
 
         public void NotifyInventory(int player)
         {
-            server.clients[player].IsInventoryDirty = true;
+            server.GetClient(player).IsInventoryDirty = true;
             server.NotifyInventory(player);
         }
 
@@ -329,12 +329,12 @@ namespace ManicDigger
 
         public string GetPlayerIp(int player)
         {
-            return ((IPEndPoint)server.clients[player].socket.RemoteEndPoint).Address.ToString();
+            return ((IPEndPoint)server.GetClient(player).socket.RemoteEndPoint).Address.ToString();
         }
 
         public string GetPlayerName(int player)
         {
-            return server.clients[player].playername;
+            return server.GetClient(player).playername;
         }
 
         public List<string> required = new List<string>();
@@ -424,17 +424,17 @@ namespace ManicDigger
 
         public float GetPlayerPositionX(int player)
         {
-            return server.clients[player].PositionMul32GlX / 32;
+            return server.GetClient(player).PositionMul32GlX / 32;
         }
 
         public float GetPlayerPositionY(int player)
         {
-            return server.clients[player].PositionMul32GlZ / 32;
+            return server.GetClient(player).PositionMul32GlZ / 32;
         }
 
         public float GetPlayerPositionZ(int player)
         {
-            return server.clients[player].PositionMul32GlY / 32;
+            return server.GetClient(player).PositionMul32GlY / 32;
         }
 
         public void SetPlayerPosition(int player, float x, float y, float z)
@@ -442,7 +442,7 @@ namespace ManicDigger
             foreach(var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
-                    (byte)server.clients[player].positionheading, (byte)server.clients[player].positionpitch);
+                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
             }
         }
 

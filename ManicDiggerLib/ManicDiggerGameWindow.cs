@@ -995,6 +995,11 @@ namespace ManicDigger
                 {
                     GuiStateBackToGame();
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.F12))
+                {
+                    d_Screenshot.SaveScreenshot();
+                    screenshotflash = 5;
+                }
                 return;
             }
             else if (guistate == GuiState.PlayerList)
@@ -4064,6 +4069,7 @@ namespace ManicDigger
                         {
                             ENABLE_FREEMOVE = false;
                             ENABLE_NOCLIP = false;
+                            movespeed = basemovespeed;
                             Log(Language.MoveNormal);
                         }
                     }
