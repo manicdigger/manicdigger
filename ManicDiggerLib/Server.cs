@@ -3227,7 +3227,6 @@ if (sent >= unknown.Count) { break; }
             {
                 serverClient = new ServerClient();
             }
-            serverClient.Clients.Sort();
             if (serverClient.Groups.Count == 0)
             {
                 serverClient.Groups = ServerClientMisc.getDefaultGroups();
@@ -3236,6 +3235,7 @@ if (sent >= unknown.Count) { break; }
             {
                 serverClient.Clients = ServerClientMisc.getDefaultClients();
             }
+            serverClient.Clients.Sort();
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, serverClient);
             textWriter.Close();

@@ -797,11 +797,12 @@ namespace ManicDiggerServer
                 ServerEventLog(String.Format("{0} sets group of {1} to {2}.", GetClient(sourceClientId).playername, targetClient.playername, newGroupName));
                 targetClient.AssignGroup(newGroup);
                 SendFreemoveState(targetClient.Id, targetClient.privileges.Contains(ServerClientMisc.Privilege.freemove));
+                SetFillAreaLimit(targetClient.Id);
                 return true;
             }
 
             // Target is at the moment not online.
-            SendMessage(sourceClientId, string.Format("{0}Player {1} is online. Use /chgrp_offline command.", colorError, target));
+            SendMessage(sourceClientId, string.Format("{0}Player {1} is offline. Use /chgrp_offline command.", colorError, target));
             return false;
         }
 
