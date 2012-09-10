@@ -360,7 +360,7 @@ namespace ManicDiggerServer
             ManicDiggerSave save = Serializer.Deserialize<ManicDiggerSave>(new MemoryStream(globaldata));
             //d_Generator.SetSeed(save.Seed);
             Seed = save.Seed;
-            d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeX, d_Map.MapSizeZ);
+            d_Map.Reset(d_Map.MapSizeX, d_Map.MapSizeY, d_Map.MapSizeZ);
             if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
             else this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
@@ -1991,7 +1991,7 @@ if (sent >= unknown.Count) { break; }
 
         private void RunInClientSandbox(string script, int clientid)
         {
-            var client = clients[clientid];
+            var client = GetClient(clientid);
             if (!config.AllowScripting)
             {
                 SendMessage(clientid, "Server scripts disabled.", MessageType.Error);
@@ -2002,7 +2002,7 @@ if (sent >= unknown.Count) { break; }
                 SendMessage(clientid, "Insufficient privileges to access this command.", MessageType.Error);
                 return;
             }
-            ServerEventLog(string.Format("{0} runs script:\n{1}", clients[clientid].playername, script));
+            ServerEventLog(string.Format("{0} runs script:\n{1}", client.playername, script));
             if (client.Interpreter == null)
             {
                 client.Interpreter = new JavaScriptInterpreter();
