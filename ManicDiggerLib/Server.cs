@@ -1864,7 +1864,7 @@ if (sent >= unknown.Count) { break; }
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
                         }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z))
+                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == BlockSetMode.Create || packet.SetBlock.Mode == BlockSetMode.Destroy))
                         {
                             SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
