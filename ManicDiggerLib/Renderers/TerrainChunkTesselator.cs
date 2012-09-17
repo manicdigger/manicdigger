@@ -58,24 +58,29 @@ namespace ManicDigger.Renderers
             maxlightInverse = 1f / maxlight;
             terrainTexturesPerAtlas = d_TerrainTextures.terrainTexturesPerAtlas;
             terrainTexturesPerAtlasInverse = 1f / d_TerrainTextures.terrainTexturesPerAtlas;
-            allvi.Initialize(VI_MAX);
-            for (int i = 0; i < VI_MAX; i++)
-            {
-                allvi.Push(new VerticesIndices()
-                    {
-                        indices = new ushort[ushort.MaxValue],
-                        vertices = new VertexPositionTexture[ushort.MaxValue],
-                    });
-            }
         }
         int terrainTexturesPerAtlas;
         float terrainTexturesPerAtlasInverse;
-        int VI_MAX = 20;
         int maxlight;
         float maxlightInverse;
         bool[] istransparent;
         bool[] iswater;
         bool[] isvalid;
+
+        void NewVi(ref VerticesIndices vi)
+        {
+            if (vi == null)
+            {
+                vi = new VerticesIndices()
+                {
+                    indices = new ushort[ushort.MaxValue],
+                    vertices = new VertexPositionTexture[ushort.MaxValue],
+                };
+            }
+            vi.verticesCount = 0;
+            vi.indicesCount = 0;
+        }
+
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0) { yield break; }
@@ -85,30 +90,25 @@ namespace ManicDigger.Renderers
                 || z >= mapsizez / chunksize) { yield break; }
             if (ENABLE_ATLAS1D)
             {
-                toreturnatlas1d = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
-                toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
+                if (toreturnatlas1d == null)
+                {
+                    toreturnatlas1d = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
+                    toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
+                }
                 for (int i = 0; i < toreturnatlas1d.Length; i++)
                 {
                     //Manual memory allocation for performance - reuse arrays.
-                    toreturnatlas1d[i] = allvi.Pop();
-                    toreturnatlas1d[i].verticesCount = 0;
-                    toreturnatlas1d[i].indicesCount = 0;
-                    toreturnatlas1dtransparent[i] = allvi.Pop();
-                    toreturnatlas1dtransparent[i].verticesCount = 0;
-                    toreturnatlas1dtransparent[i].indicesCount = 0;
+                    NewVi(ref toreturnatlas1d[i]);
+                    NewVi(ref toreturnatlas1dtransparent[i]);
                 }
             }
             //else //torch block
             {
-                toreturnmain = allvi.Pop();
-                toreturnmain.verticesCount = 0;
-                toreturnmain.indicesCount = 0;
-                toreturntransparent = allvi.Pop();
-                toreturntransparent.verticesCount = 0;
-                toreturntransparent.indicesCount = 0;
+                NewVi(ref toreturnmain);
+                NewVi(ref toreturntransparent);
             }
             GetExtendedChunk(x, y, z);
-            if (IsSolidChunk(currentChunk)) { FreeVi(); yield break; }
+            if (IsSolidChunk(currentChunk)) { yield break; }
             //ResetCurrentShadows();
             d_Shadows.OnMakeChunk(x, y, z);
             CalculateVisibleFaces(currentChunk);
@@ -118,20 +118,6 @@ namespace ManicDigger.Renderers
             {
                 yield return v;
             }
-            FreeVi();
-        }
-        void FreeVi()
-        {
-            for (int i = 0; i < toreturnatlas1d.Length; i++)
-            {
-                allvi.Push(toreturnatlas1d[i]);
-            }
-            for (int i = 0; i < toreturnatlas1dtransparent.Length; i++)
-            {
-                allvi.Push(toreturnatlas1dtransparent[i]);
-            }
-            allvi.Push(toreturnmain);
-            allvi.Push(toreturntransparent);
         }
         IEnumerable<VerticesIndicesToLoad> GetFinalVerticesIndices(int x, int y, int z)
         {
@@ -264,7 +250,6 @@ namespace ManicDigger.Renderers
             public VertexPositionTexture[] vertices;
             public int verticesCount;
         }
-        FastStack<VerticesIndices> allvi = new FastStack<VerticesIndices>();
         private bool IsValidPos(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0)
