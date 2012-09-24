@@ -1812,45 +1812,14 @@ if (sent >= unknown.Count) { break; }
                         SendCraftingRecipes(clientid);
 
                         //notify all players about new player spawn
-                        PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
-                        {
-                            PlayerId = clientid,
-                            PlayerName = clients[clientid].playername,
-                            PositionAndOrientation = new PositionAndOrientation()
-                            {
-                                X = position.x,
-                                Y = position.y + (int)(0.5 * 32),
-                                Z = position.z,
-                                Heading = 0,
-                                Pitch = 0,
-                            }
-                        };
-                        PacketServer pp = new PacketServer() {PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p};
-                        foreach (var k in clients)
-                        {
-                            SendPacket(k.Key, Serialize(pp));
-                        }
+                        SendPlayerSpawnToAll(clientid);
 
                         //send all players spawn to new player
                         foreach (var k in clients)
                         {
                             if (k.Key != clientid)
                             {
-                                p = new PacketServerSpawnPlayer()
-                                {
-                                    PlayerId = k.Key,
-                                    PlayerName = k.Value.playername,
-                                    PositionAndOrientation = new PositionAndOrientation()
-                                    {
-                                        X = k.Value.PositionMul32GlX,
-                                        Y = k.Value.PositionMul32GlY,
-                                        Z = k.Value.PositionMul32GlZ,
-                                        Heading = (byte)k.Value.positionheading,
-                                        Pitch = (byte)k.Value.positionpitch,
-                                    }
-                                };
-                                pp = new PacketServer() {PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p};
-                                SendPacket(clientid, Serialize(pp));
+                                SendPlayerSpawn(clientid, k.Key);
                             }
                         }
                         clients[clientid].state = ClientStateOnServer.LoadingGenerating;
@@ -1996,6 +1965,37 @@ if (sent >= unknown.Count) { break; }
             }
             return lengthPrefixLength + packetLength;
         }
+
+        public void SendPlayerSpawnToAll(int clientid)
+        {
+            foreach (var k in clients)
+            {
+                SendPlayerSpawn(k.Key, clientid);
+            }
+        }
+
+        public void SendPlayerSpawn(int clientid, int spawnedplayer)
+        {
+            Client c = clients[spawnedplayer];
+            PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
+            {
+                PlayerId = spawnedplayer,
+                PlayerName = c.playername,
+                PositionAndOrientation = new PositionAndOrientation()
+                {
+                    X = c.PositionMul32GlX,
+                    Y = c.PositionMul32GlY,
+                    Z = c.PositionMul32GlZ,
+                    Heading = (byte)c.positionheading,
+                    Pitch = (byte)c.positionpitch,
+                },
+                Model = clients[clientid].Model,
+                Texture = clients[clientid].Texture,
+            };
+            PacketServer pp = new PacketServer() { PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p };
+            SendPacket(clientid, Serialize(pp));
+        }
+
 
         public int PlayerDrawDistance = 128;
 
@@ -3045,6 +3045,8 @@ if (sent >= unknown.Count) { break; }
             public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
+            public string Model = "player.txt";
+            public string Texture;
             public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();
             public bool[] chunksseen;
             public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();

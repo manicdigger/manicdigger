@@ -1041,7 +1041,53 @@ namespace ManicDigger.Mods
 
             m.SetSunLevels(sunLevels);
             m.SetLightLevels(lightLevels);
+
+            m.RegisterOnCommand(OnCommandSetModel);
         }
+
+        bool OnCommandSetModel(int player, string command, string argument)
+        {
+            if (command == "setmodel")
+            {
+                if (!(m.PlayerHasPrivilege(player, "setmodel") || m.IsSinglePlayer()))
+                {
+                    m.SendMessage(player, "No setmodel privilege.");
+                    return true;
+                }
+                string[] ss = argument.Split(' ');
+                string targetplayername = ss[0];
+                string modelname = ss[1];
+                string texturename = null;
+                if (ss.Length >= 3)
+                {
+                    texturename = ss[2];
+                }
+                bool found = false;
+                foreach (int p in m.AllPlayers())
+                {
+                    if (m.GetPlayerName(p).Equals(targetplayername, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        m.SetPlayerModel(p, modelname, texturename);
+                        found = true;
+                    }
+                }
+                if (!found)
+                {
+                    m.SendMessage(player, string.Format("Player {0} not found", targetplayername));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /*
+        bool red = false;
+        void f()
+        {
+            red = !red;
+            m.SetPlayerModel(0, "zombie.txt", red ? "playerred.png" : "playergreen.png");
+        }
+        */
 
         ModManager m;
         SoundSet solidSounds;

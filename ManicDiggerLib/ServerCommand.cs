@@ -596,9 +596,16 @@ namespace ManicDiggerServer
                 default:
                     for (int i = 0; i < oncommand.Count; i++)
                     {
-                        if (oncommand[i](sourceClientId, command, argument))
+                        try
                         {
-                            return;
+                            if (oncommand[i](sourceClientId, command, argument))
+                            {
+                                return;
+                            }
+                        }
+                        catch
+                        {
+                            SendMessage(sourceClientId, "Command exception.");
                         }
                     }
                     SendMessage(sourceClientId, colorError + "Unknown command /" + command);

@@ -108,7 +108,7 @@ namespace ManicDigger
             var weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = w, d_Inventory = inventory, d_LocalPlayerPosition = w };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
             var playerrenderer = new CharacterRendererMonsterCode();
-            playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.mdc"))));
+            playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.txt"))));
             w.d_CharacterRenderer = playerrenderer;
             var particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
             w.particleEffectBlockBreak = particle;
@@ -2418,6 +2418,7 @@ namespace ManicDigger
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
         Dictionary<int, int> monstertextures = new Dictionary<int, int>();
         public string playertexturedefaultfilename = "mineplayer.png";
+        Dictionary<string, int> diskplayertextures = new Dictionary<string, int>();
         private int GetPlayerTexture(int playerid)
         {
             if (playertexturedefault == -1)
@@ -2436,6 +2437,14 @@ namespace ManicDigger
                     }
                 }
                 return monstertextures[player.MonsterType];
+            }
+            if (!string.IsNullOrEmpty(player.Texture))
+            {
+                if (!diskplayertextures.ContainsKey(player.Texture))
+                {
+                    diskplayertextures[player.Texture] = d_The3d.LoadTexture(d_GetFile.GetFile(player.Texture));
+                }
+                return diskplayertextures[player.Texture];
             }
             List<string> players = new List<string>();
             foreach (var k in d_Clients.Players)
@@ -2584,21 +2593,17 @@ namespace ManicDigger
                 var animHint = d_Clients.Players[k.Key].AnimationHint;
                 if (k.Value.Type == PlayerType.Player)
                 {
-                    DrawCharacter(info.anim, FeetPos,
-                        curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+                    var r = GetCharacterRenderer(k.Value.Model);
+                    r.DrawCharacter(info.anim, FeetPos, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+                    //DrawCharacter(info.anim, FeetPos,
+                    //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
                 else
                 {
-                    int type = k.Value.MonsterType;
-                    if (!MonsterRenderers.ContainsKey(type))
-                    {
-                        var r = new CharacterRendererMonsterCode();
-                        r.Load(new List<string>(d_DataMonsters.MonsterCode[type]));
-                        MonsterRenderers[type] = r;
-                    }
-                    MonsterRenderers[type].SetAnimation("walk");
+                    var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
+                    r.SetAnimation("walk");
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                    MonsterRenderers[type].DrawCharacter(info.anim, curpos,
+                    r.DrawCharacter(info.anim, curpos,
                         (byte)(-curstate.heading - 256 / 4), curstate.pitch,
                         moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
@@ -2612,13 +2617,34 @@ namespace ManicDigger
                     (int)LocalPlayerPosition.Y)
                     / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
-                DrawCharacter(localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
-                    NetworkHelper.HeadingByte(LocalPlayerOrientation),
+                var r = GetCharacterRenderer(d_Clients.Players[LocalPlayerId].Model);
+                r.SetAnimation("walk");
+                r.DrawCharacter
+                    (localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
+                    (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint);
                 lastlocalplayerpos = LocalPlayerPosition;
                 GL.Color3(1f, 1f, 1f);
             }
+        }
+        ICharacterRenderer GetCharacterRenderer(string modelfilename)
+        {
+            if (!MonsterRenderers.ContainsKey(modelfilename))
+            {
+                try
+                {
+                    string[] lines = MyStream.ReadAllLines(d_GetFile.GetFile(modelfilename));
+                    var renderer = new CharacterRendererMonsterCode();
+                    renderer.Load(new List<string>(lines));
+                    MonsterRenderers[modelfilename] = renderer;
+                }
+                catch
+                {
+                    MonsterRenderers[modelfilename] = GetCharacterRenderer("player.txt"); // todo invalid.txt
+                }
+            }
+            return MonsterRenderers[modelfilename];
         }
         Vector3 lastlocalplayerpos;
         AnimationState localplayeranim = new AnimationState();
@@ -2689,12 +2715,7 @@ namespace ManicDigger
                 v0.Draw(dt);
             }
         }
-        private void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
-        {
-            d_CharacterRenderer.SetAnimation("walk");
-            d_CharacterRenderer.DrawCharacter(animstate, pos, (byte)(-heading - 256 / 4), pitch, moves, dt, playertexture, animationhint);
-        }
-        Dictionary<int, ICharacterRenderer> MonsterRenderers = new Dictionary<int, ICharacterRenderer>();
+        Dictionary<string, ICharacterRenderer> MonsterRenderers = new Dictionary<string, ICharacterRenderer>();
         GuiState guistate;
         enum GuiState
         {
@@ -4127,9 +4148,23 @@ namespace ManicDigger
                     {
                         int playerid = packet.SpawnPlayer.PlayerId;
                         string playername = packet.SpawnPlayer.PlayerName;
-                        this.ServerInfo.Players.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
+                        bool isnewplayer = true;
+                        foreach(ConnectedPlayer p in ServerInfo.Players)
+                        {
+                            if (p.id == playerid)
+                            {
+                                isnewplayer = false;
+                                p.name = playername;
+                            }
+                        }
+                        if (isnewplayer)
+                        {
+                            this.ServerInfo.Players.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
+                        }
                         d_Clients.Players[playerid] = new Player();
                         d_Clients.Players[playerid].Name = playername;
+                        d_Clients.Players[playerid].Model = packet.SpawnPlayer.Model;
+                        d_Clients.Players[playerid].Texture = packet.SpawnPlayer.Texture;
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                         if (playerid == this.LocalPlayerId)
                         {
@@ -4522,7 +4557,7 @@ namespace ManicDigger
         private void ReadAndUpdatePlayerPosition(PositionAndOrientation positionAndOrientation, int playerid)
         {
             float x = (float)((double)positionAndOrientation.X / 32);
-            float y = (float)((double)positionAndOrientation.Y / 32);
+            float y = (float)((double)positionAndOrientation.Y / 32) - CharacterPhysics.characterheight;
             float z = (float)((double)positionAndOrientation.Z / 32);
             byte heading = positionAndOrientation.Heading;
             byte pitch = positionAndOrientation.Pitch;

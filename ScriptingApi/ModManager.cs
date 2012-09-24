@@ -91,6 +91,7 @@ namespace ManicDigger
         int[] GetScreenResolution(int playerid);
         void SendDialog(int player, string id, Dialog dialog);
         void RegisterOnDialogClick(Action<int, string> a); //widgetid
+        void SetPlayerModel(int player, string model, string texture);
     }
 
     [ProtoContract]

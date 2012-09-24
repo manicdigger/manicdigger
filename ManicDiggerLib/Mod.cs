@@ -539,5 +539,12 @@ namespace ManicDigger
         {
             server.ondialogclick.Add(a);
         }
+
+        public void SetPlayerModel(int player, string model, string texture)
+        {
+            server.clients[player].Model = model;
+            server.clients[player].Texture = texture;
+            server.SendPlayerSpawnToAll(player);
+        }
     }
 }

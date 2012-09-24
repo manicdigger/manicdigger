@@ -91,6 +91,8 @@ namespace ManicDigger
         public int MonsterType;
         public int Health;
         public DateTime LastUpdate;
+        public string Model = "player.txt";
+        public string Texture;
     }
     public static class MapUtil
     {

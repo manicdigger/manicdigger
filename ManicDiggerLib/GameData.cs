@@ -312,27 +312,27 @@ namespace ManicDigger
         public GameDataMonsters(IGetFileStream getfile)
         {
             int n = 5;
-            MonsterCode = new string[n][];
+            MonsterCode = new string[n];
             MonsterName = new string[n];
             MonsterSkin = new string[n];
-            MonsterCode[0] = MyStream.ReadAllLines(getfile.GetFile("imp.txt"));
+            MonsterCode[0] = "imp.txt";
             MonsterName[0] = "Imp";
             MonsterSkin[0] = "imp.png";
-            MonsterCode[1] = MyStream.ReadAllLines(getfile.GetFile("imp.txt"));
+            MonsterCode[1] = "imp.txt";
             MonsterName[1] = "Fire Imp";
             MonsterSkin[1] = "impfire.png";
-            MonsterCode[2] = MyStream.ReadAllLines(getfile.GetFile("dragon.txt"));
+            MonsterCode[2] = "dragon.txt";
             MonsterName[2] = "Dragon";
             MonsterSkin[2] = "dragon.png";
-            MonsterCode[3] = MyStream.ReadAllLines(getfile.GetFile("zombie.txt"));
+            MonsterCode[3] = "zombie.txt";
             MonsterName[3] = "Zombie";
             MonsterSkin[3] = "zombie.png";
-            MonsterCode[4] = MyStream.ReadAllLines(getfile.GetFile("cyclops.txt"));
+            MonsterCode[4] = "cyclops.txt";
             MonsterName[4] = "Cyclops";
             MonsterSkin[4] = "cyclops.png";
         }
         public string[] MonsterName;
-        public string[][] MonsterCode;
+        public string[] MonsterCode;
         public string[] MonsterSkin;
     }
 }

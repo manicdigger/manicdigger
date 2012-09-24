@@ -252,6 +252,10 @@ namespace GameModeFortress
         public string PlayerName;
         [ProtoMember(3, IsRequired = false)]
         public PositionAndOrientation PositionAndOrientation;
+        [ProtoMember(4, IsRequired = false)]
+        public string Model;
+        [ProtoMember(5, IsRequired = false)]
+        public string Texture;
     }
     [ProtoContract]
     public class PositionAndOrientation
