@@ -2442,7 +2442,14 @@ namespace ManicDigger
             {
                 if (!diskplayertextures.ContainsKey(player.Texture))
                 {
-                    diskplayertextures[player.Texture] = d_The3d.LoadTexture(d_GetFile.GetFile(player.Texture));
+                    try
+                    {
+                        diskplayertextures[player.Texture] = d_The3d.LoadTexture(d_GetFile.GetFile(player.Texture));
+                    }
+                    catch
+                    {
+                        diskplayertextures[player.Texture] = playertexturedefault; // invalid
+                    }
                 }
                 return diskplayertextures[player.Texture];
             }
