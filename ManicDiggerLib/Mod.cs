@@ -494,5 +494,50 @@ namespace ManicDigger
         {
             return server.clients[playerid].clientGroup.Level;
         }
+
+        public void SetCreative(bool value)
+        {
+            server.config.IsCreative = value;
+        }
+
+        public void SetWorldSize(int x, int y, int z)
+        {
+            server.d_Map.Reset(x, y, z);
+        }
+
+        public void RegisterOnPlayerJoin(ManicDigger.Action<int> a)
+        {
+            server.onplayerjoin.Add(a);
+        }
+
+        public void RegisterOnPlayerLeave(ManicDigger.Action<int> a)
+        {
+            server.onplayerleave.Add(a);
+        }
+
+        public void RegisterOnPlayerDisconnect(ManicDigger.Action<int> a)
+        {
+            server.onplayerdisconnect.Add(a);
+        }
+
+        public void RegisterOnPlayerChat(ManicDigger.Action<int, string> a)
+        {
+            server.onplayerchat.Add(a);
+        }
+
+        public int[] GetScreenResolution(int playerid)
+        {
+            return new int[] { 800, 600 };
+        }
+
+        public void SendDialog(int player, string id, Dialog dialog)
+        {
+            server.SendDialog(player, id, dialog);
+        }
+
+        public void RegisterOnDialogClick(Action<int, string> a)
+        {
+            server.ondialogclick.Add(a);
+        }
     }
 }

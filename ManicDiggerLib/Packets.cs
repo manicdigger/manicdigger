@@ -366,6 +366,8 @@ namespace GameModeFortress
         public PacketServerLightLevels LightLevels;
         [ProtoMember(26, IsRequired = false)]
         public PacketServerCraftingRecipes CraftingRecipes;
+        [ProtoMember(27, IsRequired = false)]
+        public PacketServerDialog Dialog;
     }
     [ProtoContract]
     public class PacketClient
@@ -392,6 +394,8 @@ namespace GameModeFortress
         public PacketClientHealth Health;
         [ProtoMember(10, IsRequired = false)]
         public PacketClientPingReply PingReply;
+        [ProtoMember(11, IsRequired = false)]
+        public PacketClientDialogClick DialogClick;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -488,6 +492,20 @@ namespace GameModeFortress
         public int Moon;
     }
     [ProtoContract]
+    public class PacketServerDialog
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string DialogId;
+        [ProtoMember(2, IsRequired = false)]
+        public Dialog Dialog;
+    }
+    [ProtoContract]
+    public class PacketClientDialogClick
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string WidgetId;
+    }
+    [ProtoContract]
     public class PacketServerPing
     {
     }
@@ -527,6 +545,7 @@ namespace GameModeFortress
         PositionandOrientation = 8,
         Craft = 9,
         Message = 0x0d,
+        DialogClick,
         RequestBlob = 50,
         InventoryAction = 51,
         Health = 52,
@@ -572,6 +591,7 @@ namespace GameModeFortress
         CraftingRecipes,
         RemoveMonsters = 50,
         Freemove,
+        Dialog,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

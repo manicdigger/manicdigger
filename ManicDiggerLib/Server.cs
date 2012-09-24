@@ -1759,6 +1759,10 @@ if (sent >= unknown.Count) { break; }
                         }
                         this.SetFillAreaLimit(clientid);
                         this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
+                        for (int i = 0; i < onplayerjoin.Count; i++)
+                        {
+                            onplayerjoin[i](clientid);
+                        }
                     }
                     break;
                 case ClientPacketId.RequestBlob:
@@ -1979,6 +1983,12 @@ if (sent >= unknown.Count) { break; }
                     break;
                 case ClientPacketId.MonsterHit:
                     HitMonsters(clientid, packet.Health.CurrentHealth);
+                    break;
+                case ClientPacketId.DialogClick:
+                    for (int i = 0; i < ondialogclick.Count; i++)
+                    {
+                        ondialogclick[i](clientid, packet.DialogClick.WidgetId);
+                    }
                     break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
@@ -3354,6 +3364,22 @@ if (sent >= unknown.Count) { break; }
         {
             get { return d_MainSocket.GetType() == typeof(SocketDummy); }
         }
+
+        public void SendDialog(int player, string id, Dialog dialog)
+        {
+            PacketServerDialog p = new PacketServerDialog()
+            {
+                DialogId = id,
+                Dialog = dialog,
+            };
+            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Dialog, Dialog = p }));
+        }
+
+        public List<ManicDigger.Action<int>> onplayerjoin = new List<ManicDigger.Action<int>>();
+        public List<ManicDigger.Action<int>> onplayerleave = new List<ManicDigger.Action<int>>();
+        public List<ManicDigger.Action<int>> onplayerdisconnect = new List<ManicDigger.Action<int>>();
+        public List<ManicDigger.Action<int, string>> onplayerchat = new List<ManicDigger.Action<int, string>>();
+        public List<ManicDigger.Action<int, string>> ondialogclick = new List<ManicDigger.Action<int, string>>();
     }
 
     public class Ping

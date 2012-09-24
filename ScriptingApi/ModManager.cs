@@ -82,6 +82,49 @@ namespace ManicDigger
         void AddPermissionArea(int x1, int y1, int z1, int x2, int y2, int z2, int permissionLevel);
         void RemovePermissionArea(int x1, int y1, int z1, int x2, int y2, int z2);
         int GetPlayerPermissionLevel(int playerid);
+        void SetCreative(bool creative);
+        void SetWorldSize(int x, int y, int z);
+        void RegisterOnPlayerJoin(ManicDigger.Action<int> a); //playerid
+        void RegisterOnPlayerLeave(ManicDigger.Action<int> a); //playerid
+        void RegisterOnPlayerDisconnect(ManicDigger.Action<int> a); //playerid
+        void RegisterOnPlayerChat(ManicDigger.Action<int, string> a); //playerid, message
+        int[] GetScreenResolution(int playerid);
+        void SendDialog(int player, string id, Dialog dialog);
+        void RegisterOnDialogClick(Action<int, string> a); //widgetid
+    }
+
+    [ProtoContract]
+    public class Dialog
+    {
+        [ProtoMember(1,IsRequired=false)]
+        public Widget[] Widgets;
+        [ProtoMember(2, IsRequired = false)]
+        public int Width;
+        [ProtoMember(3, IsRequired = false)]
+        public int Height;
+    }
+
+    [ProtoContract]
+    public class Widget
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string Id;
+        [ProtoMember(2, IsRequired = false)]
+        public bool Click;
+        [ProtoMember(3, IsRequired = false)]
+        public int X;
+        [ProtoMember(4, IsRequired = false)]
+        public int Y;
+        [ProtoMember(5, IsRequired = false)]
+        public int Width;
+        [ProtoMember(6, IsRequired = false)]
+        public int Height;
+        [ProtoMember(7, IsRequired = false)]
+        public string Text;
+        [ProtoMember(8, IsRequired = false)]
+        public char ClickKey;
+        [ProtoMember(9, IsRequired = false)]
+        public string Image;
     }
 
     public class ModInfo

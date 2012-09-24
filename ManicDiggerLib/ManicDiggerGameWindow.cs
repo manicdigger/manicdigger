@@ -469,6 +469,20 @@ namespace ManicDigger
                     }
                 }
             }
+            foreach (var d in dialogs)
+            {
+                foreach (var w in d.Value.Widgets)
+                {
+                    if ("abcdefghijklmnopqrstuvwxyz1234567890".Contains("" + w.ClickKey))
+                    {
+                        if (e.KeyChar == w.ClickKey)
+                        {
+                            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.DialogClick, DialogClick = new PacketClientDialogClick() { WidgetId = w.Id } });
+                            return;
+                        }
+                    }
+                }
+            }
             if (guistate == GuiState.EditText)
             {
                 d_HudTextEditor.HandleKeyPress(sender, e);
@@ -2727,15 +2741,18 @@ namespace ManicDigger
                         {
                             d_HudChat.DrawTypingBuffer();
                         }
+                        DrawDialogs();
                     }
                     break;
                 case GuiState.EscapeMenu:
                     {
+                        DrawDialogs();
                         EscapeMenuDraw();
                     }
                     break;
                 case GuiState.Inventory:
                     {
+                        DrawDialogs();
                         //d_The3d.ResizeGraphics(Width, Height);
                         //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
                         d_HudInventory.Draw();
@@ -2754,11 +2771,13 @@ namespace ManicDigger
                     break;
                 case GuiState.EditText:
                     {
+                        DrawDialogs();
                         d_HudTextEditor.Render();
                     }
                     break;
                 case GuiState.PlayerList:
                     {
+                        DrawDialogs();
                         d_HudPlayerList.DrawHudPlayerList();
                     }
                     break;
@@ -2800,6 +2819,27 @@ namespace ManicDigger
             }
             d_The3d.PerspectiveMode();
         }
+
+        private void DrawDialogs()
+        {
+            foreach (var d in dialogs.Values)
+            {
+                int x = Width / 2 - d.Width / 2;
+                int y = Height / 2 - d.Height / 2;
+                foreach (var w in d.Widgets)
+                {
+                    if (w.Text != null)
+                    {
+                        d_The3d.Draw2dText(w.Text, w.X + x, w.Y + y, 12, null);
+                    }
+                    if (w.Image != null)
+                    {
+                        d_The3d.Draw2dBitmapFile(w.Image + ".png", w.X + x, w.Y + y, w.Width, w.Height);
+                    }
+                }
+            }
+        }
+
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
         private void DrawScreenshotFlash()
         {
@@ -4364,12 +4404,29 @@ namespace ManicDigger
                 case ServerPacketId.CraftingRecipes:
                     d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
                     break;
+                case ServerPacketId.Dialog:
+                    var d = packet.Dialog;
+                    if (d.Dialog == null)
+                    {
+                        dialogs.Remove(d.DialogId);
+                        if (dialogs.Count == 0)
+                        {
+                            FreeMouse = false;
+                        }
+                    }
+                    else
+                    {
+                        dialogs[d.DialogId] = d.Dialog;
+                        FreeMouse = true;
+                    }
+                    break;
                 default:
                     break;
             }
             LastReceived = currentTime;
             return lengthPrefixLength + packetLength;
         }
+        Dictionary<string, Dialog> dialogs = new Dictionary<string, Dialog>();
         public GameDataMonsters d_DataMonsters;
         public int MonsterIdFirst = 1000;
         DateTime currentTime;
