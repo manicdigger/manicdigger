@@ -92,8 +92,8 @@ namespace ManicDigger.Renderers
             {
                 if (toreturnatlas1d == null)
                 {
-                    toreturnatlas1d = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
-                    toreturnatlas1dtransparent = new VerticesIndices[maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas];
+                    toreturnatlas1d = new VerticesIndices[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
+                    toreturnatlas1dtransparent = new VerticesIndices[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
                 }
                 for (int i = 0; i < toreturnatlas1d.Length; i++)
                 {
