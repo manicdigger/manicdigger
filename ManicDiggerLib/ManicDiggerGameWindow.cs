@@ -2594,6 +2594,7 @@ namespace ManicDigger
                 if (k.Value.Type == PlayerType.Player)
                 {
                     var r = GetCharacterRenderer(k.Value.Model);
+                    r.SetAnimation("walk");
                     r.DrawCharacter(info.anim, FeetPos, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                     //DrawCharacter(info.anim, FeetPos,
                     //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
@@ -4557,7 +4558,7 @@ namespace ManicDigger
         private void ReadAndUpdatePlayerPosition(PositionAndOrientation positionAndOrientation, int playerid)
         {
             float x = (float)((double)positionAndOrientation.X / 32);
-            float y = (float)((double)positionAndOrientation.Y / 32) - CharacterPhysics.characterheight;
+            float y = (float)((double)positionAndOrientation.Y / 32);
             float z = (float)((double)positionAndOrientation.Z / 32);
             byte heading = positionAndOrientation.Heading;
             byte pitch = positionAndOrientation.Pitch;

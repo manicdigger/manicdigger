@@ -1984,13 +1984,13 @@ if (sent >= unknown.Count) { break; }
                 PositionAndOrientation = new PositionAndOrientation()
                 {
                     X = c.PositionMul32GlX,
-                    Y = c.PositionMul32GlY,
+                    Y = c.PositionMul32GlY - (int)(CharacterPhysics.characterheight * 32),
                     Z = c.PositionMul32GlZ,
                     Heading = (byte)c.positionheading,
                     Pitch = (byte)c.positionpitch,
                 },
-                Model = clients[clientid].Model,
-                Texture = clients[clientid].Texture,
+                Model = c.Model,
+                Texture = c.Texture,
             };
             PacketServer pp = new PacketServer() { PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p };
             SendPacket(clientid, Serialize(pp));
