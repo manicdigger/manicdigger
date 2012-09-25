@@ -258,6 +258,10 @@ namespace ManicDiggerServer
             ModManager1 m = new ModManager1();
             m.Start(this);
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
+            for (int i = 0; i < modpaths.Length; i++)
+            {
+                modpaths[i] = Path.Combine(modpaths[i], "Fortress");
+            }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
             foreach (string modpath in modpaths)
             {

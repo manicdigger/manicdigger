@@ -1795,6 +1795,7 @@ namespace ManicDigger
         {
             return d_Inventory.RightHand[ActiveMaterial] != null;
         }
+        int pistolcycle;
         private void UpdatePicking()
         {
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
@@ -1974,6 +1975,17 @@ namespace ManicDigger
                 if (left || right || middle)
                 {
                     lastbuild = DateTime.Now;
+                }
+                Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (left && item != null && blocktypes[item.BlockId].IsPistol)
+                {
+                    d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
+                    
+                    //recoil
+                    player.playerorientation.X -= (float)rnd.NextDouble() * 0.04f;
+                    player.playerorientation.Y += (float)rnd.NextDouble() * 0.08f - 0.04f;
+
+                    goto end;
                 }
                 if (pick2.Count > 0)
                 {
@@ -2370,7 +2382,22 @@ namespace ManicDigger
                 }
                 if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
                 {
-                    d_Weapon.DrawWeapon((float)e.Time);
+                    Item item = d_Inventory.RightHand[ActiveMaterial];
+                    string img = null;
+                    if (item != null)
+                    {
+                        img = blocktypes[item.BlockId].handimage;
+                    }
+                    if (img == null)
+                    {
+                        d_Weapon.DrawWeapon((float)e.Time);
+                    }
+                    else
+                    {
+                        d_The3d.OrthoMode(Width, Height);
+                        d_The3d.Draw2dBitmapFile(img, Width / 2, Height - 512, 512, 512);
+                        d_The3d.PerspectiveMode();
+                    }
                 }
             }
         draw2d:

@@ -98,28 +98,30 @@
     <Compile Include="Misc2.cs" />
     <Compile Include="ModeFortressRail.cs" />
     <Compile Include="ModLoader.cs" />
-    <Compile Include="Mods\BuildLog.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
-    <Compile Include="Mods\CraftingTable.cs" />
-    <Compile Include="Mods\Default.cs" />
-    <Compile Include="Mods\DefaultWorldGenerator.cs" />
-    <Compile Include="Mods\Doors.cs" />
-    <Compile Include="Mods\OreGenerator.cs" />
-    <Compile Include="Mods\PermissionBlock.cs" />
-    <Compile Include="Mods\Revert.cs" />
-    <Compile Include="Mods\SandPhysics.cs" />
-    <Compile Include="Mods\Monsters.cs" />
-    <Compile Include="Mods\Tnt.cs" />
-    <Compile Include="Mods\TreeGenerator.cs" />
-    <Compile Include="Mods\VandalFinder.cs" />
-    <Compile Include="Mods\VegetationGrowth.cs" />
     <Compile Include="Forms\MultiplayerForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\MultiplayerForm.Designer.cs">
       <DependentUpon>MultiplayerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Mods\Fortress\BuildLog.cs" />
+    <Compile Include="Mods\Fortress\CraftingTable.cs" />
+    <Compile Include="Mods\Fortress\Default.cs" />
+    <Compile Include="Mods\Fortress\DefaultWorldGenerator.cs" />
+    <Compile Include="Mods\Fortress\Doors.cs" />
+    <Compile Include="Mods\Fortress\Monsters.cs" />
+    <Compile Include="Mods\Fortress\OreGenerator.cs" />
+    <Compile Include="Mods\Fortress\PermissionBlock.cs" />
+    <Compile Include="Mods\Fortress\Revert.cs" />
+    <Compile Include="Mods\Fortress\SandPhysics.cs" />
+    <Compile Include="Mods\Fortress\Tnt.cs" />
+    <Compile Include="Mods\Fortress\TreeGenerator.cs" />
+    <Compile Include="Mods\Fortress\VandalFinder.cs" />
+    <Compile Include="Mods\Fortress\VegetationGrowth.cs" />
+    <Compile Include="Mods\War\Default.cs" />
+    <Compile Include="Mods\War\Noise2DWorldGenerator.cs" />
+    <Compile Include="Mods\War\TreeGenerator.cs" />
+    <Compile Include="Mods\War\War.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Forms\PasswordForm.cs">
       <SubType>Form</SubType>

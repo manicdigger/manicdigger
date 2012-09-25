@@ -228,6 +228,10 @@ namespace ManicDigger
         public bool IsUsable;
         [ProtoMember(20)]
         public bool IsTool;
+        [ProtoMember(21)]
+        public string handimage;
+        [ProtoMember(22)]
+        public bool IsPistol;
         public string AllTextures
         {
             set
