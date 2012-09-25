@@ -124,6 +124,8 @@ namespace GameModeFortress
         public int DisableShadows;
         [ProtoMember(12, IsRequired = false)]
         public int PlayerAreaSize;
+        [ProtoMember(13, IsRequired = false)]
+        public int RenderHint;
     }
     [ProtoContract]
     public class PacketServerPlayerSpawnPosition

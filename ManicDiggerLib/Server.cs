@@ -2974,6 +2974,7 @@ if (sent >= unknown.Count) { break; }
             PacketServerLevelFinalize p = new PacketServerLevelFinalize() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelFinalize, LevelFinalize = p }));
         }
+        public RenderHint RenderHint = RenderHint.Fast;
         private void SendServerIdentification(int clientid)
         {
             PacketServerIdentification p = new PacketServerIdentification()
@@ -2989,6 +2990,7 @@ if (sent >= unknown.Count) { break; }
                 MapSizeZ = d_Map.MapSizeZ,
                 DisableShadows = enableshadows ? 0 : 1,
                 PlayerAreaSize = playerareasize,
+                RenderHint = (int)RenderHint,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }

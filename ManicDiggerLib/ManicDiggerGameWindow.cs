@@ -4023,6 +4023,7 @@ namespace ManicDigger
                         this.ServerInfo.connectdata = this.connectdata;
                         this.ServerInfo.ServerName = packet.Identification.ServerName;
                         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
+                        this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint == (int)RenderHint.Fast;
                         ChatLog("---Connected---");
                         List<byte[]> needed = new List<byte[]>();
                         foreach (byte[] b in packet.Identification.UsedBlobsMd5)

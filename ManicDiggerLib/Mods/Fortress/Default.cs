@@ -12,6 +12,7 @@ namespace ManicDigger.Mods
         public void Start(ModManager m)
         {
             this.m = m;
+            m.RenderHint(RenderHint.Fast);
             if (m.IsSinglePlayer())
             {
                 m.SetPlayerAreaSize(512);

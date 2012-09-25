@@ -877,9 +877,14 @@ namespace ManicDigger.Renderers
             }
             return -1;
         }
+        public bool ENABLE_TEXTURE_TILING = true; // tiling reduces number of triangles but causes white dots bug on some graphics cards.
         //Texture tiling in one direction.
         private int GetTilingCount(ushort[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
+            if (!ENABLE_TEXTURE_TILING)
+            {
+                return 1;
+            }
             //fixes tree Z-fighting
             if (istransparent[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
                 && !d_Data.IsTransparentFully[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }

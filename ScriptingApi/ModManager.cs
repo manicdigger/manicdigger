@@ -92,6 +92,13 @@ namespace ManicDigger
         void SendDialog(int player, string id, Dialog dialog);
         void RegisterOnDialogClick(Action<int, string> a); //widgetid
         void SetPlayerModel(int player, string model, string texture);
+        void RenderHint(RenderHint hint);
+    }
+
+    public enum RenderHint
+    {
+        Fast,
+        Nice,
     }
 
     [ProtoContract]

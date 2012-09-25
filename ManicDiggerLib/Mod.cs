@@ -546,5 +546,9 @@ namespace ManicDigger
             server.clients[player].Texture = texture;
             server.SendPlayerSpawnToAll(player);
         }
+        public void RenderHint(RenderHint hint)
+        {
+            server.RenderHint = hint;
+        }
     }
 }

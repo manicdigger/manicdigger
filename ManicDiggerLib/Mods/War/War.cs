@@ -17,6 +17,7 @@ namespace ManicDigger.Mods
             m.SetWorldSize(256, 256, 128);
             m.RegisterOnPlayerJoin(PlayerJoin);
             m.RegisterOnDialogClick(DialogClick);
+            m.RenderHint(RenderHint.Nice);
         }
 
         ModManager m;
