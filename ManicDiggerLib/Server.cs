@@ -1963,6 +1963,60 @@ if (sent >= unknown.Count) { break; }
                         ondialogclick[i](clientid, packet.DialogClick.WidgetId);
                     }
                     break;
+                case ClientPacketId.Shot:
+                    foreach (var k in clients)
+                    {
+                        if (k.Key == clientid)
+                        {
+                            continue;
+                        }
+                        ManicDigger.Collisions.Line3D pick = new ManicDigger.Collisions.Line3D();
+                        pick.Start = new Vector3(packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ);
+                        pick.End = new Vector3(packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ);
+
+                        Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
+                        feetpos.Y -= CharacterPhysics.characterheight;
+                        feetpos.Y -= CharacterPhysics.walldistance;
+                        //var p = PlayerPositionSpawn;
+                        ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
+                        float headsize = 0.4f;
+                        float h = CharacterPhysics.characterheight + CharacterPhysics.walldistance - headsize;
+                        float r = 0.35f;
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z + r);
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        ManicDigger.Collisions.Box3D headbox = new ManicDigger.Collisions.Box3D();
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
+
+                        if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox) != null)
+                        {
+                            SendSound(clientid, "death.ogg");
+                            SendSound(k.Key, "death.ogg");
+                        }
+                        else if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox) != null)
+                        {
+                            SendSound(clientid, "grunt2.ogg");
+                            SendSound(k.Key, "grunt1.ogg");
+                        }
+                    }
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;

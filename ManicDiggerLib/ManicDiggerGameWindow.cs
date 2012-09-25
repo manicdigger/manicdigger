@@ -1979,6 +1979,15 @@ namespace ManicDigger
                 Item item = d_Inventory.RightHand[ActiveMaterial];
                 if (left && item != null && blocktypes[item.BlockId].IsPistol)
                 {
+                    PacketClientShot shot = new PacketClientShot();
+                    shot.FromX = pick.Start.X;
+                    shot.FromY = pick.Start.Y;
+                    shot.FromZ = pick.Start.Z;
+                    shot.ToX = pick.End.X;
+                    shot.ToY = pick.End.Y;
+                    shot.ToZ = pick.End.Z;
+                    SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
+
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
                     
                     //recoil

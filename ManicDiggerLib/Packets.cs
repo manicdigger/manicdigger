@@ -402,6 +402,8 @@ namespace GameModeFortress
         public PacketClientPingReply PingReply;
         [ProtoMember(11, IsRequired = false)]
         public PacketClientDialogClick DialogClick;
+        [ProtoMember(12, IsRequired = false)]
+        public PacketClientShot Shot;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -539,6 +541,22 @@ namespace GameModeFortress
         [ProtoMember(4, IsRequired = false)]
         public int RecipeId;
     }
+    [ProtoContract]
+    public class PacketClientShot
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public float FromX;
+        [ProtoMember(2, IsRequired = false)]
+        public float FromY;
+        [ProtoMember(3, IsRequired = false)]
+        public float FromZ;
+        [ProtoMember(4, IsRequired = false)]
+        public float ToX;
+        [ProtoMember(5, IsRequired = false)]
+        public float ToY;
+        [ProtoMember(6, IsRequired = false)]
+        public float ToZ;
+    }
     /// <summary>
     /// Client -> Server packet id.
     /// </summary>
@@ -556,6 +574,7 @@ namespace GameModeFortress
         InventoryAction = 51,
         Health = 52,
         MonsterHit = 53,
+        Shot = 54,
         ExtendedPacketCommand = 100,
     }
     /// <summary>
