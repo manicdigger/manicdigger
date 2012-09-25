@@ -1979,6 +1979,53 @@ namespace ManicDigger
                 Item item = d_Inventory.RightHand[ActiveMaterial];
                 if (left && item != null && blocktypes[item.BlockId].IsPistol)
                 {
+                    foreach (var k in players)
+                    {
+                        if (k.Value.Position == null)
+                        {
+                            continue;
+                        }
+                        Vector3 feetpos = k.Value.Position.Value;
+                        feetpos.Y -= CharacterPhysics.characterheight;
+                        feetpos.Y -= CharacterPhysics.walldistance;
+                        //var p = PlayerPositionSpawn;
+                        Box3D bodybox = new Box3D();
+                        float headsize = 0.4f;
+                        float h = CharacterPhysics.characterheight + CharacterPhysics.walldistance - headsize;
+                        float r = 0.35f;
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z + r);
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        Box3D headbox = new Box3D();
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
+
+                        if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox) != null)
+                        {
+                            d_Audio.Play("death.ogg");
+                        }
+                        else if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox) != null)
+                        {
+                            d_Audio.Play("grunt1.ogg");
+                        }
+                    }
+
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
                     
                     //recoil
