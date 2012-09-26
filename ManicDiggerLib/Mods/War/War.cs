@@ -24,6 +24,7 @@ namespace ManicDigger.Mods
 
         void PlayerJoin(int playerid)
         {
+            m.EnableFreemove(playerid, false);
             Dialog d = new Dialog();
             List<Widget> widgets = new List<Widget>();
             Widget background = new Widget();
@@ -75,16 +76,19 @@ namespace ManicDigger.Mods
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Blue;
+                m.EnableFreemove(playerid, false);
             }
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Green;
+                m.EnableFreemove(playerid, false);
             }
             if (widget == "Team3")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Spectator;
+                m.EnableFreemove(playerid, true);
             }
             Respawn(playerid);
         }

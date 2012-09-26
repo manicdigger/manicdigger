@@ -3048,7 +3048,7 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
         }
-        private void SendFreemoveState(int clientid, bool isEnabled)
+        public void SendFreemoveState(int clientid, bool isEnabled)
         {
             PacketServerFreemove p = new PacketServerFreemove()
             {

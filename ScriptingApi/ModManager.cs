@@ -93,6 +93,7 @@ namespace ManicDigger
         void RegisterOnDialogClick(Action<int, string> a); //widgetid
         void SetPlayerModel(int player, string model, string texture);
         void RenderHint(RenderHint hint);
+        void EnableFreemove(int playerid, bool enable);
     }
 
     public enum RenderHint

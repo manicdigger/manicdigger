@@ -550,5 +550,9 @@ namespace ManicDigger
         {
             server.RenderHint = hint;
         }
+        public void EnableFreemove(int playerid, bool enable)
+        {
+            server.SendFreemoveState(playerid, enable);
+        }
     }
 }
