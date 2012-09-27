@@ -79,18 +79,21 @@ namespace ManicDigger.Mods
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Blue;
+                m.SetPlayerModel(playerid, "player.txt", "playerblue.png");
                 m.EnableFreemove(playerid, false);
             }
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Green;
+                m.SetPlayerModel(playerid, "player.txt", "playergreen.png");
                 m.EnableFreemove(playerid, false);
             }
             if (widget == "Team3")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Spectator;
+                m.SetPlayerModel(playerid, "player.txt", "mineplayer.png");
                 m.EnableFreemove(playerid, true);
             }
             Respawn(playerid);
