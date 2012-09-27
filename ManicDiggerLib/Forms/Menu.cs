@@ -49,7 +49,9 @@ namespace GameModeFortress
             }
         }
 
-        MultiplayerForm m;
+        MultiplayerForm m = new MultiplayerForm();
+        Bitmap bg;
+
         private void button1_Click(object sender, EventArgs e)
         {
             /*
@@ -85,14 +87,43 @@ namespace GameModeFortress
                         string ss = Path.Combine(s, "local");
                         string ss2 = Path.Combine(ss, "gui");
                         string ss3 = Path.Combine(ss2, "logo.png");
+                        string ss4 = Path.Combine(ss2, "background.png");
+                        string ss5 = Path.Combine(ss2, "button4_sel.png");
+                        if (File.Exists(ss4))
+                        {
+                            bg = new Bitmap(ss4);
+                            this.BackgroundImage = bg;
+                            m.BackgroundImage = bg;
+                        }
                         if (File.Exists(ss3))
                         {
                             pictureBox1.Image = new Bitmap(ss3);
+                        }
+                        if (File.Exists(ss5))
+                        {
+                            button2.BackgroundImage = new Bitmap(ss5);
+                            button3.BackgroundImage = new Bitmap(ss5);
                         }
                     }
                     catch
                     {
                     }
+
+                    //Commented out because ListView element doesn't support transparent BackColor.
+                    //Results in the background Image painted over by the list elements.
+
+                    /*try
+                    {
+                        string ss = Path.Combine(s, "public");
+                        string ss2 = Path.Combine(ss, "rock.png");
+                        if (File.Exists(ss2))
+                        {
+                            m.listView1.BackgroundImage = new Bitmap(ss2);
+                        }
+                    }
+                    catch
+                    {
+                    }*/
                 }
             }
             catch
@@ -114,7 +145,6 @@ namespace GameModeFortress
 
         private void button3_Click(object sender, EventArgs e)
         {
-            m = new MultiplayerForm();
             m.ShowDialog();
             if (m.ConnectNow)
             {

@@ -33,7 +33,7 @@ namespace ManicDigger
             catch
             {
             }
-            listView1.Columns[0].Width = 200;
+            listView1.Columns[0].Width = 300;
             listView1.Columns[1].Width = 300;
             listView1.Columns[2].Width = 100;
             try
@@ -237,6 +237,38 @@ namespace ManicDigger
             }
             ConnectNow = true;
             Close();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            listView1.Items.Clear();
+            listView1.Update();
+            listView1.Columns[0].Width = 300;
+            listView1.Columns[1].Width = 300;
+            listView1.Columns[2].Width = 100;
+            try
+            {
+                servers = null;
+                servers = GetServers();
+                for (int i = 0; i < servers.Length; i++)
+                {
+                    ListViewItem item = new ListViewItem();
+                    item = listView1.Items.Add(servers[i].Name);
+                    item.SubItems.Add(servers[i].Players);
+                    var ver = item.SubItems.Add(servers[i].Version);
+                    /*
+                    if (ver.Text != GameVersion.Version)
+                    {
+                        item.ForeColor = Color.Red;
+                    }
+                    */
+                    item.Tag = i;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Can't download server list.");
+            }
         }
     }
 }
