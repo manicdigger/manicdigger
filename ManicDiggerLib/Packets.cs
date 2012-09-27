@@ -556,6 +556,8 @@ namespace GameModeFortress
         public float ToY;
         [ProtoMember(6, IsRequired = false)]
         public float ToZ;
+        [ProtoMember(7, IsRequired = false)]
+        public int WeaponBlock;
     }
     /// <summary>
     /// Client -> Server packet id.

@@ -94,6 +94,13 @@ namespace ManicDigger
         void SetPlayerModel(int player, string model, string texture);
         void RenderHint(RenderHint hint);
         void EnableFreemove(int playerid, bool enable);
+        int GetPlayerHealth(int playerid);
+        int GetPlayerMaxHealth(int playerid);
+        void SetPlayerHealth(int playerid, int health, int maxhealth);
+        void RegisterOnWeaponHit(ManicDigger.Action<int, int, int, bool> a); //sourceplayer, targetplayer, block, head
+        void RegisterOnRespawnKey(ManicDigger.Action<int> a); //playerid
+        void RegisterOnTabKey(ManicDigger.Action<int> a); //playerid
+        void RegisterOnSetSpawnKey(ManicDigger.Action<int> a); //playerid
     }
 
     public enum RenderHint

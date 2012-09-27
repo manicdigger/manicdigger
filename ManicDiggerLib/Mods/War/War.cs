@@ -18,7 +18,10 @@ namespace ManicDigger.Mods
             m.RegisterOnPlayerJoin(PlayerJoin);
             m.RegisterOnDialogClick(DialogClick);
             m.RenderHint(RenderHint.Nice);
+            m.RegisterOnWeaponHit(Hit);
         }
+
+        public bool EnableTeamkill = true;
 
         ModManager m;
 
@@ -127,6 +130,43 @@ namespace ManicDigger.Mods
                 }
             }
             return m.GetMapSizeZ() / 2;
+        }
+
+        void Hit(int sourceplayer, int targetplayer, int block, bool head)
+        {
+            if (!EnableTeamkill)
+            {
+                if (teams[sourceplayer] == teams[targetplayer])
+                {
+                    return;
+                }
+            }
+            int health = m.GetPlayerHealth(targetplayer);
+            health -= head ? 10 : 3;
+            if (health <= 0)
+            {
+                m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
+                    (int)m.GetPlayerPositionY(targetplayer),
+                    (int)m.GetPlayerPositionZ(targetplayer), "death.ogg");
+                m.SetPlayerHealth(targetplayer, m.GetPlayerMaxHealth(targetplayer), m.GetPlayerMaxHealth(targetplayer));
+                Respawn(targetplayer);
+                if (teams[sourceplayer] == teams[targetplayer])
+                {
+                    m.SendMessageToAll(string.Format("{0} kills {1} - " + m.colorError() + "TEAMKILL", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
+                    
+                }
+                else
+                {
+                   m.SendMessageToAll(string.Format("{0} kills {1}", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
+                }
+            }
+            else
+            {
+                m.SetPlayerHealth(targetplayer, health, m.GetPlayerMaxHealth(targetplayer));
+                m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
+                    (int)m.GetPlayerPositionY(targetplayer),
+                    (int)m.GetPlayerPositionZ(targetplayer), "grunt1.ogg");
+            }
         }
     }
 }

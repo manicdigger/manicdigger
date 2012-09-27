@@ -554,5 +554,43 @@ namespace ManicDigger
         {
             server.SendFreemoveState(playerid, enable);
         }
+
+        public int GetPlayerHealth(int playerid)
+        {
+            string name = GetPlayerName(playerid);
+            return server.GetPlayerStats(name).CurrentHealth;
+        }
+
+        public int GetPlayerMaxHealth(int playerid)
+        {
+            string name = GetPlayerName(playerid);
+            return server.GetPlayerStats(name).MaxHealth;
+        }
+
+        public void SetPlayerHealth(int playerid, int health, int maxhealth)
+        {
+            string name = GetPlayerName(playerid);
+            server.GetPlayerStats(name).CurrentHealth = health;
+            server.GetPlayerStats(name).MaxHealth = maxhealth;
+            server.clients[playerid].IsPlayerStatsDirty = true;
+            server.NotifyPlayerStats(playerid);
+        }
+
+        public void RegisterOnWeaponHit(Action<int, int, int, bool> a)
+        {
+            server.onweaponhit.Add(a);
+        }
+
+        public void RegisterOnRespawnKey(Action<int> a)
+        {
+        }
+
+        public void RegisterOnTabKey(Action<int> a)
+        {
+        }
+
+        public void RegisterOnSetSpawnKey(Action<int> a)
+        {
+        }
     }
 }

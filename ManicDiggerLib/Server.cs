@@ -260,7 +260,12 @@ namespace ManicDiggerServer
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
             for (int i = 0; i < modpaths.Length; i++)
             {
-                modpaths[i] = Path.Combine(modpaths[i], "Fortress");
+                string game = "Fortress";
+                if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
+                {
+                    game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt"));
+                }
+                modpaths[i] = Path.Combine(modpaths[i], game);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
             foreach (string modpath in modpaths)
@@ -1285,7 +1290,7 @@ if (sent >= unknown.Count) { break; }
                 c.IsInventoryDirty = false;
             }
         }
-        private void NotifyPlayerStats(int clientid)
+        public void NotifyPlayerStats(int clientid)
         {
             Client c = clients[clientid];
             if (c.IsPlayerStatsDirty && c.playername != invalidplayername)
@@ -1527,7 +1532,7 @@ if (sent >= unknown.Count) { break; }
             };
         }
 
-        PacketServerPlayerStats GetPlayerStats(string playername)
+        public PacketServerPlayerStats GetPlayerStats(string playername)
         {
             if (PlayerStats == null)
             {
@@ -2007,13 +2012,17 @@ if (sent >= unknown.Count) { break; }
 
                         if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox) != null)
                         {
-                            SendSound(clientid, "death.ogg");
-                            SendSound(k.Key, "death.ogg");
+                            for (int i = 0; i < onweaponhit.Count; i++)
+                            {
+                                onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
+                            }
                         }
                         else if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox) != null)
                         {
-                            SendSound(clientid, "grunt2.ogg");
-                            SendSound(k.Key, "grunt1.ogg");
+                            for (int i = 0; i < onweaponhit.Count; i++)
+                            {
+                                onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, false);
+                            }
                         }
                     }
                     break;
@@ -2023,6 +2032,8 @@ if (sent >= unknown.Count) { break; }
             }
             return lengthPrefixLength + packetLength;
         }
+
+        public List<ManicDigger.Action<int, int, int, bool>> onweaponhit = new List<ManicDigger.Action<int, int, int, bool>>();
 
         public void SendPlayerSpawnToAll(int clientid)
         {
