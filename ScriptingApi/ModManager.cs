@@ -102,6 +102,12 @@ namespace ManicDigger
         void RegisterOnTabKey(ManicDigger.Action<int> a); //playerid
         void RegisterOnSetSpawnKey(ManicDigger.Action<int> a); //playerid
         float[] GetDefaultSpawnPosition(int player);
+        string GetServerName();
+        string GetServerMotd();
+        float[] MeasureTextSize(string text, DialogFont font);
+        string GetServerIp();
+        string GetServerPort();
+        float GetPlayerPing(int player);
     }
 
     public enum RenderHint
@@ -119,6 +125,37 @@ namespace ManicDigger
         public int Width;
         [ProtoMember(3, IsRequired = false)]
         public int Height;
+        [ProtoMember(4, IsRequired = false)]
+        public bool IsModal;
+    }
+
+    [ProtoContract]
+    public class DialogFont
+    {
+        public DialogFont()
+        {
+        }
+        public DialogFont(string FamilyName, float Size, DialogFontStyle FontStyle)
+        {
+            this.FamilyName = FamilyName;
+            this.Size = Size;
+            this.FontStyle = FontStyle;
+        }
+        [ProtoMember(1, IsRequired = false)]
+        public string FamilyName = "Verdana";
+        [ProtoMember(2, IsRequired = false)]
+        public float Size = 11f;
+        [ProtoMember(3, IsRequired = false)]
+        public DialogFontStyle FontStyle;
+    }
+    [Flags]
+    public enum DialogFontStyle
+    {
+        Regular = 0,
+        Bold = 1,
+        Italic = 2,
+        Underline = 4,
+        Strikeout = 8,
     }
 
     [ProtoContract]
@@ -142,6 +179,43 @@ namespace ManicDigger
         public char ClickKey;
         [ProtoMember(9, IsRequired = false)]
         public string Image;
+        [ProtoMember(10, IsRequired = false)]
+        public int Color = -1; //white
+        [ProtoMember(11, IsRequired = false)]
+        public DialogFont Font;
+        [ProtoMember(12, IsRequired = false)]
+        public WidgetType Type;
+        public const string SolidImage = "Solid";
+        public static Widget MakeSolid(float x, float y, float width, float height, int color)
+        {
+            Widget w = new Widget();
+            w.Type = WidgetType.Image;
+            w.Image = SolidImage;
+            w.X = (int)x;
+            w.Y = (int)y;
+            w.Width = (int)width;
+            w.Height = (int)height;
+            w.Color = color;
+            return w;
+        }
+
+        public static Widget MakeText(string text, DialogFont Font, float x, float y, int textColor)
+        {
+            Widget w = new Widget();
+            w.Type = WidgetType.Text;
+            w.Text = text;
+            w.X = (int)x;
+            w.Y = (int)y;
+            w.Font = Font;
+            w.Color = textColor;
+            return w;
+        }
+    }
+
+    public enum WidgetType
+    {
+        Image,
+        Text,
     }
 
     public class ModInfo

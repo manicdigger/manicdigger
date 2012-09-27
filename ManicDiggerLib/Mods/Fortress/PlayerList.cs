@@ -3,191 +3,23 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 
-namespace ManicDigger.Mods
+namespace ManicDigger.Mods.Fortress
 {
-    public class War : IMod
+    public class PlayerList : IMod
     {
         public void PreStart(ModManager m)
         {
-            m.RequireMod("DefaultWar");
         }
+
         public void Start(ModManager m)
         {
             this.m = m;
-            m.SetCreative(true);
-            m.SetWorldSize(256, 256, 128);
-            m.RegisterOnPlayerJoin(PlayerJoin);
-            m.RegisterOnDialogClick(DialogClick);
-            m.RenderHint(RenderHint.Nice);
-            m.RegisterOnWeaponHit(Hit);
-            m.RegisterOnRespawnKey(RespawnKey);
             m.RegisterOnTabKey(OnTabKey);
             m.RegisterOnDialogClick(OnTabResponse);
             m.RegisterTimer(UpdateTab, 1);
         }
 
-        public bool EnableTeamkill = true;
-
         ModManager m;
-
-        void PlayerJoin(int playerid)
-        {
-            m.EnableFreemove(playerid, false);
-            Dialog d = new Dialog();
-            List<Widget> widgets = new List<Widget>();
-            Widget background = new Widget();
-            background.X = 0;
-            background.Y = 0;
-            background.Width = 800;
-            background.Height = 800;
-            background.Image = "SelectTeam";
-            widgets.Add(background);
-            Widget w1 = new Widget();
-            w1.Id = "Team1";
-            w1.Text = "Press 1 to join Blue";
-            w1.X = 50;
-            w1.Y = 400;
-            w1.ClickKey = '1';
-            widgets.Add(w1);
-            Widget w2 = new Widget();
-            w2.Text = "Press 2 to join Green";
-            w2.Id = "Team2";
-            w2.X = 600;
-            w2.Y = 400;
-            w2.ClickKey = '2';
-            widgets.Add(w2);
-            Widget w3 = new Widget();
-            w3.Text = "Press 3 to spectate";
-            w3.Id = "Team3";
-            w3.X = 300;
-            w3.Y = 400;
-            w3.ClickKey = '3';
-            widgets.Add(w3);
-            d.Width = 800;
-            d.Height = 600;
-            d.Widgets = widgets.ToArray();
-            m.SendDialog(playerid, "SelectTeam" + playerid, d);
-        }
-
-        enum Team
-        {
-            Blue,
-            Green,
-            Spectator,
-        }
-
-        Dictionary<int, Team> teams = new Dictionary<int, Team>();
-
-        void DialogClick(int playerid, string widget)
-        {
-            if (widget == "Team1")
-            {
-                m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                teams[playerid] = Team.Blue;
-                m.SetPlayerModel(playerid, "player.txt", "playerblue.png");
-                m.EnableFreemove(playerid, false);
-                Respawn(playerid);
-            }
-            if (widget == "Team2")
-            {
-                m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                teams[playerid] = Team.Green;
-                m.SetPlayerModel(playerid, "player.txt", "playergreen.png");
-                m.EnableFreemove(playerid, false);
-                Respawn(playerid);
-            }
-            if (widget == "Team3")
-            {
-                m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                teams[playerid] = Team.Spectator;
-                m.SetPlayerModel(playerid, "player.txt", "mineplayer.png");
-                m.EnableFreemove(playerid, true);
-                Respawn(playerid);
-            }
-        }
-
-        void Respawn(int playerid)
-        {
-            int posx = -1;
-            int posy = -1;
-            int posz = -1;
-            switch (teams[playerid])
-            {
-                case Team.Blue:
-                    posx = 50;
-                    posy = m.GetMapSizeY() / 2;
-                    break;
-                case Team.Green:
-                    posx = m.GetMapSizeX() - 50;
-                    posy = m.GetMapSizeY() / 2;
-                    break;
-                case Team.Spectator:
-                    posx = m.GetMapSizeX() / 2;
-                    posy = m.GetMapSizeY() / 2;
-                    break;
-            }
-            posz = BlockHeight(posx, posy);
-            m.SetPlayerPosition(playerid, posx, posy, posz);
-        }
-
-        public int BlockHeight(int x, int y)
-        {
-            for (int z = m.GetMapSizeZ() - 1; z >= 0; z--)
-            {
-                if (m.GetBlock(x, y, z) != 0)
-                {
-                    return z + 1;
-                }
-            }
-            return m.GetMapSizeZ() / 2;
-        }
-
-        void Hit(int sourceplayer, int targetplayer, int block, bool head)
-        {
-            if (!EnableTeamkill)
-            {
-                if (teams[sourceplayer] == teams[targetplayer])
-                {
-                    return;
-                }
-            }
-            int health = m.GetPlayerHealth(targetplayer);
-            health -= head ? 10 : 3;
-            if (health <= 0)
-            {
-                m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
-                    (int)m.GetPlayerPositionY(targetplayer),
-                    (int)m.GetPlayerPositionZ(targetplayer), "death.ogg");
-                m.SetPlayerHealth(targetplayer, m.GetPlayerMaxHealth(targetplayer), m.GetPlayerMaxHealth(targetplayer));
-                Respawn(targetplayer);
-                if (teams[sourceplayer] == teams[targetplayer])
-                {
-                    m.SendMessageToAll(string.Format("{0} kills {1} - " + m.colorError() + "TEAMKILL", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
-                    
-                }
-                else
-                {
-                   m.SendMessageToAll(string.Format("{0} kills {1}", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
-                }
-            }
-            else
-            {
-                m.SetPlayerHealth(targetplayer, health, m.GetPlayerMaxHealth(targetplayer));
-                m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
-                    (int)m.GetPlayerPositionY(targetplayer),
-                    (int)m.GetPlayerPositionZ(targetplayer), "grunt1.ogg");
-            }
-        }
-
-        void RespawnKey(int player)
-        {
-            m.PlaySoundAt((int)m.GetPlayerPositionX(player),
-                (int)m.GetPlayerPositionY(player),
-                (int)m.GetPlayerPositionZ(player), "death.ogg");
-            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
-            Respawn(player);
-            m.SendMessageToAll(string.Format("{0} dies", m.GetPlayerName(player)));
-        }
 
         void OnTabKey(int player)
         {
@@ -195,19 +27,19 @@ namespace ManicDigger.Mods
             Dialog d = new Dialog();
             d.IsModal = true;
             List<Widget> widgets = new List<Widget>();
-            
+
             // table alignment
             float tableX = xcenter(m.GetScreenResolution(player)[0], tableWidth);
             float tableY = tableMarginTop;
-            
+
             // text to draw
             string row1 = m.GetServerName();
             row1 = cutText(row1, HeadingFont, tableWidth - 2 * tablePadding);
 
             string row2 = m.GetServerMotd();
             row2 = cutText(row2, SmallFontBold, tableWidth - 2 * tablePadding);
-            
-            
+
+
             string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
             string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
 
@@ -227,7 +59,7 @@ namespace ManicDigger.Mods
             float listEntryHeight = textHeight("Player", NormalFont) + 2 * listEntryPaddingTopBottom;
 
             float heightOffset = 0;
-            
+
             // determine how many entries can be displayed
             tableHeight = m.GetScreenResolution(player)[1] - tableMarginTop - tableMarginBottom;
             float availableEntrySpace = tableHeight - row1Height - row2Height - row3Height - row4Height - (row5Height + tableLineWidth);
@@ -243,12 +75,12 @@ namespace ManicDigger.Mods
             widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row1Height;
-            
+
             // 2 - MOTD
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row2Height, Color.ForestGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row2Height;
-            
+
             // 3 - server info: IP Motd Serverping
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row3Height, Color.DarkSeaGreen.ToArgb()));
             // row3_1 - IP align left
@@ -256,7 +88,7 @@ namespace ManicDigger.Mods
             // row3_2 - Serverping align right
             widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row3Height;
-            
+
             // 4 - infoline: Playercount, Page
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row4Height, Color.DimGray.ToArgb()));
             // row4_1 PlayerCount
@@ -264,7 +96,7 @@ namespace ManicDigger.Mods
             // row4_2 PlayerCount
             widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row4Height;
-            
+
             // 5 - playerlist heading: ID | Player | Ping
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableIdColumnWidth, row5Height, Color.DarkGray.ToArgb()));
             widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tablePlayerColumnWidth, row5Height, Color.DarkGray.ToArgb()));
@@ -282,7 +114,7 @@ namespace ManicDigger.Mods
             // horizontal line
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, tableLineWidth, Color.DimGray.ToArgb()));
             heightOffset += tableLineWidth;
-            
+
             // 6 - actual playerlist
             // entries:
             Color entryRowColor;
@@ -319,7 +151,7 @@ namespace ManicDigger.Mods
             wesc.ClickKey = (char)27;
             wesc.Id = "Esc";
             widgets.Add(wesc);
-            
+
             d.Width = m.GetScreenResolution(player)[0];
             d.Height = m.GetScreenResolution(player)[1];
             d.Widgets = widgets.ToArray();
@@ -336,7 +168,7 @@ namespace ManicDigger.Mods
         public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);
         public DialogFont SmallFont = new DialogFont("Verdana", 8f, DialogFontStyle.Regular);
         public DialogFont SmallFontBold = new DialogFont("Verdana", 8f, DialogFontStyle.Bold);
-        
+
         private float tableMarginTop = 10;
         private float tableMarginBottom = 10;
         private float tableWidth = 500;
@@ -406,7 +238,7 @@ namespace ManicDigger.Mods
 
         void UpdateTab()
         {
-            foreach (var k in new Dictionary<string,bool>(tabOpen))
+            foreach (var k in new Dictionary<string, bool>(tabOpen))
             {
                 foreach (int p in m.AllPlayers())
                 {

@@ -159,7 +159,6 @@ namespace ManicDigger
             */
             w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w };
             w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w };
-            w.d_HudPlayerList = new HudPlayerList() { ServerInfo = w.ServerInfo, d_ViewportSize = w };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata };
             var inventoryController = clientgame;
             var inventoryUtil = new InventoryUtil();
@@ -235,8 +234,6 @@ namespace ManicDigger
         public ITerrainTextures d_TerrainTextures;
         [Inject]
         public HudChat d_HudChat;
-        [Inject]
-        public HudPlayerList d_HudPlayerList;
         [Inject]
         public HudTextEditor d_HudTextEditor;
         [Inject]
@@ -473,7 +470,7 @@ namespace ManicDigger
             {
                 foreach (var w in d.Value.Widgets)
                 {
-                    if ("abcdefghijklmnopqrstuvwxyz1234567890".Contains("" + w.ClickKey))
+                    if (("abcdefghijklmnopqrstuvwxyz1234567890\t " + (char)27).Contains("" + w.ClickKey))
                     {
                         if (e.KeyChar == w.ClickKey)
                         {
@@ -713,6 +710,14 @@ namespace ManicDigger
             {
                 if (Keyboard[GetKey(OpenTK.Input.Key.Escape)])
                 {
+                    foreach (var k in new Dictionary<string, Dialog>(dialogs))
+                    {
+                        if (k.Value.IsModal)
+                        {
+                            dialogs.Remove(k.Key);
+                            return;
+                        }
+                    }
                     guistate = GuiState.EscapeMenu;
                     menustate = new MenuState();
                     FreeMouse = true;
@@ -943,8 +948,11 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.Tab))
                 {
-                    guistate = GuiState.PlayerList;
-                    FreeMouse = true;
+                    SendPacketClient(new PacketClient()
+                    {
+                        PacketId = ClientPacketId.SpecialKey,
+                        SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.TabPlayerList },
+                    });
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.E))
                 {
@@ -1021,29 +1029,18 @@ namespace ManicDigger
                 }
                 return;
             }
-            else if (guistate == GuiState.PlayerList)
+            else if (guistate == GuiState.ModalDialog)
             {
-                if (e.Key == GetKey(OpenTK.Input.Key.Tab)
+                if (e.Key == GetKey(OpenTK.Input.Key.B)
                     || e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
                     GuiStateBackToGame();
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.PageDown)
-                    || e.Key == GetKey(OpenTK.Input.Key.Down))
-                {
-                    d_HudPlayerList.NextPage();
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.PageUp)
-                    || e.Key == GetKey(OpenTK.Input.Key.Up))
-                {
-                    d_HudPlayerList.PreviousPage();
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     d_Screenshot.SaveScreenshot();
                     screenshotflash = 5;
                 }
-                return;
             }
             else if (guistate == GuiState.MapLoading)
             {
@@ -1489,7 +1486,7 @@ namespace ManicDigger
             {
             }
             else if (guistate == GuiState.EditText) { }
-            else if (guistate == GuiState.PlayerList)
+            else if (guistate == GuiState.ModalDialog)
             {
             }
             else throw new Exception();
@@ -2778,7 +2775,7 @@ namespace ManicDigger
             MapLoading,
             CraftingRecipes,
             EditText,
-            PlayerList
+            ModalDialog,
         }
         private void DrawMouseCursor()
         {
@@ -2849,10 +2846,9 @@ namespace ManicDigger
                         d_HudTextEditor.Render();
                     }
                     break;
-                case GuiState.PlayerList:
+                case GuiState.ModalDialog:
                     {
                         DrawDialogs();
-                        d_HudPlayerList.DrawHudPlayerList();
                     }
                     break;
                 default:
@@ -2904,14 +2900,42 @@ namespace ManicDigger
                 {
                     if (w.Text != null)
                     {
-                        d_The3d.Draw2dText(w.Text, w.X + x, w.Y + y, 12, null);
+                        w.Text = w.Text.Replace("!SERVER_IP!", ServerInfo.connectdata.Ip);
+                        w.Text = w.Text.Replace("!SERVER_PORT!", ServerInfo.connectdata.Port.ToString());
+                        if (w.Font != null)
+                        {
+                            Font font = new Font(ValidFont(w.Font.FamilyName), w.Font.Size, (FontStyle)w.Font.FontStyle);
+                            d_The3d.Draw2dText(w.Text, font, w.X + x, w.Y + y, Color.FromArgb(w.Color));
+                        }
+                        else
+                        {
+                            d_The3d.Draw2dText(w.Text, w.X + x, w.Y + y, 12, Color.FromArgb(w.Color));
+                        }
                     }
-                    if (w.Image != null)
+                    if (w.Image == "Solid")
+                    {
+                        d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), w.X + x, w.Y + y, w.Width, w.Height, null, Color.FromArgb(w.Color));
+                    }
+                    else if (w.Image != null)
                     {
                         d_The3d.Draw2dBitmapFile(w.Image + ".png", w.X + x, w.Y + y, w.Width, w.Height);
                     }
                 }
             }
+        }
+        
+        string[] AllowedFonts = new string[] { "Verdana" };
+
+        private string ValidFont(string family)
+        {
+            foreach (string s in AllowedFonts)
+            {
+                if (s.Equals(family, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return family;
+                }
+            }
+            return AllowedFonts[0];
         }
 
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
@@ -4497,6 +4521,10 @@ namespace ManicDigger
                     var d = packet.Dialog;
                     if (d.Dialog == null)
                     {
+                        if (dialogs.ContainsKey(d.DialogId) && dialogs[d.DialogId].IsModal)
+                        {
+                            GuiStateBackToGame();
+                        }
                         dialogs.Remove(d.DialogId);
                         if (dialogs.Count == 0)
                         {
@@ -4505,8 +4533,13 @@ namespace ManicDigger
                     }
                     else
                     {
-                        dialogs[d.DialogId] = d.Dialog;
+                        dialogs[d.DialogId] = d.Dialog; 
                         FreeMouse = true;
+                        if (d.Dialog.IsModal)
+                        {
+                            guistate = GuiState.ModalDialog;
+                            FreeMouse = true;
+                        }
                     }
                     break;
                 default:

@@ -112,6 +112,7 @@
     <Compile Include="Mods\Fortress\Monsters.cs" />
     <Compile Include="Mods\Fortress\OreGenerator.cs" />
     <Compile Include="Mods\Fortress\PermissionBlock.cs" />
+    <Compile Include="Mods\Fortress\PlayerList.cs" />
     <Compile Include="Mods\Fortress\Revert.cs" />
     <Compile Include="Mods\Fortress\SandPhysics.cs" />
     <Compile Include="Mods\Fortress\Tnt.cs" />
@@ -174,7 +175,6 @@
     <Compile Include="The3d.cs" />
     <Compile Include="MapTools\WaterSimple.cs" />
     <Compile Include="Renderers\WeaponRenderer.cs" />
-    <Compile Include="Hud\HudPlayerList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

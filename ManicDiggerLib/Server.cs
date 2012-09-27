@@ -1660,7 +1660,8 @@ if (sent >= unknown.Count) { break; }
             {
                 case ClientPacketId.PingReply:
                     clients[clientid].Ping.Receive();
-                    this.NotifyPing(clientid, clients[clientid].Ping.RoundtripTime.Milliseconds);
+                    clients[clientid].LastPing = (float)clients[clientid].Ping.RoundtripTime.TotalSeconds;
+                    this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTime.TotalMilliseconds);
                     break;
                 case ClientPacketId.PlayerIdentification:
                     {
@@ -3142,6 +3143,7 @@ if (sent >= unknown.Count) { break; }
             public ISocket socket;
             public List<byte> received = new List<byte>();
             public Ping Ping = new Ping();
+            public float LastPing;
             public string playername = invalidplayername;
             public int PositionMul32GlX;
             public int PositionMul32GlY;

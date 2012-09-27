@@ -6,6 +6,7 @@ using ProtoBuf;
 using GameModeFortress;
 using Jint.Delegates;
 using System.Net;
+using System.Drawing;
 
 namespace ManicDigger
 {
@@ -600,6 +601,43 @@ namespace ManicDigger
         {
             Vector3i pos = server.GetPlayerSpawnPositionMul32(player);
             return new float[3] { (float)pos.x / 32, (float)pos.z / 32, (float)pos.y / 32 };
+        }
+
+        public string GetServerName()
+        {
+            return server.config.Name;
+        }
+
+        public string GetServerMotd()
+        {
+            return server.config.Motd;
+        }
+
+        public float[] MeasureTextSize(string text, DialogFont font)
+        {
+            using (Bitmap bmp = new Bitmap(1, 1))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle));
+                    return new float[] { size.Width, size.Height };
+                }
+            }
+        }
+
+        public string GetServerIp()
+        {
+            return "!SERVER_IP!";
+        }
+
+        public string GetServerPort()
+        {
+            return "!SERVER_PORT!";
+        }
+
+        public float GetPlayerPing(int player)
+        {
+            return server.clients[player].LastPing;
         }
     }
 }

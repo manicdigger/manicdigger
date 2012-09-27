@@ -19,6 +19,7 @@ namespace ManicDigger
                     GenerateInMemory = true,
                 };
                 parms.ReferencedAssemblies.Add("System.dll");
+                parms.ReferencedAssemblies.Add("System.Drawing.dll");
                 parms.ReferencedAssemblies.Add("ScriptingApi.dll");
                 parms.ReferencedAssemblies.Add("LibNoise.dll");
                 CompilerResults results = compiler.CompileAssemblyFromSource(parms, new string[] { k.Value });
