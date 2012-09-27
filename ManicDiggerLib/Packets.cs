@@ -404,6 +404,8 @@ namespace GameModeFortress
         public PacketClientDialogClick DialogClick;
         [ProtoMember(12, IsRequired = false)]
         public PacketClientShot Shot;
+        [ProtoMember(13, IsRequired = false)]
+        public PacketClientSpecialKey SpecialKey;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -559,6 +561,18 @@ namespace GameModeFortress
         [ProtoMember(7, IsRequired = false)]
         public int WeaponBlock;
     }
+    public enum SpecialKey
+    {
+        Respawn,
+        SetSpawn,
+        TabPlayerList,
+    }
+    [ProtoContract]
+    public class PacketClientSpecialKey
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public SpecialKey key;
+    }
     /// <summary>
     /// Client -> Server packet id.
     /// </summary>
@@ -577,6 +591,7 @@ namespace GameModeFortress
         Health = 52,
         MonsterHit = 53,
         Shot = 54,
+        SpecialKey = 55,
         ExtendedPacketCommand = 100,
     }
     /// <summary>

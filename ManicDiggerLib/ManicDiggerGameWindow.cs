@@ -975,6 +975,11 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.P))
                 {
+                    SendPacketClient(new PacketClient()
+                    {
+                        PacketId = ClientPacketId.SpecialKey,
+                        SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.SetSpawn },
+                    });
                     PlayerPositionSpawn = player.playerposition;
                     player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
                     Log(Language.SpawnPositionSet);
@@ -1690,7 +1695,11 @@ namespace ManicDigger
 
         private void Respawn()
         {
-            player.playerposition = PlayerPositionSpawn;
+            SendPacketClient(new PacketClient()
+            {
+                PacketId = ClientPacketId.SpecialKey,
+                SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.Respawn },
+            });
             player.movedz = 0;
         }
 

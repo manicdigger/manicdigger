@@ -583,14 +583,23 @@ namespace ManicDigger
 
         public void RegisterOnRespawnKey(Action<int> a)
         {
+            server.onrespawnkey.Add(a);
         }
 
         public void RegisterOnTabKey(Action<int> a)
         {
+            server.ontabkey.Add(a);
         }
 
         public void RegisterOnSetSpawnKey(Action<int> a)
         {
+            server.onsetspawnkey.Add(a);
+        }
+
+        public float[] GetDefaultSpawnPosition(int player)
+        {
+            Vector3i pos = server.GetPlayerSpawnPositionMul32(player);
+            return new float[3] { (float)pos.x / 32, (float)pos.z / 32, (float)pos.y / 32 };
         }
     }
 }

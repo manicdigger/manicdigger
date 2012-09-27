@@ -1777,34 +1777,7 @@ if (sent >= unknown.Count) { break; }
                 case ClientPacketId.RequestBlob:
                     {
                         // Set player's spawn position
-                        Vector3i position;
-                        GameModeFortress.Spawn playerSpawn = null;
-                        // Check if there is a spawn entry for his assign group
-                        if (clients[clientid].clientGroup.Spawn != null)
-                        {
-                            playerSpawn = clients[clientid].clientGroup.Spawn;
-                        }
-                        // Check if there is an entry in clients with spawn member (overrides group spawn).
-                        foreach (GameModeFortress.Client client in serverClient.Clients)
-                        {
-                            if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                if (client.Spawn != null)
-                                {
-                                    playerSpawn = client.Spawn;
-                                }
-                                break;
-                            }
-                        }
-
-                        if (playerSpawn == null)
-                        {
-                            position = new Vector3i(this.defaultPlayerSpawn.x * 32, this.defaultPlayerSpawn.z * 32, this.defaultPlayerSpawn.y * 32);
-                        }
-                        else
-                        {
-                            position = this.SpawnToVector3i(playerSpawn);
-                        }
+                        Vector3i position = GetPlayerSpawnPositionMul32(clientid);
 
                         clients[clientid].PositionMul32GlX = position.x;
                         clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
@@ -2026,6 +1999,29 @@ if (sent >= unknown.Count) { break; }
                         }
                     }
                     break;
+                case ClientPacketId.SpecialKey:
+                    if (packet.SpecialKey.key == SpecialKey.Respawn)
+                    {
+                        for (int i = 0; i < onrespawnkey.Count; i++)
+                        {
+                            onrespawnkey[i](clientid);
+                        }
+                    }
+                    if (packet.SpecialKey.key == SpecialKey.TabPlayerList)
+                    {
+                        for (int i = 0; i < ontabkey.Count; i++)
+                        {
+                            ontabkey[i](clientid);
+                        }
+                    }
+                    if (packet.SpecialKey.key == SpecialKey.SetSpawn)
+                    {
+                        for (int i = 0; i < onsetspawnkey.Count; i++)
+                        {
+                            onsetspawnkey[i](clientid);
+                        }
+                    }
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
@@ -2033,7 +2029,43 @@ if (sent >= unknown.Count) { break; }
             return lengthPrefixLength + packetLength;
         }
 
+        public Vector3i GetPlayerSpawnPositionMul32(int clientid)
+        {
+            Vector3i position;
+            GameModeFortress.Spawn playerSpawn = null;
+            // Check if there is a spawn entry for his assign group
+            if (clients[clientid].clientGroup.Spawn != null)
+            {
+                playerSpawn = clients[clientid].clientGroup.Spawn;
+            }
+            // Check if there is an entry in clients with spawn member (overrides group spawn).
+            foreach (GameModeFortress.Client client in serverClient.Clients)
+            {
+                if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (client.Spawn != null)
+                    {
+                        playerSpawn = client.Spawn;
+                    }
+                    break;
+                }
+            }
+
+            if (playerSpawn == null)
+            {
+                position = new Vector3i(this.defaultPlayerSpawn.x * 32, this.defaultPlayerSpawn.z * 32, this.defaultPlayerSpawn.y * 32);
+            }
+            else
+            {
+                position = this.SpawnToVector3i(playerSpawn);
+            }
+            return position;
+        }
+
         public List<ManicDigger.Action<int, int, int, bool>> onweaponhit = new List<ManicDigger.Action<int, int, int, bool>>();
+        public List<ManicDigger.Action<int>> onrespawnkey = new List<ManicDigger.Action<int>>();
+        public List<ManicDigger.Action<int>> ontabkey = new List<ManicDigger.Action<int>>();
+        public List<ManicDigger.Action<int>> onsetspawnkey = new List<ManicDigger.Action<int>>();
 
         public void SendPlayerSpawnToAll(int clientid)
         {

@@ -19,6 +19,7 @@ namespace ManicDigger.Mods
             m.RegisterOnDialogClick(DialogClick);
             m.RenderHint(RenderHint.Nice);
             m.RegisterOnWeaponHit(Hit);
+            m.RegisterOnRespawnKey(RespawnKey);
         }
 
         public bool EnableTeamkill = true;
@@ -170,6 +171,16 @@ namespace ManicDigger.Mods
                     (int)m.GetPlayerPositionY(targetplayer),
                     (int)m.GetPlayerPositionZ(targetplayer), "grunt1.ogg");
             }
+        }
+
+        void RespawnKey(int player)
+        {
+            m.PlaySoundAt((int)m.GetPlayerPositionX(player),
+                (int)m.GetPlayerPositionY(player),
+                (int)m.GetPlayerPositionZ(player), "death.ogg");
+            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
+            Respawn(player);
+            m.SendMessageToAll(string.Format("{0} dies", m.GetPlayerName(player)));
         }
     }
 }

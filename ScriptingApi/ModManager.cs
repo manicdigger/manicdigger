@@ -101,6 +101,7 @@ namespace ManicDigger
         void RegisterOnRespawnKey(ManicDigger.Action<int> a); //playerid
         void RegisterOnTabKey(ManicDigger.Action<int> a); //playerid
         void RegisterOnSetSpawnKey(ManicDigger.Action<int> a); //playerid
+        float[] GetDefaultSpawnPosition(int player);
     }
 
     public enum RenderHint
