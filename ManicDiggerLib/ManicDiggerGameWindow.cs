@@ -1810,6 +1810,8 @@ namespace ManicDigger
             return d_Inventory.RightHand[ActiveMaterial] != null;
         }
         int pistolcycle;
+        public Vector3? blood = null;
+        public DateTime bloodtime;
         private void UpdatePicking()
         {
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
@@ -2000,6 +2002,59 @@ namespace ManicDigger
                     shot.ToX = pick.End.X;
                     shot.ToY = pick.End.Y;
                     shot.ToZ = pick.End.Z;
+
+
+                    foreach (var k in d_Clients.Players)
+                    {
+                        if (k.Value.Position == null)
+                        {
+                            continue;
+                        }
+                        Vector3 feetpos = new Vector3((float)k.Value.Position.Value.X, (float)k.Value.Position.Value.Y, (float)k.Value.Position.Value.Z);
+                        feetpos.Y -= CharacterPhysics.characterheight;
+                        feetpos.Y -= CharacterPhysics.walldistance;
+                        //var p = PlayerPositionSpawn;
+                        ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
+                        float headsize = 0.4f;
+                        float h = CharacterPhysics.characterheight + CharacterPhysics.walldistance - headsize;
+                        float r = 0.35f;
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + 0, feetpos.Z + r);
+
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        ManicDigger.Collisions.Box3D headbox = new ManicDigger.Collisions.Box3D();
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
+
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X - r, feetpos.Y + h + headsize, feetpos.Z + r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
+                        headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
+
+                        BlockPosSide? p;
+                        if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox)) != null)
+                        {
+                            blood = p.Value.pos;
+                            bloodtime = DateTime.UtcNow;
+                        }
+                        else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
+                        {
+                            blood = p.Value.pos;
+                            bloodtime = DateTime.UtcNow;
+                        }
+                    }                    
+
+
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
@@ -2380,6 +2435,22 @@ namespace ManicDigger
                 }
 
                 DrawCharacters((float)e.Time);
+                if (blood != null)
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    Vector3 pos = blood.Value;
+                    GL.PushMatrix();
+                    GL.Translate(pos.X, pos.Y, pos.Z);
+                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
+                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
+                    GL.Scale(0.02, 0.02, 0.02);
+                    int ImageSize = 40;
+                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
+                    d_The3d.Draw2dBitmapFile("blood.png", 0, 0, ImageSize, ImageSize);
+                    GL.PopMatrix();
+                }
+                if ((DateTime.UtcNow - bloodtime).TotalSeconds > 0.2) { blood = null; }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
