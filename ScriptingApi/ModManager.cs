@@ -108,6 +108,7 @@ namespace ManicDigger
         float GetPlayerPing(int player);
         int AddBot(string name);
         void SetPlayerHeight(int playerid, float eyeheight, float modelheight);
+        void DisablePrivilege(string privilege); //todo privileges
     }
 
     public enum SpecialKey

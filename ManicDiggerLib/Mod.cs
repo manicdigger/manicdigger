@@ -211,9 +211,9 @@ namespace ManicDigger
             server.GetInventoryUtil(inventory).GrabItem(item, 0);
         }
 
-        public bool PlayerHasPrivilege(int player, string p)
+        public bool PlayerHasPrivilege(int player, string privilege)
         {
-            return server.GetClient(player).privileges.Contains(p);
+            return server.PlayerHasPrivilege(player, privilege);
         }
 
         public bool IsCreative()
@@ -657,6 +657,11 @@ namespace ManicDigger
             server.clients[playerid].EyeHeight = eyeheight;
             server.clients[playerid].ModelHeight = modelheight;
             server.SendPlayerSpawnToAll(playerid);
+        }
+
+        public void DisablePrivilege(string privilege)
+        {
+            server.disabledprivileges[privilege] = true;
         }
     }
 }

@@ -25,6 +25,7 @@ namespace ManicDigger.Mods
             m.RegisterOnDialogClick(OnTabResponse);
             m.RegisterOnSpecialKey(OnSelectTeamKey);
             m.RegisterTimer(UpdateTab, 1);
+            m.DisablePrivilege("tp");
         }
 
         public bool EnableTeamkill = true;

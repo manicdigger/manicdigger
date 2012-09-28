@@ -719,7 +719,7 @@ namespace ManicDiggerServer
 
         public bool PrivateMessage(int sourceClientId, string recipient, string message)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.pm))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.pm))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -741,7 +741,7 @@ namespace ManicDiggerServer
 
         public bool ChangeGroup(int sourceClientId, string target, string newGroupName)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.chgrp))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.chgrp))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -815,7 +815,7 @@ namespace ManicDiggerServer
 
         public bool ChangeGroupOffline(int sourceClientId, string target, string newGroupName)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.chgrp_offline))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.chgrp_offline))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -896,7 +896,7 @@ namespace ManicDiggerServer
 
         public bool RemoveClientFromConfig(int sourceClientId, string target)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.remove_client))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.remove_client))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -949,7 +949,7 @@ namespace ManicDiggerServer
 
         public bool Login (int sourceClientId, string targetGroupString, string password)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.login))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.login))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -986,7 +986,7 @@ namespace ManicDiggerServer
 
         public bool WelcomeMessage(int sourceClientId, string welcomeMessage)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.welcome))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.welcome))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1000,7 +1000,7 @@ namespace ManicDiggerServer
 
         public bool SetLogging(int sourceClientId, string type, string option)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.logging))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.logging))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1099,7 +1099,7 @@ namespace ManicDiggerServer
 
         public bool Kick(int sourceClientId, int targetClientId, string reason)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.kick))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.kick))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1153,7 +1153,7 @@ namespace ManicDiggerServer
 
         public bool Ban(int sourceClientId, int targetClientId, string reason)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.ban))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.ban))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1209,7 +1209,7 @@ namespace ManicDiggerServer
 
         public bool BanIP(int sourceClientId, int targetClientId, string reason)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.banip))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.banip))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1248,7 +1248,7 @@ namespace ManicDiggerServer
         }
         public bool BanOffline(int sourceClientId, string target, string reason)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.ban_offline))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.ban_offline))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1312,7 +1312,7 @@ namespace ManicDiggerServer
 
         public bool Unban(int sourceClientId, string type, string target)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.unban))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.unban))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1360,7 +1360,7 @@ namespace ManicDiggerServer
             {
                 case "-clients":
                 case "-c":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_clients))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_clients))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1374,7 +1374,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-clients2":
                 case "-c2":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_clients))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_clients))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1388,7 +1388,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-areas":
                 case "-a":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_areas))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_areas))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1401,7 +1401,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-bannedusers":
                 case "-bu":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_banned_users))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1414,7 +1414,7 @@ namespace ManicDiggerServer
                     return true;
                 case "-bannedips":
                 case "-bip":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_banned_users))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_banned_users))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1426,7 +1426,7 @@ namespace ManicDiggerServer
                     }
                     return true;
                 case "-groups":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_groups))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_groups))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1438,7 +1438,7 @@ namespace ManicDiggerServer
                     }
                     return true;
                 case "-saved_clients":
-                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.list_saved_clients))
+                    if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.list_saved_clients))
                     {
                         SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                         return false;
@@ -1458,7 +1458,7 @@ namespace ManicDiggerServer
 
         public bool GiveAll(int sourceClientId, string target)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.giveall))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.giveall))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1523,7 +1523,7 @@ namespace ManicDiggerServer
 
         public bool Give(int sourceClientId, string target, string blockname, int amount)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.give))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.give))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1609,7 +1609,7 @@ namespace ManicDiggerServer
 
         public bool ResetInventory(int sourceClientId, string target)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.reset_inventory))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.reset_inventory))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1636,7 +1636,7 @@ namespace ManicDiggerServer
 
         public bool Monsters(int sourceClientId, string option)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.monsters))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.monsters))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1660,7 +1660,7 @@ namespace ManicDiggerServer
 
         public bool AreaAdd(int sourceClientId, int id, string coords, string[] permittedGroups, string[] permittedUsers, int? level)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.area_add))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.area_add))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1701,7 +1701,7 @@ namespace ManicDiggerServer
 
         public bool AreaDelete(int sourceClientId, int id)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.area_delete))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.area_delete))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1721,7 +1721,7 @@ namespace ManicDiggerServer
 
         public bool Announcement(int sourceClientId, string message)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.announcement))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.announcement))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1733,7 +1733,7 @@ namespace ManicDiggerServer
 
         public bool ClearInterpreter(int sourceClientId)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.run))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.run))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1745,7 +1745,7 @@ namespace ManicDiggerServer
 
         public bool SetSpawnPosition(int sourceClientId, string targetType, string target, int x, int y, int? z)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.set_spawn))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.set_spawn))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1903,7 +1903,7 @@ namespace ManicDiggerServer
 
         public bool SetSpawnPosition(int sourceClientId, int x, int y, int? z)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.set_home))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.set_home))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1961,7 +1961,7 @@ namespace ManicDiggerServer
 
         public bool PrivilegeAdd(int sourceClientId, string target, string privilege)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_add))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.privilege_add))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -1990,7 +1990,7 @@ namespace ManicDiggerServer
 
         public bool PrivilegeRemove(int sourceClientId, string target, string privilege)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.privilege_remove))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.privilege_remove))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -2018,7 +2018,7 @@ namespace ManicDiggerServer
 
         public bool RestartServer(int sourceClientId)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.restart))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.restart))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -2031,7 +2031,7 @@ namespace ManicDiggerServer
 
         public bool TeleportToPlayer(int sourceClientId, int clientTo)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.tp))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.tp))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -2044,7 +2044,7 @@ namespace ManicDiggerServer
 
         public bool TeleportToPosition(int sourceClientId, int x, int y, int? z)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.tp_pos))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.tp_pos))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -2079,7 +2079,7 @@ namespace ManicDiggerServer
 
         public bool TeleportPlayer(int sourceClientId, string target, int x, int y, int? z)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.teleport_player))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.teleport_player))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
@@ -2120,7 +2120,7 @@ namespace ManicDiggerServer
 
         public bool SetFillAreaLimit(int sourceClientId, string targetType, string target, int maxFill)
         {
-            if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.fill_limit))
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.fill_limit))
             {
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;

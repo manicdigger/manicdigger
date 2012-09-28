@@ -3210,6 +3210,7 @@ if (sent >= unknown.Count) { break; }
             public float ModelHeight = 1.7f;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
         public Client GetClient(int id)
         {
             if (id == this.serverConsoleId)
@@ -3506,6 +3507,15 @@ if (sent >= unknown.Count) { break; }
         public List<ModDelegates.PlayerDisconnect> onplayerdisconnect = new List<ModDelegates.PlayerDisconnect>();
         public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
         public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
+
+        public bool PlayerHasPrivilege(int player, string privilege)
+        {
+            if (disabledprivileges.ContainsKey(privilege))
+            {
+                return false;
+            }
+            return GetClient(player).privileges.Contains(privilege);
+        }
     }
 
     public class Ping
