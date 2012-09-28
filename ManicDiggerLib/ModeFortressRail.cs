@@ -91,7 +91,7 @@ namespace ManicDigger
                 {
                     var railunderplayer = d_Data.Rail[d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
-                    CharacterHeight = minecartheight;
+                    CharacterEyesHeight = minecartheight;
                     currentvehiclespeed = 0;
                     if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
                     {
@@ -134,7 +134,7 @@ namespace ManicDigger
         }
         private void ExitVehicle()
         {
-            CharacterHeight = WalkCharacterHeight;
+            CharacterEyesHeight = WalkCharacterHeight;
             railriding = false;
             ENABLE_FREEMOVE = false;
             ENABLE_MOVE = true;

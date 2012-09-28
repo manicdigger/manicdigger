@@ -444,6 +444,12 @@ namespace ManicDigger
             {
                 server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
                     (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
+                if (k.Value.IsBot)
+                {
+                    k.Value.PositionMul32GlX = (int)x * 32;
+                    k.Value.PositionMul32GlY = (int)z * 32;
+                    k.Value.PositionMul32GlZ = (int)y * 32;
+                }
             }
         }
 
@@ -628,6 +634,22 @@ namespace ManicDigger
         public float GetPlayerPing(int player)
         {
             return server.clients[player].LastPing;
+        }
+        public int AddBot(string name)
+        {
+            int id = server.GenerateClientId();
+            Server.Client c = new Server.Client();
+            c.Id = id;
+            c.IsBot = true;
+            c.playername = name;
+            server.clients[id] = c;
+            c.state = Server.ClientStateOnServer.Playing;
+            c.socket = new SocketDummy(new SocketDummyNetwork());
+            c.Ping.TimeoutValue = int.MaxValue;
+            c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
+                * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
+            server.SendPlayerSpawnToAll(id);
+            return id;
         }
     }
 }

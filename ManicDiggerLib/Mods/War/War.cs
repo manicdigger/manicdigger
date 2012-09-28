@@ -111,7 +111,18 @@ namespace ManicDigger.Mods
                 m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
                 Respawn(playerid);
             }
+            if (!started)
+            {
+                started = true;
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    int bot = m.AddBot("bot");
+                    PlayerJoin(bot);
+                    DialogClick(bot, "Team2");
+                }
+            }
         }
+        bool started = false;
 
         void OnSelectTeamKey(int player, SpecialKey key)
         {

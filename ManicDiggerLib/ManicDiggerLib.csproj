@@ -159,7 +159,6 @@
     <Compile Include="GameWindowMisc.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />
-    <Compile Include="Network\NetworkClientMinecraft.cs" />
     <Compile Include="Network\PlayerSkinDownloader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -106,6 +106,7 @@ namespace ManicDigger
         string GetServerIp();
         string GetServerPort();
         float GetPlayerPing(int player);
+        int AddBot(string name);
     }
 
     public enum SpecialKey

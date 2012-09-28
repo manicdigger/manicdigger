@@ -678,7 +678,7 @@ namespace ManicDiggerServer
         double accumulator;
 
         private int lastClientId;
-        private int GenerateClientId()
+        public int GenerateClientId()
         {
             int i = 0;
             while (clients.ContainsKey(i))
@@ -764,6 +764,10 @@ namespace ManicDiggerServer
             ArrayList copyList = new ArrayList();
             foreach (var k in clients)
             {
+                if (k.Value.IsBot)
+                {
+                    continue;
+                }
                 copyList.Add(k.Value.socket);
             }
             //if (copyList.Count == 0)
@@ -890,8 +894,35 @@ namespace ManicDiggerServer
                 StatTotalPackets = 0;
                 StatTotalPacketsLength = 0;
             }
+            if ((DateTime.UtcNow - botpositionupdate).TotalSeconds >= 0.1)
+            {
+                foreach (var a in clients)
+                {
+                    if (!a.Value.IsBot)
+                    {
+                        continue;
+                    }
+                    foreach (var b in clients)
+                    {
+                        if (b.Key != a.Key)
+                        {
+                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= PlayerDrawDistance * PlayerDrawDistance)
+                            {
+                                SendPlayerTeleport(b.Key, a.Key,
+                                    a.Value.PositionMul32GlX,
+                                    a.Value.PositionMul32GlY,
+                                    a.Value.PositionMul32GlZ,
+                                    (byte)a.Value.positionheading,
+                                    (byte)a.Value.positionpitch);
+                            }
+                        }
+                    }
+                }
+                botpositionupdate = DateTime.UtcNow;
+            }
         }
         DateTime statsupdate;
+        DateTime botpositionupdate = DateTime.UtcNow;
 
         public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
 
@@ -1954,8 +1985,6 @@ if (sent >= unknown.Count) { break; }
                         pick.End = new Vector3(packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ);
 
                         Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
-                        feetpos.Y -= CharacterPhysics.characterheight;
-                        feetpos.Y -= CharacterPhysics.walldistance;
                         //var p = PlayerPositionSpawn;
                         ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
                         float headsize = 0.4f;
@@ -2067,7 +2096,7 @@ if (sent >= unknown.Count) { break; }
                 PositionAndOrientation = new PositionAndOrientation()
                 {
                     X = c.PositionMul32GlX,
-                    Y = c.PositionMul32GlY - (int)(CharacterPhysics.characterheight * 32),
+                    Y = c.PositionMul32GlY,
                     Z = c.PositionMul32GlZ,
                     Heading = (byte)c.positionheading,
                     Pitch = (byte)c.positionpitch,
@@ -2847,6 +2876,10 @@ if (sent >= unknown.Count) { break; }
         int StatTotalPacketsLength = 0;
         public void SendPacket(int clientid, byte[] packet)
         {
+            if (clients[clientid].IsBot)
+            {
+                return;
+            }
             StatTotalPackets++;
             StatTotalPacketsLength += packet.Length;
             try
@@ -3142,6 +3175,7 @@ if (sent >= unknown.Count) { break; }
             public int FillLimit = 500;
             //public List<byte[]> blobstosend = new List<byte[]>();
             public GameModeFortress.Group clientGroup;
+            public bool IsBot;
             public void AssignGroup(GameModeFortress.Group newGroup)
             {
                 this.clientGroup = newGroup;

@@ -2011,8 +2011,6 @@ namespace ManicDigger
                             continue;
                         }
                         Vector3 feetpos = new Vector3((float)k.Value.Position.Value.X, (float)k.Value.Position.Value.Y, (float)k.Value.Position.Value.Z);
-                        feetpos.Y -= CharacterPhysics.characterheight;
-                        feetpos.Y -= CharacterPhysics.walldistance;
                         //var p = PlayerPositionSpawn;
                         ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
                         float headsize = 0.4f;
@@ -2335,7 +2333,8 @@ namespace ManicDigger
         double accumulator = 0;
         double t = 0;
         //Vector3 oldplayerposition;
-        public float CharacterHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
+        public float CharacterEyesHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
+        public float CharacterModelHeight { get { return CharacterPhysics.characterheight + 0.2f; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
         public Stopwatch framestopwatch;
         public void OnRenderFrame(FrameEventArgs e)
@@ -2716,8 +2715,7 @@ namespace ManicDigger
                 }
                 float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
-                Vector3 FeetPos = curpos + new Vector3(0, -CharacterPhysics.characterheight, 0)
-                        + new Vector3(0, -CharacterPhysics.walldistance, 0);
+                Vector3 FeetPos = curpos;
                 var animHint = d_Clients.Players[k.Key].AnimationHint;
                 if (k.Value.Type == PlayerType.Player)
                 {
@@ -2749,7 +2747,7 @@ namespace ManicDigger
                 var r = GetCharacterRenderer(d_Clients.Players[LocalPlayerId].Model);
                 r.SetAnimation("walk");
                 r.DrawCharacter
-                    (localplayeranim, LocalPlayerPosition + new Vector3(0, -CharacterPhysics.walldistance, 0),
+                    (localplayeranim, LocalPlayerPosition,
                     (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
                     lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint);
@@ -2784,7 +2782,7 @@ namespace ManicDigger
             Vector3 forward = VectorTool.ToVectorInFixedSystem(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
             Vector3 cameraEye;
             Vector3 cameraTarget;
-            Vector3 playerEye = player.playerposition + new Vector3(0, CharacterHeight, 0);
+            Vector3 playerEye = player.playerposition + new Vector3(0, CharacterEyesHeight, 0);
             if (!ENABLE_TPP_VIEW)
             {
                 cameraEye = playerEye;
@@ -2802,7 +2800,7 @@ namespace ManicDigger
         Matrix4 OverheadCamera()
         {
             Vector3 cameraEye = overheadcameraK.Position;
-            Vector3 cameraTarget = overheadcameraK.Center + new Vector3(0, CharacterHeight, 0);
+            Vector3 cameraTarget = overheadcameraK.Center + new Vector3(0, CharacterEyesHeight, 0);
             float currentOverheadcameradistance = overheadcameradistance;
             LimitThirdPersonCameraToWalls(ref cameraEye, cameraTarget, ref currentOverheadcameradistance);
             return Matrix4.LookAt(cameraEye, cameraTarget, up);
@@ -3092,7 +3090,7 @@ namespace ManicDigger
                             pos = k.Value.Position.Value;
                         }
                         GL.PushMatrix();
-                        GL.Translate(pos.X, pos.Y + 1f, pos.Z);
+                        GL.Translate(pos.X, pos.Y + CharacterModelHeight + 0.8f, pos.Z);
                         if (k.Value.Type == PlayerType.Monster)
                         {
                             GL.Translate(0, 1f, 0);
@@ -4060,7 +4058,7 @@ namespace ManicDigger
             {
                 PlayerId = this.LocalPlayerId,//self
                 X = (int)((position.X) * 32),
-                Y = (int)((position.Y + CharacterPhysics.characterheight) * 32),
+                Y = (int)((position.Y) * 32),
                 Z = (int)(position.Z * 32),
                 Heading = HeadingByte(orientation),
                 Pitch = PitchByte(orientation),

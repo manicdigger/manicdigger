@@ -400,7 +400,7 @@ namespace ManicDigger
         Vector3 LocalPlayerPosition { get; set; }
         Vector3 LocalPlayerOrientation { get; set; }
         bool Swimming { get; }
-        float CharacterHeight { get; set; }
+        float CharacterEyesHeight { get; set; }
     }
     public class LocalPlayerPositionDummy : ILocalPlayerPosition
     {
@@ -410,7 +410,7 @@ namespace ManicDigger
         public bool Swimming { get { return false; } }
         #endregion
         #region ILocalPlayerPosition Members
-        public float CharacterHeight { get; set; }
+        public float CharacterEyesHeight { get; set; }
         #endregion
     }
     public interface IClients

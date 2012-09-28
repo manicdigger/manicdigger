@@ -71,7 +71,6 @@ namespace ManicDigger
         }
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push)
         {
-            
             soundnow = false;
             Vector3 diff1 = VectorTool.ToVectorInFixedSystem
                 (move.movedx * move.movespeednow * (float)dt,
@@ -217,6 +216,9 @@ namespace ManicDigger
         }
         public Vector3 WallSlide(CharacterPhysicsState state, Vector3 oldposition, Vector3 newposition)
         {
+            oldposition.Y += walldistance;
+            newposition.Y += walldistance;
+
             reachedceiling = false;
             reachedwall = false;
             //Math.Floor() is needed because casting negative values to integer is not floor.
@@ -417,6 +419,8 @@ namespace ManicDigger
             {
                 playerposition.Y = ((int)Math.Floor(playerposition.Y)) + 0.5f + walldistance;
             }
+
+            playerposition.Y -= walldistance;
             return playerposition;
         }
         public bool swimmingtop;
