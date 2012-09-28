@@ -321,7 +321,7 @@ namespace ManicDigger
                     }
                 }
             }
-        ok:
+        //ok:
             playerposition.Y -= walldistance;
             return playerposition;
         }

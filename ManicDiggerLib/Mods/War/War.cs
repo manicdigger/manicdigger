@@ -88,7 +88,12 @@ namespace ManicDigger.Mods
             if (widget == "Team1")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
+                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Blue)
+                {
+                    return;
+                }
                 teams[playerid] = Team.Blue;
+                kills[playerid] = 0;
                 m.SetPlayerModel(playerid, "playerwar.txt", "playerblue.png");
                 m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, false);
@@ -98,7 +103,12 @@ namespace ManicDigger.Mods
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
+                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Green)
+                {
+                    return;
+                }
                 teams[playerid] = Team.Green;
+                kills[playerid] = 0;
                 m.SetPlayerModel(playerid, "playerwar.txt", "playergreen.png");
                 m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, false);
@@ -108,7 +118,12 @@ namespace ManicDigger.Mods
             if (widget == "Team3")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
+                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Spectator)
+                {
+                    return;
+                }
                 teams[playerid] = Team.Spectator;
+                kills[playerid] = 0;
                 m.SetPlayerModel(playerid, "playerwar.txt", "mineplayer.png");
                 m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, true);
@@ -186,6 +201,10 @@ namespace ManicDigger.Mods
             health -= head ? 10 : 3;
             if (health <= 0)
             {
+                if (teams[sourceplayer] != teams[targetplayer])
+                {
+                    kills[sourceplayer] = kills[sourceplayer] + 1;
+                }
                 m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
                     (int)m.GetPlayerPositionY(targetplayer),
                     (int)m.GetPlayerPositionZ(targetplayer), "death.ogg");
@@ -246,7 +265,6 @@ namespace ManicDigger.Mods
             string row2 = m.GetServerMotd();
             row2 = cutText(row2, SmallFontBold, tableWidth - 2 * tablePadding);
             
-            
             string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
             string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
 
@@ -254,8 +272,8 @@ namespace ManicDigger.Mods
             string row4_2 = "Page: " + (page + 1) + "/" + (pageCount + 1);
 
             string row5_1 = "ID";
-            string row5_2 = "Player";
-            string row5_3 = "Ping";
+            //string row5_2 = "Player";
+            //string row5_3 = "Ping";
 
             // row heights
             float row1Height = textHeight(row1, HeadingFont) + 2 * tablePadding;
@@ -277,7 +295,7 @@ namespace ManicDigger.Mods
             {
                 page = 0;
             }
-
+            
             // 1 - heading: Servername
             widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
@@ -303,53 +321,43 @@ namespace ManicDigger.Mods
             // row4_2 PlayerCount
             widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row4Height;
-            
-            // 5 - playerlist heading: ID | Player | Ping
-            widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableIdColumnWidth, row5Height, Color.DarkGray.ToArgb()));
-            widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tablePlayerColumnWidth, row5Height, Color.DarkGray.ToArgb()));
-            widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth, tableY + heightOffset, tablePingColumnWidth, row5Height, Color.DarkGray.ToArgb()));
-            // separation lines
-            widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tableLineWidth, row5Height, Color.DimGray.ToArgb()));
-            widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth - tableLineWidth, tableY + heightOffset, tableLineWidth, row5Height, Color.DimGray.ToArgb()));
-            // row4_1 ID - align center
-            widgets.Add(Widget.MakeText(row5_1, NormalFontBold, tableX + xcenter(tableIdColumnWidth, textWidth(row5_1, NormalFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
-            // row4_2 Player - align center
-            widgets.Add(Widget.MakeText(row5_2, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth / 2 - textWidth(row5_2, NormalFontBold) / 2, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
-            // row4_3 Ping - align center
-            widgets.Add(Widget.MakeText(row5_3, NormalFontBold, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth / 2 - textWidth(row5_3, NormalFontBold) / 2, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
-            heightOffset += row5Height;
-            // horizontal line
-            widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, tableLineWidth, Color.DimGray.ToArgb()));
-            heightOffset += tableLineWidth;
-            
-            // 6 - actual playerlist
-            // entries:
-            Color entryRowColor;
+
+            Dictionary<Team, List<int>> playersByTeam = new Dictionary<Team, List<int>>();
+            playersByTeam[Team.Blue] = new List<int>();
+            playersByTeam[Team.Spectator] = new List<int>();
+            playersByTeam[Team.Green] = new List<int>();
             int[] AllPlayers = m.AllPlayers();
-            for (int i = page * entriesPerPage; i < Math.Min(AllPlayers.Length, page * entriesPerPage + entriesPerPage); i++)
+            foreach (int p in AllPlayers)
             {
-                if (i % 2 == 0)
+                if (teams.ContainsKey(p))
                 {
-                    entryRowColor = Color.Gainsboro;
+                    playersByTeam[teams[p]].Add(p);
                 }
                 else
                 {
-                    entryRowColor = Color.Honeydew;
+                    playersByTeam[Team.Spectator].Add(p);
                 }
-                widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableIdColumnWidth, listEntryHeight, entryRowColor.ToArgb()));
-                widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tablePlayerColumnWidth, listEntryHeight, entryRowColor.ToArgb()));
-                widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth, tableY + heightOffset, tablePingColumnWidth, listEntryHeight, entryRowColor.ToArgb()));
-
-                // separation lines
-                widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth, tableY + heightOffset, tableLineWidth, listEntryHeight, Color.DimGray.ToArgb()));
-                widgets.Add(Widget.MakeSolid(tableX + tableIdColumnWidth + tablePlayerColumnWidth - tableLineWidth, tableY + heightOffset, tableLineWidth, listEntryHeight, Color.DimGray.ToArgb()));
-
-                widgets.Add(Widget.MakeText(AllPlayers[i].ToString(), NormalFont, tableX + tableIdColumnWidth - textWidth(AllPlayers[i].ToString(), NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
-                widgets.Add(Widget.MakeText(m.GetPlayerName(AllPlayers[i]), NormalFont, tableX + tableIdColumnWidth + tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
-                int ping = (int)(m.GetPlayerPing(AllPlayers[i]) * 1000);
-                widgets.Add(Widget.MakeText(ping.ToString(), NormalFont, tableX + tableIdColumnWidth + tablePlayerColumnWidth + tablePingColumnWidth - textWidth(ping.ToString(), NormalFont) - tablePadding, tableY + heightOffset + listEntryPaddingTopBottom, TEXT_COLOR.ToArgb()));
-                heightOffset += listEntryHeight;
             }
+            Team[] allteams = new Team[] { Team.Blue, Team.Spectator, Team.Green };
+            for (int t = 0; t < allteams.Length; t++)
+            {
+                List<int> players = playersByTeam[allteams[t]];
+                foreach (int p in players)
+                {
+                    if (!kills.ContainsKey(p))
+                    {
+                        kills[p] = 0;
+                    }
+                }
+                players.Sort((a, b) => (kills[b].CompareTo(kills[a])));
+                for (int i = 0; i < players.Count; i++)
+                {
+                    string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), kills[players[i]]);
+                    widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
+                }
+            }
+
+
             var wtab = Widget.MakeSolid(0, 0, 0, 0, 0);
             wtab.ClickKey = '\t';
             wtab.Id = "Tab";
@@ -364,6 +372,8 @@ namespace ManicDigger.Mods
             d.Widgets = widgets.ToArray();
             m.SendDialog(player, "PlayerList", d);
         }
+        Dictionary<int, int> kills = new Dictionary<int, int>();
+
 
         private int pageCount = 0; //number of pages for player table entries
         private int page = 0; // current displayed page
@@ -382,9 +392,9 @@ namespace ManicDigger.Mods
         private float tableHeight = 500;
         private float tablePadding = 5;
         private float listEntryPaddingTopBottom = 2;
-        private float tableIdColumnWidth = 50;
-        private float tablePlayerColumnWidth = 400;
-        private float tablePingColumnWidth = 50;
+        //private float tableIdColumnWidth = 50;
+        //private float tablePlayerColumnWidth = 400;
+        //private float tablePingColumnWidth = 50;
         private float tableLineWidth = 2;
 
         public bool NextPage()
