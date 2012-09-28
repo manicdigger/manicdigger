@@ -11,10 +11,10 @@ namespace ManicDigger
         void SetBlockType(string name, BlockType block);
         int GetBlockId(string name);
         void AddToCreativeInventory(string blockType);
-        void RegisterOnBlockBuild(ManicDigger.Action<int, int, int, int> f);
-        void RegisterOnBlockDelete(ManicDigger.Action<int, int, int, int, int> f);
-        void RegisterOnBlockUse(ManicDigger.Action<int, int, int, int> f);
-        void RegisterOnBlockUseWithTool(ManicDigger.Action<int, int, int, int, int> f);
+        void RegisterOnBlockBuild(ModDelegates.BlockBuild f);
+        void RegisterOnBlockDelete(ModDelegates.BlockDelete f);
+        void RegisterOnBlockUse(ModDelegates.BlockUse f);
+        void RegisterOnBlockUseWithTool(ModDelegates.BlockUseWithTool f);
         int GetMapSizeX();
         int GetMapSizeY();
         int GetMapSizeZ();
@@ -40,21 +40,21 @@ namespace ManicDigger
         string colorError();
         void SendMessage(int player, string p);
         void RegisterPrivilege(string p);
-        void RegisterOnBlockUpdate(ManicDigger.Action<int, int, int> f);
+        void RegisterOnBlockUpdate(ModDelegates.BlockUpdate f);
         bool IsTransparentForLight(int p);
-        void RegisterWorldGenerator(ManicDigger.Action<int, int, int, ushort[]> f);
+        void RegisterWorldGenerator(ModDelegates.WorldGenerator f);
         void RegisterOptionBool(string optionname, bool default_);
         int GetChunkSize();
         object GetOption(string optionname);
         int GetSeed();
         int Index3d(int x, int y, int h, int sizex, int sizey);
-        void RegisterPopulateChunk(ManicDigger.Action<int, int, int> f);
+        void RegisterPopulateChunk(ModDelegates.PopulateChunk f);
         void SetDefaultSounds(SoundSet defaultSounds);
         byte[] GetGlobalData(string name);
         void SetGlobalData(string name, byte[] value);
         void RegisterOnLoad(ManicDigger.Action f);
         void RegisterOnSave(ManicDigger.Action f);
-        void RegisterOnCommand(ManicDigger.Func<int, string, string, bool> f);
+        void RegisterOnCommand(ModDelegates.Command f);
         string GetPlayerIp(int player);
         string GetPlayerName(int player);
         void RequireMod(string modname);
@@ -84,23 +84,23 @@ namespace ManicDigger
         int GetPlayerPermissionLevel(int playerid);
         void SetCreative(bool creative);
         void SetWorldSize(int x, int y, int z);
-        void RegisterOnPlayerJoin(ManicDigger.Action<int> a); //playerid
-        void RegisterOnPlayerLeave(ManicDigger.Action<int> a); //playerid
-        void RegisterOnPlayerDisconnect(ManicDigger.Action<int> a); //playerid
-        void RegisterOnPlayerChat(ManicDigger.Action<int, string> a); //playerid, message
+        void RegisterOnPlayerJoin(ModDelegates.PlayerJoin a);
+        void RegisterOnPlayerLeave(ModDelegates.PlayerLeave a);
+        void RegisterOnPlayerDisconnect(ModDelegates.PlayerDisconnect a);
+        void RegisterOnPlayerChat(ModDelegates.PlayerChat a);
         int[] GetScreenResolution(int playerid);
         void SendDialog(int player, string id, Dialog dialog);
-        void RegisterOnDialogClick(Action<int, string> a); //widgetid
+        void RegisterOnDialogClick(ModDelegates.DialogClick a);
         void SetPlayerModel(int player, string model, string texture);
         void RenderHint(RenderHint hint);
         void EnableFreemove(int playerid, bool enable);
         int GetPlayerHealth(int playerid);
         int GetPlayerMaxHealth(int playerid);
         void SetPlayerHealth(int playerid, int health, int maxhealth);
-        void RegisterOnWeaponHit(ManicDigger.Action<int, int, int, bool> a); //sourceplayer, targetplayer, block, head
-        void RegisterOnRespawnKey(ManicDigger.Action<int> a); //playerid
-        void RegisterOnTabKey(ManicDigger.Action<int> a); //playerid
-        void RegisterOnSetSpawnKey(ManicDigger.Action<int> a); //playerid
+        void RegisterOnWeaponHit(ModDelegates.WeaponHit a);
+        void RegisterOnRespawnKey(ModDelegates.RespawnKey a);
+        void RegisterOnTabKey(ModDelegates.TabKey a);
+        void RegisterOnSetSpawnKey(ModDelegates.SetSpawnKey a);
         float[] GetDefaultSpawnPosition(int player);
         string GetServerName();
         string GetServerMotd();
@@ -108,6 +108,27 @@ namespace ManicDigger
         string GetServerIp();
         string GetServerPort();
         float GetPlayerPing(int player);
+    }
+
+    public class ModDelegates
+    {
+        public delegate void BlockBuild(int player, int x, int y, int z);
+        public delegate void BlockDelete(int player, int x, int y, int z, int oldblock);
+        public delegate void BlockUse(int player, int x, int y, int z);
+        public delegate void BlockUseWithTool(int player, int x, int y, int z, int tool);
+        public delegate void BlockUpdate(int x, int y, int z);
+        public delegate void WorldGenerator(int x, int y, int z, ushort[] chunk);
+        public delegate void PopulateChunk(int x, int y, int z);
+        public delegate bool Command(int player, string command, string argument);
+        public delegate void PlayerJoin(int player);
+        public delegate void PlayerLeave(int player);
+        public delegate void PlayerDisconnect(int player);
+        public delegate void PlayerChat(int player, string message);
+        public delegate void DialogClick(int player, string widgetId);
+        public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
+        public delegate void RespawnKey(int player);
+        public delegate void TabKey(int player);
+        public delegate void SetSpawnKey(int player);
     }
 
     public enum RenderHint

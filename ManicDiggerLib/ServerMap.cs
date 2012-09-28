@@ -49,7 +49,7 @@ namespace ManicDiggerServer
     {
         [Inject]
         public IChunkDb d_ChunkDb;
-        public List<ManicDigger.Action<int, int, int, ushort[]>> getchunk = new List<ManicDigger.Action<int, int, int, ushort[]>>();
+        public List<ModDelegates.WorldGenerator> getchunk = new List<ModDelegates.WorldGenerator>();
         [Inject]
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;

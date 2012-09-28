@@ -54,22 +54,22 @@ namespace ManicDigger
             server.d_Data.UseBlockType(id, server.BlockTypes[id], null);
         }
 
-        public void RegisterOnBlockBuild(Action<int, int, int, int> f)
+        public void RegisterOnBlockBuild(ModDelegates.BlockBuild f)
         {
             server.onbuild.Add(f);
         }
 
-        public void RegisterOnBlockDelete(ManicDigger.Action<int, int, int, int, int> f)
+        public void RegisterOnBlockDelete(ModDelegates.BlockDelete f)
         {
             server.ondelete.Add(f);
         }
 
-        public void RegisterOnBlockUse(ManicDigger.Action<int, int, int, int> f)
+        public void RegisterOnBlockUse(ModDelegates.BlockUse f)
         {
             server.onuse.Add(f);
         }
 
-        public void RegisterOnBlockUseWithTool(ManicDigger.Action<int, int, int, int, int> f)
+        public void RegisterOnBlockUseWithTool(ModDelegates.BlockUseWithTool f)
         {
             server.onusewithtool.Add(f);
         }
@@ -246,7 +246,7 @@ namespace ManicDigger
         {
         }
 
-        public void RegisterOnBlockUpdate(Action<int, int, int> f)
+        public void RegisterOnBlockUpdate(ModDelegates.BlockUpdate f)
         {
             server.blockticks.Add(f);
         }
@@ -256,7 +256,7 @@ namespace ManicDigger
             return server.d_Data.IsTransparentForLight[p];
         }
 
-        public void RegisterWorldGenerator(Action<int, int, int, ushort[]> f)
+        public void RegisterWorldGenerator(ModDelegates.WorldGenerator f)
         {
             server.d_Map.getchunk.Add(f);
         }
@@ -288,7 +288,7 @@ namespace ManicDigger
             return (h * sizey + y) * sizex + x;
         }
 
-        public void RegisterPopulateChunk(Action<int, int, int> f)
+        public void RegisterPopulateChunk(ModDelegates.PopulateChunk f)
         {
             server.populatechunk.Add(f);
         }
@@ -323,7 +323,7 @@ namespace ManicDigger
             server.onsave.Add(f);
         }
 
-        public void RegisterOnCommand(Func<int,string,string,bool> f)
+        public void RegisterOnCommand(ModDelegates.Command f)
         {
             server.oncommand.Add(f);
         }
@@ -506,22 +506,22 @@ namespace ManicDigger
             server.d_Map.Reset(x, y, z);
         }
 
-        public void RegisterOnPlayerJoin(ManicDigger.Action<int> a)
+        public void RegisterOnPlayerJoin(ModDelegates.PlayerJoin a)
         {
             server.onplayerjoin.Add(a);
         }
 
-        public void RegisterOnPlayerLeave(ManicDigger.Action<int> a)
+        public void RegisterOnPlayerLeave(ModDelegates.PlayerLeave a)
         {
             server.onplayerleave.Add(a);
         }
 
-        public void RegisterOnPlayerDisconnect(ManicDigger.Action<int> a)
+        public void RegisterOnPlayerDisconnect(ModDelegates.PlayerDisconnect a)
         {
             server.onplayerdisconnect.Add(a);
         }
 
-        public void RegisterOnPlayerChat(ManicDigger.Action<int, string> a)
+        public void RegisterOnPlayerChat(ModDelegates.PlayerChat a)
         {
             server.onplayerchat.Add(a);
         }
@@ -536,7 +536,7 @@ namespace ManicDigger
             server.SendDialog(player, id, dialog);
         }
 
-        public void RegisterOnDialogClick(Action<int, string> a)
+        public void RegisterOnDialogClick(ModDelegates.DialogClick a)
         {
             server.ondialogclick.Add(a);
         }
@@ -577,22 +577,22 @@ namespace ManicDigger
             server.NotifyPlayerStats(playerid);
         }
 
-        public void RegisterOnWeaponHit(Action<int, int, int, bool> a)
+        public void RegisterOnWeaponHit(ModDelegates.WeaponHit a)
         {
             server.onweaponhit.Add(a);
         }
 
-        public void RegisterOnRespawnKey(Action<int> a)
+        public void RegisterOnRespawnKey(ModDelegates.RespawnKey a)
         {
             server.onrespawnkey.Add(a);
         }
 
-        public void RegisterOnTabKey(Action<int> a)
+        public void RegisterOnTabKey(ModDelegates.TabKey a)
         {
             server.ontabkey.Add(a);
         }
 
-        public void RegisterOnSetSpawnKey(Action<int> a)
+        public void RegisterOnSetSpawnKey(ModDelegates.SetSpawnKey a)
         {
             server.onsetspawnkey.Add(a);
         }

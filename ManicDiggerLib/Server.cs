@@ -317,7 +317,7 @@ namespace ManicDiggerServer
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
         public int ServerConsoleId {get { return serverConsoleId; } }
         private Client serverConsoleClient;
-        public List<ManicDigger.Func<int, string, string, bool>> oncommand = new List<ManicDigger.Func<int, string, string, bool>>();
+        public List<ModDelegates.Command> oncommand = new List<ModDelegates.Command>();
         public void ReceiveServerConsole(string message)
         {
             if (message == null)
@@ -992,7 +992,7 @@ namespace ManicDiggerServer
             }
         }
 
-        public List<ManicDigger.Action<int, int, int>> populatechunk = new List<ManicDigger.Action<int, int, int>>();
+        public List<ModDelegates.PopulateChunk> populatechunk = new List<ModDelegates.PopulateChunk>();
 
         private void PopulateChunk(Vector3i p)
         {
@@ -1026,7 +1026,7 @@ namespace ManicDiggerServer
                 }
             }
         }
-        public List<ManicDigger.Action<int, int, int>> blockticks = new List<ManicDigger.Action<int, int, int>>();
+        public List<ModDelegates.BlockUpdate> blockticks = new List<ModDelegates.BlockUpdate>();
 
         public int[] MonsterTypesUnderground = new int[] { 1, 2 };
         public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
@@ -2063,10 +2063,10 @@ if (sent >= unknown.Count) { break; }
             return position;
         }
 
-        public List<ManicDigger.Action<int, int, int, bool>> onweaponhit = new List<ManicDigger.Action<int, int, int, bool>>();
-        public List<ManicDigger.Action<int>> onrespawnkey = new List<ManicDigger.Action<int>>();
-        public List<ManicDigger.Action<int>> ontabkey = new List<ManicDigger.Action<int>>();
-        public List<ManicDigger.Action<int>> onsetspawnkey = new List<ManicDigger.Action<int>>();
+        public List<ModDelegates.WeaponHit> onweaponhit = new List<ModDelegates.WeaponHit>();
+        public List<ModDelegates.RespawnKey> onrespawnkey = new List<ModDelegates.RespawnKey>();
+        public List<ModDelegates.TabKey> ontabkey = new List<ModDelegates.TabKey>();
+        public List<ModDelegates.SetSpawnKey> onsetspawnkey = new List<ModDelegates.SetSpawnKey>();
 
         public void SendPlayerSpawnToAll(int clientid)
         {
@@ -2518,10 +2518,10 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
         }
-        public List<ManicDigger.Action<int, int, int, int>> onuse = new List<ManicDigger.Action<int, int, int, int>>();
-        public List<ManicDigger.Action<int, int, int, int>> onbuild = new List<ManicDigger.Action<int, int, int, int>>();
-        public List<ManicDigger.Action<int, int, int, int, int>> ondelete = new List<ManicDigger.Action<int, int, int, int, int>>();
-        public List<ManicDigger.Action<int, int, int, int, int>> onusewithtool = new List<ManicDigger.Action<int, int, int, int, int>>();
+        public List<ModDelegates.BlockUse> onuse = new List<ModDelegates.BlockUse>();
+        public List<ModDelegates.BlockBuild> onbuild = new List<ModDelegates.BlockBuild>();
+        public List<ModDelegates.BlockDelete> ondelete = new List<ModDelegates.BlockDelete>();
+        public List<ModDelegates.BlockUseWithTool> onusewithtool = new List<ModDelegates.BlockUseWithTool>();
 
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
@@ -3482,11 +3482,11 @@ if (sent >= unknown.Count) { break; }
             SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Dialog, Dialog = p }));
         }
 
-        public List<ManicDigger.Action<int>> onplayerjoin = new List<ManicDigger.Action<int>>();
-        public List<ManicDigger.Action<int>> onplayerleave = new List<ManicDigger.Action<int>>();
-        public List<ManicDigger.Action<int>> onplayerdisconnect = new List<ManicDigger.Action<int>>();
-        public List<ManicDigger.Action<int, string>> onplayerchat = new List<ManicDigger.Action<int, string>>();
-        public List<ManicDigger.Action<int, string>> ondialogclick = new List<ManicDigger.Action<int, string>>();
+        public List<ModDelegates.PlayerJoin> onplayerjoin = new List<ModDelegates.PlayerJoin>();
+        public List<ModDelegates.PlayerLeave> onplayerleave = new List<ModDelegates.PlayerLeave>();
+        public List<ModDelegates.PlayerDisconnect> onplayerdisconnect = new List<ModDelegates.PlayerDisconnect>();
+        public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
+        public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
     }
 
     public class Ping
