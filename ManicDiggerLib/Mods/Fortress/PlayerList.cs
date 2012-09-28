@@ -14,15 +14,19 @@ namespace ManicDigger.Mods.Fortress
         public void Start(ModManager m)
         {
             this.m = m;
-            m.RegisterOnTabKey(OnTabKey);
+            m.RegisterOnSpecialKey(OnTabKey);
             m.RegisterOnDialogClick(OnTabResponse);
             m.RegisterTimer(UpdateTab, 1);
         }
 
         ModManager m;
 
-        void OnTabKey(int player)
+        void OnTabKey(int player, SpecialKey key)
         {
+            if (key != SpecialKey.TabPlayerList)
+            {
+                return;
+            }
             tabOpen[m.GetPlayerName(player)] = true;
             Dialog d = new Dialog();
             d.IsModal = true;
@@ -244,7 +248,7 @@ namespace ManicDigger.Mods.Fortress
                 {
                     if (k.Key == m.GetPlayerName(p))
                     {
-                        OnTabKey(p);
+                        OnTabKey(p, SpecialKey.TabPlayerList);
                         goto nexttab;
                     }
                 }

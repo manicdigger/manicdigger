@@ -951,7 +951,7 @@ namespace ManicDigger
                     SendPacketClient(new PacketClient()
                     {
                         PacketId = ClientPacketId.SpecialKey,
-                        SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.TabPlayerList },
+                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.TabPlayerList },
                     });
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.E))
@@ -981,12 +981,20 @@ namespace ManicDigger
                     Respawn();
                     Log(Language.Respawn);
                 }
+                if (e.Key == GetKey(OpenTK.Input.Key.L))
+                {
+                    SendPacketClient(new PacketClient()
+                    {
+                        PacketId = ClientPacketId.SpecialKey,
+                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.SelectTeam },
+                    });
+                }
                 if (e.Key == GetKey(OpenTK.Input.Key.P))
                 {
                     SendPacketClient(new PacketClient()
                     {
                         PacketId = ClientPacketId.SpecialKey,
-                        SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.SetSpawn },
+                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.SetSpawn },
                     });
                     PlayerPositionSpawn = player.playerposition;
                     player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
@@ -1695,7 +1703,7 @@ namespace ManicDigger
             SendPacketClient(new PacketClient()
             {
                 PacketId = ClientPacketId.SpecialKey,
-                SpecialKey = new PacketClientSpecialKey() { key = GameModeFortress.SpecialKey.Respawn },
+                SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.Respawn },
             });
             player.movedz = 0;
         }

@@ -20,9 +20,10 @@ namespace ManicDigger.Mods
             m.RegisterOnDialogClick(DialogClick);
             m.RenderHint(RenderHint.Nice);
             m.RegisterOnWeaponHit(Hit);
-            m.RegisterOnRespawnKey(RespawnKey);
-            m.RegisterOnTabKey(OnTabKey);
+            m.RegisterOnSpecialKey(RespawnKey);
+            m.RegisterOnSpecialKey(OnTabKey);
             m.RegisterOnDialogClick(OnTabResponse);
+            m.RegisterOnSpecialKey(OnSelectTeamKey);
             m.RegisterTimer(UpdateTab, 1);
         }
 
@@ -77,6 +78,9 @@ namespace ManicDigger.Mods
         }
 
         Dictionary<int, Team> teams = new Dictionary<int, Team>();
+        string BlueColor = "&1";
+        string GreenColor = "&2";
+        //string SpectatorColor = "&7";
 
         void DialogClick(int playerid, string widget)
         {
@@ -86,6 +90,7 @@ namespace ManicDigger.Mods
                 teams[playerid] = Team.Blue;
                 m.SetPlayerModel(playerid, "player.txt", "playerblue.png");
                 m.EnableFreemove(playerid, false);
+                m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
                 Respawn(playerid);
             }
             if (widget == "Team2")
@@ -94,6 +99,7 @@ namespace ManicDigger.Mods
                 teams[playerid] = Team.Green;
                 m.SetPlayerModel(playerid, "player.txt", "playergreen.png");
                 m.EnableFreemove(playerid, false);
+                m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
                 Respawn(playerid);
             }
             if (widget == "Team3")
@@ -102,8 +108,18 @@ namespace ManicDigger.Mods
                 teams[playerid] = Team.Spectator;
                 m.SetPlayerModel(playerid, "player.txt", "mineplayer.png");
                 m.EnableFreemove(playerid, true);
+                m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
                 Respawn(playerid);
             }
+        }
+
+        void OnSelectTeamKey(int player, SpecialKey key)
+        {
+            if (key != SpecialKey.SelectTeam)
+            {
+                return;
+            }
+            PlayerJoin(player);
         }
 
         void Respawn(int playerid)
@@ -179,8 +195,12 @@ namespace ManicDigger.Mods
             }
         }
 
-        void RespawnKey(int player)
+        void RespawnKey(int player, SpecialKey key)
         {
+            if (key != SpecialKey.Respawn)
+            {
+                return;
+            }
             m.PlaySoundAt((int)m.GetPlayerPositionX(player),
                 (int)m.GetPlayerPositionY(player),
                 (int)m.GetPlayerPositionZ(player), "death.ogg");
@@ -189,8 +209,12 @@ namespace ManicDigger.Mods
             m.SendMessageToAll(string.Format("{0} dies", m.GetPlayerName(player)));
         }
 
-        void OnTabKey(int player)
+        void OnTabKey(int player, SpecialKey key)
         {
+            if (key != SpecialKey.TabPlayerList)
+            {
+                return;
+            }
             tabOpen[m.GetPlayerName(player)] = true;
             Dialog d = new Dialog();
             d.IsModal = true;
@@ -412,7 +436,7 @@ namespace ManicDigger.Mods
                 {
                     if (k.Key == m.GetPlayerName(p))
                     {
-                        OnTabKey(p);
+                        OnTabKey(p, SpecialKey.TabPlayerList);
                         goto nexttab;
                     }
                 }

@@ -1044,14 +1044,18 @@ namespace ManicDigger.Mods
             m.SetLightLevels(lightLevels);
 
             m.RegisterOnCommand(OnCommandSetModel);
-            m.RegisterOnRespawnKey(OnRespawnKey);
-            m.RegisterOnSetSpawnKey(OnSetSpawnKey);
+            m.RegisterOnSpecialKey(OnRespawnKey);
+            m.RegisterOnSpecialKey(OnSetSpawnKey);
         }
 
         Dictionary<string, float[]> spawnPositions = new Dictionary<string, float[]>();
 
-        void OnSetSpawnKey(int player)
+        void OnSetSpawnKey(int player, SpecialKey key)
         {
+            if (key != SpecialKey.SetSpawn)
+            {
+                return;
+            }
             float[] pos = new float[3];
             pos[0] = m.GetPlayerPositionX(player);
             pos[1] = m.GetPlayerPositionY(player);
@@ -1059,8 +1063,12 @@ namespace ManicDigger.Mods
             spawnPositions[m.GetPlayerName(player)] = pos;
         }
 
-        void OnRespawnKey(int player)
+        void OnRespawnKey(int player, SpecialKey key)
         {
+            if (key != SpecialKey.Respawn)
+            {
+                return;
+            }
             if (!spawnPositions.ContainsKey(m.GetPlayerName(player)))
             {
                 float[] pos = m.GetDefaultSpawnPosition(player);

@@ -561,12 +561,6 @@ namespace GameModeFortress
         [ProtoMember(7, IsRequired = false)]
         public int WeaponBlock;
     }
-    public enum SpecialKey
-    {
-        Respawn,
-        SetSpawn,
-        TabPlayerList,
-    }
     [ProtoContract]
     public class PacketClientSpecialKey
     {

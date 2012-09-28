@@ -2001,26 +2001,9 @@ if (sent >= unknown.Count) { break; }
                     }
                     break;
                 case ClientPacketId.SpecialKey:
-                    if (packet.SpecialKey.key == SpecialKey.Respawn)
+                    for (int i = 0; i < onspecialkey.Count; i++)
                     {
-                        for (int i = 0; i < onrespawnkey.Count; i++)
-                        {
-                            onrespawnkey[i](clientid);
-                        }
-                    }
-                    if (packet.SpecialKey.key == SpecialKey.TabPlayerList)
-                    {
-                        for (int i = 0; i < ontabkey.Count; i++)
-                        {
-                            ontabkey[i](clientid);
-                        }
-                    }
-                    if (packet.SpecialKey.key == SpecialKey.SetSpawn)
-                    {
-                        for (int i = 0; i < onsetspawnkey.Count; i++)
-                        {
-                            onsetspawnkey[i](clientid);
-                        }
+                        onspecialkey[i](clientid, packet.SpecialKey.key);
                     }
                     break;
                 default:
@@ -2064,9 +2047,7 @@ if (sent >= unknown.Count) { break; }
         }
 
         public List<ModDelegates.WeaponHit> onweaponhit = new List<ModDelegates.WeaponHit>();
-        public List<ModDelegates.RespawnKey> onrespawnkey = new List<ModDelegates.RespawnKey>();
-        public List<ModDelegates.TabKey> ontabkey = new List<ModDelegates.TabKey>();
-        public List<ModDelegates.SetSpawnKey> onsetspawnkey = new List<ModDelegates.SetSpawnKey>();
+        public List<ModDelegates.SpecialKey1> onspecialkey = new List<ModDelegates.SpecialKey1>();
 
         public void SendPlayerSpawnToAll(int clientid)
         {

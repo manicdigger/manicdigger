@@ -582,19 +582,9 @@ namespace ManicDigger
             server.onweaponhit.Add(a);
         }
 
-        public void RegisterOnRespawnKey(ModDelegates.RespawnKey a)
+        public void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a)
         {
-            server.onrespawnkey.Add(a);
-        }
-
-        public void RegisterOnTabKey(ModDelegates.TabKey a)
-        {
-            server.ontabkey.Add(a);
-        }
-
-        public void RegisterOnSetSpawnKey(ModDelegates.SetSpawnKey a)
-        {
-            server.onsetspawnkey.Add(a);
+            server.onspecialkey.Add(a);
         }
 
         public float[] GetDefaultSpawnPosition(int player)

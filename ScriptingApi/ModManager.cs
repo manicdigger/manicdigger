@@ -98,9 +98,7 @@ namespace ManicDigger
         int GetPlayerMaxHealth(int playerid);
         void SetPlayerHealth(int playerid, int health, int maxhealth);
         void RegisterOnWeaponHit(ModDelegates.WeaponHit a);
-        void RegisterOnRespawnKey(ModDelegates.RespawnKey a);
-        void RegisterOnTabKey(ModDelegates.TabKey a);
-        void RegisterOnSetSpawnKey(ModDelegates.SetSpawnKey a);
+        void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a);
         float[] GetDefaultSpawnPosition(int player);
         string GetServerName();
         string GetServerMotd();
@@ -108,6 +106,14 @@ namespace ManicDigger
         string GetServerIp();
         string GetServerPort();
         float GetPlayerPing(int player);
+    }
+
+    public enum SpecialKey
+    {
+        Respawn,
+        SetSpawn,
+        TabPlayerList,
+        SelectTeam,
     }
 
     public class ModDelegates
@@ -126,9 +132,7 @@ namespace ManicDigger
         public delegate void PlayerChat(int player, string message);
         public delegate void DialogClick(int player, string widgetId);
         public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
-        public delegate void RespawnKey(int player);
-        public delegate void TabKey(int player);
-        public delegate void SetSpawnKey(int player);
+        public delegate void SpecialKey1(int player, SpecialKey key);
     }
 
     public enum RenderHint
