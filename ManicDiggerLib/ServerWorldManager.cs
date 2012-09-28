@@ -45,7 +45,11 @@ namespace ManicDiggerServer
                             //var a = PlayerArea(k.Key);
                             if (i % 10 == 0)
                             {
-                                SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), "Generating world...");
+                                if (i >= k.Value.generatingworldprogress)
+                                {
+                                    k.Value.generatingworldprogress = i;
+                                    SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), "Generating world...");
+                                }
                             }
                         }
                         if (s.ElapsedMilliseconds > 10)

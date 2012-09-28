@@ -3208,6 +3208,7 @@ if (sent >= unknown.Count) { break; }
             }
             public float EyeHeight = 1.5f;
             public float ModelHeight = 1.7f;
+            public float generatingworldprogress;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
