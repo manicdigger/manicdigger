@@ -651,5 +651,12 @@ namespace ManicDigger
             server.SendPlayerSpawnToAll(id);
             return id;
         }
+
+        public void SetPlayerHeight(int playerid, float eyeheight, float modelheight)
+        {
+            server.clients[playerid].EyeHeight = eyeheight;
+            server.clients[playerid].ModelHeight = modelheight;
+            server.SendPlayerSpawnToAll(playerid);
+        }
     }
 }

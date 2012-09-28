@@ -258,6 +258,10 @@ namespace GameModeFortress
         public string Model;
         [ProtoMember(5, IsRequired = false)]
         public string Texture;
+        [ProtoMember(6, IsRequired = false)]
+        public float EyeHeight;
+        [ProtoMember(7, IsRequired = false)]
+        public float ModelHeight;
     }
     [ProtoContract]
     public class PositionAndOrientation

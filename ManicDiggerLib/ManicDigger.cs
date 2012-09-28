@@ -93,6 +93,8 @@ namespace ManicDigger
         public DateTime LastUpdate;
         public string Model = "player.txt";
         public string Texture;
+        public float EyeHeight = 1.5f;
+        public float ModelHeight = 1.7f;
     }
     public static class MapUtil
     {

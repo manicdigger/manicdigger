@@ -1987,8 +1987,8 @@ if (sent >= unknown.Count) { break; }
                         Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
                         //var p = PlayerPositionSpawn;
                         ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
-                        float headsize = 0.4f;
-                        float h = CharacterPhysics.characterheight + CharacterPhysics.walldistance - headsize;
+                        float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
+                        float h = k.Value.ModelHeight - headsize;
                         float r = 0.35f;
 
                         bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z - r);
@@ -2103,6 +2103,8 @@ if (sent >= unknown.Count) { break; }
                 },
                 Model = c.Model,
                 Texture = c.Texture,
+                EyeHeight = c.EyeHeight,
+                ModelHeight = c.ModelHeight,
             };
             PacketServer pp = new PacketServer() { PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p };
             SendPacket(clientid, Serialize(pp));
@@ -3204,6 +3206,8 @@ if (sent >= unknown.Count) { break; }
                 return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
                     ServerClientMisc.PrivilegesString(this.privileges), ip);
             }
+            public float EyeHeight = 1.5f;
+            public float ModelHeight = 1.7f;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Client GetClient(int id)

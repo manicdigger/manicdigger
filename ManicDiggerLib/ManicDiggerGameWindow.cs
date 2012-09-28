@@ -1561,7 +1561,7 @@ namespace ManicDigger
                 wantsjump = wantsjump,
             };
             bool soundnow;
-            d_Physics.Move(player, move, e.Time, out soundnow, push);
+            d_Physics.Move(player, move, e.Time, out soundnow, push, Players[LocalPlayerId].ModelHeight);
             if (soundnow)
             {
                 UpdateWalkSound(-1);
@@ -1640,7 +1640,7 @@ namespace ManicDigger
         Vector3i GetPlayerEyesBlock()
         {
             var p = LocalPlayerPosition;
-            p += new Vector3(0, CharacterPhysics.characterheight, 0);
+            p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
             return new Vector3i((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y));
         }
 
@@ -1648,7 +1648,7 @@ namespace ManicDigger
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
-            p += new Vector3(0, CharacterPhysics.characterheight, 0);
+            p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
             int block1 = 0;
             int block2 = 0;
             if (MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
@@ -2013,8 +2013,8 @@ namespace ManicDigger
                         Vector3 feetpos = new Vector3((float)k.Value.Position.Value.X, (float)k.Value.Position.Value.Y, (float)k.Value.Position.Value.Z);
                         //var p = PlayerPositionSpawn;
                         ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
-                        float headsize = 0.4f;
-                        float h = CharacterPhysics.characterheight + CharacterPhysics.walldistance - headsize;
+                        float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
+                        float h = k.Value.ModelHeight - headsize;
                         float r = 0.35f;
 
                         bodybox.AddPoint(feetpos.X - r, feetpos.Y + 0, feetpos.Z - r);
@@ -2333,8 +2333,8 @@ namespace ManicDigger
         double accumulator = 0;
         double t = 0;
         //Vector3 oldplayerposition;
-        public float CharacterEyesHeight { get { return CharacterPhysics.characterheight; } set { CharacterPhysics.characterheight = value; } }
-        public float CharacterModelHeight { get { return CharacterPhysics.characterheight + 0.2f; } }
+        public float CharacterEyesHeight { get { return Players[LocalPlayerId].EyeHeight; } set { Players[LocalPlayerId].EyeHeight = value; } }
+        public float CharacterModelHeight { get { return Players[LocalPlayerId].ModelHeight; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
         public Stopwatch framestopwatch;
         public void OnRenderFrame(FrameEventArgs e)
@@ -3303,7 +3303,7 @@ namespace ManicDigger
             get
             {
                 var p = LocalPlayerPosition;
-                p += new Vector3(0, CharacterPhysics.characterheight, 0);
+                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
                 if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return p.Y < WaterLevel;
@@ -3316,7 +3316,7 @@ namespace ManicDigger
             get
             {
                 var p = LocalPlayerPosition;
-                p += new Vector3(0, CharacterPhysics.characterheight, 0);
+                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
                 if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return p.Y < WaterLevel;
@@ -4320,6 +4320,8 @@ namespace ManicDigger
                         d_Clients.Players[playerid].Name = playername;
                         d_Clients.Players[playerid].Model = packet.SpawnPlayer.Model;
                         d_Clients.Players[playerid].Texture = packet.SpawnPlayer.Texture;
+                        d_Clients.Players[playerid].EyeHeight = packet.SpawnPlayer.EyeHeight;
+                        d_Clients.Players[playerid].ModelHeight = packet.SpawnPlayer.ModelHeight;
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                         if (playerid == this.LocalPlayerId)
                         {

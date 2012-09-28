@@ -88,7 +88,8 @@ namespace ManicDigger.Mods
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Blue;
-                m.SetPlayerModel(playerid, "player.txt", "playerblue.png");
+                m.SetPlayerModel(playerid, "playerwar.txt", "playerblue.png");
+                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
                 Respawn(playerid);
@@ -97,7 +98,8 @@ namespace ManicDigger.Mods
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Green;
-                m.SetPlayerModel(playerid, "player.txt", "playergreen.png");
+                m.SetPlayerModel(playerid, "playerwar.txt", "playergreen.png");
+                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
                 Respawn(playerid);
@@ -106,7 +108,8 @@ namespace ManicDigger.Mods
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
                 teams[playerid] = Team.Spectator;
-                m.SetPlayerModel(playerid, "player.txt", "mineplayer.png");
+                m.SetPlayerModel(playerid, "playerwar.txt", "mineplayer.png");
+                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
                 m.EnableFreemove(playerid, true);
                 m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
                 Respawn(playerid);
