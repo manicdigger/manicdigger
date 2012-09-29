@@ -34,6 +34,8 @@ namespace ManicDigger.Mods
 
         void PlayerJoin(int playerid)
         {
+            teams.Remove(playerid);
+            kills.Remove(playerid);
             m.EnableFreemove(playerid, false);
             Dialog d = new Dialog();
             List<Widget> widgets = new List<Widget>();
