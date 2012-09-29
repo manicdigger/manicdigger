@@ -1373,10 +1373,10 @@ if (sent >= unknown.Count) { break; }
                                 if (m.Health <= 0)
                                 {
                                     chunk.Monsters.Remove(m);
-                                    SendSound(clientid, "death.wav");
+                                    SendSound(clientid, "death.wav", m.X, m.Y, m.Z);
                                     break;
                                 }
-                                SendSound(clientid, "grunt2.wav");
+                                SendSound(clientid, "grunt2.wav", m.X, m.Y, m.Z);
                                 break;
                             }
                         }
@@ -1974,6 +1974,7 @@ if (sent >= unknown.Count) { break; }
                     }
                     break;
                 case ClientPacketId.Shot:
+                    PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
                     foreach (var k in clients)
                     {
                         if (k.Key == clientid)
@@ -2041,7 +2042,7 @@ if (sent >= unknown.Count) { break; }
             }
             return lengthPrefixLength + packetLength;
         }
-
+        int pistolcycle;
         public Vector3i GetPlayerSpawnPositionMul32(int clientid)
         {
             Vector3i position;
@@ -2801,9 +2802,9 @@ if (sent >= unknown.Count) { break; }
             PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
         }
-        public void SendSound(int clientid, string name)
+        public void SendSound(int clientid, string name, int x, int y, int z)
         {
-            PacketServerSound p = new PacketServerSound() { Name = name };
+            PacketServerSound p = new PacketServerSound() { Name = name, X = x, Y = y, Z = z };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Sound, Sound = p }));
         }
         private void SendPlayerSpawnPosition(int clientid, int x, int y, int z)
@@ -3516,6 +3517,28 @@ if (sent >= unknown.Count) { break; }
                 return false;
             }
             return GetClient(player).privileges.Contains(privilege);
+        }
+
+        public void PlaySoundAt(int posx, int posy, int posz, string sound)
+        {
+            PlaySoundAtExceptPlayer(posx, posy, posz, sound, null);
+        }
+        
+        public void PlaySoundAtExceptPlayer(int posx, int posy, int posz, string sound, int? player)
+        {
+            Vector3i pos = new Vector3i(posx, posy, posz);
+            foreach (var k in clients)
+            {
+                if (player != null && player == k.Key)
+                {
+                    continue;
+                }
+                int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                if (distance < 64 * 64)
+                {
+                    SendSound(k.Key, sound, pos.x, posy, posz);
+                }
+            }
         }
     }
 

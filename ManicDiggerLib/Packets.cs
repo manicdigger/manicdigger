@@ -310,6 +310,12 @@ namespace GameModeFortress
     {
         [ProtoMember(1, IsRequired = false)]
         public string Name;
+        [ProtoMember(2, IsRequired = false)]
+        public int X;
+        [ProtoMember(3, IsRequired = false)]
+        public int Y;
+        [ProtoMember(4, IsRequired = false)]
+        public int Z;
     }
     [ProtoContract]
     public class PacketServer

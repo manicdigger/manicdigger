@@ -174,15 +174,7 @@ namespace ManicDigger
 
         public void PlaySoundAt(int posx, int posy, int posz, string sound)
         {
-            Vector3i pos = new Vector3i(posx, posy, posz);
-            foreach (var k in server.clients)
-            {
-                int distance = server.DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
-                if (distance < 255)
-                {
-                    server.SendSound(k.Key, sound);
-                }
-            }
+            server.PlaySoundAt(posx, posy, posz, sound);
         }
 
         public int NearestPlayer(int x, int y, int z)

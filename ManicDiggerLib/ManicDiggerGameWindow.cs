@@ -1591,6 +1591,9 @@ namespace ManicDigger
             //must be here because frametick can be called more than once per render frame.
             keyevent = null;
             keyeventup = null;
+
+            Vector3 orientation = new Vector3((float)Math.Sin(LocalPlayerOrientation.Y), 0, -(float)Math.Cos(LocalPlayerOrientation.Y));
+            d_Audio.UpdateListener(LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0), orientation);
         }
         //bool test;
         private void UpdateFallDamageToPlayer()
@@ -4548,7 +4551,7 @@ namespace ManicDigger
                     break;
                 case ServerPacketId.Sound:
                     {
-                        d_Audio.Play(packet.Sound.Name);
+                        PlaySoundAt(packet.Sound.Name, packet.Sound.X, packet.Sound.Y, packet.Sound.Z);
                     }
                     break;
                 case ServerPacketId.RemoveMonsters:
@@ -4631,6 +4634,19 @@ namespace ManicDigger
             LastReceived = currentTime;
             return lengthPrefixLength + packetLength;
         }
+        private void PlaySoundAt(string name, float x, float y, float z)
+        {
+            if (x == 0 && y == 0 && z == 0)
+            {
+                d_Audio.Play(name);
+            }
+            else
+            {
+                Vector3 player = LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0);
+                d_Audio.Play(name, new Vector3(x, z, y));
+            }
+        }
+
         Dictionary<string, Dialog> dialogs = new Dictionary<string, Dialog>();
         public GameDataMonsters d_DataMonsters;
         public int MonsterIdFirst = 1000;

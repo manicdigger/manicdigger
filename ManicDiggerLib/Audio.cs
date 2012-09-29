@@ -5,6 +5,7 @@ using System.IO;
 using OpenTK.Audio;
 using System.Threading;
 using System.Diagnostics;
+using OpenTK;
 
 namespace ManicDigger
 {
@@ -124,15 +125,17 @@ namespace ManicDigger
         Dictionary<string, AudioSample> cache = new Dictionary<string, AudioSample>();
         class AudioTask
         {
-            public AudioTask(IGameExit gameexit, string id, AudioOpenAl audio)
+            public AudioTask(IGameExit gameexit, string id, AudioOpenAl audio, Vector3 position)
             {
                 this.gameexit = gameexit;
                 this.filename = id;
                 this.audio = audio;
+                this.position = position;
             }
             AudioOpenAl audio;
             IGameExit gameexit;
             public string filename;
+            public Vector3 position;
             public void Play()
             {
                 if (started)
@@ -206,7 +209,12 @@ namespace ManicDigger
                     OpenTK.Audio.OpenAL.AL.BufferData(buffer, GetSoundFormat(sample.Channels, sample.BitsPerSample), sample.Pcm, sample.Pcm.Length, sample.Rate);
                     //audiofiles[filename]=buffer;
 
+                    OpenTK.Audio.OpenAL.AL.DistanceModel(OpenTK.Audio.OpenAL.ALDistanceModel.InverseDistance);
+                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcef.RolloffFactor, 0.3f);
+                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcef.ReferenceDistance, 1);
+                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcef.MaxDistance, (int)(64 * 1));
                     OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSourcei.Buffer, buffer);
+                    OpenTK.Audio.OpenAL.AL.Source(source, OpenTK.Audio.OpenAL.ALSource3f.Position, position.X, position.Y, position.Z);
                     OpenTK.Audio.OpenAL.AL.SourcePlay(source);
 
                     // Query the source to find out when it stops playing.
@@ -271,6 +279,12 @@ namespace ManicDigger
         }
         public void Play(string filename)
         {
+            Play(filename, lastlistener);
+        }
+        Vector3 lastlistener;
+        Vector3 lastorientation;
+        public void Play(string filename, Vector3 position)
+        {
             if (!enabled)
             {
                 return;
@@ -279,7 +293,7 @@ namespace ManicDigger
             {
                 return;
             }
-            new AudioTask(d_GameExit, filename, this).Play();
+            new AudioTask(d_GameExit, filename, this, position).Play();
         }
         Dictionary<string, AudioTask> soundsplaying = new Dictionary<string, AudioTask>();
         public void PlayAudioLoop(string filename, bool play)
@@ -301,7 +315,7 @@ namespace ManicDigger
             {
                 if (!soundsplaying.ContainsKey(filename))
                 {
-                    var x = new AudioTask(d_GameExit, filename, this);
+                    var x = new AudioTask(d_GameExit, filename, this, lastlistener);
                     x.loop = true;
                     soundsplaying[filename] = x;
                 }
@@ -322,5 +336,12 @@ namespace ManicDigger
         }
         bool enabled = true;
         public bool Enabled { get { return enabled; } set { enabled = value; } }
+        public void UpdateListener(Vector3 position, Vector3 orientation)
+        {
+            lastlistener = position;
+            OpenTK.Audio.OpenAL.AL.Listener(OpenTK.Audio.OpenAL.ALListener3f.Position, position.X, position.Y, position.Z);
+            Vector3 up = Vector3.UnitY;
+            OpenTK.Audio.OpenAL.AL.Listener(OpenTK.Audio.OpenAL.ALListenerfv.Orientation, ref orientation, ref up);
+        }
     }
 }
