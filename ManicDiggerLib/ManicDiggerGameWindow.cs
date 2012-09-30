@@ -249,7 +249,7 @@ namespace ManicDigger
         [Inject]
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
-        public ISocket main;
+        public INetClient main;
         [Inject]
         public InfiniteMapChunked2d d_Heightmap;
         [Inject]
@@ -3863,11 +3863,14 @@ namespace ManicDigger
         public void Connect(string serverAddress, int port, string username, string auth)
         {
             iep = new IPEndPoint(IPAddress.Any, port);
+            main.Start();
             main.Connect(serverAddress, port);
             this.username = username;
             this.auth = auth;
             byte[] n = CreateLoginPacket(username, auth);
-            main.Send(n);
+            var msg = main.CreateMessage();
+            msg.Write(n);
+            main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
         }
         public void Connect(string serverAddress, int port, string username, string auth, string serverPassword)
         {
@@ -3876,7 +3879,9 @@ namespace ManicDigger
             this.username = username;
             this.auth = auth;
             byte[] n = CreateLoginPacket(username, auth, serverPassword);
-            main.Send(n);
+            var msg = main.CreateMessage();
+            msg.Write(n);
+            main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
         }
         string username;
         string auth;
@@ -3906,7 +3911,9 @@ namespace ManicDigger
         {
             try
             {
-                main.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
+                var msg = main.CreateMessage();
+                msg.Write(packet);
+                main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
             }
             catch
             {
@@ -3915,11 +3922,6 @@ namespace ManicDigger
         }
         void EmptyCallback(IAsyncResult result)
         {
-        }
-        public void Disconnect()
-        {
-            ChatLog("---Disconnected---");
-            main.Disconnect(false);
         }
         DateTime lastpositionsent;
         public void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot)
@@ -3969,7 +3971,7 @@ namespace ManicDigger
         private byte[] Serialize(PacketClient p)
         {
             MemoryStream ms = new MemoryStream();
-            Serializer.SerializeWithLengthPrefix(ms, p, PrefixStyle.Base128);
+            Serializer.Serialize(ms, p);
             return ms.ToArray();
         }
         /// <summary>
@@ -3985,61 +3987,11 @@ namespace ManicDigger
             {
                 return;
             }
-            bool again = false;
-            for (; ; )
+            INetIncomingMessage msg;
+            while ((msg = main.ReadMessage()) != null)
             {
-                if (!(main.Poll(0, SelectMode.SelectRead)))
-                {
-                    if (!again)
-                    {
-                        again = true;
-                        goto process;
-                    }
-                    break;
-                }
-                byte[] data = new byte[1024];
-                int recv;
-                try
-                {
-                    recv = main.Receive(data);
-                }
-                catch
-                {
-                    recv = 0;
-                }
-                if (recv == 0)
-                {
-                    //disconnected
-                    return;
-                }
-                for (int i = 0; i < recv; i++)
-                {
-                    received.Add(data[i]);
-                }
-            process:
-                for (; ; )
-                {
-                    if (received.Count < 4)
-                    {
-                        break;
-                    }
-                    if (stopwatch.ElapsedMilliseconds >= maxMiliseconds)
-                    {
-                        goto end;
-                    }
-                    int bytesRead;
-                    bytesRead = TryReadPacket();
-                    if (bytesRead > 0)
-                    {
-                        received.RemoveRange(0, bytesRead);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                TryReadPacket(msg.ReadBytes(msg.LengthBytes));
             }
-        end:
             if (spawned && ((DateTime.UtcNow - lastpositionsent).TotalSeconds > 0.1))
             {
                 lastpositionsent = DateTime.UtcNow;
@@ -4089,23 +4041,9 @@ namespace ManicDigger
 
         Stopwatch stopwatch = new Stopwatch();
         public int maxMiliseconds = 3;
-        private int TryReadPacket()
+        private void TryReadPacket(byte[] data)
         {
-            MemoryStream ms = new MemoryStream(received.ToArray());
-            if (received.Count == 0)
-            {
-                return 0;
-            }
-            int packetLength;
-            int lengthPrefixLength;
-            bool packetLengthOk = Serializer.TryReadLengthPrefix(ms, PrefixStyle.Base128, out packetLength);
-            lengthPrefixLength = (int)ms.Position;
-            if (!packetLengthOk || lengthPrefixLength + packetLength > ms.Length)
-            {
-                return 0;
-            }
-            ms.Position = 0;
-            PacketServer packet = Serializer.DeserializeWithLengthPrefix<PacketServer>(ms, PrefixStyle.Base128);
+            PacketServer packet = Serializer.Deserialize<PacketServer>(new MemoryStream(data));
             if (Debugger.IsAttached
                 && packet.PacketId != ServerPacketId.PositionUpdate
                 && packet.PacketId != ServerPacketId.OrientationUpdate
@@ -4435,7 +4373,7 @@ namespace ManicDigger
                             }
 
                         }
-                        ReceivedMapLength += lengthPrefixLength + packetLength;
+                        ReceivedMapLength += data.Length;// lengthPrefixLength + packetLength;
                     }
                     break;
                 case ServerPacketId.HeightmapChunk:
@@ -4632,7 +4570,7 @@ namespace ManicDigger
                     break;
             }
             LastReceived = currentTime;
-            return lengthPrefixLength + packetLength;
+            //return lengthPrefixLength + packetLength;
         }
         private void PlaySoundAt(string name, float x, float y, float z)
         {
@@ -4778,7 +4716,7 @@ namespace ManicDigger
         {
             if (main != null)
             {
-                main.Disconnect(false);
+                //main.Disconnect(false);
                 main = null;
             }
         }

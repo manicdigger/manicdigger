@@ -15,6 +15,7 @@ using ManicDiggerServer;
 using System.Text;
 using ManicDigger.Hud;
 using System.Net.Sockets;
+using Lidgren.Network;
 #endregion
 
 namespace GameModeFortress
@@ -123,12 +124,12 @@ namespace GameModeFortress
             this.curw = w;
             if (issingleplayer)
             {
-                var socket = new SocketDummy() { network = this.dummyNetwork };
-                w.main = socket;
+                w.main = new DummyNetClient() { network = this.dummyNetwork };
             }
             else
             {
-                w.main = new SocketNet(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+                var config = new NetPeerConfiguration("ManicDigger");
+                w.main = new MyNetClient() { client = new NetClient(config) };
             }
             var glwindow = new GlWindow(w);
             w.d_GlWindow = glwindow;
@@ -140,7 +141,7 @@ namespace GameModeFortress
         }
         ManicDiggerGameWindow curw;
 
-        SocketDummyNetwork dummyNetwork = new SocketDummyNetwork();
+        DummyNetwork dummyNetwork = new DummyNetwork();
 
         string savefilename;
         public IGameExit exit = new GameExitDummy();
@@ -152,7 +153,7 @@ namespace GameModeFortress
                 Server server = new Server();
                 server.SaveFilenameOverride = savefilename;
                 server.exit = exit;
-                var socket = new SocketDummy(dummyNetwork);
+                var socket = new DummyNetServer() { network = dummyNetwork };
                 server.d_MainSocket = socket;
                 server.Start();
                 for (; ; )

@@ -17,6 +17,7 @@ using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Jint.Delegates;
+using Lidgren.Network;
 
 namespace ManicDiggerServer
 {
@@ -67,7 +68,7 @@ namespace ManicDiggerServer
         [Inject]
         public ICompression d_NetworkCompression;
         [Inject]
-        public ISocket d_MainSocket;
+        public INetServer d_MainSocket;
         [Inject]
         public IServerHeartbeat d_Heartbeat;
 
@@ -192,10 +193,8 @@ namespace ManicDiggerServer
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
-                server.d_MainSocket = new SocketNet()
-                {
-                    d_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-                };
+                NetPeerConfiguration serverConfig = new NetPeerConfiguration("ManicDigger");
+                server.d_MainSocket = new MyNetServer() { server = new NetServer(serverConfig) };
             }
             server.d_Heartbeat = new ServerHeartbeat();
             if ((Public) && (server.config.Public))
@@ -635,6 +634,7 @@ namespace ManicDiggerServer
         }
         void Start(int port)
         {
+            /*
             if (LocalConnectionsOnly)
             {
                 iep = new IPEndPoint(IPAddress.Loopback, port);
@@ -643,8 +643,9 @@ namespace ManicDiggerServer
             {
                 iep = new IPEndPoint(IPAddress.Any, port);
             }
-            d_MainSocket.Bind(iep);
-            d_MainSocket.Listen(10);
+            */
+            d_MainSocket.Configuration.Port = port;
+            d_MainSocket.Start();
         }
         public void Process()
         {
@@ -662,7 +663,7 @@ namespace ManicDiggerServer
         {
             if (!disposed)
             {
-                d_MainSocket.Disconnect(false);
+                //d_MainSocket.Disconnect(false);
             }
             disposed = true;
         }
@@ -687,6 +688,7 @@ namespace ManicDiggerServer
             }
             return i;
         }
+
         public void Process1()
         {
             if (d_MainSocket == null)
@@ -724,121 +726,73 @@ namespace ManicDiggerServer
                 }
                 oldtime = currenttime;
             }
-            byte[] data = new byte[1024];
-            int recv;
-            if (d_MainSocket.Poll(0, SelectMode.SelectRead)) //Test for new connections
-            {
-                ISocket client1 = d_MainSocket.Accept();
-                IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
 
-                Client c = new Client();
-                c.socket = client1;
-                c.Ping.TimeoutValue = config.ClientConnectionTimeout;
-                c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
-                lock (clients)
-                {
-                    this.lastClientId = this.GenerateClientId();
-                    c.Id = lastClientId;
-                    clients[lastClientId] = c;
-                }
-                c.notifyMapTimer = new ManicDigger.Timer()
-                {
-                    INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
-                };
-                c.notifyMonstersTimer = new ManicDigger.Timer()
-                {
-                    INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
-                };
-                if (clients.Count > config.MaxClients)
-                {
-                    SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
-                    KillPlayer(this.lastClientId);
-                }
-                else if (config.IsIPBanned(iep1.Address.ToString()))
-                {
-                    SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
-                    ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
-                    KillPlayer(this.lastClientId);
-                }
-            }
-            ArrayList copyList = new ArrayList();
-            foreach (var k in clients)
+            INetIncomingMessage msg;
+            while ((msg = d_MainSocket.ReadMessage()) != null)
             {
-                if (k.Value.IsBot)
+                if (msg.SenderConnection == null)
                 {
                     continue;
                 }
-                copyList.Add(k.Value.socket);
-            }
-            //if (copyList.Count == 0)
-            //{
-            //    return;
-            //}
-            if (copyList.Count != 0)
-            {
-                d_MainSocket.Select(copyList, null, null, 0);//10000000);
-            }
-
-            foreach (ISocket clientSocket in copyList)
-            {
                 int clientid = -1;
-                foreach (var k in new List<KeyValuePair<int, Client>>(clients))
+                foreach (var k in clients)
                 {
-                    if (k.Value != null && k.Value.socket == clientSocket)
+                    if (k.Value.socket.Equals(msg.SenderConnection))
                     {
                         clientid = k.Key;
                     }
                 }
-                Client client = clients[clientid];
+                if (clientid == -1)
+                {
+                    //new connection
+                    //ISocket client1 = d_MainSocket.Accept();
+                    INetConnection client1 = msg.SenderConnection;
+                    IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
 
-                data = new byte[1024];
+                    Client c = new Client();
+                    c.socket = client1;
+                    c.Ping.TimeoutValue = config.ClientConnectionTimeout;
+                    c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
+                    lock (clients)
+                    {
+                        this.lastClientId = this.GenerateClientId();
+                        c.Id = lastClientId;
+                        clients[lastClientId] = c;
+                    }
+                    clientid = c.Id;
+                    c.notifyMapTimer = new ManicDigger.Timer()
+                    {
+                        INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
+                    };
+                    c.notifyMonstersTimer = new ManicDigger.Timer()
+                    {
+                        INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
+                    };
+                    if (clients.Count > config.MaxClients)
+                    {
+                        SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
+                        KillPlayer(this.lastClientId);
+                    }
+                    else if (config.IsIPBanned(iep1.Address.ToString()))
+                    {
+                        SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
+                        ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
+                        KillPlayer(this.lastClientId);
+                    }
+                }
+
+                // process packet
                 try
                 {
-                    recv = clientSocket.Receive(data);
+                    TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
+                    d_MainSocket.Recycle(msg);
                 }
                 catch
                 {
-                    recv = 0;
-                }
-                //stringData = Encoding.ASCII.GetString(data, 0, recv);
-
-                if (recv == 0)
-                {
                     //client problem. disconnect client.
+                    Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
+                    SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
                     KillPlayer(clientid);
-                }
-                else
-                {
-                    for (int i = 0; i < recv; i++)
-                    {
-                        client.received.Add(data[i]);
-                    }
-                }
-            }
-            foreach (var k in new List<KeyValuePair<int, Client>>(clients))
-            {
-                Client c = k.Value;
-                try
-                {
-                    for (; ; )
-                    {
-                        int bytesRead = TryReadPacket(k.Key);
-                        if (bytesRead > 0)
-                        {
-                            clients[k.Key].received.RemoveRange(0, bytesRead);
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                }
-                catch
-                {
-                    //client problem. disconnect client.
-                    Console.WriteLine("Exception at client " + k.Key + ". Disconnecting client.");
-                    SendDisconnectPlayer(k.Key, "Your client threw an exception at server.");
-                    KillPlayer(k.Key);
                 }
             }
             NotifyMap();
@@ -1661,31 +1615,13 @@ if (sent >= unknown.Count) { break; }
             }
         }
 
-        //returns bytes read.
-        private int TryReadPacket(int clientid)
+        private void TryReadPacket(int clientid, byte[] data)
         {
             Client c = clients[clientid];
-            MemoryStream ms = new MemoryStream(c.received.ToArray());
-            if (c.received.Count == 0)
-            {
-                return 0;
-            }
-            int packetLength;
-            int lengthPrefixLength;
-            bool packetLengthOk = Serializer.TryReadLengthPrefix(ms, PrefixStyle.Base128, out packetLength);
-            lengthPrefixLength = (int)ms.Position;
-            if (!packetLengthOk || lengthPrefixLength + packetLength > ms.Length)
-            {
-                return 0;
-            }
-            ms.Position = 0;
-            PacketClient packet = Serializer.DeserializeWithLengthPrefix<PacketClient>(ms, PrefixStyle.Base128);
-            //int packetid = br.ReadByte();
-            //int totalread = 1;
-
+            PacketClient packet = Serializer.Deserialize<PacketClient>(new MemoryStream(data));
             if (config.ServerMonitor && !this.serverMonitor.CheckPacket(clientid, packet))
             {
-                return lengthPrefixLength + packetLength;
+                return;
             }
             switch (packet.PacketId)
             {
@@ -2040,7 +1976,6 @@ if (sent >= unknown.Count) { break; }
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
             }
-            return lengthPrefixLength + packetLength;
         }
         int pistolcycle;
         public Vector3i GetPlayerSpawnPositionMul32(int clientid)
@@ -2754,7 +2689,7 @@ if (sent >= unknown.Count) { break; }
         private byte[] Serialize(PacketServer p)
         {
             MemoryStream ms = new MemoryStream();
-            Serializer.SerializeWithLengthPrefix(ms, p, PrefixStyle.Base128);
+            Serializer.Serialize(ms, p);
             return ms.ToArray();
         }
         private string GenerateUsername(string name)
@@ -2887,21 +2822,9 @@ if (sent >= unknown.Count) { break; }
             StatTotalPacketsLength += packet.Length;
             try
             {
-                //if (IsMono)
-                {
-                    clients[clientid].socket.BeginSend(packet, 0, packet.Length, SocketFlags.None, EmptyCallback, new object());
-                }
-                //commented out because SocketAsyncEventArgs
-                //doesn't work on Mono and .NET Framework 2.0 without Service Pack
-                //is Socket.SendAsync() better than BeginSend()?
-                //else
-                //{
-                //    using (SocketAsyncEventArgs e = new SocketAsyncEventArgs())
-                //    {
-                //        e.SetBuffer(packet, 0, packet.Length);
-                //        clients[clientid].socket.SendAsync(e);
-                //    }
-                //}
+                INetOutgoingMessage msg = d_MainSocket.CreateMessage();
+                msg.Write(packet);
+                clients[clientid].socket.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered, 0);
             }
             catch (Exception)
             {
@@ -3157,7 +3080,7 @@ if (sent >= unknown.Count) { break; }
             public int Id = -1;
             public ClientStateOnServer state = ClientStateOnServer.Connecting;
             public int maploadingsentchunks = 0;
-            public ISocket socket;
+            public INetConnection socket;
             public List<byte> received = new List<byte>();
             public Ping Ping = new Ping();
             public float LastPing;
@@ -3491,7 +3414,7 @@ if (sent >= unknown.Count) { break; }
 
         public bool IsSinglePlayer
         {
-            get { return d_MainSocket.GetType() == typeof(SocketDummy); }
+            get { return d_MainSocket.GetType() == typeof(DummyNetServer); }
         }
 
         public void SendDialog(int player, string id, Dialog dialog)
