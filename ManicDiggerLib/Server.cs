@@ -3509,7 +3509,7 @@ if (sent >= unknown.Count) { break; }
 
         public bool Timeout()
         {
-            if (DateTime.UtcNow.Subtract(this.timeSend).Seconds > this.timeout)
+            if (DateTime.UtcNow.Subtract(this.timeSend).TotalSeconds > this.timeout)
             {
                 this.ready = true;
                 return true;
