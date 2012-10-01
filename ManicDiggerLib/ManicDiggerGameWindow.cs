@@ -2009,7 +2009,7 @@ namespace ManicDigger
                     shot.ToX = pick.End.X;
                     shot.ToY = pick.End.Y;
                     shot.ToZ = pick.End.Z;
-
+                    shot.HitPlayer = -1;
 
                     foreach (var k in d_Clients.Players)
                     {
@@ -2051,11 +2051,15 @@ namespace ManicDigger
                         {
                             blood = p.Value.pos;
                             bloodtime = DateTime.UtcNow;
+                            shot.HitPlayer = k.Key;
+                            shot.HitHead = true;
                         }
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
                         {
                             blood = p.Value.pos;
                             bloodtime = DateTime.UtcNow;
+                            shot.HitPlayer = k.Key;
+                            shot.HitHead = false;
                         }
                     }                    
 

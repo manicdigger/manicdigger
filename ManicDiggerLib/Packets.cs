@@ -570,6 +570,10 @@ namespace GameModeFortress
         public float ToZ;
         [ProtoMember(7, IsRequired = false)]
         public int WeaponBlock;
+        [ProtoMember(8, IsRequired = false)]
+        public int HitPlayer;
+        [ProtoMember(9, IsRequired = false)]
+        public bool HitHead;
     }
     [ProtoContract]
     public class PacketClientSpecialKey

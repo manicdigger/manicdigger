@@ -1911,6 +1911,18 @@ if (sent >= unknown.Count) { break; }
                     break;
                 case ClientPacketId.Shot:
                     PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
+                    if (clients[clientid].LastPing < 0.3)
+                    {
+                        if (packet.Shot.HitPlayer != -1)
+                        {
+                            //client-side shooting
+                            for (int i = 0; i < onweaponhit.Count; i++)
+                            {
+                                onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.HitHead);
+                            }
+                            return;
+                        }
+                    }
                     foreach (var k in clients)
                     {
                         if (k.Key == clientid)
