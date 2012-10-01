@@ -1920,8 +1920,8 @@ if (sent >= unknown.Count) { break; }
                             {
                                 onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.HitHead);
                             }
-                            return;
                         }
+                        return;
                     }
                     foreach (var k in clients)
                     {

@@ -1882,6 +1882,9 @@ namespace ManicDigger
                 //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
                 ray_start_point = new Vector3(mx * 3f, -my * 2.2f, -1.0f);
             }
+            Item item = d_Inventory.RightHand[ActiveMaterial];
+            bool ispistol = (left && item != null && blocktypes[item.BlockId].IsPistol);
+
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
@@ -1891,12 +1894,11 @@ namespace ManicDigger
             //the_modelview = new Matrix4();
             ray = Vector3.Transform(ray, theModelView);
             ray_start_point = Vector3.Transform(ray_start_point, theModelView);
-
             Line3D pick = new Line3D();
             Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
             pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
-            pick.End = ray + Vector3.Multiply(raydir, pick_distance * 2);
+            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((left && ispistol) ? 20 : 2));
 
             //pick models
             selectedmodelid = -1;
@@ -1922,7 +1924,7 @@ namespace ManicDigger
             }
             if (selectedmodelid != -1)
             {
-                pickcubepos = new Vector3(-1, -1, -1);
+                SelectedBlockPosition = new Vector3(-1, -1, -1);
                 if (mouseleftclick)
                 {
                     ModelClick(selectedmodelid);
@@ -1973,13 +1975,13 @@ namespace ManicDigger
                 || overheadcamera)
                 )
             {
-                pickcubepos = pick2[0].Current();
-                pickcubepos = new Vector3((int)pickcubepos.X, (int)pickcubepos.Y, (int)pickcubepos.Z);
+                SelectedBlockPosition = pick2[0].Current();
+                SelectedBlockPosition = new Vector3((int)SelectedBlockPosition.X, (int)SelectedBlockPosition.Y, (int)SelectedBlockPosition.Z);
                 pick0 = pick2[0];
             }
             else
             {
-                pickcubepos = new Vector3(-1, -1, -1);
+                SelectedBlockPosition = new Vector3(-1, -1, -1);
                 pick0.pos = new Vector3(-1, -1, -1);
                 pick0.side = TileSide.Front;
             }
@@ -2012,8 +2014,7 @@ namespace ManicDigger
                 {
                     lastbuild = DateTime.Now;
                 }
-                Item item = d_Inventory.RightHand[ActiveMaterial];
-                if (left && item != null && blocktypes[item.BlockId].IsPistol)
+                if(ispistol)
                 {
                     PacketClientShot shot = new PacketClientShot();
                     shot.FromX = pick.Start.X;
@@ -2060,19 +2061,28 @@ namespace ManicDigger
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
 
                         BlockPosSide? p;
+                        Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, players[LocalPlayerId].ModelHeight, 0);
                         if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox)) != null)
                         {
-                            blood = p.Value.pos;
-                            bloodtime = DateTime.UtcNow;
-                            shot.HitPlayer = k.Key;
-                            shot.HitHead = true;
+                            //do not allow to shoot through terrain
+                            if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
+                            {
+                                blood = p.Value.pos;
+                                bloodtime = DateTime.UtcNow;
+                                shot.HitPlayer = k.Key;
+                                shot.HitHead = true;
+                            }
                         }
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
                         {
-                            blood = p.Value.pos;
-                            bloodtime = DateTime.UtcNow;
-                            shot.HitPlayer = k.Key;
-                            shot.HitHead = false;
+                            //do not allow to shoot through terrain
+                            if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
+                            {
+                                blood = p.Value.pos;
+                                bloodtime = DateTime.UtcNow;
+                                shot.HitPlayer = k.Key;
+                                shot.HitHead = false;
+                            }
                         }
                     }                    
 
@@ -2352,7 +2362,7 @@ namespace ManicDigger
             return new Vector3((int)a.X, (int)a.Z, (int)a.Y);
         }
         bool fastclicking = false;
-        public Vector3 pickcubepos;
+        public Vector3 SelectedBlockPosition;
         //double currentTime = 0;
         double accumulator = 0;
         double t = 0;
@@ -2454,7 +2464,7 @@ namespace ManicDigger
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
-                    DrawLinesAroundSelectedCube(pickcubepos);
+                    DrawLinesAroundSelectedCube(SelectedBlockPosition);
                 }
 
                 DrawCharacters((float)e.Time);
@@ -3050,9 +3060,9 @@ namespace ManicDigger
         }
         private void DrawBlockInfo()
         {
-            int x = (int)pickcubepos.X;
-            int y = (int)pickcubepos.Z;
-            int z = (int)pickcubepos.Y;
+            int x = (int)SelectedBlockPosition.X;
+            int y = (int)SelectedBlockPosition.Z;
+            int z = (int)SelectedBlockPosition.Y;
             //string info = "None";
             if (!MapUtil.IsValidPos(d_Map, x, y, z))
             {
@@ -3380,7 +3390,7 @@ namespace ManicDigger
         }
         #endregion
         #region IViewport3d Members
-        public Vector3 PickCubePos { get { return pickcubepos; } }
+        public Vector3 PickCubePos { get { return SelectedBlockPosition; } }
         #endregion
         #region IViewport3d Members
         public string LocalPlayerName { get { return connectdata.Username; } }
@@ -3416,7 +3426,7 @@ namespace ManicDigger
 
         public Vector3i SelectedBlock()
         {
-            Vector3 pos = pickcubepos;
+            Vector3 pos = SelectedBlockPosition;
             if (pos == new Vector3(-1, -1, -1))
             {
                 pos = player.playerposition;
