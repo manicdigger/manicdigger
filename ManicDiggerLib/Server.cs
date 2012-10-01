@@ -787,12 +787,13 @@ namespace ManicDiggerServer
                     TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
                     d_MainSocket.Recycle(msg);
                 }
-                catch
+                catch (Exception e)
                 {
                     //client problem. disconnect client.
                     Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
                     SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
                     KillPlayer(clientid);
+                    Console.WriteLine(e.ToString());
                 }
             }
             NotifyMap();
