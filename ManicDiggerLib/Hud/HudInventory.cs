@@ -360,7 +360,7 @@ namespace ManicDigger.Hud
                 Point? itemAtCell = inventoryUtil.ItemAtCell(selected);
                 if (itemAtCell != null)
                 {
-                    Item item = inventory.Items[new ProtoPoint(itemAtCell.Value)];
+                    Item item = inventory.Items[new ProtoPoint(itemAtCell.Value.X, itemAtCell.Value.Y)];
                     if (item != null)
                     {
                         int x = (selected.X) * CellDrawSize + CellsStart.X;

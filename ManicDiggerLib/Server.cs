@@ -1984,11 +1984,19 @@ if (sent >= unknown.Count) { break; }
                         onspecialkey[i](clientid, packet.SpecialKey.key);
                     }
                     break;
+                case ClientPacketId.ActiveMaterialSlot:
+                    clients[clientid].ActiveMaterialSlot = packet.ActiveMaterialSlot.ActiveMaterialSlot;
+                    for (int i = 0; i < changedactivematerialslot.Count; i++)
+                    {
+                        changedactivematerialslot[i](clientid);
+                    }
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
             }
         }
+        public List<ModDelegates.ChangedActiveMaterialSlot> changedactivematerialslot = new List<ModDelegates.ChangedActiveMaterialSlot>();
         int pistolcycle;
         public Vector3i GetPlayerSpawnPositionMul32(int clientid)
         {
@@ -3145,6 +3153,7 @@ if (sent >= unknown.Count) { break; }
             public float EyeHeight = 1.5f;
             public float ModelHeight = 1.7f;
             public float generatingworldprogress;
+            public int ActiveMaterialSlot;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();

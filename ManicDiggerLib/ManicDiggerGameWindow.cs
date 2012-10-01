@@ -1594,7 +1594,20 @@ namespace ManicDigger
 
             Vector3 orientation = new Vector3((float)Math.Sin(LocalPlayerOrientation.Y), 0, -(float)Math.Cos(LocalPlayerOrientation.Y));
             d_Audio.UpdateListener(LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0), orientation);
+            Item activeitem = d_Inventory.RightHand[ActiveMaterial];
+            int activeblock = 0;
+            if (activeitem != null) { activeblock = activeitem.BlockId; }
+            if (activeblock != PreviousActiveMaterialBlock)
+            {
+                SendPacketClient(new PacketClient()
+                {
+                    PacketId = ClientPacketId.ActiveMaterialSlot,
+                    ActiveMaterialSlot = new PacketClientActiveMaterialSlot() { ActiveMaterialSlot = ActiveMaterial }
+                });
+            }
+            PreviousActiveMaterialBlock = activeblock;
         }
+        int PreviousActiveMaterialBlock;
         //bool test;
         private void UpdateFallDamageToPlayer()
         {
@@ -2105,7 +2118,7 @@ namespace ManicDigger
                                     if (freehand != null)
                                     {
                                         d_InventoryController.WearItem(
-                                            InventoryPosition.MainArea(k.Key.ToPoint()),
+                                            InventoryPosition.MainArea(new Point(k.Key.X, k.Key.Y)),
                                             InventoryPosition.MaterialSelector(freehand.Value));
                                         goto done;
                                     }
@@ -2116,7 +2129,7 @@ namespace ManicDigger
                                         d_InventoryController.MoveToInventory(
                                             InventoryPosition.MaterialSelector(ActiveMaterial));
                                         d_InventoryController.WearItem(
-                                            InventoryPosition.MainArea(k.Key.ToPoint()),
+                                            InventoryPosition.MainArea(new Point(k.Key.X, k.Key.Y)),
                                             InventoryPosition.MaterialSelector(ActiveMaterial));
                                     }
                                 }

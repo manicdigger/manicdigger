@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ProtoBuf;
+using System.Runtime.Serialization;
 
 namespace ManicDigger
 {
@@ -109,6 +110,11 @@ namespace ManicDigger
         int AddBot(string name);
         void SetPlayerHeight(int playerid, float eyeheight, float modelheight);
         void DisablePrivilege(string privilege); //todo privileges
+        void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a);
+
+        Inventory GetInventory(int player);
+
+        int GetActiveMaterialSlot(int player);
     }
 
     public enum SpecialKey
@@ -136,6 +142,157 @@ namespace ManicDigger
         public delegate void DialogClick(int player, string widgetId);
         public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
         public delegate void SpecialKey1(int player, SpecialKey key);
+        public delegate void ChangedActiveMaterialSlot(int player);
+    }
+
+    public enum ItemClass
+    {
+        Block,
+        Weapon,
+        MainArmor,
+        Boots,
+        Helmet,
+        Gauntlet,
+        Shield,
+        Other,
+    }
+
+    [ProtoContract]
+    public class Item
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public ItemClass ItemClass;
+        [ProtoMember(2, IsRequired = false)]
+        public string ItemId;
+        [ProtoMember(3, IsRequired = false)]
+        public int BlockId;
+        [ProtoMember(4, IsRequired = false)]
+        public int BlockCount = 1;
+    }
+
+    [ProtoContract]
+    public class Inventory
+    {
+        [OnDeserialized()]
+        void OnDeserialized()
+        {
+            /*
+            LeftHand = new Item[10];
+            if (LeftHandProto != null)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    if (LeftHandProto.ContainsKey(i))
+                    {
+                        LeftHand[i] = LeftHandProto[i];
+                    }
+                }
+            }
+            */
+            RightHand = new Item[10];
+            if (RightHandProto != null)
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    if (RightHandProto.ContainsKey(i))
+                    {
+                        RightHand[i] = RightHandProto[i];
+                    }
+                }
+            }
+        }
+        [OnSerializing()]
+        void OnSerializing()
+        {
+            Dictionary<int, Item> d;// = new Dictionary<int, Item>();
+            /*
+            for (int i = 0; i < 10; i++)
+            {
+                if (LeftHand[i] != null)
+                {
+                    d[i] = LeftHand[i];
+                }
+            }
+            LeftHandProto = d;
+            */
+            d = new Dictionary<int, Item>();
+            for (int i = 0; i < 10; i++)
+            {
+                if (RightHand[i] != null)
+                {
+                    d[i] = RightHand[i];
+                }
+            }
+            RightHandProto = d;
+        }
+        //dictionary because protobuf-net can't serialize array of nulls.
+        //[ProtoMember(1, IsRequired = false)]
+        //public Dictionary<int, Item> LeftHandProto;
+        [ProtoMember(2, IsRequired = false)]
+        public Dictionary<int, Item> RightHandProto;
+        //public Item[] LeftHand = new Item[10];
+        public Item[] RightHand = new Item[10];
+        [ProtoMember(3, IsRequired = false)]
+        public Item MainArmor;
+        [ProtoMember(4, IsRequired = false)]
+        public Item Boots;
+        [ProtoMember(5, IsRequired = false)]
+        public Item Helmet;
+        [ProtoMember(6, IsRequired = false)]
+        public Item Gauntlet;
+        [ProtoMember(7, IsRequired = false)]
+        public Dictionary<ProtoPoint, Item> Items = new Dictionary<ProtoPoint, Item>();
+        [ProtoMember(8, IsRequired = false)]
+        public Item DragDropItem;
+        public void CopyFrom(Inventory inventory)
+        {
+            //this.LeftHand = inventory.LeftHand;
+            this.RightHand = inventory.RightHand;
+            this.MainArmor = inventory.MainArmor;
+            this.Boots = inventory.Boots;
+            this.Helmet = inventory.Helmet;
+            this.Gauntlet = inventory.Gauntlet;
+            this.Items = inventory.Items;
+            this.DragDropItem = inventory.DragDropItem;
+        }
+        public static Inventory Create()
+        {
+            Inventory i = new Inventory();
+            //i.LeftHand = new Item[10];
+            i.RightHand = new Item[10];
+            return i;
+        }
+    }
+
+    [ProtoContract]
+    public class ProtoPoint
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int X;
+        [ProtoMember(2, IsRequired = false)]
+        public int Y;
+        public ProtoPoint()
+        {
+        }
+        public ProtoPoint(int x, int y)
+        {
+            this.X = x;
+            this.Y = y;
+        }
+        public override bool Equals(object obj)
+        {
+            ProtoPoint obj2 = obj as ProtoPoint;
+            if (obj2 != null)
+            {
+                return this.X == obj2.X
+                    && this.Y == obj2.Y;
+            }
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            return X ^ Y;
+        }
     }
 
     public enum RenderHint

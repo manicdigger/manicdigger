@@ -100,45 +100,6 @@ namespace ManicDigger
             return bmp;
         }
     }
-    [ProtoContract]
-    public class ProtoPoint
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int X;
-        [ProtoMember(2, IsRequired = false)]
-        public int Y;
-        public ProtoPoint()
-        {
-        }
-        public ProtoPoint(int x, int y)
-        {
-            this.X = x;
-            this.Y = y;
-        }
-        public ProtoPoint(Point p)
-        {
-            this.X = p.X;
-            this.Y = p.Y;
-        }
-        public Point ToPoint()
-        {
-            return new Point(X, Y);
-        }
-        public override bool Equals(object obj)
-        {
-            ProtoPoint obj2 = obj as ProtoPoint;
-            if (obj2 != null)
-            {
-                return this.X == obj2.X
-                    && this.Y == obj2.Y;
-            }
-            return base.Equals(obj);
-        }
-        public override int GetHashCode()
-        {
-            return X ^ Y;
-        }
-    }
     public struct FastColor
     {
         public FastColor(byte A, byte R, byte G, byte B)

@@ -26,6 +26,7 @@ namespace ManicDigger.Mods
             m.RegisterOnSpecialKey(OnSelectTeamKey);
             m.RegisterTimer(UpdateTab, 1);
             m.DisablePrivilege("tp");
+            m.RegisterChangedActiveMaterialSlot(OnChangedWeapon);
         }
 
         public bool EnableTeamkill = true;
@@ -471,6 +472,28 @@ namespace ManicDigger.Mods
                 tabOpen.Remove(k.Key);
             nexttab:
                 ;
+            }
+        }
+
+        void OnChangedWeapon(int player)
+        {
+            Inventory inv = m.GetInventory(player);
+            Item item = inv.RightHand[m.GetActiveMaterialSlot(player)];
+            int blockid = 0;
+            if (item != null && item.ItemClass == ItemClass.Block) { blockid = item.BlockId; }
+            string model = "playerwar.txt";
+            if (blockid == m.GetBlockId("Pistol")) { model = "playerwarpistol.txt"; }
+            switch (teams[player])
+            {
+                case Team.Blue:
+                    m.SetPlayerModel(player, model, "playerblue.png");
+                    break;
+                case Team.Green:
+                    m.SetPlayerModel(player, model, "playergreen.png");
+                    break;
+                case Team.Spectator:
+                    m.SetPlayerModel(player, model, "mineplayer.png");
+                    break;
             }
         }
     }

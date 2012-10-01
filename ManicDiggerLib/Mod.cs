@@ -655,5 +655,20 @@ namespace ManicDigger
         {
             server.disabledprivileges[privilege] = true;
         }
+
+        public void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a)
+        {
+            server.changedactivematerialslot.Add(a);
+        }
+
+        public Inventory GetInventory(int player)
+        {
+            return server.GetPlayerInventory(server.clients[player].playername).Inventory;
+        }
+
+        public int GetActiveMaterialSlot(int player)
+        {
+            return server.clients[player].ActiveMaterialSlot;
+        }
     }
 }

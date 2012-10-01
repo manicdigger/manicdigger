@@ -386,6 +386,12 @@ namespace GameModeFortress
         public PacketServerDialog Dialog;
     }
     [ProtoContract]
+    public class PacketClientActiveMaterialSlot
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public int ActiveMaterialSlot;
+    }
+    [ProtoContract]
     public class PacketClient
     {
         [ProtoMember(1, IsRequired = false)]
@@ -416,6 +422,8 @@ namespace GameModeFortress
         public PacketClientShot Shot;
         [ProtoMember(13, IsRequired = false)]
         public PacketClientSpecialKey SpecialKey;
+        [ProtoMember(14, IsRequired = false)]
+        public PacketClientActiveMaterialSlot ActiveMaterialSlot;
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -600,6 +608,7 @@ namespace GameModeFortress
         MonsterHit = 53,
         Shot = 54,
         SpecialKey = 55,
+        ActiveMaterialSlot = 56,
         ExtendedPacketCommand = 100,
     }
     /// <summary>

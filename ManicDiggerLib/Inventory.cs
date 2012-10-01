@@ -7,134 +7,6 @@ using System.Runtime.Serialization;
 
 namespace ManicDigger
 {
-    public enum ItemClass
-    {
-        Block,
-        Weapon,
-        MainArmor,
-        Boots,
-        Helmet,
-        Gauntlet,
-        Shield,
-        Other,
-    }
-
-    public enum WeaponType
-    {
-        Hammer,
-        OneHandedSword,
-        Axe,
-        Spear,
-        TwoHandedSword,
-    }
-
-    [ProtoContract]
-    public class Item
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public ItemClass ItemClass;
-        [ProtoMember(2, IsRequired = false)]
-        public string ItemId;
-        [ProtoMember(3, IsRequired = false)]
-        public int BlockId;
-        [ProtoMember(4, IsRequired = false)]
-        public int BlockCount = 1;
-    }
-
-    [ProtoContract]
-    public class Inventory
-    {
-        [OnDeserialized()]
-        void OnDeserialized()
-        {
-            /*
-            LeftHand = new Item[10];
-            if (LeftHandProto != null)
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    if (LeftHandProto.ContainsKey(i))
-                    {
-                        LeftHand[i] = LeftHandProto[i];
-                    }
-                }
-            }
-            */
-            RightHand = new Item[10];
-            if (RightHandProto != null)
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    if (RightHandProto.ContainsKey(i))
-                    {
-                        RightHand[i] = RightHandProto[i];
-                    }
-                }
-            }
-        }
-        [OnSerializing()]
-        void OnSerializing()
-        {
-            Dictionary<int, Item> d;// = new Dictionary<int, Item>();
-            /*
-            for (int i = 0; i < 10; i++)
-            {
-                if (LeftHand[i] != null)
-                {
-                    d[i] = LeftHand[i];
-                }
-            }
-            LeftHandProto = d;
-            */
-            d = new Dictionary<int, Item>();
-            for (int i = 0; i < 10; i++)
-            {
-                if (RightHand[i] != null)
-                {
-                    d[i] = RightHand[i];
-                }
-            }
-            RightHandProto = d;
-        }
-        //dictionary because protobuf-net can't serialize array of nulls.
-        //[ProtoMember(1, IsRequired = false)]
-        //public Dictionary<int, Item> LeftHandProto;
-        [ProtoMember(2, IsRequired = false)]
-        public Dictionary<int, Item> RightHandProto;
-        //public Item[] LeftHand = new Item[10];
-        public Item[] RightHand = new Item[10];
-        [ProtoMember(3, IsRequired = false)]
-        public Item MainArmor;
-        [ProtoMember(4, IsRequired = false)]
-        public Item Boots;
-        [ProtoMember(5, IsRequired = false)]
-        public Item Helmet;
-        [ProtoMember(6, IsRequired = false)]
-        public Item Gauntlet;
-        [ProtoMember(7, IsRequired = false)]
-        public Dictionary<ProtoPoint, Item> Items = new Dictionary<ProtoPoint, Item>();
-        [ProtoMember(8, IsRequired = false)]
-        public Item DragDropItem;
-        public void CopyFrom(Inventory inventory)
-        {
-            //this.LeftHand = inventory.LeftHand;
-            this.RightHand = inventory.RightHand;
-            this.MainArmor = inventory.MainArmor;
-            this.Boots = inventory.Boots;
-            this.Helmet = inventory.Helmet;
-            this.Gauntlet = inventory.Gauntlet;
-            this.Items = inventory.Items;
-            this.DragDropItem = inventory.DragDropItem;
-        }
-        public static Inventory Create()
-        {
-            Inventory i = new Inventory();
-            //i.LeftHand = new Item[10];
-            i.RightHand = new Item[10];
-            return i;
-        }
-    }
-
     //separate class because it's used by server and client.
     public class InventoryUtil
     {
@@ -175,7 +47,7 @@ namespace ManicDigger
 
         public IEnumerable<Point> ItemCells(Point p)
         {
-            Item item = d_Inventory.Items[new ProtoPoint(p)];
+            Item item = d_Inventory.Items[new ProtoPoint(p.X, p.Y)];
             for (int x = 0; x < d_Items.ItemSize(item).X; x++)
             {
                 for (int y = 0; y < d_Items.ItemSize(item).Y; y++)
@@ -189,9 +61,9 @@ namespace ManicDigger
         {
             foreach (var k in d_Inventory.Items)
             {
-                foreach (var pp in ItemCells(k.Key.ToPoint()))
+                foreach (var pp in ItemCells(new Point(k.Key.X, k.Key.Y)))
                 {
-                    if (p == pp) { return k.Key.ToPoint(); }
+                    if (p == pp) { return new Point(k.Key.X, k.Key.Y); }
                 }
             }
             return null;
@@ -277,7 +149,7 @@ namespace ManicDigger
                             var p = ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
                             if (p != null && p.Length == 1)
                             {
-                                var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0])], item);
+                                var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0].X, p[0].Y)], item);
                                 if (stacked != null)
                                 {
                                     d_Inventory.Items[new ProtoPoint(x, y)] = stacked;
@@ -423,14 +295,14 @@ namespace ManicDigger
                         && pos.AreaX < k.Key.X + d_Items.ItemSize(k.Value).X
                         && pos.AreaY < k.Key.Y + d_Items.ItemSize(k.Value).Y)
                     {
-                        selected = k.Key.ToPoint();
+                        selected = new Point(k.Key.X, k.Key.Y);
                     }
                 }
                 //drag
                 if (selected != null && d_Inventory.DragDropItem == null)
                 {
-                    d_Inventory.DragDropItem = d_Inventory.Items[new ProtoPoint(selected.Value)];
-                    d_Inventory.Items.Remove(new ProtoPoint(selected.Value));
+                    d_Inventory.DragDropItem = d_Inventory.Items[new ProtoPoint(selected.Value.X, selected.Value.Y)];
+                    d_Inventory.Items.Remove(new ProtoPoint(selected.Value.X, selected.Value.Y));
                     SendInventory();
                 }
                 //drop
@@ -453,18 +325,18 @@ namespace ManicDigger
                     {
                         var swapWith = itemsAtArea[0];
                         //try to stack                        
-                        Item stackResult = d_Items.Stack(d_Inventory.Items[new ProtoPoint(swapWith)], d_Inventory.DragDropItem);
+                        Item stackResult = d_Items.Stack(d_Inventory.Items[new ProtoPoint(swapWith.X, swapWith.Y)], d_Inventory.DragDropItem);
                         if (stackResult != null)
                         {
-                            d_Inventory.Items[new ProtoPoint(swapWith)] = stackResult;
+                            d_Inventory.Items[new ProtoPoint(swapWith.X, swapWith.Y)] = stackResult;
                             d_Inventory.DragDropItem = null;
                         }
                         else
                         {
                             //try to swap
                             //swap (swapWith, dragdropitem)
-                            Item z = d_Inventory.Items[new ProtoPoint(swapWith)];
-                            d_Inventory.Items.Remove(new ProtoPoint(swapWith));
+                            Item z = d_Inventory.Items[new ProtoPoint(swapWith.X, swapWith.Y)];
+                            d_Inventory.Items.Remove(new ProtoPoint(swapWith.X, swapWith.Y));
                             d_Inventory.Items[new ProtoPoint(pos.AreaX, pos.AreaY)] = d_Inventory.DragDropItem;
                             d_Inventory.DragDropItem = z;
                         }
@@ -558,7 +430,7 @@ namespace ManicDigger
                         var p = d_InventoryUtil.ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
                         if (p != null && p.Length == 1)
                         {
-                            var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0])], item);
+                            var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0].X, p[0].Y)], item);
                             if (stacked != null)
                             {
                                 d_Inventory.Items[new ProtoPoint(x, y)] = stacked;
