@@ -2689,6 +2689,7 @@ namespace ManicDigger
                     n.EXTRAPOLATION_TIME = 0.3f;
                     playerdrawinfo[k.Key].interpolation = n;
                 }
+                playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.05, ServerInfo.ServerPing.RoundtripTime.TotalSeconds);
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
                 Vector3 realpos = k.Value.Position.Value;
                 if (realpos != info.lastrealpos
