@@ -1348,7 +1348,7 @@ namespace ManicDigger
         }
         public IPEndPoint RemoteEndPoint
         {
-            get { return new IPEndPoint(0, 0); }
+            get { return new IPEndPoint(IPAddress.Loopback, 0); }
         }
     }
     public class DummyNetIncomingmessage : INetIncomingMessage
