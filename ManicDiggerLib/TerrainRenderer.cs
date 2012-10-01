@@ -382,35 +382,42 @@ namespace ManicDigger
         int minlight = 0;
         public int? MaybeGetLight(int x, int y, int z)
         {
-            int xx = x - CurrentRendererMapPositionG.x;
-            int yy = y - CurrentRendererMapPositionG.y;
-            int zz = z - CurrentRendererMapPositionG.z;
-            int l;
-            if (xx < 0 || yy < 0 || zz < 0 || xx >= mapAreaSize || yy >= mapAreaSize || zz >= MapSizeZ)
+            try
             {
-                l = 0;
-            }
-            else
-            {
-                // returns 0 when unknown
-                byte[] light = RendererMap[MapUtil.Index3d(xx / chunksize, yy / chunksize, zz / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].light;
-                l = light[MapUtil.Index3d((x % chunksize) + 1, (y % chunksize) + 1, (z % chunksize) + 1, chunksize + 2, chunksize + 2)];
-            }
-            if (l == 0)
-            {
-                if (z >= d_Heightmap.GetBlock(x, y))
+                int xx = x - CurrentRendererMapPositionG.x;
+                int yy = y - CurrentRendererMapPositionG.y;
+                int zz = z - CurrentRendererMapPositionG.z;
+                int l;
+                if (xx < 0 || yy < 0 || zz < 0 || xx >= mapAreaSize || yy >= mapAreaSize || zz >= MapSizeZ)
                 {
-                    return sunlight_;
+                    l = 0;
                 }
                 else
                 {
-                    return minlight;
+                    // returns 0 when unknown
+                    byte[] light = RendererMap[MapUtil.Index3d(xx / chunksize, yy / chunksize, zz / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].light;
+                    l = light[MapUtil.Index3d((x % chunksize) + 1, (y % chunksize) + 1, (z % chunksize) + 1, chunksize + 2, chunksize + 2)];
+                }
+                if (l == 0)
+                {
+                    if (z >= d_Heightmap.GetBlock(x, y))
+                    {
+                        return sunlight_;
+                    }
+                    else
+                    {
+                        return minlight;
+                    }
+                }
+                else
+                {
+                    //return l - 1;
+                    return l;
                 }
             }
-            else
+            catch
             {
-                //return l - 1;
-                return l;
+                return maxlight;
             }
         }
 
