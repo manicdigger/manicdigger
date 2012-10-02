@@ -483,7 +483,9 @@ namespace ManicDigger.Mods
             if (item != null && item.ItemClass == ItemClass.Block) { blockid = item.BlockId; }
             string model = "playerwar.txt";
             if (blockid == m.GetBlockId("Pistol")) { model = "playerwarpistol.txt"; }
-            switch (teams[player])
+            Team team = Team.Spectator;
+            if (teams.ContainsKey(player)) { team = teams[player]; }
+            switch (team)
             {
                 case Team.Blue:
                     m.SetPlayerModel(player, model, "playerblue.png");
