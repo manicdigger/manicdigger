@@ -869,6 +869,8 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Empty,
                 Sounds = noSound,
             });
+            Dictionary<string, int> DamageBody = new Dictionary<string, int>();
+            Dictionary<string, int> DamageHead = new Dictionary<string, int>();
             m.SetBlockType(154, "Pistol", new BlockType()
             {
                 AllTextures = "Pistol",
@@ -879,7 +881,55 @@ namespace ManicDigger.Mods
                 IsPistol = true,
                 AimRadius = 15,
                 Recoil = 0.04f,
+                Delay = 0.5f,
             });
+            DamageBody["Pistol"] = 15;
+            DamageHead["Pistol"] = 50;
+            m.SetBlockType(155, "SubmachineGun", new BlockType()
+            {
+                AllTextures = "SubmachineGun",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Solid,
+                Sounds = solidSounds,
+                handimage = "submachinegunhand.png",
+                IsPistol = true,
+                AimRadius = 20,
+                Recoil = 0.04f,
+                Delay = 0.1f,
+            });
+            DamageBody["SubmachineGun"] = 15;
+            DamageHead["SubmachineGun"] = 40;
+            m.SetBlockType(156, "Shotgun", new BlockType()
+            {
+                AllTextures = "Shotgun",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Solid,
+                Sounds = solidSounds,
+                handimage = "shotgunhand.png",
+                IsPistol = true,
+                AimRadius = 50,
+                Recoil = 0.08f,
+                Delay = 1f,
+                BulletsPerShot = 6,
+            });
+            DamageBody["Shotgun"] = 35;
+            DamageHead["Shotgun"] = 60;
+            m.SetBlockType(157, "Rifle", new BlockType()
+            {
+                AllTextures = "Rifle",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Solid,
+                Sounds = solidSounds,
+                handimage = "riflehand.png",
+                IsPistol = true,
+                AimRadius = 10,
+                Recoil = 0.04f,
+                Delay = 0.5f,
+            });
+            DamageBody["Rifle"] = 35;
+            DamageHead["Rifle"] = 100;
+            m.SetGlobalDataNotSaved("DamageHead", DamageHead);
+            m.SetGlobalDataNotSaved("DamageBody", DamageBody);
 
             m.RegisterTimer(UpdateSeasons, 1);
 
@@ -968,6 +1018,9 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("Rail3");
             m.AddToCreativeInventory("Rail60");
             m.AddToCreativeInventory("Pistol");
+            m.AddToCreativeInventory("SubmachineGun");
+            m.AddToCreativeInventory("Shotgun");
+            m.AddToCreativeInventory("Rifle");
 
             m.AddToStartInventory("Torch", 6);
             m.AddToStartInventory("Crops1", 1);

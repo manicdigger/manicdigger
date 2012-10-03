@@ -35,6 +35,7 @@ namespace ManicDigger.Mods
 
         void PlayerJoin(int playerid)
         {
+            m.SetPlayerHealth(playerid, 100, 100);
             teams.Remove(playerid);
             kills.Remove(playerid);
             m.EnableFreemove(playerid, false);
@@ -201,7 +202,13 @@ namespace ManicDigger.Mods
                 }
             }
             int health = m.GetPlayerHealth(targetplayer);
-            health -= head ? 10 : 3;
+            Dictionary<string, int> DamageHead = (Dictionary<string, int>)m.GetGlobalDataNotSaved("DamageHead");
+            Dictionary<string, int> DamageBody = (Dictionary<string, int>)m.GetGlobalDataNotSaved("DamageBody");
+            int dmghead = 50;
+            int dmgbody = 15;
+            if (DamageHead.ContainsKey(m.GetBlockName(block))) { dmghead = DamageHead[m.GetBlockName(block)]; }
+            if (DamageBody.ContainsKey(m.GetBlockName(block))) { dmgbody = DamageBody[m.GetBlockName(block)]; }
+            health -= head ? dmghead : dmgbody;
             if (health <= 0)
             {
                 if (teams[sourceplayer] != teams[targetplayer])
@@ -483,6 +490,9 @@ namespace ManicDigger.Mods
             if (item != null && item.ItemClass == ItemClass.Block) { blockid = item.BlockId; }
             string model = "playerwar.txt";
             if (blockid == m.GetBlockId("Pistol")) { model = "playerwarpistol.txt"; }
+            if (blockid == m.GetBlockId("SubmachineGun")) { model = "playerwarsubmachinegun.txt"; }
+            if (blockid == m.GetBlockId("Shotgun")) { model = "playerwarshotgun.txt"; }
+            if (blockid == m.GetBlockId("Rifle")) { model = "playerwarrifle.txt"; }
             Team team = Team.Spectator;
             if (teams.ContainsKey(player)) { team = teams[player]; }
             switch (team)

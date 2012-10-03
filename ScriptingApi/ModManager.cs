@@ -511,6 +511,10 @@ namespace ManicDigger
         public int AimRadius;
         [ProtoMember(24)]
         public float Recoil;
+        [ProtoMember(25)]
+        public float Delay;
+        [ProtoMember(26)]
+        public float BulletsPerShot;
         public string AllTextures
         {
             set

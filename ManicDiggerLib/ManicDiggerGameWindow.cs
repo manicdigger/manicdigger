@@ -1830,10 +1830,17 @@ namespace ManicDigger
             return d_Inventory.RightHand[ActiveMaterial] != null;
         }
         int pistolcycle;
-        public Vector3? blood = null;
-        public DateTime bloodtime;
+        class Blood
+        {
+            public Vector3 position;
+            public DateTime time;
+        }
+        List<Blood> blood = new List<Blood>();
         private void UpdatePicking()
         {
+            int bulletsshot = 0;
+            bool IsNextShot = false;
+        NextBullet:
             bool left = Mouse[OpenTK.Input.MouseButton.Left];//destruct
             bool middle = Mouse[OpenTK.Input.MouseButton.Middle];//clone material as active
             bool right = Mouse[OpenTK.Input.MouseButton.Right];//build
@@ -2011,7 +2018,7 @@ namespace ManicDigger
             {
                 currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
             }
-            if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay)
+            if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay || IsNextShot)
             {
                 if (left && d_Inventory.RightHand[ActiveMaterial] == null)
                 {
@@ -2080,8 +2087,7 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                blood = p.Value.pos;
-                                bloodtime = DateTime.UtcNow;
+                                blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = true;
                             }
@@ -2091,8 +2097,7 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                blood = p.Value.pos;
-                                bloodtime = DateTime.UtcNow;
+                                blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = false;
                             }
@@ -2103,6 +2108,13 @@ namespace ManicDigger
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
+
+                    bulletsshot++;
+                    if (bulletsshot < blocktypes[item.BlockId].BulletsPerShot)
+                    {
+                        IsNextShot = true;
+                        goto NextBullet;
+                    }
                     
                     //recoil
                     player.playerorientation.X -= (float)rnd.NextDouble() * CurrentRecoil;
@@ -2369,7 +2381,24 @@ namespace ManicDigger
         {
             //playerdestination = pick0.pos;
         }
-        float BuildDelay = 0.95f * (1 / basemovespeed);
+        float BuildDelay
+        {
+            get
+            {
+                float default_ = 0.95f * (1 / basemovespeed);
+                Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (item == null || item.ItemClass != ItemClass.Block)
+                {
+                    return default_;
+                }
+                float delay = blocktypes[item.BlockId].Delay;
+                if (delay == 0)
+                {
+                    return default_;
+                }
+                return delay;
+            }
+        }
         Vector3 ToMapPos(Vector3 a)
         {
             return new Vector3((int)a.X, (int)a.Z, (int)a.Y);
@@ -2481,10 +2510,10 @@ namespace ManicDigger
                 }
 
                 DrawCharacters((float)e.Time);
-                if (blood != null)
+                foreach(Blood b in new List<Blood>(blood))
                 {
                     GL.MatrixMode(MatrixMode.Modelview);
-                    Vector3 pos = blood.Value;
+                    Vector3 pos = b.position;
                     GL.PushMatrix();
                     GL.Translate(pos.X, pos.Y, pos.Z);
                     GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
@@ -2495,8 +2524,8 @@ namespace ManicDigger
                     //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
                     d_The3d.Draw2dBitmapFile("blood.png", 0, 0, ImageSize, ImageSize);
                     GL.PopMatrix();
-                }
-                if ((DateTime.UtcNow - bloodtime).TotalSeconds > 0.2) { blood = null; }
+                    if ((DateTime.UtcNow - b.time).TotalSeconds > 0.2) { blood.Remove(b); }
+                }                
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
