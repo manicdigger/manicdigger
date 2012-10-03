@@ -390,7 +390,7 @@ namespace ManicDigger
             }
             if (bmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
             {
-                throw new Exception();
+                bmp = new Bitmap(bmp);
             }
             bmd = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                 System.Drawing.Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat);
