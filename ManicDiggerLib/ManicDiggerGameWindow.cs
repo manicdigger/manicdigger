@@ -1866,6 +1866,10 @@ namespace ManicDigger
             if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
             if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
 
+            Item item = d_Inventory.RightHand[ActiveMaterial];
+            bool ispistol = (left && item != null && blocktypes[item.BlockId].IsPistol);
+            bool ispistolshoot = ispistol && left;
+
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
@@ -1875,15 +1879,24 @@ namespace ManicDigger
             Vector3 ray = new Vector3(unit_x * near_height * ASPECT, unit_y * near_height, 1);//, 0);
 
             Vector3 ray_start_point = new Vector3(0, 0, 0);
-            if (overheadcamera)
+            PointF aim = GetAim();
+            if (overheadcamera || aim.X != 0 || aim.Y != 0)
             {
-                float mx = (float)mouse_current.X / Width - 0.5f;
-                float my = (float)mouse_current.Y / Height - 0.5f;
+                float mx = 0;
+                float my = 0;
+                if (overheadcamera)
+                {
+                    mx = (float)mouse_current.X / Width - 0.5f;
+                    my = (float)mouse_current.Y / Height - 0.5f;
+                }
+                else if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
+                {
+                    mx += aim.X / Width;
+                    my += aim.Y / Height;
+                }
                 //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
                 ray_start_point = new Vector3(mx * 3f, -my * 2.2f, -1.0f);
             }
-            Item item = d_Inventory.RightHand[ActiveMaterial];
-            bool ispistol = (left && item != null && blocktypes[item.BlockId].IsPistol);
 
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
@@ -2092,8 +2105,8 @@ namespace ManicDigger
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
                     
                     //recoil
-                    player.playerorientation.X -= (float)rnd.NextDouble() * 0.04f;
-                    player.playerorientation.Y += (float)rnd.NextDouble() * 0.08f - 0.04f;
+                    player.playerorientation.X -= (float)rnd.NextDouble() * CurrentRecoil;
+                    player.playerorientation.Y += (float)rnd.NextDouble() * CurrentRecoil * 2 - CurrentRecoil;
 
                     goto end;
                 }
@@ -3096,7 +3109,70 @@ namespace ManicDigger
             float aimwidth = aimsize.Value.Width;
             float aimheight = aimsize.Value.Height;
 
+            if (CurrentAimRadius > 1)
+            {
+                Circle3i(Width / 2, Height / 2, CurrentAimRadius);
+            }
             d_The3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+        }
+        PointF GetAim()
+        {
+            if (CurrentAimRadius <= 1)
+            {
+                return new PointF(0, 0);
+            }
+        retry:
+            float x = (float)(rnd.NextDouble() - 0.5f) * CurrentAimRadius * 2;
+            float y = (float)(rnd.NextDouble() - 0.5f) * CurrentAimRadius * 2;
+            float dist1 = (float)Math.Sqrt(x * x + y * y);
+            if (dist1 > CurrentAimRadius)
+            {
+                goto retry;
+            }
+            return new PointF(x, y);
+        }
+        float CurrentAimRadius
+        {
+            get
+            {
+                Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (item == null || item.ItemClass != ItemClass.Block)
+                {
+                    return 0;
+                }
+                return ((float)blocktypes[item.BlockId].AimRadius / 800) * Width;
+            }
+        }
+        float CurrentRecoil
+        {
+            get
+            {
+                Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (item == null || item.ItemClass != ItemClass.Block)
+                {
+                    return 0;
+                }
+                return (float)blocktypes[item.BlockId].Recoil;
+            }
+        }
+        void Circle3i(float x, float y, float radius)
+        {
+            float angle;
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Disable(EnableCap.Texture2D);
+            GL.Color3(1.0f, 1.0f, 1.0f);
+            GL.LineWidth(1.0f);
+            GL.Begin(BeginMode.LineLoop);
+            int n = 32;
+            for (int i = 0; i < n; i++)
+            {
+                angle = (float)(i * 2 * Math.PI / n);
+                GL.Vertex2(x + (Math.Cos(angle) * radius), y + (Math.Sin(angle) * radius));
+            }
+            GL.End();
+            GL.Enable(EnableCap.Texture2D);
+            GL.PopMatrix();
         }
         private void DrawPlayerNames()
         {

@@ -507,6 +507,10 @@ namespace ManicDigger
         public string handimage;
         [ProtoMember(22)]
         public bool IsPistol;
+        [ProtoMember(23)]
+        public int AimRadius;
+        [ProtoMember(24)]
+        public float Recoil;
         public string AllTextures
         {
             set

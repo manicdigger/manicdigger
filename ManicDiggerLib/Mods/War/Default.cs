@@ -877,6 +877,8 @@ namespace ManicDigger.Mods
                 Sounds = solidSounds,
                 handimage = "pistolhand.png",
                 IsPistol = true,
+                AimRadius = 15,
+                Recoil = 0.04f,
             });
 
             m.RegisterTimer(UpdateSeasons, 1);
