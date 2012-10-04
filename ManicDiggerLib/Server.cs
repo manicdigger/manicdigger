@@ -256,6 +256,16 @@ namespace ManicDiggerServer
         {
             ModManager1 m = new ModManager1();
             m.Start(this);
+            /*
+            {
+                //debug war mod
+                new ManicDigger.Mods.DefaultWar().Start(m);
+                new ManicDigger.Mods.Noise2DWorldGeneratorWar().Start(m);
+                new ManicDigger.Mods.TreeGeneratorWar().Start(m);
+                new ManicDigger.Mods.War().Start(m);
+                return;
+            }
+            */
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
             for (int i = 0; i < modpaths.Length; i++)
             {
@@ -283,32 +293,6 @@ namespace ManicDiggerServer
             }
             modloader.CompileScripts(scripts);
             modloader.Start(m, m.required);
-            /*
-            //todo
-            IMod[] mods = new IMod[]
-            {
-                new ManicDigger.Mods.Default(),
-                new ManicDigger.Mods.DefaultWorldGenerator(),
-                //new ManicDigger.Mods.FlatWorldGenerator(),
-                new ManicDigger.Mods.TreeGenerator(),
-                new ManicDigger.Mods.OreGenerator(),
-                new ManicDigger.Mods.VegetationGrowth(),
-                new ManicDigger.Mods.Doors(),
-                new ManicDigger.Mods.SandPhysics(),
-                new ManicDigger.Mods.Monsters(),
-                new ManicDigger.Mods.Tnt(),
-                new ManicDigger.Mods.CraftingTable(),
-                new ManicDigger.Mods.WaterFinite(),
-                new ManicDigger.Mods.SandPhysics(),
-                new ManicDigger.Mods.BuildLog(),
-                new ManicDigger.Mods.VandalFinder(),
-                new ManicDigger.Mods.Revert(),
-            };
-            for (int i = 0; i < mods.Length; i++)
-            {
-                mods[i].Start(m);
-            }
-            */
         }
 
         private ServerMonitor serverMonitor;

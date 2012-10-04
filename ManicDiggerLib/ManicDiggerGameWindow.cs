@@ -2095,6 +2095,7 @@ namespace ManicDigger
                                 blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = true;
+                                shot.WeaponBlock = item.BlockId;
                             }
                         }
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
@@ -2105,6 +2106,7 @@ namespace ManicDigger
                                 blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = false;
+                                shot.WeaponBlock = item.BlockId;
                             }
                         }
                     }                    
