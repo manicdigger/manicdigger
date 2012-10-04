@@ -417,31 +417,31 @@ namespace ManicDigger
 
         public float GetPlayerPositionX(int player)
         {
-            return server.GetClient(player).PositionMul32GlX / 32;
+            return (float)server.GetClient(player).PositionMul32GlX / 32;
         }
 
         public float GetPlayerPositionY(int player)
         {
-            return server.GetClient(player).PositionMul32GlZ / 32;
+            return (float)server.GetClient(player).PositionMul32GlZ / 32;
         }
 
         public float GetPlayerPositionZ(int player)
         {
-            return server.GetClient(player).PositionMul32GlY / 32;
+            return (float)server.GetClient(player).PositionMul32GlY / 32;
         }
 
         public void SetPlayerPosition(int player, float x, float y, float z)
         {
-            foreach(var k in server.clients)
+            if (server.clients[player].IsBot)
+            {
+                server.clients[player].PositionMul32GlX = (int)(x * 32);
+                server.clients[player].PositionMul32GlY = (int)(z * 32);
+                server.clients[player].PositionMul32GlZ = (int)(y * 32);
+            }
+            foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
                     (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
-                if (k.Value.IsBot)
-                {
-                    k.Value.PositionMul32GlX = (int)x * 32;
-                    k.Value.PositionMul32GlY = (int)z * 32;
-                    k.Value.PositionMul32GlZ = (int)y * 32;
-                }
             }
         }
 
