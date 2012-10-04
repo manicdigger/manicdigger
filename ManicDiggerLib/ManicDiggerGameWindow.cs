@@ -1606,7 +1606,12 @@ namespace ManicDigger
                 });
             }
             PreviousActiveMaterialBlock = activeblock;
+            playervelocity = LocalPlayerPosition - lastplayerposition;
+            playervelocity *= 75;
+            lastplayerposition = LocalPlayerPosition;
         }
+        Vector3 lastplayerposition;
+        Vector3 playervelocity;
         int PreviousActiveMaterialBlock;
         //bool test;
         private void UpdateFallDamageToPlayer()
@@ -3169,9 +3174,11 @@ namespace ManicDigger
                 {
                     return 0;
                 }
-                return ((float)blocktypes[item.BlockId].AimRadius / 800) * Width;
+                float radius = ((float)blocktypes[item.BlockId].AimRadius / 800) * Width;
+                return radius + RadiusWhenMoving * radius * (Math.Min(playervelocity.Length / movespeed, 1));
             }
         }
+        float RadiusWhenMoving = 0.3f;
         float CurrentRecoil
         {
             get
