@@ -39,6 +39,11 @@ namespace ManicDigger.Mods
             teams.Remove(playerid);
             kills.Remove(playerid);
             m.EnableFreemove(playerid, false);
+            ShowTeamSelectionDialog(playerid);
+        }
+
+        void ShowTeamSelectionDialog(int playerid)
+        {
             Dialog d = new Dialog();
             List<Widget> widgets = new List<Widget>();
             Widget background = new Widget();
@@ -153,7 +158,7 @@ namespace ManicDigger.Mods
             {
                 return;
             }
-            PlayerJoin(player);
+            ShowTeamSelectionDialog(player);
         }
 
         void Respawn(int playerid)
@@ -223,11 +228,11 @@ namespace ManicDigger.Mods
                 if (teams[sourceplayer] == teams[targetplayer])
                 {
                     m.SendMessageToAll(string.Format("{0} kills {1} - " + m.colorError() + "TEAMKILL", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
-                    
+
                 }
                 else
                 {
-                   m.SendMessageToAll(string.Format("{0} kills {1}", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
+                    m.SendMessageToAll(string.Format("{0} kills {1}", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
                 }
             }
             else
@@ -263,18 +268,18 @@ namespace ManicDigger.Mods
             Dialog d = new Dialog();
             d.IsModal = true;
             List<Widget> widgets = new List<Widget>();
-            
+
             // table alignment
             float tableX = xcenter(m.GetScreenResolution(player)[0], tableWidth);
             float tableY = tableMarginTop;
-            
+
             // text to draw
             string row1 = m.GetServerName();
             row1 = cutText(row1, HeadingFont, tableWidth - 2 * tablePadding);
 
             string row2 = m.GetServerMotd();
             row2 = cutText(row2, SmallFontBold, tableWidth - 2 * tablePadding);
-            
+
             string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
             string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
 
@@ -294,7 +299,7 @@ namespace ManicDigger.Mods
             float listEntryHeight = textHeight("Player", NormalFont) + 2 * listEntryPaddingTopBottom;
 
             float heightOffset = 0;
-            
+
             // determine how many entries can be displayed
             tableHeight = m.GetScreenResolution(player)[1] - tableMarginTop - tableMarginBottom;
             float availableEntrySpace = tableHeight - row1Height - row2Height - row3Height - row4Height - (row5Height + tableLineWidth);
@@ -305,17 +310,17 @@ namespace ManicDigger.Mods
             {
                 page = 0;
             }
-            
+
             // 1 - heading: Servername
             widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row1Height;
-            
+
             // 2 - MOTD
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row2Height, Color.ForestGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row2Height;
-            
+
             // 3 - server info: IP Motd Serverping
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row3Height, Color.DarkSeaGreen.ToArgb()));
             // row3_1 - IP align left
@@ -323,7 +328,7 @@ namespace ManicDigger.Mods
             // row3_2 - Serverping align right
             widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row3Height;
-            
+
             // 4 - infoline: Playercount, Page
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row4Height, Color.DimGray.ToArgb()));
             // row4_1 PlayerCount
@@ -376,7 +381,7 @@ namespace ManicDigger.Mods
             wesc.ClickKey = (char)27;
             wesc.Id = "Esc";
             widgets.Add(wesc);
-            
+
             d.Width = m.GetScreenResolution(player)[0];
             d.Height = m.GetScreenResolution(player)[1];
             d.Widgets = widgets.ToArray();
@@ -395,7 +400,7 @@ namespace ManicDigger.Mods
         public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);
         public DialogFont SmallFont = new DialogFont("Verdana", 8f, DialogFontStyle.Regular);
         public DialogFont SmallFontBold = new DialogFont("Verdana", 8f, DialogFontStyle.Bold);
-        
+
         private float tableMarginTop = 10;
         private float tableMarginBottom = 10;
         private float tableWidth = 500;
@@ -465,7 +470,7 @@ namespace ManicDigger.Mods
 
         void UpdateTab()
         {
-            foreach (var k in new Dictionary<string,bool>(tabOpen))
+            foreach (var k in new Dictionary<string, bool>(tabOpen))
             {
                 foreach (int p in m.AllPlayers())
                 {
