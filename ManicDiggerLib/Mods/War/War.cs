@@ -556,7 +556,7 @@ namespace ManicDigger.Mods
                     int p = allplayers[i];
                     if (players[p].isdead)
                     {
-                        m.SendDialog(i, "RespawnCountdown" + p, null);
+                        m.SendDialog(p, "RespawnCountdown" + p, null);
                         players[p].isdead = false;
                         m.FollowPlayer(p, -1, false);
                         Respawn(p);
@@ -577,7 +577,7 @@ namespace ManicDigger.Mods
                     Widget w = Widget.MakeText(text, f, -m.MeasureTextSize(text, f)[0] / 2, -200, Color.Red.ToArgb());
                     d.Widgets = new Widget[1];
                     d.Widgets[0] = w;
-                    m.SendDialog(i, "RespawnCountdown" + p, d);
+                    m.SendDialog(p, "RespawnCountdown" + p, d);
                 }
             }
         }
