@@ -3473,6 +3473,16 @@ if (sent >= unknown.Count) { break; }
                 }
             }
         }
+
+        public void SendPacketFollow(int player, int target, bool tpp)
+        {
+            PacketServerFollow p = new PacketServerFollow()
+            {
+                Client = target == -1 ? null : clients[target].playername,
+                Tpp = tpp,
+            };
+            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Follow, Follow = p }));
+        }
     }
 
     public class Ping

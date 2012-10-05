@@ -318,6 +318,14 @@ namespace GameModeFortress
         public int Z;
     }
     [ProtoContract]
+    public class PacketServerFollow
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string Client;
+        [ProtoMember(2, IsRequired = false)]
+        public bool Tpp;
+    }
+    [ProtoContract]
     public class PacketServer
     {
         [ProtoMember(90, IsRequired = false)]
@@ -384,6 +392,8 @@ namespace GameModeFortress
         public PacketServerCraftingRecipes CraftingRecipes;
         [ProtoMember(27, IsRequired = false)]
         public PacketServerDialog Dialog;
+        [ProtoMember(28, IsRequired = false)]
+        public PacketServerFollow Follow;
     }
     [ProtoContract]
     public class PacketClientActiveMaterialSlot
@@ -651,6 +661,7 @@ namespace GameModeFortress
         RemoveMonsters = 50,
         Freemove,
         Dialog,
+        Follow,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

@@ -26,18 +26,34 @@ namespace ManicDigger.Mods
             m.RegisterOnSpecialKey(OnSelectTeamKey);
             m.RegisterTimer(UpdateTab, 1);
             m.DisablePrivilege("tp");
-            m.RegisterChangedActiveMaterialSlot(OnChangedWeapon);
+            m.RegisterChangedActiveMaterialSlot(UpdatePlayerModel);
+            m.RegisterTimer(UpdateRespawnTimer, 1);
+            CurrentRespawnTime = DateTime.UtcNow;
         }
 
+        TimeSpan RespawnTime = TimeSpan.FromSeconds(30);
+        TimeSpan RoundTime = TimeSpan.FromMinutes(30);
+        DateTime CurrentRespawnTime;
+
         public bool EnableTeamkill = true;
+
+        Dictionary<int, Player> players = new Dictionary<int, Player>();
+
+        public class Player
+        {
+            public Team team = Team.Spectator;
+            public int kills;
+            public bool isdead;
+            public int following = -1;
+            public bool firstteam = true;
+        }
 
         ModManager m;
 
         void PlayerJoin(int playerid)
         {
             m.SetPlayerHealth(playerid, 100, 100);
-            teams.Remove(playerid);
-            kills.Remove(playerid);
+            players[playerid] = new Player();
             m.EnableFreemove(playerid, false);
             ShowTeamSelectionDialog(playerid);
         }
@@ -80,14 +96,13 @@ namespace ManicDigger.Mods
             m.SendDialog(playerid, "SelectTeam" + playerid, d);
         }
 
-        enum Team
+        public enum Team
         {
             Blue,
             Green,
             Spectator,
         }
 
-        Dictionary<int, Team> teams = new Dictionary<int, Team>();
         string BlueColor = "&1";
         string GreenColor = "&2";
         //string SpectatorColor = "&7";
@@ -97,48 +112,67 @@ namespace ManicDigger.Mods
             if (widget == "Team1")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Blue)
+                if (players[playerid].team == Team.Blue)
                 {
                     return;
                 }
-                teams[playerid] = Team.Blue;
-                kills[playerid] = 0;
-                m.SetPlayerModel(playerid, "playerwar.txt", "playerblue.png");
-                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
+                players[playerid].team = Team.Blue;
+                players[playerid].kills = 0;
+                UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
-                Respawn(playerid);
+                if (players[playerid].firstteam)
+                {
+                    Respawn(playerid);
+                }
+                else
+                {
+                    Die(playerid);
+                }
             }
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Green)
+                if (players[playerid].team == Team.Green)
                 {
                     return;
                 }
-                teams[playerid] = Team.Green;
-                kills[playerid] = 0;
-                m.SetPlayerModel(playerid, "playerwar.txt", "playergreen.png");
-                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
+                players[playerid].team = Team.Green;
+                players[playerid].kills = 0;
+                UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
-                Respawn(playerid);
+                if (players[playerid].firstteam)
+                {
+                    Respawn(playerid);
+                }
+                else
+                {
+                    Die(playerid);
+                }
             }
             if (widget == "Team3")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (teams.ContainsKey(playerid) && teams[playerid] == Team.Spectator)
+                if (players[playerid].team == Team.Spectator)
                 {
                     return;
                 }
-                teams[playerid] = Team.Spectator;
-                kills[playerid] = 0;
-                m.SetPlayerModel(playerid, "playerwar.txt", "mineplayer.png");
-                m.SetPlayerHeight(playerid, 2.2f, 2.4f);
+                players[playerid].team = Team.Spectator;
+                players[playerid].kills = 0;
+                UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, true);
                 m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
-                Respawn(playerid);
+                if (players[playerid].firstteam)
+                {
+                    Respawn(playerid);
+                }
+                else
+                {
+                    Die(playerid);
+                }
             }
+            players[playerid].firstteam = false;
             if (!started)
             {
                 started = true;
@@ -166,7 +200,7 @@ namespace ManicDigger.Mods
             int posx = -1;
             int posy = -1;
             int posz = -1;
-            switch (teams[playerid])
+            switch (players[playerid].team)
             {
                 case Team.Blue:
                     posx = 50;
@@ -201,10 +235,18 @@ namespace ManicDigger.Mods
         {
             if (!EnableTeamkill)
             {
-                if (teams[sourceplayer] == teams[targetplayer])
+                if (players[sourceplayer].team == players[targetplayer].team)
                 {
                     return;
                 }
+            }
+            if (players[targetplayer].isdead)
+            {
+                return;
+            }
+            if (players[sourceplayer].team == Team.Spectator)
+            {
+                return;
             }
             int health = m.GetPlayerHealth(targetplayer);
             Dictionary<string, int> DamageHead = (Dictionary<string, int>)m.GetGlobalDataNotSaved("DamageHead");
@@ -216,16 +258,12 @@ namespace ManicDigger.Mods
             health -= head ? dmghead : dmgbody;
             if (health <= 0)
             {
-                if (teams[sourceplayer] != teams[targetplayer])
+                if (players[sourceplayer].team != players[targetplayer].team)
                 {
-                    kills[sourceplayer] = kills[sourceplayer] + 1;
+                    players[sourceplayer].kills = players[sourceplayer].kills + 1;
                 }
-                m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
-                    (int)m.GetPlayerPositionY(targetplayer),
-                    (int)m.GetPlayerPositionZ(targetplayer), "death.ogg");
-                m.SetPlayerHealth(targetplayer, m.GetPlayerMaxHealth(targetplayer), m.GetPlayerMaxHealth(targetplayer));
-                Respawn(targetplayer);
-                if (teams[sourceplayer] == teams[targetplayer])
+                Die(targetplayer);
+                if (players[sourceplayer].team == players[targetplayer].team)
                 {
                     m.SendMessageToAll(string.Format("{0} kills {1} - " + m.colorError() + "TEAMKILL", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
 
@@ -244,18 +282,25 @@ namespace ManicDigger.Mods
             }
         }
 
+        void Die(int player)
+        {
+            m.PlaySoundAt((int)m.GetPlayerPositionX(player),
+                (int)m.GetPlayerPositionY(player),
+                (int)m.GetPlayerPositionZ(player), "death.ogg");
+            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
+            //Respawn(targetplayer);
+            players[player].isdead = true;
+            m.FollowPlayer(player, player, true);
+            UpdatePlayerModel(player);
+        }
+
         void RespawnKey(int player, SpecialKey key)
         {
             if (key != SpecialKey.Respawn)
             {
                 return;
             }
-            m.PlaySoundAt((int)m.GetPlayerPositionX(player),
-                (int)m.GetPlayerPositionY(player),
-                (int)m.GetPlayerPositionZ(player), "death.ogg");
-            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
-            Respawn(player);
-            m.SendMessageToAll(string.Format("{0} dies", m.GetPlayerName(player)));
+            Die(player);
         }
 
         void OnTabKey(int player, SpecialKey key)
@@ -344,30 +389,16 @@ namespace ManicDigger.Mods
             int[] AllPlayers = m.AllPlayers();
             foreach (int p in AllPlayers)
             {
-                if (teams.ContainsKey(p))
-                {
-                    playersByTeam[teams[p]].Add(p);
-                }
-                else
-                {
-                    playersByTeam[Team.Spectator].Add(p);
-                }
+                playersByTeam[players[p].team].Add(p);
             }
             Team[] allteams = new Team[] { Team.Blue, Team.Spectator, Team.Green };
             for (int t = 0; t < allteams.Length; t++)
             {
                 List<int> players = playersByTeam[allteams[t]];
-                foreach (int p in players)
-                {
-                    if (!kills.ContainsKey(p))
-                    {
-                        kills[p] = 0;
-                    }
-                }
-                players.Sort((a, b) => (kills[b].CompareTo(kills[a])));
+                players.Sort((a, b) => (this.players[b].kills.CompareTo(this.players[a].kills)));
                 for (int i = 0; i < players.Count; i++)
                 {
-                    string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), kills[players[i]]);
+                    string s = string.Format("{0} {1}ms {2} kills", m.GetPlayerName(players[i]), (int)(m.GetPlayerPing(players[i]) * 1000), this.players[players[i]].kills);
                     widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
                 }
             }
@@ -387,7 +418,6 @@ namespace ManicDigger.Mods
             d.Widgets = widgets.ToArray();
             m.SendDialog(player, "PlayerList", d);
         }
-        Dictionary<int, int> kills = new Dictionary<int, int>();
 
 
         private int pageCount = 0; //number of pages for player table entries
@@ -487,7 +517,7 @@ namespace ManicDigger.Mods
             }
         }
 
-        void OnChangedWeapon(int player)
+        void UpdatePlayerModel(int player)
         {
             Inventory inv = m.GetInventory(player);
             Item item = inv.RightHand[m.GetActiveMaterialSlot(player)];
@@ -498,8 +528,9 @@ namespace ManicDigger.Mods
             if (blockid == m.GetBlockId("SubmachineGun")) { model = "playerwarsubmachinegun.txt"; }
             if (blockid == m.GetBlockId("Shotgun")) { model = "playerwarshotgun.txt"; }
             if (blockid == m.GetBlockId("Rifle")) { model = "playerwarrifle.txt"; }
-            Team team = Team.Spectator;
-            if (teams.ContainsKey(player)) { team = teams[player]; }
+            if (players[player].isdead) { model = "playerwardead.txt"; }
+            m.SetPlayerHeight(player, 2.2f, 2.4f);
+            Team team = players[player].team;
             switch (team)
             {
                 case Team.Blue:
@@ -511,6 +542,43 @@ namespace ManicDigger.Mods
                 case Team.Spectator:
                     m.SetPlayerModel(player, model, "mineplayer.png");
                     break;
+            }
+        }
+
+        void UpdateRespawnTimer()
+        {
+            int[] allplayers = m.AllPlayers();
+            int secondsToRespawn = (int)((CurrentRespawnTime + RespawnTime) - DateTime.UtcNow).TotalSeconds;
+            if (secondsToRespawn <= 0)
+            {
+                for (int i = 0; i < allplayers.Length; i++)
+                {
+                    int p = allplayers[i];
+                    if (players[p].isdead)
+                    {
+                        m.SendDialog(i, "RespawnCountdown" + p, null);
+                        players[p].isdead = false;
+                        m.FollowPlayer(p, -1, false);
+                        Respawn(p);
+                        UpdatePlayerModel(p);
+                    }
+                }
+                CurrentRespawnTime = DateTime.UtcNow;
+            }
+            for (int i = 0; i < allplayers.Length; i++)
+            {
+                int p = allplayers[i];
+                if (players[p].isdead)
+                {
+                    Dialog d = new Dialog();
+                    d.IsModal = false;
+                    string text = secondsToRespawn.ToString();
+                    DialogFont f = new DialogFont("Verdana", 60f, DialogFontStyle.Regular);
+                    Widget w = Widget.MakeText(text, f, -m.MeasureTextSize(text, f)[0] / 2, -200, Color.Red.ToArgb());
+                    d.Widgets = new Widget[1];
+                    d.Widgets[0] = w;
+                    m.SendDialog(i, "RespawnCountdown" + p, d);
+                }
             }
         }
     }

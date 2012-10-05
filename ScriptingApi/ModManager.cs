@@ -111,10 +111,9 @@ namespace ManicDigger
         void SetPlayerHeight(int playerid, float eyeheight, float modelheight);
         void DisablePrivilege(string privilege); //todo privileges
         void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a);
-
         Inventory GetInventory(int player);
-
         int GetActiveMaterialSlot(int player);
+        void FollowPlayer(int player, int target, bool tpp);
     }
 
     public enum SpecialKey

@@ -432,7 +432,7 @@ namespace ManicDigger
 
         public void SetPlayerPosition(int player, float x, float y, float z)
         {
-            if (server.clients[player].IsBot)
+            //if (server.clients[player].IsBot)
             {
                 server.clients[player].PositionMul32GlX = (int)(x * 32);
                 server.clients[player].PositionMul32GlY = (int)(z * 32);
@@ -669,6 +669,11 @@ namespace ManicDigger
         public int GetActiveMaterialSlot(int player)
         {
             return server.clients[player].ActiveMaterialSlot;
+        }
+
+        public void FollowPlayer(int player, int target, bool tpp)
+        {
+            server.SendPacketFollow(player, target, tpp);
         }
     }
 }

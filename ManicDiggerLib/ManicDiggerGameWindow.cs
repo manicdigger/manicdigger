@@ -1075,6 +1075,30 @@ namespace ManicDigger
             else throw new Exception();
         }
 
+        public void SetCamera(CameraType type)
+        {
+            if (type == CameraType.Fpp)
+            {
+                cameratype = CameraType.Fpp;
+                FreeMouse = false;
+                ENABLE_TPP_VIEW = false;
+                overheadcamera = false;
+            }
+            else if (type == CameraType.Tpp)
+            {
+                cameratype = CameraType.Tpp;
+                ENABLE_TPP_VIEW = true;
+            }
+            else
+            {
+                cameratype = CameraType.Overhead;
+                overheadcamera = true;
+                FreeMouse = true;
+                ENABLE_TPP_VIEW = true;
+                playerdestination = player.playerposition;
+            }
+        }
+
         private void ToggleVsync()
         {
             ENABLE_LAG++;
@@ -1107,7 +1131,7 @@ namespace ManicDigger
         end:
             StartTerrain();
         }
-        enum CameraType
+        public enum CameraType
         {
             Fpp,
             Tpp,
@@ -1565,17 +1589,30 @@ namespace ManicDigger
                 wantsjump = wantsjump,
             };
             bool soundnow;
-            d_Physics.Move(player, move, e.Time, out soundnow, push, Players[LocalPlayerId].ModelHeight);
-            if (soundnow)
+            if (FollowId == null)
             {
-                UpdateWalkSound(-1);
+                d_Physics.Move(player, move, e.Time, out soundnow, push, Players[LocalPlayerId].ModelHeight);
+                if (soundnow)
+                {
+                    UpdateWalkSound(-1);
+                }
+                if (player.isplayeronground && movedx != 0 || movedy != 0)
+                {
+                    UpdateWalkSound(e.Time);
+                }
+                UpdateBlockDamageToPlayer();
+                UpdateFallDamageToPlayer();
             }
-            if (player.isplayeronground && movedx != 0 || movedy != 0)
+            else
             {
-                UpdateWalkSound(e.Time);
+                if (FollowId == LocalPlayerId)
+                {
+                    move.movedx = 0;
+                    move.movedy = 0;
+                    move.wantsjump = false;
+                    d_Physics.Move(player, move, e.Time, out soundnow, push, players[LocalPlayerId].ModelHeight);
+                }
             }
-            UpdateBlockDamageToPlayer();
-            UpdateFallDamageToPlayer();
             if (guistate == GuiState.CraftingRecipes)
             {
                 CraftingMouse();
@@ -1843,6 +1880,11 @@ namespace ManicDigger
         List<Blood> blood = new List<Blood>();
         private void UpdatePicking()
         {
+            if (FollowId != null)
+            {
+                SelectedBlockPosition = new Vector3(-1, -1, -1);
+                return;
+            }
             int bulletsshot = 0;
             bool IsNextShot = false;
         NextBullet:
@@ -3439,8 +3481,50 @@ namespace ManicDigger
         bool titleset = false;
         string applicationname = Language.GameName;
         #region ILocalPlayerPosition Members
-        public Vector3 LocalPlayerPosition { get { return player.playerposition; } set { player.playerposition = value; } }
-        public Vector3 LocalPlayerOrientation { get { return player.playerorientation; } set { player.playerorientation = value; } }
+        public Vector3 LocalPlayerPosition
+        {
+            get
+            {
+                if (FollowId != null)
+                {
+                    if (FollowId == LocalPlayerId)
+                    {
+                        return player.playerposition;
+                    }
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
+                    return curstate.position;
+                }
+                return player.playerposition;
+            }
+            set
+            {
+                if (FollowId != null)
+                {
+                    return;
+                }
+                player.playerposition = value;
+            }
+        }
+        public Vector3 LocalPlayerOrientation
+        {
+            get
+            {
+                if (FollowId != null)
+                {
+                    if (FollowId == LocalPlayerId)
+                    {
+                        return player.playerorientation;
+                    }
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
+                    return HeadingPitchToOrientation(curstate.heading, curstate.pitch);
+                }
+                return player.playerorientation;
+            }
+            set
+            {
+                player.playerorientation = value;
+            }
+        }
         #endregion
         public void AddChatline(string s)
         {
@@ -4167,6 +4251,12 @@ namespace ManicDigger
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.PositionandOrientation, PositionAndOrientation = p }));
             lastsentposition = position;
         }
+        public static Vector3 HeadingPitchToOrientation(byte heading, byte pitch)
+        {
+            float x = ((float)heading / 256) * 2 * (float)Math.PI;
+            float y = (((float)pitch / 256) * 2 * (float)Math.PI) - (float)Math.PI;
+            return new Vector3() { X = x, Y = y };
+        }
         public static byte HeadingByte(Vector3 orientation)
         {
             return (byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256);
@@ -4699,8 +4789,7 @@ namespace ManicDigger
                     }
                     else
                     {
-                        dialogs[d.DialogId] = d.Dialog; 
-                        FreeMouse = true;
+                        dialogs[d.DialogId] = d.Dialog;
                         if (d.Dialog.IsModal)
                         {
                             guistate = GuiState.ModalDialog;
@@ -4708,11 +4797,40 @@ namespace ManicDigger
                         }
                     }
                     break;
+                case ServerPacketId.Follow:
+                    int? oldFollowId = FollowId;
+                    Follow = packet.Follow.Client;
+                    if (packet.Follow.Tpp)
+                    {
+                        SetCamera(CameraType.Overhead);
+                        player.playerorientation.X = (float)Math.PI;
+                        GuiStateBackToGame();
+                    }
+                    else
+                    {
+                        SetCamera(CameraType.Fpp);
+                    }
+                    break;
                 default:
                     break;
             }
             LastReceived = currentTime;
             //return lengthPrefixLength + packetLength;
+        }
+        string Follow = null;
+        int? FollowId
+        {
+            get
+            {
+                foreach (var k in Players)
+                {
+                    if (k.Value.Name.Equals(Follow))
+                    {
+                        return k.Key;
+                    }
+                }
+                return null;
+            }
         }
         private void PlaySoundAt(string name, float x, float y, float z)
         {
