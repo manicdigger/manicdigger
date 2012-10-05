@@ -780,6 +780,10 @@ namespace ManicDiggerServer
                     Console.WriteLine(e.ToString());
                 }
             }
+            foreach (var k in clients)
+            {
+                k.Value.socket.Update();
+            }
             NotifyMap();
             foreach (var k in clients)
             {

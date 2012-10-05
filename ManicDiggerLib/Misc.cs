@@ -1135,6 +1135,7 @@ namespace ManicDigger
     {
         IPEndPoint RemoteEndPoint { get; }
         void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel);
+        void Update();
     }
     public interface INetIncomingMessage
     {
@@ -1265,13 +1266,41 @@ namespace ManicDigger
         public byte[] ReadBytes(int numberOfBytes) { return message.ReadBytes(numberOfBytes); }
         public int LengthBytes { get { return message.LengthBytes; } }
     }
-
+    //Must limit amount of data sent at once because sending too much saturates lidgren-net and crashes client.
     public class MyNetConnection : INetConnection
     {
+        Stopwatch s = new Stopwatch();
+        public MyNetConnection()
+        {
+            s.Start();
+        }
+
+        public int MaxBytes = 10 * 1000;
+        public float PerSeconds = 0.05f;
+        public int currentbytes;
+
+        public Queue<INetOutgoingMessage> queued = new Queue<INetOutgoingMessage>();
+
         public NetConnection netConnection;
         public void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
         {
-            netConnection.SendMessage(((MyNetOutgoingMessage)msg).message, (NetDeliveryMethod)method, sequenceChannel);
+            if (method != MyNetDeliveryMethod.ReliableOrdered || sequenceChannel != 0)
+            {
+                netConnection.SendMessage(((MyNetOutgoingMessage)msg).message, (NetDeliveryMethod)method, sequenceChannel);
+            }
+            else
+            {
+                int len = ((MyNetOutgoingMessage)msg).message.LengthBytes;
+                if ((currentbytes == 0 || currentbytes + len <= MaxBytes) && queued.Count == 0)
+                {
+                    netConnection.SendMessage(((MyNetOutgoingMessage)msg).message, (NetDeliveryMethod)method, sequenceChannel);
+                    currentbytes += len;
+                }
+                else
+                {
+                    queued.Enqueue(msg);
+                }
+            }
         }
         public IPEndPoint RemoteEndPoint
         {
@@ -1279,7 +1308,7 @@ namespace ManicDigger
         }
         public override bool Equals(object obj)
         {
-            if(obj != null && obj is MyNetConnection)
+            if (obj != null && obj is MyNetConnection)
             {
                 return netConnection.Equals(((MyNetConnection)obj).netConnection);
             }
@@ -1288,6 +1317,30 @@ namespace ManicDigger
         public override int GetHashCode()
         {
             return netConnection.GetHashCode();
+        }
+        public void Update()
+        {
+            if (s.Elapsed.TotalSeconds >= PerSeconds)
+            {
+                //process up to MaxBytes
+                while (queued.Count > 0)
+                {
+                    MyNetOutgoingMessage m = (MyNetOutgoingMessage)queued.Peek();
+                    if (currentbytes == 0 || m.message.LengthBytes + currentbytes < MaxBytes)
+                    {
+                        queued.Dequeue();
+                        netConnection.SendMessage(m.message, NetDeliveryMethod.ReliableOrdered, 0);
+                        currentbytes += m.message.LengthBytes;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                s.Reset();
+                s.Start();
+                currentbytes = 0;
+            }
         }
     }
 
@@ -1349,6 +1402,9 @@ namespace ManicDigger
         public IPEndPoint RemoteEndPoint
         {
             get { return new IPEndPoint(IPAddress.Loopback, 0); }
+        }
+        public void Update()
+        {
         }
     }
     public class DummyNetIncomingmessage : INetIncomingMessage
