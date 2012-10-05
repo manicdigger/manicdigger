@@ -1879,7 +1879,7 @@ namespace ManicDigger
             if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
 
             Item item = d_Inventory.RightHand[ActiveMaterial];
-            bool ispistol = (left && item != null && blocktypes[item.BlockId].IsPistol);
+            bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
             bool ispistolshoot = ispistol && left;
 
             float unit_x = 0;
@@ -1923,7 +1923,7 @@ namespace ManicDigger
             Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
             pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
-            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((left && ispistol) ? 20 : 2));
+            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((ispistolshoot) ? 20 : 2));
 
             //pick models
             selectedmodelid = -1;
@@ -2039,7 +2039,7 @@ namespace ManicDigger
                 {
                     lastbuild = DateTime.Now;
                 }
-                if(ispistol)
+                if(ispistolshoot)
                 {
                     PacketClientShot shot = new PacketClientShot();
                     shot.FromX = pick.Start.X;
@@ -2243,7 +2243,7 @@ namespace ManicDigger
             }
         end:
             fastclicking = false;
-            if (!(left || right || middle))
+            if ((!(left || right || middle)) && (!ispistol))
             {
                 lastbuild = new DateTime();
                 fastclicking = true;
