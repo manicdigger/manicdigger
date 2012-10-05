@@ -1276,7 +1276,7 @@ namespace ManicDigger
         }
 
         public int MaxBytes = 10 * 1000;
-        public float PerSeconds = 0.05f;
+        public float PerSeconds = 0.1f;
         public int currentbytes;
 
         public Queue<INetOutgoingMessage> queued = new Queue<INetOutgoingMessage>();
