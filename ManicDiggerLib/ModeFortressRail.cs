@@ -78,7 +78,6 @@ namespace ManicDigger
             {
                 Reverse();
             }
-
             if (!wasepressed && keyboardstate[GetKey(OpenTK.Input.Key.E)] && !railriding && !ENABLE_FREEMOVE && GuiTyping != TypingState.Typing)
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
@@ -91,6 +90,7 @@ namespace ManicDigger
                 {
                     var railunderplayer = d_Data.Rail[d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
+                    originalmodelheight = CharacterEyesHeight;
                     CharacterEyesHeight = minecartheight;
                     currentvehiclespeed = 0;
                     if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
@@ -132,9 +132,10 @@ namespace ManicDigger
             wasqpressed = keyboardstate[GetKey(OpenTK.Input.Key.Q)] && GuiTyping != TypingState.Typing;
             wasepressed = keyboardstate[GetKey(OpenTK.Input.Key.E)] && GuiTyping != TypingState.Typing;
         }
+        float originalmodelheight;
         private void ExitVehicle()
         {
-            CharacterEyesHeight = WalkCharacterHeight;
+            CharacterEyesHeight = originalmodelheight;
             railriding = false;
             ENABLE_FREEMOVE = false;
             ENABLE_MOVE = true;
