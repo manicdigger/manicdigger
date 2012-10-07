@@ -436,5 +436,18 @@ namespace ManicDigger
             {
             }
         }
+
+        public bool IsChunkRendered(int cx, int cy, int cz)
+        {
+            int xx = cx*chunksize - CurrentRendererMapPositionG.x;
+            int yy = cy*chunksize - CurrentRendererMapPositionG.y;
+            int zz = cz*chunksize - CurrentRendererMapPositionG.z;
+            if (xx < 0 || yy < 0 || zz < 0 || xx >= mapAreaSize || yy >= mapAreaSize || zz >= MapSizeZ)
+            {
+                return false;
+            }
+            int pos = MapUtil.Index3d(xx / chunksize, yy / chunksize, zz / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize);
+            return RendererMap[pos] != null && RendererMap[pos].ids != null;
+        }
     }
 }

@@ -2839,6 +2839,10 @@ namespace ManicDigger
                 {
                     continue;
                 }
+                if (!IsChunkRendered((int)curpos.X / chunksize, (int)curpos.Z / chunksize, (int)curpos.Y / chunksize))
+                {
+                    continue;
+                }
                 float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
                 Vector3 FeetPos = curpos;
