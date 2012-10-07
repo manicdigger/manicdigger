@@ -1982,6 +1982,9 @@ if (sent >= unknown.Count) { break; }
                         changedactivematerialslot[i](clientid);
                     }
                     break;
+                case ClientPacketId.Leave:
+                    KillPlayer(clientid);
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;

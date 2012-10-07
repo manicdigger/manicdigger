@@ -184,6 +184,7 @@ namespace ManicDigger
             w.d_HudInventory = hudInventory;
             w.d_CurrentShadows = this;
             w.d_ResetMap = this;
+            crashreporter.OnCrash += new EventHandler(crashreporter_OnCrash);
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
@@ -193,6 +194,22 @@ namespace ManicDigger
                     internetgamefactory, blockrenderertorch, playerrenderer,
                     map, terrainchunktesselator);
             }
+        }
+
+        void crashreporter_OnCrash(object sender, EventArgs e)
+        {
+            try
+            {
+                SendLeave(LeaveReason.Crash);
+            }
+            catch
+            {
+            }
+        }
+
+        void SendLeave(LeaveReason reason)
+        {
+            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Leave, Leave = new PacketClientLeave() { Reason = reason} }));
         }
 
         [Inject]
@@ -512,6 +529,10 @@ namespace ManicDigger
             float mult = 1f;
             float[] global_ambient = new float[] { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
             GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
+        }
+        public void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            SendLeave(LeaveReason.Leave);
         }
         public void OnClosed(EventArgs e)
         {
@@ -1168,6 +1189,7 @@ namespace ManicDigger
         TypingState GuiTyping = TypingState.None;
 
         public ConnectData connectdata;
+        public CrashReporter crashreporter;
         public bool issingleplayer;
         public bool StartedSinglePlayerServer;
         private void Connect()

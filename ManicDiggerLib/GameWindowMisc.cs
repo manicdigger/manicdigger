@@ -307,6 +307,7 @@ namespace ManicDigger
         void OnUpdateFrame(FrameEventArgs e);
         void OnRenderFrame(FrameEventArgs e);
         void OnKeyPress(OpenTK.KeyPressEventArgs e);
+        void OnClosing(System.ComponentModel.CancelEventArgs e);
     }
     //OpenTK.GameWindow can't be destroyed and recreated during program lifetime,
     //because it would be very noticeable (new window in Windows, 5-10 seconds).
@@ -343,6 +344,11 @@ namespace ManicDigger
         {
             base.OnKeyPress(e);
             mywindow.OnKeyPress(e);
+        }
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            mywindow.OnClosing(e);
         }
     }
     public class ConnectData

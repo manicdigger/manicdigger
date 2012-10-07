@@ -29,8 +29,10 @@ namespace GameModeFortress
         }
         public ManicDiggerProgram(string[] args)
         {
-            new CrashReporter().Start(delegate { Start(args); });
+            crashreporter = new CrashReporter();
+            crashreporter.Start(delegate { Start(args); });
         }
+        CrashReporter crashreporter;
         private void Start(string[] args)
         {
             string appPath = Path.GetDirectoryName(Application.ExecutablePath);
@@ -135,6 +137,7 @@ namespace GameModeFortress
             w.d_GlWindow = glwindow;
             w.d_Exit = exit;
             w.connectdata = connectdata;
+            w.crashreporter = crashreporter;
             w.Start();
             w.Run();
             exit.exit = true;

@@ -114,7 +114,7 @@ namespace ManicDigger
             }
         }
         public static string gamepathcrash = GameStorePath.GetStorePath();
-        public static void Crash(Exception e)
+        public void Crash(Exception e)
         {
             if (!Directory.Exists(gamepathcrash))
             {
@@ -123,6 +123,10 @@ namespace ManicDigger
             string crashfile = Path.Combine(gamepathcrash, "ManicDiggerCrash.txt");
             File.WriteAllText(crashfile, e.ToString());
             Console.WriteLine(e);
+            if (OnCrash != null)
+            {
+                OnCrash(this, new EventArgs());
+            }
             try
             {
                 for (int i = 0; i < 5; i++)
@@ -139,5 +143,6 @@ namespace ManicDigger
             }
             Environment.Exit(1);
         }
+        public event EventHandler OnCrash;
     }
 }

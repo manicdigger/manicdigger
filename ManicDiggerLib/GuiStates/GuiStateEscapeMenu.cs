@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Xml.Serialization;
 using System.IO;
 using OpenTK;
+using GameModeFortress;
 
 namespace ManicDigger
 {
@@ -61,6 +62,7 @@ namespace ManicDigger
                 {
                     RestoreResolution();
                     d_Exit.exit = true;
+                    SendLeave(LeaveReason.Leave);
                     this.d_GlWindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);

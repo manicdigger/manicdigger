@@ -454,6 +454,19 @@ namespace GameModeFortress
         public PacketClientSpecialKey SpecialKey;
         [ProtoMember(14, IsRequired = false)]
         public PacketClientActiveMaterialSlot ActiveMaterialSlot;
+        [ProtoMember(15, IsRequired = false)]
+        public PacketClientLeave Leave;
+    }
+    [ProtoContract]
+    public class PacketClientLeave
+    {
+        [ProtoMember(1)]
+        public LeaveReason Reason;
+    }
+    public enum LeaveReason
+    {
+        Leave,
+        Crash,
     }
     [ProtoContract]
     public class PacketServerChunk
@@ -639,6 +652,7 @@ namespace GameModeFortress
         Shot = 54,
         SpecialKey = 55,
         ActiveMaterialSlot = 56,
+        Leave = 57,
         ExtendedPacketCommand = 100,
     }
     /// <summary>
