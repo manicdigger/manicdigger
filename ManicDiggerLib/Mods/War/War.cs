@@ -31,6 +31,7 @@ namespace ManicDigger.Mods
             m.RegisterChangedActiveMaterialSlot(UpdatePlayerModel);
             m.RegisterTimer(UpdateRespawnTimer, 1);
             CurrentRespawnTime = DateTime.UtcNow;
+            m.RegisterTimer(UpdateMedicalKit, 0.1);
         }
 
         public enum PlayerClass
@@ -325,6 +326,10 @@ namespace ManicDigger.Mods
                 if (widget == "Subclass1")
                 {
                     m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    for (int i = 0; i < 4; i++)
+                    {
+                        m.GrabBlock(playerid, m.GetBlockId("MedicalKit"));
+                    }
                 }
                 m.NotifyInventory(playerid);
             }
@@ -727,6 +732,41 @@ namespace ManicDigger.Mods
                     d.Widgets = new Widget[1];
                     d.Widgets[0] = w;
                     m.SendDialog(p, "RespawnCountdown" + p, d);
+                }
+            }
+        }
+
+        void UpdateMedicalKit()
+        {
+            int[] allplayers = m.AllPlayers();
+            int medicalkit = m.GetBlockId("MedicalKit");
+            foreach (int p in allplayers)
+            {
+                int px = (int)m.GetPlayerPositionX(p);
+                int py = (int)m.GetPlayerPositionY(p);
+                int pz = (int)m.GetPlayerPositionZ(p);
+                if (m.IsValidPos(px, py, pz))
+                {
+                    int block = m.GetBlock(px, py, pz);
+                    if (block == medicalkit)
+                    {
+                        int health = m.GetPlayerHealth(p);
+                        int maxhealth = m.GetPlayerMaxHealth(p);
+                        if (health >= maxhealth)
+                        {
+                            continue;
+                        }
+                        health += 30;
+                        if (health > maxhealth)
+                        {
+                            health = maxhealth;
+                        }
+                        m.SetPlayerHealth(p, health, maxhealth);
+                        m.SetBlock(px, py, pz, 0);
+                        //m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
+                        //    (int)m.GetPlayerPositionY(targetplayer),
+                        //    (int)m.GetPlayerPositionZ(targetplayer), "heal.ogg");
+                    }
                 }
             }
         }

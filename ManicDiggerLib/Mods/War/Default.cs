@@ -952,6 +952,16 @@ namespace ManicDigger.Mods
             });
             DamageBody["Rifle"] = 35;
             DamageHead["Rifle"] = 100;
+            m.SetBlockType(158, "MedicalKit", new BlockType()
+            {
+                AllTextures = "MedicalKit",
+                DrawType = DrawType.Transparent,
+                WalkableType = WalkableType.Empty,
+                Sounds = solidSounds,
+                handimage = null,
+                IsPistol = false,
+                WalkSpeedWhenUsed = 1f,
+            });
             m.SetGlobalDataNotSaved("DamageHead", DamageHead);
             m.SetGlobalDataNotSaved("DamageBody", DamageBody);
 
