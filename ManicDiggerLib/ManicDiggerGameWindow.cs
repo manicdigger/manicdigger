@@ -184,6 +184,7 @@ namespace ManicDigger
             w.d_HudInventory = hudInventory;
             w.d_CurrentShadows = this;
             w.d_ResetMap = this;
+            d_The3d.currentfov = GetCurrentFov;
             crashreporter.OnCrash += new EventHandler(crashreporter_OnCrash);
             if (Debugger.IsAttached)
             {
@@ -692,6 +693,20 @@ namespace ManicDigger
             arguments = arguments.Trim();
             return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
         }
+
+        private float GetCurrentFov()
+        {
+            if (IronSights)
+            {
+                Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (item != null && item.ItemClass == ItemClass.Block)
+                {
+                    return d_The3d.fov * blocktypes[item.BlockId].IronSightsFov;
+                }
+            }
+            return d_The3d.fov;
+        }
+
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
@@ -1822,8 +1837,18 @@ namespace ManicDigger
                 //enable_acceleration = false;
                 movespeednow *= 0.2f;
             }
+            Item item = d_Inventory.RightHand[ActiveMaterial];
+            if (item != null && item.ItemClass == ItemClass.Block)
+            {
+                movespeednow *= blocktypes[item.BlockId].WalkSpeedWhenUsed;
+                if (IronSights)
+                {
+                    movespeednow *= blocktypes[item.BlockId].IronSightsMoveSpeed;
+                }
+            }
             return movespeednow;
         }
+        bool IronSights;
         int? BlockUnderPlayer()
         {
             if (!MapUtil.IsValidPos(d_Map, (int)player.playerposition.X,
@@ -1899,6 +1924,7 @@ namespace ManicDigger
             public Vector3 position;
             public DateTime time;
         }
+        DateTime lastironsightschange;
         List<Blood> blood = new List<Blood>();
         private void UpdatePicking()
         {
@@ -1946,10 +1972,16 @@ namespace ManicDigger
             bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
             bool ispistolshoot = ispistol && left;
 
+            if (ispistol && mouserightclick && (DateTime.UtcNow - lastironsightschange).TotalSeconds >= 0.5)
+            {
+                IronSights = !IronSights;
+                lastironsightschange = DateTime.UtcNow;
+            }
+
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
-            int FOV = 600;
+            int FOV = (int)GetCurrentFov() * 10; // 600
             float ASPECT = 640f / 480;
             float near_height = NEAR * (float)(Math.Tan(FOV * Math.PI / 360.0));
             Vector3 ray = new Vector3(unit_x * near_height * ASPECT, unit_y * near_height, 1);//, 0);
@@ -2197,6 +2229,10 @@ namespace ManicDigger
                     player.playerorientation.X -= (float)rnd.NextDouble() * CurrentRecoil;
                     player.playerorientation.Y += (float)rnd.NextDouble() * CurrentRecoil * 2 - CurrentRecoil;
 
+                    goto end;
+                }
+                if (ispistol && right)
+                {
                     goto end;
                 }
                 if (pick2.Count > 0)
@@ -2661,6 +2697,10 @@ namespace ManicDigger
                     if (item != null)
                     {
                         img = blocktypes[item.BlockId].handimage;
+                    }
+                    if (IronSights)
+                    {
+                        img = blocktypes[item.BlockId].IronSightsImage;
                     }
                     if (img == null)
                     {
@@ -3250,7 +3290,12 @@ namespace ManicDigger
 
             if (CurrentAimRadius > 1)
             {
-                Circle3i(Width / 2, Height / 2, CurrentAimRadius);
+                float fov = d_The3d.fov;
+                if (d_The3d.currentfov != null)
+                {
+                    fov = d_The3d.currentfov();
+                }
+                Circle3i(Width / 2, Height / 2, CurrentAimRadius * d_The3d.fov / fov);
             }
             d_The3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
         }
@@ -3280,6 +3325,10 @@ namespace ManicDigger
                     return 0;
                 }
                 float radius = ((float)blocktypes[item.BlockId].AimRadius / 800) * Width;
+                if (IronSights)
+                {
+                    radius = ((float)blocktypes[item.BlockId].IronSightsAimRadius / 800) * Width;
+                }
                 return radius + RadiusWhenMoving * radius * (Math.Min(playervelocity.Length / movespeed, 1));
             }
         }

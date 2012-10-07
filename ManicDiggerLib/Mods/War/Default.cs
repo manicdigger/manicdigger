@@ -882,6 +882,12 @@ namespace ManicDigger.Mods
                 AimRadius = 15,
                 Recoil = 0.04f,
                 Delay = 0.5f,
+                WalkSpeedWhenUsed = 1f,
+                IronSightsEnabled = true,
+                IronSightsMoveSpeed = 1f,
+                IronSightsImage = "pistolhandsights.png",
+                IronSightsAimRadius = 15,
+                IronSightsFov = 0.8f,
             });
             DamageBody["Pistol"] = 15;
             DamageHead["Pistol"] = 50;
@@ -896,6 +902,12 @@ namespace ManicDigger.Mods
                 AimRadius = 20,
                 Recoil = 0.04f,
                 Delay = 0.1f,
+                WalkSpeedWhenUsed = 1f,
+                IronSightsEnabled = true,
+                IronSightsMoveSpeed = 1f,
+                IronSightsImage = "submachinegunhandsights.png",
+                IronSightsAimRadius = 20,
+                IronSightsFov = 0.8f,
             });
             DamageBody["SubmachineGun"] = 15;
             DamageHead["SubmachineGun"] = 40;
@@ -911,6 +923,12 @@ namespace ManicDigger.Mods
                 Recoil = 0.08f,
                 Delay = 1f,
                 BulletsPerShot = 6,
+                WalkSpeedWhenUsed = 1f,
+                IronSightsEnabled = true,
+                IronSightsMoveSpeed = 1f,
+                IronSightsImage = "shotgunhandsights.png",
+                IronSightsAimRadius = 50,
+                IronSightsFov = 0.8f,
             });
             DamageBody["Shotgun"] = 35;
             DamageHead["Shotgun"] = 60;
@@ -922,9 +940,15 @@ namespace ManicDigger.Mods
                 Sounds = solidSounds,
                 handimage = "riflehand.png",
                 IsPistol = true,
-                AimRadius = 10,
+                AimRadius = 20,
                 Recoil = 0.04f,
-                Delay = 0.5f,
+                Delay = 2f,
+                WalkSpeedWhenUsed = 1f,
+                IronSightsEnabled = true,
+                IronSightsMoveSpeed = 0.4f,
+                IronSightsImage = "riflehandsights.png",
+                IronSightsAimRadius = 10,
+                IronSightsFov = 0.5f,
             });
             DamageBody["Rifle"] = 35;
             DamageHead["Rifle"] = 100;

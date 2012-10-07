@@ -402,6 +402,7 @@ namespace ManicDigger
         int whitetexture = -1;
         Dictionary<string, int> textures = new Dictionary<string, int>();
         public float fov = MathHelper.PiOver3;
+        public Func<float> currentfov;
         public void Set3dProjection()
         {
             Set3dProjection(zfar);
@@ -409,7 +410,12 @@ namespace ManicDigger
         public void Set3dProjection(float zfar)
         {
             float aspect_ratio = d_ViewportSize.Width / (float)d_ViewportSize.Height;
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov, aspect_ratio, znear, zfar);
+            float fov1 = fov;
+            if (currentfov != null)
+            {
+                fov1 = currentfov();
+            }
+            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov1, aspect_ratio, znear, zfar);
             ProjectionMatrix = perpective;
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
             GL.MatrixMode(MatrixMode.Projection);

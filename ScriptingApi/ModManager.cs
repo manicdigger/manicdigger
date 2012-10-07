@@ -515,6 +515,18 @@ namespace ManicDigger
         public float Delay;
         [ProtoMember(26)]
         public float BulletsPerShot;
+        [ProtoMember(27)]
+        public float WalkSpeedWhenUsed = 1;
+        [ProtoMember(28)]
+        public bool IronSightsEnabled;
+        [ProtoMember(29)]
+        public float IronSightsMoveSpeed = 1;
+        [ProtoMember(30)]
+        public string IronSightsImage;
+        [ProtoMember(31)]
+        public float IronSightsAimRadius;
+        [ProtoMember(32)]
+        public float IronSightsFov;
         public string AllTextures
         {
             set
