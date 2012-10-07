@@ -1900,6 +1900,8 @@ if (sent >= unknown.Count) { break; }
                     break;
                 case ClientPacketId.Shot:
                     PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
+                    SendBullet(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
+                        packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ, 150);
                     if (clients[clientid].LastPing < 0.3)
                     {
                         if (packet.Shot.HitPlayer != -1)
@@ -1983,6 +1985,30 @@ if (sent >= unknown.Count) { break; }
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
+            }
+        }
+
+        private void SendBullet(int player, float fromx, float fromy, float fromz, float tox, float toy, float toz, float speed)
+        {
+            foreach (var k in clients)
+            {
+                if (k.Key == player)
+                {
+                    continue;
+                }
+                PacketServer p = new PacketServer();
+                p.PacketId = ServerPacketId.Bullet;
+                p.Bullet = new PacketServerBullet()
+                {
+                    FromX = fromx,
+                    FromY = fromy,
+                    FromZ = fromz,
+                    ToX = tox,
+                    ToY = toy,
+                    ToZ = toz,
+                    Speed = speed
+                };
+                SendPacket(k.Key, Serialize(p));
             }
         }
         public List<ModDelegates.ChangedActiveMaterialSlot> changedactivematerialslot = new List<ModDelegates.ChangedActiveMaterialSlot>();

@@ -326,6 +326,24 @@ namespace GameModeFortress
         public bool Tpp;
     }
     [ProtoContract]
+    public class PacketServerBullet
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public float FromX;
+        [ProtoMember(2, IsRequired = false)]
+        public float FromY;
+        [ProtoMember(3, IsRequired = false)]
+        public float FromZ;
+        [ProtoMember(4, IsRequired = false)]
+        public float ToX;
+        [ProtoMember(5, IsRequired = false)]
+        public float ToY;
+        [ProtoMember(6, IsRequired = false)]
+        public float ToZ;
+        [ProtoMember(7, IsRequired = false)]
+        public float Speed;
+    }
+    [ProtoContract]
     public class PacketServer
     {
         [ProtoMember(90, IsRequired = false)]
@@ -394,6 +412,8 @@ namespace GameModeFortress
         public PacketServerDialog Dialog;
         [ProtoMember(28, IsRequired = false)]
         public PacketServerFollow Follow;
+        [ProtoMember(29, IsRequired = false)]
+        public PacketServerBullet Bullet;
     }
     [ProtoContract]
     public class PacketClientActiveMaterialSlot
@@ -662,6 +682,7 @@ namespace GameModeFortress
         Freemove,
         Dialog,
         Follow,
+        Bullet,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

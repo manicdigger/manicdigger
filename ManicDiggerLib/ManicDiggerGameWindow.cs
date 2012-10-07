@@ -2083,13 +2083,19 @@ namespace ManicDigger
                 }
                 if(ispistolshoot)
                 {
+                    Vector3 to = pick.End;
+                    if (pick2.Count > 0)
+                    {
+                        to = pick2[0].pos;
+                    }
+
                     PacketClientShot shot = new PacketClientShot();
                     shot.FromX = pick.Start.X;
                     shot.FromY = pick.Start.Y;
                     shot.FromZ = pick.Start.Z;
-                    shot.ToX = pick.End.X;
-                    shot.ToY = pick.End.Y;
-                    shot.ToZ = pick.End.Z;
+                    shot.ToX = to.X;
+                    shot.ToY = to.Y;
+                    shot.ToZ = to.Z;
                     shot.HitPlayer = -1;
 
                     foreach (var k in d_Clients.Players)
@@ -2151,9 +2157,9 @@ namespace ManicDigger
                                 shot.WeaponBlock = item.BlockId;
                             }
                         }
-                    }                    
-
-
+                    }
+                    
+                    bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
                     d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
@@ -2574,7 +2580,35 @@ namespace ManicDigger
                     d_The3d.Draw2dBitmapFile("blood.png", 0, 0, ImageSize, ImageSize);
                     GL.PopMatrix();
                     if ((DateTime.UtcNow - b.time).TotalSeconds > 0.2) { blood.Remove(b); }
-                }                
+                }
+                foreach (Bullet b in new List<Bullet>(bullets))
+                {
+                    if (b.progress < 1f)
+                    {
+                        b.progress = 1f;
+                    }
+                    Vector3 pos = b.from;
+                    Vector3 dir = (b.to - b.from);
+                    float length = dir.Length;
+                    dir.Normalize();
+                    pos += dir * (b.progress + b.speed * (float)dt);
+                    b.progress += b.speed * (float)dt;
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    GL.Translate(pos.X, pos.Y, pos.Z);
+                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
+                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
+                    GL.Scale(0.02, 0.02, 0.02);
+                    int ImageSize = 4;
+                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    if (!textures.ContainsKey("Sponge.png"))
+                    {
+                        textures["Sponge.png"] = d_The3d.LoadTexture(d_GetFile.GetFile("Sponge.png"));
+                    }
+                    d_The3d.Draw2dTexture(textures["Sponge.png"], 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    GL.PopMatrix();
+                    if (b.progress > length) { bullets.Remove(b); }
+                }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
@@ -2628,6 +2662,7 @@ namespace ManicDigger
             mouseleftdeclick = mouserightdeclick = false;
             if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
+        Dictionary<string, int> textures = new Dictionary<string, int>();
         bool startedconnecting;
         private void SetFog()
         {
@@ -4815,12 +4850,27 @@ namespace ManicDigger
                         SetCamera(CameraType.Fpp);
                     }
                     break;
+                case ServerPacketId.Bullet:
+                    Bullet bullet = new Bullet();
+                    bullet.from = new Vector3(packet.Bullet.FromX, packet.Bullet.FromY, packet.Bullet.FromZ);
+                    bullet.to = new Vector3(packet.Bullet.ToX, packet.Bullet.ToY, packet.Bullet.ToZ);
+                    bullet.speed = packet.Bullet.Speed;
+                    bullets.Add(bullet);
+                    break;
                 default:
                     break;
             }
             LastReceived = currentTime;
             //return lengthPrefixLength + packetLength;
         }
+        public class Bullet
+        {
+            public Vector3 from;
+            public Vector3 to;
+            public float speed;
+            public float progress;
+        }
+        List<Bullet> bullets = new List<Bullet>();
         string Follow = null;
         int? FollowId
         {
