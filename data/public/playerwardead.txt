@@ -7,6 +7,12 @@ set,legsheight,0.9
 set,armsheight,1.8
 set,minuslegsheight,-0.9
 set,minusarmsheight,-1.8
+set,limbrotation3,limbrotation1
+mul,limbrotation3,0.5
+set,limbrotation4,limbrotation2
+mul,limbrotation4,0.125
+set,updown2,updown
+mul,updown2,0.5
 
 rotate,headingdeg,0,1,0
 translate,-1.2,0.2,0
@@ -49,11 +55,11 @@ popmatrix
 pushmatrix
 translate,0.15,legsheight,0
 ifeq,anim,walk
-rotate,limbrotation1, 0, 0, 1
+rotate,limbrotation1,0,0,1
 endif
 translate,-0.15, minuslegsheight, 0
 
-makecoords, coords, 4, 8, 4, 0, 16
+makecoords, coords, 4, 12, 4, 0, 16
 drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
 
 popmatrix
@@ -62,7 +68,7 @@ popmatrix
 pushmatrix
 translate,0.15,legsheight,0
 ifeq,anim,walk
-rotate,limbrotation2, 0, 0, 1
+rotate,limbrotation2,0,0,1
 endif
 translate,-0.15, minuslegsheight, 0
 
@@ -75,25 +81,51 @@ popmatrix
 pushmatrix
 translate,0.15, armsheight, 0
 ifeq,anim,walk
-rotate,limbrotation2, 0, 0, 1
+rotate,limbrotation2,0,0,1
 endif
 translate,-0.15, minusarmsheight, 0
 
-makecoords, coords, 4, 8, 4, 40, 16
+makecoords, coords, 4, 12, 4, 40, 16
 drawcuboid, 0, legsheight, -0.3, 0.3, 0.9, 0.3, skin, coords
 
 popmatrix
+
 
 //right arm
 pushmatrix
 translate,0.15, armsheight, 0
 ifeq,anim,walk
-rotate,limbrotation1, 0, 0, 1
+rotate,limbrotation1,0,0,1
 endif
 translate,-0.15, minusarmsheight, 0
-
 drawcuboid, 0, legsheight, 0.6, 0.3, 0.9, 0.3, skin, coords
 
 popmatrix
+
+//cape
+pushmatrix
+translate,0.3, armsheight, 0
+ifeq,anim,walk
+rotate,limbrotation4,0,0,1
+rotate,20,0,0,1
+endif
+translate,-0.3, minusarmsheight, 0
+makecoords,coords,2,2,2,0,4
+drawcuboid,0.3,legsheight,0,0.1,0.9,0.6,skin,coords
+popmatrix
+
+//cape
+pushmatrix
+translate,0.3, armsheight, 0
+ifeq,anim,walk
+rotate,limbrotation4,0,0,1
+rotate,20,0,0,1
+endif
+translate,-0.3, minusarmsheight, 0
+makecoords,coords,2,2,2,0,4
+drawcuboid,0.3,legsheight,0,0.1,0.9,0.6,skin,coords
+popmatrix
+
+
 
 popmatrix
