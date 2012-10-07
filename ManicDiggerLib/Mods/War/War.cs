@@ -262,6 +262,10 @@ namespace ManicDigger.Mods
                 {
                     players[sourceplayer].kills = players[sourceplayer].kills + 1;
                 }
+                else
+                {
+                    players[sourceplayer].kills = players[sourceplayer].kills - 2;
+                }
                 Die(targetplayer);
                 if (players[sourceplayer].team == players[targetplayer].team)
                 {
