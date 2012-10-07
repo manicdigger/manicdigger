@@ -126,17 +126,5 @@ drawcuboid, -0.01, 0.85, -0.175, 0.25, 0.15, 0.1, skin, coords
 
 popmatrix
 
-//cape
-pushmatrix
-translate,0.3, armsheight, 0
-ifeq,anim,walk
-rotate,limbrotation4,0,0,1
-rotate,20,0,0,1
-endif
-translate,-0.3, minusarmsheight, 0
-makecoords,coords,2,2,2,0,4
-drawcuboid,0.3,legsheight,0,0.1,0.9,0.6,skin,coords
-popmatrix
-
 
 popmatrix
