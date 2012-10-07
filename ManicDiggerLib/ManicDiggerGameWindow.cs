@@ -1965,7 +1965,7 @@ namespace ManicDigger
             Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
             pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
-            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((ispistolshoot) ? 20 : 2));
+            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((ispistolshoot) ? 100 : 2));
 
             //pick models
             selectedmodelid = -1;
