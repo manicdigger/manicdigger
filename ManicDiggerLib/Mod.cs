@@ -675,5 +675,10 @@ namespace ManicDigger
         {
             server.SendPacketFollow(player, target, tpp);
         }
+
+        public void SetPlayerSpectator(int playerid, bool isSpectator)
+        {
+            server.clients[playerid].IsSpectator = isSpectator;
+        }
     }
 }

@@ -114,6 +114,7 @@ namespace ManicDigger
         Inventory GetInventory(int player);
         int GetActiveMaterialSlot(int player);
         void FollowPlayer(int player, int target, bool tpp);
+        void SetPlayerSpectator(int playerid, bool isSpectator);
     }
 
     public enum SpecialKey

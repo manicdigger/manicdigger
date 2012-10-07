@@ -112,12 +112,13 @@ namespace ManicDigger.Mods
             if (widget == "Team1")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (players[playerid].team == Team.Blue)
+                if (players[playerid].team == Team.Blue && (!players[playerid].firstteam))
                 {
                     return;
                 }
                 players[playerid].team = Team.Blue;
                 players[playerid].kills = 0;
+                m.SetPlayerSpectator(playerid, false);
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
@@ -133,12 +134,13 @@ namespace ManicDigger.Mods
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (players[playerid].team == Team.Green)
+                if (players[playerid].team == Team.Green && (!players[playerid].firstteam))
                 {
                     return;
                 }
                 players[playerid].team = Team.Green;
                 players[playerid].kills = 0;
+                m.SetPlayerSpectator(playerid, false);
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
@@ -154,12 +156,13 @@ namespace ManicDigger.Mods
             if (widget == "Team3")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (players[playerid].team == Team.Spectator)
+                if (players[playerid].team == Team.Spectator && (!players[playerid].firstteam))
                 {
                     return;
                 }
                 players[playerid].team = Team.Spectator;
                 players[playerid].kills = 0;
+                m.SetPlayerSpectator(playerid, true);
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, true);
                 m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
@@ -244,7 +247,8 @@ namespace ManicDigger.Mods
             {
                 return;
             }
-            if (players[sourceplayer].team == Team.Spectator)
+            if (players[sourceplayer].team == Team.Spectator
+                || players[targetplayer].team == Team.Spectator)
             {
                 return;
             }

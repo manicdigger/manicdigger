@@ -2051,6 +2051,12 @@ if (sent >= unknown.Count) { break; }
                 EyeHeight = c.EyeHeight,
                 ModelHeight = c.ModelHeight,
             };
+            if (clients[spawnedplayer].IsSpectator && (!clients[clientid].IsSpectator))
+            {
+                p.PositionAndOrientation.X = -1000 * 32;
+                p.PositionAndOrientation.Y = -1000 * 32;
+                p.PositionAndOrientation.Z = 0;
+            }
             PacketServer pp = new PacketServer() { PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p };
             SendPacket(clientid, Serialize(pp));
         }
@@ -2767,6 +2773,11 @@ if (sent >= unknown.Count) { break; }
         }
         public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
         {
+            //spectators invisible to players
+            if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
+            {
+                return;
+            }
             PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
             {
                 PlayerId = playerid,
@@ -3143,6 +3154,7 @@ if (sent >= unknown.Count) { break; }
             public float ModelHeight = 1.7f;
             public float generatingworldprogress;
             public int ActiveMaterialSlot;
+            public bool IsSpectator;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
