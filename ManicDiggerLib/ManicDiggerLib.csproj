@@ -127,6 +127,7 @@
     <Compile Include="Mods\War\Noise2DWorldGenerator.cs" />
     <Compile Include="Mods\War\TreeGenerator.cs" />
     <Compile Include="Mods\War\War.cs" />
+    <Compile Include="Mods\War\WaterSimple.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Forms\PasswordForm.cs">
       <SubType>Form</SubType>

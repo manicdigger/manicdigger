@@ -943,7 +943,7 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("Wood");
             m.AddToCreativeInventory("Sapling");
             //m.AddToCreativeInventory("Adminium");
-            m.AddToCreativeInventory("Water");
+            //m.AddToCreativeInventory("Water");
             m.AddToCreativeInventory("Lava");
             m.AddToCreativeInventory("Sand");
             m.AddToCreativeInventory("Gravel");
