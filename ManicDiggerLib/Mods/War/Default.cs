@@ -960,6 +960,7 @@ namespace ManicDigger.Mods
             m.SetGameDayRealHours(1);
             m.SetGameYearRealHours(24);
 
+            /*
             //Creative inventory
             m.AddToCreativeInventory("Stone");
             m.AddToCreativeInventory("Dirt");
@@ -1045,7 +1046,7 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("SubmachineGun");
             m.AddToCreativeInventory("Shotgun");
             m.AddToCreativeInventory("Rifle");
-
+            
             m.AddToStartInventory("Torch", 6);
             m.AddToStartInventory("Crops1", 1);
             m.AddToStartInventory("CraftingTable", 6);
@@ -1053,6 +1054,7 @@ namespace ManicDigger.Mods
             m.AddToStartInventory("GoldBar", 5);
             m.AddToStartInventory("SilverCoin", 1);
             m.AddToStartInventory("Compass", 1);
+            */
 
 
             m.AddCraftingRecipe("Cobblestone", 1, "Stone", 2);

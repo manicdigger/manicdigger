@@ -2697,10 +2697,10 @@ namespace ManicDigger
                     if (item != null)
                     {
                         img = blocktypes[item.BlockId].handimage;
-                    }
-                    if (IronSights)
-                    {
-                        img = blocktypes[item.BlockId].IronSightsImage;
+                        if (IronSights)
+                        {
+                            img = blocktypes[item.BlockId].IronSightsImage;
+                        }
                     }
                     if (img == null)
                     {

@@ -14,10 +14,12 @@ namespace ManicDigger.Mods
         public void Start(ModManager m)
         {
             this.m = m;
-            m.SetCreative(true);
+            m.SetCreative(false);
             m.SetWorldSize(256, 256, 128);
             m.RegisterOnPlayerJoin(PlayerJoin);
-            m.RegisterOnDialogClick(DialogClick);
+            m.RegisterOnDialogClick(DialogClickSelectTeam);
+            m.RegisterOnDialogClick(DialogClickSelectClass);
+            m.RegisterOnDialogClick(DialogClickSelectSubclass);
             m.RenderHint(RenderHint.Nice);
             m.RegisterOnWeaponHit(Hit);
             m.RegisterOnSpecialKey(RespawnKey);
@@ -29,6 +31,18 @@ namespace ManicDigger.Mods
             m.RegisterChangedActiveMaterialSlot(UpdatePlayerModel);
             m.RegisterTimer(UpdateRespawnTimer, 1);
             CurrentRespawnTime = DateTime.UtcNow;
+        }
+
+        public enum PlayerClass
+        {
+            Soldier,
+            Medic,
+        }
+        enum SoldierSubclass
+        {
+            SubmachineGun,
+            Shotgun,
+            Rifle,
         }
 
         TimeSpan RespawnTime = TimeSpan.FromSeconds(30);
@@ -46,6 +60,7 @@ namespace ManicDigger.Mods
             public bool isdead;
             public int following = -1;
             public bool firstteam = true;
+            public PlayerClass playerclass;
         }
 
         ModManager m;
@@ -56,6 +71,19 @@ namespace ManicDigger.Mods
             players[playerid] = new Player();
             m.EnableFreemove(playerid, false);
             ShowTeamSelectionDialog(playerid);
+        }
+
+        void ClearInventory(int playerid)
+        {
+            Inventory inv = m.GetInventory(playerid);
+            inv.Boots = null;
+            inv.DragDropItem = null;
+            inv.Gauntlet = null;
+            inv.Helmet = null;
+            inv.Items.Clear();
+            inv.MainArmor = null;
+            Array.Clear(inv.RightHand, 0, inv.RightHand.Length);
+            m.NotifyInventory(playerid);
         }
 
         void ShowTeamSelectionDialog(int playerid)
@@ -96,6 +124,70 @@ namespace ManicDigger.Mods
             m.SendDialog(playerid, "SelectTeam" + playerid, d);
         }
 
+        void ShowClassSelectionDialog(int playerid)
+        {
+            Dialog d = new Dialog();
+            List<Widget> widgets = new List<Widget>();
+            Widget background = new Widget();
+            background.X = 0;
+            background.Y = 0;
+            background.Width = 800;
+            background.Height = 800;
+            background.Image = "SelectClass";
+            widgets.Add(background);
+            string[] classes = { "Soldier", "Medic" };
+            for (int i = 0; i < 2; i++)
+            {
+                Widget w = new Widget();
+                w.Id = "Class" + (i + 1).ToString();
+                w.Text = string.Format("Press {0} for {1}", i + 1, classes[i]);
+                w.X = 50 + 250 * i;
+                w.Y = 400;
+                w.ClickKey = (i + 1).ToString()[0];
+                widgets.Add(w);
+            }
+            d.Width = 800;
+            d.Height = 600;
+            d.Widgets = widgets.ToArray();
+            m.SendDialog(playerid, "SelectClass" + playerid, d);
+        }
+
+        void ShowSubclassSelectionDialog(int playerid)
+        {
+            Dialog d = new Dialog();
+            List<Widget> widgets = new List<Widget>();
+            Widget background = new Widget();
+            background.X = 0;
+            background.Y = 0;
+            background.Width = 800;
+            background.Height = 800;
+            background.Image = "SelectSubclass";
+            widgets.Add(background);
+            string[] subclasses = null;
+            if (players[playerid].playerclass == PlayerClass.Soldier)
+            {
+                subclasses = new[] { "Submachine gun", "Shotgun", "Rifle" };
+            }
+            if (players[playerid].playerclass == PlayerClass.Medic)
+            {
+                subclasses = new[] { "Pistol" };
+            }
+            for (int i = 0; i < subclasses.Length; i++)
+            {
+                Widget w = new Widget();
+                w.Id = "Subclass" + (i + 1).ToString();
+                w.Text = string.Format("Press {0} for {1}", i + 1, subclasses[i]);
+                w.X = 50 + 275 * i;
+                w.Y = 400;
+                w.ClickKey = (i + 1).ToString()[0];
+                widgets.Add(w);
+            }
+            d.Width = 800;
+            d.Height = 600;
+            d.Widgets = widgets.ToArray();
+            m.SendDialog(playerid, "SelectSubclass" + playerid, d);
+        }
+
         public enum Team
         {
             Blue,
@@ -107,14 +199,14 @@ namespace ManicDigger.Mods
         string GreenColor = "&2";
         //string SpectatorColor = "&7";
 
-        void DialogClick(int playerid, string widget)
+        void DialogClickSelectTeam(int playerid, string widget)
         {
             if (widget == "Team1")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (players[playerid].team == Team.Blue && (!players[playerid].firstteam))
+                //if (players[playerid].team == Team.Blue && (!players[playerid].firstteam))
                 {
-                    return;
+                    //return;
                 }
                 players[playerid].team = Team.Blue;
                 players[playerid].kills = 0;
@@ -122,21 +214,14 @@ namespace ManicDigger.Mods
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
-                if (players[playerid].firstteam)
-                {
-                    Respawn(playerid);
-                }
-                else
-                {
-                    Die(playerid);
-                }
+                ShowClassSelectionDialog(playerid);
             }
             if (widget == "Team2")
             {
                 m.SendDialog(playerid, "SelectTeam" + playerid, null);
-                if (players[playerid].team == Team.Green && (!players[playerid].firstteam))
+                //if (players[playerid].team == Team.Green && (!players[playerid].firstteam))
                 {
-                    return;
+                    //return;
                 }
                 players[playerid].team = Team.Green;
                 players[playerid].kills = 0;
@@ -144,14 +229,7 @@ namespace ManicDigger.Mods
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
                 m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
-                if (players[playerid].firstteam)
-                {
-                    Respawn(playerid);
-                }
-                else
-                {
-                    Die(playerid);
-                }
+                ShowClassSelectionDialog(playerid);
             }
             if (widget == "Team3")
             {
@@ -166,28 +244,91 @@ namespace ManicDigger.Mods
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, true);
                 m.SendMessageToAll(string.Format("{0} becomes a &7 spectator&f.", m.GetPlayerName(playerid)));
-                if (players[playerid].firstteam)
-                {
-                    Respawn(playerid);
-                }
-                else
-                {
-                    Die(playerid);
-                }
+                ClearInventory(playerid);
             }
-            players[playerid].firstteam = false;
-            if (!started)
+            if (widget == "Team1" || widget == "Team2" || widget == "Team3")
             {
-                started = true;
-                if (System.Diagnostics.Debugger.IsAttached)
+                if (!spawnedBot)
                 {
-                    int bot = m.AddBot("bot");
-                    PlayerJoin(bot);
-                    DialogClick(bot, "Team2");
+                    spawnedBot = true;
+                    if (System.Diagnostics.Debugger.IsAttached)
+                    {
+                        int bot = m.AddBot("bot");
+                        PlayerJoin(bot);
+                        DialogClickSelectTeam(bot, "Team2");
+                        Respawn(bot);
+                    }
                 }
             }
         }
-        bool started = false;
+        bool spawnedBot = false;
+        void DialogClickSelectClass(int playerid, string widget)
+        {
+            if (widget == "Class1" || widget == "Class2")
+            {
+                m.SendDialog(playerid, "SelectClass" + playerid, null);
+            }
+            if (widget == "Class1")
+            {
+                players[playerid].playerclass = PlayerClass.Soldier;
+                ShowSubclassSelectionDialog(playerid);
+            }
+            if (widget == "Class2")
+            {
+                players[playerid].playerclass = PlayerClass.Medic;
+                ShowSubclassSelectionDialog(playerid);
+            }
+        }
+        void DialogClickSelectSubclass(int playerid, string widget)
+        {
+            if (!(widget == "Subclass1" || widget == "Subclass2" || widget == "Subclass3"))
+            {
+                return;
+            }
+
+            if (players[playerid].firstteam)
+            {
+                Respawn(playerid);
+            }
+            else
+            {
+                Die(playerid);
+            }
+            players[playerid].firstteam = false;
+
+            m.SendDialog(playerid, "SelectSubclass" + playerid, null);
+            ClearInventory(playerid);
+
+            Inventory inv = m.GetInventory(playerid);
+            PlayerClass pclass = players[playerid].playerclass;
+            if (pclass == PlayerClass.Soldier)
+            {
+                if (widget == "Subclass1")
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("SubmachineGun"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                if (widget == "Subclass2")
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Shotgun"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                if (widget == "Subclass3")
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Rifle"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                m.NotifyInventory(playerid);
+            }
+            if (pclass == PlayerClass.Medic)
+            {
+                if (widget == "Subclass1")
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                m.NotifyInventory(playerid);
+            }
+        }
 
         void OnSelectTeamKey(int player, SpecialKey key)
         {
