@@ -1902,6 +1902,10 @@ if (sent >= unknown.Count) { break; }
                     PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
                     SendBullet(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
                         packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ, 150);
+                    for (int i = 0; i < onweaponshot.Count; i++)
+                    {
+                        onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                    }
                     if (clients[clientid].LastPing < 0.3)
                     {
                         if (packet.Shot.HitPlayer != -1)
@@ -2049,6 +2053,7 @@ if (sent >= unknown.Count) { break; }
             return position;
         }
 
+        public List<ModDelegates.WeaponShot> onweaponshot = new List<ModDelegates.WeaponShot>();
         public List<ModDelegates.WeaponHit> onweaponhit = new List<ModDelegates.WeaponHit>();
         public List<ModDelegates.SpecialKey1> onspecialkey = new List<ModDelegates.SpecialKey1>();
 
@@ -3523,6 +3528,15 @@ if (sent >= unknown.Count) { break; }
                 Tpp = tpp,
             };
             SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Follow, Follow = p }));
+        }
+
+        public void SendAmmo(int playerid, Dictionary<int, int> totalAmmo)
+        {
+            PacketServerAmmo p = new PacketServerAmmo()
+            {
+                TotalAmmo = totalAmmo,
+            };
+            SendPacket(playerid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ammo, Ammo = p }));
         }
     }
 

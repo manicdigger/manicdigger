@@ -30,14 +30,16 @@ namespace ManicDigger.Mods
             m.DisablePrivilege("tp");
             m.RegisterChangedActiveMaterialSlot(UpdatePlayerModel);
             m.RegisterTimer(UpdateRespawnTimer, 1);
+            m.RegisterOnWeaponShot(Shot);
             CurrentRespawnTime = DateTime.UtcNow;
-            m.RegisterTimer(UpdateMedicalKit, 0.1);
+            m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
         }
 
         public enum PlayerClass
         {
             Soldier,
             Medic,
+            Support,
         }
         enum SoldierSubclass
         {
@@ -62,6 +64,7 @@ namespace ManicDigger.Mods
             public int following = -1;
             public bool firstteam = true;
             public PlayerClass playerclass;
+            public Dictionary<int, int> totalAmmo = new Dictionary<int, int>();
         }
 
         ModManager m;
@@ -136,8 +139,8 @@ namespace ManicDigger.Mods
             background.Height = 800;
             background.Image = "SelectClass";
             widgets.Add(background);
-            string[] classes = { "Soldier", "Medic" };
-            for (int i = 0; i < 2; i++)
+            string[] classes = { "Soldier", "Medic", "Support" };
+            for (int i = 0; i < 3; i++)
             {
                 Widget w = new Widget();
                 w.Id = "Class" + (i + 1).ToString();
@@ -170,6 +173,10 @@ namespace ManicDigger.Mods
                 subclasses = new[] { "Submachine gun", "Shotgun", "Rifle" };
             }
             if (players[playerid].playerclass == PlayerClass.Medic)
+            {
+                subclasses = new[] { "Pistol" };
+            }
+            if (players[playerid].playerclass == PlayerClass.Support)
             {
                 subclasses = new[] { "Pistol" };
             }
@@ -265,7 +272,7 @@ namespace ManicDigger.Mods
         bool spawnedBot = false;
         void DialogClickSelectClass(int playerid, string widget)
         {
-            if (widget == "Class1" || widget == "Class2")
+            if (widget == "Class1" || widget == "Class2" || widget == "Class3")
             {
                 m.SendDialog(playerid, "SelectClass" + playerid, null);
             }
@@ -277,6 +284,11 @@ namespace ManicDigger.Mods
             if (widget == "Class2")
             {
                 players[playerid].playerclass = PlayerClass.Medic;
+                ShowSubclassSelectionDialog(playerid);
+            }
+            if (widget == "Class3")
+            {
+                players[playerid].playerclass = PlayerClass.Support;
                 ShowSubclassSelectionDialog(playerid);
             }
         }
@@ -300,7 +312,6 @@ namespace ManicDigger.Mods
             m.SendDialog(playerid, "SelectSubclass" + playerid, null);
             ClearInventory(playerid);
 
-            Inventory inv = m.GetInventory(playerid);
             PlayerClass pclass = players[playerid].playerclass;
             if (pclass == PlayerClass.Soldier)
             {
@@ -333,6 +344,32 @@ namespace ManicDigger.Mods
                 }
                 m.NotifyInventory(playerid);
             }
+            if (pclass == PlayerClass.Support)
+            {
+                if (widget == "Subclass1")
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    for (int i = 0; i < 5; i++)
+                    {
+                        m.GrabBlock(playerid, m.GetBlockId("AmmoPack"));
+                    }
+                }
+                m.NotifyInventory(playerid);
+            }
+            Inventory inv = m.GetInventory(playerid);
+            for (int i = 0; i < 10; i++)
+            {
+                Item item = inv.RightHand[i];
+                if (item != null && item.ItemClass == ItemClass.Block)
+                {
+                    BlockType block = m.GetBlockType(item.BlockId);
+                    if (block.IsPistol)
+                    {
+                        players[playerid].totalAmmo[item.BlockId] = block.AmmoTotal;
+                    }
+                }
+            }
+            m.NotifyAmmo(playerid, players[playerid].totalAmmo);
         }
 
         void OnSelectTeamKey(int player, SpecialKey key)
@@ -379,7 +416,15 @@ namespace ManicDigger.Mods
             }
             return m.GetMapSizeZ() / 2;
         }
-
+        void Shot(int sourceplayer, int block)
+        {
+            if (!players[sourceplayer].totalAmmo.ContainsKey(block))
+            {
+                players[sourceplayer].totalAmmo[block] = 0;
+            }
+            players[sourceplayer].totalAmmo[block] = players[sourceplayer].totalAmmo[block] - 1;
+            m.NotifyAmmo(sourceplayer, players[sourceplayer].totalAmmo);
+        }
         void Hit(int sourceplayer, int targetplayer, int block, bool head)
         {
             if (!EnableTeamkill)
@@ -736,10 +781,11 @@ namespace ManicDigger.Mods
             }
         }
 
-        void UpdateMedicalKit()
+        void UpdateMedicalKitAmmoPack()
         {
             int[] allplayers = m.AllPlayers();
             int medicalkit = m.GetBlockId("MedicalKit");
+            int ammopack = m.GetBlockId("AmmoPack");
             foreach (int p in allplayers)
             {
                 int px = (int)m.GetPlayerPositionX(p);
@@ -766,6 +812,25 @@ namespace ManicDigger.Mods
                         //m.PlaySoundAt((int)m.GetPlayerPositionX(targetplayer),
                         //    (int)m.GetPlayerPositionY(targetplayer),
                         //    (int)m.GetPlayerPositionZ(targetplayer), "heal.ogg");
+                    }
+                    if (block == ammopack)
+                    {
+                        foreach (var k in new List<int>(players[p].totalAmmo.Keys))
+                        {
+                            int ammo = 0;
+                            if (players[p].totalAmmo.ContainsKey(k))
+                            {
+                                ammo = players[p].totalAmmo[k];
+                            }
+                            ammo += m.GetBlockType(k).AmmoTotal / 3;
+                            if (ammo > m.GetBlockType(k).AmmoTotal)
+                            {
+                                ammo = m.GetBlockType(k).AmmoTotal;
+                            }
+                            players[p].totalAmmo[k] = ammo;
+                        }
+                        m.NotifyAmmo(p, players[p].totalAmmo);
+                        m.SetBlock(px, py, pz, 0);
                     }
                 }
             }

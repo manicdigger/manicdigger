@@ -115,6 +115,9 @@ namespace ManicDigger
         int GetActiveMaterialSlot(int player);
         void FollowPlayer(int player, int target, bool tpp);
         void SetPlayerSpectator(int playerid, bool isSpectator);
+        BlockType GetBlockType(int block);
+        void NotifyAmmo(int playerid, Dictionary<int, int> dictionary);
+        void RegisterOnWeaponShot(ModDelegates.WeaponShot a);
     }
 
     public enum SpecialKey
@@ -141,6 +144,7 @@ namespace ManicDigger
         public delegate void PlayerChat(int player, string message);
         public delegate void DialogClick(int player, string widgetId);
         public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
+        public delegate void WeaponShot(int sourceplayer, int block);
         public delegate void SpecialKey1(int player, SpecialKey key);
         public delegate void ChangedActiveMaterialSlot(int player);
     }
@@ -527,6 +531,12 @@ namespace ManicDigger
         public float IronSightsAimRadius;
         [ProtoMember(32)]
         public float IronSightsFov;
+        [ProtoMember(33)]
+        public int AmmoMagazine;
+        [ProtoMember(34)]
+        public int AmmoTotal;
+        [ProtoMember(35)]
+        public float ReloadDelay;
         public string AllTextures
         {
             set

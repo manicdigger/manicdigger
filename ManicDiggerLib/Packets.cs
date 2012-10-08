@@ -414,6 +414,14 @@ namespace GameModeFortress
         public PacketServerFollow Follow;
         [ProtoMember(29, IsRequired = false)]
         public PacketServerBullet Bullet;
+        [ProtoMember(30, IsRequired = false)]
+        public PacketServerAmmo Ammo;
+    }
+    [ProtoContract]
+    public class PacketServerAmmo
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public Dictionary<int, int> TotalAmmo;
     }
     [ProtoContract]
     public class PacketClientActiveMaterialSlot
@@ -456,6 +464,12 @@ namespace GameModeFortress
         public PacketClientActiveMaterialSlot ActiveMaterialSlot;
         [ProtoMember(15, IsRequired = false)]
         public PacketClientLeave Leave;
+        [ProtoMember(16, IsRequired = false)]
+        public PacketClientReload Reload;
+    }
+    [ProtoContract]
+    public class PacketClientReload
+    {
     }
     [ProtoContract]
     public class PacketClientLeave
@@ -653,6 +667,7 @@ namespace GameModeFortress
         SpecialKey = 55,
         ActiveMaterialSlot = 56,
         Leave = 57,
+        Reload = 58,
         ExtendedPacketCommand = 100,
     }
     /// <summary>
@@ -697,6 +712,7 @@ namespace GameModeFortress
         Dialog,
         Follow,
         Bullet,
+        Ammo,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

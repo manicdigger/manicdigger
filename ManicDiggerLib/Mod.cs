@@ -680,5 +680,20 @@ namespace ManicDigger
         {
             server.clients[playerid].IsSpectator = isSpectator;
         }
+
+        public BlockType GetBlockType(int block)
+        {
+            return server.BlockTypes[block];
+        }
+
+        public void NotifyAmmo(int playerid, Dictionary<int, int> totalAmmo)
+        {
+            server.SendAmmo(playerid, totalAmmo);
+        }
+
+        public void RegisterOnWeaponShot(ModDelegates.WeaponShot a)
+        {
+            server.onweaponshot.Add(a);
+        }
     }
 }

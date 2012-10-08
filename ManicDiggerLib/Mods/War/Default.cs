@@ -888,6 +888,9 @@ namespace ManicDigger.Mods
                 IronSightsImage = "pistolhandsights.png",
                 IronSightsAimRadius = 15,
                 IronSightsFov = 0.8f,
+                AmmoMagazine = 12,
+                AmmoTotal = 120,
+                ReloadDelay = 2,
             });
             DamageBody["Pistol"] = 15;
             DamageHead["Pistol"] = 50;
@@ -908,6 +911,9 @@ namespace ManicDigger.Mods
                 IronSightsImage = "submachinegunhandsights.png",
                 IronSightsAimRadius = 20,
                 IronSightsFov = 0.8f,
+                AmmoMagazine = 30,
+                AmmoTotal = 120,
+                ReloadDelay = 2,
             });
             DamageBody["SubmachineGun"] = 15;
             DamageHead["SubmachineGun"] = 40;
@@ -929,6 +935,9 @@ namespace ManicDigger.Mods
                 IronSightsImage = "shotgunhandsights.png",
                 IronSightsAimRadius = 50,
                 IronSightsFov = 0.8f,
+                AmmoMagazine = 30,
+                AmmoTotal = 120,
+                ReloadDelay = 2,
             });
             DamageBody["Shotgun"] = 35;
             DamageHead["Shotgun"] = 60;
@@ -949,12 +958,25 @@ namespace ManicDigger.Mods
                 IronSightsImage = "riflehandsights.png",
                 IronSightsAimRadius = 10,
                 IronSightsFov = 0.5f,
+                AmmoMagazine = 6,
+                AmmoTotal = 48,
+                ReloadDelay = 2,
             });
             DamageBody["Rifle"] = 35;
             DamageHead["Rifle"] = 100;
             m.SetBlockType(158, "MedicalKit", new BlockType()
             {
                 AllTextures = "MedicalKit",
+                DrawType = DrawType.Transparent,
+                WalkableType = WalkableType.Empty,
+                Sounds = solidSounds,
+                handimage = null,
+                IsPistol = false,
+                WalkSpeedWhenUsed = 1f,
+            });
+            m.SetBlockType(159, "AmmoPack", new BlockType()
+            {
+                AllTextures = "AmmoPack",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,

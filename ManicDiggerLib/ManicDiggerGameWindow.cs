@@ -1018,6 +1018,18 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.R))
                 {
+                    Item item = d_Inventory.RightHand[ActiveMaterial];
+                    if (item != null && item.ItemClass == ItemClass.Block
+                        && blocktypes[item.BlockId].IsPistol)
+                    {
+                        d_Audio.Play("shotgun-reload-old_school-RA_The_Sun_God-580332022.ogg");
+                        reloadstart = DateTime.UtcNow;
+                        reloadblock = item.BlockId;
+                        SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Reload, Reload = new PacketClientReload() });
+                    }
+                }
+                if (e.Key == GetKey(OpenTK.Input.Key.O))
+                {
                     Respawn();
                     Log(Language.Respawn);
                 }
@@ -1683,7 +1695,18 @@ namespace ManicDigger
             playervelocity = LocalPlayerPosition - lastplayerposition;
             playervelocity *= 75;
             lastplayerposition = LocalPlayerPosition;
+            if (reloadstart.Ticks != 0
+                && (DateTime.UtcNow - reloadstart).TotalSeconds > blocktypes[reloadblock].ReloadDelay)
+            {
+                int loaded = TotalAmmo[reloadblock];
+                loaded = Math.Min(blocktypes[reloadblock].AmmoMagazine, loaded);
+                LoadedAmmo[reloadblock] = loaded;
+                reloadstart = new DateTime(0);
+                reloadblock = -1;
+            }
         }
+        int reloadblock;
+        DateTime reloadstart;
         Vector3 lastplayerposition;
         Vector3 playervelocity;
         int PreviousActiveMaterialBlock;
@@ -2135,6 +2158,19 @@ namespace ManicDigger
                 {
                     lastbuild = DateTime.Now;
                 }
+                if (reloadstart.Ticks != 0)
+                {
+                    goto end;
+                }
+                if (ispistolshoot)
+                {
+                    if ((!(LoadedAmmo.ContainsKey(item.BlockId) && LoadedAmmo[item.BlockId] > 0))
+                        || (!(TotalAmmo.ContainsKey(item.BlockId) && TotalAmmo[item.BlockId] > 0)))
+                    {
+                        d_Audio.Play("Dry Fire Gun-SoundBible.com-2053652037.ogg");
+                        goto end;
+                    }
+                }
                 if(ispistolshoot)
                 {
                     Vector3 to = pick.End;
@@ -2197,7 +2233,6 @@ namespace ManicDigger
                                 blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = true;
-                                shot.WeaponBlock = item.BlockId;
                             }
                         }
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
@@ -2208,11 +2243,12 @@ namespace ManicDigger
                                 blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = false;
-                                shot.WeaponBlock = item.BlockId;
                             }
                         }
                     }
-                    
+                    shot.WeaponBlock = item.BlockId;
+                    LoadedAmmo[item.BlockId] = LoadedAmmo[item.BlockId] - 1;
+                    TotalAmmo[item.BlockId] = TotalAmmo[item.BlockId] - 1;
                     bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
@@ -3116,6 +3152,7 @@ namespace ManicDigger
                         {
                             d_HudChat.DrawTypingBuffer();
                         }
+                        DrawAmmo();
                         DrawDialogs();
                     }
                     break;
@@ -3193,6 +3230,34 @@ namespace ManicDigger
             }
             d_The3d.PerspectiveMode();
         }
+
+        private void DrawAmmo()
+        {
+            Item item = d_Inventory.RightHand[ActiveMaterial];
+            if (item != null && item.ItemClass == ItemClass.Block)
+            {
+                if (blocktypes[item.BlockId].IsPistol)
+                {
+                    int loaded = 0;
+                    if (LoadedAmmo.ContainsKey(item.BlockId))
+                    {
+                        loaded = LoadedAmmo[item.BlockId];
+                    }
+                    int total = 0;
+                    if (TotalAmmo.ContainsKey(item.BlockId))
+                    {
+                        total = TotalAmmo[item.BlockId];
+                    }
+                    string s = string.Format("{0}/{1}", loaded, total - loaded);
+                    d_The3d.Draw2dText(s, Width - d_The3d.TextSize(s, 18).Width - 50,
+                        Height - d_The3d.TextSize(s, 18).Height - 50, 18, loaded == 0 ? Color.Red : Color.White);
+                }
+            }
+        }
+
+        bool ammostarted;
+        public Dictionary<int, int> TotalAmmo = new Dictionary<int, int>();
+        public Dictionary<int, int> LoadedAmmo = new Dictionary<int, int>();
 
         private void DrawDialogs()
         {
@@ -4927,6 +4992,17 @@ namespace ManicDigger
                     bullet.to = new Vector3(packet.Bullet.ToX, packet.Bullet.ToY, packet.Bullet.ToZ);
                     bullet.speed = packet.Bullet.Speed;
                     bullets.Add(bullet);
+                    break;
+                case ServerPacketId.Ammo:
+                    if (!ammostarted)
+                    {
+                        ammostarted = true;
+                        foreach (var k in packet.Ammo.TotalAmmo)
+                        {
+                            LoadedAmmo[k.Key] = Math.Min(k.Value, blocktypes[k.Key].AmmoMagazine);
+                        }
+                    }
+                    TotalAmmo = packet.Ammo.TotalAmmo;
                     break;
                 default:
                     break;
