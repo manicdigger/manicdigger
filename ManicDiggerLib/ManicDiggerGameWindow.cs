@@ -2325,7 +2325,11 @@ namespace ManicDigger
                                 }
                             }
                         done:
-                            d_Audio.Play(d_Data.CloneSound[clonesource][0]); //todo sound cycle
+                            string[] sound = d_Data.CloneSound[clonesource];
+                            if (sound != null && sound.Length > 0)
+                            {
+                                d_Audio.Play(sound[0]); //todo sound cycle
+                            }
                         }
                     }
                     if (left || right)
