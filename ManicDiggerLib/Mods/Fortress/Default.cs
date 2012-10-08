@@ -118,6 +118,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
+                LightRadius = 15,
             });
             m.SetBlockType(11, "StationaryLava", new BlockType()
             {
@@ -125,6 +126,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
+                LightRadius = 15,
             });
             m.SetBlockType(12, "Sand", new BlockType()
             {
@@ -1136,7 +1138,39 @@ namespace ManicDigger.Mods
             int currentSeason = (int)((m.GetCurrentYearTotal() % 1) * 4);
             if (currentSeason != lastseason)
             {
+                // spring
                 if (currentSeason == 0)
+                {
+                    m.SetBlockType(2, "Grass", new BlockType()
+                    {
+                        TextureIdTop = "SpringGrass",
+                        TextureIdBack = "SpringGrassSide",
+                        TextureIdFront = "SpringGrassSide",
+                        TextureIdLeft = "SpringGrassSide",
+                        TextureIdRight = "SpringGrassSide",
+                        TextureIdForInventory = "SpringGrassSide",
+                        TextureIdBottom = "Dirt",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = snowSounds,
+                    });
+                    m.SetBlockType(18, "Leaves", new BlockType()
+                    {
+                        AllTextures = "Leaves",
+                        DrawType = DrawType.Transparent,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                    m.SetBlockType(106, "Apples", new BlockType()
+                    {
+                        AllTextures = "Apples",
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        Sounds = solidSounds,
+                    });
+                }
+                // summer
+                if (currentSeason == 1)
                 {
                     m.SetBlockType(2, "Grass", new BlockType()
                     {
@@ -1173,6 +1207,7 @@ namespace ManicDigger.Mods
                         Sounds = noSound,
                     });
                 }
+                // autumn
                 if (currentSeason == 2)
                 {
                     m.SetBlockType(2, "Grass", new BlockType()
@@ -1203,6 +1238,7 @@ namespace ManicDigger.Mods
                         Sounds = solidSounds,
                     });
                 }
+                // winter
                 if (currentSeason == 3)
                 {
                     m.SetBlockType(2, "Grass", new BlockType()
