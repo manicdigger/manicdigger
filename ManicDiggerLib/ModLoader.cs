@@ -17,6 +17,7 @@ namespace ManicDigger
                 {
                     GenerateExecutable = false,
                     GenerateInMemory = true,
+                    CompilerOptions = "/unsafe"
                 };
                 parms.ReferencedAssemblies.Add("System.dll");
                 parms.ReferencedAssemblies.Add("System.Drawing.dll");
