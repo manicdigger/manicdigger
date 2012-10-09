@@ -195,10 +195,16 @@ namespace ManicDigger
 
         public void GrabBlock(int player, int block)
         {
+            GrabBlocks(player, block, 1);
+        }
+
+        public void GrabBlocks(int player, int block, int amount)
+        {
             Inventory inventory = server.GetPlayerInventory(server.GetClient(player).playername).Inventory;
             
             var item = new Item();
             item.ItemClass = ItemClass.Block;
+            item.BlockCount = amount;
             item.BlockId = server.d_Data.WhenPlayerPlacesGetsConvertedTo[block];
             server.GetInventoryUtil(inventory).GrabItem(item, 0);
         }
@@ -344,6 +350,10 @@ namespace ManicDigger
 
         public object GetGlobalDataNotSaved(string name)
         {
+            if (!notsaved.ContainsKey(name))
+            {
+                return null;
+            }
             return notsaved[name];
         }
         Dictionary<string, object> notsaved = new Dictionary<string, object>();
@@ -700,5 +710,18 @@ namespace ManicDigger
         {
             server.ChatLog(s);
         }
+
+        public void EnableExtraPrivilegeToAll(string privilege, bool enable)
+        {
+            if (enable)
+            {
+                server.extraPrivileges[privilege] = true;
+            }
+            else
+            {
+                server.extraPrivileges.Remove(privilege);
+            }
+        }
+        
     }
 }

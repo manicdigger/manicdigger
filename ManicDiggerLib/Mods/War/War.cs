@@ -34,7 +34,16 @@ namespace ManicDigger.Mods
             CurrentRespawnTime = DateTime.UtcNow;
             m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
             m.RegisterOnPlayerChat(OnChat);
+            m.RegisterOnCommand(OnCommand);
         }
+
+        public enum WarMode
+        {
+            Edit,
+            TeamDeathmatch,
+        }
+
+        WarMode warmode = WarMode.TeamDeathmatch;
 
         public enum PlayerClass
         {
@@ -75,8 +84,40 @@ namespace ManicDigger.Mods
         {
             m.SetPlayerHealth(playerid, 100, 100);
             players[playerid] = new Player();
-            m.EnableFreemove(playerid, false);
-            ShowTeamSelectionDialog(playerid);
+            switch (warmode)
+            {
+                case WarMode.Edit:
+                    m.EnableExtraPrivilegeToAll("build", false);
+                    m.EnableFreemove(playerid, true);
+                    int posx = m.GetMapSizeX() / 2;
+                    int posy = m.GetMapSizeY() / 2;
+                    int posz = BlockHeight(posx, posy);
+                    m.SetPlayerPosition(playerid, posx, posy, posz);
+                    ClearInventory(playerid);
+                    GiveAllBlocks(playerid);
+                    m.SetGlobalDataNotSaved("enablewater", false);
+                    break;
+                case WarMode.TeamDeathmatch:
+                    m.SetCreative(false);
+                    m.EnableExtraPrivilegeToAll("build", true);
+                    m.EnableFreemove(playerid, false);
+                    ShowTeamSelectionDialog(playerid);
+                    m.SetGlobalDataNotSaved("enablewater", true);
+                    break;
+            }
+        }
+
+        void GiveAllBlocks(int playerid)
+        {
+            for (int i = 1; i < 256; i++)
+            {
+                var b = m.GetBlockType(i);
+                if (b != null)
+                {
+                    m.GrabBlocks(playerid, i, 9999);
+                }
+            }
+            m.NotifyInventory(playerid);
         }
 
         void ClearInventory(int playerid)
@@ -422,6 +463,10 @@ namespace ManicDigger.Mods
             {
                 return;
             }
+            if (warmode == WarMode.Edit)
+            {
+                return;
+            }
             ShowTeamSelectionDialog(player);
         }
 
@@ -541,6 +586,10 @@ namespace ManicDigger.Mods
         void RespawnKey(int player, SpecialKey key)
         {
             if (key != SpecialKey.Respawn)
+            {
+                return;
+            }
+            if (warmode == WarMode.Edit)
             {
                 return;
             }
@@ -828,6 +877,10 @@ namespace ManicDigger.Mods
 
         void UpdateMedicalKitAmmoPack()
         {
+            if (warmode == WarMode.Edit)
+            {
+                return;
+            }
             int[] allplayers = m.AllPlayers();
             int medicalkit = m.GetBlockId("MedicalKit");
             int ammopack = m.GetBlockId("AmmoPack");
@@ -883,6 +936,10 @@ namespace ManicDigger.Mods
 
         string OnChat(int player, string message, bool toteam)
         {
+            if (warmode == WarMode.Edit)
+            {
+                return message;
+            }
             int[] allplayers = m.AllPlayers();
             string sender = m.GetPlayerName(player);
             string senderColorString = GetTeamColorString(players[player].team);
@@ -908,6 +965,43 @@ namespace ManicDigger.Mods
             }
             m.LogChat(senderColorString + sender + "&f: " + s);
             return null;
+        }
+
+        bool OnCommand(int player, string command, string arguments)
+        {
+            if (command == "mode")
+            {
+                if (!m.PlayerHasPrivilege(player, "mode"))
+                {
+                    m.SendMessage(player, m.colorError() + "No privilege: mode");
+                    return true;
+                }
+                if (arguments == "edit")
+                {
+                    warmode = WarMode.Edit;
+                    Restart();
+                }
+                else if (arguments == "tdm")
+                {
+                    warmode = WarMode.TeamDeathmatch;
+                    Restart();
+                }
+                else
+                {
+                    m.SendMessage(player, m.colorError() + "Usage: /mode [edit/tdm]");
+                }
+                return true;
+            }
+            return false;
+        }
+
+        void Restart()
+        {
+            int[] allplayers = m.AllPlayers();
+            foreach (int p in allplayers)
+            {
+                PlayerJoin(p);
+            }
         }
     }
 }

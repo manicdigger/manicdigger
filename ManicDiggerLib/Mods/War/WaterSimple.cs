@@ -37,6 +37,11 @@ namespace ManicDigger.Mods
 
         void Update()
         {
+            object enablewater = m.GetGlobalDataNotSaved("enablewater");
+            if (enablewater == null || (bool)enablewater == false)
+            {
+                return;
+            }
             if ((DateTime.UtcNow - lastflood).TotalSeconds > 1)
             {
                 lastflood = DateTime.UtcNow;
@@ -70,6 +75,11 @@ namespace ManicDigger.Mods
 
         public void BlockChange(int player, int x, int y, int z)
         {
+            object enablewater=m.GetGlobalDataNotSaved("enablewater");
+            if (enablewater == null || (bool)enablewater == false)
+            {
+                return;
+            }
             this.flooded = new Dictionary<Vector3i, Vector3i>();
             //sponge just built.
             if (m.IsValidPos(x, y, z) && m.GetBlock(x, y, z) == Sponge)

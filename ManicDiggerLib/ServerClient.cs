@@ -257,7 +257,8 @@ namespace GameModeFortress
                     teleport_player,
                     backup_database,
                     reset_inventory,
-                    fill_limit
+                    fill_limit,
+                    mode,
                 };
             }
             public static string build = "build";
@@ -302,6 +303,7 @@ namespace GameModeFortress
             public static string backup_database = "backup_database";
             public static string reset_inventory = "reset_inventory";
             public static string fill_limit = "fill_limit";
+            public static string mode = "mode";
         };
 
         public static List<Group> getDefaultGroups()
@@ -364,6 +366,7 @@ namespace GameModeFortress
             moderator.GroupPrivileges.Add(Privilege.tp);
             moderator.GroupPrivileges.Add(Privilege.tp_pos);
             moderator.GroupPrivileges.Add(Privilege.set_home);
+            moderator.GroupPrivileges.Add(Privilege.mode);
             moderator.GroupColor = ClientColor.Cyan;
             defaultGroups.Add(moderator);
             // default admin group
@@ -401,6 +404,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.tp);
             admin.GroupPrivileges.Add(Privilege.tp_pos);
             admin.GroupPrivileges.Add(Privilege.set_home);
+            admin.GroupPrivileges.Add(Privilege.mode);
             admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);

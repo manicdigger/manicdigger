@@ -34,6 +34,7 @@ namespace ManicDigger
         void PlaySoundAt(int x, int y, int z, string sound);
         int NearestPlayer(int x, int y, int z);
         void GrabBlock(int player, int block);
+        void GrabBlocks(int player, int block, int amount);
         bool PlayerHasPrivilege(int player, string p);
         bool IsCreative();
         bool IsBlockFluid(int block);
@@ -119,6 +120,7 @@ namespace ManicDigger
         void NotifyAmmo(int playerid, Dictionary<int, int> dictionary);
         void RegisterOnWeaponShot(ModDelegates.WeaponShot a);
         void LogChat(string s);
+        void EnableExtraPrivilegeToAll(string privilege, bool enable);
     }
 
     public enum SpecialKey

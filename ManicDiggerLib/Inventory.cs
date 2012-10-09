@@ -142,9 +142,9 @@ namespace ManicDigger
                         }
                     }
                     //grab to main area - stacking
-                    for (int x = 0; x < CellCount.X; x++)
+                    for (int y = 0; y < CellCount.Y; y++)
                     {
-                        for (int y = 0; y < CellCount.Y; y++)
+                        for (int x = 0; x < CellCount.X; x++)
                         {
                             var p = ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
                             if (p != null && p.Length == 1)
@@ -159,9 +159,9 @@ namespace ManicDigger
                         }
                     }
                     //grab to main area - adding
-                    for (int x = 0; x < CellCount.X; x++)
+                    for (int y = 0; y < CellCount.Y; y++)
                     {
-                        for (int y = 0; y < CellCount.Y; y++)
+                        for (int x = 0; x < CellCount.X; x++)
                         {
                             var p = ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
                             if (p != null && p.Length == 0)

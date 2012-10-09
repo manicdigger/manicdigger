@@ -1770,7 +1770,7 @@ if (sent >= unknown.Count) { break; }
                         int x = packet.SetBlock.X;
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
-                        if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
+                        if (!PlayerHasPrivilege(clientid,ServerClientMisc.Privilege.build))
                         {
                             SendMessage(clientid, colorError + "Insufficient privileges to build.");
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -1782,7 +1782,8 @@ if (sent >= unknown.Count) { break; }
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
                         }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == BlockSetMode.Create || packet.SetBlock.Mode == BlockSetMode.Destroy))
+                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == BlockSetMode.Create || packet.SetBlock.Mode == BlockSetMode.Destroy)
+                            && !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
                         {
                             SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -3212,6 +3213,7 @@ if (sent >= unknown.Count) { break; }
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
+        public Dictionary<string, bool> extraPrivileges = new Dictionary<string, bool>();
         public Client GetClient(int id)
         {
             if (id == this.serverConsoleId)
@@ -3511,6 +3513,10 @@ if (sent >= unknown.Count) { break; }
 
         public bool PlayerHasPrivilege(int player, string privilege)
         {
+            if (extraPrivileges.ContainsKey(privilege))
+            {
+                return true;
+            }
             if (disabledprivileges.ContainsKey(privilege))
             {
                 return false;

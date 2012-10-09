@@ -1701,11 +1701,14 @@ namespace ManicDigger
             if (reloadstart.Ticks != 0
                 && (DateTime.UtcNow - reloadstart).TotalSeconds > blocktypes[reloadblock].ReloadDelay)
             {
-                int loaded = TotalAmmo[reloadblock];
-                loaded = Math.Min(blocktypes[reloadblock].AmmoMagazine, loaded);
-                LoadedAmmo[reloadblock] = loaded;
-                reloadstart = new DateTime(0);
-                reloadblock = -1;
+                if (TotalAmmo.ContainsKey(reloadblock))
+                {
+                    int loaded = TotalAmmo[reloadblock];
+                    loaded = Math.Min(blocktypes[reloadblock].AmmoMagazine, loaded);
+                    LoadedAmmo[reloadblock] = loaded;
+                    reloadstart = new DateTime(0);
+                    reloadblock = -1;
+                }
             }
         }
         int reloadblock;
