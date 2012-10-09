@@ -899,7 +899,13 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(159, "AmmoPack", new BlockType()
             {
-                AllTextures = "AmmoPack",
+                TextureIdTop = "AmmoTop",
+                TextureIdBack = "AmmoPack",
+                TextureIdFront = "AmmoPack",
+                TextureIdLeft = "AmmoPack",
+                TextureIdRight = "AmmoPack",
+                TextureIdForInventory = "AmmoPack",
+                TextureIdBottom = "AmmoTop",
                 DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
