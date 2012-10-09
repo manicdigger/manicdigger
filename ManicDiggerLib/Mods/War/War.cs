@@ -41,7 +41,7 @@ namespace ManicDigger.Mods
             Medic,
             Support,
         }
-        enum SoldierSubclass
+        public enum SoldierSubclass
         {
             SubmachineGun,
             Shotgun,
@@ -64,6 +64,7 @@ namespace ManicDigger.Mods
             public int following = -1;
             public bool firstteam = true;
             public PlayerClass playerclass;
+            public SoldierSubclass soldierSubclass;
             public Dictionary<int, int> totalAmmo = new Dictionary<int, int>();
         }
 
@@ -272,10 +273,6 @@ namespace ManicDigger.Mods
         bool spawnedBot = false;
         void DialogClickSelectClass(int playerid, string widget)
         {
-            if (widget == "Class1" || widget == "Class2" || widget == "Class3")
-            {
-                m.SendDialog(playerid, "SelectClass" + playerid, null);
-            }
             if (widget == "Class1")
             {
                 players[playerid].playerclass = PlayerClass.Soldier;
@@ -290,6 +287,10 @@ namespace ManicDigger.Mods
             {
                 players[playerid].playerclass = PlayerClass.Support;
                 ShowSubclassSelectionDialog(playerid);
+            }
+            if (widget == "Class1" || widget == "Class2" || widget == "Class3")
+            {
+                m.SendDialog(playerid, "SelectClass" + playerid, null);
             }
         }
         void DialogClickSelectSubclass(int playerid, string widget)
@@ -310,52 +311,81 @@ namespace ManicDigger.Mods
             players[playerid].firstteam = false;
 
             m.SendDialog(playerid, "SelectSubclass" + playerid, null);
-            ClearInventory(playerid);
 
             PlayerClass pclass = players[playerid].playerclass;
             if (pclass == PlayerClass.Soldier)
             {
                 if (widget == "Subclass1")
                 {
-                    m.GrabBlock(playerid, m.GetBlockId("SubmachineGun"));
-                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    players[playerid].soldierSubclass = SoldierSubclass.SubmachineGun;
                 }
                 if (widget == "Subclass2")
                 {
-                    m.GrabBlock(playerid, m.GetBlockId("Shotgun"));
-                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    players[playerid].soldierSubclass = SoldierSubclass.Shotgun;
                 }
                 if (widget == "Subclass3")
                 {
-                    m.GrabBlock(playerid, m.GetBlockId("Rifle"));
-                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    players[playerid].soldierSubclass = SoldierSubclass.Rifle;
                 }
-                m.NotifyInventory(playerid);
             }
             if (pclass == PlayerClass.Medic)
             {
                 if (widget == "Subclass1")
                 {
-                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
-                    for (int i = 0; i < 4; i++)
-                    {
-                        m.GrabBlock(playerid, m.GetBlockId("MedicalKit"));
-                    }
+                    //todo medic subclass
                 }
-                m.NotifyInventory(playerid);
             }
             if (pclass == PlayerClass.Support)
             {
                 if (widget == "Subclass1")
                 {
-                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
-                    for (int i = 0; i < 5; i++)
-                    {
-                        m.GrabBlock(playerid, m.GetBlockId("AmmoPack"));
-                    }
+                    //todo support subclass
                 }
-                m.NotifyInventory(playerid);
             }
+            ResetInventoryOnRespawn(playerid);
+        }
+
+        void ResetInventoryOnRespawn(int playerid)
+        {
+            ClearInventory(playerid);
+
+            PlayerClass pclass = players[playerid].playerclass;
+            if (pclass == PlayerClass.Soldier)
+            {
+                SoldierSubclass sclass = players[playerid].soldierSubclass;
+                if (sclass == SoldierSubclass.SubmachineGun)
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("SubmachineGun"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                if (sclass == SoldierSubclass.Shotgun)
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Shotgun"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+                if (sclass == SoldierSubclass.Rifle)
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("Rifle"));
+                    m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                }
+            }
+            if (pclass == PlayerClass.Medic)
+            {
+                m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                for (int i = 0; i < 4; i++)
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("MedicalKit"));
+                }
+            }
+            if (pclass == PlayerClass.Support)
+            {
+                m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                for (int i = 0; i < 5; i++)
+                {
+                    m.GrabBlock(playerid, m.GetBlockId("AmmoPack"));
+                }
+            }
+            m.NotifyInventory(playerid);
             Inventory inv = m.GetInventory(playerid);
             for (int i = 0; i < 10; i++)
             {
@@ -403,6 +433,7 @@ namespace ManicDigger.Mods
             }
             posz = BlockHeight(posx, posy);
             m.SetPlayerPosition(playerid, posx, posy, posz);
+            ResetInventoryOnRespawn(playerid);
         }
 
         public int BlockHeight(int x, int y)
