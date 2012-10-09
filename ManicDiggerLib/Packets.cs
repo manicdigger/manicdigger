@@ -82,6 +82,8 @@ namespace GameModeFortress
     {
         [ProtoMember(1, IsRequired = false)]
         public string Message;
+        [ProtoMember(2, IsRequired = false)]
+        public bool IsTeamchat;
     }
     public enum InventoryActionType
     {

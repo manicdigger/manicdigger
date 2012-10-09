@@ -33,6 +33,7 @@ namespace ManicDigger.Mods
             m.RegisterOnWeaponShot(Shot);
             CurrentRespawnTime = DateTime.UtcNow;
             m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
+            m.RegisterOnPlayerChat(OnChat);
         }
 
         public enum PlayerClass
@@ -206,7 +207,20 @@ namespace ManicDigger.Mods
 
         string BlueColor = "&1";
         string GreenColor = "&2";
-        //string SpectatorColor = "&7";
+        string SpectatorColor = "&7";
+        string GetTeamColorString(Team team)
+        {
+            switch (team)
+            {
+                case Team.Blue:
+                    return BlueColor;
+                case Team.Green:
+                    return GreenColor;
+                case Team.Spectator:
+                    return SpectatorColor;
+            }
+            throw new Exception();
+        }
 
         void DialogClickSelectTeam(int playerid, string widget)
         {
@@ -865,6 +879,35 @@ namespace ManicDigger.Mods
                     }
                 }
             }
+        }
+
+        string OnChat(int player, string message, bool toteam)
+        {
+            int[] allplayers = m.AllPlayers();
+            string sender = m.GetPlayerName(player);
+            string senderColorString = GetTeamColorString(players[player].team);
+            string s = message;
+            if (players[player].team == Team.Spectator)
+            {
+                toteam = true;
+            }
+            if (toteam)
+            {
+                s = GetTeamColorString(players[player].team) + s;
+            }
+            foreach (int p in allplayers)
+            {
+                if (toteam)
+                {
+                    if (!(players[p].team == players[player].team || players[p].team == Team.Spectator))
+                    {
+                        continue;
+                    }
+                }
+                m.SendMessage(p, senderColorString + sender + "&f: " + s);
+            }
+            m.LogChat(senderColorString + sender + "&f: " + s);
+            return null;
         }
     }
 }

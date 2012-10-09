@@ -118,6 +118,7 @@ namespace ManicDigger
         BlockType GetBlockType(int block);
         void NotifyAmmo(int playerid, Dictionary<int, int> dictionary);
         void RegisterOnWeaponShot(ModDelegates.WeaponShot a);
+        void LogChat(string s);
     }
 
     public enum SpecialKey
@@ -141,7 +142,7 @@ namespace ManicDigger
         public delegate void PlayerJoin(int player);
         public delegate void PlayerLeave(int player);
         public delegate void PlayerDisconnect(int player);
-        public delegate void PlayerChat(int player, string message);
+        public delegate string PlayerChat(int player, string message, bool toteam);
         public delegate void DialogClick(int player, string widgetId);
         public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
         public delegate void WeaponShot(int sourceplayer, int block);

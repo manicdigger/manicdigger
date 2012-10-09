@@ -20,6 +20,7 @@ namespace ManicDigger.Gui
         public int ChatLinesMaxToDraw = 10;
         public List<Chatline> ChatLines = new List<Chatline>();
         public int ChatPageScroll;
+        public bool IsTeamchat;
         public string Name { get { return "Chat"; } }
 
         public void Render()
@@ -105,7 +106,12 @@ namespace ManicDigger.Gui
         }
         public void DrawTypingBuffer()
         {
-            d_Draw2d.Draw2dText(GuiTypingBuffer + "_", 50, d_ViewportSize.Height - 100, ChatFontSize, Color.White);
+            string s = GuiTypingBuffer;
+            if (IsTeamchat)
+            {
+                s = "To team: " + s;
+            }
+            d_Draw2d.Draw2dText(s + "_", 50, d_ViewportSize.Height - 100, ChatFontSize, Color.White);
         }
     }
     public class Chatline

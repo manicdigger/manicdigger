@@ -126,7 +126,7 @@ namespace ManicDiggerServer
                 Console.WriteLine("Cannot write to server log file {0}.", filename);
             }
         }
-        private void ChatLog(string p)
+        public void ChatLog(string p)
         {
             if (!config.ChatLogging)
             {
@@ -1857,10 +1857,19 @@ if (sent >= unknown.Count) { break; }
                         // chat message
                         else
                         {
+                            string message = packet.Message.Message;
+                            for (int i = 0; i < onplayerchat.Count; i++)
+                            {
+                                message = onplayerchat[i](clientid, message, packet.Message.IsTeamchat);
+                            }
                             if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
                             {
-                                SendMessageToAll(string.Format("{0}: {1}", clients[clientid].ColoredPlayername(colorNormal), packet.Message.Message));
-                                ChatLog(string.Format("{0}: {1}", clients[clientid].playername, packet.Message.Message));
+                                if (message == null)
+                                {
+                                    break;
+                                }
+                                SendMessageToAll(string.Format("{0}: {1}", clients[clientid].ColoredPlayername(colorNormal), message));
+                                ChatLog(string.Format("{0}: {1}", clients[clientid].playername, message));
                             }
                             else
                             {

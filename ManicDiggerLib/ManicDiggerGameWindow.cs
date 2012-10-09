@@ -457,6 +457,7 @@ namespace ManicDigger
             {
                 GuiTyping = TypingState.Typing;
                 d_HudChat.GuiTypingBuffer = "";
+                d_HudChat.IsTeamchat = true;
                 return;
             }
             if (GuiTyping == TypingState.Typing)
@@ -767,6 +768,7 @@ namespace ManicDigger
                     GuiTyping = TypingState.Typing;
                     d_HudChat.IsTyping = true;
                     d_HudChat.GuiTypingBuffer = "";
+                    d_HudChat.IsTeamchat = false;
                     return;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.PageUp) && GuiTyping == TypingState.Typing)
@@ -796,6 +798,7 @@ namespace ManicDigger
                         GuiTyping = TypingState.Typing;
                         d_HudChat.IsTyping = true;
                         d_HudChat.GuiTypingBuffer = "";
+                        d_HudChat.IsTeamchat = false;
                     }
                     else if (GuiTyping == TypingState.Ready)
                     {
@@ -4359,7 +4362,7 @@ namespace ManicDigger
         }
         public void SendChat(string s)
         {
-            PacketClientMessage p = new PacketClientMessage() { Message = s };
+            PacketClientMessage p = new PacketClientMessage() { Message = s, IsTeamchat = d_HudChat.IsTeamchat };
             SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Message, Message = p }));
         }
         private void SendPingReply()

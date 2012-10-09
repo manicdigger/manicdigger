@@ -695,5 +695,10 @@ namespace ManicDigger
         {
             server.onweaponshot.Add(a);
         }
+
+        public void LogChat(string s)
+        {
+            server.ChatLog(s);
+        }
     }
 }
