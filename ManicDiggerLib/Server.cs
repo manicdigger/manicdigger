@@ -1776,6 +1776,12 @@ if (sent >= unknown.Count) { break; }
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
                         }
+                        if (clients[clientid].IsSpectator)
+                        {
+                            SendMessage(clientid, colorError + "Spectators are not allowed to build.");
+                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            break;
+                        }
                         if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == BlockSetMode.Create || packet.SetBlock.Mode == BlockSetMode.Destroy))
                         {
                             SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
@@ -1794,6 +1800,11 @@ if (sent >= unknown.Count) { break; }
                         if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
                         {
                             SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                            break;
+                        }
+                        if (clients[clientid].IsSpectator)
+                        {
+                            SendMessage(clientid, colorError + "Spectators are not allowed to build.");
                             break;
                         }
                         Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
