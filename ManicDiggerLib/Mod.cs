@@ -722,6 +722,10 @@ namespace ManicDigger
                 server.extraPrivileges.Remove(privilege);
             }
         }
-        
+
+        public void LogServerEvent(string serverEvent)
+        {
+            server.ServerEventLog(serverEvent);
+        }
     }
 }

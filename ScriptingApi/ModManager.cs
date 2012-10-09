@@ -121,6 +121,7 @@ namespace ManicDigger
         void RegisterOnWeaponShot(ModDelegates.WeaponShot a);
         void LogChat(string s);
         void EnableExtraPrivilegeToAll(string privilege, bool enable);
+        void LogServerEvent(string serverEvent);
     }
 
     public enum SpecialKey

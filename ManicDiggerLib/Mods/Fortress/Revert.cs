@@ -81,7 +81,8 @@ namespace ManicDigger.Mods
                 }
                 else
                 {
-                    m.SendMessageToAll(string.Format("Reverted {0} block changes by player {1}", reverted, targetplayername));
+                    m.SendMessageToAll(string.Format("{0} reverted {1} block changes by player {2}", m.GetPlayerName(player), reverted, targetplayername));
+                    m.LogServerEvent(string.Format("{0} reverts {1} block changes by player {2}", m.GetPlayerName(player), reverted, targetplayername));
                 }
                 return true;
             }

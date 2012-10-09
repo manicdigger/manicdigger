@@ -106,7 +106,7 @@ namespace ManicDiggerServer
                 Console.WriteLine("Cannot write to server log file {0}.", filename);
             }
         }
-        private void ServerEventLog(string p)
+        public void ServerEventLog(string p)
         {
             if (!config.ServerEventLogging)
             {
