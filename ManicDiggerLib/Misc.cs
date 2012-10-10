@@ -50,7 +50,7 @@ namespace ManicDigger
 
         public static bool IsValidName (string s)
         {
-            if (s.Length < 1 || s.Length > 8)
+            if (s.Length < 1 || s.Length > 32)
             {
                 return false;
             }

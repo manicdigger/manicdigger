@@ -126,6 +126,7 @@ namespace ManicDigger
         void SetWorldDatabaseReadOnly(bool readOnly);
         string CurrentWorld();
         void LoadWorld(string filename);
+        string[] GetModPaths();
     }
 
     public enum SpecialKey

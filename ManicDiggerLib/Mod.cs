@@ -747,5 +747,10 @@ namespace ManicDigger
         {
             server.LoadDatabase(filename);
         }
+
+        public string[] GetModPaths()
+        {
+            return server.ModPaths.ToArray();
+        }
     }
 }

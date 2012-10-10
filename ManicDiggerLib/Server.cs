@@ -254,6 +254,7 @@ namespace ManicDiggerServer
         List<string> all_privileges = new List<string>();
 
         ModLoader modloader = new ModLoader();
+        public List<string> ModPaths = new List<string>();
         private void LoadMods()
         {
             ModManager1 m = new ModManager1();
@@ -269,6 +270,7 @@ namespace ManicDiggerServer
             }
             */
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
+
             for (int i = 0; i < modpaths.Length; i++)
             {
                 string game = "Fortress";
@@ -285,9 +287,14 @@ namespace ManicDiggerServer
                 {
                     continue;
                 }
+                ModPaths.Add(modpath);
                 string[] files = Directory.GetFiles(modpath);
                 foreach (string s in files)
                 {
+                    if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)) || !Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        continue;
+                    }
                     string scripttext = File.ReadAllText(s);
                     string filename = new FileInfo(s).Name;
                     scripts[filename] = scripttext;
