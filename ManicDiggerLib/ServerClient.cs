@@ -259,6 +259,7 @@ namespace GameModeFortress
                     reset_inventory,
                     fill_limit,
                     mode,
+                    load,
                 };
             }
             public static string build = "build";
@@ -304,6 +305,7 @@ namespace GameModeFortress
             public static string reset_inventory = "reset_inventory";
             public static string fill_limit = "fill_limit";
             public static string mode = "mode";
+            public static string load = "load";
         };
 
         public static List<Group> getDefaultGroups()
@@ -405,6 +407,7 @@ namespace GameModeFortress
             admin.GroupPrivileges.Add(Privilege.tp_pos);
             admin.GroupPrivileges.Add(Privilege.set_home);
             admin.GroupPrivileges.Add(Privilege.mode);
+            admin.GroupPrivileges.Add(Privilege.load);
             admin.GroupPrivileges.Add("revert");
             admin.GroupColor = ClientColor.Yellow;
             defaultGroups.Add(admin);

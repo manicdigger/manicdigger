@@ -727,5 +727,25 @@ namespace ManicDigger
         {
             server.ServerEventLog(serverEvent);
         }
+
+
+        public void RegisterOnLoadWorld(ModDelegates.LoadWorld a)
+        {
+        }
+
+        public void SetWorldDatabaseReadOnly(bool readOnly)
+        {
+            server.d_ChunkDb.ReadOnly = readOnly;
+        }
+
+        public string CurrentWorld()
+        {
+            return server.GetSaveFilename();
+        }
+
+        public void LoadWorld(string filename)
+        {
+            server.LoadDatabase(filename);
+        }
     }
 }

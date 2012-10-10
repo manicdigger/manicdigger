@@ -405,6 +405,27 @@ namespace ManicDiggerServer
             d_ChunkDb.Backup(finalFilename);
             return true;
         }
+        public bool LoadDatabase(string filename)
+        {
+            d_Map.d_ChunkDb = d_ChunkDb;
+            SaveAll();
+            if (filename != GetSaveFilename())
+            {
+                //todo load
+            }
+            var dbcompressed = (ChunkDbCompressed)d_Map.d_ChunkDb;
+            var db = (ChunkDbSqlite)dbcompressed.d_ChunkDb;
+            db.temporaryChunks = new Dictionary<ulong, byte[]>();
+            Array.Clear(d_Map.chunks, 0, d_Map.chunks.Length);
+            LoadGame(filename);
+            foreach (var k in clients)
+            {
+                //SendLevelInitialize(k.Key);
+                Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
+                k.Value.chunksseenTime.Clear();
+            }
+            return true;
+        }
         private void SaveAllLoadedChunks()
         {
             List<DbChunk> tosave = new List<DbChunk>();
@@ -440,7 +461,7 @@ namespace ManicDiggerServer
 
         public string SaveFilenameWithoutExtension = "default";
         public string SaveFilenameOverride;
-        string GetSaveFilename()
+        public string GetSaveFilename()
         {
             if (SaveFilenameOverride != null)
             {

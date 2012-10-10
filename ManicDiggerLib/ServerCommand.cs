@@ -561,6 +561,29 @@ namespace ManicDiggerServer
                         ServerEventLog(String.Format("{0} backups database: {1}.", GetClient(sourceClientId).playername, argument));
                     }
                     break;
+                    /*
+                case "load":
+                    if (!GetClient(sourceClientId).privileges.Contains(ServerClientMisc.Privilege.load))
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                        break;
+                    }
+                    if (!GameStorePath.IsValidName(argument))
+                    {
+                        SendMessage(sourceClientId, string.Format("Invalid load filename: {0}", argument));
+                        break;
+                    }
+                    if (!LoadDatabase(argument))
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}World could not be loaded. Check filename.", colorError));
+                    }
+                    else
+                    {
+                        SendMessage(sourceClientId, string.Format("{0}World loaded.", colorSuccess));
+                        ServerEventLog(String.Format("{0} loads world: {1}.", GetClient(sourceClientId).playername, argument));
+                    }
+                    break;
+                    */
                 case "reset_inventory":
                     this.ResetInventory(sourceClientId, argument);
                     return;

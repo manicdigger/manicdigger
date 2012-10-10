@@ -70,6 +70,7 @@ namespace GameModeFortress
         void DeleteChunks(IEnumerable<Xyz> chunkpositions);
         byte[] GetGlobalData();
         void SetGlobalData(byte[] data);
+        bool ReadOnly { get; set; }
     }
     public class ChunkDbCompressed : IChunkDb
     {
@@ -146,12 +147,12 @@ namespace GameModeFortress
             }
         }
         #endregion
+        public bool ReadOnly { get { return d_ChunkDb.ReadOnly; } set { d_ChunkDb.ReadOnly = value; } }
     }
     public class ChunkDbDummy : IChunkDb
     {
         string currentFilename = null;
         Dictionary<Xyz, byte[]> chunks = new Dictionary<Xyz, byte[]>();
-        #region IChunkDb Members
         public void Open(string filename)
         {
             if (filename != currentFilename)
@@ -202,7 +203,7 @@ namespace GameModeFortress
         {
             globaldata = data;
         }
-        #endregion
+        public bool ReadOnly { get;set; }
     }
     public class ChunkDbSqlite : IChunkDb
     {
@@ -314,7 +315,6 @@ namespace GameModeFortress
             }
             */
         }
-        #region IChunkDb Members
         public IEnumerable<byte[]> GetChunks(IEnumerable<Xyz> chunkpositions)
         {
             using (SQLiteTransaction transaction = sqliteConn.BeginTransaction())
@@ -329,6 +329,13 @@ namespace GameModeFortress
         }
         public byte[] GetChunk(ulong position)
         {
+            if (ReadOnly)
+            {
+                if (temporaryChunks.ContainsKey(position))
+                {
+                    return temporaryChunks[position];
+                }
+            }
             SQLiteCommand cmd = sqliteConn.CreateCommand();
             cmd.CommandText = "SELECT data FROM chunks WHERE position=?";
             cmd.Parameters.Add(CreateParameter("position", DbType.UInt64, position, cmd));
@@ -353,6 +360,11 @@ namespace GameModeFortress
         }
         public void DeleteChunk(ulong position)
         {
+            if (ReadOnly)
+            {
+                temporaryChunks.Remove(position);
+                return;
+            }
             DbCommand cmd = sqliteConn.CreateCommand();
             cmd.CommandText = "DELETE FROM chunks WHERE position=?";
             cmd.Parameters.Add(CreateParameter("position", DbType.UInt64, position, cmd));
@@ -360,6 +372,15 @@ namespace GameModeFortress
         }
         public void SetChunks(IEnumerable<DbChunk> chunks)
         {
+            if (ReadOnly)
+            {
+                foreach (DbChunk c in chunks)
+                {
+                    ulong pos = ManicDigger.MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
+                    temporaryChunks[pos] = (byte[])c.Chunk.Clone();
+                }
+                return;
+            }
             using (SQLiteTransaction transaction = sqliteConn.BeginTransaction())
             {
                 foreach (DbChunk c in chunks)
@@ -370,7 +391,8 @@ namespace GameModeFortress
                 transaction.Commit();
             }
         }
-        #endregion
+        //when read only don't save this to disk
+        public Dictionary<ulong, byte[]> temporaryChunks = new Dictionary<ulong, byte[]>();
         void InsertChunk(ulong position, byte[] data)
         {
             DbCommand cmd = sqliteConn.CreateCommand();
@@ -387,7 +409,6 @@ namespace GameModeFortress
             p.Value = value;
             return p;
         }
-        #region IChunkDb Members
         public byte[] GetGlobalData()
         {
             try
@@ -403,6 +424,7 @@ namespace GameModeFortress
         {
             InsertChunk(ulong.MaxValue / 2, data);
         }
-        #endregion
+
+        public bool ReadOnly { get; set; }
     }
 }

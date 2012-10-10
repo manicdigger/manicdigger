@@ -122,6 +122,10 @@ namespace ManicDigger
         void LogChat(string s);
         void EnableExtraPrivilegeToAll(string privilege, bool enable);
         void LogServerEvent(string serverEvent);
+        void RegisterOnLoadWorld(ModDelegates.LoadWorld a);
+        void SetWorldDatabaseReadOnly(bool readOnly);
+        string CurrentWorld();
+        void LoadWorld(string filename);
     }
 
     public enum SpecialKey
@@ -151,6 +155,7 @@ namespace ManicDigger
         public delegate void WeaponShot(int sourceplayer, int block);
         public delegate void SpecialKey1(int player, SpecialKey key);
         public delegate void ChangedActiveMaterialSlot(int player);
+        public delegate void LoadWorld();
     }
 
     public enum ItemClass

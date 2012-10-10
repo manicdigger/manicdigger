@@ -35,6 +35,7 @@ namespace ManicDigger.Mods
             m.RegisterTimer(UpdateMedicalKitAmmoPack, 0.1);
             m.RegisterOnPlayerChat(OnChat);
             m.RegisterOnCommand(OnCommand);
+            m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
         }
 
         public enum WarMode
@@ -979,11 +980,15 @@ namespace ManicDigger.Mods
                 if (arguments == "edit")
                 {
                     warmode = WarMode.Edit;
+                    m.LoadWorld(m.CurrentWorld());
+                    m.SetWorldDatabaseReadOnly(false);
                     Restart();
                 }
                 else if (arguments == "tdm")
                 {
                     warmode = WarMode.TeamDeathmatch;
+                    m.LoadWorld(m.CurrentWorld());
+                    m.SetWorldDatabaseReadOnly(true);
                     Restart();
                 }
                 else
