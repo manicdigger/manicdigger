@@ -258,7 +258,16 @@ namespace ManicDigger
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
             IsTransparentForLight[id] = b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
-            IsEmptyForPhysics[id] = b.WalkableType != WalkableType.Solid && b.WalkableType != WalkableType.Fluid;
+
+            if ((b.DrawType == DrawType.Ladder) || (b.WalkableType != WalkableType.Solid && b.WalkableType != WalkableType.Fluid))
+            {
+                IsEmptyForPhysics[id] = true;
+            }
+            else
+            {
+                IsEmptyForPhysics[id] = false;
+            }
+
             IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant)
                  && (b.DrawType != DrawType.OpenDoor) && (b.DrawType != DrawType.ClosedDoor);
             //Indexed by block id and TileSide.

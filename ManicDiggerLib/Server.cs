@@ -276,7 +276,7 @@ namespace ManicDiggerServer
                 string game = "Fortress";
                 if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
                 {
-                    game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt"));
+                    game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
                 }
                 modpaths[i] = Path.Combine(modpaths[i], game);
             }
