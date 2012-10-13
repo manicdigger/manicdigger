@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Jint.Delegates;
 using Lidgren.Network;
+using System.Diagnostics;
 
 namespace ManicDiggerServer
 {
@@ -193,8 +194,7 @@ namespace ManicDiggerServer
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
-                NetPeerConfiguration serverConfig = new NetPeerConfiguration("ManicDigger");
-                server.d_MainSocket = new MyNetServer() { server = new NetServer(serverConfig) };
+                server.d_MainSocket = new TcpNetServer() { };
             }
             server.d_Heartbeat = new ServerHeartbeat();
             if ((Public) && (server.config.Public))
@@ -733,6 +733,8 @@ namespace ManicDiggerServer
             }
 
             INetIncomingMessage msg;
+            Stopwatch s = new Stopwatch();
+            s.Start();
             while ((msg = d_MainSocket.ReadMessage()) != null)
             {
                 if (msg.SenderConnection == null)
@@ -799,6 +801,10 @@ namespace ManicDiggerServer
                     SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
                     KillPlayer(clientid);
                     Console.WriteLine(e.ToString());
+                }
+                if (s.Elapsed.TotalMilliseconds > 15)
+                {
+                    break;
                 }
             }
             foreach (var k in clients)
