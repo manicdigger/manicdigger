@@ -194,7 +194,9 @@ namespace ManicDiggerServer
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
-                server.d_MainSocket = new TcpNetServer() { };
+                NetPeerConfiguration serverConfig = new NetPeerConfiguration("ManicDigger");
+                server.d_MainSocket = new MyNetServer() { server = new NetServer(serverConfig) };
+                //server.d_MainSocket = new TcpNetServer() { };
             }
             server.d_Heartbeat = new ServerHeartbeat();
             if ((Public) && (server.config.Public))

@@ -130,7 +130,9 @@ namespace GameModeFortress
             }
             else
             {
-                w.main = new TcpNetClient() { };
+                var config = new NetPeerConfiguration("ManicDigger");
+                w.main = new MyNetClient() { client = new NetClient(config) };
+                //w.main = new TcpNetClient() { };
             }
             var glwindow = new GlWindow(w);
             w.d_GlWindow = glwindow;
