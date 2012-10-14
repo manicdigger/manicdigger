@@ -702,7 +702,10 @@ namespace ManicDigger
                 Item item = d_Inventory.RightHand[ActiveMaterial];
                 if (item != null && item.ItemClass == ItemClass.Block)
                 {
-                    return d_The3d.fov * blocktypes[item.BlockId].IronSightsFov;
+                    if (blocktypes[item.BlockId].IronSightsFov != 0)
+                    {
+                        return d_The3d.fov * blocktypes[item.BlockId].IronSightsFov;
+                    }
                 }
             }
             return d_The3d.fov;
