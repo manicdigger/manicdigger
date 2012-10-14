@@ -189,13 +189,19 @@ namespace ManicDigger
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            RememberPassword(textBox1.Text, textBox2.Text);
+            if (checkBox1.Checked)
+            {
+                RememberPassword(textBox1.Text, textBox2.Text);
+            }
             SetLoginData();
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
-            RememberPassword(textBox1.Text, textBox2.Text);
+            if (checkBox1.Checked)
+            {
+                RememberPassword(textBox1.Text, textBox2.Text);
+            }
             SetLoginData();
         }
 
