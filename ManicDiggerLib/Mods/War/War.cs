@@ -479,12 +479,12 @@ namespace ManicDigger.Mods
             switch (players[playerid].team)
             {
                 case Team.Blue:
-                    posx = 50;
-                    posy = m.GetMapSizeY() / 2;
+                    posx = m.GetMapSizeX() / 2;
+                    posy = 50;
                     break;
                 case Team.Green:
-                    posx = m.GetMapSizeX() - 50;
-                    posy = m.GetMapSizeY() / 2;
+                    posx = m.GetMapSizeX() / 2;
+                    posy = m.GetMapSizeY() - 50;
                     break;
                 case Team.Spectator:
                     posx = m.GetMapSizeX() / 2;
