@@ -1023,7 +1023,8 @@ namespace ManicDigger
                 {
                     Item item = d_Inventory.RightHand[ActiveMaterial];
                     if (item != null && item.ItemClass == ItemClass.Block
-                        && blocktypes[item.BlockId].IsPistol)
+                        && blocktypes[item.BlockId].IsPistol
+                        && reloadstart.Ticks == 0)
                     {
                         d_Audio.Play("shotgun-reload-old_school-RA_The_Sun_God-580332022.ogg");
                         reloadstart = DateTime.UtcNow;
