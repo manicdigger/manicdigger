@@ -2387,10 +2387,6 @@ if (sent >= unknown.Count) { break; }
             int endz = Math.Max(a.z, b.z);
 
             int blockType = fill.BlockType;
-            if (blockType == (int)TileTypeManicDigger.FillArea)
-            {
-                blockType = SpecialBlockId.Empty;
-            }
             blockType = d_Data.WhenPlayerPlacesGetsConvertedTo[blockType];
 
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
@@ -2399,84 +2395,29 @@ if (sent >= unknown.Count) { break; }
             {
                 return false;
             }
-
-            // crafting mode
-            if (!config.IsCreative)
+            for (int x = startx; x <= endx; ++x)
             {
-                // grab items
-                if (blockType == SpecialBlockId.Empty)
+                for (int y = starty; y <= endy; ++y)
                 {
-                    var newItem = new Item();
-                    newItem.ItemClass = ItemClass.Block;
-                    for (int x = startx; x <= endx; x++)
+                    for (int z = startz; z <= endz; ++z)
                     {
-                        for (int y = starty; y <= endy; y++)
+                        PacketClientSetBlock cmd = new PacketClientSetBlock();
+                        cmd.X = x;
+                        cmd.Y = y;
+                        cmd.Z = z;
+                        cmd.MaterialSlot = fill.MaterialSlot;
+                        if (GetBlock(x, y, z) != 0)
                         {
-                            for (int z = startz; z <= endz; z++)
-                            {
-                                newItem.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[d_Map.GetBlock(x, y, z)];
-                                GetInventoryUtil(inventory).GrabItem(newItem, fill.MaterialSlot);
-                                d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
-                            }
+                            cmd.Mode = BlockSetMode.Destroy;
+                            DoCommandBuild(player_id, true, cmd);
+                        }
+                        if (blockType != (int)TileTypeManicDigger.FillArea)
+                        {
+                            cmd.Mode = BlockSetMode.Create;
+                            DoCommandBuild(player_id,true, cmd);
                         }
                     }
                 }
-                // place and lose items
-                else
-                {
-                    int newBlockCount = 0;
-                    var newItem = new Item();
-                    newItem.ItemClass = ItemClass.Block;
-                    // Anon-method here to break out of the nested loop instead of using goto.
-                    ManicDigger.Action fillArea = delegate
-                    {
-                        for (int x = startx; x <= endx; ++x)
-                        {
-                            for (int y = starty; y <= endy; ++y)
-                            {
-                                for (int z = startz; z <= endz; ++z)
-                                {
-                                    // Player got out of blocks. Stop fill here.
-                                    if (item.BlockCount == 0)
-                                    {
-                                        inventory.RightHand[fill.MaterialSlot] = null;
-                                        return;
-                                    }
-                                    item.BlockCount--;
-                                    // Grab item before replacing it with new block.
-                                    newItem.BlockId = d_Data.WhenPlayerPlacesGetsConvertedTo[d_Map.GetBlock(x, y, z)];
-                                    GetInventoryUtil(inventory).GrabItem(newItem, fill.MaterialSlot);
-                                    newBlockCount++;
-                                    d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
-                                }
-                            }
-                        }
-                    };
-                    fillArea();
-                    blockCount = newBlockCount;
-                }
-                clients[player_id].IsInventoryDirty = true;
-                NotifyInventory(player_id);
-            }
-            // creative mode
-            else
-            {
-                for (int x = startx; x <= endx; x++)
-                {
-                    for (int y = starty; y <= endy; y++)
-                    {
-                        for (int z = startz; z <= endz; z++)
-                        {
-                            d_Map.SetBlockNotMakingDirty(x, y, z, blockType);
-                        }
-                    }
-                }
-            }
-
-            // notify clients
-            foreach (var k in clients)
-            {
-                SendFillArea(k.Key, a, b, blockType, blockCount);
             }
             return true;
         }
