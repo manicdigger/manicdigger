@@ -36,6 +36,7 @@ namespace ManicDigger.Mods
             m.RegisterOnPlayerChat(OnChat);
             m.RegisterOnCommand(OnCommand);
             m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
+            m.RegisterOnBlockBuild(OnBuild);
         }
 
         public enum WarMode
@@ -1006,6 +1007,14 @@ namespace ManicDigger.Mods
             foreach (int p in allplayers)
             {
                 PlayerJoin(p);
+            }
+        }
+
+        void OnBuild(int player, int x, int y, int z)
+        {
+            if (m.GetBlockNameAt(x, y, z) == "Water")
+            {
+                m.SetBlock(x, y, z, 0);
             }
         }
     }
