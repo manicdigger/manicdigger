@@ -2039,6 +2039,8 @@ if (sent >= unknown.Count) { break; }
                 case ClientPacketId.Leave:
                     KillPlayer(clientid);
                     break;
+                case ClientPacketId.Reload:
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
