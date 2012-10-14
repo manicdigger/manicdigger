@@ -241,6 +241,17 @@ namespace ManicDiggerServer
                     c.heightmapchunksseen[new Vector2i(v.x, v.y)] = (int)simulationcurrentframe;
                 }
             }
+            if (compressedchunk != null)
+            {
+                foreach (byte[] part in Parts(compressedchunk, 1024))
+                {
+                    PacketServerChunkPart p1 = new PacketServerChunkPart()
+                    {
+                        CompressedChunkPart = part,
+                    };
+                    SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ChunkPart, ChunkPart = p1 }));
+                }
+            }
             PacketServerChunk p = new PacketServerChunk()
             {
                 X = v.x,
@@ -249,7 +260,6 @@ namespace ManicDiggerServer
                 SizeX = chunksize,
                 SizeY = chunksize,
                 SizeZ = chunksize,
-                CompressedChunk = compressedchunk,
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
         }

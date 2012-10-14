@@ -4760,12 +4760,16 @@ namespace ManicDigger
                     {
                         throw new Exception(packet.DisconnectPlayer.DisconnectReason);
                     }
+                case ServerPacketId.ChunkPart:
+                    BinaryWriter bw1 = new BinaryWriter(CurrentChunk);
+                    bw1.Write((byte[])packet.ChunkPart.CompressedChunkPart);
+                    break;
                 case ServerPacketId.Chunk:
                     {
                         var p = packet.Chunk;
-                        if (p.CompressedChunk != null)
+                        if (CurrentChunk.Length != 0)
                         {
-                            byte[] decompressedchunk = d_Compression.Decompress(p.CompressedChunk);
+                            byte[] decompressedchunk = d_Compression.Decompress(CurrentChunk.ToArray());
                             ushort[, ,] receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
                             {
                                 BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
@@ -4792,9 +4796,9 @@ namespace ManicDigger
                                     }
                                 }
                             }
-
                         }
                         ReceivedMapLength += data.Length;// lengthPrefixLength + packetLength;
+                        CurrentChunk = new MemoryStream();
                     }
                     break;
                 case ServerPacketId.HeightmapChunk:
@@ -5029,6 +5033,7 @@ namespace ManicDigger
             LastReceived = currentTime;
             //return lengthPrefixLength + packetLength;
         }
+        MemoryStream CurrentChunk = new MemoryStream();
         BlockType[] NewBlockTypes = new BlockType[256];
         public class Bullet
         {

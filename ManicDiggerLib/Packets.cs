@@ -426,6 +426,8 @@ namespace GameModeFortress
         public PacketServerAmmo Ammo;
         [ProtoMember(31, IsRequired = false)]
         public PacketServerBlockType BlockType;
+        [ProtoMember(32, IsRequired = false)]
+        public PacketServerChunkPart ChunkPart;
     }
     [ProtoContract]
     public class PacketServerAmmo
@@ -493,6 +495,12 @@ namespace GameModeFortress
         Crash,
     }
     [ProtoContract]
+    public class PacketServerChunkPart
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public byte[] CompressedChunkPart;
+    }
+    [ProtoContract]
     public class PacketServerChunk
     {
         [ProtoMember(1, IsRequired = false)]
@@ -507,8 +515,6 @@ namespace GameModeFortress
         public int SizeY;
         [ProtoMember(6, IsRequired = false)]
         public int SizeZ;
-        [ProtoMember(7, IsRequired = false)]
-        public byte[] CompressedChunk;
     }
     //needed for drawing shadows.
     //sent before any chunks or blocks in the column.
@@ -724,6 +730,7 @@ namespace GameModeFortress
         Bullet,
         Ammo,
         BlockType,
+        ChunkPart,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }
