@@ -4920,9 +4920,14 @@ namespace ManicDigger
                         }
                     }
                     break;
+                case ServerPacketId.BlockType:
+                    NewBlockTypes[packet.BlockType.Id] = packet.BlockType.blocktype;
+                    break;
                 case ServerPacketId.BlockTypes:
+                    this.blocktypes = NewBlockTypes;
+                    NewBlockTypes = new BlockType[blocktypes.Length];
+
                     Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
-                    this.blocktypes = packet.BlockTypes.blocktypes;
                     int lastTextureId = 0;
                     for (int i = 0; i < blocktypes.Length; i++)
                     {
@@ -4944,7 +4949,7 @@ namespace ManicDigger
                             }
                         }
                     }
-                    d_Data.UseBlockTypes(packet.BlockTypes.blocktypes, textureInAtlasIds);
+                    d_Data.UseBlockTypes(blocktypes, textureInAtlasIds);
                     UseTerrainTextures(textureInAtlasIds);
                     d_Weapon.redraw = true;
                     RedrawAllBlocks();
@@ -5020,6 +5025,7 @@ namespace ManicDigger
             LastReceived = currentTime;
             //return lengthPrefixLength + packetLength;
         }
+        BlockType[] NewBlockTypes = new BlockType[256];
         public class Bullet
         {
             public Vector3 from;

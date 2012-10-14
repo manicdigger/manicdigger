@@ -3024,7 +3024,7 @@ if (sent >= unknown.Count) { break; }
             }
             return files;
         }
-        int BlobPartLength = 1024 * 4;
+        int BlobPartLength = 1024 * 1;
         private void SendBlobs(int clientid)
         {
             SendLevelInitialize(clientid);
@@ -3083,7 +3083,12 @@ if (sent >= unknown.Count) { break; }
         public BlockType[] BlockTypes = new BlockType[256];
         public void SendBlockTypes(int clientid)
         {
-            PacketServerBlockTypes p = new PacketServerBlockTypes() { blocktypes = BlockTypes };
+            for (int i = 0; i < BlockTypes.Length; i++)
+            {
+                PacketServerBlockType p1 = new PacketServerBlockType() { Id = i, blocktype = BlockTypes[i] };
+                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlockType, BlockType = p1 }));
+            }
+            PacketServerBlockTypes p = new PacketServerBlockTypes() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlockTypes, BlockTypes = p }));
         }
         private void SendSunLevels(int clientid)

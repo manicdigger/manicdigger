@@ -166,8 +166,14 @@ namespace GameModeFortress
     [ProtoContract]
     public class PacketServerBlockTypes
     {
+    }
+    [ProtoContract]
+    public class PacketServerBlockType
+    {
         [ProtoMember(1)]
-        public BlockType[] blocktypes;
+        public int Id;
+        [ProtoMember(2)]
+        public BlockType blocktype;
     }
     [ProtoContract]
     public class PacketServerSunLevels
@@ -418,6 +424,8 @@ namespace GameModeFortress
         public PacketServerBullet Bullet;
         [ProtoMember(30, IsRequired = false)]
         public PacketServerAmmo Ammo;
+        [ProtoMember(31, IsRequired = false)]
+        public PacketServerBlockType BlockType;
     }
     [ProtoContract]
     public class PacketServerAmmo
@@ -715,6 +723,7 @@ namespace GameModeFortress
         Follow,
         Bullet,
         Ammo,
+        BlockType,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }
