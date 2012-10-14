@@ -453,7 +453,14 @@ namespace ManicDigger
         }
         void ManicDiggerGameWindow_KeyPress(object sender, OpenTK.KeyPressEventArgs e)
         {
-            if ((e.KeyChar == 't' || e.KeyChar == 'T') && GuiTyping == TypingState.None)
+            if (KeyIsEqualChar(OpenTK.Input.Key.T, e.KeyChar) && GuiTyping == TypingState.None)
+            {
+                GuiTyping = TypingState.Typing;
+                d_HudChat.GuiTypingBuffer = "";
+                d_HudChat.IsTeamchat = false;
+                return;
+            }
+            if (KeyIsEqualChar(OpenTK.Input.Key.Y, e.KeyChar) && GuiTyping == TypingState.None)
             {
                 GuiTyping = TypingState.Typing;
                 d_HudChat.GuiTypingBuffer = "";
@@ -1849,6 +1856,15 @@ namespace ManicDigger
                 return (OpenTK.Input.Key)options.Keys[(int)key];
             }
             return key;
+        }
+        public bool KeyIsEqualChar(OpenTK.Input.Key key1, char key2)
+        {
+            // TODO: Any better solution? http://www.opentk.com/node/1202
+            if (options.Keys.ContainsKey((int)key1))
+            {
+                return ((OpenTK.Input.Key)options.Keys[(int)key1]).ToString().Equals(key2.ToString(), StringComparison.InvariantCultureIgnoreCase);
+            }
+            return  key1.ToString().Equals(key2.ToString(), StringComparison.InvariantCultureIgnoreCase);
         }
         private float VectorAngleGet(Vector3 q)
         {

@@ -221,6 +221,33 @@ namespace ManicDigger {
                 return ResourceManager.GetString("KeyChat", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Team Chat.
+        /// </summary>
+        public static string KeyTeamChat {
+            get {
+                return ResourceManager.GetString("KeyTeamChat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use.
+        /// </summary>
+        public static string KeyBlockInfo {
+            get {
+                return ResourceManager.GetString("KeyBlockInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use.
+        /// </summary>
+        public static string KeyUse {
+            get {
+                return ResourceManager.GetString("KeyUse", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Free move.
@@ -230,7 +257,17 @@ namespace ManicDigger {
                 return ResourceManager.GetString("KeyFreeMove", resourceCulture);
             }
         }
-        
+
+
+        /// <summary>
+        ///   Looks up a localized string similar to Fullscreen.
+        /// </summary>
+        public static string KeyTextEditor {
+            get {
+                return ResourceManager.GetString("KeyTexteditor", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Fullscreen.
         /// </summary>
@@ -309,6 +346,24 @@ namespace ManicDigger {
         public static string KeyRespawn {
             get {
                 return ResourceManager.GetString("KeyRespawn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Respawn.
+        /// </summary>
+        public static string KeyReloadWeapon {
+            get {
+                return ResourceManager.GetString("KeyReloadWeapon", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reverse minecart.
+        /// </summary>
+        public static string KeyCraft {
+            get {
+                return ResourceManager.GetString("KeyCraft", resourceCulture);
             }
         }
         

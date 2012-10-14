@@ -171,8 +171,20 @@
   <data name="KeyChat" xml:space="preserve">
     <value>Chat</value>
   </data>
+  <data name="KeyTeamChat" xml:space="preserve">
+    <value>Team Chat</value>
+  </data>
+  <data name="KeyBlockInfo" xml:space="preserve">
+    <value>Block information</value>
+  </data>
+  <data name="KeyUse" xml:space="preserve">
+    <value>Use</value>
+  </data>
   <data name="KeyFreeMove" xml:space="preserve">
     <value>Free move</value>
+  </data>
+  <data name="KeyTexteditor" xml:space="preserve">
+    <value>Texteditor</value>
   </data>
   <data name="KeyFullscreen" xml:space="preserve">
     <value>Fullscreen</value>
@@ -201,6 +213,12 @@
   <data name="KeyRespawn" xml:space="preserve">
     <value>Respawn</value>
   </data>
+    <data name="KeyReloadWeapon" xml:space="preserve">
+    <value>Reload weapon</value>
+  </data>
+  <data name="KeyCraft" xml:space="preserve">
+    <value>Craft</value>
+  </data>
   <data name="KeyReverseMinecart" xml:space="preserve">
     <value>Reverse minecart</value>
   </data>
@@ -214,7 +232,7 @@
     <value>Set spawn position</value>
   </data>
   <data name="KeyShowMaterialSelector" xml:space="preserve">
-    <value>Show material selector</value>
+    <value>Open inventory</value>
   </data>
   <data name="KeyThirdPersonCamera" xml:space="preserve">
     <value>Third-person camera</value>
@@ -253,7 +271,7 @@
     <value>(press {0} to use)</value>
   </data>
   <data name="Respawn" xml:space="preserve">
-    <value>Respawn.</value>
+    <value>Respawn</value>
   </data>
   <data name="ReturnToGame" xml:space="preserve">
     <value>Return to game</value>

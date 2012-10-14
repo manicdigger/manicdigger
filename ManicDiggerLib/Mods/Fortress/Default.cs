@@ -548,7 +548,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(106, "Apples", new BlockType()
             {
                 AllTextures = "Apples",
-                DrawType = DrawType.Solid,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
