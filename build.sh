@@ -35,5 +35,6 @@ cp -R ManicDiggerLib/Mods output
 rm -f output/*vshost.exe
 cp credits.txt output
 cp OpenTK.dll.config output
+cp ENetCS.dll.config output
 
 # pause

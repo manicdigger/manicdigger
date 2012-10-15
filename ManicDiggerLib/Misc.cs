@@ -1762,6 +1762,230 @@ namespace ManicDigger
         }
     }
 
+    public class EnetNetServer : INetServer
+    {
+        public void Start()
+        {
+            host = new ENet.Host();
+            host.Create((ushort)configuration.Port, 64);
+        }
+
+        ENet.Host host;
+
+        public void Recycle(INetIncomingMessage msg)
+        {
+        }
+
+        public INetIncomingMessage ReadMessage()
+        {
+            if (messages.Count > 0)
+            {
+                return messages.Dequeue();
+            }
+            if (host.Service(0) >= 0)
+            {
+                ENet.Event event_;
+                while (host.CheckEvents(out event_) > 0)
+                {
+                    switch (event_.Type)
+                    {
+                        case ENet.EventType.Connect:
+                            var peer = event_.Peer;
+                            peer.UserData = new IntPtr(clientid++);
+                            break;
+
+                        case ENet.EventType.Receive:
+                            byte[] data = event_.Packet.GetBytes();
+                            event_.Packet.Dispose();
+                            var senderconnection = new EnetNetConnection() { peer = event_.Peer };
+                            var msg = new EnetNetIncomingMessage() { senderconnection = senderconnection, message = data };
+                            messages.Enqueue(msg);
+                            break;
+                    }
+                }
+            }
+            if (messages.Count > 0)
+            {
+                return messages.Dequeue();
+            }
+            return null;
+        }
+        int clientid;
+        Queue<EnetNetIncomingMessage> messages = new Queue<EnetNetIncomingMessage>();
+
+        public DummyNetPeerConfiguration configuration = new DummyNetPeerConfiguration();
+
+        public INetPeerConfiguration Configuration
+        {
+            get { return configuration; }
+        }
+
+        public INetOutgoingMessage CreateMessage()
+        {
+            return new EnetNetOutgoingMessage();
+        }
+    }
+
+    public class EnetNetIncomingMessage : INetIncomingMessage
+    {
+        public EnetNetConnection senderconnection;
+
+        public INetConnection SenderConnection
+        {
+            get { return senderconnection; }
+        }
+
+        public byte[] message;
+
+        public byte[] ReadBytes(int numberOfBytes)
+        {
+            return message;
+        }
+
+        public int LengthBytes
+        {
+            get { return message.Length; }
+        }
+    }
+
+    public class EnetNetConnection : INetConnection
+    {
+        public ENet.Peer peer;
+        public unsafe IPEndPoint RemoteEndPoint
+        {
+            get { return new IPEndPoint(peer.NativeData->address.host, peer.NativeData->address.port); }
+        }
+
+        public unsafe void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
+        {
+            var msg1 = (EnetNetOutgoingMessage)msg;
+            //peer.Send(0, msg1.message);
+
+            ENet.Packet p = new ENet.Packet();
+            p.Create(msg1.message);
+            p.NativeData->flags |= ENet.PacketFlags.Reliable;
+            peer.Send(0, p);
+            p.Dispose();
+        }
+
+        public void Update()
+        {
+        }
+
+        public unsafe override bool Equals(object obj)
+        {
+            return peer.UserData == ((EnetNetConnection)obj).peer.UserData;
+        }
+
+        public unsafe override int GetHashCode()
+        {
+            return peer.UserData.GetHashCode();
+        }
+    }
+
+    public class EnetNetOutgoingMessage : INetOutgoingMessage
+    {
+        public byte[] message;
+        public void Write(byte[] source)
+        {
+            message = (byte[])source.Clone();
+        }
+    }
+
+    public class EnetNetClient : INetClient
+    {
+        public void Start()
+        {
+            host = new ENet.Host();
+        }
+        ENet.Host host;
+        ENet.Peer peer;
+        bool connected;
+        bool connected2;
+
+        public INetConnection Connect(string ip, int port)
+        {
+            host.Create(null, 1);
+            ENet.Address address = new ENet.Address();
+            address.SetHost(ip);
+            address.Port = (ushort)port;
+            peer = host.Connect(address, 200, 1234);
+            connected = true;
+            return null;
+        }
+
+        public unsafe INetIncomingMessage ReadMessage()
+        {
+            if (!connected)
+            {
+                return null;
+            }
+            if (messages.Count > 0)
+            {
+                return messages.Dequeue();
+            }
+            if (connected2)
+            {
+                while (tosend.Count > 0)
+                {
+                    var msg = tosend.Dequeue();
+                    DoSendPacket(msg);
+                }
+            }
+            if (host.Service(0) >= 0)
+            {
+                ENet.Event event_;
+                while (host.CheckEvents(out event_) > 0)
+                {
+                    switch (event_.Type)
+                    {
+                        case ENet.EventType.Connect:
+                            connected2 = true;
+                            break;
+                        case ENet.EventType.Receive:
+                            byte[] data = event_.Packet.GetBytes();
+                            event_.Packet.Dispose();
+                            var msg = new EnetNetIncomingMessage() { message = data };
+                            messages.Enqueue(msg);
+                            break;
+                    }
+                }
+            }
+            if (messages.Count > 0)
+            {
+                return messages.Dequeue();
+            }
+            return null;
+        }
+
+        unsafe private void DoSendPacket(EnetNetOutgoingMessage msg)
+        {
+            ENet.Packet p = new ENet.Packet();
+            p.Create(msg.message);
+            p.NativeData->flags |= ENet.PacketFlags.Reliable;
+            peer.Send(0, p);
+            p.Dispose();
+        }
+
+        Queue<EnetNetIncomingMessage> messages = new Queue<EnetNetIncomingMessage>();
+
+        public INetOutgoingMessage CreateMessage()
+        {
+            return new EnetNetOutgoingMessage();
+        }
+        Queue<EnetNetOutgoingMessage> tosend = new Queue<EnetNetOutgoingMessage>();
+        public unsafe void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
+        {
+            var msg = (EnetNetOutgoingMessage)message;
+            if (!connected2)
+            {
+                tosend.Enqueue(msg);
+                return;
+            }
+            DoSendPacket(msg);
+        }
+    }
+
     public class MyUri
     {
         public MyUri(string uri)
