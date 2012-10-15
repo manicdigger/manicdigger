@@ -114,7 +114,7 @@ namespace ManicDigger.Mods
                 }
             }
             BlockChangeFlood(x, y, z);
-            var v = new Vector3i(x, y, z);
+            //var v = new Vector3i(x, y, z);
             //tosetwater.Sort((a, b) => Distance(v, a).CompareTo(Distance(v, b)));
         }
 

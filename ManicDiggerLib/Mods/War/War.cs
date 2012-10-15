@@ -61,7 +61,7 @@ namespace ManicDigger.Mods
         }
 
         TimeSpan RespawnTime = TimeSpan.FromSeconds(30);
-        TimeSpan RoundTime = TimeSpan.FromMinutes(30);
+        //TimeSpan RoundTime = TimeSpan.FromMinutes(30);
         DateTime CurrentRespawnTime;
 
         public bool EnableTeamkill = true;
