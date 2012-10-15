@@ -279,6 +279,16 @@ namespace ManicDiggerServer
                 {
                     game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
                 }
+                else if (Directory.Exists(modpaths[i]))
+                {
+                    try
+                    {
+                        File.WriteAllText(Path.Combine(modpaths[i], "current.txt"), game);
+                    }
+                    catch
+                    {
+                    }
+                }
                 modpaths[i] = Path.Combine(modpaths[i], game);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
