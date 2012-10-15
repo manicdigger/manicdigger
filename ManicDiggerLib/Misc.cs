@@ -1142,6 +1142,13 @@ namespace ManicDigger
         INetConnection SenderConnection { get; }
         byte[] ReadBytes(int numberOfBytes);
         int LengthBytes { get; }
+        MessageType Type { get; }
+    }
+    public enum MessageType
+    {
+        Data,
+        Connect,
+        Disconnect,
     }
     public interface INetOutgoingMessage
     {
@@ -1265,6 +1272,7 @@ namespace ManicDigger
         public INetConnection SenderConnection { get { return new MyNetConnection() {  netConnection = message.SenderConnection }; } }
         public byte[] ReadBytes(int numberOfBytes) { return message.ReadBytes(numberOfBytes); }
         public int LengthBytes { get { return message.LengthBytes; } }
+        public MessageType Type { get; set; }
     }
     //Must limit amount of data sent at once because sending too much saturates lidgren-net and crashes client.
     public class MyNetConnection : INetConnection
@@ -1422,6 +1430,8 @@ namespace ManicDigger
         }
 
         public int LengthBytes { get { return message.Length; } }
+
+        public MessageType Type { get; set; }
     }
     public class DummyNetOutgoingMessage : INetOutgoingMessage
     {
@@ -1617,6 +1627,8 @@ namespace ManicDigger
         {
             get { return data.Length; }
         }
+
+        public MessageType Type { get; set; }
     }
     public class TcpNetClient : INetClient
     {
@@ -1792,14 +1804,21 @@ namespace ManicDigger
                         case ENet.EventType.Connect:
                             var peer = event_.Peer;
                             peer.UserData = new IntPtr(clientid++);
+                            var senderconnection1 = new EnetNetConnection() { peer = event_.Peer };
+                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderconnection1, Type = MessageType.Connect });
                             break;
 
                         case ENet.EventType.Receive:
                             byte[] data = event_.Packet.GetBytes();
                             event_.Packet.Dispose();
                             var senderconnection = new EnetNetConnection() { peer = event_.Peer };
-                            var msg = new EnetNetIncomingMessage() { senderconnection = senderconnection, message = data };
+                            var msg = new EnetNetIncomingMessage() { senderconnection = senderconnection, message = data, Type = MessageType.Data };
                             messages.Enqueue(msg);
+                            break;
+
+                        case ENet.EventType.Disconnect:
+                            var senderconnection2 = new EnetNetConnection() { peer = event_.Peer };
+                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderconnection2, Type = MessageType.Disconnect });
                             break;
                     }
                 }
@@ -1846,6 +1865,8 @@ namespace ManicDigger
         {
             get { return message.Length; }
         }
+
+        public MessageType Type { get; set; }
     }
 
     public class EnetNetConnection : INetConnection

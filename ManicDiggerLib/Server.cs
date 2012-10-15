@@ -769,62 +769,73 @@ namespace ManicDiggerServer
                         clientid = k.Key;
                     }
                 }
-                if (clientid == -1)
+                switch (msg.Type)
                 {
-                    //new connection
-                    //ISocket client1 = d_MainSocket.Accept();
-                    INetConnection client1 = msg.SenderConnection;
-                    IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
+                    case ManicDigger.MessageType.Connect:
+                        //new connection
+                        //ISocket client1 = d_MainSocket.Accept();
+                        INetConnection client1 = msg.SenderConnection;
+                        IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
 
-                    Client c = new Client();
-                    c.socket = client1;
-                    c.Ping.TimeoutValue = config.ClientConnectionTimeout;
-                    c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
-                    lock (clients)
-                    {
-                        this.lastClientId = this.GenerateClientId();
-                        c.Id = lastClientId;
-                        clients[lastClientId] = c;
-                    }
-                    clientid = c.Id;
-                    c.notifyMapTimer = new ManicDigger.Timer()
-                    {
-                        INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
-                    };
-                    c.notifyMonstersTimer = new ManicDigger.Timer()
-                    {
-                        INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
-                    };
-                    if (clients.Count > config.MaxClients)
-                    {
-                        SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
-                        KillPlayer(this.lastClientId);
-                    }
-                    else if (config.IsIPBanned(iep1.Address.ToString()))
-                    {
-                        SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
-                        ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
-                        KillPlayer(this.lastClientId);
-                    }
-                }
+                        Client c = new Client();
+                        c.socket = client1;
+                        c.Ping.TimeoutValue = config.ClientConnectionTimeout;
+                        c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
+                        lock (clients)
+                        {
+                            this.lastClientId = this.GenerateClientId();
+                            c.Id = lastClientId;
+                            clients[lastClientId] = c;
+                        }
+                        //clientid = c.Id;
+                        c.notifyMapTimer = new ManicDigger.Timer()
+                        {
+                            INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
+                        };
+                        c.notifyMonstersTimer = new ManicDigger.Timer()
+                        {
+                            INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
+                        };
+                        if (clients.Count > config.MaxClients)
+                        {
+                            SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
+                            KillPlayer(this.lastClientId);
+                        }
+                        else if (config.IsIPBanned(iep1.Address.ToString()))
+                        {
+                            SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
+                            ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
+                            KillPlayer(this.lastClientId);
+                        }
+                        break;
+                    case ManicDigger.MessageType.Data:
+                        if (clientid == -1)
+                        {
+                            break;
+                        }
 
-                // process packet
-                try
-                {
-                    TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
-                    d_MainSocket.Recycle(msg);
-                }
-                catch (Exception e)
-                {
-                    //client problem. disconnect client.
-                    Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
-                    SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
-                    KillPlayer(clientid);
-                    Console.WriteLine(e.ToString());
-                }
-                if (s.Elapsed.TotalMilliseconds > 15)
-                {
-                    break;
+                        // process packet
+                        try
+                        {
+                            TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
+                            d_MainSocket.Recycle(msg);
+                        }
+                        catch (Exception e)
+                        {
+                            //client problem. disconnect client.
+                            Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
+                            SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
+                            KillPlayer(clientid);
+                            Console.WriteLine(e.ToString());
+                        }
+                        if (s.Elapsed.TotalMilliseconds > 15)
+                        {
+                            break;
+                        }
+                        break;
+                    case ManicDigger.MessageType.Disconnect:
+                        KillPlayer(clientid);
+                        break;
                 }
             }
             foreach (var k in clients)
