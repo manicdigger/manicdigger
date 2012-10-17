@@ -1455,6 +1455,8 @@ namespace ManicDigger
 
         INetConnection connectedClient = new DummyNetConnection();
 
+        bool receivedAnyMessage;
+
         public INetIncomingMessage ReadMessage()
         {
             ((DummyNetConnection)connectedClient).network = network;
@@ -1462,6 +1464,11 @@ namespace ManicDigger
             {
                 if (network.ServerReceiveBuffer.Count > 0)
                 {
+                    if (!receivedAnyMessage)
+                    {
+                        receivedAnyMessage = true;
+                        return new DummyNetIncomingmessage() { Type = MessageType.Connect, SenderConnection = connectedClient };
+                    }
                     return new DummyNetIncomingmessage() { message = network.ServerReceiveBuffer.Dequeue(), SenderConnection = connectedClient };
                 }
                 else
