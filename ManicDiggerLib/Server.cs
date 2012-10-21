@@ -2757,7 +2757,7 @@ if (sent >= unknown.Count) { break; }
             }
             return blocktypea == blocktypeb;
         }
-        private byte[] Serialize(PacketServer p)
+        public byte[] Serialize(PacketServer p)
         {
             MemoryStream ms = new MemoryStream();
             Serializer.Serialize(ms, p);
@@ -3569,6 +3569,18 @@ if (sent >= unknown.Count) { break; }
                 TotalAmmo = totalAmmo,
             };
             SendPacket(playerid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ammo, Ammo = p }));
+        }
+
+        public void SendExplosion(int player, float x, float y, float z, bool relativeposition, float range, float time)
+        {
+            PacketServerExplosion p = new PacketServerExplosion();
+            p.X = x;
+            p.Y = y;
+            p.Z = z;
+            p.IsRelativeToPlayerPosition = relativeposition;
+            p.Range = range;
+            p.Time = time;
+            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Explosion, Explosion = p }));
         }
     }
 

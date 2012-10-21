@@ -814,6 +814,8 @@ namespace ManicDigger.Mods
                 AmmoMagazine = 12,
                 AmmoTotal = 120,
                 ReloadDelay = 2,
+                ExplosionRange = 0.2f,
+                ExplosionTime = 0.2f,
             });
             DamageBody["Pistol"] = 15;
             DamageHead["Pistol"] = 50;
@@ -837,6 +839,8 @@ namespace ManicDigger.Mods
                 AmmoMagazine = 30,
                 AmmoTotal = 120,
                 ReloadDelay = 2,
+                ExplosionRange = 0.2f,
+                ExplosionTime = 0.2f,
             });
             DamageBody["SubmachineGun"] = 15;
             DamageHead["SubmachineGun"] = 40;
@@ -861,6 +865,8 @@ namespace ManicDigger.Mods
                 AmmoMagazine = 30,
                 AmmoTotal = 120,
                 ReloadDelay = 2,
+                ExplosionRange = 0.2f,
+                ExplosionTime = 0.2f,
             });
             DamageBody["Shotgun"] = 35;
             DamageHead["Shotgun"] = 60;
@@ -884,6 +890,8 @@ namespace ManicDigger.Mods
                 AmmoMagazine = 6,
                 AmmoTotal = 48,
                 ReloadDelay = 2,
+                ExplosionRange = 0.2f,
+                ExplosionTime = 0.2f,
             });
             DamageBody["Rifle"] = 35;
             DamageHead["Rifle"] = 100;

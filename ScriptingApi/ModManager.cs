@@ -127,6 +127,7 @@ namespace ManicDigger
         string CurrentWorld();
         void LoadWorld(string filename);
         string[] GetModPaths();
+        void SendExplosion(int targetplayer, float dx, float dy, float dz, bool relativeposition, float range, float time);
     }
 
     public enum SpecialKey
@@ -547,6 +548,10 @@ namespace ManicDigger
         public int AmmoTotal;
         [ProtoMember(35)]
         public float ReloadDelay;
+        [ProtoMember(36)]
+        public float ExplosionRange;
+        [ProtoMember(37)]
+        public float ExplosionTime;
         public string AllTextures
         {
             set

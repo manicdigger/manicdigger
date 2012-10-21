@@ -526,12 +526,28 @@ namespace ManicDigger.Mods
                     return;
                 }
             }
-            if (players[targetplayer].isdead)
+            if (players[sourceplayer].team == Team.Spectator
+                || players[targetplayer].team == Team.Spectator)
             {
                 return;
             }
-            if (players[sourceplayer].team == Team.Spectator
-                || players[targetplayer].team == Team.Spectator)
+            {
+                float x1 = m.GetPlayerPositionX(sourceplayer);
+                float y1 = m.GetPlayerPositionY(sourceplayer);
+                float z1 = m.GetPlayerPositionZ(sourceplayer);
+                float x2 = m.GetPlayerPositionX(targetplayer);
+                float y2 = m.GetPlayerPositionY(targetplayer);
+                float z2 = m.GetPlayerPositionZ(targetplayer);
+                float dx = x1 - x2;
+                float dy = y1 - y2;
+                float dz = z1 - z2;
+                float dist = (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+                dx = (dx / dist) * 0.1f;
+                dy = (dy / dist) * 0.1f;
+                dz = (dz / dist) * 0.1f;
+                m.SendExplosion(targetplayer, dx, dy, dz, true, m.GetBlockType(block).ExplosionRange, m.GetBlockType(block).ExplosionTime);
+            }
+            if (players[targetplayer].isdead)
             {
                 return;
             }

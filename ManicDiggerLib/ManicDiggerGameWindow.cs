@@ -1637,6 +1637,23 @@ namespace ManicDigger
                     push += diff;
                 }
             }
+            foreach (var k in new List<Explosion>(explosions))
+            {
+                Vector3 kpos = new Vector3(k.explosion.X, k.explosion.Z, k.explosion.Y);
+                if (k.explosion.IsRelativeToPlayerPosition)
+                {
+                    kpos += LocalPlayerPosition;
+                }
+                if ((kpos - LocalPlayerPosition).Length < k.explosion.Range)
+                {
+                    Vector3 diff = LocalPlayerPosition - kpos;
+                    push += diff;
+                }
+                if ((DateTime.UtcNow - k.date) > TimeSpan.FromSeconds(k.explosion.Time))
+                {
+                    explosions.Remove(k);
+                }
+            }
             var move = new CharacterPhysics.MoveInfo()
             {
                 movedx = movedx,
@@ -5043,12 +5060,21 @@ namespace ManicDigger
                     }
                     TotalAmmo = packet.Ammo.TotalAmmo;
                     break;
+                case ServerPacketId.Explosion:
+                    explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = packet.Explosion });
+                    break;
                 default:
                     break;
             }
             LastReceived = currentTime;
             //return lengthPrefixLength + packetLength;
         }
+        public class Explosion
+        {
+            public DateTime date;
+            public PacketServerExplosion explosion;
+        }
+        List<Explosion> explosions = new List<Explosion>();
         MemoryStream CurrentChunk = new MemoryStream();
         BlockType[] NewBlockTypes = new BlockType[256];
         public class Bullet

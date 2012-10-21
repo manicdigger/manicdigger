@@ -752,5 +752,10 @@ namespace ManicDigger
         {
             return server.ModPaths.ToArray();
         }
+
+        public void SendExplosion(int player, float x, float y, float z, bool relativeposition, float range, float time)
+        {
+            server.SendExplosion(player, x, y, z, relativeposition, range, time);
+        }
     }
 }
