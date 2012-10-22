@@ -5335,6 +5335,7 @@ namespace ManicDigger
                     projectile.velocity = new Vector3(packet.Projectile.VelocityX, packet.Projectile.VelocityY, packet.Projectile.VelocityZ);
                     projectile.start = DateTime.UtcNow;
                     projectile.block = packet.Projectile.BlockId;
+                    projectile.explodesafter = packet.Projectile.ExplodesAfter;
                     projectiles.Add(projectile);
                     break;
                 default:
