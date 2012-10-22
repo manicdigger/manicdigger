@@ -1036,7 +1036,8 @@ namespace ManicDigger
                         && blocktypes[item.BlockId].IsPistol
                         && reloadstart.Ticks == 0)
                     {
-                        d_Audio.Play("shotgun-reload-old_school-RA_The_Sun_God-580332022.ogg");
+                        int sound = rnd.Next(blocktypes[item.BlockId].Sounds.Reload.Length);
+                        d_Audio.Play(blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
                         reloadstart = DateTime.UtcNow;
                         reloadblock = item.BlockId;
                         SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Reload, Reload = new PacketClientReload() });
@@ -1738,6 +1739,17 @@ namespace ManicDigger
                     reloadblock = -1;
                 }
             }
+            foreach (Projectile p in new List<Projectile>(projectiles))
+            {
+                UpdateGrenade(p, (float)e.Time);
+            }
+        }
+        public class Projectile
+        {
+            public Vector3 position;
+            public Vector3 velocity;
+            public DateTime start;
+            public int block;
         }
         int reloadblock;
         DateTime reloadstart;
@@ -2292,10 +2304,22 @@ namespace ManicDigger
                     shot.WeaponBlock = item.BlockId;
                     LoadedAmmo[item.BlockId] = LoadedAmmo[item.BlockId] - 1;
                     TotalAmmo[item.BlockId] = TotalAmmo[item.BlockId] - 1;
-                    bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
+                    float projectilespeed = blocktypes[item.BlockId].ProjectileSpeed;
+                    if (projectilespeed == 0)
+                    {
+                        bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
+                    }
+                    else
+                    {
+                        Vector3 v = to - pick.Start;
+                        v.Normalize();
+                        v *= projectilespeed;
+                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, start = DateTime.UtcNow, block = item.BlockId });
+                    }
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
-                    d_Audio.Play((pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav");
+                    pistolcycle = rnd.Next(blocktypes[item.BlockId].Sounds.Shoot.Length);
+                    d_Audio.Play(blocktypes[item.BlockId].Sounds.Shoot[pistolcycle] + ".ogg");
 
                     bulletsshot++;
                     if (bulletsshot < blocktypes[item.BlockId].BulletsPerShot)
@@ -2750,6 +2774,23 @@ namespace ManicDigger
                     GL.PopMatrix();
                     if (b.progress > length) { bullets.Remove(b); }
                 }
+                foreach (Projectile b in new List<Projectile>(projectiles))
+                {
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    GL.Translate(b.position.X, b.position.Y, b.position.Z);
+                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
+                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
+                    GL.Scale(0.02, 0.02, 0.02);
+                    int ImageSize = 14;
+                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    if (!textures.ContainsKey("ChemicalGreen.png"))
+                    {
+                        textures["ChemicalGreen.png"] = d_The3d.LoadTexture(d_GetFile.GetFile("ChemicalGreen.png"));
+                    }
+                    d_The3d.Draw2dTexture(textures["ChemicalGreen.png"], 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    GL.PopMatrix();
+                }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
@@ -2807,6 +2848,173 @@ namespace ManicDigger
             mouseleftdeclick = mouserightdeclick = false;
             if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
+
+        float projectilegravity = 20f;
+        private void UpdateGrenade(Projectile b, float dt)
+        {
+            Vector3 oldpos = b.position;
+            Vector3 newpos = b.position + b.velocity * (float)dt;
+            b.velocity.Y += -projectilegravity * (float)dt;
+            b.position = GrenadeBounce(oldpos, newpos, ref b.velocity, dt);
+            if ((DateTime.UtcNow - b.start).TotalSeconds > 5)
+            {
+                projectiles.Remove(b);
+                d_Audio.Play("grenadeexplosion.ogg", b.position);
+                PacketServerExplosion explosion = new PacketServerExplosion();
+                explosion.X = b.position.X;
+                explosion.Y = b.position.Z;
+                explosion.Z = b.position.Y;
+                explosion.Range = blocktypes[b.block].ExplosionRange;
+                explosion.IsRelativeToPlayerPosition = false;
+                explosion.Time = blocktypes[b.block].ExplosionTime;
+                explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = explosion });
+                float dist = (LocalPlayerPosition - b.position).Length;
+                float dmg = (1 - dist / blocktypes[b.block].ExplosionRange) * blocktypes[b.block].DamageBody;
+                if ((int)dmg > 0)
+                {
+                    ApplyDamageToPlayer((int)dmg);
+                }
+            }
+        }
+        float bouncespeedmultiply = 0.5f;
+        public Vector3 GrenadeBounce(Vector3 oldposition, Vector3 newposition, ref Vector3 velocity, float dt)
+        {
+            bool ismoving = velocity.Length > 100f * dt;
+            float modelheight = walldistance;
+            oldposition.Y += walldistance;
+            newposition.Y += walldistance;
+
+            //Math.Floor() is needed because casting negative values to integer is not floor.
+            Vector3i oldpositioni = new Vector3i((int)Math.Floor(oldposition.X),
+                (int)Math.Floor(oldposition.Z),
+                (int)Math.Floor(oldposition.Y));
+            Vector3 playerposition = newposition;
+            //left
+            {
+                var qnewposition = newposition + new Vector3(0, 0, walldistance);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
+                if (newposition.Z - oldposition.Z > 0)
+                {
+                    if (!newempty)
+                    {
+                        velocity.Z = -velocity.Z;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.Z = oldposition.Z - newposition.Z;
+                    }
+                }
+            }
+            //front
+            {
+                var qnewposition = newposition + new Vector3(walldistance, 0, 0);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
+                if (newposition.X - oldposition.X > 0)
+                {
+                    if (!newempty)
+                    {
+                        velocity.X = -velocity.X;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.X = oldposition.X - newposition.X;
+                    }
+                }
+            }
+            //top
+            {
+                var qnewposition = newposition + new Vector3(0, -walldistance, 0);
+                int x = (int)Math.Floor(qnewposition.X);
+                int y = (int)Math.Floor(qnewposition.Z);
+                int z = (int)Math.Floor(qnewposition.Y);
+                float a = walldistance;
+                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+                if (newposition.Y - oldposition.Y < 0)
+                {
+                    if (newfull)
+                    {
+                        velocity.Y = -velocity.Y;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.Y = oldposition.Y - newposition.Y;
+                    }
+                }
+            }
+            //right
+            {
+                var qnewposition = newposition + new Vector3(0, 0, -walldistance);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
+                if (newposition.Z - oldposition.Z < 0)
+                {
+                    if (!newempty)
+                    {
+                        velocity.Z = -velocity.Z;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.Z = oldposition.Z - newposition.Z;
+                    }
+                }
+            }
+            //back
+            {
+                var qnewposition = newposition + new Vector3(-walldistance, 0, 0);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
+                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
+                if (newposition.X - oldposition.X < 0)
+                {
+                    if (!newempty)
+                    {
+                        velocity.X = -velocity.X;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.X = oldposition.X - newposition.X;
+                    }
+                }
+            }
+            //bottom
+            {
+                var qnewposition = newposition + new Vector3(0, modelheight, 0);
+                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
+                if (newposition.Y - oldposition.Y > 0)
+                {
+                    if (!newempty)
+                    {
+                        velocity.Y = -velocity.Y;
+                        velocity *= bouncespeedmultiply;
+                        if (ismoving)
+                        {
+                            d_Audio.Play("grenadebounce.ogg", newposition);
+                        }
+                        //playerposition.Y = oldposition.Y - newposition.Y;
+                    }
+                }
+            }
+            //ok:
+            playerposition.Y -= walldistance;
+            return playerposition;
+        }
+        float walldistance = 0.3f;
+
         Dictionary<string, int> textures = new Dictionary<string, int>();
         bool startedconnecting;
         private void SetFog()
@@ -5063,6 +5271,14 @@ namespace ManicDigger
                 case ServerPacketId.Explosion:
                     explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = packet.Explosion });
                     break;
+                case ServerPacketId.Projectile:
+                    Projectile projectile = new Projectile();
+                    projectile.position = new Vector3(packet.Projectile.FromX, packet.Projectile.FromY, packet.Projectile.FromZ);
+                    projectile.velocity = new Vector3(packet.Projectile.VelocityX, packet.Projectile.VelocityY, packet.Projectile.VelocityZ);
+                    projectile.start = DateTime.UtcNow;
+                    projectile.block = packet.Projectile.BlockId;
+                    projectiles.Add(projectile);
+                    break;
                 default:
                     break;
             }
@@ -5085,6 +5301,7 @@ namespace ManicDigger
             public float progress;
         }
         List<Bullet> bullets = new List<Bullet>();
+        List<Projectile> projectiles = new List<Projectile>();
         string Follow = null;
         int? FollowId
         {

@@ -414,16 +414,19 @@ namespace ManicDigger.Mods
                 {
                     m.GrabBlock(playerid, m.GetBlockId("SubmachineGun"));
                     m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    m.GrabBlock(playerid, m.GetBlockId("Grenade"));
                 }
                 if (sclass == SoldierSubclass.Shotgun)
                 {
                     m.GrabBlock(playerid, m.GetBlockId("Shotgun"));
                     m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    m.GrabBlock(playerid, m.GetBlockId("Grenade"));
                 }
                 if (sclass == SoldierSubclass.Rifle)
                 {
                     m.GrabBlock(playerid, m.GetBlockId("Rifle"));
                     m.GrabBlock(playerid, m.GetBlockId("Pistol"));
+                    m.GrabBlock(playerid, m.GetBlockId("Grenade"));
                 }
             }
             if (pclass == PlayerClass.Medic)
@@ -552,12 +555,10 @@ namespace ManicDigger.Mods
                 return;
             }
             int health = m.GetPlayerHealth(targetplayer);
-            Dictionary<string, int> DamageHead = (Dictionary<string, int>)m.GetGlobalDataNotSaved("DamageHead");
-            Dictionary<string, int> DamageBody = (Dictionary<string, int>)m.GetGlobalDataNotSaved("DamageBody");
             int dmghead = 50;
             int dmgbody = 15;
-            if (DamageHead.ContainsKey(m.GetBlockName(block))) { dmghead = DamageHead[m.GetBlockName(block)]; }
-            if (DamageBody.ContainsKey(m.GetBlockName(block))) { dmgbody = DamageBody[m.GetBlockName(block)]; }
+            if (m.GetBlockType(block).DamageHead != 0) { dmghead = (int)m.GetBlockType(block).DamageHead; }
+            if (m.GetBlockType(block).DamageBody != 0) { dmgbody = (int)m.GetBlockType(block).DamageBody; }
             health -= head ? dmghead : dmgbody;
             if (health <= 0)
             {

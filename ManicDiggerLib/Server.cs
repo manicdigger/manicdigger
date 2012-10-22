@@ -1979,8 +1979,21 @@ if (sent >= unknown.Count) { break; }
                     break;
                 case ClientPacketId.Shot:
                     PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
-                    SendBullet(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
-                        packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ, 150);
+                    if (BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed == 0)
+                    {
+                        SendBullet(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
+                            packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ, 150);
+                    }
+                    else
+                    {
+                        Vector3 from = new Vector3(packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ);
+                        Vector3 to = new Vector3(packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ);
+                        Vector3 v = to - from;
+                        v.Normalize();
+                        v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
+                        SendProjectile(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
+                            v.X, v.Y, v.Z, packet.Shot.WeaponBlock);
+                    }
                     for (int i = 0; i < onweaponshot.Count; i++)
                     {
                         onweaponshot[i](clientid, packet.Shot.WeaponBlock);
@@ -2073,6 +2086,30 @@ if (sent >= unknown.Count) { break; }
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
                     break;
+            }
+        }
+
+        private void SendProjectile(int player, float fromx, float fromy, float fromz, float velocityx, float velocityy, float velocityz, int block)
+        {
+            foreach (var k in clients)
+            {
+                if (k.Key == player)
+                {
+                    continue;
+                }
+                PacketServer p = new PacketServer();
+                p.PacketId = ServerPacketId.Projectile;
+                p.Projectile = new PacketServerProjectile()
+                {
+                    FromX = fromx,
+                    FromY = fromy,
+                    FromZ = fromz,
+                    VelocityX = velocityx,
+                    VelocityY = velocityy,
+                    VelocityZ = velocityz,
+                    BlockId = block,
+                };
+                SendPacket(k.Key, Serialize(p));
             }
         }
 

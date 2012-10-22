@@ -352,6 +352,23 @@ namespace GameModeFortress
         public float Speed;
     }
     [ProtoContract]
+    public class PacketServerProjectile
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public float FromX;
+        [ProtoMember(2, IsRequired = false)]
+        public float FromY;
+        [ProtoMember(3, IsRequired = false)]
+        public float FromZ;
+        [ProtoMember(4, IsRequired = false)]
+        public float VelocityX;
+        [ProtoMember(5, IsRequired = false)]
+        public float VelocityY;
+        [ProtoMember(6, IsRequired = false)]
+        public float VelocityZ;
+        public int BlockId;
+    }
+    [ProtoContract]
     public class PacketServerExplosion
     {
         [ProtoMember(1, IsRequired = false)]
@@ -446,6 +463,8 @@ namespace GameModeFortress
         public PacketServerChunkPart ChunkPart;
         [ProtoMember(33, IsRequired = false)]
         public PacketServerExplosion Explosion;
+        [ProtoMember(34, IsRequired = false)]
+        public PacketServerProjectile Projectile;
     }
     [ProtoContract]
     public class PacketServerAmmo
@@ -750,6 +769,7 @@ namespace GameModeFortress
         BlockType,
         ChunkPart,
         Explosion,
+        Projectile,
         ExtendedPacketCommand = 100,
         ExtendedPacketTick = 101,
     }

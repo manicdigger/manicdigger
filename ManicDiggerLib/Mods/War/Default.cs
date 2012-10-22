@@ -26,6 +26,9 @@ namespace ManicDigger.Mods
                 Break = new string[] { "destruct" },
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
+                Shoot = new string[] { "M1GarandGun-SoundBible.com-1519788442", "M1GarandGun-SoundBible.com-15197884422" },
+                ShootEnd = new string[] { },
+                Reload = new string[] { "shotgun-reload-old_school-RA_The_Sun_God-580332022" },
             };
             snowSounds = new SoundSet()
             {
@@ -792,8 +795,6 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Empty,
                 Sounds = noSound,
             });
-            Dictionary<string, int> DamageBody = new Dictionary<string, int>();
-            Dictionary<string, int> DamageHead = new Dictionary<string, int>();
             m.SetBlockType(154, "Pistol", new BlockType()
             {
                 AllTextures = "Pistol",
@@ -816,9 +817,9 @@ namespace ManicDigger.Mods
                 ReloadDelay = 2,
                 ExplosionRange = 0.2f,
                 ExplosionTime = 0.2f,
+                DamageBody = 15,
+                DamageHead = 50,
             });
-            DamageBody["Pistol"] = 15;
-            DamageHead["Pistol"] = 50;
             m.SetBlockType(155, "SubmachineGun", new BlockType()
             {
                 AllTextures = "SubmachineGun",
@@ -841,9 +842,9 @@ namespace ManicDigger.Mods
                 ReloadDelay = 2,
                 ExplosionRange = 0.2f,
                 ExplosionTime = 0.2f,
+                DamageBody = 15,
+                DamageHead = 40,
             });
-            DamageBody["SubmachineGun"] = 15;
-            DamageHead["SubmachineGun"] = 40;
             m.SetBlockType(156, "Shotgun", new BlockType()
             {
                 AllTextures = "Shotgun",
@@ -867,9 +868,9 @@ namespace ManicDigger.Mods
                 ReloadDelay = 2,
                 ExplosionRange = 0.2f,
                 ExplosionTime = 0.2f,
+                DamageBody = 35,
+                DamageHead = 60,
             });
-            DamageBody["Shotgun"] = 35;
-            DamageHead["Shotgun"] = 60;
             m.SetBlockType(157, "Rifle", new BlockType()
             {
                 AllTextures = "Rifle",
@@ -892,9 +893,9 @@ namespace ManicDigger.Mods
                 ReloadDelay = 2,
                 ExplosionRange = 0.2f,
                 ExplosionTime = 0.2f,
+                DamageBody = 35,
+                DamageHead = 100,
             });
-            DamageBody["Rifle"] = 35;
-            DamageHead["Rifle"] = 100;
             m.SetBlockType(158, "MedicalKit", new BlockType()
             {
                 AllTextures = "MedicalKit",
@@ -921,8 +922,36 @@ namespace ManicDigger.Mods
                 IsPistol = false,
                 WalkSpeedWhenUsed = 1f,
             });
-            m.SetGlobalDataNotSaved("DamageHead", DamageHead);
-            m.SetGlobalDataNotSaved("DamageBody", DamageBody);
+            SoundSet grenadesounds = new SoundSet();
+            grenadesounds.Shoot = new string[] { "grenadethrow" };
+            grenadesounds.ShootEnd = new string[] {"grenadethrow" };
+            grenadesounds.Reload = solidSounds.Reload;
+            m.SetBlockType(160, "Grenade", new BlockType()
+            {
+                AllTextures = "Grenade",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Solid,
+                Sounds = grenadesounds,
+                handimage = "grenadehand.png",
+                IsPistol = true,
+                AimRadius = 20,
+                Recoil = 0.04f,
+                Delay = 2f,
+                WalkSpeedWhenUsed = 1f,
+                IronSightsEnabled = false,
+                IronSightsMoveSpeed = 0.4f,
+                IronSightsImage = "grenadehand.png",
+                IronSightsAimRadius = 10,
+                IronSightsFov = 0.5f,
+                AmmoMagazine = 6,
+                AmmoTotal = 6,
+                ReloadDelay = 2,
+                ExplosionRange = 10f,
+                ExplosionTime = 1f,
+                ProjectileSpeed = 25f,
+                ProjectileBounce = true,
+                DamageBody = 200,
+            });
 
             m.RegisterTimer(UpdateSeasons, 1);
 

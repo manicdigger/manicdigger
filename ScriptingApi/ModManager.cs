@@ -460,6 +460,12 @@ namespace ManicDigger
         public string[] Build = new string[0];
         [ProtoMember(4)]
         public string[] Clone = new string[0];
+        [ProtoMember(5)]
+        public string[] Shoot = new string[0];
+        [ProtoMember(6)]
+        public string[] ShootEnd = new string[0];
+        [ProtoMember(7)]
+        public string[] Reload = new string[0];
     }
 
     [ProtoContract]
@@ -552,6 +558,14 @@ namespace ManicDigger
         public float ExplosionRange;
         [ProtoMember(37)]
         public float ExplosionTime;
+        [ProtoMember(38)]
+        public float ProjectileSpeed; // 0 is infinite
+        [ProtoMember(39)]
+        public bool ProjectileBounce;
+        [ProtoMember(40)]
+        public float DamageBody;
+        [ProtoMember(41)]
+        public float DamageHead;
         public string AllTextures
         {
             set
