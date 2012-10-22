@@ -1997,13 +1997,17 @@ namespace ManicDigger
             return d_Inventory.RightHand[ActiveMaterial] != null;
         }
         int pistolcycle;
-        class Blood
+        class Sprite
         {
             public Vector3 position;
             public DateTime time;
+            public TimeSpan timespan;
+            public string image;
+            public int size = 40;
+            public int animationcount;
         }
         DateTime lastironsightschange;
-        List<Blood> blood = new List<Blood>();
+        List<Sprite> sprites = new List<Sprite>();
         private void UpdatePicking()
         {
             if (FollowId != null)
@@ -2285,7 +2289,7 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
+                                sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = true;
                             }
@@ -2295,7 +2299,7 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                blood.Add(new Blood() { position = p.Value.pos, time = DateTime.UtcNow });
+                                sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = false;
                             }
@@ -2730,7 +2734,7 @@ namespace ManicDigger
                 }
 
                 DrawCharacters((float)e.Time);
-                foreach(Blood b in new List<Blood>(blood))
+                foreach(Sprite b in new List<Sprite>(sprites))
                 {
                     GL.MatrixMode(MatrixMode.Modelview);
                     Vector3 pos = b.position;
@@ -2739,12 +2743,17 @@ namespace ManicDigger
                     GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
                     GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
                     GL.Scale(0.02, 0.02, 0.02);
-                    int ImageSize = 40;
-                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    GL.Translate(-b.size / 2, -b.size / 2, 0);
                     //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
-                    d_The3d.Draw2dBitmapFile("blood.png", 0, 0, ImageSize, ImageSize);
+                    int? n = null;
+                    if (b.animationcount > 0)
+                    {
+                        n = (int)((DateTime.UtcNow - b.time).TotalSeconds / b.timespan.TotalSeconds
+                            * (b.animationcount * b.animationcount - 1));
+                    }
+                    d_The3d.Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Color.White, true);
                     GL.PopMatrix();
-                    if ((DateTime.UtcNow - b.time).TotalSeconds > 0.2) { blood.Remove(b); }
+                    if ((DateTime.UtcNow - b.time) > b.timespan) { sprites.Remove(b); }
                 }
                 foreach (Bullet b in new List<Bullet>(bullets))
                 {
@@ -2766,11 +2775,7 @@ namespace ManicDigger
                     GL.Scale(0.02, 0.02, 0.02);
                     int ImageSize = 4;
                     GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-                    if (!textures.ContainsKey("Sponge.png"))
-                    {
-                        textures["Sponge.png"] = d_The3d.LoadTexture(d_GetFile.GetFile("Sponge.png"));
-                    }
-                    d_The3d.Draw2dTexture(textures["Sponge.png"], 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    d_The3d.Draw2dTexture(GetTexture("Sponge.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
                     GL.PopMatrix();
                     if (b.progress > length) { bullets.Remove(b); }
                 }
@@ -2784,11 +2789,7 @@ namespace ManicDigger
                     GL.Scale(0.02, 0.02, 0.02);
                     int ImageSize = 14;
                     GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-                    if (!textures.ContainsKey("ChemicalGreen.png"))
-                    {
-                        textures["ChemicalGreen.png"] = d_The3d.LoadTexture(d_GetFile.GetFile("ChemicalGreen.png"));
-                    }
-                    d_The3d.Draw2dTexture(textures["ChemicalGreen.png"], 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    d_The3d.Draw2dTexture(GetTexture("ChemicalGreen.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
                     GL.PopMatrix();
                 }
                 if (ENABLE_DRAW_TEST_CHARACTER)
@@ -2849,6 +2850,15 @@ namespace ManicDigger
             if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
 
+        private int GetTexture(string s)
+        {
+            if (!textures.ContainsKey(s))
+            {
+                textures[s] = d_The3d.LoadTexture(d_GetFile.GetFile(s));
+            }
+            return textures[s];
+        }
+
         float projectilegravity = 20f;
         private void UpdateGrenade(Projectile b, float dt)
         {
@@ -2860,6 +2870,9 @@ namespace ManicDigger
             {
                 projectiles.Remove(b);
                 d_Audio.Play("grenadeexplosion.ogg", b.position);
+
+                sprites.Add(new Sprite() { time = DateTime.UtcNow, image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespan = TimeSpan.FromSeconds(1), size = 200, animationcount = 4 });
+
                 PacketServerExplosion explosion = new PacketServerExplosion();
                 explosion.X = b.position.X;
                 explosion.Y = b.position.Z;

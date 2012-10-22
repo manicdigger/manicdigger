@@ -261,6 +261,10 @@ namespace ManicDigger
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
         {
+            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, d_Terrain.texturesPacked, color, enabledepthtest);
+        }
+        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, Color color, bool enabledepthtest)
+        {
             RectangleF rect;
             if (inAtlasId == null)
             {
@@ -268,7 +272,7 @@ namespace ManicDigger
             }
             else
             {
-                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, d_Terrain.texturesPacked);
+                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, atlastextures);
             }
             GL.PushAttrib(AttribMask.ColorBufferBit);
             GL.Color3(color);
