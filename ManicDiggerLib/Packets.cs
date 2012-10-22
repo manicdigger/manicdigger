@@ -366,6 +366,7 @@ namespace GameModeFortress
         public float VelocityY;
         [ProtoMember(6, IsRequired = false)]
         public float VelocityZ;
+        [ProtoMember(7, IsRequired = false)]
         public int BlockId;
     }
     [ProtoContract]
