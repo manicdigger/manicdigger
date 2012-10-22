@@ -31,7 +31,7 @@ namespace ManicDigger
         IMapStoragePortion, IShadows, ICurrentShadows, IResetMap, ITerrainTextures
     {
         public void Start()
-        {            
+        {
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
@@ -1750,6 +1750,7 @@ namespace ManicDigger
             public Vector3 velocity;
             public DateTime start;
             public int block;
+            public float explodesafter;
         }
         int reloadblock;
         DateTime reloadstart;
@@ -2008,6 +2009,8 @@ namespace ManicDigger
         }
         DateTime lastironsightschange;
         List<Sprite> sprites = new List<Sprite>();
+        DateTime grenadecookingstart;
+        float grenadetime = 3;
         private void UpdatePicking()
         {
             if (FollowId != null)
@@ -2053,6 +2056,40 @@ namespace ManicDigger
             Item item = d_Inventory.RightHand[ActiveMaterial];
             bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
             bool ispistolshoot = ispistol && left;
+            bool isgrenade = ispistol && blocktypes[item.BlockId].PistolType == PistolType.Grenade;
+            if (ispistol && isgrenade)
+            {
+                ispistolshoot = mouseleftdeclick;
+            }
+            //grenade cooking
+            if (mouseleftclick)
+            {
+                grenadecookingstart = DateTime.UtcNow;
+                if (ispistol && isgrenade)
+                {
+                    if (blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
+                    {
+                        d_Audio.Play(blocktypes[item.BlockId].Sounds.Shoot[0] + ".ogg");
+                    }
+                }
+            }
+            float wait = (float)(DateTime.UtcNow - grenadecookingstart).TotalSeconds;
+            if (isgrenade && left)
+            {
+                if (wait >= grenadetime && isgrenade && grenadecookingstart != new DateTime())
+                {
+                    ispistolshoot = true;
+                    mouseleftdeclick = true;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                grenadecookingstart = new DateTime();
+            }
 
             if (ispistol && mouserightclick && (DateTime.UtcNow - lastironsightschange).TotalSeconds >= 0.5)
             {
@@ -2213,7 +2250,11 @@ namespace ManicDigger
                     //todo animation
                     fastclicking = false;
                 }
-                if (left || right || middle)
+                if ((left || right || middle) && (!isgrenade))
+                {
+                    lastbuild = DateTime.Now;
+                }
+                if (isgrenade && mouseleftdeclick)
                 {
                     lastbuild = DateTime.Now;
                 }
@@ -2318,12 +2359,16 @@ namespace ManicDigger
                         Vector3 v = to - pick.Start;
                         v.Normalize();
                         v *= projectilespeed;
-                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, start = DateTime.UtcNow, block = item.BlockId });
+                        shot.ExplodesAfter = grenadetime - wait;
+                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, start = DateTime.UtcNow, block = item.BlockId, explodesafter = grenadetime - wait });
                     }
                     SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
 
-                    pistolcycle = rnd.Next(blocktypes[item.BlockId].Sounds.Shoot.Length);
-                    d_Audio.Play(blocktypes[item.BlockId].Sounds.Shoot[pistolcycle] + ".ogg");
+                    if (blocktypes[item.BlockId].Sounds.ShootEnd.Length > 0)
+                    {
+                        pistolcycle = rnd.Next(blocktypes[item.BlockId].Sounds.ShootEnd.Length);
+                        d_Audio.Play(blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle] + ".ogg");
+                    }
 
                     bulletsshot++;
                     if (bulletsshot < blocktypes[item.BlockId].BulletsPerShot)
@@ -2866,7 +2911,7 @@ namespace ManicDigger
             Vector3 newpos = b.position + b.velocity * (float)dt;
             b.velocity.Y += -projectilegravity * (float)dt;
             b.position = GrenadeBounce(oldpos, newpos, ref b.velocity, dt);
-            if ((DateTime.UtcNow - b.start).TotalSeconds > 5)
+            if ((DateTime.UtcNow - b.start).TotalSeconds > b.explodesafter)
             {
                 projectiles.Remove(b);
                 d_Audio.Play("grenadeexplosion.ogg", b.position);

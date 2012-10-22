@@ -566,6 +566,8 @@ namespace ManicDigger
         public float DamageBody;
         [ProtoMember(41)]
         public float DamageHead;
+        [ProtoMember(42)]
+        public PistolType PistolType;
         public string AllTextures
         {
             set
@@ -579,6 +581,12 @@ namespace ManicDigger
                 TextureIdForInventory = value;
             }
         }
+    }
+
+    public enum PistolType
+    {
+        Normal,
+        Grenade,
     }
 
     public delegate void Action();

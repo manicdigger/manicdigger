@@ -1992,7 +1992,7 @@ if (sent >= unknown.Count) { break; }
                         v.Normalize();
                         v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
                         SendProjectile(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
-                            v.X, v.Y, v.Z, packet.Shot.WeaponBlock);
+                            v.X, v.Y, v.Z, packet.Shot.WeaponBlock, packet.Shot.ExplodesAfter);
                     }
                     for (int i = 0; i < onweaponshot.Count; i++)
                     {
@@ -2089,7 +2089,7 @@ if (sent >= unknown.Count) { break; }
             }
         }
 
-        private void SendProjectile(int player, float fromx, float fromy, float fromz, float velocityx, float velocityy, float velocityz, int block)
+        private void SendProjectile(int player, float fromx, float fromy, float fromz, float velocityx, float velocityy, float velocityz, int block, float explodesafter)
         {
             foreach (var k in clients)
             {
@@ -2108,6 +2108,7 @@ if (sent >= unknown.Count) { break; }
                     VelocityY = velocityy,
                     VelocityZ = velocityz,
                     BlockId = block,
+                    ExplodesAfter = explodesafter,
                 };
                 SendPacket(k.Key, Serialize(p));
             }

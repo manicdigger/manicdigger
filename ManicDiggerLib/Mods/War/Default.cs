@@ -26,8 +26,8 @@ namespace ManicDigger.Mods
                 Break = new string[] { "destruct" },
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
-                Shoot = new string[] { "M1GarandGun-SoundBible.com-1519788442", "M1GarandGun-SoundBible.com-15197884422" },
-                ShootEnd = new string[] { },
+                Shoot = new string[] { },
+                ShootEnd = new string[] { "M1GarandGun-SoundBible.com-1519788442", "M1GarandGun-SoundBible.com-15197884422" },
                 Reload = new string[] { "shotgun-reload-old_school-RA_The_Sun_God-580332022" },
             };
             snowSounds = new SoundSet()
@@ -923,7 +923,7 @@ namespace ManicDigger.Mods
                 WalkSpeedWhenUsed = 1f,
             });
             SoundSet grenadesounds = new SoundSet();
-            grenadesounds.Shoot = new string[] { "grenadethrow" };
+            grenadesounds.Shoot = new string[] { "grenadestart" };
             grenadesounds.ShootEnd = new string[] {"grenadethrow" };
             grenadesounds.Reload = solidSounds.Reload;
             m.SetBlockType(160, "Grenade", new BlockType()
@@ -936,7 +936,7 @@ namespace ManicDigger.Mods
                 IsPistol = true,
                 AimRadius = 20,
                 Recoil = 0.04f,
-                Delay = 2f,
+                Delay = 0.5f,
                 WalkSpeedWhenUsed = 1f,
                 IronSightsEnabled = false,
                 IronSightsMoveSpeed = 0.4f,
@@ -951,6 +951,7 @@ namespace ManicDigger.Mods
                 ProjectileSpeed = 25f,
                 ProjectileBounce = true,
                 DamageBody = 200,
+                PistolType = PistolType.Grenade,
             });
 
             m.RegisterTimer(UpdateSeasons, 1);

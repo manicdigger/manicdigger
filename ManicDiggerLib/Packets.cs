@@ -368,6 +368,8 @@ namespace GameModeFortress
         public float VelocityZ;
         [ProtoMember(7, IsRequired = false)]
         public int BlockId;
+        [ProtoMember(8, IsRequired = false)]
+        public float ExplodesAfter;
     }
     [ProtoContract]
     public class PacketServerExplosion
@@ -693,6 +695,8 @@ namespace GameModeFortress
         public int HitPlayer;
         [ProtoMember(9, IsRequired = false)]
         public bool HitHead;
+        [ProtoMember(10, IsRequired = false)]
+        public float ExplodesAfter;
     }
     [ProtoContract]
     public class PacketClientSpecialKey
