@@ -1993,6 +1993,7 @@ if (sent >= unknown.Count) { break; }
                         v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
                         SendProjectile(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
                             v.X, v.Y, v.Z, packet.Shot.WeaponBlock, packet.Shot.ExplodesAfter);
+                        return;
                     }
                     for (int i = 0; i < onweaponshot.Count; i++)
                     {

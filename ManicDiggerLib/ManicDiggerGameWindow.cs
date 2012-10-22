@@ -2330,7 +2330,10 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                if (!isgrenade)
+                                {
+                                    sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                }
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = true;
                             }
@@ -2340,7 +2343,10 @@ namespace ManicDigger
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
                             {
-                                sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                if (!isgrenade)
+                                {
+                                    sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                }
                                 shot.HitPlayer = k.Key;
                                 shot.HitHead = false;
                             }
