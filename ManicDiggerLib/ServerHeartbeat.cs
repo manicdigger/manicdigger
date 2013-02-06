@@ -42,7 +42,7 @@ namespace GameModeFortress
             this.Motd = "";
             this.GameMode = "Fortress";
         }
-        public string fListUrl = "http://manicdigger.sourceforge.net/play/heartbeat.php";
+        public string fListUrl = null;
 
         public string Name { get; set; }
         public string Key { get; set; }
@@ -61,6 +61,11 @@ namespace GameModeFortress
         public string ReceivedKey { get; set; }
         public void SendHeartbeat()
         {
+            if (fListUrl == null)
+            {
+                WebClient c = new WebClient();
+                fListUrl = c.DownloadString("http://manicdigger.sourceforge.net/heartbeat.txt");
+            }
             StringWriter sw = new StringWriter();//&salt={4}
             string staticData = String.Format("name={0}&max={1}&public={2}&passwordProtected={3}&allowGuests={4}&port={5}&version={6}&fingerprint={7}"
                 , System.Web.HttpUtility.UrlEncode(Name),

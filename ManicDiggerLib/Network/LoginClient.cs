@@ -31,9 +31,14 @@ namespace ManicDigger
     }
     public class LoginClientManicDigger : ILoginClient
     {
-        public string LoginUrl = "http://manicdigger.sourceforge.net/play/login.php";
+        public string LoginUrl = null;
         public LoginData Login(string username, string password, string publicServerKey)
         {
+            if (LoginUrl == null)
+            {
+                WebClient c=new WebClient();
+                LoginUrl = c.DownloadString("http://manicdigger.sourceforge.net/login.txt");
+            }
             StringWriter sw = new StringWriter();//&salt={4}
             string requestString = String.Format("username={0}&password={1}&server={2}"
                 , username, password, publicServerKey);

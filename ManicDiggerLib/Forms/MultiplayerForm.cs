@@ -80,6 +80,10 @@ namespace ManicDigger
             {
                 System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error in future connections
                 WebClient c = new WebClient();
+                if (ServerListAddress == null)
+                {
+                    ServerListAddress = new WebClient().DownloadString("http://manicdigger.sourceforge.net/serverlist.txt");
+                }
                 string xml = c.DownloadString(ServerListAddress);
                 XmlDocument d = new XmlDocument();
                 d.LoadXml(xml);
@@ -116,7 +120,7 @@ namespace ManicDigger
                 return null;
             }
         }
-        public string ServerListAddress = "http://fragmer.net/md/xml.php";
+        public string ServerListAddress = null;
 
         private void button1_Click(object sender, EventArgs e)
         {
