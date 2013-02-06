@@ -41,7 +41,7 @@ namespace ManicDigger
             }
             StringWriter sw = new StringWriter();//&salt={4}
             string requestString = String.Format("username={0}&password={1}&server={2}"
-                , username, password, publicServerKey);
+                , username, BCrypt.Net.BCrypt.HashPassword(password, 8), publicServerKey);
 
             var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "POST";
