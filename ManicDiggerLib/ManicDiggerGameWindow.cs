@@ -3084,6 +3084,8 @@ namespace ManicDigger
         private void SetFog()
         {
             float density = 0.3f;
+			// use this density for exp2 fog
+			//float density = 0.0045f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             float[] fogColor;
             if (SkySphereNight && (!shadowssimple))//d_Shadows.GetType() != typeof(ShadowsSimple))
@@ -3097,14 +3099,17 @@ namespace ManicDigger
             GL.Enable(EnableCap.Fog);
             GL.Hint(HintTarget.FogHint, HintMode.Nicest);
             GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
-            GL.Fog(FogParameter.FogColor, fogColor);
+            // looks better
+			//GL.Fog(FogParameter.FogMode, (int)FogMode.Exp2);
+			GL.Fog(FogParameter.FogColor, fogColor);
             GL.Fog(FogParameter.FogDensity, density);
             float fogsize = 10;
             if (d_Config3d.viewdistance <= 64)
             {
                 fogsize = 5;
             }
-            float fogstart = d_Config3d.viewdistance - fogsize;
+            //float fogstart = d_Config3d.viewdistance - fogsize + 200;
+			float fogstart = d_Config3d.viewdistance - fogsize;
             GL.Fog(FogParameter.FogStart, fogstart);
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
         }
@@ -3317,7 +3322,9 @@ namespace ManicDigger
                 }
                 else
                 {
-                    var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
+                    //fix crash on monster spawn
+					var r = GetCharacterRenderer(d_DataMonsters.MonsterCode[k.Value.MonsterType]);
+					//var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
                     r.SetAnimation("walk");
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
                     r.DrawCharacter(info.anim, curpos,
@@ -5038,7 +5045,10 @@ namespace ManicDigger
                             updatedMonsters[id] = 1;
                         }
                         //remove all old monsters that were not sent by server now.
-                        foreach (int id in new List<int>(players.Keys))
+                        
+						//this causes monster flicker on chunk boundaries,
+						//commented out
+						/*foreach (int id in new List<int>(players.Keys))
                         {
                             if (id >= MonsterIdFirst)
                             {
@@ -5047,7 +5057,7 @@ namespace ManicDigger
                                     players.Remove(id);
                                 }
                             }
-                        }
+                        }*/
                     }
                     break;
                 case ServerPacketId.DespawnPlayer:
