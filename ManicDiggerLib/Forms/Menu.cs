@@ -28,33 +28,19 @@ namespace GameModeFortress
         public ChosenGameType Chosen;
         public string SinglePlayerSaveGamePath;
         public ConnectData MultiplayerConnectData;
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string dir = System.Environment.CurrentDirectory;
-                var result = openFileDialog1.ShowDialog();
-                System.Environment.CurrentDirectory=dir;
-                if (result == DialogResult.OK)
-                {
-                    SinglePlayerSaveGamePath = openFileDialog1.FileName;
-                    Chosen = ChosenGameType.Singleplayer;
-                    Close();
-                }
-            }
-            catch
-            {
-            }
-        }
+        private string button_hover_path;
+        private string button_idle_path;
+        bool buttonImagesExist = false;
+        Bitmap button_hover_image;
+        Bitmap button_idle_image;
 
         MultiplayerForm m = new MultiplayerForm();
         Bitmap bg;
 
-        private void button1_Click(object sender, EventArgs e)
+        // Method useless? Maybe remove it.
+        /*private void button1_Click(object sender, EventArgs e)
         {
-            /*
+            
             try
             {
                 Chosen = ChosenGameType.Multiplayer;
@@ -72,8 +58,8 @@ namespace GameModeFortress
             {
                 MessageBox.Show("Invalid sever address.");
             }
-            */
-        }
+            
+        }*/
 
         private void Menu_Load(object sender, EventArgs e)
         {
@@ -88,7 +74,8 @@ namespace GameModeFortress
                         string ss2 = Path.Combine(ss, "gui");
                         string ss3 = Path.Combine(ss2, "logo.png");
                         string ss4 = Path.Combine(ss2, "background.png");
-                        string ss5 = Path.Combine(ss2, "button4_sel.png");
+                        button_hover_path = Path.Combine(ss2, "button_sel.png");
+                        button_idle_path = Path.Combine(ss2, "button.png");
                         if (File.Exists(ss4))
                         {
                             bg = new Bitmap(ss4);
@@ -99,31 +86,19 @@ namespace GameModeFortress
                         {
                             pictureBox1.Image = new Bitmap(ss3);
                         }
-                        if (File.Exists(ss5))
+                        // Check if the image files for the buttons exist
+                        buttonImagesExist = (File.Exists(button_idle_path) && File.Exists(button_hover_path));
+                        if (buttonImagesExist)
                         {
-                            button2.BackgroundImage = new Bitmap(ss5);
-                            button3.BackgroundImage = new Bitmap(ss5);
+                            button_hover_image = new Bitmap(button_hover_path);
+                            button_idle_image = new Bitmap(button_idle_path);
+                            button_singleplayer.BackgroundImage = button_idle_image;
+                            button_multiplayer.BackgroundImage = button_idle_image;
                         }
                     }
                     catch
                     {
                     }
-
-                    //Commented out because ListView element doesn't support transparent BackColor.
-                    //Results in the background Image painted over by the list elements.
-
-                    /*try
-                    {
-                        string ss = Path.Combine(s, "public");
-                        string ss2 = Path.Combine(ss, "rock.png");
-                        if (File.Exists(ss2))
-                        {
-                            m.listView1.BackgroundImage = new Bitmap(ss2);
-                        }
-                    }
-                    catch
-                    {
-                    }*/
                 }
             }
             catch
@@ -143,7 +118,49 @@ namespace GameModeFortress
             */
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void button_singleplayer_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                openFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                string dir = System.Environment.CurrentDirectory;
+                var result = openFileDialog1.ShowDialog();
+                System.Environment.CurrentDirectory = dir;
+                if (result == DialogResult.OK)
+                {
+                    SinglePlayerSaveGamePath = openFileDialog1.FileName;
+                    Chosen = ChosenGameType.Singleplayer;
+                    Close();
+                }
+            }
+            catch
+            {
+            }
+        }
+        
+        private void button_singleplayer_MouseEnter(object sender, EventArgs e)
+        {
+            try
+            {
+                button_singleplayer.BackgroundImage = button_hover_image;
+            }
+            catch
+            {
+            }
+        }
+
+        private void button_singleplayer_MouseLeave(object sender, EventArgs e)
+        {
+            try
+            {
+                button_singleplayer.BackgroundImage = button_idle_image;
+            }
+            catch
+            {
+            }
+        }
+
+        private void button_multiplayer_Click(object sender, EventArgs e)
         {
             m.ShowDialog();
             if (m.ConnectNow)
@@ -155,6 +172,28 @@ namespace GameModeFortress
                 MultiplayerConnectData.Port = int.Parse(m.LoginPort);
                 MultiplayerConnectData.Username = m.LoginUser;
                 Close();
+            }
+        }
+
+        private void button_multiplayer_MouseEnter(object sender, EventArgs e)
+        {
+            try
+            {
+                button_multiplayer.BackgroundImage = button_hover_image;
+            }
+            catch
+            {
+            }
+        }
+
+        private void button_multiplayer_MouseLeave(object sender, EventArgs e)
+        {
+            try
+            {
+                button_multiplayer.BackgroundImage = button_idle_image;
+            }
+            catch
+            {
             }
         }
     }
