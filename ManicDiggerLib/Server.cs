@@ -3591,6 +3591,27 @@ if (sent >= unknown.Count) { break; }
             }
         }
 
+        public void PlaySoundAt(int posx, int posy, int posz, string sound, int range)
+        {
+            PlaySoundAtExceptPlayer(posx, posy, posz, sound, null, range);
+        }
+        public void PlaySoundAtExceptPlayer (int posx, int posy, int posz, string sound, int? player, int range)
+        {
+            Vector3i pos = new Vector3i (posx, posy, posz);
+            foreach (var k in clients)
+            {
+                if (player != null && player == k.Key)
+                {
+                    continue;
+                }
+                int distance = DistanceSquared (new Vector3i ((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                if (distance < range)
+                {
+                    SendSound (k.Key, sound, pos.x, posy, posz);
+                }
+            }
+        }
+
         public void SendPacketFollow(int player, int target, bool tpp)
         {
             PacketServerFollow p = new PacketServerFollow()

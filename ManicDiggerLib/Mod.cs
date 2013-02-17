@@ -177,6 +177,11 @@ namespace ManicDigger
             server.PlaySoundAt(posx, posy, posz, sound);
         }
 
+        public void PlaySoundAt(int x, int y, int z, string sound, int range)
+        {
+            server.PlaySoundAt(x, y, z, sound, range);
+        }
+
         public int NearestPlayer(int x, int y, int z)
         {
             int closeplayer = -1;

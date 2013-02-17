@@ -32,6 +32,7 @@ namespace ManicDigger
         bool IsValidPos(int x, int y, int z);
         void RegisterTimer(ManicDigger.Action a, double interval);
         void PlaySoundAt(int x, int y, int z, string sound);
+        void PlaySoundAt(int x, int y, int z, string sound, int range);
         int NearestPlayer(int x, int y, int z);
         void GrabBlock(int player, int block);
         void GrabBlocks(int player, int block, int amount);
