@@ -24,7 +24,7 @@ namespace ManicDigger.Renderers
                 {
                     for (int i = 0; i < parts.Count; i++)
                     {
-                        SizeF size = g.MeasureString(parts[i].text, font);
+                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                         if (size.Width == 0 || size.Height == 0)
                         {
                             continue;
@@ -62,7 +62,7 @@ namespace ManicDigger.Renderers
               {
                  using (Graphics g = Graphics.FromImage(bmp))
                  {
-                    return g.MeasureString(text, font);
+                    return g.MeasureString(text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                  }
               }
            }

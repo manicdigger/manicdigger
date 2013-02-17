@@ -622,7 +622,7 @@ namespace ManicDigger
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle));
+                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                     return new float[] { size.Width, size.Height };
                 }
             }

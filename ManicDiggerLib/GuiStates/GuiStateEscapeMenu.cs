@@ -110,11 +110,10 @@ namespace ManicDigger
                     {
                         options.UseServerTextures = !options.UseServerTextures;
                     });
-                AddButton(string.Format(Language.FontOption, (d_TextRenderer.NewFont ? "2" : "1")),
+                AddButton(string.Format(Language.FontOption, (FontString())),
                     (a, b) =>
                     {
-                        d_TextRenderer.NewFont = !d_TextRenderer.NewFont;
-                        d_The3d.cachedTextTextures.Clear();
+                        ToggleFont();
                     });
                 AddButton(Language.ReturnToOptionsMenu, (a, b) => { UseFullscreen(); UseResolution(); SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -219,6 +218,24 @@ namespace ManicDigger
                 d_GlWindow.Width = res.Width;
                 d_GlWindow.Height = res.Height;
             }
+        }
+
+        string[] fonts = Enum.GetNames(typeof(ManicDigger.Renderers.FontType));
+        ManicDigger.Renderers.FontType[] fontValues = (ManicDigger.Renderers.FontType[])Enum.GetValues(typeof(ManicDigger.Renderers.FontType));
+
+        private string FontString()
+        {
+            return fonts[options.Font];
+        }
+        private void ToggleFont()
+        {
+            options.Font++;
+            if (options.Font >= fonts.Length)
+            {
+                options.Font = 0;
+            }
+            d_TextRenderer.Font = fontValues[options.Font];
+            d_The3d.cachedTextTextures.Clear();
         }
 
         private string KeyName(int key)
@@ -373,7 +390,7 @@ namespace ManicDigger
             string s = File.ReadAllText(path);
             this.options = (Options)x.Deserialize(new System.IO.StringReader(s));
 
-            d_TextRenderer.NewFont = options.Font != 1;
+            d_TextRenderer.Font = fontValues[options.Font];
             d_CurrentShadows.ShadowsFull = options.Shadows;
             d_Shadows.ResetShadows();
             //d_Terrain.UpdateAllTiles();
@@ -386,7 +403,7 @@ namespace ManicDigger
         }
         void SaveOptions()
         {
-            options.Font = d_TextRenderer.NewFont ? 0 : 1;
+            options.Font = (int)d_TextRenderer.Font;
             options.Shadows = d_CurrentShadows.ShadowsFull;
             options.DrawDistance = (int)d_Config3d.viewdistance;
             options.EnableSound = d_Audio.Enabled;

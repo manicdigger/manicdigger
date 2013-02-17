@@ -32,8 +32,18 @@ namespace ManicDigger.Renderers
             return base.Equals(obj);
         }
     }
+
+    public enum FontType
+    {
+        Default,
+        Simple,
+        Nice,
+        BlackBackground,
+    }
     public class TextRenderer
     {
+        public FontType Font = FontType.Default;
+
         public virtual Bitmap MakeTextTexture(Text t, Font font)
         {
             var parts = DecodeColors(t.text, t.color);
@@ -46,7 +56,7 @@ namespace ManicDigger.Renderers
                 {
                     for(int i = 0; i < parts.Count; i++)
                     {
-                        SizeF size = g.MeasureString(parts[i].text, font);
+                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                         if(size.Width == 0 || size.Height == 0)
                         {
                             continue;
@@ -77,32 +87,84 @@ namespace ManicDigger.Renderers
             return bmp2;
         }
 
-        public virtual Bitmap MakeTextTexture(Text t)
+        // TODO: Currently broken in mono (Graphics Path).
+        private Bitmap defaultFont(Text t)
         {
             Font font;
-        retry:
-            if (NewFont)
+            //outlined font looks smaller
+            float oldfontsize = t.fontsize;
+            t.fontsize = Math.Max (t.fontsize, 9);
+            t.fontsize *= 1.65f;
+            try
             {
-                //outlined font looks smaller
-                float oldfontsize = t.fontsize;
-                t.fontsize = Math.Max(t.fontsize, 9);
-                t.fontsize *= 1.65f;
-                try
+                font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+            }
+            catch
+            {
+                throw new Exception();
+            }
+            var parts = DecodeColors (t.text, t.color);
+            float totalwidth = 0;
+            float totalheight = 0;
+            List<SizeF> sizes = new List<SizeF> ();
+            using (Bitmap bmp = new Bitmap(1, 1))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    font = new Font("Arial", t.fontsize, FontStyle.Bold);
-                }
-                catch
-                {
-                    //fixes crash: System.ArgumentException: Font ‘Arial’ does not support style ‘Bold’.
-                    NewFont = false;
-                    t.fontsize = oldfontsize;
-                    goto retry;
+                    for (int i = 0; i < parts.Count; i++)
+                    {
+                        SizeF size = g.MeasureString (parts [i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        if (size.Width == 0 || size.Height == 0)
+                        {
+                            continue;
+                        }
+                        size.Width *= 0.7f;
+                        totalwidth += size.Width;
+                        totalheight = Math.Max (totalheight, size.Height);
+                        sizes.Add (size);
+                    }
                 }
             }
-            else
+            SizeF size2 = new SizeF (NextPowerOfTwo ((uint)totalwidth), NextPowerOfTwo ((uint)totalheight));
+            Bitmap bmp2 = new Bitmap ((int)size2.Width, (int)size2.Height);
+            using (Graphics g2 = Graphics.FromImage(bmp2))
             {
-                font = new Font("Verdana", t.fontsize);
+                float currentwidth = 0;
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    SizeF sizei = sizes [i];
+                    if (sizei.Width == 0 || sizei.Height == 0)
+                    {
+                        continue;
+                    }
+                    StringFormat format = StringFormat.GenericTypographic;
+
+                    g2.FillRectangle (new SolidBrush (Color.FromArgb (textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
+                    g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                    Rectangle rect = new Rectangle () { X = (int)currentwidth, Y = 0 };
+                    using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
+                    {
+                        g2.SmoothingMode = SmoothingMode.AntiAlias;
+                        RectangleF off = rect;
+                        off.Offset (2, 2);
+                        using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
+                        {
+                            Brush b = new SolidBrush (Color.FromArgb (100, 0, 0, 0));
+                            g2.FillPath (b, offPath);
+                            b.Dispose ();
+                        }
+                        g2.FillPath (new SolidBrush (parts [i].color), path);
+                        g2.DrawPath (Pens.Black, path);
+                    }
+                    currentwidth += sizei.Width;
+                }
             }
+            return bmp2;
+        }
+
+		private Bitmap blackBackgroundFont(Text t)
+        {
+            Font font = new Font("Verdana", t.fontsize);
             var parts = DecodeColors(t.text, t.color);
             float totalwidth = 0;
             float totalheight = 0;
@@ -113,14 +175,10 @@ namespace ManicDigger.Renderers
                 {
                     for (int i = 0; i < parts.Count; i++)
                     {
-                        SizeF size = g.MeasureString(parts[i].text, font);
+                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                         if (size.Width == 0 || size.Height == 0)
                         {
                             continue;
-                        }
-                        if (NewFont)
-                        {
-                            size.Width *= 0.7f;
                         }
                         totalwidth += size.Width;
                         totalheight = Math.Max(totalheight, size.Height);
@@ -140,42 +198,170 @@ namespace ManicDigger.Renderers
                     {
                         continue;
                     }
-                    if (NewFont)
-                    {
-                       StringFormat format = StringFormat.GenericTypographic;
-
-                       g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
-                       g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                       //g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                       Rectangle rect = new Rectangle() { X = (int)currentwidth, Y = 0 };
-                       using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
-                       {
-                          g2.SmoothingMode = SmoothingMode.AntiAlias;
-                          RectangleF off = rect;
-                          off.Offset(2, 2);
-                          using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
-                          {
-                             Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
-                             g2.FillPath(b, offPath);
-                             b.Dispose();
-                          }
-                          g2.FillPath(new SolidBrush(parts[i].color), path);
-                          g2.DrawPath(Pens.Black, path);
-                       }
-                    }
-                    else
-                    {
-                        g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
-                        g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                    }
+                    g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
+                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
                     currentwidth += sizei.Width;
                 }
             }
             return bmp2;
         }
-        GraphicsPath GetStringPath(string s, float emSize, RectangleF rect, Font font, StringFormat format)
+
+        private Bitmap simpleFont(Text t)
         {
+            Font font;
+            t.fontsize = Math.Max (t.fontsize, 9);
+            t.fontsize *= 1.1f;
+            try
+            {
+               font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+            }
+            catch
+            {
+                throw new Exception();
+            }
+
+            var parts = DecodeColors(t.text, t.color);
+            float totalwidth = 0;
+            float totalheight = 0;
+            List<SizeF> sizes = new List<SizeF>();
+            using (Bitmap bmp = new Bitmap(1, 1))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    for (int i = 0; i < parts.Count; i++)
+                    {
+                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        if (size.Width == 0 || size.Height == 0)
+                        {
+                            continue;
+                        }
+                        totalwidth += size.Width;
+                        totalheight = Math.Max(totalheight, size.Height);
+                        sizes.Add(size);
+                    }
+                }
+            }
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+            Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
+            using (Graphics g2 = Graphics.FromImage(bmp2))
+            {
+                float currentwidth = 0;
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    SizeF sizei = sizes[i];
+                    if (sizei.Width == 0 || sizei.Height == 0)
+                    {
+                        continue;
+                    }
+                    g2.SmoothingMode = SmoothingMode.AntiAlias;
+                    g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                    currentwidth += sizei.Width;
+                }
+            }
+            return bmp2;
+        }
+
+        private Bitmap niceFont(Text t)
+        {
+            Font font;
+            t.fontsize = Math.Max (t.fontsize, 9);
+            t.fontsize *= 1.1f;
+            try
+            {
+               font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+            }
+            catch
+            {
+                throw new Exception();
+            }
+
+            var parts = DecodeColors(t.text, t.color);
+            float totalwidth = 0;
+            float totalheight = 0;
+            List<SizeF> sizes = new List<SizeF>();
+            using (Bitmap bmp = new Bitmap(1, 1))
+            {
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    for (int i = 0; i < parts.Count; i++)
+                    {
+                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        if (size.Width == 0 || size.Height == 0)
+                        {
+                            continue;
+                        }
+                        totalwidth += size.Width;
+                        totalheight = Math.Max(totalheight, size.Height);
+                        sizes.Add(size);
+                    }
+                }
+            }
+          
+
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+            Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
+            using (Graphics g2 = Graphics.FromImage(bmp2))
+            {
+                float currentwidth = 0;
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    SizeF sizei = sizes[i];
+                    if (sizei.Width == 0 || sizei.Height == 0)
+                    {
+                        continue;
+                    }
+
+                    /*
+                    RectangleF rect = new RectangleF(currentwidth, 0, sizei.Width, sizei.Height);
+                    StringFormat format = StringFormat.GenericTypographic;
+                    float emSize = g2.DpiY * font.SizeInPoints / 72;
+
+                    using (GraphicsPath path = GetStringPath(parts[i].text, emSize, rect, font, format))
+                    {   
+                        g2.SmoothingMode = SmoothingMode.AntiAlias;
+                        g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+                        g2.FillPath(new SolidBrush(parts[i].color), path);
+                        g2.DrawPath(new Pen(Color.Black, 1), path);
+                    }
+                    */
+
+                    g2.SmoothingMode = SmoothingMode.AntiAlias;
+                    g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
+                    Matrix mx = new Matrix(1f,0,0,1f,1,1);
+                    g2.Transform = mx;
+                    g2.DrawString(parts[i].text, font, new SolidBrush( Color.FromArgb(128, Color.Black)), currentwidth, 0);
+                    g2.ResetTransform();
+
+                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
+                    currentwidth += sizei.Width;
+                }
+            }
+            return bmp2;
+        }
+
+        public virtual Bitmap MakeTextTexture(Text t)
+        {
+            switch(this.Font)
+            {
+                case FontType.Default:
+                    return this.defaultFont(t);
+                case FontType.BlackBackground:
+                    return this.blackBackgroundFont(t);
+                case FontType.Simple:
+                    return this.simpleFont(t);
+                case FontType.Nice:
+                    return this.niceFont(t);
+                default:
+                    return this.defaultFont(t);
+            }
+        }
+        GraphicsPath GetStringPath(string s, float emSize, RectangleF rect, Font font, StringFormat format)
+        { 
             GraphicsPath path = new GraphicsPath();
+            // TODO: Bug in Mono. Returns incomplete list of points / cuts string.
             path.AddString(s, font.FontFamily, (int)font.Style, emSize, rect, format);
             return path;
         }
@@ -287,7 +473,7 @@ namespace ManicDigger.Renderers
                 {
                     using(Graphics g = Graphics.FromImage(bmp))
                     {
-                        return g.MeasureString(text, font);
+                        return g.MeasureString(text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                     }
                 }
             }
@@ -299,7 +485,7 @@ namespace ManicDigger.Renderers
             {
                 using(Graphics g = Graphics.FromImage(bmp))
                 {
-                    return g.MeasureString(text, font);
+                    return g.MeasureString(text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
         }
