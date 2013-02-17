@@ -31,9 +31,12 @@ namespace GameModeFortress
             interpreter.SetFunction("get_block", new ManicDigger.Func<double, double, double, int>(GetBlock));
             interpreter.SetFunction("get_height", new ManicDigger.Func<double, double, double>(GetHeight));
             interpreter.SetFunction("get_mapsize", new ManicDigger.Func<int[]>(GetMapSize));
-
             interpreter.SetFunction("set_chunk", new ManicDigger.Action<double, double, double, ushort[]>(SetChunk));
+            interpreter.SetFunction("set_chunks", new ManicDigger.Action<Dictionary<Xyz, ushort[]>>(SetChunks));
+            interpreter.SetFunction("set_chunks_offset", new ManicDigger.Action<double, double, double, Dictionary<Xyz, ushort[]>>(SetChunks));
             interpreter.SetFunction("get_chunk", new ManicDigger.Func<double, double, double, ushort[]>(GetChunk));
+            interpreter.SetFunction("get_chunks_from_database", new ManicDigger.Func<double, double, double, double, double, double, string, Dictionary<Xyz, ushort[]>>(GetChunksFromDatabase));
+            interpreter.SetFunction("copy_chunks_to_database", new ManicDigger.Action<double, double, double, double, double, double, string>(CopyChunksToDatabase));
             interpreter.SetFunction("delete_chunk", new ManicDigger.Action<double, double, double>(DeleteChunk));
             interpreter.SetFunction("delete_chunk_range", new ManicDigger.Action<double, double, double, double, double, double>(DeleteChunkRange));
             interpreter.SetFunction("backup_database", new ManicDigger.Action<string>(BackupDatabase));
@@ -130,10 +133,64 @@ namespace GameModeFortress
             m_server.SetChunk((int)x, (int)y, (int)z, data);
         }
 
+        public void SetChunks (Dictionary<Xyz, ushort[]> chunks)
+        {
+            m_server.SetChunks(chunks);
+        }
+
+        public void SetChunks (double offsetX, double offsetY, double offsetZ, Dictionary<Xyz, ushort[]> chunks)
+        {
+            m_server.SetChunks((int)offsetX, (int)offsetY, (int)offsetZ, chunks);
+        }
+
+
         public ushort[] GetChunk(double x, double y, double z)
         {
             return m_server.GetChunk((int)x, (int)y, (int)z);
         }
+
+        public ushort[] GetChunkFromDatabase (double x, double y, double z, string file)
+        {
+            return m_server.GetChunkFromDatabase((int)x, (int)y, (int)z, file);
+        }
+
+        public Dictionary<Xyz, ushort[]> GetChunksFromDatabase (double x1, double y1, double z1, double x2, double y2, double z2, string file)
+        {
+            List<Xyz> chunkPositions = new List<Xyz>();
+            int chunksize = Server.chunksize;
+            for (int x=(int)x1; x<(int)x2; x=x+chunksize)
+            {
+                for (int y=(int)y1; y<(int)y2; y=y+chunksize)
+                {
+                    for (int z=(int)z1; z<(int)z2; z=z+chunksize)
+                    {
+                        chunkPositions.Add(new Xyz(){X = x / chunksize, Y = y / chunksize, Z = z / chunksize});
+                    }
+                }
+            }
+
+            Dictionary<Xyz, ushort[]> chunks = m_server.GetChunksFromDatabase(chunkPositions, file);
+            Print(chunks.Count + " chunks loaded.");
+            return chunks;
+        }
+
+        public void CopyChunksToDatabase(double x1, double y1, double z1, double x2, double y2, double z2, string file)
+        {
+            List<Vector3i> chunkPositions = new List<Vector3i>();
+            int chunksize = Server.chunksize;
+            for (int x=(int)x1; x<(int)x2; x=x+chunksize)
+            {
+                for (int y=(int)y1; y<(int)y2; y=y+chunksize)
+                {
+                    for (int z=(int)z1; z<(int)z2; z=z+chunksize)
+                    {
+                        chunkPositions.Add(new Vector3i() {x=x, y=y, z=z});
+                    }
+                }
+            }
+            m_server.SaveChunksToDatabase(chunkPositions, file);
+        }
+
 
         public void BackupDatabase(string backupFilename)
         {

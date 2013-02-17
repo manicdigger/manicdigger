@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
@@ -8,6 +9,7 @@ using Vector3iC = ManicDigger.Vector3i;
 using PointG = System.Drawing.Point;
 using GameModeFortress;
 using System.Diagnostics;
+using ProtoBuf;
 
 namespace ManicDiggerServer
 {
@@ -334,6 +336,75 @@ namespace ManicDiggerServer
                 }
             }
         }
+
+        public void SetChunks(Dictionary<Xyz, ushort[]> chunks)
+        {
+            if (chunks.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var k in chunks)
+            {
+                if (k.Value == null)
+                {
+                    continue;
+                }
+
+                // TODO: check bounds.
+                Chunk c = d_Map.chunks[k.Key.X, k.Key.Y, k.Key.Z];
+                if (c == null)
+                {
+                    c = new Chunk();
+                }
+                c.data = k.Value;
+                c.DirtyForSaving = true;
+                d_Map.chunks[k.Key.X,k.Key.Y,k.Key.Z] = c;
+            }
+
+            // update related chunk at clients
+            foreach (var k in clients)
+            {
+                //TODO wrong
+                //k.Value.chunksseen.Clear();
+                Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
+            }
+        }
+
+        public void SetChunks(int offsetX, int offsetY, int offsetZ, Dictionary<Xyz, ushort[]> chunks)
+        {
+            if (chunks.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var k in chunks)
+            {
+                if (k.Value == null)
+                {
+                    continue;
+                }
+
+                // TODO: check bounds.
+                Chunk c = d_Map.chunks[k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ];
+                if (c == null)
+                {
+                    c = new Chunk();
+                }
+                c.data = k.Value;
+                c.DirtyForSaving = true;
+                d_Map.chunks[k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ] = c;
+            }
+
+            // update related chunk at clients
+            foreach (var k in clients)
+            {
+                //TODO wrong
+                //k.Value.chunksseen.Clear();
+                Array.Clear(k.Value.chunksseen, 0, k.Value.chunksseen.Length);
+            }
+        }
+
         public ushort[] GetChunk(int x, int y, int z)
         {
             if (MapUtil.IsValidPos(d_Map, x, y, z))
@@ -392,6 +463,119 @@ namespace ManicDiggerServer
         public int[] GetMapSize()
         {
             return new int[] {d_Map.MapSizeX, d_Map.MapSizeY, d_Map.MapSizeZ};
+        }
+
+        public ushort[] GetChunkFromDatabase(int x, int y, int z, string filename)
+        {
+            if (MapUtil.IsValidPos(d_Map, x, y, z))
+            {
+                if (!GameStorePath.IsValidName(filename))
+                {
+                    Console.WriteLine("Invalid backup filename: " + filename);
+                    return null;
+                }
+                if (!Directory.Exists(GameStorePath.gamepathbackup))
+                {
+                    Directory.CreateDirectory(GameStorePath.gamepathbackup);
+                }
+                string finalFilename = Path.Combine(GameStorePath.gamepathbackup, filename + MapManipulator.BinSaveExtension);
+
+                x = x / chunksize;
+                y = y / chunksize;
+                z = z / chunksize;
+
+                byte[] serializedChunk = ChunkDb.GetChunkFromFile(d_ChunkDb, x, y, z, finalFilename);
+                if (serializedChunk != null)
+                {
+                    Chunk c = DeserializeChunk(serializedChunk);
+                    return c.data;
+                }
+            }
+            return null;
+        }
+        public Dictionary<Xyz, ushort[]> GetChunksFromDatabase(List<Xyz> chunks, string filename)
+        {
+            if (chunks == null)
+            {
+                return null;
+            }
+
+            if (!GameStorePath.IsValidName(filename))
+            {
+                Console.WriteLine("Invalid backup filename: " + filename);
+                return null;
+            }
+            if (!Directory.Exists(GameStorePath.gamepathbackup))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathbackup);
+            }
+            string finalFilename = Path.Combine(GameStorePath.gamepathbackup, filename + MapManipulator.BinSaveExtension);
+
+            Dictionary<Xyz,ushort[]> deserializedChunks = new Dictionary<Xyz,ushort[]>();
+            Dictionary<Xyz,byte[]> serializedChunks = ChunkDb.GetChunksFromFile(d_ChunkDb, chunks, finalFilename);
+
+            foreach (var k in serializedChunks)
+            {
+                Chunk c = null;
+                if (k.Value != null)
+                {
+                    c = DeserializeChunk(k.Value);
+                }
+                deserializedChunks.Add(k.Key, c.data);
+            }
+            return deserializedChunks;
+        }
+        private Chunk DeserializeChunk(byte[] serializedChunk)
+        {
+            Chunk c = Serializer.Deserialize<Chunk>(new MemoryStream(serializedChunk));
+            //convert savegame to new format
+            if (c.dataOld != null)
+            {
+                c.data = new ushort[chunksize * chunksize * chunksize];
+                for (int i = 0; i < c.dataOld.Length; i++)
+                {
+                    c.data[i] = c.dataOld[i];
+                }
+                c.dataOld = null;
+            }
+            return c;
+        }
+
+        public void SaveChunksToDatabase(List<Vector3i> chunkPositions, string filename)
+        {
+            if (!GameStorePath.IsValidName(filename))
+            {
+                Console.WriteLine("Invalid backup filename: " + filename);
+                return;
+            }
+            if (!Directory.Exists(GameStorePath.gamepathbackup))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathbackup);
+            }
+            string finalFilename = Path.Combine(GameStorePath.gamepathbackup, filename + MapManipulator.BinSaveExtension);
+
+            List<DbChunk> dbchunks = new List<DbChunk>();
+            foreach (Vector3i pos in chunkPositions)
+            {
+                int dx = pos.x / chunksize;
+                int dy = pos.y / chunksize;
+                int dz = pos.z / chunksize;
+
+                Chunk cc = new Chunk() {data = this.GetChunk(pos.x, pos.y, pos.z)};
+                MemoryStream ms = new MemoryStream();
+                Serializer.Serialize(ms, cc);
+                dbchunks.Add(new DbChunk() { Position = new Xyz() { X = dx, Y = dy, Z = dz }, Chunk = ms.ToArray() });
+            }
+            if (dbchunks.Count != 0)
+            {
+                IChunkDb d_ChunkDb = new ChunkDbCompressed() {d_ChunkDb = new ChunkDbSqlite(), d_Compression = new CompressionGzip()};
+                d_ChunkDb.SetChunksToFile(dbchunks, finalFilename);
+            }
+            else
+            {
+                Console.WriteLine(string.Format("0 chunks selected. Nothing to do."));
+            }
+            Console.WriteLine(string.Format("Saved {0} chunk(s) to database.", dbchunks.Count));
         }
     }
 }
