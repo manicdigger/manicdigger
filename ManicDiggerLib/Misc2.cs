@@ -9,6 +9,7 @@ namespace GameModeFortress
     {
         [Inject]
         public IMapStorage d_Map;
+        public GameData d_Data;
         public List<int> GetOnTable(List<Vector3i> table)
         {
             List<int> ontable = new List<int>();
@@ -38,22 +39,22 @@ namespace GameModeFortress
                 }
                 l.Add(p);
                 var a = new Vector3i(p.x + 1, p.y, p.z);
-                if (d_Map.GetBlock(a.x, a.y, a.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(a.x, a.y, a.z) == d_Data.BlockIdCraftingTable)
                 {
                     todo.Enqueue(a);
                 }
                 var b = new Vector3i(p.x - 1, p.y, p.z);
-                if (d_Map.GetBlock(b.x, b.y, b.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(b.x, b.y, b.z) == d_Data.BlockIdCraftingTable)
                 {
                     todo.Enqueue(b);
                 }
                 var c = new Vector3i(p.x, p.y + 1, p.z);
-                if (d_Map.GetBlock(c.x, c.y, c.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(c.x, c.y, c.z) == d_Data.BlockIdCraftingTable)
                 {
                     todo.Enqueue(c);
                 }
                 var d = new Vector3i(p.x, p.y - 1, p.z);
-                if (d_Map.GetBlock(d.x, d.y, d.z) == (int)TileTypeManicDigger.CraftingTable)
+                if (d_Map.GetBlock(d.x, d.y, d.z) == d_Data.BlockIdCraftingTable)
                 {
                     todo.Enqueue(d);
                 }

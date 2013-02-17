@@ -37,6 +37,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.ClosedDoor,
                 WalkableType = WalkableType.Solid,
                 Sounds = sounds,
+                IsUsable = true,
             });
             m.SetBlockType(127, "DoorTopClosed", new BlockType()
             {
@@ -44,6 +45,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.ClosedDoor,
                 WalkableType = WalkableType.Solid,
                 Sounds = sounds,
+                IsUsable = true,
             });
             m.SetBlockType(128, "DoorBottomOpen", new BlockType()
             {
@@ -51,6 +53,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.OpenDoor,
                 WalkableType = WalkableType.Empty,
                 Sounds = sounds,
+                IsUsable = true,
             });
             m.SetBlockType(129, "DoorTopOpen", new BlockType()
             {
@@ -58,6 +61,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.OpenDoor,
                 WalkableType = WalkableType.Empty,
                 Sounds = sounds,
+                IsUsable = true,
             });
 
             m.AddToCreativeInventory("DoorBottomClosed");

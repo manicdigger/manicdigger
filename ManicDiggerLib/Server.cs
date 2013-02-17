@@ -180,7 +180,7 @@ namespace ManicDiggerServer
             //craftingrecipes.data = data;
             //craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
             server.d_Data = data;
-            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map };
+            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map, d_Data = data };
             server.LocalConnectionsOnly = !Public;
             server.d_GetFile = getfile;
             var networkcompression = new CompressionGzip();
@@ -2311,7 +2311,7 @@ if (sent >= unknown.Count) { break; }
         bool ENABLE_FINITEINVENTORY { get { return !config.IsCreative; } }
         private bool DoCommandCraft(bool execute, PacketClientCraft cmd)
         {
-            if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) != (int)TileTypeManicDigger.CraftingTable)
+            if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) != d_Data.BlockIdCraftingTable)
             {
                 return false;
             }
@@ -2342,7 +2342,7 @@ if (sent >= unknown.Count) { break; }
                         for (int ii = 0; ii < ingredient.Amount; ii++)
                         {
                             //replace on table
-                            ReplaceOne(ontable, ingredient.Type, (int)TileTypeManicDigger.Empty);
+                            ReplaceOne(ontable, ingredient.Type, d_Data.BlockIdEmpty);
                         }
                     }
                     //add output
@@ -2356,7 +2356,7 @@ if (sent >= unknown.Count) { break; }
             }
             foreach (var v in outputtoadd)
             {
-                ReplaceOne(ontable, (int)TileTypeManicDigger.Empty, v);
+                ReplaceOne(ontable, d_Data.BlockIdEmpty, v);
             }
             int zz = 0;
             if (execute)
@@ -2481,7 +2481,7 @@ if (sent >= unknown.Count) { break; }
                             cmd.Mode = BlockSetMode.Destroy;
                             DoCommandBuild(player_id, true, cmd);
                         }
-                        if (blockType != (int)TileTypeManicDigger.FillArea)
+                        if (blockType != d_Data.BlockIdFillArea)
                         {
                             cmd.Mode = BlockSetMode.Create;
                             DoCommandBuild(player_id,true, cmd);
@@ -2671,22 +2671,22 @@ if (sent >= unknown.Count) { break; }
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
             //int blockstoput = 1;
-            if (!(oldblock == SpecialBlockId.Empty || GameDataManicDigger.IsRailTile(oldblock)))
+            if (!(oldblock == SpecialBlockId.Empty || d_Data.IsRailTile(oldblock)))
             {
                 return false;
             }
 
             //count how many rails will be created
             int oldrailcount = 0;
-            if (GameDataManicDigger.IsRailTile(oldblock))
+            if (d_Data.IsRailTile(oldblock))
             {
                 oldrailcount = MyLinq.Count(
                     DirectionUtils.ToRailDirections(
-                    (RailDirectionFlags)(oldblock - GameDataManicDigger.railstart)));
+                    (RailDirectionFlags)(oldblock - d_Data.BlockIdRailstart)));
             }
             int newrailcount = MyLinq.Count(
                 DirectionUtils.ToRailDirections(
-                (RailDirectionFlags)(cmd.BlockType - GameDataManicDigger.railstart)));
+                (RailDirectionFlags)(cmd.BlockType - d_Data.BlockIdRailstart)));
             int blockstoput = newrailcount - oldrailcount;
 
             Item item = inventory.RightHand[cmd.MaterialSlot];
@@ -2718,11 +2718,11 @@ if (sent >= unknown.Count) { break; }
                 return false;
             }
             int blockstopick = 1;
-            if (GameDataManicDigger.IsRailTile(blocktype))
+            if (d_Data.IsRailTile(blocktype))
             {
                 blockstopick = MyLinq.Count(
                     DirectionUtils.ToRailDirections(
-                    (RailDirectionFlags)(blocktype - GameDataManicDigger.railstart)));
+                    (RailDirectionFlags)(blocktype - d_Data.BlockIdRailstart)));
             }
 
             var item = new Item();
@@ -2790,7 +2790,7 @@ if (sent >= unknown.Count) { break; }
         }
         private bool EquivalentBlock(int blocktypea, int blocktypeb)
         {
-            if (GameDataManicDigger.IsRailTile(blocktypea) && GameDataManicDigger.IsRailTile(blocktypeb))
+            if (d_Data.IsRailTile(blocktypea) && d_Data.IsRailTile(blocktypeb))
             {
                 return true;
             }

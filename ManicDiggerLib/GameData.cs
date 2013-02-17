@@ -15,7 +15,6 @@ namespace ManicDigger
         bool[] IsEmptyForPhysics { get; }
         bool[] IsFluid { get; }
         bool[] IsWater { get; }
-        int BlockIdSingleStairs { get; }
     }
     public interface IGameData : IGameDataLight, IGameDataPhysics
     {
@@ -47,20 +46,24 @@ namespace ManicDigger
 
         //Special blocks
         //Block 0 is empty block.
-        int BlockIdGrass { get; }
+        int BlockIdEmpty { get; }
         int BlockIdDirt { get; }
-        int BlockIdGravel { get; }
-        int BlockIdGold { get; }
-        int BlockIdStone { get; }
-        int BlockIdWater { get; }
-        int BlockIdSand { get; }
         int BlockIdSponge { get; }
         int BlockIdTrampoline { get; }
-        int BlockIdTorch { get; }
         int BlockIdAdminium { get; }
         int BlockIdCompass { get; }
         int BlockIdLadder { get; }
         int BlockIdEmptyHand { get; }
+        int BlockIdCraftingTable { get; }
+        int BlockIdLava { get; }
+        int BlockIdStationaryLava { get; }
+        int BlockIdFillStart { get; }
+        int BlockIdCuboid { get; }
+        int BlockIdFillArea { get; }
+        int BlockIdMinecart { get; }
+        int BlockIdRailstart { get ; }
+
+
     }
     public class SpecialBlockId
     {
@@ -170,23 +173,6 @@ namespace ManicDigger
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
 
-
-        public int BlockIdGrass { get { return mBlockIdGrass; } set { mBlockIdGrass = value; } }
-        public int BlockIdDirt { get { return mBlockIdDirt; } set { mBlockIdDirt = value; } }
-        public int BlockIdGravel { get { return mBlockIdGravel; } set { mBlockIdGravel = value; } }
-        public int BlockIdGold { get { return mBlockIdGold; } set { mBlockIdGold = value; } }
-        public int BlockIdStone { get { return mBlockIdStone; } set { mBlockIdStone = value; } }
-        public int BlockIdWater { get { return mBlockIdWater; } set { mBlockIdWater = value; } }
-        public int BlockIdSand { get { return mBlockIdSand; } set { mBlockIdSand = value; } }
-        public int BlockIdSingleStairs { get { return mBlockIdSingleStairs; } set { mBlockIdSingleStairs = value; } }
-        public int BlockIdSponge { get { return mBlockIdSponge; } set { mBlockIdSponge = value; } }
-        public int BlockIdTrampoline { get { return mBlockIdTrampoline; } set { mBlockIdTrampoline = value; } }
-        public int BlockIdTorch { get { return mBlockIdTorch; } set { mBlockIdTorch = value; } }
-        public int BlockIdAdminium { get { return mBlockIdAdminium; } set { mBlockIdAdminium = value; } }
-        public int BlockIdCompass { get { return mBlockIdCompass; } set { mBlockIdCompass = value; } }
-        public int BlockIdLadder { get { return mBlockIdLadder; } set { mBlockIdLadder = value; } }
-        public int BlockIdEmptyHand { get { return mBlockIdEmptyHand; } set { mBlockIdEmptyHand = value; } }
-
         private bool[] mIsFluid;
         private bool[] mIsWater;
         private bool[] mIsTransparent;
@@ -216,21 +202,104 @@ namespace ManicDigger
         private int[] mDefaultMaterialSlots;
         private float[] mLightLevels;
 
-        private int mBlockIdGrass = 2;
-        private int mBlockIdDirt = 3;
-        private int mBlockIdGravel = 13;
-        private int mBlockIdGold = 14;
-        private int mBlockIdStone = 1;
-        private int mBlockIdWater = 9;
-        private int mBlockIdSand = 12;
-        private int mBlockIdSingleStairs = 44;
-        private int mBlockIdSponge = 19;
-        private int mBlockIdTrampoline = 114;
-        private int mBlockIdTorch = 50;
-        private int mBlockIdAdminium = 7;
-        private int mBlockIdCompass = 151;
-        private int mBlockIdLadder = 152;
-        private int mBlockIdEmptyHand = 153;
+        // TODO: hardcoded IDs
+        // few code sections still expect some hardcoded IDs
+        private int mBlockIdEmpty = 0;
+        private int mBlockIdDirt = -1;
+        private int mBlockIdSponge = -1;
+        private int mBlockIdTrampoline = -1;
+        private int mBlockIdAdminium = -1;
+        private int mBlockIdCompass = -1;
+        private int mBlockIdLadder = -1;
+        private int mBlockIdEmptyHand = -1;
+        private int mBlockIdCraftingTable = -1;
+        private int mBlockIdLava = -1;
+        private int mBlockIdStationaryLava = -1;
+        private int mBlockIdFillStart = -1;
+        private int mBlockIdCuboid = -1;
+        private int mBlockIdFillArea = -1;
+        private int mBlockIdMinecart = -1;
+        private int mBlockIdRailstart = -128; // 64 rail tiles
+
+        public int BlockIdEmpty { get { return mBlockIdEmpty; } set { mBlockIdEmpty = value; } }
+        public int BlockIdDirt { get { return mBlockIdDirt; } set { mBlockIdDirt = value; } }
+        public int BlockIdSponge { get { return mBlockIdSponge; } set { mBlockIdSponge = value; } }
+        public int BlockIdTrampoline { get { return mBlockIdTrampoline; } set { mBlockIdTrampoline = value; } }
+        public int BlockIdAdminium { get { return mBlockIdAdminium; } set { mBlockIdAdminium = value; } }
+        public int BlockIdCompass { get { return mBlockIdCompass; } set { mBlockIdCompass = value; } }
+        public int BlockIdLadder { get { return mBlockIdLadder; } set { mBlockIdLadder = value; } }
+        public int BlockIdEmptyHand { get { return mBlockIdEmptyHand; } set { mBlockIdEmptyHand = value; } }
+        public int BlockIdCraftingTable { get { return mBlockIdCraftingTable; } set { mBlockIdCraftingTable = value; } }
+        public int BlockIdLava { get { return mBlockIdLava; } set { mBlockIdLava = value; } }
+        public int BlockIdStationaryLava { get { return mBlockIdStationaryLava; } set { mBlockIdStationaryLava = value; } }
+        public int BlockIdFillStart { get { return mBlockIdFillStart; } set { mBlockIdFillStart = value; } }
+        public int BlockIdCuboid { get { return mBlockIdCuboid; } set { mBlockIdCuboid = value; } }
+        public int BlockIdFillArea { get { return mBlockIdFillArea; } set { mBlockIdFillArea = value; } }
+        public int BlockIdMinecart { get { return mBlockIdMinecart; } set { mBlockIdMinecart = value; } }
+        public int BlockIdRailstart { get { return mBlockIdRailstart; } set { mBlockIdRailstart = value; } }
+
+        // TODO: atm it sets sepcial block id from block name - better use new block property
+        public bool SetSpecialBlock(BlockType b, int id)
+        {
+            switch (b.Name)
+            {
+                case "Empty":
+                    this.BlockIdEmpty = id;
+                    return true;
+                case "Dirt":
+                    this.BlockIdDirt = id;
+                    return true;
+                case "Sponge":
+                    this.BlockIdSponge = id;
+                    return true;
+                case "Trampoline":
+                    this.BlockIdTrampoline = id;
+                    return true;
+                case "Adminium":
+                    this.BlockIdAdminium = id;
+                    return true;
+                case "Compass":
+                    this.BlockIdCompass = id;
+                    return true;
+                case "Ladder":
+                    this.BlockIdLadder = id;
+                    return true;
+                case "EmptyHand":
+                    this.BlockIdEmptyHand = id;
+                    return true;
+                case "CraftingTable":
+                    this.BlockIdCraftingTable = id;
+                    return true;
+                case "Lava":
+                    this.BlockIdLava = id;
+                    return true;
+                case "StationaryLava":
+                    this.BlockIdStationaryLava = id;
+                    return true;
+                case "FillStart":
+                    this.BlockIdFillStart = id;
+                    return true;
+                case "Cuboid":
+                    this.BlockIdCuboid = id;
+                    return true;
+                case "FillArea":
+                    this.BlockIdFillArea = id;
+                    return true;
+                case "Minecart":
+                    this.BlockIdMinecart = id;
+                    return true;
+                case "Rail0":
+                    this.BlockIdRailstart = id;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public bool IsRailTile(int id)
+        {
+            return id >= BlockIdRailstart && id < BlockIdRailstart + 64;
+        }
 
         public void UseBlockTypes(BlockType[] blocktypes, Dictionary<string,int> textureInAtlasIds)
         {
@@ -313,6 +382,7 @@ namespace ManicDigger
             Strength[id] = b.Strength;
             DrawType1[id] = b.DrawType;
             WalkableType1[id] = b.WalkableType;
+            SetSpecialBlock(b, id);
         }
     }
 

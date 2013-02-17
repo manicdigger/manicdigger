@@ -32,6 +32,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
+                IsUsable = true,
             });
             tnt = m.GetBlockId("TNT");
             adminium = m.GetBlockId("Adminium");

@@ -115,7 +115,7 @@ namespace ManicDigger
             w.ENABLE_FINITEINVENTORY = false;
             w.d_Shadows = w;
             clientgame.d_Data = gamedata;
-            clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage };
+            clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage, d_Data = gamedata };
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
             clientgame.d_TerrainTextures = terrainTextures;
@@ -1015,7 +1015,7 @@ namespace ManicDigger
                         int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
                         if (IsUsableBlock(blocktype))
                         {
-                            if (GameDataManicDigger.IsRailTile(blocktype))
+                            if (d_Data.IsRailTile(blocktype))
                             {
                                 player.playerposition.X = pos.X + .5f;
                                 player.playerposition.Y = pos.Z + 1;
@@ -1831,10 +1831,10 @@ namespace ManicDigger
 
             //TODO d_Data.DamageToPlayer.
             //TODO swimming in water too long.
-            if (block1 == (int)TileTypeManicDigger.Lava
-                || block1 == (int)TileTypeManicDigger.StationaryLava
-                || block2 == (int)TileTypeManicDigger.Lava
-                || block2 == (int)TileTypeManicDigger.StationaryLava)
+            if (block1 == d_Data.BlockIdLava
+                || block1 == d_Data.BlockIdStationaryLava
+                || block2 == d_Data.BlockIdLava
+                || block2 == d_Data.BlockIdStationaryLava)
             {
                 BlockDamageToPlayerTimer.Update(ApplyBlockDamageToPlayer);
             }
@@ -1975,7 +1975,7 @@ namespace ManicDigger
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs)
+                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.SingleStair)
                 || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)]);
         }
         public float PICK_DISTANCE = 3.5f;
@@ -1985,13 +1985,7 @@ namespace ManicDigger
         int selectedmodelid = -1;
         bool IsUsableBlock(int blocktype)
         {
-            return blocktype == (int)TileTypeManicDigger.DoorBottomClosed
-                || blocktype == (int)TileTypeManicDigger.DoorTopClosed
-                || blocktype == (int)TileTypeManicDigger.DoorBottomOpen
-                || blocktype == (int)TileTypeManicDigger.DoorTopOpen
-                || blocktype == (int)TileTypeManicDigger.TNT
-                || GameDataManicDigger.IsRailTile(blocktype)
-                || blocktypes[blocktype].IsUsable;
+            return d_Data.IsRailTile(blocktype) || blocktypes[blocktype].IsUsable;
         }
         bool IsWearingWeapon()
         {
@@ -2646,7 +2640,7 @@ namespace ManicDigger
             {
                 return RailHeight;
             }
-            if (d_Map.GetBlock(x, y, z) == d_Data.BlockIdSingleStairs)
+            if (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.SingleStair)
             {
                 return 0.5f;
             }
@@ -4142,7 +4136,7 @@ namespace ManicDigger
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
             int activematerial = (byte)MaterialSlots[ActiveMaterial];
-            int railstart = GameDataManicDigger.railstart;
+            int railstart = d_Data.BlockIdRailstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
             {
@@ -4183,11 +4177,13 @@ namespace ManicDigger
                         OnPickUseWithTool(blockpos);
                         return;
                     }
+                    /*
                     if (GameDataManicDigger.IsDoorTile(activematerial))
                     {
                         if (z + 1 == d_Map.MapSizeZ || z == 0) return;
                     }
-                    if (activematerial == (int)TileTypeManicDigger.Cuboid)
+                    */
+                    if (activematerial == d_Data.BlockIdCuboid)
                     {
                         ClearFillArea();
 
@@ -4198,7 +4194,7 @@ namespace ManicDigger
                             {
                                 fillarea[f] = d_Map.GetBlock(f.x, f.y, f.z);
                             }
-                            SetBlock(f.x, f.y, f.z, (int)TileTypeManicDigger.FillStart);
+                            SetBlock(f.x, f.y, f.z, d_Data.BlockIdFillStart);
 
 
                             FillFill(v, fillstart.Value);
@@ -4207,19 +4203,19 @@ namespace ManicDigger
                         {
                             fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.Cuboid);
+                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdCuboid);
                         fillend = v;
                         RedrawBlock(v.x, v.y, v.z);
                         return;
                     }
-                    if (activematerial == (int)TileTypeManicDigger.FillStart)
+                    if (activematerial == d_Data.BlockIdFillStart)
                     {
                         ClearFillArea();
                         if (!IsFillBlock(d_Map.GetBlock(v.x, v.y, v.z)))
                         {
                             fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        SetBlock(v.x, v.y, v.z, (int)TileTypeManicDigger.FillStart);
+                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdFillStart);
                         fillstart = v;
                         fillend = null;
                         RedrawBlock(v.x, v.y, v.z);
@@ -4257,7 +4253,7 @@ namespace ManicDigger
                         return;
                     }
                 }
-                if (mode == BlockSetMode.Create && activematerial == (int)TileTypeManicDigger.Minecart)
+                if (mode == BlockSetMode.Create && activematerial == d_Data.BlockIdMinecart)
                 {
                     /*
                     CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
@@ -4342,7 +4338,7 @@ namespace ManicDigger
                         if (!IsFillBlock(d_Map.GetBlock(x, y, z)))
                         {
                             fillarea[new Vector3i(x, y, z)] = d_Map.GetBlock(x, y, z);
-                            SetBlock(x, y, z, (int)TileTypeManicDigger.FillArea);
+                            SetBlock(x, y, z, d_Data.BlockIdFillArea);
                             RedrawBlock(x, y, z);
                         }
                     }
@@ -4351,9 +4347,9 @@ namespace ManicDigger
         }
         bool IsFillBlock(int blocktype)
         {
-            return blocktype == (int)TileTypeManicDigger.FillArea
-                || blocktype == (int)TileTypeManicDigger.FillStart
-                || blocktype == (int)TileTypeManicDigger.Cuboid;
+            return blocktype == d_Data.BlockIdFillArea
+                || blocktype == d_Data.BlockIdFillStart
+                || blocktype == d_Data.BlockIdCuboid;
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
         {
@@ -4438,7 +4434,7 @@ namespace ManicDigger
                 {
                     Vector3i pos = new Vector3i((int)PickCubePos.X, (int)PickCubePos.Z, (int)PickCubePos.Y);
                     if (d_Map.GetBlock(pos.x, pos.y, pos.z)
-                        == (int)TileTypeManicDigger.CraftingTable)
+                        == d_Data.BlockIdCraftingTable)
                     {
                         //draw crafting recipes list.
                         CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),

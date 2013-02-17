@@ -441,6 +441,8 @@ namespace ManicDigger
         OpenDoor,
         ClosedDoor,
         Ladder,
+        Fence,
+        SingleStair
     }
 
     public enum WalkableType

@@ -367,7 +367,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(44, "Stair", new BlockType()
             {
                 AllTextures = "Stair",
-                DrawType = DrawType.Transparent,
+                DrawType = DrawType.SingleStair,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -555,7 +555,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(107, "Hay", new BlockType()
             {
                 AllTextures = "Hay",
-                DrawType = DrawType.Solid,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -847,7 +847,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(150, "Fence", new BlockType()
             {
                 AllTextures = "Fence",
-                DrawType = DrawType.Plant,
+                DrawType = DrawType.Fence,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
