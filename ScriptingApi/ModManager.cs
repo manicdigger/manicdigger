@@ -443,7 +443,7 @@ namespace ManicDigger
         ClosedDoor,
         Ladder,
         Fence,
-        SingleStair
+        HalfHeight,
     }
 
     public enum WalkableType

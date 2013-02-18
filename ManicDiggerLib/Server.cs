@@ -275,7 +275,6 @@ namespace ManicDiggerServer
             for (int i = 0; i < modpaths.Length; i++)
             {
                 string game = "Fortress";
-                /*
                 if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
                 {
                     game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
@@ -290,7 +289,6 @@ namespace ManicDiggerServer
                     {
                     }
                 }
-                */
                 modpaths[i] = Path.Combine(modpaths[i], game);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();

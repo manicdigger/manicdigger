@@ -367,7 +367,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(44, "Stair", new BlockType()
             {
                 AllTextures = "Stair",
-                DrawType = DrawType.SingleStair,
+                DrawType = DrawType.HalfHeight,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -1063,6 +1063,7 @@ namespace ManicDigger.Mods
             pos[1] = m.GetPlayerPositionY(player);
             pos[2] = m.GetPlayerPositionZ(player);
             spawnPositions[m.GetPlayerName(player)] = pos;
+            m.SendMessage(player, "Spawn position set.");
         }
 
         void OnRespawnKey(int player, SpecialKey key)
@@ -1080,6 +1081,7 @@ namespace ManicDigger.Mods
             {
                 float[] pos = (float[])spawnPositions[m.GetPlayerName(player)];
                 m.SetPlayerPosition(player, pos[0], pos[1], pos[2]);
+                m.SendMessage(player, "Respawn.");
             }
         }
 

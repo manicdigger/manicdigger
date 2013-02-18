@@ -1,4 +1,5 @@
 ﻿// Copyright (c) 2011-2012 by Henon <meinrad.recheis@gmail.com>
+// TODO: Reimplement as mod like playerlist. The TextEditor is broken at the moment, cause d_Terrain in d_The3d is not being initialized.
 using System;
 using System.Collections;
 using System.Collections.Generic;

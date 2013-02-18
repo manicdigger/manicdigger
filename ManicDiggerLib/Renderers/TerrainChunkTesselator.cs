@@ -558,7 +558,7 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (d_Data.DrawType1[tt] == DrawType.SingleStair)
+            if (d_Data.DrawType1[tt] == DrawType.HalfHeight)
             {
                 blockheight = 0.5f;
             }

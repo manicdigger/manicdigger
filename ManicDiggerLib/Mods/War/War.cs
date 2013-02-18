@@ -612,6 +612,7 @@ namespace ManicDigger.Mods
             {
                 return;
             }
+            m.SendMessage(player, "Respawn.");
             Die(player);
         }
 

@@ -1046,7 +1046,6 @@ namespace ManicDigger
                 if (e.Key == GetKey(OpenTK.Input.Key.O))
                 {
                     Respawn();
-                    Log(Language.Respawn);
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.L))
                 {
@@ -1065,7 +1064,6 @@ namespace ManicDigger
                     });
                     PlayerPositionSpawn = player.playerposition;
                     player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
-                    Log(Language.SpawnPositionSet);
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
@@ -1975,7 +1973,7 @@ namespace ManicDigger
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.SingleStair)
+                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight)
                 || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)]);
         }
         public float PICK_DISTANCE = 3.5f;
@@ -2640,7 +2638,7 @@ namespace ManicDigger
             {
                 return RailHeight;
             }
-            if (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.SingleStair)
+            if (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight)
             {
                 return 0.5f;
             }

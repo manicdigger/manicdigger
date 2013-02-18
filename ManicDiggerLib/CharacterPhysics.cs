@@ -45,7 +45,7 @@ namespace ManicDigger
             if (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] &&
                 !d_Data.IsFluid[d_Map.GetBlock(x, y, z + 1)]) { return true; }
             return d_Map.GetBlock(x, y, z) == 0
-                || (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.SingleStair && d_Map.GetBlock(x, y, z+2) == 0 && d_Map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
+                || (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight && d_Map.GetBlock(x, y, z+2) == 0 && d_Map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
                 || (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] && (!swimmingtop))
                 || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
         }

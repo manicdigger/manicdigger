@@ -55,7 +55,7 @@ namespace GameModeFortress
 
         public void PrintMaterials ()
         {
-            PrintMaterials(0, 255);
+            PrintMaterials(0, GlobalVar.MAX_BLOCKTYPES);
         }
 
         public void PrintMaterials (double start,double end)
@@ -68,7 +68,7 @@ namespace GameModeFortress
 
         public void FindMaterial (string search_string)
         {
-            for (int i = 0; i < 255; i++)
+            for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
             {
                 if (m_server.d_Data.Name[i].Contains(search_string))
                 {
