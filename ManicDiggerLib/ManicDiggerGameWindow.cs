@@ -4597,6 +4597,7 @@ namespace ManicDigger
         public void Connect(string serverAddress, int port, string username, string auth, string serverPassword)
         {
             iep = new IPEndPoint(IPAddress.Any, port);
+            main.Start();
             main.Connect(serverAddress, port);
             this.username = username;
             this.auth = auth;
