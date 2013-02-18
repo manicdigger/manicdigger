@@ -8,6 +8,7 @@ namespace ManicDigger
 {
     public interface ModManager
     {
+        int GetMaxBlockTypes();
         void SetBlockType(int id, string name, BlockType block);
         void SetBlockType(string name, BlockType block);
         int GetBlockId(string name);

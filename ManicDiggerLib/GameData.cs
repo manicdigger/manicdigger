@@ -65,6 +65,11 @@ namespace ManicDigger
 
 
     }
+    public class GlobalVar
+    {
+        public const int MAX_BLOCKTYPES = 1024;
+        public const int MAX_BLOCKTYPES_SQRT = 32;
+    }
     public class SpecialBlockId
     {
         public const int Empty = 0;
@@ -83,8 +88,7 @@ namespace ManicDigger
     {
         public void Start()
         {
-            int count = 256;
-            Initialize(count);
+            Initialize(GlobalVar.MAX_BLOCKTYPES);
         }
         public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
         public void Update()

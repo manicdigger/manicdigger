@@ -4135,7 +4135,7 @@ namespace ManicDigger
         {
             float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
             float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
-            int activematerial = (byte)MaterialSlots[ActiveMaterial];
+            int activematerial = (ushort)MaterialSlots[ActiveMaterial];
             int railstart = d_Data.BlockIdRailstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
@@ -5361,7 +5361,7 @@ namespace ManicDigger
         }
         List<Explosion> explosions = new List<Explosion>();
         MemoryStream CurrentChunk = new MemoryStream();
-        BlockType[] NewBlockTypes = new BlockType[256];
+        BlockType[] NewBlockTypes = new BlockType[GlobalVar.MAX_BLOCKTYPES];
         public class Bullet
         {
             public Vector3 from;
@@ -5576,7 +5576,7 @@ namespace ManicDigger
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
             ushort[] chunk = GetChunk(x, y, z);
-            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;
+            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (ushort)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             d_Shadows.OnSetBlock(x, y, z);
             ShadowsOnSetBlock(x, y, z);
@@ -5808,7 +5808,7 @@ namespace ManicDigger
 
                         int block = chunk.data[pos];
                         //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
-                        outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (byte)block;
+                        outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (ushort)block;
                     }
                 }
             }
@@ -5823,7 +5823,7 @@ namespace ManicDigger
 
         [Inject]
         public TextureAtlasConverter d_TextureAtlasConverter;
-        public int texturesPacked { get { return 16; } } //16x16
+        public int texturesPacked { get { return GlobalVar.MAX_BLOCKTYPES_SQRT; } } //16x16
         public int terrainTexture { get; set; }
         public void StartTerrainTextures()
         {
@@ -5885,7 +5885,7 @@ namespace ManicDigger
         }
         int maxTextureSize; // detected at runtime
         public int atlas1dheight { get { return maxTextureSize; } }
-        public int atlas2dtiles = 16; // 16x16
+        public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
         public int[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get; set; }
     }

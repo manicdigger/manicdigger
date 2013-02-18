@@ -60,7 +60,7 @@ namespace ManicDigger
         {
             if (bmp.Size == new Size(1, 1))
             {
-                Bitmap bmp2 = new Bitmap(256, 256);
+                Bitmap bmp2 = new Bitmap(GlobalVar.MAX_BLOCKTYPES, GlobalVar.MAX_BLOCKTYPES);
                 Graphics.FromImage(bmp2).Clear(bmp.GetPixel(0, 0));
                 bmp = bmp2;
             }

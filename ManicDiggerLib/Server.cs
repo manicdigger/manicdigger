@@ -275,6 +275,7 @@ namespace ManicDiggerServer
             for (int i = 0; i < modpaths.Length; i++)
             {
                 string game = "Fortress";
+                /*
                 if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
                 {
                     game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
@@ -289,6 +290,7 @@ namespace ManicDiggerServer
                     {
                     }
                 }
+                */
                 modpaths[i] = Path.Combine(modpaths[i], game);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
@@ -3091,7 +3093,7 @@ if (sent >= unknown.Count) { break; }
             PacketServerBlobFinalize p = new PacketServerBlobFinalize() { };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobFinalize, BlobFinalize = p }));
         }
-        public BlockType[] BlockTypes = new BlockType[256];
+        public BlockType[] BlockTypes = new BlockType[GlobalVar.MAX_BLOCKTYPES];
         public void SendBlockTypes(int clientid)
         {
             for (int i = 0; i < BlockTypes.Length; i++)

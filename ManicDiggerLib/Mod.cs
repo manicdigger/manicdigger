@@ -12,6 +12,11 @@ namespace ManicDigger
 {
     public class ModManager1 : ModManager
     {
+        public int GetMaxBlockTypes()
+        {
+            return GlobalVar.MAX_BLOCKTYPES;
+        }
+
         public void SetBlockType(int id, string name, BlockType block)
         {
             if (block.Sounds == null)

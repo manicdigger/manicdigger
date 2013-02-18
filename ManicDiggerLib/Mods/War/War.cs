@@ -111,7 +111,7 @@ namespace ManicDigger.Mods
 
         void GiveAllBlocks(int playerid)
         {
-            for (int i = 1; i < 256; i++)
+            for (int i = 1; i < m.GetMaxBlockTypes(); i++)
             {
                 var b = m.GetBlockType(i);
                 if (b != null)

@@ -32,10 +32,10 @@ namespace ManicDigger.Renderers
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16
-        public int texturesPacked = 16;
+        public int texturesPacked = GlobalVar.MAX_BLOCKTYPES_SQRT;
         public float BlockShadow = 0.6f;
         public bool ENABLE_ATLAS1D = true;
-        int maxblocktypes = 256;
+        int maxblocktypes = GlobalVar.MAX_BLOCKTYPES;
         ushort[] currentChunk;
         bool started = false;
         int mapsizex; //cache
