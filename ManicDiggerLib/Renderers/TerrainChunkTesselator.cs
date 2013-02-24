@@ -618,6 +618,7 @@ namespace ManicDigger.Renderers
                     blockheight11 += 1;
                 }
             }
+            /*
             if (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
             {
                 int waterlevel = tt - PartialWaterBlock;
@@ -656,6 +657,7 @@ namespace ManicDigger.Renderers
                     blockheight11 = 1;
                 }
             }
+            */
             FastColor curcolor = color;
             texrecLeft = 0;
             texrecHeight = terrainTexturesPerAtlasInverse;
@@ -853,12 +855,13 @@ namespace ManicDigger.Renderers
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
             }
         }
-        int waterLevelsCount = 8;
-        int PartialWaterBlock = 118;
         private float Max(int a, int b, int c, int d)
         {
             return Math.Max(Math.Max(Math.Max(a, b), c), d);
         }
+        /*
+        int waterLevelsCount = 8;
+        int PartialWaterBlock = 118;
         private int GetWaterLevel(int tt)
         {
             if (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
@@ -875,6 +878,7 @@ namespace ManicDigger.Renderers
             }
             return -1;
         }
+        */
         public bool ENABLE_TEXTURE_TILING = true; // tiling reduces number of triangles but causes white dots bug on some graphics cards.
         //Texture tiling in one direction.
         private int GetTilingCount(ushort[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)

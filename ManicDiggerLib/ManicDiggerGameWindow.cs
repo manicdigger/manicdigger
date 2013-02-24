@@ -1967,7 +1967,7 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
-                || d_Map.GetBlock(x, y, z) == 117
+                || d_Map.GetBlock(x, y, z) == d_Data.BlockIdFillArea
                 || d_Data.IsWater[d_Map.GetBlock(x, y, z)];
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
