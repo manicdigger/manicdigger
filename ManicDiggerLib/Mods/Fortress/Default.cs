@@ -563,28 +563,28 @@ namespace ManicDigger.Mods
             {
                 AllTextures = "Crops1",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(109, "Crops2", new BlockType()
             {
                 AllTextures = "Crops2",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(110, "Crops3", new BlockType()
             {
                 AllTextures = "Crops3",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(111, "Crops4", new BlockType()
             {
                 AllTextures = "Crops4",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(112, "CraftingTable", new BlockType()

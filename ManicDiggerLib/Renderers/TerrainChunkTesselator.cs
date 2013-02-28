@@ -970,7 +970,7 @@ namespace ManicDigger.Renderers
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (d_Data.IsFlower[tiletype] || d_Data.DrawType1[tiletype] == DrawType.ClosedDoor)
+            if (d_Data.IsFlower[tiletype])
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -998,26 +998,32 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (tiletype == 150) // fence tiles automatically when another fence is beside
+            if (d_Data.DrawType1[tiletype] == DrawType.Fence || d_Data.DrawType1[tiletype] == DrawType.ClosedDoor) // fence tiles automatically when another fence is beside
             {
+                drawtop = 0;
+                drawbottom = 0;
+                drawfront = 0;
+                drawback = 0;
+                drawleft = 0;
+                drawright = 0;
+                flowerfix = 0.5f;
+
                 //x-1, x+1
-                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 150
-                    && currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 150)
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
+                    || currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
                 {
-                    drawleft = 0;
-                    drawright = 0;
+                    drawleft = 1;
                 }
                 //y-1, y+1
-                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 150
-                    && currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 150)
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
+                    || currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
                 {
-                    drawfront = 0;
-                    drawback = 0;
+                    drawfront = 1;
                 }
                 if (drawback == 0 && drawfront == 0 && drawleft == 0 && drawright == 0)
                 {
-                	drawback = 1;
-                	drawleft = 1;
+                    drawback = 1;
+                    drawleft = 1;
                 }
             }
             if (d_Data.DrawType1[tiletype] == DrawType.Ladder) // try to fit ladder to best wall or existing ladder
@@ -1052,14 +1058,6 @@ namespace ManicDigger.Renderers
                     case 3: drawfront = 1; break;
                     default: drawright = 1; break;
                 }
-            }
-            //doors are drawed using a bug with flower drawing.
-            //when there are blocks around flower, then some sides are not rendered.
-            //this fixes case when there are no blocks around doors.
-            if (tiletype == 126 || tiletype == 127 || tiletype == 128 || tiletype == 129) //door
-            {
-                if (drawleft > 0 || drawright > 0) { drawfront = 0; drawback = 0; }
-                if (drawfront > 0 || drawback > 0) { drawleft = 0; drawright = 0; }
             }
             RailDirectionFlags rail = d_Data.Rail[tiletype];
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);

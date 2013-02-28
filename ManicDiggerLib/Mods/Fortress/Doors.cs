@@ -31,7 +31,7 @@ namespace ManicDigger.Mods
                 Clone = new string[] { "clone" },
             };
 
-            m.SetBlockType(126, "DoorBottomClosed", new BlockType()
+            m.SetBlockType("DoorBottomClosed", new BlockType()
             {
                 AllTextures = "DoorBottom",
                 DrawType = DrawType.ClosedDoor,
@@ -39,7 +39,7 @@ namespace ManicDigger.Mods
                 Sounds = sounds,
                 IsUsable = true,
             });
-            m.SetBlockType(127, "DoorTopClosed", new BlockType()
+            m.SetBlockType("DoorTopClosed", new BlockType()
             {
                 AllTextures = "DoorTop",
                 DrawType = DrawType.ClosedDoor,
@@ -47,7 +47,7 @@ namespace ManicDigger.Mods
                 Sounds = sounds,
                 IsUsable = true,
             });
-            m.SetBlockType(128, "DoorBottomOpen", new BlockType()
+            m.SetBlockType("DoorBottomOpen", new BlockType()
             {
                 AllTextures = "DoorBottom",
                 DrawType = DrawType.OpenDoor,
@@ -55,7 +55,7 @@ namespace ManicDigger.Mods
                 Sounds = sounds,
                 IsUsable = true,
             });
-            m.SetBlockType(129, "DoorTopOpen", new BlockType()
+            m.SetBlockType("DoorTopOpen", new BlockType()
             {
                 AllTextures = "DoorTop",
                 DrawType = DrawType.OpenDoor,
