@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{08056549-3BE8-454C-A09A-67EDCDC81261}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -96,7 +96,6 @@
       <DependentUpon>Language.resx</DependentUpon>
     </Compile>
     <Compile Include="ChunkDb.cs" />
-    <Compile Include="GameDataManicDigger.cs" />
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
     <Compile Include="GuiStates\GuiStateMapLoading.cs" />
@@ -116,6 +115,7 @@
     <Compile Include="Forms\MultiplayerForm.Designer.cs">
       <DependentUpon>MultiplayerForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Mods\Fortress\BlockId.cs" />
     <Compile Include="Mods\Fortress\BuildLog.cs" />
     <Compile Include="Mods\Fortress\CraftingTable.cs" />
     <Compile Include="Mods\Fortress\Default.cs" />
