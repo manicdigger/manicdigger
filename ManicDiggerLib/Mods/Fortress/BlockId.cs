@@ -9,7 +9,6 @@ namespace ManicDigger.Mods
     public class BlockId : IMod
     {
         private ModManager m;
-        private static int MAX_BLOCKS = m.GetMaxBlockTypes();
         public static bool DEBUG = true;
 
         public void PreStart(ModManager m)
@@ -38,7 +37,7 @@ namespace ManicDigger.Mods
             if (DEBUG)
                 Console.WriteLine("## Current assigned IDs:");
 
-            for (int i = 0; i < MAX_BLOCKS; i++)
+            for (int i = 0; i < m.GetMaxBlockTypes(); i++)
             {
                 string s = m.GetBlockName(i);
                 if (s != null)
@@ -74,7 +73,7 @@ namespace ManicDigger.Mods
             Dictionary<int, Block> reassignedBlocks = this.ReassignBlockIds(assignedBlocks, expectedBlocks);
 
             // Set blocktypes again to game with new reassigned IDs.
-            for (int i = 0; i < MAX_BLOCKS; i++)
+            for (int i = 0; i < m.GetMaxBlockTypes(); i++)
             {
                 if (reassignedBlocks.ContainsKey(i))
                 {
