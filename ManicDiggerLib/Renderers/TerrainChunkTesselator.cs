@@ -1071,11 +1071,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (tt == d_Data.BlockIdSingleStairs)
+            if (d_Data.DrawType1[tt] == DrawType.HalfHeight)
             {
                 blockheight = 0.5f;
             }
-            if (tt == d_Data.BlockIdTorch)
+            if (d_Data.DrawType1[tt] == DrawType.Torch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -1084,8 +1084,8 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
                 List<ushort> torchelements = new List<ushort>();
                 List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
-                d_BlockRendererTorch.SideTexture = d_Data.TextureId[d_Data.BlockIdTorch, (int)TileSide.Front];
-                d_BlockRendererTorch.TopTexture = d_Data.TextureId[d_Data.BlockIdTorch, (int)TileSide.Top];
+                d_BlockRendererTorch.SideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
+                d_BlockRendererTorch.TopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
                 d_BlockRendererTorch.AddTorch(torchelements, torchvertices, x, y, z, type);
                 int oldverticescount=toreturnmain.verticesCount;
                 for (int i = 0; i < torchelements.Count; i++)
@@ -1129,45 +1129,6 @@ namespace ManicDigger.Renderers
                 {
                     blockheight01 += 1;
                     blockheight11 += 1;
-                }
-            }
-            if (tt >= PartialWaterBlock && tt < PartialWaterBlock + waterLevelsCount)
-            {
-                int waterlevel = tt - PartialWaterBlock;
-
-                int[] wl = new int[9];
-                wl[0] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[1] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[2] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[3] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[4] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[5] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz, chunksize + 2, chunksize + 2)]);
-                wl[6] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[7] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                wl[8] = GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)]);
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[0] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[1] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[2] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[3] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[4] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 0, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[5] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[6] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 0, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[7] = waterLevelsCount - 1; }
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)]) >= 0) { wl[8] = waterLevelsCount - 1; }
-                
-                //00: maximum of (-1,-1), (0,-1), (-1,0)
-                blockheight00 = ((float)Max(waterlevel, wl[0], wl[1], wl[3]) + 1) / waterLevelsCount;
-                blockheight01 = ((float)Max(waterlevel, wl[3], wl[6], wl[7]) + 1) / waterLevelsCount;
-                blockheight10 = ((float)Max(waterlevel, wl[1], wl[2], wl[5]) + 1) / waterLevelsCount;
-                blockheight11 = ((float)Max(waterlevel, wl[5], wl[7], wl[8]) + 1) / waterLevelsCount;
-                
-                if (GetWaterLevel(currentChunk[MapUtil.Index3d(xx, yy, zz + 1, chunksize + 2, chunksize + 2)]) > 0)
-                {
-                    
-                    blockheight00 = 1f;
-                    blockheight01 = 1f;
-                    blockheight10 = 1f;
-                    blockheight11 = 1f;
                 }
             }
             //if stationary water block, make slightly lower than terrain

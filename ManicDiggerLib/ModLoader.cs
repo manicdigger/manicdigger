@@ -24,6 +24,7 @@ namespace ManicDigger
                 parms.ReferencedAssemblies.Add("ScriptingApi.dll");
                 parms.ReferencedAssemblies.Add("LibNoise.dll");
                 parms.ReferencedAssemblies.Add("protobuf-net.dll");
+                parms.ReferencedAssemblies.Add("System.Xml.dll");
                 CompilerResults results = compiler.CompileAssemblyFromSource(parms, new string[] { k.Value });
                 if (results.Errors.Count != 0)
                 {
