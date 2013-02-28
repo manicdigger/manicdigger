@@ -9,7 +9,7 @@ namespace ManicDigger.Mods
     public class BlockId : IMod
     {
         private ModManager m;
-        private static int MAX_BLOCKS = 256;
+        private static int MAX_BLOCKS = m.GetMaxBlockTypes();
         public static bool DEBUG = true;
 
         public void PreStart(ModManager m)
