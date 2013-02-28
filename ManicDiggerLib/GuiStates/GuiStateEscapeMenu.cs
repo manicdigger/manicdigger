@@ -19,6 +19,8 @@ namespace ManicDigger
         public int Framerate = 0;
         public int Resolution = 0;
         public bool Fullscreen = false;
+public bool Smoothshadows = false;
+        public float BlockShadowSave = 0.6f;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }
     partial class ManicDiggerGameWindow
@@ -85,6 +87,23 @@ namespace ManicDigger
                         RedrawAllBlocks();
                     });
                 */
+                    AddButton(string.Format("Smooth shadows: {0}", options.Smoothshadows ? Language.On : Language.Off),
+                    (a, b) =>
+                    {
+                        options.Smoothshadows = !options.Smoothshadows;
+                        d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+                        if (options.Smoothshadows)
+                        {
+                            options.BlockShadowSave = 0.7f;
+                            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+                        }
+                        else
+                        {
+                            options.BlockShadowSave = 0.6f;
+                            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+                        }
+                        RedrawAllBlocks();
+                    });
                 AddButton(string.Format(Language.ViewDistanceOption, (d_Config3d.viewdistance)),
                     (a, b) =>
                     {
@@ -396,6 +415,8 @@ namespace ManicDigger
             //d_Terrain.UpdateAllTiles();
             d_Config3d.viewdistance = options.DrawDistance;
             d_Audio.Enabled = options.EnableSound;
+            d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
             ENABLE_LAG = options.Framerate;
             UseFullscreen();
             UseVsync();
@@ -409,6 +430,7 @@ namespace ManicDigger
             options.EnableSound = d_Audio.Enabled;
             options.Framerate = ENABLE_LAG;
             options.Fullscreen = d_GlWindow.WindowState == WindowState.Fullscreen;
+            options.Smoothshadows = d_TerrainChunkTesselator.EnableSmoothLight;
             
             string path = Path.Combine(gamepathconfig, filename);
             MemoryStream ms = new MemoryStream();
