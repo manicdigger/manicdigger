@@ -3232,6 +3232,7 @@ namespace ManicDigger
             }
         }
         double totaltime;
+        double lastdrawplayers;
         private void DrawPlayers(float dt)
         {
             totaltime += dt;
@@ -3258,9 +3259,16 @@ namespace ManicDigger
                 playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.05, ServerInfo.ServerPing.RoundtripTime.TotalSeconds);
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
                 Vector3 realpos = k.Value.Position.Value;
+                bool redraw = false;
+                if (totaltime - lastdrawplayers >= 0.1)
+                {
+                    redraw = true;
+                    lastdrawplayers = totaltime;
+                }
                 if (realpos != info.lastrealpos
                     || k.Value.Heading != info.lastrealheading
-                    || k.Value.Pitch != info.lastrealpitch)
+                    || k.Value.Pitch != info.lastrealpitch
+                    || redraw)
                 {
                     info.interpolation.AddNetworkPacket(
                         new PlayerInterpolationState()
