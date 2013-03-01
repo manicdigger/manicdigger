@@ -18,6 +18,22 @@ namespace ManicDigger.Mods
             m.RegisterWorldGenerator(GetChunk);
             m.RegisterOptionBool("DefaultGenCaves", false);
             m.RegisterOptionBool("DefaultGenLavaCaves", false);
+
+            BLOCK_STONE = m.GetBlockId ("Stone");
+            BLOCK_DIRT = m.GetBlockId ("Dirt");
+            BLOCK_SAND = m.GetBlockId ("Sand");
+            BLOCK_CLAY = m.GetBlockId ("Stone");
+            BLOCK_BEDROCK = m.GetBlockId ("Adminium");
+            BLOCK_AIR = m.GetBlockId ("Empty");
+            BLOCK_SNOW = m.GetBlockId ("Grass");
+            BLOCK_ICE = m.GetBlockId ("Water");
+            BLOCK_GRASS = m.GetBlockId ("Grass");
+            BLOCK_WATER = m.GetBlockId ("Water");
+            BLOCK_GRAVEL = m.GetBlockId ("Gravel");
+            BLOCK_PUMPKIN = m.GetBlockId ("Hay");
+            BLOCK_RED_ROSE = m.GetBlockId ("RedRoseDecorations");
+            BLOCK_YELLOW_FLOWER = m.GetBlockId ("YellowFlowerDecorations");
+            BLOCK_LAVA = m.GetBlockId ("Lava");
         }
 
         ModManager m;
@@ -62,7 +78,7 @@ namespace ManicDigger.Mods
                     }*/
 
                     int biome = (int)(BiomeSelect.GetValue((x + xx) / 100.0, 0, (y + yy) / 100.0) * 2); //MD * 2
-                    byte toplayer = BLOCK_DIRT;
+                    int toplayer = BLOCK_DIRT;
                     if (biome == 0)
                     {
                         toplayer = BLOCK_DIRT;
@@ -209,21 +225,22 @@ namespace ManicDigger.Mods
         }
         //int[] biomecoun = new int[10];
         int seaLevel = 62;
-        byte BLOCK_STONE = 1;
-        byte BLOCK_DIRT = 3;
-        byte BLOCK_SAND = 12;
-        byte BLOCK_CLAY = 1; //stone
-        byte BLOCK_BEDROCK = 7;
-        byte BLOCK_AIR = 0;
-        byte BLOCK_SNOW = 102; //todo
-        byte BLOCK_ICE = 101; //todo
-        byte BLOCK_GRASS = 2;
-        byte BLOCK_WATER = 8;
-        byte BLOCK_GRAVEL = 13;
-        byte BLOCK_PUMPKIN = 107; //hay
-        byte BLOCK_RED_ROSE = 38;
-        byte BLOCK_YELLOW_FLOWER = 37;
-        byte BLOCK_LAVA = 11;
+        int BLOCK_STONE;
+        int BLOCK_DIRT;
+        int BLOCK_SAND;
+        int BLOCK_CLAY; //stone
+        int BLOCK_BEDROCK;
+        int BLOCK_AIR;
+        int BLOCK_SNOW; //todo
+        int BLOCK_ICE; //todo
+        int BLOCK_GRASS;
+        int BLOCK_WATER;
+        int BLOCK_GRAVEL;
+        int BLOCK_PUMPKIN; //hay
+        int BLOCK_RED_ROSE;
+        int BLOCK_YELLOW_FLOWER;
+        int BLOCK_LAVA;
+
         public void Init()
         {
             int Seed = m.GetSeed();
