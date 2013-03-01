@@ -962,7 +962,6 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("Ladder");
             m.AddToCreativeInventory("Rail3");
             m.AddToCreativeInventory("Rail60");
-            //m.AddToCreativeInventory("Hurt");
 
             m.AddToStartInventory("Torch", 6);
             m.AddToStartInventory("Crops1", 1);
