@@ -1827,24 +1827,15 @@ namespace ManicDigger
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
 
-            //TODO d_Data.DamageToPlayer.
             //TODO swimming in water too long.
-            if (block1 == d_Data.BlockIdLava
-                || block1 == d_Data.BlockIdStationaryLava
-                || block2 == d_Data.BlockIdLava
-                || block2 == d_Data.BlockIdStationaryLava)
+            int damage = d_Data.DamageToPlayer[block1] + d_Data.DamageToPlayer[block2];
+            if (damage > 0)
             {
-                BlockDamageToPlayerTimer.Update(ApplyBlockDamageToPlayer);
+                BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage); });
             }
         }
 
-        public int BlockDamageToPlayer = 2;
         public const int BlockDamageToPlayerEvery = 1;
-
-        void ApplyBlockDamageToPlayer()
-        {
-            ApplyDamageToPlayer(BlockDamageToPlayer);
-        }
 
         void ApplyDamageToPlayer(int damage)
         {

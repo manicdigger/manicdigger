@@ -120,6 +120,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
+                DamageToPlayer = 2,
             });
             m.SetBlockType(11, "StationaryLava", new BlockType()
             {
@@ -127,6 +128,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Fluid,
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
+                DamageToPlayer = 2,
             });
             m.SetBlockType(12, "Sand", new BlockType()
             {
@@ -425,6 +427,14 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
+            });
+            m.SetBlockType(99, "Hurt", new BlockType()
+            {
+                AllTextures = "Hurt",
+                DrawType = DrawType.Solid,
+                WalkableType = WalkableType.Empty,
+                Sounds = solidSounds,
+                DamageToPlayer = 20,
             });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
             {
@@ -766,6 +776,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Plant,
                 WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
+                DamageToPlayer = 2,
             });
             m.SetBlockType(150, "Fence", new BlockType()
             {

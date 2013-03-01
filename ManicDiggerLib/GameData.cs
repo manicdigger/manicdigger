@@ -39,6 +39,7 @@ namespace ManicDigger
         string[][] CloneSound { get; }
         int[] StartInventoryAmount { get; }
         float[] Strength { get; }
+        int[] DamageToPlayer { get; }
         DrawType[] DrawType1 { get; }
 
         int[] DefaultMaterialSlots { get; }
@@ -139,6 +140,7 @@ namespace ManicDigger
             mLightRadius = new int[count];
             mStartInventoryAmount = new int[count];
             mStrength = new float[count];
+            mDamageToPlayer = new int[count];
             mDrawType = new DrawType[count];
             mWalkableType = new WalkableType[count];
 
@@ -171,6 +173,7 @@ namespace ManicDigger
         public int[] LightRadius { get { return mLightRadius; } }
         public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
         public float[] Strength { get { return mStrength; } }
+        public int[] DamageToPlayer { get { return mDamageToPlayer; } }
         public DrawType[] DrawType1 { get { return mDrawType; } }
         public WalkableType[] WalkableType1 { get { return mWalkableType; } }
 
@@ -200,6 +203,7 @@ namespace ManicDigger
         private int[] mLightRadius;
         private int[] mStartInventoryAmount;
         private float[] mStrength;
+         private int[] mDamageToPlayer;
         private DrawType[] mDrawType;
         private WalkableType[] mWalkableType;
 
@@ -384,6 +388,7 @@ namespace ManicDigger
             LightRadius[id] = b.LightRadius;
             //StartInventoryAmount { get; }
             Strength[id] = b.Strength;
+            DamageToPlayer[id] = b.DamageToPlayer;
             DrawType1[id] = b.DrawType;
             WalkableType1[id] = b.WalkableType;
             SetSpecialBlock(b, id);

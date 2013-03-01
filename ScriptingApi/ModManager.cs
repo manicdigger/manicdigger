@@ -572,6 +572,8 @@ namespace ManicDigger
         public float DamageHead;
         [ProtoMember(42)]
         public PistolType PistolType;
+        [ProtoMember(43)]
+        public int DamageToPlayer = 0;
         public string AllTextures
         {
             set
