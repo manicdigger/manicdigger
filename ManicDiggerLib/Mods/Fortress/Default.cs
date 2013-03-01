@@ -505,14 +505,6 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
-            m.SetBlockType(99, "Hurt", new BlockType()
-            {
-                AllTextures = "Hurt",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Empty,
-                Sounds = solidSounds,
-                DamageToPlayer = 10,
-            });
             m.SetBlockType(100, "BrushedMetal", new BlockType()
             {
                 AllTextures = "BrushedMetal",
