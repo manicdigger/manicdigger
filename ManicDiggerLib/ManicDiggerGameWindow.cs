@@ -5257,21 +5257,24 @@ namespace ManicDigger
                     int lastTextureId = 0;
                     for (int i = 0; i < blocktypes.Length; i++)
                     {
-                        string[] to_load = new string[]
+                        if (blocktypes[i] != null)
                         {
-                            blocktypes[i].TextureIdLeft,
-                            blocktypes[i].TextureIdRight,
-                            blocktypes[i].TextureIdFront,
-                            blocktypes[i].TextureIdBack,
-                            blocktypes[i].TextureIdTop,
-                            blocktypes[i].TextureIdBottom,
-                            blocktypes[i].TextureIdForInventory,
-                        };
-                        for (int k = 0; k < to_load.Length; k++)
-                        {
-                            if (!textureInAtlasIds.ContainsKey(to_load[k]))
+                            string[] to_load = new string[]
                             {
-                                textureInAtlasIds[to_load[k]] = lastTextureId++;
+                                blocktypes[i].TextureIdLeft,
+                                blocktypes[i].TextureIdRight,
+                                blocktypes[i].TextureIdFront,
+                                blocktypes[i].TextureIdBack,
+                                blocktypes[i].TextureIdTop,
+                                blocktypes[i].TextureIdBottom,
+                                blocktypes[i].TextureIdForInventory,
+                            };
+                            for (int k = 0; k < to_load.Length; k++)
+                            {
+                                if (!textureInAtlasIds.ContainsKey(to_load[k]))
+                                {
+                                    textureInAtlasIds[to_load[k]] = lastTextureId++;
+                                }
                             }
                         }
                     }
