@@ -543,8 +543,10 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoor) //open door
+            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoorLeft)
             {
+                drawtop = 0;
+                drawbottom = 0;
                 flowerfix = 0.9f;
                 //x-1, x+1
                 if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
@@ -561,6 +563,30 @@ namespace ManicDigger.Renderers
                 {
                     drawback = 1;
                     drawfront = 0;
+                    drawleft = 0;
+                    drawright = 0;
+                }
+            }
+            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoorRight)
+            {
+                drawtop = 0;
+                drawbottom = 0;
+                flowerfix = 0.9f;
+                //x-1, x+1
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 0;
+                    drawfront = 0;
+                    drawleft = 0;
+                    drawright = 1;
+                }
+                //y-1, y+1
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 0;
+                    drawfront = 1;
                     drawleft = 0;
                     drawright = 0;
                 }
@@ -976,8 +1002,10 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoor) //open door
+            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoorLeft)
             {
+                drawtop = 0;
+                drawbottom = 0;
                 flowerfix = 0.9f;
                 //x-1, x+1
                 if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
@@ -994,6 +1022,30 @@ namespace ManicDigger.Renderers
                 {
                     drawback = 1;
                     drawfront = 0;
+                    drawleft = 0;
+                    drawright = 0;
+                }
+            }
+            if (d_Data.DrawType1[tiletype] == DrawType.OpenDoorRight)
+            {
+                drawtop = 0;
+                drawbottom = 0;
+                flowerfix = 0.9f;
+                //x-1, x+1
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 0;
+                    drawfront = 0;
+                    drawleft = 0;
+                    drawright = 1;
+                }
+                //y-1, y+1
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                    && currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+                {
+                    drawback = 0;
+                    drawfront = 1;
                     drawleft = 0;
                     drawright = 0;
                 }

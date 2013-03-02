@@ -346,7 +346,7 @@ namespace ManicDigger
             }
 
             IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant)
-                 && (b.DrawType != DrawType.OpenDoor) && (b.DrawType != DrawType.ClosedDoor);
+                 && (b.DrawType != DrawType.OpenDoorLeft) && (b.DrawType != DrawType.OpenDoorRight) && (b.DrawType != DrawType.ClosedDoor);
             //Indexed by block id and TileSide.
             if (textureIds != null)
             {
@@ -360,7 +360,7 @@ namespace ManicDigger
             }
             IsBuildable[id] = b.IsBuildable; // todo
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
-            IsFlower[id] = b.DrawType == DrawType.Plant || b.DrawType == DrawType.OpenDoor || b.DrawType == DrawType.ClosedDoor;
+            IsFlower[id] = b.DrawType == DrawType.Plant;
             Rail[id] = (RailDirectionFlags)b.Rail;
             Name[id] = b.Name;
             WalkSpeed[id] = b.WalkSpeed;

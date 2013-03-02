@@ -50,7 +50,7 @@ namespace ManicDigger.Mods
             m.SetBlockType("DoorBottomOpen", new BlockType()
             {
                 AllTextures = "DoorBottom",
-                DrawType = DrawType.OpenDoor,
+                DrawType = DrawType.OpenDoorLeft,
                 WalkableType = WalkableType.Empty,
                 Sounds = sounds,
                 IsUsable = true,
@@ -58,7 +58,7 @@ namespace ManicDigger.Mods
             m.SetBlockType("DoorTopOpen", new BlockType()
             {
                 AllTextures = "DoorTop",
-                DrawType = DrawType.OpenDoor,
+                DrawType = DrawType.OpenDoorLeft,
                 WalkableType = WalkableType.Empty,
                 Sounds = sounds,
                 IsUsable = true,
