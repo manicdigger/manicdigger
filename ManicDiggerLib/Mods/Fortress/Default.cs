@@ -736,6 +736,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
+                LightRadius = 5,
             });
             m.SetBlockType(133, "SilverOre", new BlockType()
             {
@@ -828,7 +829,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(148, "Cake", new BlockType()
             {
                 TextureIdTop = "CakeTop",
-                TextureIdBottom = "CakeSide",
+                TextureIdBottom = "Gray",
                 TextureIdBack = "CakeSide",
                 TextureIdFront = "CakeSide",
                 TextureIdLeft = "CakeSide",
@@ -863,7 +864,7 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(152, "Ladder", new BlockType()
             {
-                AllTextures = "RailPart9",
+                AllTextures = "Ladder",
                 DrawType = DrawType.Ladder,
                 WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,

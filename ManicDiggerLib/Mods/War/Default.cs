@@ -121,6 +121,7 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
                 DamageToPlayer = 2,
+                LightRadius = 15,
             });
             m.SetBlockType(11, "StationaryLava", new BlockType()
             {
@@ -129,6 +130,7 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Fluid,
                 Sounds = noSound,
                 DamageToPlayer = 2,
+                LightRadius = 15,
             });
             m.SetBlockType(12, "Sand", new BlockType()
             {
@@ -345,6 +347,7 @@ namespace ManicDigger.Mods
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
+                LightRadius = 5,
             });
             m.SetBlockType(42, "IronBlock", new BlockType()
             {
@@ -488,7 +491,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(107, "Hay", new BlockType()
             {
                 AllTextures = "Hay",
-                DrawType = DrawType.Solid,
+                DrawType = DrawType.Transparent,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
@@ -496,28 +499,28 @@ namespace ManicDigger.Mods
             {
                 AllTextures = "Crops1",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(109, "Crops2", new BlockType()
             {
                 AllTextures = "Crops2",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(110, "Crops3", new BlockType()
             {
                 AllTextures = "Crops3",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(111, "Crops4", new BlockType()
             {
                 AllTextures = "Crops4",
                 DrawType = DrawType.Plant,
-                WalkableType = WalkableType.Solid,
+                WalkableType = WalkableType.Empty,
                 Sounds = solidSounds,
             });
             m.SetBlockType(112, "CraftingTable", new BlockType()
@@ -759,7 +762,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(148, "Cake", new BlockType()
             {
                 TextureIdTop = "CakeTop",
-                TextureIdBottom = "CakeSide",
+                TextureIdBottom = "Gray",
                 TextureIdBack = "CakeSide",
                 TextureIdFront = "CakeSide",
                 TextureIdLeft = "CakeSide",
@@ -794,7 +797,7 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(152, "Ladder", new BlockType()
             {
-                AllTextures = "RailPart9",
+                AllTextures = "Ladder",
                 DrawType = DrawType.Ladder,
                 WalkableType = WalkableType.Fluid,
                 Sounds = solidSounds,
