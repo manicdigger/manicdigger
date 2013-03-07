@@ -115,7 +115,6 @@
     <Compile Include="Forms\MultiplayerForm.Designer.cs">
       <DependentUpon>MultiplayerForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Mods\Fortress\BlockId.cs" />
     <Compile Include="Mods\Fortress\BuildLog.cs" />
     <Compile Include="Mods\Fortress\CraftingTable.cs" />
     <Compile Include="Mods\Fortress\Default.cs" />
@@ -131,6 +130,7 @@
     <Compile Include="Mods\Fortress\TreeGenerator.cs" />
     <Compile Include="Mods\Fortress\VandalFinder.cs" />
     <Compile Include="Mods\Fortress\VegetationGrowth.cs" />
+    <Compile Include="Mods\Unused\BlockId.cs" />
     <Compile Include="Mods\War\Default.cs" />
     <Compile Include="Mods\War\Noise2DWorldGenerator.cs" />
     <Compile Include="Mods\War\TreeGenerator.cs" />
