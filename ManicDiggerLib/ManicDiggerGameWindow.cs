@@ -2757,8 +2757,8 @@ namespace ManicDigger
                 {
                     SetFog();
                 }
-                DrawPlayers((float)e.Time);
                 d_SunMoonRenderer.Draw((float)e.Time);
+                DrawPlayers((float)e.Time);
                 DrawTerrain();
                 DrawPlayerNames();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
