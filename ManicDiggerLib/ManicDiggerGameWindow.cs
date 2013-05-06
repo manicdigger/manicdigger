@@ -125,7 +125,18 @@ namespace ManicDigger
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = d_Exit;
             playerskindownloader.d_The3d = the3d;
-            playerskindownloader.skinserver = "http://manicdigger.sourceforge.net/play/skins/";
+            try
+            {
+               if (playerskindownloader.skinserver == null)
+               {
+                   WebClient c = new WebClient();
+                   playerskindownloader.skinserver = c.DownloadString("http://manicdigger.sourceforge.net/skinserver.txt");
+               }
+            }
+            catch
+            {
+                 playerskindownloader.skinserver = "";
+            }
             w.playerskindownloader = playerskindownloader;
             w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w };
             w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
@@ -572,7 +583,7 @@ namespace ManicDigger
                         ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
                         ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
                     }
-                    if (cmd == "pos")
+                    else if (cmd == "pos")
                     {
                         ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
                     }

@@ -28,6 +28,8 @@ xcopy /s ManicDiggerLib\Mods output\Mods\
 xcopy /y /s lib\*.dll output\
 del output\*vshost.exe
 copy credits.txt output\credits.txt
-copy OpenTK.dll.config output\OpenTK.dll.config
-copy ENetCS.dll.config output\ENetCS.dll.config
+
+copy libenet.dylib output\libenet.dylib
+copy ENetX64.dll  output\ENetX64.dll
+copy ENetX86.dll  output\ENetX86.dll
 REM pause

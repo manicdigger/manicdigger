@@ -85,7 +85,7 @@ namespace ManicDigger
 
         public int GetBlock(int x, int y, int z)
         {
-            return server.d_Map.GetBlock(x,y,z);
+            return server.d_Map.GetBlock(x, y, z);
         }
 
         public string GetBlockName(int blockType)
@@ -95,7 +95,7 @@ namespace ManicDigger
 
         public string GetBlockNameAt(int x, int y, int z)
         {
-            return GetBlockName(GetBlock(x,y,z));
+            return GetBlockName(GetBlock(x, y, z));
         }
 
         public void SetBlock(int x, int y, int z, int tileType)
@@ -211,7 +211,7 @@ namespace ManicDigger
         public void GrabBlocks(int player, int block, int amount)
         {
             Inventory inventory = server.GetPlayerInventory(server.GetClient(player).playername).Inventory;
-            
+
             var item = new Item();
             item.ItemClass = ItemClass.Block;
             item.BlockCount = amount;
@@ -627,7 +627,7 @@ namespace ManicDigger
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                     return new float[] { size.Width, size.Height };
                 }
             }
@@ -766,6 +766,11 @@ namespace ManicDigger
         public void SendExplosion(int player, float x, float y, float z, bool relativeposition, float range, float time)
         {
             server.SendExplosion(player, x, y, z, relativeposition, range, time);
+        }
+
+        public void DisconnectPlayer(int player)
+        {
+            server.KillPlayer(player);
         }
     }
 }

@@ -526,7 +526,7 @@ namespace GameModeFortress
     [ProtoContract]
     public class PacketClientLeave
     {
-        [ProtoMember(1)]
+        [ProtoMember(1, IsRequired = false)]
         public LeaveReason Reason;
     }
     public enum LeaveReason

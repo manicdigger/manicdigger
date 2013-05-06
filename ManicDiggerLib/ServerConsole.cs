@@ -26,9 +26,9 @@ namespace GameModeFortress
             while(!Exit.exit)
             {
                 input = Console.ReadLine();
-                if(input == null)
+                if (string.IsNullOrEmpty(input))
                 {
-                    break;
+                    continue;
                 }
                 input = input.Trim();
                 server.ReceiveServerConsole(input);

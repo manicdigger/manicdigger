@@ -130,6 +130,7 @@ namespace ManicDigger
         void LoadWorld(string filename);
         string[] GetModPaths();
         void SendExplosion(int targetplayer, float dx, float dy, float dz, bool relativeposition, float range, float time);
+        void DisconnectPlayer(int player);
     }
 
     public enum SpecialKey

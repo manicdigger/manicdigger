@@ -1003,6 +1003,7 @@ namespace ManicDiggerServer
                     Chunk c = d_Map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
                     if (c == null) { continue; }
                     if (c.data == null) { continue; }
+                    if (c.LastUpdate > simulationcurrentframe) { c.LastUpdate = simulationcurrentframe; }
                     if (c.LastUpdate < oldesttime)
                     {
                         oldesttime = c.LastUpdate;
@@ -1638,7 +1639,7 @@ if (sent >= unknown.Count) { break; }
             int dz = a.z - b.z;
             return dx * dx + dy * dy + dz * dz;
         }
-        private void KillPlayer(int clientid)
+        public void KillPlayer(int clientid)
         {
             if (!clients.ContainsKey(clientid))
             {

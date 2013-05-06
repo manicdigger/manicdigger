@@ -56,13 +56,13 @@ namespace ManicDigger.Mods
                     }
                 }
             }
-            
+
             //add area
             for (int i = 0; i < PermissionLevelsCount; i++)
             {
                 if (m.GetBlock(x, y, z) == permissionblock + i)
                 {
-                    if(m.GetPlayerPermissionLevel(playerid) <= i)
+                    if (m.GetPlayerPermissionLevel(playerid) <= i)
                     {
                         m.SendMessage(playerid, "No permission");
                         m.SetBlock(x, y, z, 0);

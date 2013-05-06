@@ -63,8 +63,8 @@ public bool Smoothshadows = false;
                 AddButton(Language.Exit, (a, b) =>
                 {
                     RestoreResolution();
-                    d_Exit.exit = true;
                     SendLeave(LeaveReason.Leave);
+                    d_Exit.exit = true;
                     this.d_GlWindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);

@@ -36,12 +36,14 @@ namespace ManicDigger
         {
             if (LoginUrl == null)
             {
-                WebClient c=new WebClient();
+                WebClient c = new WebClient();
                 LoginUrl = c.DownloadString("http://manicdigger.sourceforge.net/login.txt");
             }
+
             StringWriter sw = new StringWriter();//&salt={4}
+            // TODO: encrypt password.
             string requestString = String.Format("username={0}&password={1}&server={2}"
-                , username, BCrypt.Net.BCrypt.HashPassword(password, 8), publicServerKey);
+                , username, password, publicServerKey);
 
             var request = (HttpWebRequest)WebRequest.Create(LoginUrl);
             request.Method = "POST";
