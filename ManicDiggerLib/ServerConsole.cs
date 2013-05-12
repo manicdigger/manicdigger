@@ -25,13 +25,20 @@ namespace GameModeFortress
             string input = "";
             while(!Exit.exit)
             {
-                input = Console.ReadLine();
-                if (string.IsNullOrEmpty(input))
+                if (server.IsSinglePlayer)
                 {
-                    continue;
+                    Thread.Sleep(1000);
                 }
-                input = input.Trim();
-                server.ReceiveServerConsole(input);
+                else
+                {
+                    input = Console.ReadLine();
+                    if (string.IsNullOrEmpty(input))
+                    {
+                        continue;
+                    }
+                    input = input.Trim();
+                    server.ReceiveServerConsole(input);
+                }
             }
         }
 
