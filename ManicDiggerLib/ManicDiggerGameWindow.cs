@@ -2764,7 +2764,7 @@ namespace ManicDigger
             {
                 GL.Disable(EnableCap.Fog);
                 DrawSkySphere();
-                if (d_Config3d.viewdistance < 128)
+                if (d_Config3d.viewdistance < 512)
                 {
                     SetFog();
                 }
@@ -3077,12 +3077,13 @@ namespace ManicDigger
         bool startedconnecting;
         private void SetFog()
         {
-            float density = 0.3f;
-			// use this density for exp2 fog
-			//float density = 0.0045f;
+            //Density for linear fog
+            //float density = 0.3f;
+			// use this density for exp2 fog (0.0045f was a bit too much at close ranges)
+			float density = 0.0025f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             float[] fogColor;
-            if (SkySphereNight && (!shadowssimple))//d_Shadows.GetType() != typeof(ShadowsSimple))
+            if (SkySphereNight && (!shadowssimple))
             {
                 fogColor = new[] { 0f, 0f, 0f, 1.0f };
             }
@@ -3092,12 +3093,14 @@ namespace ManicDigger
             }
             GL.Enable(EnableCap.Fog);
             GL.Hint(HintTarget.FogHint, HintMode.Nicest);
-            GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
+            //old linear fog
+            //GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
             // looks better
-			//GL.Fog(FogParameter.FogMode, (int)FogMode.Exp2);
+			GL.Fog(FogParameter.FogMode, (int)FogMode.Exp2);
 			GL.Fog(FogParameter.FogColor, fogColor);
             GL.Fog(FogParameter.FogDensity, density);
-            float fogsize = 10;
+            //Unfortunately not used for exp/exp2 fog
+            /*float fogsize = 10;
             if (d_Config3d.viewdistance <= 64)
             {
                 fogsize = 5;
@@ -3105,7 +3108,7 @@ namespace ManicDigger
             //float fogstart = d_Config3d.viewdistance - fogsize + 200;
 			float fogstart = d_Config3d.viewdistance - fogsize;
             GL.Fog(FogParameter.FogStart, fogstart);
-            GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
+            GL.Fog(FogParameter.FogEnd, fogstart + fogsize);*/
         }
         public event EventHandler BeforeRenderFrame;
         bool ENABLE_DRAW2D = true;
@@ -5078,7 +5081,11 @@ namespace ManicDigger
                     break;
                 case ServerPacketId.DisconnectPlayer:
                     {
-                        throw new Exception(packet.DisconnectPlayer.DisconnectReason);
+                        System.Windows.Forms.MessageBox.Show(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+                        d_GlWindow.Exit();
+                        //Not needed anymore - avoids "cryptic" error messages on being kicked/banned
+                        //throw new Exception(packet.DisconnectPlayer.DisconnectReason);
+                        break;
                     }
                 case ServerPacketId.ChunkPart:
                     BinaryWriter bw1 = new BinaryWriter(CurrentChunk);
