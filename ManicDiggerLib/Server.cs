@@ -3643,6 +3643,16 @@ if (sent >= unknown.Count) { break; }
             p.Time = time;
             SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Explosion, Explosion = p }));
         }
+
+        public string GetGroupColor(int playerid)
+        {
+            return GetClient(playerid).clientGroup.GroupColorString();
+        }
+
+        public string GetGroupName(int playerid)
+        {
+            return GetClient(playerid).clientGroup.Name;
+        }
     }
 
     public class Ping

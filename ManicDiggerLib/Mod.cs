@@ -772,5 +772,15 @@ namespace ManicDigger
         {
             server.KillPlayer(player);
         }
+
+        public string GetGroupColor(int player)
+        {
+            return server.GetGroupColor(player);
+        }
+
+        public string GetGroupName(int player)
+        {
+            return server.GetGroupName(player);
+        }
     }
 }
