@@ -1645,6 +1645,14 @@ if (sent >= unknown.Count) { break; }
             {
                 return;
             }
+            for (int i = 0; i < onplayerleave.Count; i++)
+            {
+                onplayerleave[i](clientid);
+            }
+            for (int i = 0; i < onplayerdisconnect.Count; i++)
+            {
+                onplayerdisconnect[i](clientid);
+            }
             string coloredName = clients[clientid].ColoredPlayername(colorNormal);
             string name = clients[clientid].playername;
             clients.Remove(clientid);
