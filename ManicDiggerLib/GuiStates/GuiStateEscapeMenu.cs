@@ -19,7 +19,7 @@ namespace ManicDigger
         public int Framerate = 0;
         public int Resolution = 0;
         public bool Fullscreen = false;
-public bool Smoothshadows = false;
+        public bool Smoothshadows = true;
         public float BlockShadowSave = 0.6f;
         public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
     }

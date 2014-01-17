@@ -46,7 +46,7 @@ namespace ManicDigger.Renderers
         public bool toprightoccupied = false;
         public bool bottomleftoccupied = false;
         public bool bottomrightoccupied = false;
-        public bool EnableSmoothLight = false;
+        public bool EnableSmoothLight = true;
         public float AtiArtifactFix = 0.995f;
         public float Yellowness = 1f;//lower is yellower//0.7
         public float Blueness = 0.9f;//lower is blue-er
