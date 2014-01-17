@@ -20,6 +20,7 @@ namespace ManicDiggerServer
         
         public Program(string[] args)
         {
+            ENABLE_REDIRECT_STANDARD_INPUT = IsMono;
             if (args.Length > 0)
             {
                 IsAutoRestarter = false;
@@ -28,6 +29,7 @@ namespace ManicDiggerServer
             new CrashReporter().Start(Main2);
         }
 
+        bool ENABLE_REDIRECT_STANDARD_INPUT;
         bool ENABLE_AUTORESTARTER = true;
         int parentid;
         bool IsAutoRestarter = true;
@@ -178,7 +180,10 @@ namespace ManicDiggerServer
             //p.WindowStyle = ProcessWindowStyle.Hidden;
             
             p.RedirectStandardOutput = true;
-            p.RedirectStandardInput = true;
+            if (ENABLE_REDIRECT_STANDARD_INPUT) // fix
+            {
+                p.RedirectStandardInput = true;
+            }
             p.UseShellExecute = false;
             
             ServerProcess = Process.Start(p);
