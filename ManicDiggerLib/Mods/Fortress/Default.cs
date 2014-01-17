@@ -1170,7 +1170,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "Apples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
@@ -1201,7 +1201,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "Apples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
@@ -1239,7 +1239,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "AutumnApples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
@@ -1270,7 +1270,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "WinterApples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
