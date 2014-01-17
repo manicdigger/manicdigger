@@ -4549,7 +4549,7 @@ namespace ManicDigger
         {
         }
         #endregion
-        public IMapStorage mapforphysics { get { return this; } }
+        public ManicDiggerGameWindow mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
         BlockType[] blocktypes;
         public int HourDetail = 4;
@@ -5095,10 +5095,11 @@ namespace ManicDigger
                 case ServerPacketId.Chunk:
                     {
                         var p = packet.Chunk;
+                        ushort[, ,] receivedchunk;
                         if (CurrentChunk.Length != 0)
                         {
                             byte[] decompressedchunk = d_Compression.Decompress(CurrentChunk.ToArray());
-                            ushort[, ,] receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
+                            receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
                             {
                                 BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
                                 for (int zz = 0; zz < p.SizeZ; zz++)
@@ -5112,7 +5113,12 @@ namespace ManicDigger
                                     }
                                 }
                             }
-
+                        }
+                        else
+                        {
+                            receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
+                        }
+                        {
                             d_Map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
                             for (int xx = 0; xx < 2; xx++)
                             {

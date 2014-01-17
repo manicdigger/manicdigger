@@ -23,7 +23,7 @@ namespace ManicDigger
     public class CharacterPhysics
     {
         [Inject]
-        public IMapStorage d_Map;
+        public ManicDiggerGameWindow d_Map;
         [Inject]
         public IGameData d_Data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
@@ -82,7 +82,24 @@ namespace ManicDigger
                 push *= 5;
             }
             diff1 += push * (float)dt;
-            if (!(move.ENABLE_FREEMOVE))
+            bool loaded = false;
+            int cx = (int)(d_Map.LocalPlayerPosition.X / d_Map.chunksize);
+            int cy = (int)(d_Map.LocalPlayerPosition.Z / d_Map.chunksize);
+            int cz = (int)(d_Map.LocalPlayerPosition.Y / d_Map.chunksize);
+            if (MapUtil.IsValidChunkPos(d_Map, cx, cy, cz, d_Map.chunksize))
+            {
+                if (d_Map.chunks[MapUtil.Index3d(cx, cy, cz,
+                    d_Map.MapSizeX / d_Map.chunksize,
+                    d_Map.MapSizeY / d_Map.chunksize)] != null)
+                {
+                    loaded = true;
+                }
+            }
+            else
+            {
+                loaded = true;
+            }
+            if ((!(move.ENABLE_FREEMOVE)) && loaded)
             {
                 if (!move.Swimming)
                 {
