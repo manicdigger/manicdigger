@@ -3489,6 +3489,7 @@ namespace ManicDigger
                     break;
                 case GuiState.EscapeMenu:
                     {
+                        d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         DrawDialogs();
                         EscapeMenuDraw();
                     }
