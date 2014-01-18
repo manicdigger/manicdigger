@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -39,15 +39,15 @@
   <ItemGroup>
     <Reference Include="BCrypt.Net, Version=0.1.4056.18965, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\BCrypt.Net.dll</HintPath>
+      <HintPath>..\Lib\BCrypt.Net.dll</HintPath>
     </Reference>
     <Reference Include="ENet, Version=1.3.6.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\ENet.dll</HintPath>
+      <HintPath>..\Lib\ENet.dll</HintPath>
     </Reference>
     <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lidgren.Network.dll</HintPath>
+      <HintPath>..\Lib\Lidgren.Network.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
@@ -56,25 +56,25 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="csogg">
-      <HintPath>..\csogg.dll</HintPath>
+      <HintPath>..\Lib\csogg.dll</HintPath>
     </Reference>
     <Reference Include="csvorbis">
-      <HintPath>..\csvorbis.dll</HintPath>
+      <HintPath>..\Lib\csvorbis.dll</HintPath>
     </Reference>
     <Reference Include="LibNoise">
-      <HintPath>..\LibNoise.dll</HintPath>
+      <HintPath>..\Lib\LibNoise.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK">
-      <HintPath>..\OpenTK.dll</HintPath>
+      <HintPath>..\Lib\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
-      <HintPath>..\protobuf-net\protobuf-net.dll</HintPath>
+      <HintPath>..\Lib\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SQLite">
-      <HintPath>..\System.Data.SQLite.dll</HintPath>
+      <HintPath>..\Lib\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="Jint">
-      <HintPath>..\Jint.dll</HintPath>
+      <HintPath>..\Lib\Jint.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -224,11 +224,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\ENetX64.dll">
+    <Content Include="..\Lib\ENetX64.dll">
       <Link>ENetX64.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\ENetX86.dll">
+    <Content Include="..\Lib\ENetX86.dll">
       <Link>ENetX86.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

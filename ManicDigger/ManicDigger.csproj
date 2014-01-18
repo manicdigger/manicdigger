@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -56,7 +56,7 @@
     <Reference Include="Jint, Version=0.9.2.0, Culture=neutral, PublicKeyToken=6dc783a0f985a74b, processorArchitecture=MSIL" />
     <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, PublicKeyToken=251aebbae37ea889, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Lidgren.Network.dll</HintPath>
+      <HintPath>..\Lib\Lidgren.Network.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -65,19 +65,19 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Antlr3.Runtime">
-      <HintPath>..\Antlr3.Runtime.dll</HintPath>
+      <HintPath>..\Lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK">
-      <HintPath>..\OpenTK.dll</HintPath>
+      <HintPath>..\Lib\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
-      <HintPath>..\protobuf-net\protobuf-net.dll</HintPath>
+      <HintPath>..\Lib\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SQLite">
-      <HintPath>..\System.Data.SQLite.dll</HintPath>
+      <HintPath>..\Lib\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="Jint">
-      <HintPath>..\Jint.dll</HintPath>
+      <HintPath>..\Lib\Jint.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -94,13 +94,13 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\sqlite3.dll">
+    <Content Include="..\Lib\sqlite3.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\OpenAL32.dll">
+    <Content Include="..\Lib\OpenAL32.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\Jint.dll">
+    <Content Include="..\Lib\Jint.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="md.ico" />
