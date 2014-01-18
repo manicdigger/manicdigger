@@ -5,7 +5,6 @@
 rm -R -f output
 mkdir output
 
-cp OpenAL32.dll output
 cp -R data output
 
 # Dll
@@ -31,11 +30,8 @@ cp MdMonsterEditor/bin/Release/*.exe output
 # Mods
 cp -R ManicDiggerLib/Mods output
 
-#cp lib/*.dll output
+cp Lib/* output
 rm -f output/*vshost.exe
 cp credits.txt output
-cp OpenTK.dll.config output
-cp libenet.dylib output
-cp ENetX64.dll output
-cp ENetX86.dll output
+
 # pause
