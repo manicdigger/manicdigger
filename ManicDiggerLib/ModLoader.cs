@@ -3,15 +3,28 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
+using System.IO;
 
 namespace ManicDigger
 {
     public class ModLoader
     {
+        public ModLoader()
+        {
+            jintEngine.DisableSecurity();
+            jintEngine.AllowClr = true;
+        }
+        Jint.JintEngine jintEngine = new Jint.JintEngine();
+        Dictionary<string, string> javascriptScripts = new Dictionary<string, string>();
         public void CompileScripts(Dictionary<string, string> scripts)
         {
             foreach (var k in scripts)
             {
+                if (k.Key.EndsWith(".js"))
+                {
+                    javascriptScripts[k.Key] = k.Value;
+                    continue;
+                }
                 CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String>{{ "CompilerVersion", "v3.5" }});
                 var parms = new CompilerParameters
                 {
@@ -79,6 +92,7 @@ namespace ManicDigger
                 mod.Start(m);
             }
             */
+
             foreach (var k in mods)
             {
                 k.Value.PreStart(m);
@@ -88,6 +102,21 @@ namespace ManicDigger
             foreach (var k in mods)
             {
                 StartMod(k.Key, k.Value, m);
+            }
+
+            jintEngine.SetParameter("m", m);
+            // todo: javascript mod requirements
+            foreach (var k in javascriptScripts)
+            {
+                try
+                {
+                    jintEngine.Run(k.Value);
+                    Console.WriteLine("Loaded mod: {0}", k.Key);
+                }
+                catch
+                {
+                    Console.WriteLine("Error in mod: {0}", k.Key);
+                }
             }
         }
 

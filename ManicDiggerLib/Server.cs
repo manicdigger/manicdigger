@@ -302,7 +302,12 @@ namespace ManicDiggerServer
                 string[] files = Directory.GetFiles(modpath);
                 foreach (string s in files)
                 {
-                    if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)) || !Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase))
+                    if (!GameStorePath.IsValidName(Path.GetFileNameWithoutExtension(s)))
+                    {
+                        continue;
+                    }
+                    if (!(Path.GetExtension(s).Equals(".cs", StringComparison.InvariantCultureIgnoreCase)
+                        || Path.GetExtension(s).Equals(".js", StringComparison.InvariantCultureIgnoreCase)))
                     {
                         continue;
                     }
