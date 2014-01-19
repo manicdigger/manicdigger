@@ -42,7 +42,10 @@ namespace ManicDiggerServer
                 if (IsAutoRestarter)
                 {
                     new Thread(ConsoleOutput).Start();
-                    new Thread(ConsoleInput).Start();
+                    if (ENABLE_REDIRECT_STANDARD_INPUT)
+                    {
+                        new Thread(ConsoleInput).Start();
+                    }
                     ParentAutoRestarter();
                 }
                 else
