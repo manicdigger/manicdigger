@@ -759,6 +759,14 @@ namespace ManicDigger
         bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            if (e.Key == GetKey(OpenTK.Input.Key.F6))
+            {
+                double lagSeconds = (DateTime.UtcNow - LastReceived).TotalSeconds;
+                if ((lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS) || guistate == GuiState.MapLoading)
+                {
+                    Reconnect();
+                }
+            }
             if (e.Key == GetKey(OpenTK.Input.Key.ShiftLeft) || e.Key == GetKey(OpenTK.Input.Key.ShiftRight))
                 IsShiftPressed = true;
             if (e.Key == GetKey(OpenTK.Input.Key.F11))
@@ -3571,6 +3579,7 @@ namespace ManicDigger
             {
                 d_The3d.Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
                 d_The3d.Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
+                d_The3d.Draw2dText("Press F6 to reconnect", Width / 2 - 200 / 2, 50, 12, Color.White);
             }
             d_The3d.PerspectiveMode();
         }
