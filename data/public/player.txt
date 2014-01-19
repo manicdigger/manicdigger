@@ -1,6 +1,5 @@
 exportanim,stand
 exportanim,walk
-exportanim,run
 
 skinsize,64,32
 
@@ -8,21 +7,12 @@ set,legsheight,0.9
 set,armsheight,1.8
 set,minuslegsheight,-0.9
 set,minusarmsheight,-1.8
-set,limbrotation3,limbrotation1
-mul,limbrotation3,0.5
-set,limbrotation4,limbrotation2
-mul,limbrotation4,0.5
-set,updown2,updown
-mul,updown2,0.5
 
 rotate,headingdeg,0,1,0
 
 scale,0.7,0.7,0.7
 translate,-0.15,0,-0.3
 ifeq,anim,walk
-translate,0,updown2,0
-endif
-ifeq,anim,run
 translate,0,updown,0
 endif
 
@@ -34,22 +24,12 @@ drawcuboid,0,legsheight,0,0.3,0.9,0.6,skin,coords
 
 //head
 pushmatrix
-translate,0.15,armsheight,0
+translate,0,armsheight,0
 
 rotate,pitchdeg,0,0,1
-translate,-0.15,minusarmsheight,0
+translate,0,minusarmsheight,0
 makecoords,coords,8,8,8,0,0
 drawcuboid,-0.15,armsheight,0,0.6,0.6,0.6,skin,coords
-popmatrix
-
-//head
-pushmatrix
-translate,0.15,armsheight,0
-
-rotate,pitchdeg,0,0,1
-translate,-0.15,minusarmsheight,0
-makecoords,coords,8,8,8,32,0
-drawcuboid,-0.199,1.75,-0.05,0.7,0.7,0.7,skin,coords
 popmatrix
 
 
@@ -57,14 +37,11 @@ popmatrix
 pushmatrix
 translate,0.15,legsheight,0
 ifeq,anim,walk
-rotate,limbrotation3, 0, 0, 1
-endif
-ifeq,anim,run
-rotate,limbrotation1,0,0,1
+rotate,limbrotation1, 0, 0, 1
 endif
 translate,-0.15, minuslegsheight, 0
 
-makecoords, coords, 4, 12, 4, 0, 16
+makecoords, coords, 4, 8, 4, 0, 16
 drawcuboid, 0, 0, 0, 0.3, 0.9, 0.3, skin, coords
 
 popmatrix
@@ -73,10 +50,7 @@ popmatrix
 pushmatrix
 translate,0.15,legsheight,0
 ifeq,anim,walk
-rotate,limbrotation4, 0, 0, 1
-endif
-ifeq,anim,run
-rotate,limbrotation2,0,0,1
+rotate,limbrotation2, 0, 0, 1
 endif
 translate,-0.15, minuslegsheight, 0
 
@@ -89,14 +63,11 @@ popmatrix
 pushmatrix
 translate,0.15, armsheight, 0
 ifeq,anim,walk
-rotate,limbrotation4, 0, 0, 1
-endif
-ifeq,anim,run
-rotate,limbrotation2,0,0,1
+rotate,limbrotation2, 0, 0, 1
 endif
 translate,-0.15, minusarmsheight, 0
 
-makecoords, coords, 4, 12, 4, 40, 16
+makecoords, coords, 4, 8, 4, 40, 16
 drawcuboid, 0, legsheight, -0.3, 0.3, 0.9, 0.3, skin, coords
 
 popmatrix
@@ -105,10 +76,7 @@ popmatrix
 pushmatrix
 translate,0.15, armsheight, 0
 ifeq,anim,walk
-rotate,limbrotation3, 0, 0, 1
-endif
-ifeq,anim,run
-rotate,limbrotation1,0,0,1
+rotate,limbrotation1, 0, 0, 1
 endif
 translate,-0.15, minusarmsheight, 0
 
