@@ -21,7 +21,7 @@ namespace ManicDigger.Network
         List<string> texturestodownloadlist = new List<string>();
         public void Update(string[] players, Dictionary<string, int> playertextures, int playertexturedefault)
         {
-        	foreach (var loadedTexture in playertextures)
+        	foreach (var loadedTexture in new Dictionary<string, int>(playertextures))
         	{
         		bool bFound = false;
         		foreach (string name in players)
