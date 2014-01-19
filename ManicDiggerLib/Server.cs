@@ -157,6 +157,7 @@ namespace ManicDiggerServer
             Server server = this;
             server.LoadConfig();
             var map = new ManicDiggerServer.ServerMap();
+            map.server = this;
             map.d_CurrentTime = server;
             map.chunksize = 32;
             for (int i = 0; i < BlockTypes.Length; i++)
@@ -206,7 +207,7 @@ namespace ManicDiggerServer
             }
 
             all_privileges.AddRange(ServerClientMisc.Privilege.All());
-            LoadMods();
+            LoadMods(false);
 
             {
                 if (!Directory.Exists(GameStorePath.gamepathsaves))
@@ -256,9 +257,11 @@ namespace ManicDiggerServer
 
         ModLoader modloader = new ModLoader();
         public List<string> ModPaths = new List<string>();
-        private void LoadMods()
+        ModManager1 modManager;
+        private void LoadMods(bool restart)
         {
-            ModManager1 m = new ModManager1();
+            modManager = new ModManager1();
+            var m = modManager;
             m.Start(this);
             /*
             {
@@ -270,6 +273,13 @@ namespace ManicDiggerServer
                 return;
             }
             */
+            var scritps = GetScriptSources();
+            modloader.CompileScripts(scritps, restart);
+            modloader.Start(m, m.required);
+        }
+
+        Dictionary<string, string> GetScriptSources()
+        {
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
 
             for (int i = 0; i < modpaths.Length; i++)
@@ -316,8 +326,7 @@ namespace ManicDiggerServer
                     scripts[filename] = scripttext;
                 }
             }
-            modloader.CompileScripts(scripts);
-            modloader.Start(m, m.required);
+            return scripts;
         }
 
         private ServerMonitor serverMonitor;
@@ -325,7 +334,6 @@ namespace ManicDiggerServer
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
         public int ServerConsoleId {get { return serverConsoleId; } }
         private Client serverConsoleClient;
-        public List<ModDelegates.Command> oncommand = new List<ModDelegates.Command>();
         public void ReceiveServerConsole(string message)
         {
             if (message == null)
@@ -1094,13 +1102,11 @@ namespace ManicDiggerServer
             }
         }
 
-        public List<ModDelegates.PopulateChunk> populatechunk = new List<ModDelegates.PopulateChunk>();
-
         private void PopulateChunk(Vector3i p)
         {
-            for (int i = 0; i < populatechunk.Count; i++)
+            for (int i = 0; i < modEventHandlers.populatechunk.Count; i++)
             {
-                populatechunk[i](p.x / chunksize, p.y / chunksize, p.z / chunksize);
+                modEventHandlers.populatechunk[i](p.x / chunksize, p.y / chunksize, p.z / chunksize);
             }
             //d_Generator.PopulateChunk(d_Map, p.x / chunksize, p.y / chunksize, p.z / chunksize);
         }
@@ -1120,15 +1126,14 @@ namespace ManicDiggerServer
                     {
                         int block = chunk[MapUtil.Index3d(xx, yy, zz, chunksize, chunksize)];
 
-                        for (int i = 0; i < blockticks.Count; i++)
+                        for (int i = 0; i < modEventHandlers.blockticks.Count; i++)
                         {
-                            blockticks[i](p.x + xx, p.y + yy, p.z + zz);
+                            modEventHandlers.blockticks[i](p.x + xx, p.y + yy, p.z + zz);
                         }
                     }
                 }
             }
         }
-        public List<ModDelegates.BlockUpdate> blockticks = new List<ModDelegates.BlockUpdate>();
 
         public int[] MonsterTypesUnderground = new int[] { 1, 2 };
         public int[] MonsterTypesOnGround = new int[] { 0, 3, 4 };
@@ -1714,13 +1719,13 @@ if (sent >= unknown.Count) { break; }
             {
                 return;
             }
-            for (int i = 0; i < onplayerleave.Count; i++)
+            for (int i = 0; i < modEventHandlers.onplayerleave.Count; i++)
             {
-                onplayerleave[i](clientid);
+                modEventHandlers.onplayerleave[i](clientid);
             }
-            for (int i = 0; i < onplayerdisconnect.Count; i++)
+            for (int i = 0; i < modEventHandlers.onplayerdisconnect.Count; i++)
             {
-                onplayerdisconnect[i](clientid);
+                modEventHandlers.onplayerdisconnect[i](clientid);
             }
             string coloredName = clients[clientid].ColoredPlayername(colorNormal);
             string name = clients[clientid].playername;
@@ -1861,9 +1866,9 @@ if (sent >= unknown.Count) { break; }
                         }
                         this.SetFillAreaLimit(clientid);
                         this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
-                        for (int i = 0; i < onplayerjoin.Count; i++)
+                        for (int i = 0; i < modEventHandlers.onplayerjoin.Count; i++)
                         {
-                            onplayerjoin[i](clientid);
+                            modEventHandlers.onplayerjoin[i](clientid);
                         }
                     }
                     break;
@@ -2006,9 +2011,9 @@ if (sent >= unknown.Count) { break; }
                         else
                         {
                             string message = packet.Message.Message;
-                            for (int i = 0; i < onplayerchat.Count; i++)
+                            for (int i = 0; i < modEventHandlers.onplayerchat.Count; i++)
                             {
-                                message = onplayerchat[i](clientid, message, packet.Message.IsTeamchat);
+                                message = modEventHandlers.onplayerchat[i](clientid, message, packet.Message.IsTeamchat);
                             }
                             if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
                             {
@@ -2050,9 +2055,9 @@ if (sent >= unknown.Count) { break; }
                     HitMonsters(clientid, packet.Health.CurrentHealth);
                     break;
                 case ClientPacketId.DialogClick:
-                    for (int i = 0; i < ondialogclick.Count; i++)
+                    for (int i = 0; i < modEventHandlers.ondialogclick.Count; i++)
                     {
-                        ondialogclick[i](clientid, packet.DialogClick.WidgetId);
+                        modEventHandlers.ondialogclick[i](clientid, packet.DialogClick.WidgetId);
                     }
                     break;
                 case ClientPacketId.Shot:
@@ -2073,18 +2078,18 @@ if (sent >= unknown.Count) { break; }
                             v.X, v.Y, v.Z, packet.Shot.WeaponBlock, packet.Shot.ExplodesAfter);
                         return;
                     }
-                    for (int i = 0; i < onweaponshot.Count; i++)
+                    for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
                     {
-                        onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                        modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
                     }
                     if (clients[clientid].LastPing < 0.3)
                     {
                         if (packet.Shot.HitPlayer != -1)
                         {
                             //client-side shooting
-                            for (int i = 0; i < onweaponhit.Count; i++)
+                            for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.HitHead);
+                                modEventHandlers.onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.HitHead);
                             }
                         }
                         return;
@@ -2130,31 +2135,31 @@ if (sent >= unknown.Count) { break; }
 
                         if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox) != null)
                         {
-                            for (int i = 0; i < onweaponhit.Count; i++)
+                            for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
+                                modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
                             }
                         }
                         else if (ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox) != null)
                         {
-                            for (int i = 0; i < onweaponhit.Count; i++)
+                            for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, false);
+                                modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, false);
                             }
                         }
                     }
                     break;
                 case ClientPacketId.SpecialKey:
-                    for (int i = 0; i < onspecialkey.Count; i++)
+                    for (int i = 0; i < modEventHandlers.onspecialkey.Count; i++)
                     {
-                        onspecialkey[i](clientid, packet.SpecialKey.key);
+                        modEventHandlers.onspecialkey[i](clientid, packet.SpecialKey.key);
                     }
                     break;
                 case ClientPacketId.ActiveMaterialSlot:
                     clients[clientid].ActiveMaterialSlot = packet.ActiveMaterialSlot.ActiveMaterialSlot;
-                    for (int i = 0; i < changedactivematerialslot.Count; i++)
+                    for (int i = 0; i < modEventHandlers.changedactivematerialslot.Count; i++)
                     {
-                        changedactivematerialslot[i](clientid);
+                        modEventHandlers.changedactivematerialslot[i](clientid);
                     }
                     break;
                 case ClientPacketId.Leave:
@@ -2216,7 +2221,6 @@ if (sent >= unknown.Count) { break; }
                 SendPacket(k.Key, Serialize(p));
             }
         }
-        public List<ModDelegates.ChangedActiveMaterialSlot> changedactivematerialslot = new List<ModDelegates.ChangedActiveMaterialSlot>();
         int pistolcycle;
         public Vector3i GetPlayerSpawnPositionMul32(int clientid)
         {
@@ -2250,10 +2254,6 @@ if (sent >= unknown.Count) { break; }
             }
             return position;
         }
-
-        public List<ModDelegates.WeaponShot> onweaponshot = new List<ModDelegates.WeaponShot>();
-        public List<ModDelegates.WeaponHit> onweaponhit = new List<ModDelegates.WeaponHit>();
-        public List<ModDelegates.SpecialKey1> onspecialkey = new List<ModDelegates.SpecialKey1>();
 
         public void SendPlayerSpawnToAll(int clientid)
         {
@@ -2654,10 +2654,6 @@ if (sent >= unknown.Count) { break; }
             };
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
         }
-        public List<ModDelegates.BlockUse> onuse = new List<ModDelegates.BlockUse>();
-        public List<ModDelegates.BlockBuild> onbuild = new List<ModDelegates.BlockBuild>();
-        public List<ModDelegates.BlockDelete> ondelete = new List<ModDelegates.BlockDelete>();
-        public List<ModDelegates.BlockUseWithTool> onusewithtool = new List<ModDelegates.BlockUseWithTool>();
 
         private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
         {
@@ -2665,17 +2661,17 @@ if (sent >= unknown.Count) { break; }
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             if (cmd.Mode == BlockSetMode.Use)
             {
-                for (int i = 0; i < onuse.Count; i++)
+                for (int i = 0; i < modEventHandlers.onuse.Count; i++)
                 {
-                    onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                    modEventHandlers.onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
                 }
                 return true;
             }
             if (cmd.Mode == BlockSetMode.UseWithTool)
             {
-                for (int i = 0; i < onusewithtool.Count; i++)
+                for (int i = 0; i < modEventHandlers.onusewithtool.Count; i++)
                 {
-                    onusewithtool[i](player_id, cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
+                    modEventHandlers.onusewithtool[i](player_id, cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
                 }
                 return true;
             }
@@ -2713,9 +2709,9 @@ if (sent >= unknown.Count) { break; }
                         {
                         }
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
-                        for (int i = 0; i < onbuild.Count; i++)
+                        for (int i = 0; i < modEventHandlers.onbuild.Count; i++)
                         {
-                            onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                            modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
                         }
                         break;
                     default:
@@ -2734,9 +2730,9 @@ if (sent >= unknown.Count) { break; }
                     GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
                 }
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
-                for (int i = 0; i < ondelete.Count; i++)
+                for (int i = 0; i < modEventHandlers.ondelete.Count; i++)
                 {
-                    ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+                    modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
                 }
             }
             clients[player_id].IsInventoryDirty = true;
@@ -3628,12 +3624,6 @@ if (sent >= unknown.Count) { break; }
             SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Dialog, Dialog = p }));
         }
 
-        public List<ModDelegates.PlayerJoin> onplayerjoin = new List<ModDelegates.PlayerJoin>();
-        public List<ModDelegates.PlayerLeave> onplayerleave = new List<ModDelegates.PlayerLeave>();
-        public List<ModDelegates.PlayerDisconnect> onplayerdisconnect = new List<ModDelegates.PlayerDisconnect>();
-        public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
-        public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
-
         public bool PlayerHasPrivilege(int player, string privilege)
         {
             if (extraPrivileges.ContainsKey(privilege))
@@ -3752,6 +3742,29 @@ if (sent >= unknown.Count) { break; }
                 httpServer.Install(module);
             }
         }
+
+        public ModEventHandlers modEventHandlers = new ModEventHandlers();
+    }
+
+    public class ModEventHandlers
+    {
+        public List<ModDelegates.WorldGenerator> getchunk = new List<ModDelegates.WorldGenerator>();
+        public List<ModDelegates.BlockUse> onuse = new List<ModDelegates.BlockUse>();
+        public List<ModDelegates.BlockBuild> onbuild = new List<ModDelegates.BlockBuild>();
+        public List<ModDelegates.BlockDelete> ondelete = new List<ModDelegates.BlockDelete>();
+        public List<ModDelegates.BlockUseWithTool> onusewithtool = new List<ModDelegates.BlockUseWithTool>();
+        public List<ModDelegates.ChangedActiveMaterialSlot> changedactivematerialslot = new List<ModDelegates.ChangedActiveMaterialSlot>();
+        public List<ModDelegates.BlockUpdate> blockticks = new List<ModDelegates.BlockUpdate>();
+        public List<ModDelegates.PopulateChunk> populatechunk = new List<ModDelegates.PopulateChunk>();
+        public List<ModDelegates.Command> oncommand = new List<ModDelegates.Command>();
+        public List<ModDelegates.WeaponShot> onweaponshot = new List<ModDelegates.WeaponShot>();
+        public List<ModDelegates.WeaponHit> onweaponhit = new List<ModDelegates.WeaponHit>();
+        public List<ModDelegates.SpecialKey1> onspecialkey = new List<ModDelegates.SpecialKey1>();
+        public List<ModDelegates.PlayerJoin> onplayerjoin = new List<ModDelegates.PlayerJoin>();
+        public List<ModDelegates.PlayerLeave> onplayerleave = new List<ModDelegates.PlayerLeave>();
+        public List<ModDelegates.PlayerDisconnect> onplayerdisconnect = new List<ModDelegates.PlayerDisconnect>();
+        public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
+        public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
     }
 
     public class Ping

@@ -415,6 +415,9 @@ namespace ManicDiggerServer
                 case "restart":
                     this.RestartServer(sourceClientId);
                     break;
+                case "mods":
+                    this.RestartMods(sourceClientId);
+                    break;
                 //case "crashserver": for (; ; ) ;
                 case "stats":
                     double seconds = (DateTime.UtcNow - statsupdate).TotalSeconds;
@@ -617,11 +620,11 @@ namespace ManicDiggerServer
                     }
                     return;
                 default:
-                    for (int i = 0; i < oncommand.Count; i++)
+                    for (int i = 0; i < modEventHandlers.oncommand.Count; i++)
                     {
                         try
                         {
-                            if (oncommand[i](sourceClientId, command, argument))
+                            if (modEventHandlers.oncommand[i](sourceClientId, command, argument))
                             {
                                 return;
                             }
@@ -2049,6 +2052,27 @@ namespace ManicDiggerServer
             SendMessageToAll(string.Format("{0}{1} restarted server.", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} restarts server.", GetClient(sourceClientId).playername));
             Exit();
+            return true;
+        }
+
+        public bool RestartMods(int sourceClientId)
+        {
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.restart))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            SendMessageToAll(string.Format("{0}{1} restarted mods.", colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+            ServerEventLog(string.Format("{0} restarts mods.", GetClient(sourceClientId).playername));
+            
+            modEventHandlers = new ModEventHandlers();
+            foreach (var m in httpModules)
+            {
+                httpServer.Uninstall(m.module);
+            }
+            httpModules.Clear();
+
+            LoadMods(true);
             return true;
         }
 

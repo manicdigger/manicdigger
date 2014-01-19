@@ -47,9 +47,9 @@ namespace ManicDiggerServer
     }
     public class ServerMap : IMapStorage
     {
+        public Server server;
         [Inject]
         public IChunkDb d_ChunkDb;
-        public List<ModDelegates.WorldGenerator> getchunk = new List<ModDelegates.WorldGenerator>();
         [Inject]
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
@@ -127,9 +127,9 @@ namespace ManicDiggerServer
 
                 // get chunk
                 ushort[] newchunk = new ushort[chunksize * chunksize * chunksize];
-                for (int i = 0; i < getchunk.Count; i++)
+                for (int i = 0; i < server.modEventHandlers.getchunk.Count; i++)
                 {
-                    getchunk[i](x, y, z, newchunk);
+                    server.modEventHandlers.getchunk[i](x, y, z, newchunk);
                 }
                 chunks[x, y, z] = new Chunk() { data = newchunk };
                 chunks[x, y, z].DirtyForSaving = true;

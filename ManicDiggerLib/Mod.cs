@@ -61,22 +61,22 @@ namespace ManicDigger
 
         public void RegisterOnBlockBuild(ModDelegates.BlockBuild f)
         {
-            server.onbuild.Add(f);
+            server.modEventHandlers.onbuild.Add(f);
         }
 
         public void RegisterOnBlockDelete(ModDelegates.BlockDelete f)
         {
-            server.ondelete.Add(f);
+            server.modEventHandlers.ondelete.Add(f);
         }
 
         public void RegisterOnBlockUse(ModDelegates.BlockUse f)
         {
-            server.onuse.Add(f);
+            server.modEventHandlers.onuse.Add(f);
         }
 
         public void RegisterOnBlockUseWithTool(ModDelegates.BlockUseWithTool f)
         {
-            server.onusewithtool.Add(f);
+            server.modEventHandlers.onusewithtool.Add(f);
         }
 
         public int GetMapSizeX() { return server.d_Map.MapSizeX; }
@@ -256,7 +256,7 @@ namespace ManicDigger
 
         public void RegisterOnBlockUpdate(ModDelegates.BlockUpdate f)
         {
-            server.blockticks.Add(f);
+            server.modEventHandlers.blockticks.Add(f);
         }
 
         public bool IsTransparentForLight(int p)
@@ -266,7 +266,7 @@ namespace ManicDigger
 
         public void RegisterWorldGenerator(ModDelegates.WorldGenerator f)
         {
-            server.d_Map.getchunk.Add(f);
+            server.modEventHandlers.getchunk.Add(f);
         }
 
         public void RegisterOptionBool(string optionname, bool default_)
@@ -298,7 +298,7 @@ namespace ManicDigger
 
         public void RegisterPopulateChunk(ModDelegates.PopulateChunk f)
         {
-            server.populatechunk.Add(f);
+            server.modEventHandlers.populatechunk.Add(f);
         }
 
         public void SetDefaultSounds(SoundSet defaultSounds)
@@ -333,7 +333,7 @@ namespace ManicDigger
 
         public void RegisterOnCommand(ModDelegates.Command f)
         {
-            server.oncommand.Add(f);
+            server.modEventHandlers.oncommand.Add(f);
         }
 
         public string GetPlayerIp(int player)
@@ -526,22 +526,22 @@ namespace ManicDigger
 
         public void RegisterOnPlayerJoin(ModDelegates.PlayerJoin a)
         {
-            server.onplayerjoin.Add(a);
+            server.modEventHandlers.onplayerjoin.Add(a);
         }
 
         public void RegisterOnPlayerLeave(ModDelegates.PlayerLeave a)
         {
-            server.onplayerleave.Add(a);
+            server.modEventHandlers.onplayerleave.Add(a);
         }
 
         public void RegisterOnPlayerDisconnect(ModDelegates.PlayerDisconnect a)
         {
-            server.onplayerdisconnect.Add(a);
+            server.modEventHandlers.onplayerdisconnect.Add(a);
         }
 
         public void RegisterOnPlayerChat(ModDelegates.PlayerChat a)
         {
-            server.onplayerchat.Add(a);
+            server.modEventHandlers.onplayerchat.Add(a);
         }
 
         public int[] GetScreenResolution(int playerid)
@@ -556,7 +556,7 @@ namespace ManicDigger
 
         public void RegisterOnDialogClick(ModDelegates.DialogClick a)
         {
-            server.ondialogclick.Add(a);
+            server.modEventHandlers.ondialogclick.Add(a);
         }
 
         public void SetPlayerModel(int player, string model, string texture)
@@ -597,12 +597,12 @@ namespace ManicDigger
 
         public void RegisterOnWeaponHit(ModDelegates.WeaponHit a)
         {
-            server.onweaponhit.Add(a);
+            server.modEventHandlers.onweaponhit.Add(a);
         }
 
         public void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a)
         {
-            server.onspecialkey.Add(a);
+            server.modEventHandlers.onspecialkey.Add(a);
         }
 
         public float[] GetDefaultSpawnPosition(int player)
@@ -678,7 +678,7 @@ namespace ManicDigger
 
         public void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a)
         {
-            server.changedactivematerialslot.Add(a);
+            server.modEventHandlers.changedactivematerialslot.Add(a);
         }
 
         public Inventory GetInventory(int player)
@@ -713,7 +713,7 @@ namespace ManicDigger
 
         public void RegisterOnWeaponShot(ModDelegates.WeaponShot a)
         {
-            server.onweaponshot.Add(a);
+            server.modEventHandlers.onweaponshot.Add(a);
         }
 
         public void LogChat(string s)

@@ -16,13 +16,17 @@ namespace ManicDigger
         }
         Jint.JintEngine jintEngine = new Jint.JintEngine();
         Dictionary<string, string> javascriptScripts = new Dictionary<string, string>();
-        public void CompileScripts(Dictionary<string, string> scripts)
+        public void CompileScripts(Dictionary<string, string> scripts, bool restart)
         {
             foreach (var k in scripts)
             {
                 if (k.Key.EndsWith(".js"))
                 {
                     javascriptScripts[k.Key] = k.Value;
+                    continue;
+                }
+                if (restart)
+                {
                     continue;
                 }
                 CSharpCodeProvider compiler = new CSharpCodeProvider(new Dictionary<String, String>{{ "CompilerVersion", "v3.5" }});
@@ -93,6 +97,9 @@ namespace ManicDigger
             }
             */
 
+            modRequirements.Clear();
+            loaded.Clear();
+
             foreach (var k in mods)
             {
                 k.Value.PreStart(m);
@@ -104,6 +111,11 @@ namespace ManicDigger
                 StartMod(k.Key, k.Value, m);
             }
 
+            StartJsMods(m);
+        }
+
+        void StartJsMods(ModManager m)
+        {
             jintEngine.SetParameter("m", m);
             // todo: javascript mod requirements
             foreach (var k in javascriptScripts)
