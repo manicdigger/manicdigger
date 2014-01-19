@@ -121,6 +121,7 @@ namespace GameModeFortress
                 new Thread(ServerThreadStart).Start();
                 connectdata.Username = "Local";
             }
+        restart:
             ManicDiggerGameWindow w = new ManicDiggerGameWindow();
             w.issingleplayer = issingleplayer;
             this.curw = w;
@@ -142,6 +143,10 @@ namespace GameModeFortress
             w.crashreporter = crashreporter;
             w.Start();
             w.Run();
+            if (w.reconnect)
+            {
+                goto restart;
+            }
             exit.exit = true;
         }
         ManicDiggerGameWindow curw;

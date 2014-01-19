@@ -692,6 +692,10 @@ namespace ManicDigger
                     {
                         ENABLE_DRAW2D = BoolCommandArgument(arguments);
                     }
+                    else if (cmd == "reconnect")
+                    {
+                        Reconnect();
+                    }
                     else
                     {
                         string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
@@ -707,6 +711,14 @@ namespace ManicDigger
 
             }
         }
+
+        void Reconnect()
+        {
+            reconnect = true;
+            d_GlWindow.Exit();
+        }
+        public bool reconnect;
+
         private static bool BoolCommandArgument(string arguments)
         {
             arguments = arguments.Trim();
