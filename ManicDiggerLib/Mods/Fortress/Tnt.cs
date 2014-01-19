@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -20,7 +20,7 @@ namespace ManicDigger.Mods
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
             };
-            m.SetBlockType("TNT", new BlockType()
+            m.SetBlockType(46, "TNT", new BlockType()
             {
                 TextureIdTop = "TNTTop",
                 TextureIdBottom = "WoodBlock",
