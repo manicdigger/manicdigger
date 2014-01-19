@@ -4085,9 +4085,38 @@ namespace ManicDigger
                 return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
             }
         }
+        public bool LavaSwimming
+        {
+            get
+            {
+                var p = LocalPlayerPosition;
+                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
+                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                {
+                    return false;
+                }
+                return d_Data.IsLava[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+            }
+        }
         #endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
-        Color terraincolor { get { return WaterSwimming ? Color.FromArgb(255, 78, 95, 140) : Color.White; } }
+        Color terraincolor {
+        	get
+        	{
+        		if (WaterSwimming)
+        		{
+        			return Color.FromArgb(255, 78, 95, 140);
+        		}
+        		else if (LavaSwimming)
+        		{
+        			return Color.FromArgb(255, 222, 101, 46);
+        		}
+        		else
+        		{
+        			return Color.White;
+        		}
+        	}
+        }
         #region IKeyboard Members
         public OpenTK.Input.KeyboardDevice keyboardstate
         {

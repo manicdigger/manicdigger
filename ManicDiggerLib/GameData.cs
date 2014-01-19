@@ -99,6 +99,7 @@ namespace ManicDigger
         {
             mIsFluid = new bool[count];
             mIsWater = new bool[count];
+            mIsLava = new bool[count];
             mIsTransparent = new bool[count];
             mIsValid = new bool[count];
             mIsTransparentForLight = new bool[count];
@@ -152,6 +153,7 @@ namespace ManicDigger
 
         public bool[] IsFluid { get { return mIsFluid; } }
         public bool[] IsWater { get { return mIsWater; } }
+        public bool[] IsLava { get { return mIsLava; } }
         public bool[] IsTransparent { get { return mIsTransparent; } }
         public bool[] IsValid { get { return mIsValid; } }
         public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
@@ -182,6 +184,7 @@ namespace ManicDigger
 
         private bool[] mIsFluid;
         private bool[] mIsWater;
+        private bool[] mIsLava;
         private bool[] mIsTransparent;
         private bool[] mIsValid;
         private bool[] mIsTransparentForLight;
@@ -331,6 +334,7 @@ namespace ManicDigger
             //public bool[] IsWater { get { return mIsWater; } }
             IsFluid[id] = b.DrawType == DrawType.Fluid;
             IsWater[id] = b.Name.Contains("Water"); //todo
+            IsLava[id] = b.Name.Contains("Lava"); //todo
             IsTransparent[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Fluid);
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
             IsTransparentForLight[id] = b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
