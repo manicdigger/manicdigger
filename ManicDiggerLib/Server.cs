@@ -671,7 +671,71 @@ namespace ManicDiggerServer
             */
             d_MainSocket.Configuration.Port = port;
             d_MainSocket.Start();
+            try
+            {
+                httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
+                var m = new MainHttpModule();
+                m.server = this;
+                httpServer.Install(m);
+                foreach (var module in httpModules)
+                {
+                    httpServer.Install(module.module);
+                }
+                httpServer.Start();
+            }
+            catch
+            {
+                Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            }
         }
+
+        class MainHttpModule : FragLabs.HTTP.IHttpModule
+        {
+            public Server server;
+            public void Installed(FragLabs.HTTP.HttpServer server)
+            {
+            }
+
+            public void Uninstalled(FragLabs.HTTP.HttpServer server)
+            {
+            }
+
+            public bool ResponsibleForRequest(FragLabs.HTTP.HttpRequest request)
+            {
+                if (request.Uri.AbsolutePath.ToLower() == "/")
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            public bool ProcessAsync(FragLabs.HTTP.ProcessRequestEventArgs args)
+            {
+                string html = "<html>";
+                List<string> modules = new List<string>();
+                foreach (var m in server.httpModules)
+                {
+                    modules.Add(m.name);
+                }
+                modules.Sort();
+                foreach (string s in modules)
+                {
+                    foreach (var m in server.httpModules)
+                    {
+                        if (m.name == s)
+                        {
+                            html += string.Format("<a href='{0}'>{0}</a> - {1}", m.name, m.description());
+                        }
+                    }
+                }
+                html += "</html>";
+                args.Response.Producer = new FragLabs.HTTP.BufferedProducer(html);
+                return false;
+            }
+        }
+
+        internal FragLabs.HTTP.HttpServer httpServer;
+
         public void Process()
         {
             try
@@ -3660,6 +3724,28 @@ if (sent >= unknown.Count) { break; }
         public string GetGroupName(int playerid)
         {
             return GetClient(playerid).clientGroup.Name;
+        }
+
+        public class ActiveHttpModule
+        {
+            public string name;
+            public ManicDigger.Func<string> description;
+            public FragLabs.HTTP.IHttpModule module;
+        }
+
+        List<ActiveHttpModule> httpModules = new List<ActiveHttpModule>();
+
+        internal void InstallHttpModule(string name, ManicDigger.Func<string> description, FragLabs.HTTP.IHttpModule module)
+        {
+            ActiveHttpModule m = new ActiveHttpModule();
+            m.name = name;
+            m.description = description;
+            m.module = module;
+            httpModules.Add(m);
+            if (httpServer != null)
+            {
+                httpServer.Install(module);
+            }
         }
     }
 

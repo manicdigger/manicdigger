@@ -133,6 +133,7 @@ namespace ManicDigger
         void DisconnectPlayer(int player);
         string GetGroupColor(int player);
         string GetGroupName(int player);
+        void InstallHttpModule(string name, Func<string> description, FragLabs.HTTP.IHttpModule module);
     }
 
     public enum SpecialKey

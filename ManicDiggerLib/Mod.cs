@@ -782,5 +782,10 @@ namespace ManicDigger
         {
             return server.GetGroupName(player);
         }
+
+        public void InstallHttpModule(string name, ManicDigger.Func<string> description, FragLabs.HTTP.IHttpModule module)
+        {
+            server.InstallHttpModule(name, description, module);
+        }
     }
 }
