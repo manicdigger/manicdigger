@@ -19,6 +19,7 @@ namespace ManicDigger.Network
         Queue<string> texturestodownload = new Queue<string>();
         bool skindownloadthreadstarted = false;
         List<string> texturestodownloadlist = new List<string>();
+        List<string> to_remove_from_playertextures = new List<string>()
         public void Update(string[] players, Dictionary<string, int> playertextures, int playertexturedefault)
         {
             foreach (string name in players)
@@ -26,6 +27,17 @@ namespace ManicDigger.Network
                 if (name == null)
                 {
                     continue;
+                }
+                foreach (var k in playertextures)
+                {
+                	if (!players.Contains(k.key)
+                	{
+                	    to_remove_from_playertextures.Add(k.key);
+                	}
+                }
+                foreach (string s in to_remove_from_playertextures)
+                {
+                	playertextures.Remove(s);
                 }
                 if (playertextures.ContainsKey(name)
                      || texturestodownloadlist.Contains(name))
