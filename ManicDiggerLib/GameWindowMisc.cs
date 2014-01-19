@@ -91,7 +91,6 @@ namespace ManicDigger
     }
     public interface IThe3d
     {
-        int LoadTexture(Stream file);
         int LoadTexture(Bitmap bmp);
     }
     public class The3dDummy : IThe3d

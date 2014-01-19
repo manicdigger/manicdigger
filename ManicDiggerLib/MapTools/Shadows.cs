@@ -475,16 +475,6 @@ namespace ManicDigger
             return chunk[MapUtil.Index2d(xx % chunksize, yy % chunksize, chunksize)];
         }
     }
-    public interface IShadows : IShadowsGetLight
-    {
-        void OnLocalBuild(int x, int y, int z);
-        void OnSetBlock(int x, int y, int z);
-        void ResetShadows();
-        void OnGetTerrainBlock(int x, int y, int z);
-        void OnMakeChunk(int chunkx, int chunky, int chunkz);
-        int sunlight { get; set; }
-        void OnSetChunk(int x, int y, int z);
-    }
     public interface IShadowsGetLight
     {
         int GetLight(int x, int y, int z);

@@ -8,6 +8,7 @@ namespace ManicDigger.Gui
 {
     public class HudChat
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public IDraw2d d_Draw2d;
         [Inject]
@@ -97,11 +98,11 @@ namespace ManicDigger.Gui
             }
             for (int i = 0; i < chatlines2.Count; i++)
             {
-                d_Draw2d.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, ChatFontSize, Color.White);
+                game.Draw2dText(chatlines2[i].text, 20, 90f + i * 25f, ChatFontSize, Color.White);
             }
             if (ChatPageScroll != 0)
             {
-                d_Draw2d.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, ChatFontSize, Color.Gray);
+                game.Draw2dText("Page: " + ChatPageScroll, 20, 90f + (-1) * 25f, ChatFontSize, Color.Gray);
             }
         }
         public void DrawTypingBuffer()
@@ -111,7 +112,7 @@ namespace ManicDigger.Gui
             {
                 s = "To team: " + s;
             }
-            d_Draw2d.Draw2dText(s + "_", 50, d_ViewportSize.Height - 100, ChatFontSize, Color.White);
+            game.Draw2dText(s + "_", 50, d_ViewportSize.Height - 100, ChatFontSize, Color.White);
         }
     }
     public class Chatline

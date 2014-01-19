@@ -35,6 +35,7 @@ namespace ManicDigger.Hud
       public float CHARACTER_WIDTH, CHARACTER_HEIGHT;
       public float CURSOR_OFFSET_X = 1.0f;
 
+      public ManicDiggerGameWindow game;
       [Inject]
       public IViewportSize d_ViewportSize;
 
@@ -131,12 +132,12 @@ namespace ManicDigger.Hud
       {
          var cursor_x = m_left + m_padding + (m_editor.CursorCol - m_editor.ViewportCol) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
          var cursor_y = m_top + m_padding + (m_editor.CursorRow - m_editor.ViewportRow) * (FONTSIZE + LINESPACING) - LINESPACING / 2;
-         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), cursor_x, cursor_y, 1, FONTSIZE * 2, null, CURSOR_COLOR);
+         game.Draw2dTexture(game.WhiteTexture(), cursor_x, cursor_y, 1, FONTSIZE * 2, null, CURSOR_COLOR);
       }
 
       private void DrawEditorBackground()
       {
-         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), m_left, m_top, m_width, m_height, null, new FastColor(200, 250, 250, 250).ToColor());
+          game.Draw2dTexture(game.WhiteTexture(), m_left, m_top, m_width, m_height, null, new FastColor(200, 250, 250, 250).ToColor());
       }
 
       private void DrawVisibleLines()
@@ -155,7 +156,7 @@ namespace ManicDigger.Hud
             var visible_text = line.GetSegment(safe_start_col, safe_end_col);
             if (m_editor.IsSelectionActive)
                DrawSelection(row, safe_start_col, safe_end_col);
-            d_The3d.Draw2dText(visible_text, m_left + m_padding, m_top + m_padding + y, FONTSIZE, TEXT_COLOR);
+            game.Draw2dText(visible_text, m_left + m_padding, m_top + m_padding + y, FONTSIZE, TEXT_COLOR);
             y += FONTSIZE + LINESPACING;
             row++;
          }
@@ -175,7 +176,7 @@ namespace ManicDigger.Hud
          var sel_begin_x = m_left + m_padding + (sel_start_col - m_editor.ViewportCol) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
          var sel_begin_y = m_top + m_padding + (row - m_editor.ViewportRow) * (FONTSIZE + LINESPACING);// - LINESPACING / 2;
          var sel_width = (sel_end_col - sel_start_col) * CHARACTER_WIDTH + CURSOR_OFFSET_X;
-         d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), sel_begin_x, sel_begin_y, sel_width, FONTSIZE * 2, null, SELECTION_COLOR);
+         game.Draw2dTexture(game.WhiteTexture(), sel_begin_x, sel_begin_y, sel_width, FONTSIZE * 2, null, SELECTION_COLOR);
       }
 
       public void HandleKeyDown(object sender, KeyboardKeyEventArgs e)

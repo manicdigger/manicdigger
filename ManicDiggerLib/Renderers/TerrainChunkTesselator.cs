@@ -28,7 +28,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public ITerrainTextures d_TerrainTextures;
         [Inject]
-        public IShadows d_Shadows;
+        public ManicDiggerGameWindow d_Shadows;
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16

@@ -18,7 +18,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public IMapStorage d_Map;
         [Inject]
-        public IShadows d_Shadows;
+        public ManicDiggerGameWindow d_Shadows;
         [Inject]
         public ITerrainTextures d_Terrain;
         [Inject]

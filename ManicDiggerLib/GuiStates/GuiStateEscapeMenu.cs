@@ -254,7 +254,7 @@ namespace ManicDigger
                 options.Font = 0;
             }
             d_TextRenderer.Font = fontValues[options.Font];
-            d_The3d.cachedTextTextures.Clear();
+            cachedTextTextures.Clear();
         }
 
         private string KeyName(int key)
@@ -285,7 +285,7 @@ namespace ManicDigger
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = d_The3d.TextSize(s, fontsize);
+                SizeF size = TextSize(s, fontsize);
                 rect.Width = (int)size.Width + 10;
                 rect.Height = (int)size.Height;
                 rect.X = xcenter(size.Width);
@@ -305,7 +305,7 @@ namespace ManicDigger
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                d_The3d.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
         List<Button> widgets = new List<Button>();
@@ -411,7 +411,7 @@ namespace ManicDigger
 
             d_TextRenderer.Font = fontValues[options.Font];
             d_CurrentShadows.ShadowsFull = options.Shadows;
-            d_Shadows.ResetShadows();
+            //d_Shadows.ResetShadows();
             //d_Terrain.UpdateAllTiles();
             d_Config3d.viewdistance = options.DrawDistance;
             d_Audio.Enabled = options.EnableSound;

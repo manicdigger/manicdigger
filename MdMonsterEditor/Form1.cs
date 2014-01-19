@@ -196,7 +196,7 @@ namespace MdMonsterEditor
         {
             if (grasstexture == -1)
             {
-                grasstexture = the3d.LoadTexture(getfile.GetFile("grass.png"));
+                grasstexture = LoadTexture(getfile.GetFile("grass.png"));
             }
             GL.BindTexture(TextureTarget.Texture2D, grasstexture);
             GL.Enable(EnableCap.Texture2D);
@@ -205,6 +205,16 @@ namespace MdMonsterEditor
             Rectangle r = new Rectangle(-10, -10, 20, 20);
             DrawWaterQuad(r.X, r.Y, r.Width, r.Height, 0);
             GL.End();
+        }
+        public int LoadTexture(Stream file)
+        {
+            using (file)
+            {
+                using (Bitmap bmp = new Bitmap(file))
+                {
+                    return the3d.LoadTexture(bmp);
+                }
+            }
         }
         private void LoadPlayerTexture(byte[] file)
         {

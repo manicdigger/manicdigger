@@ -37,6 +37,7 @@ namespace ManicDigger.Hud
 
     public class HudInventory
     {
+        public ManicDiggerGameWindow game;
         public IGetFileStream getfile;
         public IMouseCurrent mouse_current;
         public The3d the3d;
@@ -277,7 +278,7 @@ namespace ManicDigger.Hud
 
             Point scaledMouse = mouse_current.MouseCurrent;
 
-            the3d.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 1024, 1024);
+            game.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 1024, 1024);
 
             //the3d.Draw2dTexture(terrain, 50, 50, 50, 50, 0);
             //the3d.Draw2dBitmapFile("inventory_weapon_shovel.png", 100, 100, 60 * 2, 60 * 4);
@@ -314,7 +315,7 @@ namespace ManicDigger.Hud
                         {
                             c = Color.Green;
                         }
-                        the3d.Draw2dTexture(the3d.WhiteTexture(), x, y,
+                        game.Draw2dTexture(game.WhiteTexture(), x, y,
                             CellDrawSize * size.X, CellDrawSize * size.Y,
                             null, Color.FromArgb(100, c));
                     }
@@ -335,7 +336,7 @@ namespace ManicDigger.Hud
                     {
                         c = Color.Green;
                     }
-                    the3d.Draw2dTexture(the3d.WhiteTexture(), p.X, p.Y,
+                    game.Draw2dTexture(game.WhiteTexture(), p.X, p.Y,
                         CellDrawSize * size.X, CellDrawSize * size.Y,
                         null, Color.FromArgb(100, c));
                 }
@@ -396,7 +397,7 @@ namespace ManicDigger.Hud
 
         public void DrawMaterialSelector()
         {
-            the3d.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStart.X, MaterialSelectorBackgroundStart.Y, 1024, 128);
+            game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStart.X, MaterialSelectorBackgroundStart.Y, 1024, 128);
             for (int i = 0; i < 10; i++)
             {
                 /*
@@ -412,7 +413,7 @@ namespace ManicDigger.Hud
                         inventory.RightHand[i], new Point(ActiveMaterialCellSize, ActiveMaterialCellSize));
                 }
             }
-            the3d.Draw2dBitmapFile("activematerial2.png",
+            game.Draw2dBitmapFile("activematerial2.png",
                 MaterialSelectorStart.X + ActiveMaterialCellSize * ActiveMaterial.ActiveMaterial,
                 MaterialSelectorStart.Y, ActiveMaterialCellSize, ActiveMaterialCellSize);
         }
@@ -469,16 +470,16 @@ namespace ManicDigger.Hud
             }
             if (item.ItemClass == ItemClass.Block)
             {
-                the3d.Draw2dTexture(terraintextures.terrainTexture, screenpos.X, screenpos.Y,
+                game.Draw2dTexture(terraintextures.terrainTexture, screenpos.X, screenpos.Y,
                     drawsize.Value.X, drawsize.Value.Y, dataItems.TextureIdForInventory[item.BlockId]);
                 if (item.BlockCount > 1)
                 {
-                    the3d.Draw2dText(item.BlockCount.ToString(), screenpos.X, screenpos.Y, 8, Color.White);
+                    game.Draw2dText(item.BlockCount.ToString(), screenpos.X, screenpos.Y, 8, Color.White);
                 }
             }
             else
             {
-                the3d.Draw2dBitmapFile(dataItems.ItemGraphics(item), screenpos.X, screenpos.Y,
+                game.Draw2dBitmapFile(dataItems.ItemGraphics(item), screenpos.X, screenpos.Y,
                     drawsize.Value.X, drawsize.Value.Y);
             }
         }
@@ -486,17 +487,17 @@ namespace ManicDigger.Hud
         public void DrawItemInfo(Point screenpos, Item item)
         {
         	Point size = dataItems.ItemSize(item);
-        	float tw = the3d.TextSize(dataItems.ItemInfo(item), 11.5f).Width + 6;
-        	float th = the3d.TextSize(dataItems.ItemInfo(item), 11.5f).Height + 4;
+        	float tw = game.TextSize(dataItems.ItemInfo(item), 11.5f).Width + 6;
+            float th = game.TextSize(dataItems.ItemInfo(item), 11.5f).Height + 4;
         	float w = tw + CellDrawSize * size.X;
         	float h = th < CellDrawSize * size.Y ? CellDrawSize * size.Y + 4 : th;
         	if (screenpos.X < w + 20) { screenpos.X = (int)w + 20; }
             if (screenpos.Y < h + 20) { screenpos.Y = (int)h + 20; }
             if (screenpos.X > viewport_size.Width - (w + 20)) { screenpos.X = viewport_size.Width - ((int)w + 20); }
             if (screenpos.Y > viewport_size.Height - (h + 20)) { screenpos.Y = viewport_size.Height - ((int)h + 20); }
-            the3d.Draw2dTexture(the3d.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(0, Color.Black));
-            the3d.Draw2dTexture(the3d.WhiteTexture(), screenpos.X - w+2, screenpos.Y - h+2, w-4, h-4, null, Color.FromArgb(0, Color.DimGray));
-            the3d.Draw2dText(dataItems.ItemInfo(item), screenpos.X - tw + 4, screenpos.Y - h + 2, 10, null);
+            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(0, Color.Black));
+            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w + 2, screenpos.Y - h + 2, w - 4, h - 4, null, Color.FromArgb(0, Color.DimGray));
+            game.Draw2dText(dataItems.ItemInfo(item), screenpos.X - tw + 4, screenpos.Y - h + 2, 10, null);
             DrawItem(new Point(screenpos.X - (int)w + 2, screenpos.Y - (int)h + 2), new Item { BlockId = item.BlockId }, null);
         }
         static Point Offset(Point a, Point b)

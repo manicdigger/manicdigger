@@ -9,6 +9,7 @@ namespace ManicDigger.Renderers
 {
     public class SunMoonRenderer
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public IDraw2d d_Draw2d { get; set; }
         [Inject]
@@ -40,8 +41,8 @@ namespace ManicDigger.Renderers
             GL.MatrixMode(MatrixMode.Modelview);
             if (suntexture == -1)
             {
-                suntexture = d_The3d.LoadTexture(d_GetFile.GetFile("sun.png"));
-                moontexture = d_The3d.LoadTexture(d_GetFile.GetFile("moon.png"));
+                suntexture = game.LoadTexture(d_GetFile.GetFile("sun.png"));
+                moontexture = game.LoadTexture(d_GetFile.GetFile("moon.png"));
             }            
             t += dt * 2 * Math.PI / day_length_in_seconds;
             bool night = (t + 2 * Math.PI) % (2 * Math.PI) > Math.PI;
@@ -59,7 +60,7 @@ namespace ManicDigger.Renderers
             GL.Rotate(-d_LocalPlayerPosition.LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
             GL.Scale(0.02, 0.02, 0.02);
             //GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
-            d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
+            game.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
             GL.PopMatrix();
         }
     }

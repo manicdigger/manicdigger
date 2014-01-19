@@ -80,7 +80,6 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="DirtyChunks.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
     <Compile Include="Hud\Hud.cs" />
@@ -161,7 +160,6 @@
     <Compile Include="ServerMap.cs" />
     <Compile Include="ServerMonitor.cs" />
     <Compile Include="ServerWorldManager.cs" />
-    <Compile Include="Shadows.cs" />
     <Compile Include="TerrainRenderer.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
