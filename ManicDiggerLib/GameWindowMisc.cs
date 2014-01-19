@@ -93,8 +93,6 @@ namespace ManicDigger
     {
         int LoadTexture(Stream file);
         int LoadTexture(Bitmap bmp);
-        void Set3dProjection(float zfar);
-        void Set3dProjection();
     }
     public class The3dDummy : IThe3d
     {
