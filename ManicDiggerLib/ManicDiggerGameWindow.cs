@@ -46,6 +46,7 @@ namespace ManicDigger
             var config3d = new Config3d();
             var mapManipulator = new MapManipulator();
             var the3d = new The3d();
+            the3d.game = this;
             the3d.d_GetFile = getfile;
             the3d.d_Config3d = config3d;
             the3d.d_ViewportSize = w;
@@ -98,6 +99,7 @@ namespace ManicDigger
             w.d_MapManipulator = mapManipulator;
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
+            skysphere.game = this;
             skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
             skysphere.d_LocalPlayerPosition = localplayerposition;
             skysphere.d_The3d = the3d;
@@ -195,7 +197,7 @@ namespace ManicDigger
             w.d_HudInventory = hudInventory;
             w.d_CurrentShadows = this;
             w.d_ResetMap = this;
-            d_The3d.currentfov = GetCurrentFov;
+            currentfov = GetCurrentFov;
             crashreporter.OnCrash += new EventHandler(crashreporter_OnCrash);
             if (Debugger.IsAttached)
             {
@@ -641,7 +643,7 @@ namespace ManicDigger
                             throw new Exception(string.Format("Valid field of view: {0}-{1}", minfov, maxfov));
                         }
                         float fov = (float)(2 * Math.PI * ((float)arg / 360));
-                        d_The3d.fov = fov;
+                        this.fov = fov;
                         OnResize(new EventArgs());
                     }
                     else if (cmd == "clients")
@@ -734,11 +736,11 @@ namespace ManicDigger
                 {
                     if (blocktypes[item.BlockId].IronSightsFov != 0)
                     {
-                        return d_The3d.fov * blocktypes[item.BlockId].IronSightsFov;
+                        return this.fov * blocktypes[item.BlockId].IronSightsFov;
                     }
                 }
             }
-            return d_The3d.fov;
+            return this.fov;
         }
 
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
@@ -1325,7 +1327,7 @@ namespace ManicDigger
             //.mainwindow.OnResize(e);
 
             GL.Viewport(0, 0, Width, Height);
-            d_The3d.Set3dProjection();
+            this.Set3dProjection();
         }
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
@@ -2898,9 +2900,9 @@ namespace ManicDigger
                     }
                     else
                     {
-                        d_The3d.OrthoMode(Width, Height);
+                        OrthoMode(Width, Height);
                         d_The3d.Draw2dBitmapFile(img, Width / 2, Height - 512, 512, 512);
-                        d_The3d.PerspectiveMode();
+                        PerspectiveMode();
                     }
                 }
             }
@@ -2917,11 +2919,11 @@ namespace ManicDigger
 
         private int GetTexture(string s)
         {
-            if (!textures.ContainsKey(s))
+            if (!textures1.ContainsKey(s))
             {
-                textures[s] = d_The3d.LoadTexture(d_GetFile.GetFile(s));
+                textures1[s] = d_The3d.LoadTexture(d_GetFile.GetFile(s));
             }
-            return textures[s];
+            return textures1[s];
         }
 
         float projectilegravity = 20f;
@@ -3093,7 +3095,7 @@ namespace ManicDigger
         }
         float walldistance = 0.3f;
 
-        Dictionary<string, int> textures = new Dictionary<string, int>();
+        Dictionary<string, int> textures1 = new Dictionary<string, int>();
         bool startedconnecting;
         private void SetFog()
         {
@@ -3475,7 +3477,7 @@ namespace ManicDigger
         Size? aimsize;
         private void Draw2d()
         {
-            d_The3d.OrthoMode(Width, Height);
+            OrthoMode(Width, Height);
             switch (guistate)
             {
                 case GuiState.Normal:
@@ -3487,7 +3489,7 @@ namespace ManicDigger
                                 d_HudChat.DrawChatLines(true);
                                 d_HudChat.DrawTypingBuffer();
                             }
-                            d_The3d.PerspectiveMode();
+                            PerspectiveMode();
                             return;
                         }
                         if (cameratype != CameraType.Overhead)
@@ -3581,7 +3583,7 @@ namespace ManicDigger
                 d_The3d.Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
                 d_The3d.Draw2dText("Press F6 to reconnect", Width / 2 - 200 / 2, 50, 12, Color.White);
             }
-            d_The3d.PerspectiveMode();
+            PerspectiveMode();
         }
 
         private void DrawAmmo()
@@ -3708,12 +3710,12 @@ namespace ManicDigger
 
             if (CurrentAimRadius > 1)
             {
-                float fov = d_The3d.fov;
-                if (d_The3d.currentfov != null)
+                float fov = this.fov;
+                if (this.currentfov != null)
                 {
-                    fov = d_The3d.currentfov();
+                    fov = this.currentfov();
                 }
-                Circle3i(Width / 2, Height / 2, CurrentAimRadius * d_The3d.fov / fov);
+                Circle3i(Width / 2, Height / 2, CurrentAimRadius * this.fov / fov);
             }
             d_The3d.Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
         }
@@ -5966,6 +5968,74 @@ namespace ManicDigger
         public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
         public int[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get; set; }
+
+
+
+
+
+
+
+        public int whitetexture = -1;
+        public Dictionary<string, int> textures = new Dictionary<string, int>();
+        public float fov = MathHelper.PiOver3;
+        public Func<float> currentfov;
+        public void Set3dProjection()
+        {
+            Set3dProjection(zfar);
+        }
+
+        public void Set3dProjection(float zfar)
+        {
+            float aspect_ratio = d_The3d.d_ViewportSize.Width / (float)d_The3d.d_ViewportSize.Height;
+            float fov1 = fov;
+            if (this.currentfov != null)
+            {
+                fov1 = currentfov();
+            }
+            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov1, aspect_ratio, znear, zfar);
+            d_The3d.ProjectionMatrix = perpective;
+            //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref perpective);
+        }
+        public float znear = 0.1f;
+        public float zfar
+        {
+            get
+            {
+                if (d_Config3d.viewdistance >= 256)
+                {
+                    return d_Config3d.viewdistance * 2;
+                }
+                return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999;
+            }
+        }
+        public bool ENABLE_ZFAR = true;
+
+        public void OrthoMode(int width, int height)
+        {
+            //GL.Disable(EnableCap.DepthTest);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Ortho(0, width, height, 0, 0, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+        }
+
+        public void PerspectiveMode()
+        {
+            // Enter into our projection matrix mode
+            GL.MatrixMode(MatrixMode.Projection);
+            // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
+            GL.PopMatrix();
+            // Go back to our model view matrix like normal
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+            //GL.LoadIdentity();
+            //GL.Enable(EnableCap.DepthTest);
+        }
     }
     [StructLayout(LayoutKind.Sequential)]
     public class Chunk

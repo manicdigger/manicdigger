@@ -14,6 +14,7 @@ namespace ManicDigger
     //This class should become replaceable with DirectX.
     public class The3d : IThe3d, IDraw2d, IGetCameraMatrix
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public ITerrainTextures d_Terrain;
         [Inject]
@@ -245,11 +246,11 @@ namespace ManicDigger
         }
         public void Draw2dBitmapFile(string filename, float x1, float y1, float width, float height)
         {
-            if (!textures.ContainsKey(filename))
+            if (!game.textures.ContainsKey(filename))
             {
-                textures[filename] = LoadTexture(d_GetFile.GetFile(filename));
+                game.textures[filename] = LoadTexture(d_GetFile.GetFile(filename));
             }
-            Draw2dTexture(textures[filename], x1, y1, width, height, null);
+            Draw2dTexture(game.textures[filename], x1, y1, width, height, null);
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
         {
@@ -395,82 +396,14 @@ namespace ManicDigger
         }
         public int WhiteTexture()
         {
-            if (whitetexture == -1)
+            if (game.whitetexture == -1)
             {
                 var bmp = new Bitmap(1, 1);
                 bmp.SetPixel(0, 0, Color.White);
-                whitetexture = LoadTexture(bmp);
+                game.whitetexture = LoadTexture(bmp);
             }
-            return whitetexture;
+            return game.whitetexture;
         }
-        int whitetexture = -1;
-        Dictionary<string, int> textures = new Dictionary<string, int>();
-        public float fov = MathHelper.PiOver3;
-        public Func<float> currentfov;
-        public void Set3dProjection()
-        {
-            Set3dProjection(zfar);
-        }
-        public void Set3dProjection(float zfar)
-        {
-            float aspect_ratio = d_ViewportSize.Width / (float)d_ViewportSize.Height;
-            float fov1 = fov;
-            if (currentfov != null)
-            {
-                fov1 = currentfov();
-            }
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov1, aspect_ratio, znear, zfar);
-            ProjectionMatrix = perpective;
-            //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref perpective);
-        }
-        public float znear = 0.1f;
-        float zfar
-        {
-            get
-            {
-                if (d_Config3d.viewdistance >= 256)
-                {
-                    return d_Config3d.viewdistance * 2;
-                }
-                return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999;
-            }
-        }
-        public bool ENABLE_ZFAR = true;
-        public void OrthoMode(int width, int height)
-        {
-            //GL.Disable(EnableCap.DepthTest);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Ortho(0, width, height, 0, 0, 1);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-        }
-        public void PerspectiveMode()
-        {
-            // Enter into our projection matrix mode
-            GL.MatrixMode(MatrixMode.Projection);
-            // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
-            GL.PopMatrix();
-            // Go back to our model view matrix like normal
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
-            //GL.LoadIdentity();
-            //GL.Enable(EnableCap.DepthTest);
-        }
-        public void ResizeGraphics(int width, int height)
-        {
-            float aspect = (float)width / height;
 
-            // Adjust graphics to window size
-            GL.Viewport(0, 0, width, height);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            //GLU.Perspective(45.0, aspect, 1.0, 100.0);
-            GL.MatrixMode(MatrixMode.Modelview);
-        }
     }
 }

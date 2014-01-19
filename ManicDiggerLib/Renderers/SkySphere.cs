@@ -13,6 +13,7 @@ namespace ManicDigger.Renderers
     //Posted Sunday, 22 March, 2009 - 23:50 by the Fiddler
     public class SkySphere
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public MeshBatcher d_MeshBatcher;
         [Inject]
@@ -35,7 +36,7 @@ namespace ManicDigger.Renderers
                 SkyMeshId = d_MeshBatcher.Add(indices, indices.Length, vertices, vertices.Length
                     , false, SkyTexture, new Vector3(0, 0, 0), size * 2);
             }
-            d_The3d.Set3dProjection(size * 2);
+            game.Set3dProjection(size * 2);
             GL.MatrixMode(MatrixMode.Modelview);
             d_MeshBatcher.BindTexture = false;
             GL.PushMatrix();
@@ -44,7 +45,7 @@ namespace ManicDigger.Renderers
             GL.BindTexture(TextureTarget.Texture2D, SkyTexture);
             d_MeshBatcher.Draw(d_LocalPlayerPosition.LocalPlayerPosition);
             GL.PopMatrix();
-            d_The3d.Set3dProjection();
+            game.Set3dProjection();
         }
         public VertexPositionTexture[] CalculateVertices(float radius, float height, int segments, int rings)
         {
