@@ -483,6 +483,12 @@ public class ModelData
     public void setMode(int p) { mode = p; }
 }
 
+public class DrawModeEnum
+{
+    public const int Triangles = 0;
+    public const int Lines = 1;
+}
+
 public class MainMenuNewFrameHandler : NewFrameHandler
 {
     public static MainMenuNewFrameHandler Create(MainMenu l)

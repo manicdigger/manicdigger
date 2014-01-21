@@ -21,7 +21,8 @@ namespace ManicDigger.Renderers
         [Inject]
         public IThe3d d_The3d;
         public int SkyTexture = -1;
-        int SkyMeshId = -1;
+        //int SkyMeshId = -1;
+        Model skymodel;
         public void Draw()
         {
             if (SkyTexture == -1)
@@ -29,12 +30,9 @@ namespace ManicDigger.Renderers
                 throw new InvalidOperationException();
             }
             int size = 1000;
-            if (SkyMeshId == -1)
+            if (skymodel == null)
             {
-                ushort[] indices = CalculateElements(size, size, 20, 20);
-                VertexPositionTexture[] vertices = CalculateVertices(size, size, 20, 20);
-                SkyMeshId = d_MeshBatcher.Add(indices, indices.Length, vertices, vertices.Length
-                    , false, SkyTexture, new Vector3(0, 0, 0), size * 2);
+                skymodel = CreateModel(SphereModelData.GetSphereModelData(size, size, 20, 20));
             }
             game.Set3dProjection(size * 2);
             GL.MatrixMode(MatrixMode.Modelview);
@@ -43,80 +41,89 @@ namespace ManicDigger.Renderers
             GL.Translate(d_LocalPlayerPosition.LocalPlayerPosition);
             GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, SkyTexture);
-            d_MeshBatcher.Draw(d_LocalPlayerPosition.LocalPlayerPosition);
+            DrawModel(skymodel);
             GL.PopMatrix();
             game.Set3dProjection();
         }
-        public VertexPositionTexture[] CalculateVertices(float radius, float height, int segments, int rings)
+
+        public Model CreateModel(ModelData data)
         {
-            int i = 0;
-            // Load data into a vertex buffer or a display list afterwards.
-            var data = new VertexPositionTexture[rings * segments];
+            int id = GL.GenLists(1);
 
-            for (double y = 0; y < rings; y++)
+            GL.NewList(id, ListMode.Compile);
+            
+            GL.EnableClientState(ArrayCap.VertexArray);
+            GL.EnableClientState(ArrayCap.ColorArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
+
+            float[] dataXyz = data.getXyz();
+            float[] dataUv = data.getUv();
+            byte[] dataRgba = data.getRgba();
+            float[] xyz = new float[data.GetXyzCount()];
+            float[] uv = new float[data.GetUvCount()];
+            byte[] rgba = new byte[data.GetRgbaCount()];
+
+            for (int i = 0; i < data.GetXyzCount(); i++)
             {
-                double phi = (y / (rings - 1)) * Math.PI;
-                for (double x = 0; x < segments; x++)
-                {
-                    double theta = (x / (segments - 1)) * 2 * Math.PI;
-
-                    Vector3 v = new Vector3()
-                    {
-                        X = (float)(radius * Math.Sin(phi) * Math.Cos(theta)),
-                        Y = (float)(height * Math.Cos(phi)),
-                        Z = (float)(radius * Math.Sin(phi) * Math.Sin(theta)),
-                    };
-                    //Vector3 n = Vector3.Normalize(v);
-                    // Horizontal texture projection
-                    Vector2 uv = new Vector2()
-                    {
-                        X = (float)(x / (segments - 1)),
-                        Y = (float)(y / (rings - 1))
-                    };
-                    // Using data[i++] causes i to be incremented multiple times in Mono 2.2 (bug #479506).
-                    data[i] = new VertexPositionTexture()
-                    {
-                        Position = v,
-                        //Normal = n,
-                        u = uv.X,
-                        v = uv.Y,
-                        a = byte.MaxValue,
-                        r = byte.MaxValue,
-                        g = byte.MaxValue,
-                        b = byte.MaxValue,
-                    };
-                    i++;
-
-                    // Top - down texture projection.
-                    //Vector2 uv = new Vector2()
-                    //{
-                    //    X = (float)(Math.Atan2(n.X, n.Z) / Math.PI / 2 + 0.5),
-                    //    Y = (float)(Math.Asin(n.Y) / Math.PI / 2 + 0.5)
-                    //};
-                }
+                xyz[i] = dataXyz[i];
             }
-            return data;
+            for (int i = 0; i < data.GetUvCount(); i++)
+            {
+                uv[i] = dataUv[i];
+            }
+            for (int i = 0; i < data.GetRgbaCount(); i++)
+            {
+                rgba[i] = dataRgba[i];
+            }
+
+            GL.VertexPointer(3, VertexPointerType.Float, 3 * 4, xyz);
+            GL.ColorPointer(4, ColorPointerType.UnsignedByte, 4 * 1, data.getRgba());
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, 2 * 4, uv);
+
+            BeginMode beginmode = BeginMode.Triangles;
+            if (data.getMode() == DrawModeEnum.Triangles)
+            {
+                beginmode = BeginMode.Triangles;
+                GL.Enable(EnableCap.Texture2D);
+            }
+            else if (data.getMode() == DrawModeEnum.Lines)
+            {
+                beginmode = BeginMode.Lines;
+                GL.Disable(EnableCap.Texture2D);
+            }
+            else
+            {
+                throw new Exception();
+            }
+
+            var dataIndices = data.getIndices();
+            ushort[] indices = new ushort[data.GetIndicesCount()];
+            for (int i = 0; i < data.GetIndicesCount(); i++)
+            {
+                indices[i] = (ushort)dataIndices[i];
+            }
+
+            GL.DrawElements(beginmode, data.GetIndicesCount(), DrawElementsType.UnsignedShort, indices);
+
+            GL.DisableClientState(ArrayCap.VertexArray);
+            GL.DisableClientState(ArrayCap.ColorArray);
+            GL.DisableClientState(ArrayCap.TextureCoordArray);
+            GL.Disable(EnableCap.Texture2D);
+
+            GL.EndList();
+            DisplayListModel m = new DisplayListModel();
+            m.listId = id;
+            return m;
         }
-        public ushort[] CalculateElements(float radius, float height, int segments, int rings)
+
+        class DisplayListModel : Model
         {
-            int i = 0;
-            // Load data into an element buffer or use them as offsets into the vertex array above.
-            var data = new ushort[segments * rings * 6];
+            public int listId;
+        }
 
-            for (int y = 0; y < rings - 1; y++)
-            {
-                for (int x = 0; x < segments - 1; x++)
-                {
-                    data[i++] = (ushort)((y + 0) * segments + x);
-                    data[i++] = (ushort)((y + 1) * segments + x);
-                    data[i++] = (ushort)((y + 1) * segments + x + 1);
-
-                    data[i++] = (ushort)((y + 1) * segments + x + 1);
-                    data[i++] = (ushort)((y + 0) * segments + x + 1);
-                    data[i++] = (ushort)((y + 0) * segments + x);
-                }
-            }
-            return data;
+        public void DrawModel(Model model)
+        {
+            GL.CallList(((DisplayListModel)model).listId);
         }
     }
 }

@@ -180,3 +180,81 @@ public class QuadModelData
         return m;
     }
 }
+
+public class SphereModelData
+{
+    static float GetPi()
+    {
+        float a = 3141592;
+        return a / 1000000;
+    }
+
+    //http://www.opentk.com/node/732
+    //Re: [SL Multitexturing] - Only one texture with gluSphere
+    //Posted Sunday, 22 March, 2009 - 23:50 by the Fiddler
+    public static ModelData GetSphereModelData(float radius, float height, int segments, int rings)
+    {
+        int i = 0;
+        // Load data into a vertex buffer or a display list afterwards.
+
+        float[] xyz = new float[rings * segments * 3];
+        float[] uv = new float[rings * segments * 2];
+        byte[] rgba = new byte[rings * segments * 4];
+
+        for (int y = 0; y < rings; y++)
+        {
+            float yFloat = y;
+            float phiFloat = (yFloat / (rings - 1)) * GetPi();
+            for (int x = 0; x < segments; x++)
+            {
+                float xFloat = x;
+                float thetaFloat = (xFloat / (segments - 1)) * 2 * GetPi();
+                float vxFloat = radius * Platform.Sin(phiFloat) * Platform.Cos(thetaFloat);
+                float vyFloat = height * Platform.Cos(phiFloat);
+                float vzFloat = radius * Platform.Sin(phiFloat) * Platform.Sin(thetaFloat);
+                float uFloat = xFloat / (segments - 1);
+                float vFloat = yFloat / (rings - 1);
+                xyz[i * 3 + 0] = vxFloat;
+                xyz[i * 3 + 1] = vyFloat;
+                xyz[i * 3 + 2] = vzFloat;
+                uv[i * 2 + 0] = uFloat;
+                uv[i * 2 + 1] = vFloat;
+                rgba[i * 4 + 0] = 255;
+                rgba[i * 4 + 1] = 255;
+                rgba[i * 4 + 2] = 255;
+                rgba[i * 4 + 3] = 255;
+                i++;
+            }
+        }
+        ModelData data = new ModelData();
+        data.SetVerticesCount(segments * rings);
+        data.SetIndicesCount(segments * rings * 6);
+        data.setXyz(xyz);
+        data.setUv(uv);
+        data.setRgba(rgba);
+        data.setIndices(CalculateElements(radius, height, segments, rings));
+        //data.setMode(DrawModeEnum.Triangles);
+        return data;
+    }
+    public static int[] CalculateElements(float radius, float height, int segments, int rings)
+    {
+        int i = 0;
+        // Load data into an element buffer or use them as offsets into the vertex array above.
+        int[] data = new int[segments * rings * 6];
+
+        for (int y = 0; y < rings - 1; y++)
+        {
+            for (int x = 0; x < segments - 1; x++)
+            {
+                data[i++] = ((y + 0) * segments + x);
+                data[i++] = ((y + 1) * segments + x);
+                data[i++] = ((y + 1) * segments + x + 1);
+
+                data[i++] = ((y + 1) * segments + x + 1);
+                data[i++] = ((y + 0) * segments + x + 1);
+                data[i++] = ((y + 0) * segments + x);
+            }
+        }
+        return data;
+    }
+}
