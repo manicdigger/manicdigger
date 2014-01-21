@@ -183,7 +183,7 @@
   <data name="KeyFreeMove" xml:space="preserve">
     <value>Free move</value>
   </data>
-  <data name="KeyTexteditor" xml:space="preserve">
+  <data name="KeyTextEditor" xml:space="preserve">
     <value>Texteditor</value>
   </data>
   <data name="KeyFullscreen" xml:space="preserve">
@@ -213,7 +213,7 @@
   <data name="KeyRespawn" xml:space="preserve">
     <value>Respawn</value>
   </data>
-    <data name="KeyReloadWeapon" xml:space="preserve">
+  <data name="KeyReloadWeapon" xml:space="preserve">
     <value>Reload weapon</value>
   </data>
   <data name="KeyCraft" xml:space="preserve">
