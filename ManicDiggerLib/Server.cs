@@ -300,6 +300,7 @@ namespace ManicDiggerServer
                     }
                 }
                 modpaths[i] = Path.Combine(modpaths[i], game);
+                d_Heartbeat.GameMode = System.Web.HttpUtility.UrlEncode(game);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
             foreach (string modpath in modpaths)
