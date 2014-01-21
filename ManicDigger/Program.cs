@@ -71,6 +71,7 @@ namespace GameModeFortress
             }
             else
             {
+                //MainMenu.RunMain();
                 //new Thread(ServerThreadStart).Start();
                 //p.GameUrl = "127.0.0.1:25570";
                 //p.User = "Local";

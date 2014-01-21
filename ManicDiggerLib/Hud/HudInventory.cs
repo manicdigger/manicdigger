@@ -86,7 +86,7 @@ namespace ManicDigger.Hud
         Point CellCountTotal = new Point(12, 7 * 3);
         public int ActiveMaterialCellSize = 48;
 
-        public void OnKeyPress(KeyPressEventArgs e)
+        public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (char.IsDigit(e.KeyChar))
             {

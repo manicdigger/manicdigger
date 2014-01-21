@@ -30,7 +30,7 @@ namespace MdMonsterEditor
             UpdateLabels();
             the3d = new ManicDigger.The3d() { d_Config3d = config3d };
             glControl1.Paint += new PaintEventHandler(glControl1_Paint);
-            glControl1.MouseWheel += new MouseEventHandler(glControl1_MouseWheel);
+            glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
             loaded = true;
             GL.ClearColor(Color.SkyBlue);
             overheadcameraK.Distance = 3;
@@ -90,7 +90,7 @@ namespace MdMonsterEditor
             glControl1.Invalidate();
         }
         float dt;
-        void glControl1_MouseWheel(object sender, MouseEventArgs e)
+        void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (e.Delta != 0)
             {
@@ -265,14 +265,14 @@ namespace MdMonsterEditor
         public float fov = MathHelper.PiOver3;
         int oldmousex = 0;
         int oldmousey = 0;
-        private void glControl1_MouseDown(object sender, MouseEventArgs e)
+        private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             oldmousex = e.X;
             oldmousey = e.Y;
             down = true;
         }
         bool down = false;
-        private void glControl1_MouseMove(object sender, MouseEventArgs e)
+        private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             if (down)
             {
@@ -287,7 +287,7 @@ namespace MdMonsterEditor
                 glControl1.Invalidate();
             }
         }
-        private void glControl1_MouseUp(object sender, MouseEventArgs e)
+        private void glControl1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             down = false;
         }

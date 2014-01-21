@@ -249,7 +249,7 @@ namespace ManicDigger.Hud
          }
       }
 
-      public void HandleKeyPress(object sender, KeyPressEventArgs e)
+      public void HandleKeyPress(object sender, OpenTK.KeyPressEventArgs e)
       {
          char c = e.KeyChar;
          if (c == '\r' || c == '\n')
