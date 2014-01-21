@@ -23,6 +23,7 @@ namespace ManicDigger
         }
         #endregion
     }
+    
     public class GetFileStream : IGetFileStream
     {
         public GetFileStream(IEnumerable<string> datapaths)

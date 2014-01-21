@@ -3,7 +3,12 @@
     public MainMenu()
     {
         one = 1;
+        p = GamePlatform.Create();
+        textures = new LoadedTexture[256];
+        texturesCount = 0;
     }
+
+    GamePlatform p;
 
     float one;
 
@@ -20,9 +25,6 @@
         z = -5;
 
         filter = 0;
-
-        crateTextures = new WebGLTexture[3];
-        crateImages = new HTMLImageElement[3];
 
         mvMatrix = Mat4.Create();
         pMatrix = Mat4.Create();
@@ -104,10 +106,6 @@
     WebGLUniformLocation shaderProgrammvMatrixUniform;
     WebGLUniformLocation shaderProgramsamplerUniform;
 
-    WebGLBuffer cubeVertexPositionBuffer;
-    WebGLBuffer cubeVertexTextureCoordBuffer;
-    WebGLBuffer cubeVertexIndexBuffer;
-
     bool[] currentlyPressedKeys;
 
     public void HandleKeyDown(KeyEventArgs e)
@@ -170,72 +168,71 @@
     Model CreateModel(ModelData data)
     {
         Model m = new Model();
-        cubeVertexPositionBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ArrayBuffer_, cubeVertexPositionBuffer);
+        WebGLBuffer xyzBuffer = gl.CreateBuffer();
+        gl.BindBuffer(Gl.ArrayBuffer_, xyzBuffer);
 
         gl.BufferDataFloat(Gl.ArrayBuffer_, data.xyz, Gl.StaticDraw);
+        m.xyzBuffer = xyzBuffer;
         m.xyzBufferitemSize = 3;
         m.xyzBuffernumItems = data.verticesCount;
 
-        cubeVertexTextureCoordBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ArrayBuffer_, cubeVertexTextureCoordBuffer);
+        WebGLBuffer uvBuffer = gl.CreateBuffer();
+        gl.BindBuffer(Gl.ArrayBuffer_, uvBuffer);
 
         gl.BufferDataFloat(Gl.ArrayBuffer_, data.uv, Gl.StaticDraw);
+        m.uvBuffer = uvBuffer;
         m.uvBufferitemSize = 2;
         m.uvBuffernumItems = data.verticesCount;
 
-        cubeVertexIndexBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ElementArrayBuffer, cubeVertexIndexBuffer);
+        WebGLBuffer indexBuffer = gl.CreateBuffer();
+        gl.BindBuffer(Gl.ElementArrayBuffer, indexBuffer);
         gl.BufferDataUshort(Gl.ElementArrayBuffer, data.indices, Gl.StaticDraw);
+        m.indexBuffer = indexBuffer;
         m.indexBufferitemSize = 1;
         m.indexBuffernumItems = data.indicesCount;
         return m;
     }
 
-    public void HandleLoadedTexture(WebGLTexture[] textures, HTMLImageElement[] images)
+    public void HandleLoadedTexture(WebGLTexture textures, HTMLImageElement images)
     {
-        // gl.PixelStorei(Gl.UnpackFlipYWebgl, 1);
+        //gl.PixelStorei(Gl.UnpackFlipYWebgl, 1);
 
-        gl.BindTexture(Gl.Texture2d, textures[0]);
-        gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[0]);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Nearest);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Nearest);
+        //gl.BindTexture(Gl.Texture2d, textures[0]);
+        //gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[0]);
+        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Nearest);
+        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Nearest);
 
-        gl.BindTexture(Gl.Texture2d, textures[1]);
-        gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[1]);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Linear);
+        //gl.BindTexture(Gl.Texture2d, textures[1]);
+        //gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[1]);
+        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
+        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Linear);
 
-        gl.BindTexture(Gl.Texture2d, textures[2]);
-        gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[2]);
+        gl.BindTexture(Gl.Texture2d, textures);
+        gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images);
         gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
         gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.LinearMipmapNearest);
         gl.GenerateMipmap(Gl.Texture2d);
 
         gl.BindTexture(Gl.Texture2d, null);
+
+#if !CITO
+        OpenTK.Graphics.OpenGL.GL.Enable(OpenTK.Graphics.OpenGL.EnableCap.AlphaTest);
+        OpenTK.Graphics.OpenGL.GL.AlphaFunc(OpenTK.Graphics.OpenGL.AlphaFunction.Greater, 0.5f);
+        OpenTK.Graphics.OpenGL.GL.Enable(OpenTK.Graphics.OpenGL.EnableCap.Blend);
+        OpenTK.Graphics.OpenGL.GL.BlendFunc(OpenTK.Graphics.OpenGL.BlendingFactorSrc.SrcAlpha,
+            OpenTK.Graphics.OpenGL.BlendingFactorDest.OneMinusSrcAlpha);
+#endif
     }
 
-    public void ImageOnLoad()
+    public void ImageOnLoad(string name)
     {
-        HandleLoadedTexture(crateTextures, crateImages);
-    }
-
-    WebGLTexture[] crateTextures;
-    HTMLImageElement[] crateImages;
-
-    void InitTexture()
-    {
-        HTMLImageElement crateImage = gl.CreateHTMLImageElement();
-
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < texturesCount; i++)
         {
-            WebGLTexture texture = gl.CreateTexture();
-            crateImages[i] = crateImage;
-            crateTextures[i] = texture;
+            if (textures[i] != null && textures[i].name == name)
+            {
+                HandleLoadedTexture(textures[i].texture, textures[i].image);
+            }
         }
-
-        crateImage.SetOnLoad(MainMenuImageOnLoadHandler.Create(this));
-        crateImage.SetSrc("logo.png");
     }
 
     void DrawScene()
@@ -251,14 +248,36 @@
             Mat4.Identity_(pMatrix);
             Mat4.Ortho(pMatrix, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight(), 0, 0, 10);
         }
-        
+
         float scale = one * gl.GetCanvasWidth() / 800;
         float size = one * 80 / 100;
-        Draw2dQuad(0, gl.GetCanvasWidth() / 2 - 800 * scale / 2 * size, 0, 800 * scale * size, 288 * scale * size);
+        Draw2dQuad(GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 800 * scale / 2 * size, 0, 800 * scale * size, 288 * scale * size);
+        Draw2dQuad(GetTexture("background.png"), 0, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight());
+    }
+
+    WebGLTexture GetTexture(string name)
+    {
+        for (int i = 0; i < texturesCount; i++)
+        {
+            if (textures[i].name == name)
+            {
+                return textures[i].texture;
+            }
+        }
+        HTMLImageElement image = gl.CreateHTMLImageElement();
+        WebGLTexture texture = gl.CreateTexture();
+        LoadedTexture t = new LoadedTexture();
+        t.name = name;
+        t.image = image;
+        t.texture = texture;
+        textures[texturesCount++] = t;
+        image.SetOnLoad(MainMenuImageOnLoadHandler.Create(this, name));
+        image.SetSrc(p.GetFullFilePath(name));
+        return t.texture;
     }
 
     Model cubeModel;
-    public void Draw2dQuad(int textureid, float dx, float dy, float dw, float dh)
+    public void Draw2dQuad(WebGLTexture textureid, float dx, float dy, float dw, float dh)
     {
         Mat4.Identity_(mvMatrix);
         Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(dx, dy, 0));
@@ -270,22 +289,22 @@
         {
             cubeModel = CreateModel(QuadModelData.GetQuadModelData());
         }
-        DrawModel(cubeModel);
+        DrawModel(textureid, cubeModel);
     }
 
-    void DrawModel(Model model)
+    void DrawModel(WebGLTexture texture, Model model)
     {
-        gl.BindBuffer(Gl.ArrayBuffer_, cubeVertexPositionBuffer);
+        gl.BindBuffer(Gl.ArrayBuffer_, model.xyzBuffer);
         gl.VertexAttribPointer(shaderProgramvertexPositionAttribute, model.xyzBufferitemSize, Gl.Float, false, 0, 0);
 
-        gl.BindBuffer(Gl.ArrayBuffer_, cubeVertexTextureCoordBuffer);
+        gl.BindBuffer(Gl.ArrayBuffer_, model.uvBuffer);
         gl.VertexAttribPointer(shaderProgramtextureCoordAttribute, model.uvBufferitemSize, Gl.Float, false, 0, 0);
 
         gl.ActiveTexture(Gl.Texture0);
-        gl.BindTexture(Gl.Texture2d, crateTextures[filter]);
+        gl.BindTexture(Gl.Texture2d, texture);
         gl.Uniform1i(shaderProgramsamplerUniform, 0);
 
-        gl.BindBuffer(Gl.ElementArrayBuffer, cubeVertexIndexBuffer);
+        gl.BindBuffer(Gl.ElementArrayBuffer, model.indexBuffer);
         gl.DrawElements(Gl.Triangles, model.indexBuffernumItems, Gl.UnsignedShort, 0);
     }
 
@@ -327,7 +346,6 @@
         {
             initialized = true;
             InitShaders();
-            InitTexture();
 
             gl.ClearColor(0, 0, 0, 1);
             gl.Enable(Gl.DepthTest);
@@ -411,14 +429,27 @@
     public void HandleTouchEnd(TouchEventArgs e)
     {
     }
+
+    LoadedTexture[] textures;
+    int texturesCount;
+}
+
+public class LoadedTexture
+{
+    internal string name;
+    internal HTMLImageElement image;
+    internal WebGLTexture texture;
 }
 
 public class Model
 {
+    internal WebGLBuffer xyzBuffer;
     internal int xyzBufferitemSize;
     internal int xyzBuffernumItems;
+    internal WebGLBuffer uvBuffer;
     internal int uvBufferitemSize;
     internal int uvBuffernumItems;
+    internal WebGLBuffer indexBuffer;
     internal int indexBufferitemSize;
     internal int indexBuffernumItems;
 }
@@ -469,17 +500,19 @@ public class MainMenuNewFrameHandler : NewFrameHandler
 
 public class MainMenuImageOnLoadHandler : ImageOnLoadHandler
 {
-    public static MainMenuImageOnLoadHandler Create(MainMenu l)
+    public static MainMenuImageOnLoadHandler Create(MainMenu l, string name)
     {
         MainMenuImageOnLoadHandler h = new MainMenuImageOnLoadHandler();
         h.l = l;
+        h.name = name;
         return h;
     }
     MainMenu l;
+    string name;
 
     public override void OnLoad()
     {
-        l.ImageOnLoad();
+        l.ImageOnLoad(name);
     }
 }
 
