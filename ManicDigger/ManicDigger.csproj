@@ -155,6 +155,6 @@
   -->
   <PropertyGroup>
     <PreBuildEvent>cd $(SolutionDir)
-cmd /c $(SolutionDir)\BuildCito.bat</PreBuildEvent>
+cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
   </PropertyGroup>
 </Project>
