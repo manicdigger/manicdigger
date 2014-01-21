@@ -146,7 +146,7 @@ namespace ManicDiggerServer
                     RoutineRestartStopwatch = new Stopwatch();
                     RoutineRestartStopwatch.Start();
                 }
-                if (RoutineRestartStopwatch.Elapsed.Hours > autoRestartCycle)
+                if (RoutineRestartStopwatch.Elapsed.Hours >= autoRestartCycle)
                 {
                     RoutineRestartStopwatch = new Stopwatch();
                     RoutineRestartStopwatch.Start();
