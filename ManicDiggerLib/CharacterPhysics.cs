@@ -23,12 +23,12 @@ namespace ManicDigger
     public class CharacterPhysics
     {
         [Inject]
-        public ManicDiggerGameWindow d_Map;
+        public ManicDiggerGameWindow game;
         [Inject]
         public IGameData d_Data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
-            if (z >= d_Map.MapSizeZ)
+            if (z >= game.MapSizeZ)
             {
                 return true;
             }
@@ -37,17 +37,17 @@ namespace ManicDigger
             {
                 return ENABLE_FREEMOVE;
             }
-            if (x >= d_Map.MapSizeX || y >= d_Map.MapSizeY)// || z >= mapsizez)
+            if (x >= game.MapSizeX || y >= game.MapSizeY)// || z >= mapsizez)
             {
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] &&
-                !d_Data.IsFluid[d_Map.GetBlock(x, y, z + 1)]) { return true; }
-            return d_Map.GetBlock(x, y, z) == 0
-                || (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight && d_Map.GetBlock(x, y, z+2) == 0 && d_Map.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
-                || (d_Data.IsFluid[d_Map.GetBlock(x, y, z)] && (!swimmingtop))
-                || d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)];
+            if (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() &&
+                !game.blocktypes[game.GetBlock(x, y, z + 1)].IsFluid()) { return true; }
+            return game.GetBlock(x, y, z) == 0
+                || (d_Data.DrawType1[game.GetBlock(x, y, z)] == DrawType.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
+                || (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() && (!swimmingtop))
+                || d_Data.IsEmptyForPhysics[game.GetBlock(x, y, z)];
         }
         public static float walldistance = 0.3f;
         //public static float characterheight = 1.5f;
@@ -83,14 +83,14 @@ namespace ManicDigger
             }
             diff1 += push * (float)dt;
             bool loaded = false;
-            int cx = (int)(d_Map.LocalPlayerPosition.X / d_Map.chunksize);
-            int cy = (int)(d_Map.LocalPlayerPosition.Z / d_Map.chunksize);
-            int cz = (int)(d_Map.LocalPlayerPosition.Y / d_Map.chunksize);
-            if (MapUtil.IsValidChunkPos(d_Map, cx, cy, cz, d_Map.chunksize))
+            int cx = (int)(game.LocalPlayerPosition.X / game.chunksize);
+            int cy = (int)(game.LocalPlayerPosition.Z / game.chunksize);
+            int cz = (int)(game.LocalPlayerPosition.Y / game.chunksize);
+            if (MapUtil.IsValidChunkPos(game, cx, cy, cz, game.chunksize))
             {
-                if (d_Map.chunks[MapUtil.Index3d(cx, cy, cz,
-                    d_Map.MapSizeX / d_Map.chunksize,
-                    d_Map.MapSizeY / d_Map.chunksize)] != null)
+                if (game.chunks[MapUtil.Index3d(cx, cy, cz,
+                    game.MapSizeX / game.chunksize,
+                    game.MapSizeY / game.chunksize)] != null)
                 {
                     loaded = true;
                 }

@@ -62,7 +62,7 @@ namespace GameModeFortress
         {
             for (int i = (int)start; i < end; i++)
             {
-                Print(string.Format("{0}: {1}", i, m_server.d_Data.Name[i]));
+                Print(string.Format("{0}: {1}", i, m_server.BlockTypes[i].Name));
             }
         }
 
@@ -70,9 +70,9 @@ namespace GameModeFortress
         {
             for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
             {
-                if (m_server.d_Data.Name[i].Contains(search_string))
+                if (m_server.BlockTypes[i].Name.Contains(search_string))
                 {
-                    Print(string.Format("{0}: {1}", i, m_server.d_Data.Name[i]));
+                    Print(string.Format("{0}: {1}", i, m_server.BlockTypes[i].Name));
                 }
             }
         }

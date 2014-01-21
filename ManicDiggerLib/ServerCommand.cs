@@ -1494,9 +1494,9 @@ namespace ManicDiggerServer
             {
                 string targetName = targetClient.playername;
                 string sourcename = GetClient(sourceClientId).playername;
-                for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+                for (int i = 0; i < BlockTypes.Length; i++)
                 {
-                    if (!d_Data.IsBuildable[i])
+                    if (!BlockTypes[i].IsBuildable)
                     {
                         continue;
                     }
@@ -1569,13 +1569,13 @@ namespace ManicDiggerServer
                 {
                     amount = 9999;
                 }
-                for (int i = 0; i < d_Data.IsBuildable.Length; i++)
+                for (int i = 0; i < BlockTypes.Length; i++)
                 {
-                    if (!d_Data.IsBuildable[i])
+                    if (!BlockTypes[i].IsBuildable)
                     {
                         continue;
                     }
-                    if (!d_Data.Name[i].Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
+                    if (!BlockTypes[i].Name.Equals(blockname, StringComparison.InvariantCultureIgnoreCase))
                     {
                         continue;
                     }

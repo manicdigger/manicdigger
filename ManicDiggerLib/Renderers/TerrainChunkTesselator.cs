@@ -28,7 +28,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public ITerrainTextures d_TerrainTextures;
         [Inject]
-        public ManicDiggerGameWindow d_Shadows;
+        public ManicDiggerGameWindow game;
         RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16
@@ -66,9 +66,8 @@ namespace ManicDigger.Renderers
             mapsizez = d_MapStorage.MapSizeZ;
             started = true;
             istransparent = d_Data.IsTransparent;
-            iswater = d_Data.IsFluid;
             isvalid = d_Data.IsValid;
-            maxlight = d_Shadows.maxlight;
+            maxlight = game.maxlight;
             maxlightInverse = 1f / maxlight;
             terrainTexturesPerAtlas = d_TerrainTextures.terrainTexturesPerAtlas;
             terrainTexturesPerAtlasInverse = 1f / d_TerrainTextures.terrainTexturesPerAtlas;
@@ -79,7 +78,6 @@ namespace ManicDigger.Renderers
         int maxlight;
         float maxlightInverse;
         bool[] istransparent;
-        bool[] iswater;
         bool[] isvalid;
 
         void NewVi(ref VerticesIndices vi)
@@ -125,7 +123,7 @@ namespace ManicDigger.Renderers
             GetExtendedChunk(x, y, z);
             if (IsSolidChunk(currentChunk)) { yield break; }
             //ResetCurrentShadows();
-            d_Shadows.OnMakeChunk(x, y, z);
+            game.OnMakeChunk(x, y, z);
             CalculateVisibleFaces(currentChunk);
             CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
             if (EnableSmoothLight)
@@ -314,7 +312,6 @@ namespace ManicDigger.Renderers
             unsafe
             {
                 fixed (ushort* currentChunk_ = currentChunk )
-                fixed (bool* iswater_ = iswater)
                 fixed (bool* istransparent_ = istransparent)
                 {
                     for (int zz = 1; zz < chunksize + 1; zz++)
@@ -336,7 +333,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos + movez;
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Top;
@@ -347,7 +344,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos - movez;
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Bottom;
@@ -358,7 +355,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos - 1;
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Front;
@@ -369,7 +366,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos + 1;
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Back;
@@ -380,7 +377,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos - (chunksize + 2);
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Left;
@@ -391,7 +388,7 @@ namespace ManicDigger.Renderers
                                     int pos2 = pos + (chunksize + 2);
                                     int tt2 = currentChunk_[pos2];
                                     if (tt2 == 0
-                                        || (iswater_[tt2] && (!iswater_[tt]))
+                                        || (IsWater(tt2) && (!IsWater(tt)))
                                         || istransparent_[tt2])
                                     {
                                         draw |= (int)TileSideFlags.Right;
@@ -404,6 +401,12 @@ namespace ManicDigger.Renderers
                 }
             }
         }
+
+        bool IsWater(int tt2)
+        {
+            return game.blocktypes[tt2].IsFluid();
+        }
+
         private void CalculateTilingCount(ushort[] currentChunk, int startx, int starty, int startz)
         {
             Array.Clear(currentChunkDrawCount, 0, currentChunkDrawCount.Length);
@@ -2387,7 +2390,7 @@ namespace ManicDigger.Renderers
         {
             if (ENABLE_ATLAS1D)
             {
-                if (!(istransparent[tiletype] || iswater[tiletype]))
+                if (!(istransparent[tiletype] || IsWater(tiletype)))
                 {
                     return toreturnatlas1d[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
                 }
@@ -2398,7 +2401,7 @@ namespace ManicDigger.Renderers
             }
             else
             {
-                if (!(istransparent[tiletype] || iswater[tiletype]))
+                if (!(istransparent[tiletype] || IsWater(tiletype)))
                 {
                     return toreturnmain;
                 }

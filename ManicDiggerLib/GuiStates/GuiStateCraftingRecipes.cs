@@ -59,14 +59,14 @@ namespace ManicDigger
                     int xx = menustartx + 20 + ii * 130;
                     int yy = menustarty + i * 80;
                     Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 30, 30, d_Data.TextureIdForInventory[r.ingredients[ii].Type]);
-                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, d_Data.Name[r.ingredients[ii].Type]), xx + 50, yy, 12,
+                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, blocktypes[r.ingredients[ii].Type].Name), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
                 {
                     int xx = menustartx + 20 + 400;
                     int yy = menustarty + i * 80;
                     Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 40, 40, d_Data.TextureIdForInventory[r.output.Type]);
-                    Draw2dText(string.Format("{0} {1}", r.output.Amount, d_Data.Name[r.output.Type]), xx + 50, yy, 12,
+                    Draw2dText(string.Format("{0} {1}", r.output.Amount, blocktypes[r.output.Type].Name), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
             }

@@ -592,6 +592,11 @@ namespace ManicDigger
                 TextureIdForInventory = value;
             }
         }
+
+        public bool IsFluid()
+        {
+            return DrawType == DrawType.Fluid;
+        }
     }
 
     public enum PistolType

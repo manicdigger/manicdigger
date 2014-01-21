@@ -1170,7 +1170,7 @@ namespace ManicDiggerServer
                 if (d_Map.GetBlock(px, py, pz) == 0
                     && d_Map.GetBlock(px, py, pz + 1) == 0
                     && d_Map.GetBlock(px, py, pz - 1) != 0
-                    && (!d_Data.IsFluid[d_Map.GetBlock(px, py, pz - 1)]))
+                    && (!BlockTypes[d_Map.GetBlock(px, py, pz - 1)].IsFluid()))
                 {
                     chunk.Monsters.Add(new Monster() { X = px, Y = py, Z = pz, Id = NewMonsterId(), Health = 20, MonsterType = type });
                 }
@@ -1672,7 +1672,7 @@ if (sent >= unknown.Count) { break; }
                 int amount = d_Data.StartInventoryAmount[i];
                 if (config.IsCreative)
                 {
-                    if (amount > 0 || d_Data.IsBuildable[i])
+                    if (amount > 0 || BlockTypes[i].IsBuildable)
                     {
                         inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
                         x++;
@@ -2689,7 +2689,7 @@ if (sent >= unknown.Count) { break; }
             if (cmd.Mode == BlockSetMode.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-                if (!(oldblock == 0 || d_Data.IsFluid[oldblock]))
+                if (!(oldblock == 0 || BlockTypes[oldblock].IsFluid()))
                 {
                     return false;
                 }

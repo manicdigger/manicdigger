@@ -459,10 +459,11 @@ namespace ManicDigger
     }
     public class GameDataItemsBlocks : IGameDataItems
     {
+        public ManicDiggerGameWindow game;
         public IGameData d_Data;
         public string ItemInfo(Item item)
         {
-            if (item.ItemClass == ItemClass.Block) { return d_Data.Name[item.BlockId]; }
+            if (item.ItemClass == ItemClass.Block) { return game.blocktypes[item.BlockId].Name; }
             throw new NotImplementedException();
         }
 

@@ -201,7 +201,7 @@ namespace ManicDiggerServer
                 if (MapUtil.IsValidPos(d_Map, x, y, z - i))
                 {
                     int blockUnderPlayer = d_Map.GetBlock(x, y, z - i);
-                    if (d_Data.IsFluid[blockUnderPlayer])
+                    if (BlockTypes[blockUnderPlayer].IsFluid())
                     {
                         return false;
                     }

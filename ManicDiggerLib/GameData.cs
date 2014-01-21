@@ -13,7 +13,6 @@ namespace ManicDigger
     public interface IGameDataPhysics
     {
         bool[] IsEmptyForPhysics { get; }
-        bool[] IsFluid { get; }
         bool[] IsWater { get; }
     }
     public interface IGameData : IGameDataLight, IGameDataPhysics
@@ -26,11 +25,9 @@ namespace ManicDigger
         //Indexed by block id and TileSide.
         int[,] TextureId { get; }
         int[] TextureIdForInventory { get; }
-        bool[] IsBuildable { get; }
         int[] WhenPlayerPlacesGetsConvertedTo { get; }//PlayerBuildableMaterialType
         bool[] IsFlower { get; }
         RailDirectionFlags[] Rail { get; }
-        string[] Name { get; }
         float[] WalkSpeed { get; }
         bool[] IsSlipperyWalk { get; }
         string[][] WalkSound { get; }
@@ -97,7 +94,6 @@ namespace ManicDigger
         }
         private void Initialize(int count)
         {
-            mIsFluid = new bool[count];
             mIsWater = new bool[count];
             mIsLava = new bool[count];
             mIsTransparent = new bool[count];
@@ -111,7 +107,6 @@ namespace ManicDigger
             mWhenPlayerPlacesGetsConvertedTo = new int[count];
             mIsFlower = new bool[count];
             mRail = new RailDirectionFlags[count];
-            mName = new string[count];
             mWalkSpeed = new float[count];
             for (int i = 0; i < count; i++)
             {
@@ -151,7 +146,6 @@ namespace ManicDigger
             mIsEmptyForPhysics[0] = true;
         }
 
-        public bool[] IsFluid { get { return mIsFluid; } }
         public bool[] IsWater { get { return mIsWater; } }
         public bool[] IsLava { get { return mIsLava; } }
         public bool[] IsTransparent { get { return mIsTransparent; } }
@@ -161,11 +155,9 @@ namespace ManicDigger
         public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
         public int[,] TextureId { get { return mTextureId; } }
         public int[] TextureIdForInventory { get { return mTextureIdForInventory; } }
-        public bool[] IsBuildable { get { return mIsBuildable; } }
         public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
         public bool[] IsFlower { get { return mIsFlower; } }
         public RailDirectionFlags[] Rail { get { return mRail; } }
-        public string[] Name { get { return mName; } }
         public float[] WalkSpeed { get { return mWalkSpeed; } }
         public bool[] IsSlipperyWalk { get { return mIsSlipperyWalk; } }
         public string[][] WalkSound { get { return mWalkSound; } }
@@ -182,7 +174,6 @@ namespace ManicDigger
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
         public float[] LightLevels { get { return mLightLevels; } }
 
-        private bool[] mIsFluid;
         private bool[] mIsWater;
         private bool[] mIsLava;
         private bool[] mIsTransparent;
@@ -196,7 +187,6 @@ namespace ManicDigger
         private int[] mWhenPlayerPlacesGetsConvertedTo;
         private bool[] mIsFlower;
         private RailDirectionFlags[] mRail;
-        private string[] mName;
         private float[] mWalkSpeed;
         private bool[] mIsSlipperyWalk;
         private string[][] mWalkSound;
@@ -330,9 +320,7 @@ namespace ManicDigger
             {
                 return;
             }
-            //public bool[] IsFluid { get { return mIsFluid; } }
             //public bool[] IsWater { get { return mIsWater; } }
-            IsFluid[id] = b.DrawType == DrawType.Fluid;
             IsWater[id] = b.Name.Contains("Water"); //todo
             IsLava[id] = b.Name.Contains("Lava"); //todo
             IsTransparent[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Fluid);
@@ -362,11 +350,9 @@ namespace ManicDigger
                 TextureId[id, 5] = textureIds[b.TextureIdRight];
                 TextureIdForInventory[id] = textureIds[b.TextureIdForInventory];
             }
-            IsBuildable[id] = b.IsBuildable; // todo
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
             IsFlower[id] = b.DrawType == DrawType.Plant;
             Rail[id] = (RailDirectionFlags)b.Rail;
-            Name[id] = b.Name;
             WalkSpeed[id] = b.WalkSpeed;
             IsSlipperyWalk[id] = b.IsSlipperyWalk;
             WalkSound[id] = (string[])b.Sounds.Walk.Clone();

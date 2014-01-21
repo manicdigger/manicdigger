@@ -143,7 +143,7 @@ namespace ManicDigger
             w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w, game = this };
             w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
             w.d_FrustumCulling = frustumculling;
-            physics.d_Map = clientgame.mapforphysics;
+            physics.game = clientgame.mapforphysics;
             physics.d_Data = gamedata;
             d_Audio.d_GetFile = getfile;
             d_Audio.d_GameExit = d_Exit;
@@ -159,7 +159,7 @@ namespace ManicDigger
             //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
             //light.Restart();
             w.d_TerrainChunkTesselator = terrainchunktesselator;
-            terrainchunktesselator.d_Shadows = w;
+            terrainchunktesselator.game = w;
             /*
             if (fullshadows)
             {
@@ -172,7 +172,7 @@ namespace ManicDigger
             */
             w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w, game = this };
             w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w, game = this };
-            var dataItems = new GameDataItemsBlocks() { d_Data = gamedata };
+            var dataItems = new GameDataItemsBlocks() { d_Data = gamedata, game = this };
             var inventoryController = clientgame;
             var inventoryUtil = new InventoryUtil();
             var hudInventory = new HudInventory();
@@ -2581,9 +2581,9 @@ namespace ManicDigger
                 float progress = health / d_Data.Strength[blocktype];
                 if (IsUsableBlock(blocktype))
                 {
-                    DrawEnemyHealthUseInfo(d_Data.Name[blocktype], progress, true);
+                    DrawEnemyHealthUseInfo(blocktypes[blocktype].Name, progress, true);
                 }
-                DrawEnemyHealthCommon(d_Data.Name[blocktype], progress);
+                DrawEnemyHealthCommon(blocktypes[blocktype].Name, progress);
             }
         }
 
@@ -4603,7 +4603,7 @@ namespace ManicDigger
         #endregion
         public ManicDiggerGameWindow mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
-        BlockType[] blocktypes;
+        internal BlockType[] blocktypes;
         public int HourDetail = 4;
         public int[] NightLevels;
         public bool ENABLE_PER_SERVER_TEXTURES = false;

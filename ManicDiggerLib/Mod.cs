@@ -231,7 +231,7 @@ namespace ManicDigger
 
         public bool IsBlockFluid(int block)
         {
-            return server.d_Data.IsFluid[block];
+            return server.BlockTypes[block].IsFluid();
         }
 
         public void NotifyInventory(int player)
