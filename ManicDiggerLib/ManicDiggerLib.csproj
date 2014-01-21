@@ -80,10 +80,11 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
-    <Compile Include="CitoGl.ci.cs" />
+    <Compile Include="Client\CitoGl.ci.cs" />
+    <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
-    <Compile Include="GlMatrix.ci.cs" />
+    <Compile Include="Client\GlMatrix.ci.cs" />
     <Compile Include="Hud\Hud.cs" />
     <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
@@ -107,7 +108,7 @@
     <Compile Include="Forms\Menu.Designer.cs">
       <DependentUpon>Menu.cs</DependentUpon>
     </Compile>
-    <Compile Include="MainMenu.ci.cs" />
+    <Compile Include="Client\MainMenu.ci.cs" />
     <Compile Include="Misc2.cs" />
     <Compile Include="ModeFortressRail.cs" />
     <Compile Include="ModLoader.cs" />
@@ -153,8 +154,8 @@
     <Compile Include="Forms\PasswordForm.Designer.cs">
       <DependentUpon>PasswordForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Platform.ci.cs" />
-    <Compile Include="PlatformDesktop.cs" />
+    <Compile Include="Client\Platform.ci.cs" />
+    <Compile Include="Client\PlatformNative.cs" />
     <Compile Include="ScriptConsole.cs" />
     <Compile Include="ScriptInterpreter.cs" />
     <Compile Include="Server.cs" />

@@ -705,7 +705,13 @@ namespace CitoGl
 
         public override void PixelStorei(int pname, int param)
         {
+            if (pname == Gl.UnpackFlipYWebgl)
+            {
+                UnpackFlipYWebgl = param;
+            }
         }
+
+        int UnpackFlipYWebgl;
 
         public override void PolygonOffset(float factor, float units)
         {
@@ -793,12 +799,24 @@ namespace CitoGl
                 return;
             }
 
-            BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Bitmap bmp2 = bmp;
+            if (UnpackFlipYWebgl != 0)
+            {
+                bmp2 = new Bitmap(bmp);
+                bmp2.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            }
+
+            BitmapData bmp_data = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
             GL.TexImage2D((TextureTarget)target, level, PixelInternalFormat.Rgba,
-                bmp.Width, bmp.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, (PixelType)type, bmp_data.Scan0);
+                bmp2.Width, bmp2.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, (PixelType)type, bmp_data.Scan0);
 
-            bmp.UnlockBits(bmp_data);
+            bmp2.UnlockBits(bmp_data);
+
+            if (UnpackFlipYWebgl != 0)
+            {
+                bmp2.Dispose();
+            }
         }
 
         public override void TexImage2DCanvas(int target, int level, int internalformat,
