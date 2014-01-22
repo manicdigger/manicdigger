@@ -787,5 +787,10 @@ namespace ManicDigger
         {
             server.InstallHttpModule(name, description, module);
         }
+
+        public int GetMaxPlayers()
+        {
+            return server.config.MaxClients;
+        }
     }
 }

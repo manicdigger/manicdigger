@@ -134,6 +134,7 @@ namespace ManicDigger
         string GetGroupColor(int player);
         string GetGroupName(int player);
         void InstallHttpModule(string name, Func<string> description, FragLabs.HTTP.IHttpModule module);
+        int GetMaxPlayers();
     }
 
     public enum SpecialKey
