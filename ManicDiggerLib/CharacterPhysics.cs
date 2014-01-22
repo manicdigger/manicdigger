@@ -30,7 +30,7 @@ namespace ManicDigger
             if (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() &&
                 !game.blocktypes[game.GetBlock(x, y, z + 1)].IsFluid()) { return true; }
             return game.GetBlock(x, y, z) == 0
-                || (d_Data.DrawType1[game.GetBlock(x, y, z)] == DrawType.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
+                || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == DrawType.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
                 || (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() && (!swimmingtop))
                 || d_Data.IsEmptyForPhysics[game.GetBlock(x, y, z)];
         }

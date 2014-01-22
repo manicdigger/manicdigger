@@ -2005,7 +2005,7 @@ namespace ManicDigger
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight)
+                || (MapUtil.IsValidPos(d_Map, x, y, z) && blocktypes[d_Map.GetBlock(x, y, z)].DrawType == DrawType.HalfHeight)
                 || (MapUtil.IsValidPos(d_Map, x, y, z) && d_Data.IsEmptyForPhysics[d_Map.GetBlock(x, y, z)]);
         }
         public float PICK_DISTANCE = 3.5f;
@@ -2670,7 +2670,7 @@ namespace ManicDigger
             {
                 return RailHeight;
             }
-            if (d_Data.DrawType1[d_Map.GetBlock(x, y, z)] == DrawType.HalfHeight)
+            if (blocktypes[d_Map.GetBlock(x, y, z)].DrawType == DrawType.HalfHeight)
             {
                 return 0.5f;
             }

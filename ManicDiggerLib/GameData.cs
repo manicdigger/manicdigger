@@ -37,7 +37,6 @@ namespace ManicDigger
         int[] StartInventoryAmount { get; }
         float[] Strength { get; }
         int[] DamageToPlayer { get; }
-        DrawType[] DrawType1 { get; }
 
         int[] DefaultMaterialSlots { get; }
         float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
@@ -137,7 +136,6 @@ namespace ManicDigger
             mStartInventoryAmount = new int[count];
             mStrength = new float[count];
             mDamageToPlayer = new int[count];
-            mDrawType = new DrawType[count];
             mWalkableType = new WalkableType[count];
 
             mDefaultMaterialSlots = new int[10];
@@ -168,7 +166,6 @@ namespace ManicDigger
         public int[] StartInventoryAmount { get { return mStartInventoryAmount; } }
         public float[] Strength { get { return mStrength; } }
         public int[] DamageToPlayer { get { return mDamageToPlayer; } }
-        public DrawType[] DrawType1 { get { return mDrawType; } }
         public WalkableType[] WalkableType1 { get { return mWalkableType; } }
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
@@ -379,7 +376,6 @@ namespace ManicDigger
             //StartInventoryAmount { get; }
             Strength[id] = b.Strength;
             DamageToPlayer[id] = b.DamageToPlayer;
-            DrawType1[id] = b.DrawType;
             WalkableType1[id] = b.WalkableType;
             SetSpecialBlock(b, id);
         }
