@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
+    <Compile Include="Client\CharacterPhysics.cs" />
     <Compile Include="Client\CitoGl.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="FrustumCulling.cs" />

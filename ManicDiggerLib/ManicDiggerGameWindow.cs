@@ -962,7 +962,7 @@ namespace ManicDigger
                         overheadcamera = true;
                         FreeMouse = true;
                         ENABLE_TPP_VIEW = true;
-                        playerdestination = player.playerposition;
+                        playerdestination = ToVector3(player.playerposition);
                     }
                     else if (cameratype == CameraType.Overhead)
                     {
@@ -1096,8 +1096,10 @@ namespace ManicDigger
                         PacketId = ClientPacketId.SpecialKey,
                         SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.SetSpawn },
                     });
-                    PlayerPositionSpawn = player.playerposition;
-                    player.playerposition = new Vector3((int)player.playerposition.X + 0.5f, player.playerposition.Y, (int)player.playerposition.Z + 0.5f);
+                    PlayerPositionSpawn = ToVector3(player.playerposition);
+                    player.playerposition.X = (int)player.playerposition.X + 0.5f;
+                    //player.playerposition.Y = player.playerposition.Y;
+                    player.playerposition.Z = (int)player.playerposition.Z + 0.5f;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
@@ -1170,6 +1172,11 @@ namespace ManicDigger
             else throw new Exception();
         }
 
+        public Vector3 ToVector3(Vector3Ref vector3Ref)
+        {
+            return new Vector3(vector3Ref.X, vector3Ref.Y, vector3Ref.Z);
+        }
+
         public void SetCamera(CameraType type)
         {
             if (type == CameraType.Fpp)
@@ -1190,7 +1197,7 @@ namespace ManicDigger
                 overheadcamera = true;
                 FreeMouse = true;
                 ENABLE_TPP_VIEW = true;
-                playerdestination = player.playerposition;
+                playerdestination = ToVector3(player.playerposition);
             }
         }
 
@@ -1565,12 +1572,12 @@ namespace ManicDigger
                         if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
                         if (Keyboard[GetKey(OpenTK.Input.Key.W)]) { angleup = true; }
                         if (Keyboard[GetKey(OpenTK.Input.Key.S)]) { angledown = true; }
-                        overheadcameraK.Center = player.playerposition;
+                        overheadcameraK.Center = ToVector3(player.playerposition);
                         m.Distance = overheadcameradistance;
                         m.AngleUp = angleup;
                         m.AngleDown = angledown;
                         overheadcameraK.Move(m, (float)e.Time);
-                        if ((player.playerposition - playerdestination).Length >= 1f)
+                        if ((ToVector3(player.playerposition) - playerdestination).Length >= 1f)
                         {
                             movedy += 1;
                             if (d_Physics.reachedwall)
@@ -1578,7 +1585,7 @@ namespace ManicDigger
                                 wantsjump = true;
                             }
                             //player orientation
-                            Vector3 q = playerdestination - player.playerposition;
+                            Vector3 q = playerdestination - ToVector3(player.playerposition);
                             float angle = VectorAngleGet(q);
                             player.playerorientation.Y = (float)Math.PI / 2 + angle;
                             player.playerorientation.X = (float)Math.PI;
@@ -1687,7 +1694,7 @@ namespace ManicDigger
                     explosions.Remove(k);
                 }
             }
-            var move = new CharacterPhysics.MoveInfo()
+            var move = new MoveInfo()
             {
                 movedx = movedx,
                 movedy = movedy,
@@ -2217,15 +2224,15 @@ namespace ManicDigger
                 //if not picked any object, and mouse button is pressed, then walk to destination.
                 playerdestination = pick2[0].pos;
             }
-            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - (player.playerposition)).Length <= pick_distance;
+            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - ToVector3(player.playerposition)).Length <= pick_distance;
             bool playertileempty = IsTileEmptyForPhysics(
-                        (int)ToMapPos(player.playerposition).X,
-                        (int)ToMapPos(player.playerposition).Y,
-                        (int)ToMapPos(player.playerposition).Z);
+                        (int)ToMapPos(ToVector3(player.playerposition)).X,
+                        (int)ToMapPos(ToVector3(player.playerposition)).Y,
+                        (int)ToMapPos(ToVector3(player.playerposition)).Z);
             bool playertileemptyclose = IsTileEmptyForPhysicsClose(
-                        (int)ToMapPos(player.playerposition).X,
-                        (int)ToMapPos(player.playerposition).Y,
-                        (int)ToMapPos(player.playerposition).Z);
+                        (int)ToMapPos(ToVector3(player.playerposition)).X,
+                        (int)ToMapPos(ToVector3(player.playerposition)).Y,
+                        (int)ToMapPos(ToVector3(player.playerposition)).Z);
             BlockPosSide pick0;
             if (pick2.Count > 0 &&
                 ((pickdistanceok && (playertileempty || (playertileemptyclose)))
@@ -3399,7 +3406,7 @@ namespace ManicDigger
             Vector3 forward = VectorTool.ToVectorInFixedSystem(0, 0, 1, player.playerorientation.X, player.playerorientation.Y);
             Vector3 cameraEye;
             Vector3 cameraTarget;
-            Vector3 playerEye = player.playerposition + new Vector3(0, CharacterEyesHeight, 0);
+            Vector3 playerEye = ToVector3(player.playerposition) + new Vector3(0, CharacterEyesHeight, 0);
             if (!ENABLE_TPP_VIEW)
             {
                 cameraEye = playerEye;
@@ -4020,12 +4027,12 @@ namespace ManicDigger
                 {
                     if (FollowId == LocalPlayerId)
                     {
-                        return player.playerposition;
+                        return ToVector3(player.playerposition);
                     }
                     var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
                     return curstate.position;
                 }
-                return player.playerposition;
+                return ToVector3(player.playerposition);
             }
             set
             {
@@ -4033,7 +4040,9 @@ namespace ManicDigger
                 {
                     return;
                 }
-                player.playerposition = value;
+                player.playerposition.X = value.X;
+                player.playerposition.Y = value.Y;
+                player.playerposition.Z = value.Z;
             }
         }
         public Vector3 LocalPlayerOrientation
@@ -4044,16 +4053,24 @@ namespace ManicDigger
                 {
                     if (FollowId == LocalPlayerId)
                     {
-                        return player.playerorientation;
+                        return new Vector3(
+                            player.playerorientation.X,
+                            player.playerorientation.Y,
+                            player.playerorientation.Z);
                     }
                     var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
                     return HeadingPitchToOrientation(curstate.heading, curstate.pitch);
                 }
-                return player.playerorientation;
+                return new Vector3(
+                    player.playerorientation.X,
+                    player.playerorientation.Y,
+                    player.playerorientation.Z);
             }
             set
             {
-                player.playerorientation = value;
+                player.playerorientation.X = value.X;
+                player.playerorientation.Y = value.Y;
+                player.playerorientation.Z = value.Z;
             }
         }
         #endregion
@@ -4187,7 +4204,7 @@ namespace ManicDigger
             Vector3 pos = SelectedBlockPosition;
             if (pos == new Vector3(-1, -1, -1))
             {
-                pos = player.playerposition;
+                pos = ToVector3(player.playerposition);
             }
             return new Vector3i((int)pos.X, (int)pos.Z, (int)pos.Y);
         }

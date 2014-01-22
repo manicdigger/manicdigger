@@ -5,21 +5,6 @@ using OpenTK;
 
 namespace ManicDigger
 {
-    public class CharacterPhysicsState
-    {
-        public float movedz = 0;
-        public Vector3 playerposition = new Vector3(15.5f, 40, 15.5f);
-        public Vector3 playerorientation = new Vector3((float)Math.PI, 0, 0);
-        public Vector3 curspeed;
-        public float jumpacceleration = 0;
-        public bool isplayeronground;
-    }
-    public class Acceleration
-    {
-        public float acceleration1 = 0.90f;
-        public float acceleration2 = 2f;
-        public float acceleration3 = 700f;
-    }
     public class CharacterPhysics
     {
         [Inject]
@@ -55,20 +40,6 @@ namespace ManicDigger
         public float WaterGravityMultiplier = 3;
         public bool enable_acceleration = true;
         public bool standingontheground;
-        public class MoveInfo
-        {
-            public bool ENABLE_FREEMOVE;
-            public bool Swimming;
-            public Acceleration acceleration;
-            public float movespeednow;
-            public int movedx;
-            public int movedy;
-            public bool ENABLE_NOCLIP;
-            public bool wantsjump;
-            public bool moveup;
-            public bool movedown;
-            public float jumpstartacceleration;
-        }
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push, float modelheight)
         {
             soundnow = false;
@@ -112,17 +83,23 @@ namespace ManicDigger
             }
             if (enable_acceleration)
             {
-                state.curspeed *= move.acceleration.acceleration1;
+                state.curspeed.X *= move.acceleration.acceleration1;
+                state.curspeed.Y *= move.acceleration.acceleration1;
+                state.curspeed.Z *= move.acceleration.acceleration1;
                 state.curspeed.X = MakeCloserToZero(state.curspeed.X, move.acceleration.acceleration2 * (float)dt);
                 state.curspeed.Y = MakeCloserToZero(state.curspeed.Y, move.acceleration.acceleration2 * (float)dt);
                 state.curspeed.Z = MakeCloserToZero(state.curspeed.Z, move.acceleration.acceleration2 * (float)dt);
                 diff1.Y += move.moveup ? 2 * move.movespeednow * (float)dt : 0;
                 diff1.Y -= move.movedown ? 2 * move.movespeednow * (float)dt : 0;
-                state.curspeed += Vector3.Multiply(diff1, move.acceleration.acceleration3 * (float)dt);
-                if (state.curspeed.Length > move.movespeednow)
+                state.curspeed.X += diff1.X * move.acceleration.acceleration3 * (float)dt;
+                state.curspeed.Y += diff1.Y * move.acceleration.acceleration3 * (float)dt;
+                state.curspeed.Z += diff1.Z * move.acceleration.acceleration3 * (float)dt;
+                if (state.curspeed.Length() > move.movespeednow)
                 {
                     state.curspeed.Normalize();
-                    state.curspeed *= move.movespeednow;
+                    state.curspeed.X *= move.movespeednow;
+                    state.curspeed.Y *= move.movespeednow;
+                    state.curspeed.Z *= move.movespeednow;
                 }
             }
             else
@@ -131,31 +108,46 @@ namespace ManicDigger
                 {
                     diff1.Normalize();
                 }
-                state.curspeed = diff1 * move.movespeednow;
+                state.curspeed.X = diff1.X * move.movespeednow;
+                state.curspeed.Y = diff1.Y * move.movespeednow;
+                state.curspeed.Z = diff1.Z * move.movespeednow;
             }
             Vector3 newposition;
             if (!(move.ENABLE_FREEMOVE))
             {
-                newposition = state.playerposition + state.curspeed;
+                newposition.X = state.playerposition.X + state.curspeed.X;
+                newposition.Y = state.playerposition.Y + state.curspeed.Y;
+                newposition.Z = state.playerposition.Z + state.curspeed.Z;
                 if (!move.Swimming)
                 {
                     newposition.Y = state.playerposition.Y;
                 }
                 //fast move when looking at the ground.
-                var diff = newposition - state.playerposition;
-                if (diff.Length > 0)
+                float diffx = newposition.X - state.playerposition.X;
+                float diffy = newposition.Y - state.playerposition.Y;
+                float diffz = newposition.Z - state.playerposition.Z;
+                float difflength = Length(diffx, diffy, diffz);
+                if (difflength > 0)
                 {
-                    diff.Normalize();
-                    diff *= 1 * state.curspeed.Length;
+                    diffx /= difflength;
+                    diffy /= difflength;
+                    diffz /= difflength;
+                    diffx *= state.curspeed.Length();
+                    diffy *= state.curspeed.Length();
+                    diffz *= state.curspeed.Length();
                 }
-                newposition = state.playerposition + diff * (float)dt;
+                newposition.X = state.playerposition.X + diffx * (float)dt;
+                newposition.Y = state.playerposition.Y + diffy * (float)dt;
+                newposition.Z = state.playerposition.Z + diffz * (float)dt;
             }
             else
             {
-                newposition = state.playerposition + (state.curspeed) * (float)dt;
+                newposition.X = state.playerposition.X + (state.curspeed.X) * (float)dt;
+                newposition.Y = state.playerposition.Y + (state.curspeed.Y) * (float)dt;
+                newposition.Z = state.playerposition.Z + (state.curspeed.Z) * (float)dt;
             }
             newposition.Y += state.movedz * (float)dt;
-            Vector3 previousposition = state.playerposition;
+            Vector3 previousposition = game.ToVector3(state.playerposition);
             if (!move.ENABLE_NOCLIP)
             {
                 this.swimmingtop = move.wantsjump && !move.Swimming;
@@ -163,7 +155,10 @@ namespace ManicDigger
                 // This needs to be cleaned up some other way.
                 try
                 {
-                    state.playerposition = WallSlide(state, state.playerposition, newposition, modelheight);
+                    Vector3 v = WallSlide(state, game.ToVector3(state.playerposition), newposition, modelheight);
+                    state.playerposition.X = v.X;
+                    state.playerposition.Y = v.Y;
+                    state.playerposition.Z = v.Z;
                 }
                 catch
                 {
@@ -172,7 +167,9 @@ namespace ManicDigger
             }
             else
             {
-                state.playerposition = newposition;
+                state.playerposition.X = newposition.X;
+                state.playerposition.Y = newposition.Y;
+                state.playerposition.Z = newposition.Z;
             }
             if (!(move.ENABLE_FREEMOVE || move.Swimming))
             {
@@ -210,6 +207,12 @@ namespace ManicDigger
                 state.movedz = Math.Max(0, state.movedz);
             }
         }
+
+        float Length(float x, float y, float z)
+        {
+            return Platform.Sqrt(x * x + y * y + z * z);
+        }
+
         float MakeCloserToZero(float a, float b)
         {
             if (a > 0)
