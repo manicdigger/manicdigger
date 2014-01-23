@@ -274,12 +274,16 @@ namespace ManicDigger.Mods
                 {
                     //return;
                 }
-                players[playerid].team = Team.Blue;
-                players[playerid].kills = 0;
+                if (players[playerid].team != Team.Blue)
+                {
+                    //Player changed team
+                    players[playerid].team = Team.Blue;
+                    players[playerid].kills = 0;
+                    m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
+                }
                 m.SetPlayerSpectator(playerid, false);
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
-                m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), BlueColor + " " + "Blue"));
                 ShowClassSelectionDialog(playerid);
             }
             if (widget == "Team2")
@@ -289,12 +293,16 @@ namespace ManicDigger.Mods
                 {
                     //return;
                 }
-                players[playerid].team = Team.Green;
-                players[playerid].kills = 0;
+                if (players[playerid].team != Team.Green)
+                {
+                    //Player changed team
+                    players[playerid].team = Team.Green;
+                    players[playerid].kills = 0;
+                    m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
+                }
                 m.SetPlayerSpectator(playerid, false);
                 UpdatePlayerModel(playerid);
                 m.EnableFreemove(playerid, false);
-                m.SendMessageToAll(string.Format("{0} joins {1}&f team.", m.GetPlayerName(playerid), GreenColor + " " + "Green"));
                 ShowClassSelectionDialog(playerid);
             }
             if (widget == "Team3")
@@ -595,9 +603,9 @@ namespace ManicDigger.Mods
             m.PlaySoundAt((int)m.GetPlayerPositionX(player),
                 (int)m.GetPlayerPositionY(player),
                 (int)m.GetPlayerPositionZ(player), "death.ogg");
-            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
             //Respawn(targetplayer);
             players[player].isdead = true;
+            m.SetPlayerHealth(player, m.GetPlayerMaxHealth(player), m.GetPlayerMaxHealth(player));
             m.FollowPlayer(player, player, true);
             UpdatePlayerModel(player);
         }
@@ -611,6 +619,10 @@ namespace ManicDigger.Mods
             if (warmode == WarMode.Edit)
             {
                 return;
+            }
+            if (players[player].isdead)
+            {
+                return;     //Don't allow dead players to respawn
             }
             m.SendMessage(player, "Respawn.");
             Die(player);
@@ -870,9 +882,9 @@ namespace ManicDigger.Mods
                     if (players[p].isdead)
                     {
                         m.SendDialog(p, "RespawnCountdown" + p, null);
-                        players[p].isdead = false;
                         m.FollowPlayer(p, -1, false);
                         Respawn(p);
+                        players[p].isdead = false;
                         UpdatePlayerModel(p);
                     }
                 }
@@ -982,6 +994,22 @@ namespace ManicDigger.Mods
                     }
                 }
                 m.SendMessage(p, senderColorString + sender + "&f: " + s);
+            }
+            if (players[player].team == Team.Spectator)
+            {
+                System.Console.WriteLine("[Spectator] " + sender + ": " + s);
+            }
+            else
+            {
+                if (toteam)
+                {
+                    if (players[player].team == Team.Blue)
+                        System.Console.WriteLine("[Blue] " + sender + ": " + s);
+                    else
+                        System.Console.WriteLine("[Green] " + sender + ": " + s);
+                }
+                else
+                    System.Console.WriteLine("[Players] " + sender + ": " + s);
             }
             m.LogChat(senderColorString + sender + "&f: " + s);
             return null;

@@ -372,7 +372,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(44, "Stair", new BlockType()
             {
                 AllTextures = "Stair",
-                DrawType = DrawType.Transparent,
+                DrawType = DrawType.HalfHeight,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
