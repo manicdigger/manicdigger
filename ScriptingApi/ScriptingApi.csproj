@@ -59,6 +59,7 @@
     <Compile Include="libHTTP\ResponseProducer.cs" />
     <Compile Include="ModManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServerClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="a.snk" />

@@ -774,8 +774,8 @@ namespace ManicDiggerServer
             }
 
             // Get related group from config file.
-            GameModeFortress.Group newGroup = serverClient.Groups.Find(
-                delegate(GameModeFortress.Group grp)
+            ManicDigger.Group newGroup = serverClient.Groups.Find(
+                delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -794,8 +794,8 @@ namespace ManicDiggerServer
             }
 
             // Get related client from config file
-            GameModeFortress.Client clientConfig = serverClient.Clients.Find(
-                delegate(GameModeFortress.Client client)
+            ManicDigger.Client clientConfig = serverClient.Clients.Find(
+                delegate(ManicDigger.Client client)
                 {
                     return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -816,7 +816,7 @@ namespace ManicDiggerServer
                 // Client is not yet in config file. Create a new entry.
                 if (clientConfig == null)
                 {
-                    clientConfig = new GameModeFortress.Client();
+                    clientConfig = new ManicDigger.Client();
                     clientConfig.Name = targetClient.playername;
                     clientConfig.Group = newGroup.Name;
                     serverClient.Clients.Add(clientConfig);
@@ -848,8 +848,8 @@ namespace ManicDiggerServer
             }
 
             // Get related group from config file.
-            GameModeFortress.Group newGroup = serverClient.Groups.Find(
-                delegate(GameModeFortress.Group grp)
+            ManicDigger.Group newGroup = serverClient.Groups.Find(
+                delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(newGroupName, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -868,8 +868,8 @@ namespace ManicDiggerServer
             }
 
             // Get related client from config file.
-            GameModeFortress.Client clientConfig = serverClient.Clients.Find(
-                delegate(GameModeFortress.Client client)
+            ManicDigger.Client clientConfig = serverClient.Clients.Find(
+                delegate(ManicDigger.Client client)
                 {
                     return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -887,7 +887,7 @@ namespace ManicDiggerServer
             // Target is at the moment not online. Create or change a entry in ServerClient.
             if (clientConfig == null)
             {
-                clientConfig = new GameModeFortress.Client();
+                clientConfig = new ManicDigger.Client();
                 clientConfig.Name = target;
                 clientConfig.Group = newGroup.Name;
                 serverClient.Clients.Add(clientConfig);
@@ -895,8 +895,8 @@ namespace ManicDiggerServer
             else
             {
                 // Check if target's current group is superior.
-                GameModeFortress.Group oldGroup = serverClient.Groups.Find(
-                    delegate(GameModeFortress.Group grp)
+                ManicDigger.Group oldGroup = serverClient.Groups.Find(
+                    delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(clientConfig.Group);
                 }
@@ -929,8 +929,8 @@ namespace ManicDiggerServer
             }
 
             // Get related client from config file
-            GameModeFortress.Client targetClient = serverClient.Clients.Find(
-                delegate(GameModeFortress.Client client)
+            ManicDigger.Client targetClient = serverClient.Clients.Find(
+                delegate(ManicDigger.Client client)
                 {
                     return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -939,8 +939,8 @@ namespace ManicDiggerServer
             if (targetClient != null)
             {
                 // Get target's group.
-                GameModeFortress.Group targetGroup = serverClient.Groups.Find(
-                    delegate(GameModeFortress.Group grp)
+                ManicDigger.Group targetGroup = serverClient.Groups.Find(
+                    delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(targetClient.Group);
                 }
@@ -980,8 +980,8 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
                 return false;
             }
-            GameModeFortress.Group targetGroup = serverClient.Groups.Find(
-                delegate(GameModeFortress.Group grp)
+            ManicDigger.Group targetGroup = serverClient.Groups.Find(
+                delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(targetGroupString, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -1293,8 +1293,8 @@ namespace ManicDiggerServer
             // Target is at the moment not online. Check if there is an entry in ServerClient
 
             // Get related client from config file
-            GameModeFortress.Client targetClient = serverClient.Clients.Find(
-                delegate(GameModeFortress.Client client)
+            ManicDigger.Client targetClient = serverClient.Clients.Find(
+                delegate(ManicDigger.Client client)
                 {
                     return client.Name.Equals(target, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -1304,8 +1304,8 @@ namespace ManicDiggerServer
             if (targetClient != null)
             {
                 // Get target's group.
-                GameModeFortress.Group targetGroup = serverClient.Groups.Find(
-                    delegate(GameModeFortress.Group grp)
+                ManicDigger.Group targetGroup = serverClient.Groups.Find(
+                    delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(targetClient.Group);
                 }
@@ -1458,7 +1458,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of groups:");
-                    foreach (GameModeFortress.Group currenGroup in serverClient.Groups)
+                    foreach (ManicDigger.Group currenGroup in serverClient.Groups)
                     {
                         SendMessage(sourceClientId, currenGroup.ToString());
                     }
@@ -1470,7 +1470,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of saved clients:");
-                    foreach (GameModeFortress.Client currenClient in serverClient.Clients)
+                    foreach (ManicDigger.Client currenClient in serverClient.Clients)
                     {
 
                         SendMessage(sourceClientId, currenClient.ToString());
@@ -1802,7 +1802,7 @@ namespace ManicDiggerServer
             {
                 case "-default":
                 case "-d":
-                    serverClient.DefaultSpawn = new GameModeFortress.Spawn() {x = x, y = y, z = z};
+                    serverClient.DefaultSpawn = new ManicDigger.Spawn() {x = x, y = y, z = z};
                     SaveServerClient();
                     // Inform related players.
                     bool hasEntry = false;
@@ -1815,7 +1815,7 @@ namespace ManicDiggerServer
                         }
                         else
                         {
-                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            foreach (ManicDigger.Client client in serverClient.Clients)
                             {
                                 if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
                                 {
@@ -1838,8 +1838,8 @@ namespace ManicDiggerServer
                 case "-group":
                 case "-g":
                     // Check if group even exists.
-                    GameModeFortress.Group targetGroup = serverClient.Groups.Find(
-                        delegate(GameModeFortress.Group grp)
+                    ManicDigger.Group targetGroup = serverClient.Groups.Find(
+                        delegate(ManicDigger.Group grp)
                     {
                         return grp.Name.Equals(target,StringComparison.InvariantCultureIgnoreCase);
                     }
@@ -1849,7 +1849,7 @@ namespace ManicDiggerServer
                         SendMessage(sourceClientId, string.Format("{0}Group {1} not found.", colorError, target));
                         return false;
                     }
-                    targetGroup.Spawn = new GameModeFortress.Spawn()
+                    targetGroup.Spawn = new ManicDigger.Spawn()
                     {
                         x = x,
                         y = y,
@@ -1863,7 +1863,7 @@ namespace ManicDiggerServer
                         if (k.Value.clientGroup.Name.Equals(targetGroup.Name))
                         {
                             // Inform only if there is no spawn set under clients.
-                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            foreach (ManicDigger.Client client in serverClient.Clients)
                             {
                                 if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
                                 {
@@ -1894,8 +1894,8 @@ namespace ManicDiggerServer
                     }
                     string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
-                    GameModeFortress.Client clientEntry = serverClient.Clients.Find(
-                        delegate(GameModeFortress.Client client)
+                    ManicDigger.Client clientEntry = serverClient.Clients.Find(
+                        delegate(ManicDigger.Client client)
                         {
                             return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
                         }
@@ -1906,7 +1906,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     // Change or add spawn entry of client.
-                    clientEntry.Spawn = new GameModeFortress.Spawn()
+                    clientEntry.Spawn = new ManicDigger.Spawn()
                     {
                         x = x,
                         y = y,
@@ -1958,8 +1958,8 @@ namespace ManicDiggerServer
             }
 
             // Get related client entry.
-            GameModeFortress.Client clientEntry = serverClient.Clients.Find(
-                delegate(GameModeFortress.Client client)
+            ManicDigger.Client clientEntry = serverClient.Clients.Find(
+                delegate(ManicDigger.Client client)
                 {
                     return client.Name.Equals(GetClient(sourceClientId).playername, StringComparison.InvariantCultureIgnoreCase);
                 }
@@ -1967,13 +1967,13 @@ namespace ManicDiggerServer
             // TODO: When guests have "set_home" privilege, count of client entries can quickly grow.
             if (clientEntry == null)
             {
-                clientEntry = new GameModeFortress.Client();
+                clientEntry = new ManicDigger.Client();
                 clientEntry.Name = GetClient(sourceClientId).playername;
                 clientEntry.Group = GetClient(sourceClientId).clientGroup.Name;
                 serverClient.Clients.Add(clientEntry);
             }
             // Change or add spawn entry of client.
-            clientEntry.Spawn = new GameModeFortress.Spawn()
+            clientEntry.Spawn = new ManicDigger.Spawn()
             {
                 x = x,
                 y = y,
@@ -2190,7 +2190,7 @@ namespace ManicDiggerServer
                         }
                         else
                         {
-                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            foreach (ManicDigger.Client client in serverClient.Clients)
                             {
                                 if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
                                 {
@@ -2213,8 +2213,8 @@ namespace ManicDiggerServer
                 case "-group":
                 case "-g":
                     // Check if group even exists.
-                    GameModeFortress.Group targetGroup = serverClient.Groups.Find(
-                        delegate(GameModeFortress.Group grp)
+                    ManicDigger.Group targetGroup = serverClient.Groups.Find(
+                        delegate(ManicDigger.Group grp)
                     {
                         return grp.Name.Equals(target,StringComparison.InvariantCultureIgnoreCase);
                     }
@@ -2233,7 +2233,7 @@ namespace ManicDiggerServer
                         if (k.Value.clientGroup.Name.Equals(targetGroup.Name))
                         {
                             // Inform only if there is no spawn set under clients.
-                            foreach (GameModeFortress.Client client in serverClient.Clients)
+                            foreach (ManicDigger.Client client in serverClient.Clients)
                             {
                                 if (client.Name.Equals(k.Value.playername, StringComparison.InvariantCultureIgnoreCase))
                                 {
@@ -2264,8 +2264,8 @@ namespace ManicDiggerServer
                     }
                     string targetClientPlayername = targetClient == null ? target : targetClient.playername;
 
-                    GameModeFortress.Client clientEntry = serverClient.Clients.Find(
-                        delegate(GameModeFortress.Client client)
+                    ManicDigger.Client clientEntry = serverClient.Clients.Find(
+                        delegate(ManicDigger.Client client)
                         {
                             return client.Name.Equals(targetClientPlayername, StringComparison.InvariantCultureIgnoreCase);
                         }
