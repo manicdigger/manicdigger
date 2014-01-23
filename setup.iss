@@ -18,6 +18,8 @@ OutputBaseFilename=setup
 Compression=lzma
 SolidCompression=yes
 OutputDir=output2
+WizardImageFile=setup_WizardImage.bmp
+WizardSmallImageFile=setup_WizardSmallImage.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
