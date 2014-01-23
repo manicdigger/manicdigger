@@ -312,7 +312,7 @@ namespace GameModeFortress
         {
             List<Group > defaultGroups = new List<Group>();
             // default guest group
-            GameModeFortress.Group guest = new GameModeFortress.Group();
+            ManicDigger.Group guest = new ManicDigger.Group();
             guest.Name = "Guest";
             guest.Level = 0;
             guest.GroupPrivileges = new List<string>();
@@ -326,7 +326,7 @@ namespace GameModeFortress
             guest.GroupColor = ClientColor.Grey;
             defaultGroups.Add(guest);
             // default builder group
-            GameModeFortress.Group builder = new GameModeFortress.Group();
+            ManicDigger.Group builder = new ManicDigger.Group();
             builder.Name = "Builder";
             builder.Level = 1;
             builder.GroupPrivileges = new List<string>();
@@ -341,7 +341,7 @@ namespace GameModeFortress
             builder.GroupColor = ClientColor.Green;
             defaultGroups.Add(builder);
             // default moderator group
-            GameModeFortress.Group moderator = new GameModeFortress.Group();
+            ManicDigger.Group moderator = new ManicDigger.Group();
             moderator.Name = "Moderator";
             moderator.Level = 2;
             moderator.GroupPrivileges = new List<string>();
@@ -372,7 +372,7 @@ namespace GameModeFortress
             moderator.GroupColor = ClientColor.Cyan;
             defaultGroups.Add(moderator);
             // default admin group
-            GameModeFortress.Group admin = new GameModeFortress.Group();
+            ManicDigger.Group admin = new ManicDigger.Group();
             admin.Name = "Admin";
             admin.Level = 3;
             admin.GroupPrivileges = new List<string>();

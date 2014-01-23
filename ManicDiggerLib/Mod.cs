@@ -792,5 +792,10 @@ namespace ManicDigger
         {
             return server.config.MaxClients;
         }
+
+        public ServerClient GetServerClient()
+        {
+            return server.serverClient;
+        }
     }
 }

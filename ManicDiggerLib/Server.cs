@@ -243,7 +243,7 @@ namespace ManicDiggerServer
                 Id = this.serverConsoleId,
                 playername = "Server"
             };
-            GameModeFortress.Group serverGroup = new GameModeFortress.Group();
+            ManicDigger.Group serverGroup = new ManicDigger.Group();
             serverGroup.Name = "Server";
             serverGroup.Level = 255;
             serverGroup.GroupPrivileges = new List<string>();
@@ -1834,11 +1834,11 @@ if (sent >= unknown.Count) { break; }
                         // Assign group to new client
                         //Check if client is in ServerClient.xml and assign corresponding group.
                         bool exists = false;
-                        foreach (GameModeFortress.Client client in serverClient.Clients)
+                        foreach (ManicDigger.Client client in serverClient.Clients)
                         {
                             if (client.Name.Equals(username, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                foreach (GameModeFortress.Group clientGroup in serverClient.Groups)
+                                foreach (ManicDigger.Group clientGroup in serverClient.Groups)
                                 {
                                     if (clientGroup.Name.Equals(client.Group))
                                     {
@@ -2226,14 +2226,14 @@ if (sent >= unknown.Count) { break; }
         public Vector3i GetPlayerSpawnPositionMul32(int clientid)
         {
             Vector3i position;
-            GameModeFortress.Spawn playerSpawn = null;
+            ManicDigger.Spawn playerSpawn = null;
             // Check if there is a spawn entry for his assign group
             if (clients[clientid].clientGroup.Spawn != null)
             {
                 playerSpawn = clients[clientid].clientGroup.Spawn;
             }
             // Check if there is an entry in clients with spawn member (overrides group spawn).
-            foreach (GameModeFortress.Client client in serverClient.Clients)
+            foreach (ManicDigger.Client client in serverClient.Clients)
             {
                 if (client.Name.Equals(clients[clientid].playername, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -2630,7 +2630,7 @@ if (sent >= unknown.Count) { break; }
             }
 
             // Check if there is an entry in clients with fill-limit member (overrides group fill-limit).
-            foreach (GameModeFortress.Client clientConfig in serverClient.Clients)
+            foreach (ManicDigger.Client clientConfig in serverClient.Clients)
             {
                 if (clientConfig.Name.Equals(client.playername, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -3295,9 +3295,9 @@ if (sent >= unknown.Count) { break; }
             public bool IsPlayerStatsDirty = true;
             public int FillLimit = 500;
             //public List<byte[]> blobstosend = new List<byte[]>();
-            public GameModeFortress.Group clientGroup;
+            public ManicDigger.Group clientGroup;
             public bool IsBot;
-            public void AssignGroup(GameModeFortress.Group newGroup)
+            public void AssignGroup(ManicDigger.Group newGroup)
             {
                 this.clientGroup = newGroup;
                 this.privileges.Clear();
@@ -3361,11 +3361,11 @@ if (sent >= unknown.Count) { break; }
         }
 
         public ServerClient serverClient;
-        public GameModeFortress.Group defaultGroupGuest;
-        public GameModeFortress.Group defaultGroupRegistered;
+        public ManicDigger.Group defaultGroupGuest;
+        public ManicDigger.Group defaultGroupRegistered;
         public Vector3i defaultPlayerSpawn;
 
-        private Vector3i SpawnToVector3i(GameModeFortress.Spawn spawn)
+        private Vector3i SpawnToVector3i(ManicDigger.Spawn spawn)
         {
             int x = spawn.x;
             int y = spawn.y;
@@ -3449,7 +3449,7 @@ if (sent >= unknown.Count) { break; }
             }
 
             this.defaultGroupGuest = serverClient.Groups.Find(
-                delegate(GameModeFortress.Group grp)
+                delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(serverClient.DefaultGroupGuests);
                 }
@@ -3459,7 +3459,7 @@ if (sent >= unknown.Count) { break; }
                 throw new Exception("Default guest group not found!");
             }
             this.defaultGroupRegistered = serverClient.Groups.Find(
-                delegate(GameModeFortress.Group grp)
+                delegate(ManicDigger.Group grp)
                 {
                     return grp.Name.Equals(serverClient.DefaultGroupRegistered);
                 }

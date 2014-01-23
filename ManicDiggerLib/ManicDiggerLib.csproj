@@ -160,7 +160,6 @@
     <Compile Include="ScriptConsole.cs" />
     <Compile Include="ScriptInterpreter.cs" />
     <Compile Include="Server.cs" />
-    <Compile Include="ServerClient.cs" />
     <Compile Include="ServerCommand.cs" />
     <Compile Include="ServerConfig.cs" />
     <Compile Include="ServerConsole.cs" />
