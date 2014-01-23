@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace GameModeFortress
+namespace ManicDigger
 {
     [XmlRoot(ElementName = "ManicDiggerServerClient")]
     public class ServerClient
