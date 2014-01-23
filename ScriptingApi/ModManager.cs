@@ -599,6 +599,12 @@ namespace ManicDigger
         {
             return DrawType == DrawType.Fluid;
         }
+
+        public bool IsEmptyForPhysics()
+        {
+            return (DrawType == DrawType.Ladder)
+                || (WalkableType != WalkableType.Solid && WalkableType != WalkableType.Fluid);
+        }
     }
 
     public enum PistolType

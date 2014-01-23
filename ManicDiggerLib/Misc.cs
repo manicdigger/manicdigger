@@ -184,27 +184,6 @@ namespace ManicDigger
             return new FastColor(A, R, G, B);
         }
     }
-    public static class VectorTool
-    {
-        public static Vector3 ToVectorInFixedSystem(float dx, float dy, float dz, double orientationx, double orientationy)
-        {
-            //Don't calculate for nothing ...
-            if (dx == 0.0f & dy == 0.0f && dz == 0.0f)
-                return new Vector3();
-
-            //Convert to Radian : 360° = 2PI
-            double xRot = orientationx;//Math.toRadians(orientation.X);
-            double yRot = orientationy;//Math.toRadians(orientation.Y);
-
-            //Calculate the formula
-            float x = (float)(dx * Math.Cos(yRot) + dy * Math.Sin(xRot) * Math.Sin(yRot) - dz * Math.Cos(xRot) * Math.Sin(yRot));
-            float y = (float)(+dy * Math.Cos(xRot) + dz * Math.Sin(xRot));
-            float z = (float)(dx * Math.Sin(yRot) - dy * Math.Sin(xRot) * Math.Cos(yRot) + dz * Math.Cos(xRot) * Math.Cos(yRot));
-
-            //Return the vector expressed in the global axis system
-            return new Vector3(x, y, z);
-        }
-    }
     public static class MyStream
     {
         public static string[] ReadAllLines(Stream s)

@@ -9,8 +9,6 @@ namespace ManicDigger
     {
         [Inject]
         public ManicDiggerGameWindow game;
-        [Inject]
-        public IGameData d_Data;
         bool IsTileEmptyForPhysics(int x, int y, int z)
         {
             if (z >= game.MapSizeZ)
@@ -32,7 +30,7 @@ namespace ManicDigger
             return game.GetBlock(x, y, z) == 0
                 || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == DrawType.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
                 || (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() && (!swimmingtop))
-                || d_Data.IsEmptyForPhysics[game.GetBlock(x, y, z)];
+                || game.blocktypes[game.GetBlock(x, y, z)].IsEmptyForPhysics();
         }
         public static float walldistance = 0.3f;
         //public static float characterheight = 1.5f;
@@ -43,10 +41,15 @@ namespace ManicDigger
         public void Move(CharacterPhysicsState state, MoveInfo move, double dt, out bool soundnow, Vector3 push, float modelheight)
         {
             soundnow = false;
-            Vector3 diff1 = VectorTool.ToVectorInFixedSystem
+            Vector3Ref diff1ref = new Vector3Ref();
+            VectorTool.ToVectorInFixedSystem
                 (move.movedx * move.movespeednow * (float)dt,
                 0,
-                move.movedy * move.movespeednow * (float)dt, state.playerorientation.X, state.playerorientation.Y);
+                move.movedy * move.movespeednow * (float)dt, state.playerorientation.X, state.playerorientation.Y, diff1ref);
+            Vector3 diff1 = new Vector3();
+            diff1.X = diff1ref.X;
+            diff1.Y = diff1ref.Y;
+            diff1.Z = diff1ref.Z;
             if (push.Length > 0.01f)
             {
                 push.Normalize();

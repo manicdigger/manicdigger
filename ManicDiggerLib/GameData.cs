@@ -12,7 +12,6 @@ namespace ManicDigger
     }
     public interface IGameDataPhysics
     {
-        bool[] IsEmptyForPhysics { get; }
         bool[] IsWater { get; }
     }
     public interface IGameData : IGameDataLight, IGameDataPhysics
@@ -99,7 +98,6 @@ namespace ManicDigger
             mIsValid = new bool[count];
             mIsTransparentForLight = new bool[count];
             mIsTransparentFully = new bool[count];
-            mIsEmptyForPhysics = new bool[count];
             mTextureId = new int[count, 6];
             mTextureIdForInventory = new int[count];
             mIsBuildable = new bool[count];
@@ -141,7 +139,6 @@ namespace ManicDigger
             mDefaultMaterialSlots = new int[10];
             mLightLevels = new float[16];
             mIsValid[0] = true;
-            mIsEmptyForPhysics[0] = true;
         }
 
         public bool[] IsWater { get { return mIsWater; } }
@@ -150,7 +147,6 @@ namespace ManicDigger
         public bool[] IsValid { get { return mIsValid; } }
         public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
         public bool[] IsTransparentFully { get { return mIsTransparentFully; } }
-        public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
         public int[,] TextureId { get { return mTextureId; } }
         public int[] TextureIdForInventory { get { return mTextureIdForInventory; } }
         public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
@@ -177,7 +173,6 @@ namespace ManicDigger
         private bool[] mIsValid;
         private bool[] mIsTransparentForLight;
         private bool[] mIsTransparentFully;
-        private bool[] mIsEmptyForPhysics;
         private int[,] mTextureId;
         private int[] mTextureIdForInventory;
         private bool[] mIsBuildable;
@@ -324,15 +319,6 @@ namespace ManicDigger
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
             IsTransparentForLight[id] = b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
-
-            if ((b.DrawType == DrawType.Ladder) || (b.WalkableType != WalkableType.Solid && b.WalkableType != WalkableType.Fluid))
-            {
-                IsEmptyForPhysics[id] = true;
-            }
-            else
-            {
-                IsEmptyForPhysics[id] = false;
-            }
 
             IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant)
                  && (b.DrawType != DrawType.OpenDoorLeft) && (b.DrawType != DrawType.OpenDoorRight) && (b.DrawType != DrawType.ClosedDoor);
