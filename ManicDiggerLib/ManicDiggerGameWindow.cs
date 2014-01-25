@@ -6352,7 +6352,11 @@ namespace ManicDigger
         public float size;
         public override int GetHashCode()
         {
-            return text.GetHashCode() % size.GetHashCode();
+            if (text == null)
+            {
+                return 0;
+            }
+            return text.GetHashCode() ^ size.GetHashCode();
         }
         public override bool Equals(object obj)
         {
