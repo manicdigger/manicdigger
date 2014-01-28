@@ -5,3 +5,13 @@ obj
 _ReSharper.*
 *.user
 *.suo
+
+/Packet.Serializer.cs
+
+/ManicDiggerLib/Mods/current.txt
+
+/Packet.Serializer.ci.cs
+
+/Packet.cs
+
+/ProtocolParser.cs

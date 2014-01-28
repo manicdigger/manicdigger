@@ -1,0 +1,12 @@
+package Packet;
+
+    message SoundSet
+    {
+        repeated string walk = 1;
+        repeated string break1 = 2;
+        repeated string build = 3;
+        repeated string clone = 4;
+        repeated string shoot = 5;
+        repeated string shootEnd = 6;
+        repeated string reload = 7;
+    }

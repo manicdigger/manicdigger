@@ -153,8 +153,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup>
-    <PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">cd $(SolutionDir)
-cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
-  </PropertyGroup>
 </Project>

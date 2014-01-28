@@ -183,51 +183,51 @@ namespace ManicDigger.Hud
       {
          switch (e.Key)
          {
-            case Key.Up:
+             case OpenTK.Input.Key.Up:
                m_editor.MoveCursorUpDown(-1);
                break;
-            case Key.Down:
+            case OpenTK.Input.Key.Down:
                m_editor.MoveCursorUpDown(1);
                break;
-            case Key.Right:
+            case OpenTK.Input.Key.Right:
                m_editor.MoveCursorLeftRight(1);
                break;
-            case Key.Left:
+            case OpenTK.Input.Key.Left:
                m_editor.MoveCursorLeftRight(-1);
                break;
-            case Key.BackSpace:
+            case OpenTK.Input.Key.BackSpace:
                m_editor.BackSpace();
                break;
-            case Key.Delete:
+            case OpenTK.Input.Key.Delete:
                m_editor.Delete();
                break;
-            case Key.Home:
+            case OpenTK.Input.Key.Home:
                m_editor.CursorCol = 0;
                break;
-            case Key.End:
+            case OpenTK.Input.Key.End:
                m_editor.GoToEndOfLine();
                break;
-            case Key.ShiftLeft:
-            case Key.ShiftRight:
+            case OpenTK.Input.Key.ShiftLeft:
+            case OpenTK.Input.Key.ShiftRight:
                m_editor.IsShiftKeyDown=true;
                break;
-            case Key.ControlLeft:
-            case Key.ControlRight:
+            case OpenTK.Input.Key.ControlLeft:
+            case OpenTK.Input.Key.ControlRight:
                m_editor.IsCtrlKeyDown = true;
                break;
-            case Key.C:
+            case OpenTK.Input.Key.C:
                if (m_editor.IsCtrlKeyDown)
                   m_editor.Copy();
                break;
-            case Key.X:
+            case OpenTK.Input.Key.X:
                if (m_editor.IsCtrlKeyDown)
                   m_editor.Cut();
                break;
-            case Key.V:
+            case OpenTK.Input.Key.V:
                if (m_editor.IsCtrlKeyDown)
                   m_editor.Paste();
                break;
-            case Key.A:
+            case OpenTK.Input.Key.A:
                if (m_editor.IsCtrlKeyDown)
                   m_editor.SelectAll();
                break;
@@ -238,12 +238,12 @@ namespace ManicDigger.Hud
       {
          switch (e.Key)
          {
-            case Key.ShiftLeft:
-            case Key.ShiftRight:
+             case OpenTK.Input.Key.ShiftLeft:
+            case OpenTK.Input.Key.ShiftRight:
                m_editor.IsShiftKeyDown = false;
                break;
-            case Key.ControlLeft:
-            case Key.ControlRight:
+            case OpenTK.Input.Key.ControlLeft:
+            case OpenTK.Input.Key.ControlRight:
                m_editor.IsCtrlKeyDown = false;
                break;
          }

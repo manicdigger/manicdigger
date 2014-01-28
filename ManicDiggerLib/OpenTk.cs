@@ -171,21 +171,21 @@ namespace CitoGl
             }
         }
 
-        int ToGlKey(Key key)
+        int ToGlKey(OpenTK.Input.Key key)
         {
             switch (key)
             {
-                case Key.Left:
+                case OpenTK.Input.Key.Left:
                     return GlKeys.Left;
-                case Key.Up:
+                case OpenTK.Input.Key.Up:
                     return GlKeys.Up;
-                case Key.Right:
+                case OpenTK.Input.Key.Right:
                     return GlKeys.Right;
-                case Key.Down:
+                case OpenTK.Input.Key.Down:
                     return GlKeys.Down;
-                case Key.PageUp:
+                case OpenTK.Input.Key.PageUp:
                     return GlKeys.PageUp;
-                case Key.PageDown:
+                case OpenTK.Input.Key.PageDown:
                     return GlKeys.PageDown;
             }
             return (int)key;
@@ -1125,7 +1125,7 @@ namespace CitoGl
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            if (Keyboard[Key.Escape])
+            if (Keyboard[OpenTK.Input.Key.Escape])
             {
                 Exit();
             }

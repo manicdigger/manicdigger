@@ -78,6 +78,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Packet.Serializer.ci.cs">
+      <Link>Client\Packet.Serializer.ci.cs</Link>
+    </Compile>
     <Compile Include="Audio.cs" />
     <Compile Include="CharacterPhysics.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
@@ -219,6 +222,9 @@
       <DependentUpon>MultiplayerForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <None Include="..\Packet.proto">
+      <Link>Packet.proto</Link>
+    </None>
     <None Include="Forms\PasswordForm.resx">
       <DependentUpon>PasswordForm.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -248,4 +254,20 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <!-- Fix: SolutionDir is missing when building from under Xamarin Studio -->
+  <Choose>
+    <When Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">
+      <PropertyGroup>
+        <SolutionDir>$(MSBuildProjectDirectory)/../</SolutionDir>
+      </PropertyGroup>
+    </When>
+  </Choose>
+  <PropertyGroup>
+    <PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">cd $(SolutionDir)
+cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">cd $(SolutionDir)
+sh ./BuildCito.sh</PreBuildEvent>
+  </PropertyGroup>
 </Project>
