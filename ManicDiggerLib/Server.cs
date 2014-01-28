@@ -1750,19 +1750,21 @@ if (sent >= unknown.Count) { break; }
         private void TryReadPacket(int clientid, byte[] data)
         {
             Client c = clients[clientid];
-            PacketClient packet = Serializer.Deserialize<PacketClient>(new MemoryStream(data));
+            //PacketClient packet = Serializer.Deserialize<PacketClient>(new MemoryStream(data));
+            Packet_Client packet = new Packet_Client();
+            Packet_ClientSerializer.DeserializeBuffer(data, data.Length, packet);
             if (config.ServerMonitor && !this.serverMonitor.CheckPacket(clientid, packet))
             {
                 return;
             }
-            switch (packet.PacketId)
+            switch (packet.Id)
             {
-                case ClientPacketId.PingReply:
+                case Packet_ClientIdEnum.PingReply:
                     clients[clientid].Ping.Receive();
                     clients[clientid].LastPing = (float)clients[clientid].Ping.RoundtripTime.TotalSeconds;
                     this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTime.TotalMilliseconds);
                     break;
-                case ClientPacketId.PlayerIdentification:
+                case Packet_ClientIdEnum.PlayerIdentification:
                     {
                         if (config.IsPasswordProtected() && packet.Identification.ServerPassword != config.Password)
                         {
@@ -1874,7 +1876,7 @@ if (sent >= unknown.Count) { break; }
                         }
                     }
                     break;
-                case ClientPacketId.RequestBlob:
+                case Packet_ClientIdEnum.RequestBlob:
                     {
                         // Set player's spawn position
                         Vector3i position = GetPlayerSpawnPositionMul32(clientid);
@@ -1908,7 +1910,7 @@ if (sent >= unknown.Count) { break; }
                         NotifySeason(clientid);
                     }
                     break;
-                case ClientPacketId.SetBlock:
+                case Packet_ClientIdEnum.SetBlock:
                     {
                         int x = packet.SetBlock.X;
                         int y = packet.SetBlock.Y;
@@ -1925,7 +1927,7 @@ if (sent >= unknown.Count) { break; }
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             break;
                         }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == BlockSetMode.Create || packet.SetBlock.Mode == BlockSetMode.Destroy)
+                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
                             && !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
                         {
                             SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
@@ -1939,7 +1941,7 @@ if (sent >= unknown.Count) { break; }
                         BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                     }
                     break;
-                case ClientPacketId.FillArea:
+                case Packet_ClientIdEnum.FillArea:
                     {
                         if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
                         {
@@ -1973,7 +1975,7 @@ if (sent >= unknown.Count) { break; }
                             d_Map.GetBlock(a.x, a.y, a.z)));
                     }
                     break;
-                case ClientPacketId.PositionandOrientation:
+                case Packet_ClientIdEnum.PositionandOrientation:
                     {
                         var p = packet.PositionAndOrientation;
                         clients[clientid].PositionMul32GlX = p.X;
@@ -1987,13 +1989,13 @@ if (sent >= unknown.Count) { break; }
                             {
                                 if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
                                 {
-                                    SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, p.Heading, p.Pitch);
+                                    SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch);
                                 }
                             }
                         }
                     }
                     break;
-                case ClientPacketId.Message:
+                case Packet_ClientIdEnum.Message:
                     {
                         packet.Message.Message = packet.Message.Message.Trim();
                         // server command
@@ -2015,7 +2017,7 @@ if (sent >= unknown.Count) { break; }
                             string message = packet.Message.Message;
                             for (int i = 0; i < modEventHandlers.onplayerchat.Count; i++)
                             {
-                                message = modEventHandlers.onplayerchat[i](clientid, message, packet.Message.IsTeamchat);
+                                message = modEventHandlers.onplayerchat[i](clientid, message, packet.Message.IsTeamchat != 0);
                             }
                             if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
                             {
@@ -2033,13 +2035,13 @@ if (sent >= unknown.Count) { break; }
                         }
                     }
                     break;
-                case ClientPacketId.Craft:
+                case Packet_ClientIdEnum.Craft:
                     DoCommandCraft(true, packet.Craft);
                     break;
-                case ClientPacketId.InventoryAction:
+                case Packet_ClientIdEnum.InventoryAction:
                     DoCommandInventory(clientid, packet.InventoryAction);
                     break;
-                case ClientPacketId.Health:
+                case Packet_ClientIdEnum.Health:
                     {
                         //todo server side
                         var stats = GetPlayerStats(clients[clientid].playername);
@@ -2053,31 +2055,31 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].IsPlayerStatsDirty = true;
                     }
                     break;
-                case ClientPacketId.MonsterHit:
+                case Packet_ClientIdEnum.MonsterHit:
                     HitMonsters(clientid, packet.Health.CurrentHealth);
                     break;
-                case ClientPacketId.DialogClick:
+                case Packet_ClientIdEnum.DialogClick:
                     for (int i = 0; i < modEventHandlers.ondialogclick.Count; i++)
                     {
-                        modEventHandlers.ondialogclick[i](clientid, packet.DialogClick.WidgetId);
+                        modEventHandlers.ondialogclick[i](clientid, packet.DialogClick_.WidgetId);
                     }
                     break;
-                case ClientPacketId.Shot:
-                    PlaySoundAtExceptPlayer((int)packet.Shot.FromX, (int)packet.Shot.FromZ, (int)packet.Shot.FromY, (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
+                case Packet_ClientIdEnum.Shot:
+                    PlaySoundAtExceptPlayer((int)DeserializeFloat(packet.Shot.FromX), (int)DeserializeFloat(packet.Shot.FromZ), (int)DeserializeFloat(packet.Shot.FromY), (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
                     if (BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed == 0)
                     {
-                        SendBullet(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
-                            packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ, 150);
+                        SendBullet(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
+                           DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ), 150);
                     }
                     else
                     {
-                        Vector3 from = new Vector3(packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ);
-                        Vector3 to = new Vector3(packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ);
+                        Vector3 from = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat( packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
+                        Vector3 to = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
                         Vector3 v = to - from;
                         v.Normalize();
                         v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
-                        SendProjectile(clientid, packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ,
-                            v.X, v.Y, v.Z, packet.Shot.WeaponBlock, packet.Shot.ExplodesAfter);
+                        SendProjectile(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
+                            v.X, v.Y, v.Z, packet.Shot.WeaponBlock, DeserializeFloat(packet.Shot.ExplodesAfter));
                         return;
                     }
                     for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
@@ -2091,7 +2093,7 @@ if (sent >= unknown.Count) { break; }
                             //client-side shooting
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                modEventHandlers.onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.HitHead);
+                                modEventHandlers.onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.IsHitHead != 0);
                             }
                         }
                         return;
@@ -2103,8 +2105,8 @@ if (sent >= unknown.Count) { break; }
                             continue;
                         }
                         ManicDigger.Collisions.Line3D pick = new ManicDigger.Collisions.Line3D();
-                        pick.Start = new Vector3(packet.Shot.FromX, packet.Shot.FromY, packet.Shot.FromZ);
-                        pick.End = new Vector3(packet.Shot.ToX, packet.Shot.ToY, packet.Shot.ToZ);
+                        pick.Start = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
+                        pick.End = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
 
                         Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
                         //var p = PlayerPositionSpawn;
@@ -2151,28 +2153,33 @@ if (sent >= unknown.Count) { break; }
                         }
                     }
                     break;
-                case ClientPacketId.SpecialKey:
+                case Packet_ClientIdEnum.SpecialKey:
                     for (int i = 0; i < modEventHandlers.onspecialkey.Count; i++)
                     {
-                        modEventHandlers.onspecialkey[i](clientid, packet.SpecialKey.key);
+                        modEventHandlers.onspecialkey[i](clientid, (SpecialKey)packet.SpecialKey_.Key_);
                     }
                     break;
-                case ClientPacketId.ActiveMaterialSlot:
+                case Packet_ClientIdEnum.ActiveMaterialSlot:
                     clients[clientid].ActiveMaterialSlot = packet.ActiveMaterialSlot.ActiveMaterialSlot;
                     for (int i = 0; i < modEventHandlers.changedactivematerialslot.Count; i++)
                     {
                         modEventHandlers.changedactivematerialslot[i](clientid);
                     }
                     break;
-                case ClientPacketId.Leave:
+                case Packet_ClientIdEnum.Leave:
                     KillPlayer(clientid);
                     break;
-                case ClientPacketId.Reload:
+                case Packet_ClientIdEnum.Reload:
                     break;
                 default:
-                    Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.PacketId, clientid);
+                    Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
                     break;
             }
+        }
+
+        private float DeserializeFloat(int p)
+        {
+            return (float)p / 32;
         }
 
         private void SendProjectile(int player, float fromx, float fromy, float fromz, float velocityx, float velocityy, float velocityz, int block, float explodesafter)
@@ -2389,7 +2396,7 @@ if (sent >= unknown.Count) { break; }
             }
         }
         bool ENABLE_FINITEINVENTORY { get { return !config.IsCreative; } }
-        private bool DoCommandCraft(bool execute, PacketClientCraft cmd)
+        private bool DoCommandCraft(bool execute, Packet_ClientCraft cmd)
         {
             if (d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z) != d_Data.BlockIdCraftingTable)
             {
@@ -2468,7 +2475,7 @@ if (sent >= unknown.Count) { break; }
             util.d_Items = d_DataItems;
             return util;
         }
-        private void DoCommandInventory(int player_id, PacketClientInventoryAction cmd)
+        private void DoCommandInventory(int player_id, Packet_ClientInventoryAction cmd)
         {
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             var s = new InventoryServer();
@@ -2479,13 +2486,13 @@ if (sent >= unknown.Count) { break; }
 
             switch (cmd.Action)
             {
-                case InventoryActionType.Click:
+                case Packet_InventoryActionTypeEnum.Click:
                     s.InventoryClick(cmd.A);
                     break;
-                case InventoryActionType.MoveToInventory:
+                case Packet_InventoryActionTypeEnum.MoveToInventory:
                     s.MoveToInventory(cmd.A);
                     break;
-                case InventoryActionType.WearItem:
+                case Packet_InventoryActionTypeEnum.WearItem:
                     s.WearItem(cmd.A, cmd.B);
                     break;
                 default:
@@ -2524,7 +2531,7 @@ if (sent >= unknown.Count) { break; }
             }
             return true;
         }
-        private bool DoFillArea(int player_id, PacketClientFillArea fill, int blockCount)
+        private bool DoFillArea(int player_id, Packet_ClientFillArea fill, int blockCount)
         {
             Vector3i a = new Vector3i(fill.X1, fill.Y1, fill.Z1);
             Vector3i b = new Vector3i(fill.X2, fill.Y2, fill.Z2);
@@ -2551,20 +2558,20 @@ if (sent >= unknown.Count) { break; }
                 {
                     for (int z = startz; z <= endz; ++z)
                     {
-                        PacketClientSetBlock cmd = new PacketClientSetBlock();
+                        Packet_ClientSetBlock cmd = new Packet_ClientSetBlock();
                         cmd.X = x;
                         cmd.Y = y;
                         cmd.Z = z;
                         cmd.MaterialSlot = fill.MaterialSlot;
                         if (GetBlock(x, y, z) != 0)
                         {
-                            cmd.Mode = BlockSetMode.Destroy;
+                            cmd.Mode = Packet_BlockSetModeEnum.Destroy;
                             DoCommandBuild(player_id, true, cmd);
                         }
                         if (blockType != d_Data.BlockIdFillArea)
                         {
-                            cmd.Mode = BlockSetMode.Create;
-                            DoCommandBuild(player_id,true, cmd);
+                            cmd.Mode = Packet_BlockSetModeEnum.Create;
+                            DoCommandBuild(player_id, true, cmd);
                         }
                     }
                 }
@@ -2657,11 +2664,11 @@ if (sent >= unknown.Count) { break; }
             SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
         }
 
-        private bool DoCommandBuild(int player_id, bool execute, PacketClientSetBlock cmd)
+        private bool DoCommandBuild(int player_id, bool execute, Packet_ClientSetBlock cmd)
         {
             Vector3 v = new Vector3(cmd.X, cmd.Y, cmd.Z);
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
-            if (cmd.Mode == BlockSetMode.Use)
+            if (cmd.Mode == Packet_BlockSetModeEnum.Use)
             {
                 for (int i = 0; i < modEventHandlers.onuse.Count; i++)
                 {
@@ -2669,7 +2676,7 @@ if (sent >= unknown.Count) { break; }
                 }
                 return true;
             }
-            if (cmd.Mode == BlockSetMode.UseWithTool)
+            if (cmd.Mode == Packet_BlockSetModeEnum.UseWithTool)
             {
                 for (int i = 0; i < modEventHandlers.onusewithtool.Count; i++)
                 {
@@ -2677,17 +2684,17 @@ if (sent >= unknown.Count) { break; }
                 }
                 return true;
             }
-            if (cmd.Mode == BlockSetMode.Create
+            if (cmd.Mode == Packet_BlockSetModeEnum.Create
                 && d_Data.Rail[cmd.BlockType] != 0)
             {
                 return DoCommandBuildRail(player_id, execute, cmd);
             }
-            if (cmd.Mode == (int)BlockSetMode.Destroy
+            if (cmd.Mode == (int)Packet_BlockSetModeEnum.Destroy
                 && d_Data.Rail[d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z)] != 0)
             {
                 return DoCommandRemoveRail(player_id, execute, cmd);
             }
-            if (cmd.Mode == BlockSetMode.Create)
+            if (cmd.Mode == Packet_BlockSetModeEnum.Create)
             {
                 int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
                 if (!(oldblock == 0 || BlockTypes[oldblock].IsFluid()))
@@ -2742,7 +2749,7 @@ if (sent >= unknown.Count) { break; }
             return true;
         }
 
-        private bool DoCommandBuildRail(int player_id, bool execute, PacketClientSetBlock cmd)
+        private bool DoCommandBuildRail(int player_id, bool execute, Packet_ClientSetBlock cmd)
         {
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             int oldblock = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
@@ -2782,7 +2789,7 @@ if (sent >= unknown.Count) { break; }
             return true;
         }
 
-        private bool DoCommandRemoveRail(int player_id, bool execute, PacketClientSetBlock cmd)
+        private bool DoCommandRemoveRail(int player_id, bool execute, Packet_ClientSetBlock cmd)
         {
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             //add to inventory

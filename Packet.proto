@@ -1,5 +1,236 @@
 package Packet;
 
+	enum ClientId
+	{
+        PlayerIdentification = 0;
+        PingReply = 1;
+        SetBlock = 5;
+        FillArea = 510;
+        PositionandOrientation = 8;
+        Craft = 9;
+        Message = 13;
+        DialogClick = 14;
+        RequestBlob = 50;
+        InventoryAction = 51;
+        Health = 52;
+        MonsterHit = 53;
+        Shot = 54;
+        SpecialKey = 55;
+        ActiveMaterialSlot = 56;
+        Leave = 57;
+        Reload = 58;
+        ExtendedPacketCommand = 100;
+	}
+	
+	
+	message ClientIdentification
+	{
+        optional string mdProtocolVersion = 1;
+        optional string username = 2;
+        optional string verificationKey = 3;
+        optional string serverPassword = 4;
+        optional PositionAndOrientation requestPosition = 5;
+	}
+
+	message ClientRequestBlob
+	{
+	}
+
+    message ClientSetBlock
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 z = 3;
+        optional BlockSetMode mode = 4 [default = Destroy];
+        optional int32 blockType = 5; // obsolete
+        optional int32 materialSlot = 6;
+    }
+    
+    message ClientFillArea
+    {
+        optional int32 X1 = 1;
+        optional int32 X2 = 2;
+        optional int32 Y1 = 3;
+        optional int32 Y2 = 4;
+        optional int32 Z1 = 5;
+        optional int32 Z2 = 6;
+        optional int32 blockType = 7;
+        optional int32 MaterialSlot = 8;
+    }
+    
+	message ClientPositionAndOrientation
+    {
+        optional int32 playerId = 1;
+        optional int32 x = 2;
+        optional int32 y = 3;
+        optional int32 z = 4;
+        optional int32 heading = 5;
+        optional int32 pitch = 6;
+    }
+    
+    message ClientMessage
+    {
+        optional string message = 1;
+        optional int32 isTeamchat = 2;
+    }
+    
+    enum InventoryActionType
+    {
+        Click = 0;
+        WearItem = 1;
+        MoveToInventory = 2;
+    }
+    
+    message ClientInventoryAction
+    {
+        optional InventoryActionType action = 1 [ default = Click ];
+        optional InventoryPosition a = 2;
+        optional InventoryPosition b = 3;
+    }
+    
+    message InventoryPosition
+    {
+        optional InventoryPositionType type = 1 [ default = MainArea ];
+        optional int32 AreaX = 2;
+        optional int32 AreaY = 3;
+        optional int32 MaterialId = 4;
+
+        //WearPlace
+        optional int32 WearPlace = 5;
+        optional int32 ActiveMaterial = 6;
+        optional int32 GroundPositionX = 7;
+        optional int32 GroundPositionY = 8;
+        optional int32 GroundPositionZ = 9;
+	}
+	
+	enum InventoryPositionType
+    {
+        MainArea = 0;
+        Ground = 1;
+        MaterialSelector = 2;
+        WearPlace = 3;
+    }
+    
+    message PositionAndOrientation
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 z = 3;
+        optional int32 heading = 4;
+        optional int32 pitch = 5;
+    }
+    
+    enum BlockSetMode
+    {
+        Destroy = 0;
+        Create = 1;
+        Use = 2; //open doors, use crafting table, etc.
+        UseWithTool = 3;
+    }
+
+    message ClientReload
+    {
+    }
+    
+    message ClientLeave
+    {
+        optional LeaveReason Reason = 1 [default=Leave];
+    }
+    
+    enum LeaveReason
+    {
+        Leave = 0;
+        Crash = 1;
+    }
+    
+    //Temporary, for client-side health.
+    //Todo fix because it allows cheating.
+    message ClientHealth
+    {
+        optional int32 currentHealth = 1;
+    }
+    
+    message ClientDialogClick
+    {
+        optional string widgetId = 1;
+    }
+    
+    message ClientPingReply
+    {
+    }
+    
+    message ClientCraft
+    {
+        optional int32 X = 1;
+        optional int32 Y = 2;
+        optional int32 Z = 3;
+        optional int32 RecipeId = 4;
+    }
+    
+    message ClientShot
+    {
+        optional int32 FromX = 1;
+        optional int32 FromY = 2;
+        optional int32 FromZ = 3;
+        optional int32 ToX = 4;
+        optional int32 ToY = 5;
+        optional int32 ToZ = 6;
+        optional int32 WeaponBlock = 7;
+        optional int32 HitPlayer = 8;
+        optional int32 IsHitHead = 9;
+        optional int32 ExplodesAfter = 10;
+    }
+    
+    message ClientSpecialKey
+    {
+        optional SpecialKey key_ = 1 [default = Respawn];
+    }
+    
+    enum SpecialKey
+    {
+        Respawn = 0;
+        SetSpawn = 1;
+        TabPlayerList = 2;
+        SelectTeam = 3;
+    }
+    
+    message ClientActiveMaterialSlot
+    {
+        optional int32 activeMaterialSlot = 1;
+    }
+    
+    message Client
+    {
+    
+		optional ClientId id = 1 [default = PlayerIdentification];
+        optional ClientIdentification identification = 2;
+        optional ClientSetBlock setBlock = 3;        
+        optional ClientFillArea fillArea = 31;
+        optional ClientPositionAndOrientation positionAndOrientation = 4;
+        optional ClientMessage message = 5;
+        optional ClientCraft craft = 6;
+        optional ClientRequestBlob requestBlob = 7;
+        optional ClientInventoryAction inventoryAction = 8;
+        optional ClientHealth health = 9;
+        optional ClientPingReply pingReply = 10;
+        optional ClientDialogClick dialogClick_ = 11;
+        optional ClientShot shot = 12;
+        optional ClientSpecialKey specialKey_ = 13;
+        optional ClientActiveMaterialSlot activeMaterialSlot = 14;
+        optional ClientLeave leave = 15;
+        optional ClientReload reload = 16;
+	}
+    
+    
+    
+    
+    
+    
+    
+
+	
+	
+
     message SoundSet
     {
         repeated string walk = 1;

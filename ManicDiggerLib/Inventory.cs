@@ -267,9 +267,9 @@ namespace ManicDigger
 
     public interface IInventoryController
     {
-        void InventoryClick(InventoryPosition pos);
-        void WearItem(InventoryPosition from, InventoryPosition to);
-        void MoveToInventory(InventoryPosition from);
+        void InventoryClick(Packet_InventoryPosition pos);
+        void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to);
+        void MoveToInventory(Packet_InventoryPosition from);
     }
 
     public interface IDropItem
@@ -284,9 +284,9 @@ namespace ManicDigger
         public InventoryUtil d_InventoryUtil;
         public IDropItem d_DropItem;
 
-        public void InventoryClick(InventoryPosition pos)
+        public void InventoryClick(Packet_InventoryPosition pos)
         {
-            if (pos.type == InventoryPositionType.MainArea)
+            if (pos.Type == Packet_InventoryPositionTypeEnum.MainArea)
             {
                 Point? selected = null;
                 foreach (var k in d_Inventory.Items)
@@ -344,7 +344,7 @@ namespace ManicDigger
                     SendInventory();
                 }
             }
-            else if (pos.type == InventoryPositionType.Ground)
+            else if (pos.Type == Packet_InventoryPositionTypeEnum.Ground)
             {
                 /*
                 if (d_Inventory.DragDropItem != null)
@@ -355,7 +355,7 @@ namespace ManicDigger
                 }
                 */
             }
-            else if (pos.type == InventoryPositionType.MaterialSelector)
+            else if (pos.Type == Packet_InventoryPositionTypeEnum.MaterialSelector)
             {
                 if (d_Inventory.DragDropItem == null && d_Inventory.RightHand[pos.MaterialId] != null)
                 {
@@ -381,7 +381,7 @@ namespace ManicDigger
                 }
                 SendInventory();
             }
-            else if (pos.type == InventoryPositionType.WearPlace)
+            else if (pos.Type == Packet_InventoryPositionTypeEnum.WearPlace)
             {
                 //just swap.
                 Item wear = d_InventoryUtil.ItemAtWearPlace((WearPlace)pos.WearPlace, pos.ActiveMaterial);
@@ -401,11 +401,11 @@ namespace ManicDigger
         {
         }
 
-        public void WearItem(InventoryPosition from, InventoryPosition to)
+        public void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
         {
             //todo
-            if (from.type == InventoryPositionType.MainArea
-                && to.type == InventoryPositionType.MaterialSelector
+            if (from.Type == Packet_InventoryPositionTypeEnum.MainArea
+                && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
                 && d_Inventory.RightHand[to.MaterialId] == null
                 && d_Items.CanWear(WearPlace.RightHand, d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)]))
             {
@@ -414,10 +414,10 @@ namespace ManicDigger
             }
         }
 
-        public void MoveToInventory(InventoryPosition from)
+        public void MoveToInventory(Packet_InventoryPosition from)
         {
             //todo
-            if (from.type == InventoryPositionType.MaterialSelector)
+            if (from.Type == Packet_InventoryPositionTypeEnum.MaterialSelector)
             {
                 //duplicate code with GrabItem().
 

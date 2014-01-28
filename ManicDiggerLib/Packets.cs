@@ -7,101 +7,6 @@ using ManicDigger;
 namespace GameModeFortress
 {
     [ProtoContract]
-    public class PacketClientIdentification
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public string MdProtocolVersion;
-        [ProtoMember(2, IsRequired = false)]
-        public string Username;
-        [ProtoMember(3, IsRequired = false)]
-        public string VerificationKey;
-        [ProtoMember(4, IsRequired = false)]
-        public string ServerPassword;
-    }
-    [ProtoContract]
-    public class PacketClientRequestBlob
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public List<byte[]> RequestBlobMd5; //todo, currently ignored.
-    }
-    [ProtoContract]
-    public class PacketClientSetBlock
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int X;
-        [ProtoMember(2, IsRequired = false)]
-        public int Y;
-        [ProtoMember(3, IsRequired = false)]
-        public int Z;
-        [ProtoMember(4, IsRequired = false)]
-        public BlockSetMode Mode;
-        [ProtoMember(5, IsRequired = false)]
-        //[Obsolete]
-        public int BlockType;
-        [ProtoMember(6, IsRequired = false)]
-        public int MaterialSlot;
-    }
-    [ProtoContract]
-    public class PacketClientFillArea
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int X1;
-        [ProtoMember(2, IsRequired = false)]
-        public int X2;
-        [ProtoMember(3, IsRequired = false)]
-        public int Y1;
-        [ProtoMember(4, IsRequired = false)]
-        public int Y2;
-        [ProtoMember(5, IsRequired = false)]
-        public int Z1;
-        [ProtoMember(6, IsRequired = false)]
-        public int Z2;
-        [ProtoMember(7, IsRequired = false)]
-        public int BlockType;
-        [ProtoMember(8, IsRequired = false)]
-        public int MaterialSlot;
-    }
-    [ProtoContract]
-    public class PacketClientPositionAndOrientation
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int PlayerId;
-        [ProtoMember(2, IsRequired = false)]
-        public int X;
-        [ProtoMember(3, IsRequired = false)]
-        public int Y;
-        [ProtoMember(4, IsRequired = false)]
-        public int Z;
-        [ProtoMember(5, IsRequired = false)]
-        public byte Heading;
-        [ProtoMember(6, IsRequired = false)]
-        public byte Pitch;
-    }
-    [ProtoContract]
-    public class PacketClientMessage
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public string Message;
-        [ProtoMember(2, IsRequired = false)]
-        public bool IsTeamchat;
-    }
-    public enum InventoryActionType
-    {
-        Click,
-        WearItem,
-        MoveToInventory,
-    }
-    [ProtoContract]
-    public class PacketClientInventoryAction
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public InventoryActionType Action;
-        [ProtoMember(2, IsRequired = false)]
-        public InventoryPosition A;
-        [ProtoMember(3, IsRequired = false)]
-        public InventoryPosition B;
-    }
-    [ProtoContract]
     public class PacketServerIdentification
     {
         [ProtoMember(1, IsRequired = false)]
@@ -476,65 +381,6 @@ namespace GameModeFortress
         public Dictionary<int, int> TotalAmmo;
     }
     [ProtoContract]
-    public class PacketClientActiveMaterialSlot
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int ActiveMaterialSlot;
-    }
-    [ProtoContract]
-    public class PacketClient
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public ClientPacketId PacketId;
-        [ProtoMember(2, IsRequired = false)]
-        public PacketClientIdentification Identification;
-        [ProtoMember(3, IsRequired = false)]
-        public PacketClientSetBlock SetBlock;
-        [ProtoMember(31, IsRequired = false)]
-        public PacketClientFillArea FillArea;
-        [ProtoMember(4, IsRequired = false)]
-        public PacketClientPositionAndOrientation PositionAndOrientation;
-        [ProtoMember(5, IsRequired = false)]
-        public PacketClientMessage Message;
-        [ProtoMember(6, IsRequired = false)]
-        public PacketClientCraft Craft;
-        [ProtoMember(7, IsRequired = false)]
-        public PacketClientRequestBlob RequestBlob;
-        [ProtoMember(8, IsRequired = false)]
-        public PacketClientInventoryAction InventoryAction;
-        [ProtoMember(9, IsRequired = false)]
-        public PacketClientHealth Health;
-        [ProtoMember(10, IsRequired = false)]
-        public PacketClientPingReply PingReply;
-        [ProtoMember(11, IsRequired = false)]
-        public PacketClientDialogClick DialogClick;
-        [ProtoMember(12, IsRequired = false)]
-        public PacketClientShot Shot;
-        [ProtoMember(13, IsRequired = false)]
-        public PacketClientSpecialKey SpecialKey;
-        [ProtoMember(14, IsRequired = false)]
-        public PacketClientActiveMaterialSlot ActiveMaterialSlot;
-        [ProtoMember(15, IsRequired = false)]
-        public PacketClientLeave Leave;
-        [ProtoMember(16, IsRequired = false)]
-        public PacketClientReload Reload;
-    }
-    [ProtoContract]
-    public class PacketClientReload
-    {
-    }
-    [ProtoContract]
-    public class PacketClientLeave
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public LeaveReason Reason;
-    }
-    public enum LeaveReason
-    {
-        Leave,
-        Crash,
-    }
-    [ProtoContract]
     public class PacketServerChunkPart
     {
         [ProtoMember(1, IsRequired = false)]
@@ -612,14 +458,6 @@ namespace GameModeFortress
         [ProtoMember(4, IsRequired = false)]
         public int Health;
     }
-    //Temporary, for client-side health.
-    //Todo fix because it allows cheating.
-    [ProtoContract]
-    public class PacketClientHealth
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int CurrentHealth;
-    }
     [ProtoContract]
     public class PacketServerSeason
     {
@@ -641,12 +479,6 @@ namespace GameModeFortress
         public Dialog Dialog;
     }
     [ProtoContract]
-    public class PacketClientDialogClick
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public string WidgetId;
-    }
-    [ProtoContract]
     public class PacketServerPing
     {
     }
@@ -657,76 +489,6 @@ namespace GameModeFortress
         public int ClientId;
         [ProtoMember(2, IsRequired = false)]
         public int Ping;
-    }
-    [ProtoContract]
-    public class PacketClientPingReply
-    {
-    }
-    [ProtoContract]
-    public class PacketClientCraft
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public int X;
-        [ProtoMember(2, IsRequired = false)]
-        public int Y;
-        [ProtoMember(3, IsRequired = false)]
-        public int Z;
-        [ProtoMember(4, IsRequired = false)]
-        public int RecipeId;
-    }
-    [ProtoContract]
-    public class PacketClientShot
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public float FromX;
-        [ProtoMember(2, IsRequired = false)]
-        public float FromY;
-        [ProtoMember(3, IsRequired = false)]
-        public float FromZ;
-        [ProtoMember(4, IsRequired = false)]
-        public float ToX;
-        [ProtoMember(5, IsRequired = false)]
-        public float ToY;
-        [ProtoMember(6, IsRequired = false)]
-        public float ToZ;
-        [ProtoMember(7, IsRequired = false)]
-        public int WeaponBlock;
-        [ProtoMember(8, IsRequired = false)]
-        public int HitPlayer;
-        [ProtoMember(9, IsRequired = false)]
-        public bool HitHead;
-        [ProtoMember(10, IsRequired = false)]
-        public float ExplodesAfter;
-    }
-    [ProtoContract]
-    public class PacketClientSpecialKey
-    {
-        [ProtoMember(1, IsRequired = false)]
-        public SpecialKey key;
-    }
-    /// <summary>
-    /// Client -> Server packet id.
-    /// </summary>
-    public enum ClientPacketId
-    {
-        PlayerIdentification = 0,
-        PingReply = 1,
-        SetBlock = 5,
-        FillArea = 510,
-        PositionandOrientation = 8,
-        Craft = 9,
-        Message = 0x0d,
-        DialogClick,
-        RequestBlob = 50,
-        InventoryAction = 51,
-        Health = 52,
-        MonsterHit = 53,
-        Shot = 54,
-        SpecialKey = 55,
-        ActiveMaterialSlot = 56,
-        Leave = 57,
-        Reload = 58,
-        ExtendedPacketCommand = 100,
     }
     /// <summary>
     /// Server -> Client packet id.

@@ -63,7 +63,7 @@ namespace ManicDigger
                 AddButton(Language.Exit, (a, b) =>
                 {
                     RestoreResolution();
-                    SendLeave(LeaveReason.Leave);
+                    SendLeave(Packet_LeaveReasonEnum.Leave);
                     d_Exit.exit = true;
                     this.d_GlWindow.Exit();
                 });

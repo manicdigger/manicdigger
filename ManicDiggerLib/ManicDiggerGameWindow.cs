@@ -214,16 +214,16 @@ namespace ManicDigger
         {
             try
             {
-                SendLeave(LeaveReason.Crash);
+                SendLeave(Packet_LeaveReasonEnum.Crash);
             }
             catch
             {
             }
         }
 
-        void SendLeave(LeaveReason reason)
+        void SendLeave(int reason)
         {
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Leave, Leave = new PacketClientLeave() { Reason = reason } }));
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Leave, Leave = new Packet_ClientLeave() { Reason = reason } }));
         }
 
         [Inject]
@@ -513,7 +513,7 @@ namespace ManicDigger
                     {
                         if (e.KeyChar == w.ClickKey)
                         {
-                            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.DialogClick, DialogClick = new PacketClientDialogClick() { WidgetId = w.Id } });
+                            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.DialogClick, DialogClick_ = new Packet_ClientDialogClick() { WidgetId = w.Id } });
                             return;
                         }
                     }
@@ -554,7 +554,7 @@ namespace ManicDigger
         }
         public void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            SendLeave(LeaveReason.Leave);
+            SendLeave(Packet_LeaveReasonEnum.Leave);
         }
         public void OnClosed(EventArgs e)
         {
@@ -1034,10 +1034,10 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.Tab))
                 {
-                    SendPacketClient(new PacketClient()
+                    SendPacketClient(new Packet_Client()
                     {
-                        PacketId = ClientPacketId.SpecialKey,
-                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.TabPlayerList },
+                        Id = Packet_ClientIdEnum.SpecialKey,
+                        SpecialKey_ = new Packet_ClientSpecialKey() { Key_ = Packet_SpecialKeyEnum.TabPlayerList },
                     });
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.E))
@@ -1057,7 +1057,7 @@ namespace ManicDigger
                             }
                             else
                             {
-                                SendSetBlock(pos, BlockSetMode.Use, 0, ActiveMaterial);
+                                SendSetBlock(pos, Packet_BlockSetModeEnum.Use, 0, ActiveMaterial);
                             }
                         }
                     }
@@ -1073,7 +1073,7 @@ namespace ManicDigger
                         d_Audio.Play(blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
                         reloadstart = DateTime.UtcNow;
                         reloadblock = item.BlockId;
-                        SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Reload, Reload = new PacketClientReload() });
+                        SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Reload, Reload = new Packet_ClientReload() });
                     }
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.O))
@@ -1082,18 +1082,18 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.L))
                 {
-                    SendPacketClient(new PacketClient()
+                    SendPacketClient(new Packet_Client()
                     {
-                        PacketId = ClientPacketId.SpecialKey,
-                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.SelectTeam },
+                        Id = Packet_ClientIdEnum.SpecialKey,
+                        SpecialKey_ = new Packet_ClientSpecialKey() { Key_ = Packet_SpecialKeyEnum.SelectTeam },
                     });
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.P))
                 {
-                    SendPacketClient(new PacketClient()
+                    SendPacketClient(new Packet_Client()
                     {
-                        PacketId = ClientPacketId.SpecialKey,
-                        SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.SetSpawn },
+                        Id = Packet_ClientIdEnum.SpecialKey,
+                        SpecialKey_ = new Packet_ClientSpecialKey() { Key_ = Packet_SpecialKeyEnum.SetSpawn },
                     });
                     PlayerPositionSpawn = ToVector3(player.playerposition);
                     player.playerposition.X = (int)player.playerposition.X + 0.5f;
@@ -1755,10 +1755,10 @@ namespace ManicDigger
             if (activeitem != null) { activeblock = activeitem.BlockId; }
             if (activeblock != PreviousActiveMaterialBlock)
             {
-                SendPacketClient(new PacketClient()
+                SendPacketClient(new Packet_Client()
                 {
-                    PacketId = ClientPacketId.ActiveMaterialSlot,
-                    ActiveMaterialSlot = new PacketClientActiveMaterialSlot() { ActiveMaterialSlot = ActiveMaterial }
+                    Id = Packet_ClientIdEnum.ActiveMaterialSlot,
+                    ActiveMaterialSlot = new Packet_ClientActiveMaterialSlot() { ActiveMaterialSlot = ActiveMaterial }
                 });
             }
             PreviousActiveMaterialBlock = activeblock;
@@ -1889,19 +1889,19 @@ namespace ManicDigger
             {
                 d_Audio.Play(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
             }
-            SendPacketClient(new PacketClient()
+            SendPacketClient(new Packet_Client()
             {
-                PacketId = ClientPacketId.Health,
-                Health = new PacketClientHealth() { CurrentHealth = PlayerStats.CurrentHealth },
+                Id = Packet_ClientIdEnum.Health,
+                Health = new Packet_ClientHealth() { CurrentHealth = PlayerStats.CurrentHealth },
             });
         }
 
         private void Respawn()
         {
-            SendPacketClient(new PacketClient()
+            SendPacketClient(new Packet_Client()
             {
-                PacketId = ClientPacketId.SpecialKey,
-                SpecialKey = new PacketClientSpecialKey() { key = ManicDigger.SpecialKey.Respawn },
+                Id = Packet_ClientIdEnum.SpecialKey,
+                SpecialKey_ = new Packet_ClientSpecialKey() { Key_ = Packet_SpecialKeyEnum.Respawn },
             });
             player.movedz = 0;
         }
@@ -2265,8 +2265,8 @@ namespace ManicDigger
             {
                 if (left && d_Inventory.RightHand[ActiveMaterial] == null)
                 {
-                    PacketClientHealth p = new PacketClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
-                    SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.MonsterHit, Health = p }));
+                    Packet_ClientHealth p = new Packet_ClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
+                    SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.MonsterHit, Health = p }));
                 }
                 if (left && !fastclicking)
                 {
@@ -2302,13 +2302,13 @@ namespace ManicDigger
                         to = pick2[0].pos;
                     }
 
-                    PacketClientShot shot = new PacketClientShot();
-                    shot.FromX = pick.Start.X;
-                    shot.FromY = pick.Start.Y;
-                    shot.FromZ = pick.Start.Z;
-                    shot.ToX = to.X;
-                    shot.ToY = to.Y;
-                    shot.ToZ = to.Z;
+                    Packet_ClientShot shot = new Packet_ClientShot();
+                    shot.FromX = SerializeFloat(pick.Start.X);
+                    shot.FromY = SerializeFloat(pick.Start.Y);
+                    shot.FromZ = SerializeFloat(pick.Start.Z);
+                    shot.ToX = SerializeFloat(to.X);
+                    shot.ToY = SerializeFloat(to.Y);
+                    shot.ToZ = SerializeFloat(to.Z);
                     shot.HitPlayer = -1;
 
                     foreach (var k in d_Clients.Players)
@@ -2358,7 +2358,7 @@ namespace ManicDigger
                                     sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
-                                shot.HitHead = true;
+                                shot.IsHitHead = 1;
                             }
                         }
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
@@ -2371,7 +2371,7 @@ namespace ManicDigger
                                     sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
-                                shot.HitHead = false;
+                                shot.IsHitHead = 0;
                             }
                         }
                     }
@@ -2388,10 +2388,10 @@ namespace ManicDigger
                         Vector3 v = to - pick.Start;
                         v.Normalize();
                         v *= projectilespeed;
-                        shot.ExplodesAfter = grenadetime - wait;
+                        shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
                         projectiles.Add(new Projectile() { position = pick.Start, velocity = v, start = DateTime.UtcNow, block = item.BlockId, explodesafter = grenadetime - wait });
                     }
-                    SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Shot, Shot = shot });
+                    SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
                     if (blocktypes[item.BlockId].Sounds.ShootEnd.Length > 0)
                     {
@@ -2447,8 +2447,8 @@ namespace ManicDigger
                                     if (freehand != null)
                                     {
                                         d_InventoryController.WearItem(
-                                            InventoryPosition.MainArea(new Point(k.Key.X, k.Key.Y)),
-                                            InventoryPosition.MaterialSelector(freehand.Value));
+                                            InventoryPositionMainArea(new Point(k.Key.X, k.Key.Y)),
+                                            InventoryPositionMaterialSelector(freehand.Value));
                                         goto done;
                                     }
                                     //try to replace current slot
@@ -2456,10 +2456,10 @@ namespace ManicDigger
                                         && d_Inventory.RightHand[ActiveMaterial].ItemClass == ItemClass.Block)
                                     {
                                         d_InventoryController.MoveToInventory(
-                                            InventoryPosition.MaterialSelector(ActiveMaterial));
+                                            InventoryPositionMaterialSelector(ActiveMaterial));
                                         d_InventoryController.WearItem(
-                                            InventoryPosition.MainArea(new Point(k.Key.X, k.Key.Y)),
-                                            InventoryPosition.MaterialSelector(ActiveMaterial));
+                                            InventoryPositionMainArea(new Point(k.Key.X, k.Key.Y)),
+                                            InventoryPositionMaterialSelector(ActiveMaterial));
                                     }
                                 }
                             }
@@ -2540,6 +2540,29 @@ namespace ManicDigger
                 fastclicking = true;
             }
         }
+
+        private Packet_InventoryPosition InventoryPositionMaterialSelector(int materialId)
+        {
+            Packet_InventoryPosition pos = new Packet_InventoryPosition();
+            pos.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
+            pos.MaterialId = materialId;
+            return pos;
+        }
+
+        private Packet_InventoryPosition InventoryPositionMainArea(Point point)
+        {
+            Packet_InventoryPosition pos = new Packet_InventoryPosition();
+            pos.Type = Packet_InventoryPositionTypeEnum.MainArea;
+            pos.AreaX = point.X;
+            pos.AreaY = point.Y;
+            return pos;
+        }
+
+        private int SerializeFloat(float p)
+        {
+            return (int)(p * 32);
+        }
+
         float WeaponAttackStrength()
         {
             return (float)NextDouble(2, 4);
@@ -4211,7 +4234,7 @@ namespace ManicDigger
         }
         private void OnPickUseWithTool(Vector3 pos)
         {
-            SendSetBlock(new Vector3(pos.X, pos.Y, pos.Z), BlockSetMode.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
+            SendSetBlock(new Vector3(pos.X, pos.Y, pos.Z), Packet_BlockSetModeEnum.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
         }
         public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
         {
@@ -4243,7 +4266,7 @@ namespace ManicDigger
             int x = (short)blockpos.X;
             int y = (short)blockpos.Y;
             int z = (short)blockpos.Z;
-            var mode = right ? BlockSetMode.Create : BlockSetMode.Destroy;
+            var mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
             {
                 if (IsAnyPlayerInPos(blockpos) || activematerial == 151)
                 {
@@ -4252,7 +4275,7 @@ namespace ManicDigger
                 Vector3i v = new Vector3i(x, y, z);
                 Vector3i? oldfillstart = fillstart;
                 Vector3i? oldfillend = fillend;
-                if (mode == BlockSetMode.Create)
+                if (mode == Packet_BlockSetModeEnum.Create)
                 {
                     if (blocktypes[activematerial].IsTool)
                     {
@@ -4335,7 +4358,7 @@ namespace ManicDigger
                         return;
                     }
                 }
-                if (mode == BlockSetMode.Create && activematerial == d_Data.BlockIdMinecart)
+                if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart)
                 {
                     /*
                     CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
@@ -4359,7 +4382,7 @@ namespace ManicDigger
             }
             return null;
         }
-        private void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, BlockSetMode mode)
+        private void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
         {
             SendSetBlock(new Vector3(x, y, z), mode, material, ActiveMaterial);
 
@@ -4368,7 +4391,7 @@ namespace ManicDigger
             {
                 //int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
                 int blockid = material;
-                if (mode == BlockSetMode.Destroy)
+                if (mode == Packet_BlockSetModeEnum.Destroy)
                 {
                     blockid = SpecialBlockId.Empty;
                 }
@@ -4468,7 +4491,7 @@ namespace ManicDigger
             public int blocktype;
         }
         Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
-        public void SendSetBlock(Vector3 vector3, BlockSetMode blockSetMode, int p)
+        public void SendSetBlock(Vector3 vector3, int blockSetMode, int p)
         {
             SendSetBlock(vector3, blockSetMode, p, ActiveMaterial);
         }
@@ -4532,12 +4555,12 @@ namespace ManicDigger
             {
                 return;
             }
-            PacketClientCraft cmd = new PacketClientCraft();
+            Packet_ClientCraft cmd = new Packet_ClientCraft();
             cmd.X = (short)pos.x;
             cmd.Y = (short)pos.y;
             cmd.Z = (short)pos.z;
             cmd.RecipeId = (short)recipe.Value;
-            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.Craft, Craft = cmd });
+            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Craft, Craft = cmd });
         }
         private bool KeyPressed(OpenTK.Input.Key key)
         {
@@ -4638,29 +4661,29 @@ namespace ManicDigger
         public int CurrentSeason { get; set; }
         #endregion
 
-        public void InventoryClick(InventoryPosition pos)
+        public void InventoryClick(Packet_InventoryPosition pos)
         {
-            PacketClientInventoryAction p = new PacketClientInventoryAction();
+            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
             p.A = pos;
-            p.Action = InventoryActionType.Click;
-            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+            p.Action = Packet_InventoryActionTypeEnum.Click;
+            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
         }
 
-        public void WearItem(InventoryPosition from, InventoryPosition to)
+        public void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
         {
-            PacketClientInventoryAction p = new PacketClientInventoryAction();
+            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
             p.A = from;
             p.B = to;
-            p.Action = InventoryActionType.WearItem;
-            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+            p.Action = Packet_InventoryActionTypeEnum.WearItem;
+            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
         }
 
-        public void MoveToInventory(InventoryPosition from)
+        public void MoveToInventory(Packet_InventoryPosition from)
         {
-            PacketClientInventoryAction p = new PacketClientInventoryAction();
+            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
             p.A = from;
-            p.Action = InventoryActionType.MoveToInventory;
-            SendPacketClient(new PacketClient() { PacketId = ClientPacketId.InventoryAction, InventoryAction = p });
+            p.Action = Packet_InventoryActionTypeEnum.MoveToInventory;
+            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
         }
 
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
@@ -4693,24 +4716,24 @@ namespace ManicDigger
         string auth;
         private byte[] CreateLoginPacket(string username, string verificationKey)
         {
-            PacketClientIdentification p = new PacketClientIdentification()
+            Packet_ClientIdentification p = new Packet_ClientIdentification()
             {
                 Username = username,
                 MdProtocolVersion = GameVersion.Version,
                 VerificationKey = verificationKey
             };
-            return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
+            return Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p });
         }
         private byte[] CreateLoginPacket(string username, string verificationKey, string serverPassword)
         {
-            PacketClientIdentification p = new PacketClientIdentification()
+            Packet_ClientIdentification p = new Packet_ClientIdentification()
             {
                 Username = username,
                 MdProtocolVersion = GameVersion.Version,
                 VerificationKey = verificationKey,
                 ServerPassword = serverPassword
             };
-            return Serialize(new PacketClient() { PacketId = ClientPacketId.PlayerIdentification, Identification = p });
+            return Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p });
         }
         IPEndPoint iep;
         public void SendPacket(byte[] packet)
@@ -4730,9 +4753,9 @@ namespace ManicDigger
         {
         }
         DateTime lastpositionsent;
-        public void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot)
+        public void SendSetBlock(Vector3 position, int mode, int type, int materialslot)
         {
-            PacketClientSetBlock p = new PacketClientSetBlock()
+            Packet_ClientSetBlock p = new Packet_ClientSetBlock()
             {
                 X = (int)position.X,
                 Y = (int)position.Y,
@@ -4741,11 +4764,11 @@ namespace ManicDigger
                 BlockType = type,
                 MaterialSlot = materialslot,
             };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.SetBlock, SetBlock = p }));
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.SetBlock, SetBlock = p }));
         }
         public void SendFillArea(Vector3i start, Vector3i end, int blockType)
         {
-            PacketClientFillArea p = new PacketClientFillArea()
+            Packet_ClientFillArea p = new Packet_ClientFillArea()
             {
                 X1 = start.x,
                 Y1 = start.y,
@@ -4756,29 +4779,28 @@ namespace ManicDigger
                 BlockType = blockType,
                 MaterialSlot = ActiveMaterial
             };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.FillArea, FillArea = p }));
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.FillArea, FillArea = p }));
         }
-        public void SendPacketClient(PacketClient packet)
+        public void SendPacketClient(Packet_Client packet)
         {
             SendPacket(Serialize(packet));
         }
         public void SendChat(string s)
         {
-            PacketClientMessage p = new PacketClientMessage() { Message = s, IsTeamchat = d_HudChat.IsTeamchat };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.Message, Message = p }));
+            Packet_ClientMessage p = new Packet_ClientMessage() { Message = s, IsTeamchat = d_HudChat.IsTeamchat ? 1 : 0 };
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Message, Message = p }));
         }
         private void SendPingReply()
         {
-            PacketClientPingReply p = new PacketClientPingReply()
+            Packet_ClientPingReply p = new Packet_ClientPingReply()
             {
             };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.PingReply, PingReply = p }));
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PingReply, PingReply = p }));
         }
-        private byte[] Serialize(PacketClient p)
+        private byte[] Serialize(Packet_Client p)
         {
-            MemoryStream ms = new MemoryStream();
-            Serializer.Serialize(ms, p);
-            return ms.ToArray();
+            byte[] data = Packet_ClientSerializer.SerializeToBytes(p);
+            return data;
         }
         /// <summary>
         /// This function should be called in program main loop.
@@ -4819,7 +4841,7 @@ namespace ManicDigger
         Vector3 lastsentposition;
         public void SendPosition(Vector3 position, Vector3 orientation)
         {
-            PacketClientPositionAndOrientation p = new PacketClientPositionAndOrientation()
+            Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation()
             {
                 PlayerId = this.LocalPlayerId,//self
                 X = (int)((position.X) * 32),
@@ -4828,7 +4850,7 @@ namespace ManicDigger
                 Heading = HeadingByte(orientation),
                 Pitch = PitchByte(orientation),
             };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.PositionandOrientation, PositionAndOrientation = p }));
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PositionandOrientation, PositionAndOrientation = p }));
             lastsentposition = position;
         }
         public static Vector3 HeadingPitchToOrientation(byte heading, byte pitch)
@@ -5503,8 +5525,8 @@ namespace ManicDigger
         DateTime currentTime;
         private void SendRequestBlob(List<byte[]> needed)
         {
-            PacketClientRequestBlob p = new PacketClientRequestBlob() { RequestBlobMd5 = needed };
-            SendPacket(Serialize(new PacketClient() { PacketId = ClientPacketId.RequestBlob, RequestBlob = p }));
+            Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
+            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.RequestBlob, RequestBlob = p }));
         }
         bool IsBlob(byte[] hash)
         {

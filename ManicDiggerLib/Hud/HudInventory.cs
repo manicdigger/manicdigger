@@ -121,30 +121,30 @@ namespace ManicDigger.Hud
             {
                 if (e.Button == MouseButton.Left)
                 {
-                    controller.InventoryClick(new InventoryPosition()
+                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        type = InventoryPositionType.MainArea,
+                        Type = Packet_InventoryPositionTypeEnum.MainArea,
                         AreaX = cellInPage.Value.X,
                         AreaY = cellInPage.Value.Y + ScrollLine,
                     });
                 }
                 else
                 {
-                    controller.InventoryClick(new InventoryPosition()
+                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        type = InventoryPositionType.MainArea,
+                        Type = Packet_InventoryPositionTypeEnum.MainArea,
                         AreaX = cellInPage.Value.X,
                         AreaY = cellInPage.Value.Y + ScrollLine,
                     });
-                    controller.InventoryClick(new InventoryPosition()
+                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        type = InventoryPositionType.WearPlace,
+                        Type = Packet_InventoryPositionTypeEnum.WearPlace,
                         WearPlace = (int)WearPlace.RightHand,
                         ActiveMaterial = ActiveMaterial.ActiveMaterial,
                     });
-                    controller.InventoryClick(new InventoryPosition()
+                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        type = InventoryPositionType.MainArea,
+                        Type = Packet_InventoryPositionTypeEnum.MainArea,
                         AreaX = cellInPage.Value.X,
                         AreaY = cellInPage.Value.Y + ScrollLine,
                     });
@@ -154,9 +154,9 @@ namespace ManicDigger.Hud
             if (scaledMouse.X < CellsStart.X && scaledMouse.Y < MaterialSelectorStart.Y)
             {
                 Vector3i pos = viewport3d.SelectedBlock();
-                controller.InventoryClick(new InventoryPosition()
+                controller.InventoryClick(new Packet_InventoryPosition()
                 {
-                    type = InventoryPositionType.Ground,
+                    Type = Packet_InventoryPositionTypeEnum.Ground,
                     GroundPositionX = pos.x,
                     GroundPositionY = pos.y,
                     GroundPositionZ = pos.z,
@@ -169,18 +169,18 @@ namespace ManicDigger.Hud
                 ActiveMaterial.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).Value;
                 //if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
                 {
-                    controller.InventoryClick(new InventoryPosition()
+                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        type = InventoryPositionType.MaterialSelector,
+                        Type = Packet_InventoryPositionTypeEnum.MaterialSelector,
                         MaterialId = ActiveMaterial.ActiveMaterial,
                     });
                 }
             }
             if (SelectedWearPlace(scaledMouse) != null)
             {
-                controller.InventoryClick(new InventoryPosition()
+                controller.InventoryClick(new Packet_InventoryPosition()
                 {
-                    type = InventoryPositionType.WearPlace,
+                    Type = Packet_InventoryPositionTypeEnum.WearPlace,
                     WearPlace = (int)(SelectedWearPlace(scaledMouse).Value),
                     ActiveMaterial = ActiveMaterial.ActiveMaterial,
                 });

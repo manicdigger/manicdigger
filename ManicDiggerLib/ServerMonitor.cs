@@ -50,7 +50,7 @@ namespace GameModeFortress
             }
         }
 
-        public bool CheckPacket(int clientId, PacketClient packet)
+        public bool CheckPacket(int clientId, Packet_Client packet)
         {
             if(!monitorClients.ContainsKey(clientId))
             {
@@ -64,10 +64,10 @@ namespace GameModeFortress
                 return false;
             }
 
-            switch(packet.PacketId)
+            switch (packet.Id)
             {
-                case ClientPacketId.SetBlock:
-                case ClientPacketId.FillArea:
+                case Packet_ClientIdEnum.SetBlock:
+                case Packet_ClientIdEnum.FillArea:
                     if (monitorClients[clientId].SetBlockPunished())
                     {
                         // TODO: revert block at client
@@ -80,7 +80,7 @@ namespace GameModeFortress
                     }
                     // punish client
                     return this.ActionSetBlock(clientId);
-                case ClientPacketId.Message:
+                case Packet_ClientIdEnum.Message:
                     if (monitorClients[clientId].MessagePunished())
                     {
                         server.SendMessage(clientId, "Spam protection: Your message has not been sent.", Server.MessageType.Error);
