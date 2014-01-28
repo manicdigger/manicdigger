@@ -128,7 +128,6 @@
     <Compile Include="Mods\Fortress\Default.cs" />
     <Compile Include="Mods\Fortress\DefaultWorldGenerator.cs" />
     <Compile Include="Mods\Fortress\Doors.cs" />
-    <Compile Include="Mods\Fortress\Fluids.cs" />
     <Compile Include="Mods\Fortress\Monsters.cs" />
     <Compile Include="Mods\Fortress\OreGenerator.cs" />
     <Compile Include="Mods\Fortress\HttpStats.cs" />
