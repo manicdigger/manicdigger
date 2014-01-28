@@ -29,6 +29,7 @@ namespace ManicDigger.Mods.Fortress
 
         Stopwatch stopwatch;
         public ModManager m;
+        int pageViews;
 
         public void Uninstalled(HttpServer server)
         {
@@ -43,9 +44,10 @@ namespace ManicDigger.Mods.Fortress
 
         public bool ProcessAsync(ProcessRequestEventArgs args)
         {
+            pageViews++;
             double cpu = Process.GetCurrentProcess().TotalProcessorTime.TotalSeconds / stopwatch.Elapsed.TotalSeconds;
             string html = "<html>";
-            html += "<h1>System</h1>";
+            html += "<h1>System Statistics</h1>";
             html += "<ul>";
             html += string.Format("<li>Uptime: {0} <br/></li>", ToReadableString(stopwatch.Elapsed));
             html += string.Format("<li>CPU usage: {0:P2} <br/></li>", cpu);
@@ -54,6 +56,7 @@ namespace ManicDigger.Mods.Fortress
             html += string.Format("<li>Total bytes downloaded: {0}<br/></li>", BytesToString(m.TotalReceivedBytes()));
             html += string.Format("<li>Total bytes uploaded: {0}<br/></li>", BytesToString(m.TotalSentBytes()));
             html += "</ul>";
+            html += string.Format("Page accessed <b>{0}</b> times.<br/>", pageViews);
             html += "</html>";
             args.Response.Producer = new BufferedProducer(html);
             return false;
