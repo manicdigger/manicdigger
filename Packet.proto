@@ -241,3 +241,563 @@ package Packet;
         repeated string shootEnd = 6;
         repeated string reload = 7;
     }
+
+
+    message BlockType
+    {
+        optional string textureIdTop = 1;
+        optional string textureIdBottom = 2;
+        optional string textureIdFront = 3;
+        optional string textureIdBack = 4;
+        optional string textureIdLeft = 5;
+        optional string textureIdRight = 6;
+        optional string textureIdForInventory = 7;
+
+        optional DrawType drawType = 8 [ default = Empty ];
+        optional WalkableType walkableType = 9 [ default = Empty ];
+        optional int32 rail = 10;
+        optional int32 walkSpeedFloat = 11;
+        optional bool isSlipperyWalk = 12;
+        optional SoundSet sounds = 13;
+        optional int32 lightRadius = 14;
+        optional int32 startInventoryAmount = 15;
+        optional int32 strength = 16;
+        optional string name = 17;
+        optional bool isBuildable = 18;
+        optional bool isUsable = 19;
+        optional bool isTool = 20;
+        optional string handimage = 21;
+        optional bool isPistol = 22;
+        optional int32 aimRadiusFloat = 23;
+        optional int32 recoilFloat = 24;
+        optional int32 delayFloat = 25;
+        optional int32 bulletsPerShotFloat = 26;
+        optional int32 walkSpeedWhenUsedFloat = 27;
+        optional bool ironSightsEnabled = 28;
+        optional int32 ironSightsMoveSpeedFloat = 29;
+        optional string ironSightsImage = 30;
+        optional int32 ironSightsAimRadiusFloat = 31;
+        optional int32 ironSightsFovFloat = 32;
+        optional int32 ammoMagazine = 33;
+        optional int32 ammoTotal = 34;
+        optional int32 reloadDelayFloat = 35;
+        optional int32 explosionRangeFloat = 36;
+        optional int32 explosionTimeFloat = 37;
+        optional int32 projectileSpeedFloat = 38; // 0 is infinite
+        optional bool projectileBounce = 39;
+        optional int32 damageBodyFloat = 40;
+        optional int32 damageHeadFloat = 41;
+        optional PistolType pistolType = 42 [ default = Normal ];
+        optional int32 damageToPlayer = 43;
+    }
+    
+    enum DrawType
+    {
+        Empty = 0;
+        Solid = 1;
+        Transparent = 2;
+        Fluid = 3;
+        Torch = 4;
+        Plant = 5;
+        OpenDoorLeft = 6;
+        OpenDoorRight = 7;
+        ClosedDoor = 8;
+        Ladder = 9;
+        Fence = 10;
+        HalfHeight = 11;
+    }
+    
+    enum WalkableType
+    {
+        Empty = 0;
+        Fluid = 1;
+        Solid = 2;
+    }
+    
+    enum PistolType
+    {
+        Normal = 0;
+        Grenade = 1;
+    }
+
+
+
+
+
+	enum ServerId
+	{
+        ServerIdentification = 0;
+        Ping = 1;
+        PlayerPing = 111;
+        LevelInitialize = 2;
+        LevelDataChunk = 3;
+        LevelFinalize = 4;
+        SetBlock = 6;
+        FillArea = 61;
+        FillAreaLimit = 62;
+        SpawnPlayer = 7;
+        PlayerPositionAndOrientation = 8;
+        PositionUpdate = 10;
+        OrientationUpdate = 11;
+        DespawnPlayer = 12;
+        Message = 13;
+        DisconnectPlayer = 14;
+        Chunk_ = 15;
+        FiniteInventory = 16;
+        Season = 17;
+        BlobInitialize = 18;
+        BlobPart = 19;
+        BlobFinalize = 20;
+        HeightmapChunk = 21;
+        Sound = 22;
+        PlayerStats = 23;
+        Monster = 24;
+        ActiveMonsters = 25;
+        PlayerSpawnPosition = 26;
+        BlockTypes = 27;
+        SunLevels = 28;
+        LightLevels = 29;
+        CraftingRecipes = 30;
+        RemoveMonsters = 50;
+        Freemove = 51;
+        Dialog = 52;
+        Follow = 53;
+        Bullet = 54;
+        Ammo = 55;
+        BlockType = 56;
+        ChunkPart = 57;
+        Explosion = 58;
+        Projectile = 59;
+        ExtendedPacketCommand = 100;
+        ExtendedPacketTick = 101;
+	}
+	
+	message ServerIdentification
+    {
+        optional string mdProtocolVersion = 1;
+        optional int32 assignedClientId = 2;
+        optional string serverName = 3;
+        optional string serverMotd = 4;
+        optional int32 mapSizeX = 7;
+        optional int32 mapSizeY = 8;
+        optional int32 mapSizeZ = 9;
+        optional int32 disableShadows = 11;
+        optional int32 playerAreaSize = 12;
+        optional int32 renderHint_ = 13;
+        repeated IntString origTextureById = 14;
+    }
+    
+    message IntString
+    {
+		optional int32 key_ = 1;
+		optional string value_ = 2;
+    }
+    
+    message ServerPlayerSpawnPosition
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 z = 3;
+    }
+    
+    
+    
+    
+    
+    message ServerLevelInitialize
+    {
+    }
+    
+    message ServerBlobInitialize
+    {
+        //[ProtoMember(1, IsRequired = false)]
+        //optional byte[] hash; //todo, currently ignored.
+
+        optional string name = 2;
+    }
+    
+    message ServerBlobPart
+    {
+        optional bytes data = 1;
+        optional int32 islastpart = 2;
+    }
+    
+    message ServerBlobFinalize
+    {
+    }
+    
+    message ServerBlockTypes
+    {
+    }
+    
+    message ServerBlockType
+    {
+        optional int32 id = 1;
+        optional BlockType blocktype = 2;
+    }
+    
+    message ServerSunLevels
+    {
+
+        repeated int32 sunlevels = 1;
+    }
+    
+    message ServerLightLevels
+    {
+
+        repeated int32 lightlevels = 1;
+    }
+    
+    message ServerCraftingRecipes
+    {
+		repeated CraftingRecipe CraftingRecipes = 1;
+    }
+    
+    message Ingredient
+    {
+        optional int32 Type = 1;
+        optional int32 Amount = 2;
+    }
+    
+    message CraftingRecipe
+    {
+        repeated Ingredient ingredients = 1;
+        optional Ingredient output = 2;
+    }
+    
+    message ServerLevelProgress
+    {
+        //[ProtoMember(1, IsRequired = false)]
+        //optional byte[] Chunk;
+
+        optional int32 percentComplete = 2;
+        optional string status = 3;
+        optional int32 percentCompleteSubitem = 4;
+    }
+    
+    message ServerLevelFinalize
+    {
+    }
+    
+    message ServerSetBlock
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 z = 3;
+        optional int32 blockType = 4;
+    }
+    
+    message ServerFillArea
+    {
+        optional int32 x1 = 1;
+        optional int32 x2 = 2;
+        optional int32 y1 = 3;
+        optional int32 y2 = 4;
+        optional int32 z1 = 5;
+        optional int32 z2 = 6;
+        optional int32 blockType = 7;
+        optional int32 blockCount = 8;
+    }
+    
+    message ServerFillAreaLimit
+    {
+        optional int32 limit = 1;
+    }
+    
+    message ServerFreemove
+    {
+        optional int32 isEnabled = 1;
+    }
+    
+    message ServerSpawnPlayer
+    {
+        optional int32 playerId = 1;
+        optional string playerName = 2;
+        optional PositionAndOrientation positionAndOrientation = 3;
+        optional string model_ = 4;
+        optional string texture_ = 5;
+        optional int32 eyeHeightFloat = 6;
+        optional int32 modelHeightFloat = 7;
+    }
+
+    
+    message ServerPositionAndOrientation
+    {
+        optional int32 playerId = 1;
+        optional PositionAndOrientation positionAndOrientation = 2;
+    }
+    
+    message ServerMessage
+    {
+        optional int32 playerId = 1;
+        optional string message = 2;
+    }
+    
+    message ServerDespawnPlayer
+    {
+        optional int32 playerId = 1;
+    }
+    
+    message ServerDisconnectPlayer
+    {
+        optional string disconnectReason = 1;
+    }
+    
+    message ServerSound
+    {
+        optional string name = 1;
+        optional int32 x = 2;
+        optional int32 y = 3;
+        optional int32 z = 4;
+    }
+    
+    message ServerFollow
+    {
+        optional string client = 1;
+        optional int32 tpp = 2;
+    }
+    
+    message ServerBullet
+    {
+        optional int32 fromXFloat = 1;
+        optional int32 fromYFloat = 2;
+        optional int32 fromZFloat = 3;
+        optional int32 toXFloat = 4;
+        optional int32 toYFloat = 5;
+        optional int32 toZFloat = 6;
+        optional int32 speedFloat = 7;
+    }
+    
+    message ServerProjectile
+    {
+        optional int32 fromXFloat = 1;
+        optional int32 fromYFloat = 2;
+        optional int32 fromZFloat = 3;
+        optional int32 velocityXFloat = 4;
+        optional int32 velocityYFloat = 5;
+        optional int32 velocityZFloat = 6;
+        optional int32 blockId = 7;
+        optional int32 explodesAfterFloat = 8;
+    }
+    
+    message ServerExplosion
+    {
+        optional int32 xFloat = 1;
+        optional int32 yFloat = 2;
+        optional int32 zFloat = 3;
+        optional int32 isRelativeToPlayerPosition = 4;
+        optional int32 rangeFloat = 5;
+        optional int32 timeFloat = 6;
+    }
+    
+    message Server
+    {
+        optional ServerId id = 90 [default = ServerIdentification];
+        optional ServerIdentification identification = 1;
+        optional ServerLevelInitialize levelInitialize = 2;
+        optional ServerLevelProgress levelDataChunk = 3;
+        optional ServerLevelFinalize levelFinalize = 4;
+        optional ServerSetBlock setBlock = 5;
+        optional ServerFillArea fillArea = 51;
+        optional ServerFillAreaLimit fillAreaLimit = 52;
+        optional ServerFreemove freemove = 53;
+        optional ServerSpawnPlayer spawnPlayer = 6;
+        optional ServerPositionAndOrientation positionAndOrientation = 7;
+        optional ServerDespawnPlayer despawnPlayer = 8;
+        optional ServerMessage message = 9;
+        optional ServerDisconnectPlayer disconnectPlayer = 10;
+        optional ServerChunk chunk_ = 11;
+        optional ServerInventory inventory = 12;
+        optional ServerSeason season = 13;
+        optional ServerBlobInitialize blobInitialize = 14;
+        optional ServerBlobPart blobPart = 15;
+        optional ServerBlobFinalize blobFinalize = 16;
+        optional ServerHeightmapChunk heightmapChunk = 17;
+        optional ServerPing ping = 18;
+        optional ServerPlayerPing playerPing = 181;
+        optional ServerSound sound = 19;
+        optional ServerPlayerStats playerStats = 20;
+        optional ServerMonsters monster = 21;
+        optional ServerPlayerSpawnPosition playerSpawnPosition = 22;
+        optional ServerBlockTypes blockTypes = 23;
+        optional ServerSunLevels sunLevels = 24;
+        optional ServerLightLevels lightLevels = 25;
+        optional ServerCraftingRecipes craftingRecipes = 26;
+        optional ServerDialog dialog = 27;
+        optional ServerFollow follow = 28;
+        optional ServerBullet bullet = 29;
+        optional ServerAmmo ammo = 30;
+        optional ServerBlockType blockType = 31;
+        optional ServerChunkPart chunkPart = 32;
+        optional ServerExplosion explosion = 33;
+        optional ServerProjectile projectile = 34;
+    }
+    
+    message IntInt
+    {
+		optional int32 key_ = 1;
+		optional int32 value_ = 2;
+    }
+
+    message ServerAmmo
+    {
+		repeated IntInt totalAmmo = 1;
+    }
+    
+    message ServerChunkPart
+    {
+        optional bytes compressedChunkPart = 1;
+    }
+    
+    message ServerChunk
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 z = 3;
+        optional int32 sizeX = 4;
+        optional int32 sizeY = 5;
+        optional int32 sizeZ = 6;
+    }
+    
+    //needed for drawing shadows.
+    //sent before any chunks or blocks in the column.
+    message ServerHeightmapChunk
+    {
+        optional int32 x = 1;
+        optional int32 y = 2;
+        optional int32 sizeX = 3;
+        optional int32 sizeY = 4;
+        optional bytes compressedHeightmap = 5;
+    }
+    
+    message ServerInventory
+    {
+        optional Inventory inventory = 4;
+    }
+    
+    message ServerPlayerStats
+    {
+        optional int32 currentHealth = 1;
+        optional int32 maxHealth = 2;
+    }
+    
+    message ServerMonsters
+    {
+        repeated ServerMonster monsters = 1;
+    }
+    
+    message ServerMonster
+    {
+        optional int32 id = 1;
+        optional int32 monsterType = 2;
+        optional PositionAndOrientation positionAndOrientation = 3;
+        optional int32 health = 4;
+    }
+    
+	message ServerSeason
+    {
+        //optional int32 Season;
+        optional int32 hour = 2; //1-24*4
+        optional int32 dayNightCycleSpeedup = 3; //used for predicting sun speed.
+        optional int32 moon = 4;
+    }
+    
+    message ServerDialog
+    {
+        optional string dialogId = 1;
+        optional Dialog dialog = 2;
+    }
+    
+    message ServerPing
+    {
+    }
+    
+    message ServerPlayerPing
+    {
+        optional int32 clientId = 1;
+        optional int32 ping = 2;
+    }
+
+    message Inventory
+    {
+        optional Item mainArmor = 3;
+        optional Item boots = 4;
+        optional Item helmet = 5;
+        optional Item Gauntlet = 6;
+        repeated StringItem items = 7;
+        optional Item dragDropItem = 8;
+        repeated Item rightHand = 9;
+    }
+    
+    message Item
+    {
+        optional ItemClass itemClass = 1 [ default = Block ] ;
+        optional string itemId = 2;
+        optional int32 blockId = 3;
+        optional int32 blockCount = 4;
+    }
+    
+    enum ItemClass
+    {
+        Block = 0;
+        Weapon = 1;
+        MainArmor = 2;
+        Boots = 3;
+        Helmet = 4;
+        Gauntlet = 5;
+        Shield = 6;
+        Other = 7;
+    }
+    
+    message StringItem
+    {
+		optional string Key_ = 1;
+		optional Item Value_ = 2;
+    }
+    
+    message Dialog
+    {
+		repeated Widget widgets = 1;
+		optional int32 width = 2;
+		optional int32 height_ = 3;
+		optional int32 isModal = 4;
+    }
+    
+    message Widget
+    {
+        optional string id = 1;
+        optional int32 click = 2;
+        optional int32 x = 3;
+        optional int32 y = 4;
+        optional int32 width = 5;
+        optional int32 height_ = 6;
+        optional string text = 7;
+        optional int32 clickKey = 8;
+        optional string image = 9;
+        optional int32 color = 10; //white
+        optional DialogFont font = 11;
+        optional WidgetType type = 12 [default=Image];
+    }
+    
+    enum WidgetType
+    {
+        Image = 0;
+        Text = 1;
+    }
+    
+    message DialogFont
+    {
+        optional string familyName = 1;
+        optional int32 sizeFloat = 2;
+        optional DialogFontStyle fontStyle = 3 [default=Regular];
+    }
+    
+    enum DialogFontStyle
+    {
+        Regular = 0;
+        Bold = 1;
+        Italic = 2;
+        Underline = 4;
+        Strikeout = 8;
+    }
+

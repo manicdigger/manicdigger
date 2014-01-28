@@ -285,6 +285,10 @@ namespace ManicDigger
         Vector3 lastorientation;
         public void Play(string filename, Vector3 position)
         {
+            if (filename == ".wav")
+            {
+                return;
+            }
             if (!enabled)
             {
                 return;

@@ -404,7 +404,7 @@ namespace ManicDigger.Renderers
 
         bool IsWater(int tt2)
         {
-            return game.blocktypes[tt2].IsFluid();
+            return game.IsFluid(game.blocktypes[tt2]);
         }
 
         private void CalculateTilingCount(ushort[] currentChunk, int startx, int starty, int startz)
@@ -546,7 +546,7 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.OpenDoorLeft)
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -570,7 +570,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.OpenDoorRight)
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -594,7 +594,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.Fence || game.blocktypes[tiletype].DrawType == DrawType.ClosedDoor) // fence tiles automatically when another fence is beside
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -622,7 +622,7 @@ namespace ManicDigger.Renderers
                     drawleft = 1;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.Ladder) // try to fit ladder to best wall or existing ladder
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -665,11 +665,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (game.blocktypes[tt].DrawType == DrawType.HalfHeight)
+            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
             {
                 blockheight = 0.5f;
             }
-            if (game.blocktypes[tt].DrawType == DrawType.Torch)
+            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -1005,7 +1005,7 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.OpenDoorLeft)
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1029,7 +1029,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.OpenDoorRight)
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1053,7 +1053,8 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.Fence || game.blocktypes[tiletype].DrawType == DrawType.ClosedDoor) // fence tiles automatically when another fence is beside
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence
+                || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1081,7 +1082,7 @@ namespace ManicDigger.Renderers
                     drawleft = 1;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == DrawType.Ladder) // try to fit ladder to best wall or existing ladder
+            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1124,11 +1125,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (game.blocktypes[tt].DrawType == DrawType.HalfHeight)
+            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
             {
                 blockheight = 0.5f;
             }
-            if (game.blocktypes[tt].DrawType == DrawType.Torch)
+            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -2433,7 +2434,7 @@ namespace ManicDigger.Renderers
         private bool CanSupportTorch(int blocktype)
         {
             return blocktype != SpecialBlockId.Empty
-                && game.blocktypes[blocktype].DrawType != DrawType.Torch;
+                && game.blocktypes[blocktype].DrawType != Packet_DrawTypeEnum.Torch;
         }
          private int getBestLadderWall(int x, int y, int z, ushort[] currentChunk)
         {

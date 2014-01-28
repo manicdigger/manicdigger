@@ -25,12 +25,12 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             //this test is so the player does not walk on water.
-            if (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() &&
-                !game.blocktypes[game.GetBlock(x, y, z + 1)].IsFluid()) { return true; }
+            if (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) &&
+                !game.IsFluid(game.blocktypes[game.GetBlock(x, y, z + 1)])) { return true; }
             return game.GetBlock(x, y, z) == 0
-                || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == DrawType.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
-                || (game.blocktypes[game.GetBlock(x, y, z)].IsFluid() && (!swimmingtop))
-                || game.blocktypes[game.GetBlock(x, y, z)].IsEmptyForPhysics();
+                || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight && game.GetBlock(x, y, z+2) == 0 && game.GetBlock(x, y, z+1) == 0) // also check if the block above the stair is empty
+                || (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) && (!swimmingtop))
+                || game.IsEmptyForPhysics(game.blocktypes[game.GetBlock(x, y, z)]);
         }
         public static float walldistance = 0.3f;
         //public static float characterheight = 1.5f;

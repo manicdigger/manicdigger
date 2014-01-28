@@ -56,7 +56,7 @@ namespace ManicDigger
                 throw new Exception(blockType);
             }
             server.BlockTypes[id].IsBuildable = true;
-            server.d_Data.UseBlockType(id, server.BlockTypes[id], null);
+            server.d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]), null);
         }
 
         public void RegisterOnBlockBuild(ModDelegates.BlockBuild f)

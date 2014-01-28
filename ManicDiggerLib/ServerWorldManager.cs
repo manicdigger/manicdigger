@@ -231,7 +231,7 @@ namespace ManicDiggerServer
                 {
                     byte[] heightmapchunk = Misc.UshortArrayToByteArray(d_Map.GetHeightmapChunk(v.x, v.y));
                     byte[] compressedHeightmapChunk = d_NetworkCompression.Compress(heightmapchunk);
-                    PacketServerHeightmapChunk p1 = new PacketServerHeightmapChunk()
+                    Packet_ServerHeightmapChunk p1 = new Packet_ServerHeightmapChunk()
                     {
                         X = v.x,
                         Y = v.y,
@@ -239,7 +239,7 @@ namespace ManicDiggerServer
                         SizeY = chunksize,
                         CompressedHeightmap = compressedHeightmapChunk,
                     };
-                    SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.HeightmapChunk, HeightmapChunk = p1 }));
+                    SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.HeightmapChunk, HeightmapChunk = p1 }));
                     c.heightmapchunksseen[new Vector2i(v.x, v.y)] = (int)simulationcurrentframe;
                 }
             }
@@ -247,14 +247,14 @@ namespace ManicDiggerServer
             {
                 foreach (byte[] part in Parts(compressedchunk, 1024))
                 {
-                    PacketServerChunkPart p1 = new PacketServerChunkPart()
+                    Packet_ServerChunkPart p1 = new Packet_ServerChunkPart()
                     {
                         CompressedChunkPart = part,
                     };
-                    SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ChunkPart, ChunkPart = p1 }));
+                    SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.ChunkPart, ChunkPart = p1 }));
                 }
             }
-            PacketServerChunk p = new PacketServerChunk()
+            Packet_ServerChunk p = new Packet_ServerChunk()
             {
                 X = v.x,
                 Y = v.y,
@@ -263,7 +263,7 @@ namespace ManicDiggerServer
                 SizeY = chunksize,
                 SizeZ = chunksize,
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Chunk_, Chunk_ = p }));
         }
 
         public int playerareasize = 256;

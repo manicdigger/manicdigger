@@ -333,7 +333,7 @@ namespace ManicDiggerServer
         private ServerMonitor serverMonitor;
         private ServerConsole serverConsole;
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
-        public int ServerConsoleId {get { return serverConsoleId; } }
+        public int ServerConsoleId { get { return serverConsoleId; } }
         private Client serverConsoleClient;
         public void ReceiveServerConsole(string message)
         {
@@ -1008,10 +1008,10 @@ namespace ManicDiggerServer
 
         private void SendPing(int clientid)
         {
-            PacketServerPing p = new PacketServerPing()
+            Packet_ServerPing p = new Packet_ServerPing()
             {
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ping, Ping = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Ping, Ping = p }));
         }
         private void NotifyPing(int targetClientId, int ping)
         {
@@ -1022,12 +1022,12 @@ namespace ManicDiggerServer
         }
         private void SendPlayerPing(int recipientClientId, int targetClientId, int ping)
         {
-            PacketServerPlayerPing p = new PacketServerPlayerPing()
+            Packet_ServerPlayerPing p = new Packet_ServerPlayerPing()
             {
                 ClientId = targetClientId,
                 Ping = ping
             };
-            SendPacket(recipientClientId, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerPing, PlayerPing = p }));
+            SendPacket(recipientClientId, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerPing, PlayerPing = p }));
         }
 
         ManicDigger.Timer pingtimer = new ManicDigger.Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
@@ -1037,7 +1037,7 @@ namespace ManicDiggerServer
             {
                 return;
             }
-            PacketServerSeason p = new PacketServerSeason()
+            Packet_ServerSeason p = new Packet_ServerSeason()
             {
                 //Season = GetSeason(simulationcurrentframe),
                 Hour = GetHour(simulationcurrentframe) + 1,
@@ -1045,7 +1045,7 @@ namespace ManicDiggerServer
                 //Moon = GetMoon(simulationcurrentframe),
                 Moon = 0,
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Season, Season = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Season, Season = p }));
         }
 
         int DAY_EVERY_SECONDS = 60 * 60;//1 hour
@@ -1114,7 +1114,7 @@ namespace ManicDiggerServer
         }
 
         private void ChunkUpdate(Vector3i p, long lastupdate)
-        {          
+        {
             if (config.Monsters)
             {
                 AddMonsters(p);
@@ -1380,7 +1380,7 @@ if (sent >= unknown.Count) { break; }
             Client c = clients[clientid];
             if (c.IsInventoryDirty && c.playername != invalidplayername)
             {
-                PacketServerInventory p;
+                Packet_ServerInventory p;
                 /*
                 if (config.IsCreative)
                 {
@@ -1393,22 +1393,103 @@ if (sent >= unknown.Count) { break; }
                 else
                 */
                 {
-                    p = GetPlayerInventory(c.playername);
+                    p = ConvertInventory(GetPlayerInventory(c.playername));
                 }
-                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FiniteInventory, Inventory = p }));
+                SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.FiniteInventory, Inventory = p }));
                 c.IsInventoryDirty = false;
             }
         }
+
+        private Packet_ServerInventory ConvertInventory(PacketServerInventory inv)
+        {
+            if (inv == null)
+            {
+                return null;
+            }
+            Packet_ServerInventory p = new Packet_ServerInventory();
+            if (inv.Inventory != null)
+            {
+                p.Inventory = new Packet_Inventory();
+                p.Inventory.Boots = ConvertItem(inv.Inventory.Boots);
+                p.Inventory.DragDropItem = ConvertItem(inv.Inventory.DragDropItem);
+                p.Inventory.Gauntlet = ConvertItem(inv.Inventory.Gauntlet);
+                p.Inventory.Helmet = ConvertItem(inv.Inventory.Helmet);
+                // todo
+                //p.Inventory.Items = inv.Inventory.Items;
+                p.Inventory.Items = new Packet_StringItem[inv.Inventory.Items.Count];
+                p.Inventory.ItemsCount = inv.Inventory.Items.Count;
+                p.Inventory.ItemsLength = inv.Inventory.Items.Count;
+                {
+                    int i = 0;
+                    foreach (var k in inv.Inventory.Items)
+                    {
+                        Packet_StringItem item = new Packet_StringItem();
+                        item.Key_ = SerializePoint(k.Key.X, k.Key.Y);
+                        item.Value_ = ConvertItem(k.Value);
+                        p.Inventory.Items[i++] = item;
+                    }
+                }
+                p.Inventory.MainArmor = ConvertItem(inv.Inventory.MainArmor);
+                p.Inventory.RightHand = new Packet_Item[10];
+                p.Inventory.RightHandCount = 10;
+                p.Inventory.RightHandLength = 10;
+                for (int i = 0; i < inv.Inventory.RightHand.Length; i++)
+                {
+                    if (inv.Inventory.RightHand[i] == null)
+                    {
+                        p.Inventory.RightHand[i] = new Packet_Item();
+                    }
+                    else
+                    {
+                        p.Inventory.RightHand[i] = ConvertItem(inv.Inventory.RightHand[i]);
+                    }
+                }
+            }
+            return p;
+        }
+
+        private string SerializePoint(int x, int y)
+        {
+            return x.ToString() + " " + y.ToString();
+        }
+
+        private Packet_Item ConvertItem(Item item)
+        {
+            if (item == null)
+            {
+                return null;
+            }
+            Packet_Item p = new Packet_Item();
+            p.BlockCount = item.BlockCount;
+            p.BlockId = item.BlockId;
+            p.ItemClass = (int)item.ItemClass;
+            p.ItemId = item.ItemId;
+            return p;
+        }
+
         public void NotifyPlayerStats(int clientid)
         {
             Client c = clients[clientid];
             if (c.IsPlayerStatsDirty && c.playername != invalidplayername)
             {
-                PacketServerPlayerStats p = GetPlayerStats(c.playername);
-                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.PlayerStats, PlayerStats = p }));
+                Packet_ServerPlayerStats p = ConvertPlayerStats(GetPlayerStats(c.playername));
+                SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerStats, PlayerStats = p }));
                 c.IsPlayerStatsDirty = false;
             }
         }
+
+        Packet_ServerPlayerStats ConvertPlayerStats(PacketServerPlayerStats stats)
+        {
+            if (stats == null)
+            {
+                return null;
+            }
+            Packet_ServerPlayerStats p = new Packet_ServerPlayerStats();
+            p.CurrentHealth = stats.CurrentHealth;
+            p.MaxHealth = stats.MaxHealth;
+            return p;
+        }
+
         private void HitMonsters(int clientid, int health)
         {
             Client c = clients[clientid];
@@ -1416,7 +1497,6 @@ if (sent >= unknown.Count) { break; }
             int mapy = c.PositionMul32GlZ / 32;
             int mapz = c.PositionMul32GlY / 32;
             //3x3x3 chunks
-            List<PacketServerMonster> p = new List<PacketServerMonster>();
             for (int xx = -1; xx < 2; xx++)
             {
                 for (int yy = -1; yy < 2; yy++)
@@ -1469,7 +1549,7 @@ if (sent >= unknown.Count) { break; }
             int mapy = c.PositionMul32GlZ / 32;
             int mapz = c.PositionMul32GlY / 32;
             //3x3x3 chunks
-            List<PacketServerMonster> p = new List<PacketServerMonster>();
+            List<Packet_ServerMonster> p = new List<Packet_ServerMonster>();
             for (int xx = -1; xx < 2; xx++)
             {
                 for (int yy = -1; yy < 2; yy++)
@@ -1504,12 +1584,12 @@ if (sent >= unknown.Count) { break; }
                             if (m.WalkDirection.x == 1 && m.WalkDirection.y == 0) { heading = byte.MaxValue / 4; }
                             if (m.WalkDirection.x == 0 && m.WalkDirection.y == -1) { heading = 0; }
                             if (m.WalkDirection.x == 0 && m.WalkDirection.y == 1) { heading = byte.MaxValue / 2; }
-                            var mm = new PacketServerMonster()
+                            var mm = new Packet_ServerMonster()
                             {
                                 Id = m.Id,
                                 MonsterType = m.MonsterType,
                                 Health = m.Health,
-                                PositionAndOrientation = new PositionAndOrientation()
+                                PositionAndOrientation = new Packet_PositionAndOrientation()
                                 {
                                     Heading = heading,
                                     Pitch = 0,
@@ -1537,10 +1617,10 @@ if (sent >= unknown.Count) { break; }
             {
                 p.RemoveRange(sendmaxmonsters, p.Count - sendmaxmonsters);
             }
-            SendPacket(clientid, Serialize(new PacketServer()
+            SendPacket(clientid, Serialize(new Packet_Server()
             {
-                PacketId = ServerPacketId.Monster,
-                Monster = new PacketServerMonsters() { Monsters = p.ToArray() }
+                Id = Packet_ServerIdEnum.Monster,
+                Monster = new Packet_ServerMonsters() { Monsters = p.ToArray() }
             }));
         }
         int sendmaxmonsters = 10;
@@ -1915,7 +1995,7 @@ if (sent >= unknown.Count) { break; }
                         int x = packet.SetBlock.X;
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
-                        if (!PlayerHasPrivilege(clientid,ServerClientMisc.Privilege.build))
+                        if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
                         {
                             SendMessage(clientid, colorError + "Insufficient privileges to build.");
                             SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
@@ -2073,7 +2153,7 @@ if (sent >= unknown.Count) { break; }
                     }
                     else
                     {
-                        Vector3 from = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat( packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
+                        Vector3 from = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
                         Vector3 to = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
                         Vector3 v = to - from;
                         v.Normalize();
@@ -2190,18 +2270,18 @@ if (sent >= unknown.Count) { break; }
                 {
                     continue;
                 }
-                PacketServer p = new PacketServer();
-                p.PacketId = ServerPacketId.Projectile;
-                p.Projectile = new PacketServerProjectile()
+                Packet_Server p = new Packet_Server();
+                p.Id = Packet_ServerIdEnum.Projectile;
+                p.Projectile = new Packet_ServerProjectile()
                 {
-                    FromX = fromx,
-                    FromY = fromy,
-                    FromZ = fromz,
-                    VelocityX = velocityx,
-                    VelocityY = velocityy,
-                    VelocityZ = velocityz,
+                    FromXFloat = SerializeFloat(fromx),
+                    FromYFloat = SerializeFloat(fromy),
+                    FromZFloat = SerializeFloat(fromz),
+                    VelocityXFloat = SerializeFloat(velocityx),
+                    VelocityYFloat = SerializeFloat(velocityy),
+                    VelocityZFloat = SerializeFloat(velocityz),
                     BlockId = block,
-                    ExplodesAfter = explodesafter,
+                    ExplodesAfterFloat = SerializeFloat(explodesafter),
                 };
                 SendPacket(k.Key, Serialize(p));
             }
@@ -2215,17 +2295,17 @@ if (sent >= unknown.Count) { break; }
                 {
                     continue;
                 }
-                PacketServer p = new PacketServer();
-                p.PacketId = ServerPacketId.Bullet;
-                p.Bullet = new PacketServerBullet()
+                Packet_Server p = new Packet_Server();
+                p.Id = Packet_ServerIdEnum.Bullet;
+                p.Bullet = new Packet_ServerBullet()
                 {
-                    FromX = fromx,
-                    FromY = fromy,
-                    FromZ = fromz,
-                    ToX = tox,
-                    ToY = toy,
-                    ToZ = toz,
-                    Speed = speed
+                    FromXFloat = SerializeFloat(fromx),
+                    FromYFloat = SerializeFloat(fromy),
+                    FromZFloat = SerializeFloat(fromz),
+                    ToXFloat = SerializeFloat(tox),
+                    ToYFloat = SerializeFloat(toy),
+                    ToZFloat = SerializeFloat(toz),
+                    SpeedFloat = SerializeFloat(speed)
                 };
                 SendPacket(k.Key, Serialize(p));
             }
@@ -2275,11 +2355,11 @@ if (sent >= unknown.Count) { break; }
         public void SendPlayerSpawn(int clientid, int spawnedplayer)
         {
             Client c = clients[spawnedplayer];
-            PacketServerSpawnPlayer p = new PacketServerSpawnPlayer()
+            Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
             {
                 PlayerId = spawnedplayer,
                 PlayerName = c.playername,
-                PositionAndOrientation = new PositionAndOrientation()
+                PositionAndOrientation = new Packet_PositionAndOrientation()
                 {
                     X = c.PositionMul32GlX,
                     Y = c.PositionMul32GlY,
@@ -2287,10 +2367,10 @@ if (sent >= unknown.Count) { break; }
                     Heading = (byte)c.positionheading,
                     Pitch = (byte)c.positionpitch,
                 },
-                Model = c.Model,
-                Texture = c.Texture,
-                EyeHeight = c.EyeHeight,
-                ModelHeight = c.ModelHeight,
+                Model_ = c.Model,
+                Texture_ = c.Texture,
+                EyeHeightFloat = SerializeFloat(c.EyeHeight),
+                ModelHeightFloat = SerializeFloat(c.ModelHeight),
             };
             if (clients[spawnedplayer].IsSpectator && (!clients[clientid].IsSpectator))
             {
@@ -2298,7 +2378,7 @@ if (sent >= unknown.Count) { break; }
                 p.PositionAndOrientation.Y = -1000 * 32;
                 p.PositionAndOrientation.Z = 0;
             }
-            PacketServer pp = new PacketServer() { PacketId = ServerPacketId.SpawnPlayer, SpawnPlayer = p };
+            Packet_Server pp = new Packet_Server() { Id = Packet_ServerIdEnum.SpawnPlayer, SpawnPlayer = p };
             SendPacket(clientid, Serialize(pp));
         }
 
@@ -2604,7 +2684,7 @@ if (sent >= unknown.Count) { break; }
                 return;
             }
 
-            PacketServerFillArea p = new PacketServerFillArea()
+            Packet_ServerFillArea p = new Packet_ServerFillArea()
             {
                 X1 = a.x,
                 Y1 = a.y,
@@ -2615,7 +2695,7 @@ if (sent >= unknown.Count) { break; }
                 BlockType = blockType,
                 BlockCount = blockCount
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillArea, FillArea = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.FillArea, FillArea = p }));
         }
         private void SetFillAreaLimit(int clientid)
         {
@@ -2657,11 +2737,11 @@ if (sent >= unknown.Count) { break; }
 
         private void SendFillAreaLimit(int clientid, int limit)
         {
-            PacketServerFillAreaLimit p = new PacketServerFillAreaLimit()
+            Packet_ServerFillAreaLimit p = new Packet_ServerFillAreaLimit()
             {
                 Limit = limit
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.FillAreaLimit, FillAreaLimit = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.FillAreaLimit, FillAreaLimit = p }));
         }
 
         private bool DoCommandBuild(int player_id, bool execute, Packet_ClientSetBlock cmd)
@@ -2879,11 +2959,10 @@ if (sent >= unknown.Count) { break; }
             }
             return blocktypea == blocktypeb;
         }
-        public byte[] Serialize(PacketServer p)
+        public byte[] Serialize(Packet_Server p)
         {
-            MemoryStream ms = new MemoryStream();
-            Serializer.Serialize(ms, p);
-            return ms.ToArray();
+            byte[] data = Packet_ServerSerializer.SerializeToBytes(p);
+            return data;
         }
         private string GenerateUsername(string name)
         {
@@ -2927,25 +3006,25 @@ if (sent >= unknown.Count) { break; }
             {
                 return;
             }
-            PacketServerSetBlock p = new PacketServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SetBlock, SetBlock = p }));
+            Packet_ServerSetBlock p = new Packet_ServerSetBlock() { X = x, Y = y, Z = z, BlockType = blocktype };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.SetBlock, SetBlock = p }));
         }
         public void SendSound(int clientid, string name, int x, int y, int z)
         {
-            PacketServerSound p = new PacketServerSound() { Name = name, X = x, Y = y, Z = z };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Sound, Sound = p }));
+            Packet_ServerSound p = new Packet_ServerSound() { Name = name, X = x, Y = y, Z = z };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Sound, Sound = p }));
         }
         private void SendPlayerSpawnPosition(int clientid, int x, int y, int z)
         {
-            PacketServerPlayerSpawnPosition p = new PacketServerPlayerSpawnPosition()
+            Packet_ServerPlayerSpawnPosition p = new Packet_ServerPlayerSpawnPosition()
             {
                 X = x,
                 Y = y,
                 Z = z
             };
-            SendPacket(clientid, Serialize(new PacketServer()
+            SendPacket(clientid, Serialize(new Packet_Server()
             {
-                PacketId = ServerPacketId.PlayerSpawnPosition,
+                Id = Packet_ServerIdEnum.PlayerSpawnPosition,
                 PlayerSpawnPosition = p,
             }));
         }
@@ -2956,10 +3035,10 @@ if (sent >= unknown.Count) { break; }
             {
                 return;
             }
-            PacketServerPositionAndOrientation p = new PacketServerPositionAndOrientation()
+            Packet_ServerPositionAndOrientation p = new Packet_ServerPositionAndOrientation()
             {
                 PlayerId = playerid,
-                PositionAndOrientation = new PositionAndOrientation()
+                PositionAndOrientation = new Packet_PositionAndOrientation()
                 {
                     X = x,
                     Y = y,
@@ -2968,9 +3047,9 @@ if (sent >= unknown.Count) { break; }
                     Pitch = pitch,
                 }
             };
-            SendPacket(clientid, Serialize(new PacketServer()
+            SendPacket(clientid, Serialize(new Packet_Server()
             {
-                PacketId = ServerPacketId.PlayerPositionAndOrientation,
+                Id = Packet_ServerIdEnum.PlayerPositionAndOrientation,
                 PositionAndOrientation = p,
             }));
         }
@@ -2979,8 +3058,8 @@ if (sent >= unknown.Count) { break; }
         //SendOrientationUpdate
         private void SendDespawnPlayer(int clientid, int playerid)
         {
-            PacketServerDespawnPlayer p = new PacketServerDespawnPlayer() { PlayerId = playerid };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DespawnPlayer, DespawnPlayer = p }));
+            Packet_ServerDespawnPlayer p = new Packet_ServerDespawnPlayer() { PlayerId = playerid };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.DespawnPlayer, DespawnPlayer = p }));
         }
 
         public void SendMessage(int clientid, string message, MessageType color)
@@ -2998,15 +3077,15 @@ if (sent >= unknown.Count) { break; }
 
             string truncated = message; //.Substring(0, Math.Min(64, message.Length));
 
-            PacketServerMessage p = new PacketServerMessage();
+            Packet_ServerMessage p = new Packet_ServerMessage();
             p.PlayerId = clientid;
             p.Message = truncated;
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Message, Message = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Message, Message = p }));
         }
         private void SendDisconnectPlayer(int clientid, string disconnectReason)
         {
-            PacketServerDisconnectPlayer p = new PacketServerDisconnectPlayer() { DisconnectReason = disconnectReason };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.DisconnectPlayer, DisconnectPlayer = p }));
+            Packet_ServerDisconnectPlayer p = new Packet_ServerDisconnectPlayer() { DisconnectReason = disconnectReason };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.DisconnectPlayer, DisconnectPlayer = p }));
         }
         int StatTotalPackets = 0;
         int StatTotalPacketsLength = 0;
@@ -3164,87 +3243,141 @@ if (sent >= unknown.Count) { break; }
         }
         private void SendBlobInitialize(int clientid, byte[] hash, string name)
         {
-            PacketServerBlobInitialize p = new PacketServerBlobInitialize() { hash = hash, name = name };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobInitialize, BlobInitialize = p }));
+            Packet_ServerBlobInitialize p = new Packet_ServerBlobInitialize() { Name = name };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlobInitialize, BlobInitialize = p }));
         }
         private void SendBlobPart(int clientid, byte[] data)
         {
-            PacketServerBlobPart p = new PacketServerBlobPart() { data = data };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobPart, BlobPart = p }));
+            Packet_ServerBlobPart p = new Packet_ServerBlobPart() { Data = data };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlobPart, BlobPart = p }));
         }
         private void SendBlobFinalize(int clientid)
         {
-            PacketServerBlobFinalize p = new PacketServerBlobFinalize() { };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlobFinalize, BlobFinalize = p }));
+            Packet_ServerBlobFinalize p = new Packet_ServerBlobFinalize() { };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlobFinalize, BlobFinalize = p }));
         }
         public BlockType[] BlockTypes = new BlockType[GlobalVar.MAX_BLOCKTYPES];
         public void SendBlockTypes(int clientid)
         {
             for (int i = 0; i < BlockTypes.Length; i++)
             {
-                PacketServerBlockType p1 = new PacketServerBlockType() { Id = i, blocktype = BlockTypes[i] };
-                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlockType, BlockType = p1 }));
+                Packet_ServerBlockType p1 = new Packet_ServerBlockType() { Id = i, Blocktype = BlockTypeConverter.GetBlockType(BlockTypes[i]) };
+                SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlockType, BlockType = p1 }));
             }
-            PacketServerBlockTypes p = new PacketServerBlockTypes() { };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.BlockTypes, BlockTypes = p }));
+            Packet_ServerBlockTypes p = new Packet_ServerBlockTypes() { };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlockTypes, BlockTypes = p }));
         }
+
+        public static int SerializeFloat(float p)
+        {
+            return (int)(p * 32);
+        }
+
         private void SendSunLevels(int clientid)
         {
-            PacketServerSunLevels p = new PacketServerSunLevels() { sunlevels = sunlevels };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.SunLevels, SunLevels = p }));
+            Packet_ServerSunLevels p = new Packet_ServerSunLevels();
+            p.SetSunlevels(sunlevels, sunlevels.Length, sunlevels.Length);
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.SunLevels, SunLevels = p }));
         }
         private void SendLightLevels(int clientid)
         {
-            PacketServerLightLevels p = new PacketServerLightLevels() { lightlevels = lightlevels };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LightLevels, LightLevels = p }));
+            Packet_ServerLightLevels p = new Packet_ServerLightLevels();
+            int[] l = new int[lightlevels.Length];
+            for (int i = 0; i < lightlevels.Length; i++)
+            {
+                l[i] = SerializeFloat(lightlevels[i]);
+            }
+            p.SetLightlevels(l, l.Length, l.Length);
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LightLevels, LightLevels = p }));
         }
         private void SendCraftingRecipes(int clientid)
         {
-            PacketServerCraftingRecipes p = new PacketServerCraftingRecipes() { CraftingRecipes = craftingrecipes.ToArray() };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.CraftingRecipes, CraftingRecipes = p }));
+            Packet_CraftingRecipe[] recipes = new Packet_CraftingRecipe[craftingrecipes.Count];
+            for (int i = 0; i < craftingrecipes.Count; i++)
+            {
+                recipes[i] = ConvertCraftingRecipe(craftingrecipes[i]);
+            }
+            Packet_ServerCraftingRecipes p = new Packet_ServerCraftingRecipes();
+            p.SetCraftingRecipes(recipes, recipes.Length, recipes.Length);
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.CraftingRecipes, CraftingRecipes = p }));
         }
+
+        private Packet_CraftingRecipe ConvertCraftingRecipe(CraftingRecipe craftingRecipe)
+        {
+            if (craftingRecipe == null)
+            {
+                return null;
+            }
+            Packet_CraftingRecipe r = new Packet_CraftingRecipe();
+            if (craftingRecipe.ingredients != null)
+            {
+                r.Ingredients = new Packet_Ingredient[craftingRecipe.ingredients.Length];
+                for (int i = 0; i < craftingRecipe.ingredients.Length; i++)
+                {
+                    r.Ingredients[i] = ConvertIngredient(craftingRecipe.ingredients[i]);
+                }
+                r.IngredientsCount = r.Ingredients.Length;
+                r.IngredientsLength = r.Ingredients.Length;
+            }
+            if (craftingRecipe.output != null)
+            {
+                r.Output = new Packet_Ingredient();
+                r.Output.Amount = craftingRecipe.output.Amount;
+                r.Output.Type = craftingRecipe.output.Type;
+            }
+            return r;
+        }
+
+        private Packet_Ingredient ConvertIngredient(Ingredient ingredient)
+        {
+            Packet_Ingredient p = new Packet_Ingredient();
+            p.Amount = ingredient.Amount;
+            p.Type = ingredient.Type;
+            return p;
+        }
+
         private void SendLevelInitialize(int clientid)
         {
-            PacketServerLevelInitialize p = new PacketServerLevelInitialize() { };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelInitialize, LevelInitialize = p }));
+            Packet_ServerLevelInitialize p = new Packet_ServerLevelInitialize() { };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelInitialize, LevelInitialize = p }));
         }
         private void SendLevelProgress(int clientid, int percentcomplete, string status)
         {
-            PacketServerLevelProgress p = new PacketServerLevelProgress() { PercentComplete = percentcomplete, Status = status };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelDataChunk, LevelDataChunk = p }));
+            Packet_ServerLevelProgress p = new Packet_ServerLevelProgress() { PercentComplete = percentcomplete, Status = status };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelDataChunk, LevelDataChunk = p }));
         }
         private void SendLevelFinalize(int clientid)
         {
-            PacketServerLevelFinalize p = new PacketServerLevelFinalize() { };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.LevelFinalize, LevelFinalize = p }));
+            Packet_ServerLevelFinalize p = new Packet_ServerLevelFinalize() { };
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelFinalize, LevelFinalize = p }));
         }
         public RenderHint RenderHint = RenderHint.Fast;
         private void SendServerIdentification(int clientid)
         {
-            PacketServerIdentification p = new PacketServerIdentification()
+            Packet_ServerIdentification p = new Packet_ServerIdentification()
             {
                 MdProtocolVersion = GameVersion.Version,
                 AssignedClientId = clientid,
                 ServerName = config.Name,
                 ServerMotd = config.Motd,
-                UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
-                TerrainTextureMd5 = terrainTextureMd5,
+                //UsedBlobsMd5 = new List<byte[]>(new[] { terrainTextureMd5 }),
+                //TerrainTextureMd5 = terrainTextureMd5,
                 MapSizeX = d_Map.MapSizeX,
                 MapSizeY = d_Map.MapSizeY,
                 MapSizeZ = d_Map.MapSizeZ,
                 DisableShadows = enableshadows ? 0 : 1,
                 PlayerAreaSize = playerareasize,
-                RenderHint = (int)RenderHint,
+                RenderHint_ = (int)RenderHint,
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.ServerIdentification, Identification = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.ServerIdentification, Identification = p }));
         }
         public void SendFreemoveState(int clientid, bool isEnabled)
         {
-            PacketServerFreemove p = new PacketServerFreemove()
+            Packet_ServerFreemove p = new Packet_ServerFreemove()
             {
-                IsEnabled = isEnabled
+                IsEnabled = isEnabled ? 1 : 0
             };
-            SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Freemove, Freemove = p }));
+            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Freemove, Freemove = p }));
         }
 
         byte[] terrainTextureMd5 { get { byte[] b = new byte[16]; b[0] = 1; return b; } }
@@ -3443,7 +3576,7 @@ if (sent >= unknown.Count) { break; }
                 // server sets a default spawn (middle of map)
                 int x = d_Map.MapSizeX / 2;
                 int y = d_Map.MapSizeY / 2;
-                this.defaultPlayerSpawn =  DontSpawnPlayerInWater(new Vector3i(x, y, MapUtil.blockheight(d_Map, 0, x, y)));
+                this.defaultPlayerSpawn = DontSpawnPlayerInWater(new Vector3i(x, y, MapUtil.blockheight(d_Map, 0, x, y)));
             }
             else
             {
@@ -3595,7 +3728,7 @@ if (sent >= unknown.Count) { break; }
         {
             BlockTypes[id] = block;
             block.Name = name;
-            d_Data.UseBlockType(id, block, null);
+            d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(block), null);
         }
         public void SetBlockType(string name, BlockType block)
         {
@@ -3628,12 +3761,69 @@ if (sent >= unknown.Count) { break; }
 
         public void SendDialog(int player, string id, Dialog dialog)
         {
-            PacketServerDialog p = new PacketServerDialog()
+            Packet_ServerDialog p = new Packet_ServerDialog()
             {
                 DialogId = id,
-                Dialog = dialog,
+                Dialog = ConvertDialog(dialog),
             };
-            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Dialog, Dialog = p }));
+            SendPacket(player, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Dialog, Dialog = p }));
+        }
+
+        private Packet_Dialog ConvertDialog(Dialog dialog)
+        {
+            if (dialog == null)
+            {
+                return null;
+            }
+            Packet_Dialog p = new Packet_Dialog();
+            p.Height_ = dialog.Height;
+            p.IsModal = dialog.IsModal ? 1 : 0;
+            if (dialog.Widgets != null)
+            {
+                Packet_Widget[] widgets = new Packet_Widget[dialog.Widgets.Length];
+                for (int i = 0; i < dialog.Widgets.Length; i++)
+                {
+                    widgets[i] = ConvertWidget(dialog.Widgets[i]);
+                }
+                p.SetWidgets(widgets, widgets.Length, widgets.Length);
+            }
+            p.Width = dialog.Width;
+            return p;
+        }
+
+        private Packet_Widget ConvertWidget(Widget widget)
+        {
+            if (widget == null)
+            {
+                return null;
+            }
+            Packet_Widget w = new Packet_Widget();
+            w.Click = widget.Click ? 1 : 0;
+            w.ClickKey = widget.ClickKey;
+            w.Color = widget.Color;
+            w.Font = ConvertFont(widget.Font);
+            w.Height_ = widget.Height;
+            w.Id = widget.Id;
+            w.Image = widget.Image;
+            w.Text = widget.Text;
+            w.Type = (int)widget.Type;
+            w.Width = widget.Width;
+            w.X = widget.X;
+            w.Y = widget.Y;
+            return w;
+        }
+
+        private Packet_DialogFont ConvertFont(DialogFont dialogFont)
+        {
+            if (dialogFont == null)
+            {
+                return null;
+            }
+            Packet_DialogFont f = new Packet_DialogFont();
+            f.FamilyName = dialogFont.FamilyName;
+            f.FontStyle = (int)dialogFont.FontStyle;
+            f.SizeFloat = SerializeFloat(dialogFont.Size);
+            return f;
         }
 
         public bool PlayerHasPrivilege(int player, string privilege)
@@ -3653,7 +3843,7 @@ if (sent >= unknown.Count) { break; }
         {
             PlaySoundAtExceptPlayer(posx, posy, posz, sound, null);
         }
-        
+
         public void PlaySoundAtExceptPlayer(int posx, int posy, int posz, string sound, int? player)
         {
             Vector3i pos = new Vector3i(posx, posy, posz);
@@ -3675,52 +3865,53 @@ if (sent >= unknown.Count) { break; }
         {
             PlaySoundAtExceptPlayer(posx, posy, posz, sound, null, range);
         }
-        public void PlaySoundAtExceptPlayer (int posx, int posy, int posz, string sound, int? player, int range)
+        public void PlaySoundAtExceptPlayer(int posx, int posy, int posz, string sound, int? player, int range)
         {
-            Vector3i pos = new Vector3i (posx, posy, posz);
+            Vector3i pos = new Vector3i(posx, posy, posz);
             foreach (var k in clients)
             {
                 if (player != null && player == k.Key)
                 {
                     continue;
                 }
-                int distance = DistanceSquared (new Vector3i ((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
+                int distance = DistanceSquared(new Vector3i((int)k.Value.PositionMul32GlX / 32, (int)k.Value.PositionMul32GlZ / 32, (int)k.Value.PositionMul32GlY / 32), pos);
                 if (distance < range)
                 {
-                    SendSound (k.Key, sound, pos.x, posy, posz);
+                    SendSound(k.Key, sound, pos.x, posy, posz);
                 }
             }
         }
 
         public void SendPacketFollow(int player, int target, bool tpp)
         {
-            PacketServerFollow p = new PacketServerFollow()
+            Packet_ServerFollow p = new Packet_ServerFollow()
             {
                 Client = target == -1 ? null : clients[target].playername,
-                Tpp = tpp,
+                Tpp = tpp ? 1 : 0,
             };
-            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Follow, Follow = p }));
+            SendPacket(player, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Follow, Follow = p }));
         }
 
         public void SendAmmo(int playerid, Dictionary<int, int> totalAmmo)
         {
-            PacketServerAmmo p = new PacketServerAmmo()
+            Packet_ServerAmmo p = new Packet_ServerAmmo();
+            foreach (var k in totalAmmo)
             {
-                TotalAmmo = totalAmmo,
-            };
-            SendPacket(playerid, Serialize(new PacketServer() { PacketId = ServerPacketId.Ammo, Ammo = p }));
+                p.TotalAmmoAdd(new Packet_IntInt() { Key_ = k.Key, Value_ = k.Value });
+            }
+            SendPacket(playerid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Ammo, Ammo = p }));
         }
 
         public void SendExplosion(int player, float x, float y, float z, bool relativeposition, float range, float time)
         {
-            PacketServerExplosion p = new PacketServerExplosion();
-            p.X = x;
-            p.Y = y;
-            p.Z = z;
-            p.IsRelativeToPlayerPosition = relativeposition;
-            p.Range = range;
-            p.Time = time;
-            SendPacket(player, Serialize(new PacketServer() { PacketId = ServerPacketId.Explosion, Explosion = p }));
+            Packet_ServerExplosion p = new Packet_ServerExplosion();
+            p.XFloat = SerializeFloat(x);
+            p.YFloat = SerializeFloat(y);
+            p.ZFloat = SerializeFloat(z);
+            p.IsRelativeToPlayerPosition = relativeposition ? 1 : 0;
+            p.RangeFloat = SerializeFloat(range);
+            p.TimeFloat = SerializeFloat(time);
+            SendPacket(player, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Explosion, Explosion = p }));
         }
 
         public string GetGroupColor(int playerid)
@@ -3833,23 +4024,92 @@ if (sent >= unknown.Count) { break; }
     }
     public class GameTime
     {
-            public long Ticks;
-            public int TicksPerSecond = 64;
-            public double GameYearRealHours = 24;
-            public double GameDayRealHours = 1;
-            public double HourTotal // 0 - 23
+        public long Ticks;
+        public int TicksPerSecond = 64;
+        public double GameYearRealHours = 24;
+        public double GameDayRealHours = 1;
+        public double HourTotal // 0 - 23
+        {
+            get
             {
-                get
-                {
-                    return ((double)Ticks / TicksPerSecond) / (GameDayRealHours * 60 * 60);
-                }
+                return ((double)Ticks / TicksPerSecond) / (GameDayRealHours * 60 * 60);
             }
-            public double YearTotal
+        }
+        public double YearTotal
+        {
+            get
             {
-                get
-                {
-                    return ((double)Ticks / TicksPerSecond) / (GameYearRealHours * 60 * 60);
-                }
+                return ((double)Ticks / TicksPerSecond) / (GameYearRealHours * 60 * 60);
             }
+        }
+    }
+
+    public class BlockTypeConverter
+    {
+        public static Packet_BlockType GetBlockType(BlockType block)
+        {
+            Packet_BlockType p = new Packet_BlockType();
+            p.AimRadiusFloat = Server.SerializeFloat(block.AimRadius);
+            p.AmmoMagazine = block.AmmoMagazine;
+            p.AmmoTotal = block.AmmoTotal;
+            p.BulletsPerShotFloat = Server.SerializeFloat(block.BulletsPerShot);
+            p.DamageBodyFloat = Server.SerializeFloat(block.DamageBody);
+            p.DamageHeadFloat = Server.SerializeFloat(block.DamageHead);
+            p.DamageToPlayer = block.DamageToPlayer;
+            p.DelayFloat = Server.SerializeFloat(block.Delay);
+            p.DrawType = (int)block.DrawType;
+            p.ExplosionRangeFloat = Server.SerializeFloat(block.ExplosionRange);
+            p.ExplosionTimeFloat = Server.SerializeFloat(block.ExplosionTime);
+            p.Handimage = block.handimage;
+            p.IronSightsAimRadiusFloat = Server.SerializeFloat(block.IronSightsAimRadius);
+            p.IronSightsEnabled = block.IronSightsEnabled;
+            p.IronSightsFovFloat = Server.SerializeFloat(block.IronSightsFov);
+            p.IronSightsImage = block.IronSightsImage;
+            p.IronSightsMoveSpeedFloat = Server.SerializeFloat(block.IronSightsMoveSpeed);
+            p.IsBuildable = block.IsBuildable;
+            p.IsPistol = block.IsPistol;
+            p.IsSlipperyWalk = block.IsSlipperyWalk;
+            p.IsTool = block.IsTool;
+            p.IsUsable = block.IsUsable;
+            p.LightRadius = block.LightRadius;
+            p.Name = block.Name;
+            p.PistolType = (int)block.PistolType;
+            p.ProjectileBounce = block.ProjectileBounce;
+            p.ProjectileSpeedFloat = Server.SerializeFloat(block.ProjectileSpeed);
+            p.Rail = block.Rail;
+            p.RecoilFloat = Server.SerializeFloat(block.Recoil);
+            p.ReloadDelayFloat = Server.SerializeFloat(block.ReloadDelay);
+            p.Sounds = GetSoundSet(block.Sounds);
+            p.StartInventoryAmount = block.StartInventoryAmount;
+            p.Strength = block.Strength;
+            p.TextureIdBack = block.TextureIdBack;
+            p.TextureIdBottom = block.TextureIdBottom;
+            p.TextureIdForInventory = block.TextureIdForInventory;
+            p.TextureIdFront = block.TextureIdFront;
+            p.TextureIdLeft = block.TextureIdLeft;
+            p.TextureIdRight = block.TextureIdRight;
+            p.TextureIdTop = block.TextureIdTop;
+            p.WalkableType = (int)block.WalkableType;
+            p.WalkSpeedFloat = Server.SerializeFloat(block.WalkSpeed);
+            p.WalkSpeedWhenUsedFloat = Server.SerializeFloat(block.WalkSpeedWhenUsed);
+            return p;
+        }
+
+        private static Packet_SoundSet GetSoundSet(SoundSet soundSet)
+        {
+            if (soundSet == null)
+            {
+                return null;
+            }
+            Packet_SoundSet p = new Packet_SoundSet();
+            p.SetBreak1(soundSet.Break, soundSet.Break.Length, soundSet.Break.Length);
+            p.SetBuild(soundSet.Build, soundSet.Build.Length, soundSet.Build.Length);
+            p.SetClone(soundSet.Clone, soundSet.Clone.Length, soundSet.Clone.Length);
+            p.SetReload(soundSet.Reload, soundSet.Reload.Length, soundSet.Reload.Length);
+            p.SetShoot(soundSet.Shoot, soundSet.Shoot.Length, soundSet.Shoot.Length);
+            p.SetShootEnd(soundSet.ShootEnd, soundSet.ShootEnd.Length, soundSet.ShootEnd.Length);
+            p.SetWalk(soundSet.Walk, soundSet.Walk.Length, soundSet.Walk.Length);
+            return p;
+        }
     }
 }

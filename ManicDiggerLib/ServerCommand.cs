@@ -1673,9 +1673,9 @@ namespace ManicDiggerServer
             {
                 foreach (var k in clients)
                 {
-                    SendPacket(k.Key, Serialize(new PacketServer()
+                    SendPacket(k.Key, Serialize(new Packet_Server()
                         {
-                         PacketId = ServerPacketId.RemoveMonsters
+                            Id = Packet_ServerIdEnum.RemoveMonsters
                         }));
                 }
             }

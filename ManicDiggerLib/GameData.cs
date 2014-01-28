@@ -232,7 +232,7 @@ namespace ManicDigger
         public int BlockIdRailstart { get { return mBlockIdRailstart; } set { mBlockIdRailstart = value; } }
 
         // TODO: atm it sets sepcial block id from block name - better use new block property
-        public bool SetSpecialBlock(BlockType b, int id)
+        public bool SetSpecialBlock(Packet_BlockType b, int id)
         {
             switch (b.Name)
             {
@@ -294,7 +294,7 @@ namespace ManicDigger
             return id >= BlockIdRailstart && id < BlockIdRailstart + 64;
         }
 
-        public void UseBlockTypes(BlockType[] blocktypes, Dictionary<string,int> textureInAtlasIds)
+        public void UseBlockTypes(Packet_BlockType[] blocktypes, Dictionary<string,int> textureInAtlasIds)
         {
             for (int i = 0; i < blocktypes.Length; i++)
             {
@@ -304,8 +304,8 @@ namespace ManicDigger
                 }
             }
         }
-
-        public void UseBlockType(int id, BlockType b, Dictionary<string,int> textureIds)
+        
+        public void UseBlockType(int id, Packet_BlockType b, Dictionary<string,int> textureIds)
         {
             IsValid[id] = b.Name != null;//b.IsValid;
             if (b.Name == null)//!b.IsValid)
@@ -315,13 +315,13 @@ namespace ManicDigger
             //public bool[] IsWater { get { return mIsWater; } }
             IsWater[id] = b.Name.Contains("Water"); //todo
             IsLava[id] = b.Name.Contains("Lava"); //todo
-            IsTransparent[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Fluid);
+            IsTransparent[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
-            IsTransparentForLight[id] = b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
+            IsTransparentForLight[id] = b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
 
-            IsTransparentFully[id] = (b.DrawType != DrawType.Solid) && (b.DrawType != DrawType.Plant)
-                 && (b.DrawType != DrawType.OpenDoorLeft) && (b.DrawType != DrawType.OpenDoorRight) && (b.DrawType != DrawType.ClosedDoor);
+            IsTransparentFully[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Plant)
+                 && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
             //Indexed by block id and TileSide.
             if (textureIds != null)
             {
@@ -334,16 +334,16 @@ namespace ManicDigger
                 TextureIdForInventory[id] = textureIds[b.TextureIdForInventory];
             }
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
-            IsFlower[id] = b.DrawType == DrawType.Plant;
+            IsFlower[id] = b.DrawType == Packet_DrawTypeEnum.Plant;
             Rail[id] = (RailDirectionFlags)b.Rail;
-            WalkSpeed[id] = b.WalkSpeed;
+            WalkSpeed[id] = DeserializeFloat(b.WalkSpeedFloat);
             IsSlipperyWalk[id] = b.IsSlipperyWalk;
             WalkSound[id] = (string[])b.Sounds.Walk.Clone();
             for (int i = 0; i < WalkSound[id].Length; i++)
             {
                 WalkSound[id][i] += ".wav";
             }
-            BreakSound[id] = (string[])b.Sounds.Break.Clone();
+            BreakSound[id] = (string[])b.Sounds.Break1.Clone();
             for (int i = 0; i < BreakSound[id].Length; i++)
             {
                 BreakSound[id][i] += ".wav";
@@ -362,8 +362,13 @@ namespace ManicDigger
             //StartInventoryAmount { get; }
             Strength[id] = b.Strength;
             DamageToPlayer[id] = b.DamageToPlayer;
-            WalkableType1[id] = b.WalkableType;
+            WalkableType1[id] = (WalkableType)b.WalkableType;
             SetSpecialBlock(b, id);
+        }
+
+        private float DeserializeFloat(int p)
+        {
+            return ((float)p) / 32;
         }
     }
 

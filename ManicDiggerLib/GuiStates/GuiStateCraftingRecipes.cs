@@ -9,7 +9,7 @@ namespace ManicDigger
     public partial class ManicDiggerGameWindow
     {
         #region IViewport3d Members
-        public void CraftingRecipesStart(CraftingRecipe[] recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
+        public void CraftingRecipesStart(Packet_CraftingRecipe[] recipes, List<int> blocks, Action<int?> craftingRecipeSelected)
         {
             this.craftingrecipes2 = recipes;
             this.craftingblocks = blocks;
@@ -19,7 +19,7 @@ namespace ManicDigger
             FreeMouse = true;
         }
         #endregion
-        public CraftingRecipe[] craftingrecipes2;
+        public Packet_CraftingRecipe[] craftingrecipes2;
         List<int> craftingblocks;
         ManicDigger.Action<int?> craftingrecipeselected;
 
@@ -31,10 +31,18 @@ namespace ManicDigger
             this.okrecipes = okrecipes;
             for (int i = 0; i < craftingrecipes2.Length; i++)
             {
-                CraftingRecipe r = craftingrecipes2[i];
-                //can apply recipe?
-                foreach (Ingredient ingredient in r.ingredients)
+                Packet_CraftingRecipe r = craftingrecipes2[i];
+                if (r == null)
                 {
+                    continue;
+                }
+                //can apply recipe?
+                foreach (Packet_Ingredient ingredient in r.Ingredients)
+                {
+                    if (ingredient == null)
+                    {
+                        continue;
+                    }
                     if (craftingblocks.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
                     {
                         goto next;
@@ -53,23 +61,34 @@ namespace ManicDigger
             }
             for (int i = 0; i < okrecipes.Count; i++)
             {
-                CraftingRecipe r = craftingrecipes2[okrecipes[i]];
-                for (int ii = 0; ii < r.ingredients.Length; ii++)
+                Packet_CraftingRecipe r = craftingrecipes2[okrecipes[i]];
+                for (int ii = 0; ii < r.IngredientsCount; ii++)
                 {
                     int xx = menustartx + 20 + ii * 130;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 30, 30, d_Data.TextureIdForInventory[r.ingredients[ii].Type]);
-                    Draw2dText(string.Format("{0} {1}", r.ingredients[ii].Amount, blocktypes[r.ingredients[ii].Type].Name), xx + 50, yy, 12,
+                    Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 30, 30, d_Data.TextureIdForInventory[r.Ingredients[ii].Type]);
+                    Draw2dText(string.Format("{0} {1}", r.Ingredients[ii].Amount, blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
                 {
                     int xx = menustartx + 20 + 400;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 40, 40, d_Data.TextureIdForInventory[r.output.Type]);
-                    Draw2dText(string.Format("{0} {1}", r.output.Amount, blocktypes[r.output.Type].Name), xx + 50, yy, 12,
+                    Draw2dTexture(d_TerrainTextures.terrainTexture, xx, yy, 40, 40, d_Data.TextureIdForInventory[r.Output.Type]);
+                    Draw2dText(string.Format("{0} {1}", r.Output.Amount, blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
                         i == craftingselectedrecipe ? Color.Red : Color.White);
                 }
             }
+        }
+
+        public bool IsFluid(Packet_BlockType block)
+        {
+            return block.DrawType == Packet_DrawTypeEnum.Fluid;
+        }
+
+        public bool IsEmptyForPhysics(Packet_BlockType block)
+        {
+            return (block.DrawType == Packet_DrawTypeEnum.Ladder)
+                || (block.WalkableType != Packet_WalkableTypeEnum.Solid && block.WalkableType != Packet_WalkableTypeEnum.Fluid);
         }
     }
 
