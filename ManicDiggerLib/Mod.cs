@@ -797,5 +797,15 @@ namespace ManicDigger
         {
             return server.serverClient;
         }
+
+        public long TotalReceivedBytes()
+        {
+            return server.TotalReceivedBytes;
+        }
+
+        public long TotalSentBytes()
+        {
+            return server.TotalSentBytes;
+        }
     }
 }

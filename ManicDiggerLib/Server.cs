@@ -895,6 +895,7 @@ namespace ManicDiggerServer
                         // process packet
                         try
                         {
+                            TotalReceivedBytes += msg.LengthBytes;
                             TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
                             d_MainSocket.Recycle(msg);
                         }
@@ -3002,6 +3003,8 @@ if (sent >= unknown.Count) { break; }
         }
         int StatTotalPackets = 0;
         int StatTotalPacketsLength = 0;
+        public long TotalSentBytes;
+        public long TotalReceivedBytes;
         public void SendPacket(int clientid, byte[] packet)
         {
             if (clients[clientid].IsBot)
@@ -3010,6 +3013,7 @@ if (sent >= unknown.Count) { break; }
             }
             StatTotalPackets++;
             StatTotalPacketsLength += packet.Length;
+            TotalSentBytes += packet.Length;
             try
             {
                 INetOutgoingMessage msg = d_MainSocket.CreateMessage();
