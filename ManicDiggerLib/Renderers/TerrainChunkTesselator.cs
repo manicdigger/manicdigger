@@ -22,8 +22,6 @@ namespace ManicDigger.Renderers
         [Inject]
         public IGameData d_Data;
         [Inject]
-        public BlockRendererTorch d_BlockRendererTorch;
-        [Inject]
         public Config3d d_Config3d;
         [Inject]
         public ITerrainTextures d_TerrainTextures;
@@ -71,7 +69,24 @@ namespace ManicDigger.Renderers
             maxlightInverse = 1f / maxlight;
             terrainTexturesPerAtlas = d_TerrainTextures.terrainTexturesPerAtlas;
             terrainTexturesPerAtlasInverse = 1f / d_TerrainTextures.terrainTexturesPerAtlas;
-            
+
+
+            toreturnatlas1d = new ModelData[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
+            toreturnatlas1dtransparent = new ModelData[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
+            for (int i = 0; i < toreturnatlas1d.Length; i++)
+            {
+                toreturnatlas1d[i] = new ModelData();
+                toreturnatlas1d[i].xyz = new float[65536 * 3];
+                toreturnatlas1d[i].uv = new float[65536 * 2];
+                toreturnatlas1d[i].rgba = new byte[65536 * 4];
+                toreturnatlas1d[i].indices = new int[65536];
+
+                toreturnatlas1dtransparent[i] = new ModelData();
+                toreturnatlas1dtransparent[i].xyz = new float[65536 * 3];
+                toreturnatlas1dtransparent[i].uv = new float[65536 * 2];
+                toreturnatlas1dtransparent[i].rgba = new byte[65536 * 4];
+                toreturnatlas1dtransparent[i].indices = new int[65536];
+            }
         }
         int terrainTexturesPerAtlas;
         float terrainTexturesPerAtlasInverse;
@@ -80,20 +95,6 @@ namespace ManicDigger.Renderers
         bool[] istransparent;
         bool[] isvalid;
 
-        void NewVi(ref VerticesIndices vi)
-        {
-            if (vi == null)
-            {
-                vi = new VerticesIndices()
-                {
-                    indices = new ushort[ushort.MaxValue],
-                    vertices = new VertexPositionTexture[ushort.MaxValue],
-                };
-            }
-            vi.verticesCount = 0;
-            vi.indicesCount = 0;
-        }
-
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0) { yield break; }
@@ -101,25 +102,15 @@ namespace ManicDigger.Renderers
             if (x >= mapsizex / chunksize
                 || y >= mapsizey / chunksize
                 || z >= mapsizez / chunksize) { yield break; }
-            if (ENABLE_ATLAS1D)
+
+            for (int i = 0; i < toreturnatlas1d.Length; i++)
             {
-                if (toreturnatlas1d == null)
-                {
-                    toreturnatlas1d = new VerticesIndices[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
-                    toreturnatlas1dtransparent = new VerticesIndices[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
-                }
-                for (int i = 0; i < toreturnatlas1d.Length; i++)
-                {
-                    //Manual memory allocation for performance - reuse arrays.
-                    NewVi(ref toreturnatlas1d[i]);
-                    NewVi(ref toreturnatlas1dtransparent[i]);
-                }
+                toreturnatlas1d[i].verticesCount = 0;
+                toreturnatlas1d[i].indicesCount = 0;
+                toreturnatlas1dtransparent[i].verticesCount = 0;
+                toreturnatlas1dtransparent[i].indicesCount = 0;
             }
-            //else //torch block
-            {
-                NewVi(ref toreturnmain);
-                NewVi(ref toreturntransparent);
-            }
+
             GetExtendedChunk(x, y, z);
             if (IsSolidChunk(currentChunk)) { yield break; }
             //ResetCurrentShadows();
@@ -141,73 +132,55 @@ namespace ManicDigger.Renderers
         }
         IEnumerable<VerticesIndicesToLoad> GetFinalVerticesIndices(int x, int y, int z)
         {
-            if (ENABLE_ATLAS1D)
+            for (int i = 0; i < toreturnatlas1d.Length; i++)
             {
-                for (int i = 0; i < toreturnatlas1d.Length; i++)
+                if (toreturnatlas1d[i].indicesCount > 0)
                 {
-                    if (toreturnatlas1d[i].indicesCount > 0)
-                    {
-                        yield return new VerticesIndicesToLoad()
-                        {
-                            indices = Clone(toreturnatlas1d[i].indices, toreturnatlas1d[i].indicesCount),
-                            indicesCount = toreturnatlas1d[i].indicesCount,
-                            vertices = Clone(toreturnatlas1d[i].vertices, toreturnatlas1d[i].verticesCount),
-                            verticesCount = toreturnatlas1d[i].verticesCount,
-                            position =
-                                new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                            texture = d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas],
-                        };
-                    }
-                }
-                for (int i = 0; i < toreturnatlas1dtransparent.Length; i++)
-                {
-                    if (toreturnatlas1dtransparent[i].indicesCount > 0)
-                    {
-                        yield return new VerticesIndicesToLoad()
-                        {
-                            indices = Clone(toreturnatlas1dtransparent[i].indices, toreturnatlas1dtransparent[i].indicesCount),
-                            indicesCount = toreturnatlas1dtransparent[i].indicesCount,
-                            vertices = Clone(toreturnatlas1dtransparent[i].vertices, toreturnatlas1dtransparent[i].verticesCount),
-                            verticesCount = toreturnatlas1dtransparent[i].verticesCount,
-                            position =
-                                new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                            texture = d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas],
-                            transparent = true,
-                        };
-                    }
+                    yield return GetVerticesIndices(toreturnatlas1d[i], x, y, z, d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas], false);
                 }
             }
-            //else //torch block
+            for (int i = 0; i < toreturnatlas1dtransparent.Length; i++)
             {
-                if (toreturnmain.indicesCount > 0)
+                if (toreturnatlas1dtransparent[i].indicesCount > 0)
                 {
-                    yield return new VerticesIndicesToLoad()
-                    {
-                        indices = Clone(toreturnmain.indices, toreturnmain.indicesCount),
-                        indicesCount = toreturnmain.indicesCount,
-                        vertices = Clone(toreturnmain.vertices, toreturnmain.verticesCount),
-                        verticesCount = toreturnmain.verticesCount,
-                        position =
-                            new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                        texture = d_TerrainTextures.terrainTexture,
-                    };
-                }
-                if (toreturntransparent.indicesCount > 0)
-                {
-                    yield return new VerticesIndicesToLoad()
-                    {
-                        indices = Clone(toreturntransparent.indices, toreturntransparent.indicesCount),
-                        indicesCount = toreturntransparent.indicesCount,
-                        vertices = Clone(toreturntransparent.vertices, toreturntransparent.verticesCount),
-                        verticesCount = toreturntransparent.verticesCount,
-                        position =
-                            new Vector3(x * chunksize, y * chunksize, z * chunksize),
-                        transparent = true,
-                        texture = d_TerrainTextures.terrainTexture,
-                    };
+                    yield return GetVerticesIndices(toreturnatlas1dtransparent[i], x, y, z, d_TerrainTextures.terrainTextures1d[i % d_TerrainTextures.terrainTexturesPerAtlas], true);
                 }
             }
         }
+
+        VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, int texture, bool transparent)
+        {
+            VerticesIndicesToLoad v = new VerticesIndicesToLoad();
+            v.indices = new ushort[m.indicesCount];
+            for (int i = 0; i < m.indicesCount; i++)
+            {
+                v.indices[i] = (ushort)m.indices[i];
+            }
+            v.indicesCount = m.indicesCount;
+
+            v.vertices = new VertexPositionTexture[m.verticesCount];
+            for (int i = 0; i < m.verticesCount; i++)
+            {
+                VertexPositionTexture vert = new VertexPositionTexture();
+                vert.Position.X = m.xyz[i * 3 + 0];
+                vert.Position.Y = m.xyz[i * 3 + 1];
+                vert.Position.Z = m.xyz[i * 3 + 2];
+                vert.u = m.uv[i * 2 + 0];
+                vert.v = m.uv[i * 2 + 1];
+                vert.r = m.rgba[i * 4 + 0];
+                vert.g = m.rgba[i * 4 + 1];
+                vert.b = m.rgba[i * 4 + 2];
+                vert.a = m.rgba[i * 4 + 3];
+                v.vertices[i] = vert;
+            }
+            v.verticesCount = m.verticesCount;
+            v.position = new Vector3(x * chunksize, y * chunksize, z * chunksize);
+            v.texture = texture;
+            v.transparent = transparent;
+
+            return v;
+        }
+
         T[] Clone<T>(T[] arr, int length)
         {
             T[] copy = new T[length];
@@ -279,10 +252,8 @@ namespace ManicDigger.Renderers
             d_MapStoragePortion.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
                 chunksize + 2, chunksize + 2, chunksize + 2);
         }
-        VerticesIndices toreturnmain;
-        VerticesIndices toreturntransparent;
-        VerticesIndices[] toreturnatlas1d;
-        VerticesIndices[] toreturnatlas1dtransparent;
+        ModelData[] toreturnatlas1d;
+        ModelData[] toreturnatlas1dtransparent;
         class VerticesIndices
         {
             public ushort[] indices;
@@ -676,20 +647,9 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
-                List<ushort> torchelements = new List<ushort>();
-                List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
-                d_BlockRendererTorch.SideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
-                d_BlockRendererTorch.TopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
-                d_BlockRendererTorch.AddTorch(torchelements, torchvertices, x, y, z, type);
-                int oldverticescount = toreturnmain.verticesCount;
-                for (int i = 0; i < torchelements.Count; i++)
-                {
-                    toreturnmain.indices[toreturnmain.indicesCount++] = (ushort)(torchelements[i] + oldverticescount);
-                }
-                for (int i = 0; i < torchvertices.Count; i++)
-                {
-                    toreturnmain.vertices[toreturnmain.verticesCount++] = torchvertices[i];
-                }
+                TorchSideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
+                TorchTopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
+                AddTorch(x, y, z, type, currentChunk[MapUtil.Index3d(xx, yy , zz, chunksize + 2, chunksize + 2)]);
                 return;
             }
             //slope
@@ -783,16 +743,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
                 int tilecount = drawtop;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix);
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z + blockheight00, y + 0.0f, texrecLeft, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z + blockheight01, y + 1.0f, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z + blockheight10, y + 0.0f, texrecRight, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z + blockheight11, y + 1.0f, texrecRight, texrecBottom, curcolor));
+                AddVertex(toreturn, x + 0.0f, z + blockheight00, y + 0.0f, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, x + 0.0f, z + blockheight01, y + 1.0f, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 1.0f * tilecount, z + blockheight10, y + 0.0f, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, x + 1.0f * tilecount, z + blockheight11, y + 1.0f, texrecRight, texrecBottom, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -815,16 +775,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
                 int tilecount = drawbottom;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix);
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrecLeft, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z, y + 0.0f, texrecRight, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z, y + 1.0f, texrecRight, texrecBottom, curcolor));
+                AddVertex(toreturn, x + 0.0f, z, y + 0.0f, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, x + 0.0f, z, y + 1.0f, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 1.0f * tilecount, z, y + 0.0f, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, x + 1.0f * tilecount, z, y + 1.0f, texrecRight, texrecBottom, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -847,16 +807,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
                 int tilecount = drawfront;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix);
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor));
+                AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -879,16 +839,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
                 int tilecount = drawback;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix);
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor));
+                AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -911,16 +871,16 @@ namespace ManicDigger.Renderers
 
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
                 int tilecount = drawleft;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix); //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor));
+                AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -944,16 +904,16 @@ namespace ManicDigger.Renderers
 
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
                 int tilecount = drawright;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = (tilecount * AtiArtifactFix); //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor));
+                AddVertex(toreturn,x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn,x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor);
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
@@ -962,6 +922,21 @@ namespace ManicDigger.Renderers
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
             }
         }
+
+        void AddVertex(ModelData model, float x, float y, float z, float u, float v, FastColor color)
+        {
+            model.xyz[model.GetXyzCount() + 0] = x;
+            model.xyz[model.GetXyzCount() + 1] = y;
+            model.xyz[model.GetXyzCount() + 2] = z;
+            model.uv[model.GetUvCount() + 0] = u;
+            model.uv[model.GetUvCount() + 1] = v;
+            model.rgba[model.GetRgbaCount() + 0] = color.R;
+            model.rgba[model.GetRgbaCount() + 1] = color.G;
+            model.rgba[model.GetRgbaCount() + 2] = color.B;
+            model.rgba[model.GetRgbaCount() + 3] = color.A;
+            model.verticesCount++;
+        }
+
         private void SmoothLightBlockPolygons(int x, int y, int z, int[] currentChunk)
         {
             int xx = x % chunksize + 1;
@@ -1136,20 +1111,9 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
-                List<ushort> torchelements = new List<ushort>();
-                List<VertexPositionTexture> torchvertices = new List<VertexPositionTexture>();
-                d_BlockRendererTorch.SideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
-                d_BlockRendererTorch.TopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
-                d_BlockRendererTorch.AddTorch(torchelements, torchvertices, x, y, z, type);
-                int oldverticescount=toreturnmain.verticesCount;
-                for (int i = 0; i < torchelements.Count; i++)
-                {
-                    toreturnmain.indices[toreturnmain.indicesCount++] = (ushort)(torchelements[i] + oldverticescount);
-                }
-                for (int i = 0; i < torchvertices.Count; i++)
-                {
-                    toreturnmain.vertices[toreturnmain.verticesCount++] = torchvertices[i];
-                }
+                TorchSideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
+                TorchTopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
+                AddTorch(x, y, z, type, tt);
                 return;
             }
             //slope
@@ -1330,16 +1294,16 @@ namespace ManicDigger.Renderers
                     }
                     int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
                     int tilecount = drawtop;
-                    VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                    ModelData toreturn = GetToReturn(tt, sidetexture);
                     texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                     texrecWidth = AtiArtifactFix; //tilingcount*fix
                     float texrecBottom = texrecTop + texrecHeight;
                     float texrecRight = texrecLeft + texrecWidth;
                     short lastelement = (short)toreturn.verticesCount;
-                    toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z + blockheight00, y + 0.0f, texrecLeft, texrecTop, curcolor3));//leftbottom 4
-                    toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z + blockheight01, y + 1.0f, texrecLeft, texrecBottom, curcolor));//rightbottom 2
-                    toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z + blockheight10, y + 0.0f, texrecRight, texrecTop, curcolor4));//topleft  3
-                    toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z + blockheight11, y + 1.0f, texrecRight, texrecBottom, curcolor2));//topright  * tilecount
+                    AddVertex(toreturn,x + 0.0f, z + blockheight00, y + 0.0f, texrecLeft, texrecTop, curcolor3);//leftbottom 4
+                    AddVertex(toreturn,x + 0.0f, z + blockheight01, y + 1.0f, texrecLeft, texrecBottom, curcolor);//rightbottom 2
+                    AddVertex(toreturn,x + 1.0f * tilecount, z + blockheight10, y + 0.0f, texrecRight, texrecTop, curcolor4);//topleft  3
+                    AddVertex(toreturn,x + 1.0f * tilecount, z + blockheight11, y + 1.0f, texrecRight, texrecBottom, curcolor2);//topright  * tilecount
 
                     //revert triangles to fix gradient problem
                     //if occluded, revert to proper occlusion direction
@@ -1520,16 +1484,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
                 int tilecount = drawbottom;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = AtiArtifactFix; //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z, y + 0.0f, texrecLeft, texrecTop, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0.0f, z, y + 1.0f, texrecLeft, texrecBottom, curcolor3));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z, y + 0.0f, texrecRight, texrecTop, curcolor2));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1.0f * tilecount, z, y + 1.0f, texrecRight, texrecBottom, curcolor4));
+                AddVertex(toreturn, x + 0.0f, z, y + 0.0f, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, x + 0.0f, z, y + 1.0f, texrecLeft, texrecBottom, curcolor3);
+                AddVertex(toreturn, x + 1.0f * tilecount, z, y + 0.0f, texrecRight, texrecTop, curcolor2);
+                AddVertex(toreturn, x + 1.0f * tilecount, z, y + 1.0f, texrecRight, texrecBottom, curcolor4);
 
                 //revert triangles to fix gradient problem
                 //if occluded, revert to proper occlusion direction
@@ -1705,16 +1669,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
                 int tilecount = drawfront;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = AtiArtifactFix; //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor2));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor4));
+                AddVertex(toreturn,x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor2);
+                AddVertex(toreturn,x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);
+                AddVertex(toreturn,x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor4);
                 if (occluded)
                 {
                     if (!occdirnorthwest)
@@ -1886,16 +1850,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
                 int tilecount = drawback;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = AtiArtifactFix; //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor2));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor3));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor4));
+                AddVertex(toreturn,x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor2);
+                AddVertex(toreturn,x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor3);
+                AddVertex(toreturn,x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor4);
                 if (occluded)
                 {
                     if (!occdirnorthwest)
@@ -2066,16 +2030,16 @@ namespace ManicDigger.Renderers
 
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
                 int tilecount = drawleft;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = AtiArtifactFix; //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor2));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor4));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor3));
+                AddVertex(toreturn,x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor2);
+                AddVertex(toreturn,x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor4);
+                AddVertex(toreturn,x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor3);
                 if (occluded)
                 {
                     if (occdirnorthwest)
@@ -2246,16 +2210,16 @@ namespace ManicDigger.Renderers
                 }
                 int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
                 int tilecount = drawright;
-                VerticesIndices toreturn = GetToReturn(tt, sidetexture);
+                ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
                 texrecWidth = AtiArtifactFix; //tilingcount*fix
                 float texrecBottom = texrecTop + texrecHeight;
                 float texrecRight = texrecLeft + texrecWidth;
                 short lastelement = (short)toreturn.verticesCount;
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor3));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor2));
-                toreturn.vertices[toreturn.verticesCount++] = (new VertexPositionTexture(x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor4));
+                AddVertex(toreturn,x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn,x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor3);
+                AddVertex(toreturn,x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor2);
+                AddVertex(toreturn,x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor4);
                 if (occluded)
                 {
                     if (occdirnorthwest)
@@ -2387,29 +2351,15 @@ namespace ManicDigger.Renderers
                 return newxx - xx;
             }
         }
-        private VerticesIndices GetToReturn(int tiletype, int textureid)
+        private ModelData GetToReturn(int tiletype, int textureid)
         {
-            if (ENABLE_ATLAS1D)
+            if (!(istransparent[tiletype] || IsWater(tiletype)))
             {
-                if (!(istransparent[tiletype] || IsWater(tiletype)))
-                {
-                    return toreturnatlas1d[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
-                }
-                else
-                {
-                    return toreturnatlas1dtransparent[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
-                }
+                return toreturnatlas1d[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
             }
             else
             {
-                if (!(istransparent[tiletype] || IsWater(tiletype)))
-                {
-                    return toreturnmain;
-                }
-                else
-                {
-                    return toreturntransparent;
-                }
+                return toreturnatlas1dtransparent[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
             }
         }
         //Calculate shadows lazily, many blocks don't need them.
@@ -2496,6 +2446,204 @@ namespace ManicDigger.Renderers
         	}
         	catch { }
         	return 0;
+        }
+
+        public int TorchTopTexture;
+        public int TorchSideTexture;
+        public void AddTorch(int x, int y, int z, TorchType type, int tt)
+        {
+            var d_TerainRenderer = this;
+
+            FastColor curcolor = new FastColor(Color.White);
+            float torchsizexy = 0.16f;
+            float topx = 1f / 2f - torchsizexy / 2f;
+            float topy = 1f / 2f - torchsizexy / 2f;
+            float bottomx = 1f / 2f - torchsizexy / 2f;
+            float bottomy = 1f / 2f - torchsizexy / 2f;
+
+            topx += x;
+            topy += y;
+            bottomx += x;
+            bottomy += y;
+
+            if (type == TorchType.Front) { bottomx = x - torchsizexy; }
+            if (type == TorchType.Back) { bottomx = x + 1; }
+            if (type == TorchType.Left) { bottomy = y - torchsizexy; }
+            if (type == TorchType.Right) { bottomy = y + 1; }
+
+            Vector3 top00 = new Vector3(topx, z + 0.9f, topy);
+            Vector3 top01 = new Vector3(topx, z + 0.9f, topy + torchsizexy);
+            Vector3 top10 = new Vector3(topx + torchsizexy, z + 0.9f, topy);
+            Vector3 top11 = new Vector3(topx + torchsizexy, z + 0.9f, topy + torchsizexy);
+
+            if (type == TorchType.Left)
+            {
+                top01 += new Vector3(0, -0.1f, 0);
+                top11 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Right)
+            {
+                top10 += new Vector3(0, -0.1f, 0);
+                top00 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Front)
+            {
+                top10 += new Vector3(0, -0.1f, 0);
+                top11 += new Vector3(0, -0.1f, 0);
+            }
+
+            if (type == TorchType.Back)
+            {
+                top01 += new Vector3(0, -0.1f, 0);
+                top00 += new Vector3(0, -0.1f, 0);
+            }
+
+            Vector3 bottom00 = new Vector3(bottomx, z + 0, bottomy);
+            Vector3 bottom01 = new Vector3(bottomx, z + 0, bottomy + torchsizexy);
+            Vector3 bottom10 = new Vector3(bottomx + torchsizexy, z + 0, bottomy);
+            Vector3 bottom11 = new Vector3(bottomx + torchsizexy, z + 0, bottomy + torchsizexy);
+
+            texrecLeft = 0;
+            texrecHeight = (float)terrainTexturesPerAtlasInverse * AtiArtifactFix;
+
+            //top
+            {
+                int sidetexture = TorchTopTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecBottom, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
+
+            //bottom - same as top, but z is 1 less.
+            {
+                int sidetexture = TorchSideTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
+
+            //front
+            {
+                int sidetexture = TorchSideTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecRight, texrecTop, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
+
+            //back - same as front, but x is 1 greater.
+            {
+                int sidetexture = TorchSideTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecLeft, texrecTop, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
+
+            {
+                int sidetexture = TorchSideTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecRight, texrecTop, curcolor);
+                AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecLeft, texrecTop, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
+
+            //right - same as left, but y is 1 greater.
+            {
+                int sidetexture = TorchSideTexture;
+                int tilecount = 1;
+                texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
+                texrecWidth = (tilecount * AtiArtifactFix);
+                float texrecBottom = texrecTop + texrecHeight;
+                float texrecRight = texrecLeft + texrecWidth;
+                ModelData toreturn = GetToReturn(tt, sidetexture);
+                
+                short lastelement = (short)toreturn.verticesCount;
+                AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
+                AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecTop, curcolor);
+                AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
+                AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecTop, curcolor);
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 3));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));
+                toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
+            }
         }
    }
 }

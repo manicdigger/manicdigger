@@ -88,7 +88,6 @@ namespace ManicDigger
             w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
             w.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
-            terrainchunktesselator.d_BlockRendererTorch = blockrenderertorch;
             terrainchunktesselator.d_TerrainTextures = terrainTextures;
             //w.d_Map = clientgame.mapforphysics;
             w.d_Physics = physics;
