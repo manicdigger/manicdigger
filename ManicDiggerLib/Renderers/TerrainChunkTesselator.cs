@@ -50,14 +50,14 @@ namespace ManicDigger.Renderers
         public float AtiArtifactFix = 0.995f;
         public float Yellowness = 1f;//lower is yellower//0.7
         public float Blueness = 0.9f;//lower is blue-er
-        ushort[] currentChunk;
+        int[] currentChunk;
         bool started = false;
         int mapsizex; //cache
         int mapsizey;
         int mapsizez;
         public void Start()
         {
-            currentChunk = new ushort[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
+            currentChunk = new int[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
             currentChunkShadows = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
             currentChunkDraw = new byte[chunksize, chunksize, chunksize];
             currentChunkDrawCount = new byte[chunksize, chunksize, chunksize, 6];
@@ -258,7 +258,7 @@ namespace ManicDigger.Renderers
         {
             Array.Clear(currentChunkShadows, 0, currentChunkShadows.Length);
         }
-        private bool IsSolidChunk(ushort[] currentChunk)
+        private bool IsSolidChunk(int[] currentChunk)
         {
             int block = currentChunk[0];
             for (int i = 0; i < currentChunk.Length; i++)
@@ -305,13 +305,13 @@ namespace ManicDigger.Renderers
         public byte[] currentChunkShadows;
         byte[, ,] currentChunkDraw;
         byte[, , ,] currentChunkDrawCount;
-        void CalculateVisibleFaces(ushort[] currentChunk)
+        void CalculateVisibleFaces(int[] currentChunk)
         {
             int chunksize = this.chunksize;
             int movez = (chunksize + 2) * (chunksize + 2);
             unsafe
             {
-                fixed (ushort* currentChunk_ = currentChunk )
+                fixed (int* currentChunk_ = currentChunk)
                 fixed (bool* istransparent_ = istransparent)
                 {
                     for (int zz = 1; zz < chunksize + 1; zz++)
@@ -404,15 +404,15 @@ namespace ManicDigger.Renderers
 
         bool IsWater(int tt2)
         {
-            return game.IsFluid(game.blocktypes[tt2]);
+            return game.game.IsFluid(game.game.blocktypes[tt2]);
         }
 
-        private void CalculateTilingCount(ushort[] currentChunk, int startx, int starty, int startz)
+        private void CalculateTilingCount(int[] currentChunk, int startx, int starty, int startz)
         {
             Array.Clear(currentChunkDrawCount, 0, currentChunkDrawCount.Length);
             unsafe
             {
-                fixed(ushort* currentChunk_ = currentChunk)
+                fixed (int* currentChunk_ = currentChunk)
                 for (int zz = 1; zz < chunksize + 1; zz++)
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
@@ -503,7 +503,7 @@ namespace ManicDigger.Renderers
         float texrecWidth;
         float texrecHeight;
         FastColor ColorWhite = new FastColor(Color.White);
-        private void BlockPolygons(int x, int y, int z, ushort[] currentChunk)
+        private void BlockPolygons(int x, int y, int z, int[] currentChunk)
         {
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
@@ -546,7 +546,7 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -570,7 +570,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -594,7 +594,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence || game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -622,7 +622,7 @@ namespace ManicDigger.Renderers
                     drawleft = 1;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -665,11 +665,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
+            if (game.game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
             {
                 blockheight = 0.5f;
             }
-            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
+            if (game.game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -962,7 +962,7 @@ namespace ManicDigger.Renderers
                 toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 2));
             }
         }
-        private void SmoothLightBlockPolygons(int x, int y, int z, ushort[] currentChunk)
+        private void SmoothLightBlockPolygons(int x, int y, int z, int[] currentChunk)
         {
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
@@ -1005,7 +1005,7 @@ namespace ManicDigger.Renderers
                 drawbottom = 0;
                 flowerfix = 0.5f;
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1029,7 +1029,7 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorRight)
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1053,8 +1053,8 @@ namespace ManicDigger.Renderers
                     drawright = 0;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence
-                || game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Fence
+                || game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.ClosedDoor) // fence tiles automatically when another fence is beside
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1082,7 +1082,7 @@ namespace ManicDigger.Renderers
                     drawleft = 1;
                 }
             }
-            if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
+            if (game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Ladder) // try to fit ladder to best wall or existing ladder
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1125,11 +1125,11 @@ namespace ManicDigger.Renderers
                 return;
                 */
             }
-            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
+            if (game.game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.HalfHeight)
             {
                 blockheight = 0.5f;
             }
-            if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
+            if (game.game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
             {
                 TorchType type = TorchType.Normal;
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Front; }
@@ -2326,7 +2326,7 @@ namespace ManicDigger.Renderers
         */
         public bool ENABLE_TEXTURE_TILING = true; // tiling reduces number of triangles but causes white dots bug on some graphics cards.
         //Texture tiling in one direction.
-        private int GetTilingCount(ushort[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
+        private int GetTilingCount(int[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
             if (!ENABLE_TEXTURE_TILING)
             {
@@ -2434,9 +2434,9 @@ namespace ManicDigger.Renderers
         private bool CanSupportTorch(int blocktype)
         {
             return blocktype != SpecialBlockId.Empty
-                && game.blocktypes[blocktype].DrawType != Packet_DrawTypeEnum.Torch;
+                && game.game.blocktypes[blocktype].DrawType != Packet_DrawTypeEnum.Torch;
         }
-         private int getBestLadderWall(int x, int y, int z, ushort[] currentChunk)
+        private int getBestLadderWall(int x, int y, int z, int[] currentChunk)
         {
         	bool front=false;
         	bool back=false;
@@ -2481,7 +2481,8 @@ namespace ManicDigger.Renderers
             	}
             }
         }
-        int getBestLadderInDirection(int x, int y, int z, ushort[] currentChunk, int dir) {
+        int getBestLadderInDirection(int x, int y, int z, int[] currentChunk, int dir)
+        {
         	int dz = dir;
         	int result = 0;
         	try

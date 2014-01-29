@@ -30,7 +30,7 @@ namespace ManicDiggerServer
         }
 
         bool ENABLE_REDIRECT_STANDARD_INPUT;
-        bool ENABLE_AUTORESTARTER = false;
+        bool ENABLE_AUTORESTARTER = true;
         int parentid;
         bool IsAutoRestarter = true;
         int autoRestartCycle = 6;

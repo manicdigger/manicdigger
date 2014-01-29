@@ -32,4 +32,5 @@
     // 3) find files no matter if they end in .png or .jpg
     // Returns URL in JavaScript
     public abstract string GetFullFilePath(string filename);
+    public abstract int FloatToInt(float value);
 }

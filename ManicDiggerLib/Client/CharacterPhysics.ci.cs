@@ -81,3 +81,427 @@ public class MoveInfo
     internal bool movedown;
     internal float jumpstartacceleration;
 }
+
+public class CharacterPhysicsCi
+{
+    public CharacterPhysicsCi()
+    {
+        one = 1;
+        walldistance = one * 3 / 10;
+        gravity = one * 3 / 10;
+        WaterGravityMultiplier = 3;
+        enable_acceleration = true;
+        jumpconst = one * 21 / 10;
+
+        diff = new float[3];
+        previousposition = new float[3];
+        playerposition = new float[3];
+    }
+    internal Game game;
+    internal bool swimmingtop;
+    internal float walldistance;
+    internal bool reachedceiling;
+    internal bool reachedwall;
+    internal float gravity;
+    internal float WaterGravityMultiplier;
+    internal bool enable_acceleration;
+    internal bool standingontheground;
+    internal float one;
+    internal float jumpconst;
+    
+    public bool IsTileEmptyForPhysics(int x, int y, int z)
+    {
+        if (z >= game.MapSizeZ)
+        {
+            return true;
+        }
+        bool ENABLE_FREEMOVE = false;
+        if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
+        {
+            return ENABLE_FREEMOVE;
+        }
+        if (x >= game.MapSizeX || y >= game.MapSizeY)// || z >= mapsizez)
+        {
+            return ENABLE_FREEMOVE;
+        }
+        //this test is so the player does not walk on water.
+        if (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) &&
+            !game.IsFluid(game.blocktypes[game.GetBlock(x, y, z + 1)])) { return true; }
+        return game.GetBlock(x, y, z) == 0
+            || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight && game.GetBlock(x, y, z + 2) == 0 && game.GetBlock(x, y, z + 1) == 0) // also check if the block above the stair is empty
+            || (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) && (!swimmingtop))
+            || game.IsEmptyForPhysics(game.blocktypes[game.GetBlock(x, y, z)]);
+    }
+
+    public void Move(CharacterPhysicsState state, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
+    {
+        soundnow.value = false;
+        Vector3Ref diff1ref = new Vector3Ref();
+        VectorTool.ToVectorInFixedSystem
+            (move.movedx * move.movespeednow * dt,
+            0,
+            move.movedy * move.movespeednow * dt, state.playerorientation.X, state.playerorientation.Y, diff1ref);
+        Vector3Ref diff1 = new Vector3Ref();
+        diff1.X = diff1ref.X;
+        diff1.Y = diff1ref.Y;
+        diff1.Z = diff1ref.Z;
+        if (Length(push.X, push.Y, push.Z) > one / 100)
+        {
+            push.Normalize();
+            push.X *= 5;
+            push.Y *= 5;
+            push.Z *= 5;
+        }
+        diff1.X += push.X * dt;
+        diff1.Y += push.Y * dt;
+        diff1.Z += push.Z * dt;
+
+        bool loaded = false;
+        int cx = game.p.FloatToInt(game.player.playerposition.X / game.chunksize);
+        int cy = game.p.FloatToInt(game.player.playerposition.Z / game.chunksize);
+        int cz = game.p.FloatToInt(game.player.playerposition.Y / game.chunksize);
+        if (game.IsValidChunkPos(cx, cy, cz, game.chunksize))
+        {
+            if (game.chunks[MapUtilCi.Index3d(cx, cy, cz,
+                game.MapSizeX / game.chunksize,
+                game.MapSizeY / game.chunksize)] != null)
+            {
+                loaded = true;
+            }
+        }
+        else
+        {
+            loaded = true;
+        }
+        if ((!(move.ENABLE_FREEMOVE)) && loaded)
+        {
+            if (!move.Swimming)
+            {
+                state.movedz += -gravity;//gravity
+            }
+            else
+            {
+                state.movedz += -gravity * WaterGravityMultiplier; //more gravity because it's slippery.
+            }
+        }
+        if (enable_acceleration)
+        {
+            state.curspeed.X *= move.acceleration.acceleration1;
+            state.curspeed.Y *= move.acceleration.acceleration1;
+            state.curspeed.Z *= move.acceleration.acceleration1;
+            state.curspeed.X = MakeCloserToZero(state.curspeed.X, move.acceleration.acceleration2 * dt);
+            state.curspeed.Y = MakeCloserToZero(state.curspeed.Y, move.acceleration.acceleration2 * dt);
+            state.curspeed.Z = MakeCloserToZero(state.curspeed.Z, move.acceleration.acceleration2 * dt);
+            diff1.Y += move.moveup ? 2 * move.movespeednow * dt : 0;
+            diff1.Y -= move.movedown ? 2 * move.movespeednow * dt : 0;
+            state.curspeed.X += diff1.X * move.acceleration.acceleration3 * dt;
+            state.curspeed.Y += diff1.Y * move.acceleration.acceleration3 * dt;
+            state.curspeed.Z += diff1.Z * move.acceleration.acceleration3 * dt;
+            if (state.curspeed.Length() > move.movespeednow)
+            {
+                state.curspeed.Normalize();
+                state.curspeed.X *= move.movespeednow;
+                state.curspeed.Y *= move.movespeednow;
+                state.curspeed.Z *= move.movespeednow;
+            }
+        }
+        else
+        {
+            if (Length(diff1.X, diff1.Y, diff1.Z) > 0)
+            {
+                diff1.Normalize();
+            }
+            state.curspeed.X = diff1.X * move.movespeednow;
+            state.curspeed.Y = diff1.Y * move.movespeednow;
+            state.curspeed.Z = diff1.Z * move.movespeednow;
+        }
+        Vector3Ref newposition = Vector3Ref.Create(0, 0, 0);
+        if (!(move.ENABLE_FREEMOVE))
+        {
+            newposition.X = state.playerposition.X + state.curspeed.X;
+            newposition.Y = state.playerposition.Y + state.curspeed.Y;
+            newposition.Z = state.playerposition.Z + state.curspeed.Z;
+            if (!move.Swimming)
+            {
+                newposition.Y = state.playerposition.Y;
+            }
+            //fast move when looking at the ground.
+            float diffx = newposition.X - state.playerposition.X;
+            float diffy = newposition.Y - state.playerposition.Y;
+            float diffz = newposition.Z - state.playerposition.Z;
+            float difflength = Length(diffx, diffy, diffz);
+            if (difflength > 0)
+            {
+                diffx /= difflength;
+                diffy /= difflength;
+                diffz /= difflength;
+                diffx *= state.curspeed.Length();
+                diffy *= state.curspeed.Length();
+                diffz *= state.curspeed.Length();
+            }
+            newposition.X = state.playerposition.X + diffx * dt;
+            newposition.Y = state.playerposition.Y + diffy * dt;
+            newposition.Z = state.playerposition.Z + diffz * dt;
+        }
+        else
+        {
+            newposition.X = state.playerposition.X + (state.curspeed.X) * dt;
+            newposition.Y = state.playerposition.Y + (state.curspeed.Y) * dt;
+            newposition.Z = state.playerposition.Z + (state.curspeed.Z) * dt;
+        }
+        newposition.Y += state.movedz * dt;
+        Vector3Ref previousposition = Vector3Ref.Create(state.playerposition.X, state.playerposition.Y, state.playerposition.Z);
+        if (!move.ENABLE_NOCLIP)
+        {
+            swimmingtop = move.wantsjump && !move.Swimming;
+            // This is a temporary workaround for crashing at the top of the map.
+            // This needs to be cleaned up some other way.
+            //try
+            {
+                float[] v = WallSlide(state,
+                    Vec3.FromValues(state.playerposition.X, state.playerposition.Y, state.playerposition.Z),
+                    Vec3.FromValues(newposition.X, newposition.Y, newposition.Z),
+                    modelheight);
+                state.playerposition.X = v[0];
+                state.playerposition.Y = v[1];
+                state.playerposition.Z = v[2];
+            }
+            //catch
+            {
+                // The block probably doesn't exist...
+            }
+        }
+        else
+        {
+            state.playerposition.X = newposition.X;
+            state.playerposition.Y = newposition.Y;
+            state.playerposition.Z = newposition.Z;
+        }
+        if (!(move.ENABLE_FREEMOVE || move.Swimming))
+        {
+            state.isplayeronground = state.playerposition.Y == previousposition.Y;
+            {
+                if (standingontheground && state.isplayeronground)
+                {
+                    state.jumpacceleration = 0;
+                    state.movedz = 0;
+                }
+                if (move.wantsjump && state.jumpacceleration == 0 && standingontheground)
+                {
+                    state.jumpacceleration = move.jumpstartacceleration;
+                    soundnow.value = true;
+                }
+
+                if (state.jumpacceleration > 0)
+                {
+                    standingontheground = false;
+                    state.jumpacceleration = state.jumpacceleration / 2;
+                }
+
+                //if (!this.reachedceiling)
+                {
+                    state.movedz += state.jumpacceleration * jumpconst;
+                }
+            }
+        }
+        else
+        {
+            state.isplayeronground = true;
+        }
+        if (state.isplayeronground)
+        {
+            state.movedz = Max(0, state.movedz);
+        }
+    }
+
+    float Max(int a, float b)
+    {
+        if (a > b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    public float Length(float x, float y, float z)
+    {
+        return Platform.Sqrt(x * x + y * y + z * z);
+    }
+
+    public float MakeCloserToZero(float a, float b)
+    {
+        if (a > 0)
+        {
+            float c = a - b;
+            if (c < 0)
+            {
+                c = 0;
+            }
+            return c;
+        }
+        else
+        {
+            float c = a + b;
+            if (c > 0)
+            {
+                c = 0;
+            }
+            return c;
+        }
+    }
+
+    float[] wallslideplayerposition;
+    float[] diff;
+    float[] previousposition;
+    float[] playerposition;//temp
+    public float[] WallSlide(CharacterPhysicsState state, float[] oldposition, float[] newposition, float modelheight)
+    {
+        bool high = false;
+        if (modelheight >= 2) { high = true; }
+        oldposition[1] += walldistance;
+        newposition[1] += walldistance;
+
+        reachedceiling = false;
+        reachedwall = false;
+
+        playerposition[0] = newposition[0];
+        playerposition[1] = newposition[1];
+        playerposition[2] = newposition[2];
+
+        //left
+        {
+            float p0 = newposition[0] + 0;
+            float p1 = newposition[1] + 0;
+            float p2 = newposition[2] + walldistance;
+            bool newempty = NewEmpty(high, p0, p1, p2);
+            if (newposition[2] - oldposition[2] > 0)
+            {
+                if (!newempty)
+                {
+                    reachedwall = true;
+                    playerposition[2] = oldposition[2];
+                }
+            }
+        }
+        //front
+        {
+            float p0 = newposition[0] + walldistance;
+            float p1 = newposition[1] + 0;
+            float p2 = newposition[2] + 0;
+            bool newempty = NewEmpty(high, p0, p1, p2);
+            if (newposition[0] - oldposition[0] > 0)
+            {
+                if (!newempty)
+                {
+                    reachedwall = true;
+                    playerposition[0] = oldposition[0];
+                }
+            }
+        }
+        //top
+        {
+            float qnewposition0 = newposition[0] + 0;
+            float qnewposition1 = newposition[1] - walldistance;
+            float qnewposition2 = newposition[2] + 0;
+            int x = FloatToInt(Floor(qnewposition0));
+            int y = FloatToInt(Floor(qnewposition2));
+            int z = FloatToInt(Floor(qnewposition1));
+            float a = walldistance;
+            bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+                || (qnewposition0 - Floor(qnewposition0) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                || (qnewposition2 - Floor(qnewposition2) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+            if (newposition[1] - oldposition[1] < 0)
+            {
+                if (newfull)
+                {
+                    playerposition[1] = oldposition[1];
+                    standingontheground = true;
+                }
+            }
+        }
+        //right
+        {
+            float p0 = newposition[0] + 0;
+            float p1 = newposition[1] + 0;
+            float p2 = newposition[2] - walldistance;
+            bool newempty = NewEmpty(high, p0, p1, p2);
+            if (newposition[2] - oldposition[2] < 0)
+            {
+                if (!newempty)
+                {
+                    reachedwall = true;
+                    playerposition[2] = oldposition[2];
+                }
+            }
+        }
+        //back
+        {
+            float p0 = newposition[0] - walldistance;
+            float p1 = newposition[1] + 0;
+            float p2 = newposition[2] + 0;
+            bool newempty = NewEmpty(high, p0, p1, p2);
+            if (newposition[0] - oldposition[0] < 0)
+            {
+                if (!newempty)
+                {
+                    reachedwall = true;
+                    playerposition[0] = oldposition[0];
+                }
+            }
+        }
+        //bottom
+        {
+            float p0 = newposition[0] + 0;
+            float p1 = newposition[1] + modelheight;
+            float p2 = newposition[2] + 0;
+            bool newempty = NewEmpty(high, p0, p1, p2);
+            if (newposition[1] - oldposition[1] > 0)
+            {
+                if (!newempty)
+                {
+                    reachedwall = true;
+                    playerposition[1] = oldposition[1];
+                }
+            }
+        }
+        playerposition[1] -= walldistance;
+        return playerposition;
+    }
+
+    float Floor(float aFloat)
+    {
+        if (aFloat > 0)
+        {
+            return FloatToInt(aFloat);
+        }
+        else
+        {
+            return FloatToInt(aFloat) - 1;
+        }
+    }
+
+    bool NewEmpty(bool high, float qnewposition0, float qnewposition1, float qnewposition2)
+    {
+        int x = FloatToInt(qnewposition0);
+        int y = FloatToInt(qnewposition1);
+        int z = FloatToInt(qnewposition2);
+        return IsTileEmptyForPhysics(x, z, y)
+                    && IsTileEmptyForPhysics(x, z, y + 1)
+                    && (!high || IsTileEmptyForPhysics(x, z, y + 2));
+    }
+
+    int FloatToInt(float qnewposition0)
+    {
+        return game.p.FloatToInt(qnewposition0);
+    }
+}
+
+public class BoolRef
+{
+    internal bool value;
+}

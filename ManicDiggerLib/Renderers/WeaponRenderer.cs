@@ -72,7 +72,7 @@ namespace ManicDigger.Renderers
             Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
             return item != null
                 && item.ItemClass == ItemClass.Block
-                && d_Shadows.blocktypes[item.BlockId].DrawType == Packet_DrawTypeEnum.Torch;
+                && d_Shadows.game.blocktypes[item.BlockId].DrawType == Packet_DrawTypeEnum.Torch;
         }
         public bool IsCompass()
         {

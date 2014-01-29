@@ -246,7 +246,7 @@ namespace ManicDiggerServer
         }
         #endregion
         [Inject]
-        public InfiniteMapChunked2d d_Heightmap;
+        public InfiniteMapChunked2dServer d_Heightmap;
         public unsafe ushort[] GetHeightmapChunk(int x, int y)
         {
             //todo don't copy

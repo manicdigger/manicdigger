@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 namespace ManicDigger
 {
     //This is the main game class.
-    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition, IMap,
+    public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition,
         IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
@@ -32,6 +32,7 @@ namespace ManicDigger
     {
         public void Start()
         {
+            game = new Game();
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
@@ -52,7 +53,7 @@ namespace ManicDigger
             the3d.d_ViewportSize = w;
             w.d_The3d = the3d;
             var localplayerposition = w;
-            var physics = new CharacterPhysics();
+            var physics = new CharacterPhysicsCi();
             var internetgamefactory = this;
             ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
             network.d_Compression = compression;
@@ -123,7 +124,7 @@ namespace ManicDigger
             clientgame.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
             w.Reset(10 * 1000, 10 * 1000, 128);
-            clientgame.d_Map = map;
+            clientgame.d_Map = game;
             PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
             playerskindownloader.d_Exit = d_Exit;
             playerskindownloader.d_The3d = the3d;
@@ -143,7 +144,6 @@ namespace ManicDigger
             w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w, game = this };
             w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
             w.d_FrustumCulling = frustumculling;
-            physics.game = clientgame.mapforphysics;
             d_Audio.d_GetFile = getfile;
             d_Audio.d_GameExit = d_Exit;
             the3d.d_Terrain = terrainTextures;
@@ -193,6 +193,7 @@ namespace ManicDigger
             inventoryUtil.d_Inventory = inventory;
             inventoryUtil.d_Items = dataItems;
 
+            d_Physics.game = game;
             clientgame.d_Inventory = inventory;
             w.d_HudInventory = hudInventory;
             w.d_CurrentShadows = this;
@@ -209,6 +210,8 @@ namespace ManicDigger
                     map, terrainchunktesselator);
             }
         }
+
+        internal Game game;
 
         void crashreporter_OnCrash(object sender, EventArgs e)
         {
@@ -233,11 +236,11 @@ namespace ManicDigger
         [Inject]
         public ManicDigger.Renderers.TextRenderer d_TextRenderer;
         [Inject]
-        public ManicDiggerGameWindow d_Map;
+        public Game d_Map;
         [Inject]
         public IClients d_Clients;
         [Inject]
-        public CharacterPhysics d_Physics;
+        public CharacterPhysicsCi d_Physics;
 
         [Inject]
         public AudioOpenAl d_Audio;
@@ -314,7 +317,7 @@ namespace ManicDigger
             int x = (int)pos.X;
             int y = (int)pos.Y;
             int z = (int)pos.Z;
-            d_Map.SetBlock(x, y, z, type);
+            SetBlock(x, y, z, type);
             RedrawBlock(x, y, z);
             //          });
         }
@@ -509,7 +512,7 @@ namespace ManicDigger
             {
                 foreach (var w in d.Value.Widgets)
                 {
-                    if (("abcdefghijklmnopqrstuvwxyz1234567890\t " + (char)27).Contains("" + w.ClickKey))
+                    if (("abcdefghijklmnopqrstuvwxyz1234567890\t " + (char)27).Contains("" + (char)w.ClickKey))
                     {
                         if (e.KeyChar == w.ClickKey)
                         {
@@ -734,9 +737,9 @@ namespace ManicDigger
                 Item item = d_Inventory.RightHand[ActiveMaterial];
                 if (item != null && item.ItemClass == ItemClass.Block)
                 {
-                    if (DeserializeFloat(blocktypes[item.BlockId].IronSightsFovFloat) != 0)
+                    if (DeserializeFloat(game.blocktypes[item.BlockId].IronSightsFovFloat) != 0)
                     {
-                        return this.fov * DeserializeFloat(blocktypes[item.BlockId].IronSightsFovFloat);
+                        return this.fov * DeserializeFloat(game.blocktypes[item.BlockId].IronSightsFovFloat);
                     }
                 }
             }
@@ -1066,11 +1069,11 @@ namespace ManicDigger
                 {
                     Item item = d_Inventory.RightHand[ActiveMaterial];
                     if (item != null && item.ItemClass == ItemClass.Block
-                        && blocktypes[item.BlockId].IsPistol
+                        && game.blocktypes[item.BlockId].IsPistol
                         && reloadstart.Ticks == 0)
                     {
-                        int sound = rnd.Next(blocktypes[item.BlockId].Sounds.Reload.Length);
-                        d_Audio.Play(blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
+                        int sound = rnd.Next(game.blocktypes[item.BlockId].Sounds.Reload.Length);
+                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
                         reloadstart = DateTime.UtcNow;
                         reloadblock = item.BlockId;
                         SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Reload, Reload = new Packet_ClientReload() });
@@ -1510,7 +1513,7 @@ namespace ManicDigger
             True,
             False,
         }
-        CharacterPhysicsState player = new CharacterPhysicsState();
+        CharacterPhysicsState player { get { return game.player; } }
         //DateTime lasttodo;
         bool mouseleftclick = false;
         bool mouseleftdeclick = false;
@@ -1707,11 +1710,11 @@ namespace ManicDigger
                 Swimming = Swimming,
                 wantsjump = wantsjump,
             };
-            bool soundnow;
+            BoolRef soundnow = new BoolRef();
             if (FollowId == null)
             {
-                d_Physics.Move(player, move, e.Time, out soundnow, push, Players[LocalPlayerId].ModelHeight);
-                if (soundnow)
+                d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(push.X, push.Y, push.Z), Players[LocalPlayerId].ModelHeight);
+                if (soundnow.value)
                 {
                     UpdateWalkSound(-1);
                 }
@@ -1729,7 +1732,7 @@ namespace ManicDigger
                     move.movedx = 0;
                     move.movedy = 0;
                     move.wantsjump = false;
-                    d_Physics.Move(player, move, e.Time, out soundnow, push, players[LocalPlayerId].ModelHeight);
+                    d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(push.X, push.Y, push.Z), players[LocalPlayerId].ModelHeight);
                 }
             }
             if (guistate == GuiState.CraftingRecipes)
@@ -1766,12 +1769,12 @@ namespace ManicDigger
             playervelocity *= 75;
             lastplayerposition = LocalPlayerPosition;
             if (reloadstart.Ticks != 0
-                && (DateTime.UtcNow - reloadstart).TotalSeconds >  DeserializeFloat(blocktypes[reloadblock].ReloadDelayFloat))
+                && (DateTime.UtcNow - reloadstart).TotalSeconds > DeserializeFloat(game.blocktypes[reloadblock].ReloadDelayFloat))
             {
                 if (TotalAmmo.ContainsKey(reloadblock))
                 {
                     int loaded = TotalAmmo[reloadblock];
-                    loaded = Math.Min(blocktypes[reloadblock].AmmoMagazine, loaded);
+                    loaded = Math.Min(game.blocktypes[reloadblock].AmmoMagazine, loaded);
                     LoadedAmmo[reloadblock] = loaded;
                     reloadstart = new DateTime(0);
                     reloadblock = -1;
@@ -1809,7 +1812,7 @@ namespace ManicDigger
             }
             */
             Vector3i pos = GetPlayerEyesBlock();
-            if ((MapUtil.blockheight(d_Map, 0, pos.x, pos.y) < pos.z - 8)
+            if ((d_Map.blockheight(pos.x, pos.y) < pos.z - 8)
                 || fallspeed > 3)
             {
                 d_Audio.PlayAudioLoop("fallloop.wav", fallspeed > 2, true);
@@ -1821,7 +1824,7 @@ namespace ManicDigger
 
             //fall damage
 
-            if (MapUtil.IsValidPos(d_Map, pos.x, pos.y, pos.z - 3))
+            if (d_Map.IsValidPos(pos.x, pos.y, pos.z - 3))
             {
                 int blockBelow = d_Map.GetBlock(pos.x, pos.y, pos.z - 3);
                 if ((blockBelow != 0) && (!d_Data.IsWater[blockBelow]))
@@ -1858,11 +1861,11 @@ namespace ManicDigger
             p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
             int block1 = 0;
             int block2 = 0;
-            if (MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+            if (d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
             {
                 block1 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y);
             }
-            if (MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y) - 1))
+            if (d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y) - 1))
             {
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
@@ -1948,10 +1951,10 @@ namespace ManicDigger
             Item item = d_Inventory.RightHand[ActiveMaterial];
             if (item != null && item.ItemClass == ItemClass.Block)
             {
-                movespeednow *= DeserializeFloat(blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
+                movespeednow *= DeserializeFloat(game.blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
                 if (IronSights)
                 {
-                    movespeednow *= DeserializeFloat(blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
+                    movespeednow *= DeserializeFloat(game.blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
                 }
             }
             return movespeednow;
@@ -1965,7 +1968,7 @@ namespace ManicDigger
         bool IronSights;
         int? BlockUnderPlayer()
         {
-            if (!MapUtil.IsValidPos(d_Map, (int)player.playerposition.X,
+            if (!d_Map.IsValidPos((int)player.playerposition.X,
                  (int)player.playerposition.Z, (int)player.playerposition.Y - 1))
             {
                 return null;
@@ -2010,8 +2013,8 @@ namespace ManicDigger
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
             return IsTileEmptyForPhysics(x, y, z)
-                || (MapUtil.IsValidPos(d_Map, x, y, z) && blocktypes[d_Map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
-                || (MapUtil.IsValidPos(d_Map, x, y, z) && IsEmptyForPhysics(blocktypes[d_Map.GetBlock(x, y, z)]));
+                || (d_Map.IsValidPos(x, y, z) && game.blocktypes[d_Map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+                || (d_Map.IsValidPos(x, y, z) && game.IsEmptyForPhysics(game.blocktypes[d_Map.GetBlock(x, y, z)]));
         }
         public float PICK_DISTANCE = 3.5f;
         public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
@@ -2020,7 +2023,7 @@ namespace ManicDigger
         int selectedmodelid = -1;
         bool IsUsableBlock(int blocktype)
         {
-            return d_Data.IsRailTile(blocktype) || blocktypes[blocktype].IsUsable;
+            return d_Data.IsRailTile(blocktype) || game.blocktypes[blocktype].IsUsable;
         }
         bool IsWearingWeapon()
         {
@@ -2083,9 +2086,9 @@ namespace ManicDigger
             if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
 
             Item item = d_Inventory.RightHand[ActiveMaterial];
-            bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
+            bool ispistol = (item != null && game.blocktypes[item.BlockId].IsPistol);
             bool ispistolshoot = ispistol && left;
-            bool isgrenade = ispistol && blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
+            bool isgrenade = ispistol && game.blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
             if (ispistol && isgrenade)
             {
                 ispistolshoot = mouseleftdeclick;
@@ -2096,9 +2099,9 @@ namespace ManicDigger
                 grenadecookingstart = DateTime.UtcNow;
                 if (ispistol && isgrenade)
                 {
-                    if (blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
+                    if (game.blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
                     {
-                        d_Audio.Play(blocktypes[item.BlockId].Sounds.Shoot[0] + ".ogg");
+                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.Shoot[0] + ".ogg");
                     }
                 }
             }
@@ -2384,7 +2387,7 @@ namespace ManicDigger
                     shot.WeaponBlock = item.BlockId;
                     LoadedAmmo[item.BlockId] = LoadedAmmo[item.BlockId] - 1;
                     TotalAmmo[item.BlockId] = TotalAmmo[item.BlockId] - 1;
-                    float projectilespeed = DeserializeFloat(blocktypes[item.BlockId].ProjectileSpeedFloat);
+                    float projectilespeed = DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
                     if (projectilespeed == 0)
                     {
                         bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
@@ -2399,14 +2402,14 @@ namespace ManicDigger
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
-                    if (blocktypes[item.BlockId].Sounds.ShootEnd.Length > 0)
+                    if (game.blocktypes[item.BlockId].Sounds.ShootEnd.Length > 0)
                     {
-                        pistolcycle = rnd.Next(blocktypes[item.BlockId].Sounds.ShootEnd.Length);
-                        d_Audio.Play(blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle] + ".ogg");
+                        pistolcycle = rnd.Next(game.blocktypes[item.BlockId].Sounds.ShootEnd.Length);
+                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle] + ".ogg");
                     }
 
                     bulletsshot++;
-                    if (bulletsshot < DeserializeFloat(blocktypes[item.BlockId].BulletsPerShotFloat))
+                    if (bulletsshot < DeserializeFloat(game.blocktypes[item.BlockId].BulletsPerShotFloat))
                     {
                         IsNextShot = true;
                         goto NextBullet;
@@ -2427,7 +2430,7 @@ namespace ManicDigger
                     if (middle)
                     {
                         var newtile = pick0.Current();
-                        if (MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
                             int clonesource2 = (int)d_Data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
@@ -2482,7 +2485,7 @@ namespace ManicDigger
                         BlockPosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? tile.Translated() : tile.Current();
-                        if (MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                        if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
                             if (pick0.pos != new Vector3(-1, -1, -1))
@@ -2524,7 +2527,7 @@ namespace ManicDigger
                             {
                                 particleEffectBlockBreak.StartParticleEffect(newtile);//must be before deletion - gets ground type.
                             }
-                            if (!MapUtil.IsValidPos(d_Map, (int)newtile.X, (int)newtile.Z, (int)newtile.Y))
+                            if (!d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                             {
                                 throw new Exception();
                             }
@@ -2616,9 +2619,9 @@ namespace ManicDigger
                 float progress = health / d_Data.Strength[blocktype];
                 if (IsUsableBlock(blocktype))
                 {
-                    DrawEnemyHealthUseInfo(blocktypes[blocktype].Name, progress, true);
+                    DrawEnemyHealthUseInfo(game.blocktypes[blocktype].Name, progress, true);
                 }
-                DrawEnemyHealthCommon(blocktypes[blocktype].Name, progress);
+                DrawEnemyHealthCommon(game.blocktypes[blocktype].Name, progress);
             }
         }
 
@@ -2690,7 +2693,7 @@ namespace ManicDigger
 
         float getblockheight(int x, int y, int z)
         {
-            if (!MapUtil.IsValidPos(d_Map, x, y, z))
+            if (!d_Map.IsValidPos(x, y, z))
             {
                 return 1;
             }
@@ -2698,7 +2701,7 @@ namespace ManicDigger
             {
                 return RailHeight;
             }
-            if (blocktypes[d_Map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+            if (game.blocktypes[d_Map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
             {
                 return 0.5f;
             }
@@ -2718,7 +2721,7 @@ namespace ManicDigger
                 {
                     return default_;
                 }
-                float delay = DeserializeFloat(blocktypes[item.BlockId].DelayFloat);
+                float delay = DeserializeFloat(game.blocktypes[item.BlockId].DelayFloat);
                 if (delay == 0)
                 {
                     return default_;
@@ -2924,10 +2927,10 @@ namespace ManicDigger
                     string img = null;
                     if (item != null)
                     {
-                        img = blocktypes[item.BlockId].Handimage;
+                        img = game.blocktypes[item.BlockId].Handimage;
                         if (IronSights)
                         {
-                            img = blocktypes[item.BlockId].IronSightsImage;
+                            img = game.blocktypes[item.BlockId].IronSightsImage;
                         }
                     }
                     if (img == null)
@@ -2980,12 +2983,12 @@ namespace ManicDigger
                 explosion.XFloat = SerializeFloat(b.position.X);
                 explosion.YFloat = SerializeFloat(b.position.Z);
                 explosion.ZFloat = SerializeFloat(b.position.Y);
-                explosion.RangeFloat = blocktypes[b.block].ExplosionRangeFloat;
+                explosion.RangeFloat = game.blocktypes[b.block].ExplosionRangeFloat;
                 explosion.IsRelativeToPlayerPosition = 0;
-                explosion.TimeFloat = blocktypes[b.block].ExplosionTimeFloat;
+                explosion.TimeFloat = game.blocktypes[b.block].ExplosionTimeFloat;
                 explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = explosion });
                 float dist = (LocalPlayerPosition - b.position).Length;
-                float dmg = (1 - dist / DeserializeFloat(blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(blocktypes[b.block].DamageBodyFloat);
+                float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
                 if ((int)dmg > 0)
                 {
                     ApplyDamageToPlayer((int)dmg);
@@ -3628,7 +3631,7 @@ namespace ManicDigger
             Item item = d_Inventory.RightHand[ActiveMaterial];
             if (item != null && item.ItemClass == ItemClass.Block)
             {
-                if (blocktypes[item.BlockId].IsPistol)
+                if (game.blocktypes[item.BlockId].IsPistol)
                 {
                     int loaded = 0;
                     if (LoadedAmmo.ContainsKey(item.BlockId))
@@ -3717,7 +3720,7 @@ namespace ManicDigger
             int y = (int)SelectedBlockPosition.Z;
             int z = (int)SelectedBlockPosition.Y;
             //string info = "None";
-            if (!MapUtil.IsValidPos(d_Map, x, y, z))
+            if (!d_Map.IsValidPos(x, y, z))
             {
                 return;
             }
@@ -3785,10 +3788,10 @@ namespace ManicDigger
                 {
                     return 0;
                 }
-                float radius = ((float)DeserializeFloat(blocktypes[item.BlockId].AimRadiusFloat) / 800) * Width;
+                float radius = ((float)DeserializeFloat(game.blocktypes[item.BlockId].AimRadiusFloat) / 800) * Width;
                 if (IronSights)
                 {
-                    radius = ((float)DeserializeFloat(blocktypes[item.BlockId].IronSightsAimRadiusFloat) / 800) * Width;
+                    radius = ((float)DeserializeFloat(game.blocktypes[item.BlockId].IronSightsAimRadiusFloat) / 800) * Width;
                 }
                 return radius + RadiusWhenMoving * radius * (Math.Min(playervelocity.Length / movespeed, 1));
             }
@@ -3803,7 +3806,7 @@ namespace ManicDigger
                 {
                     return 0;
                 }
-                return (float)DeserializeFloat(blocktypes[item.BlockId].RecoilFloat);
+                return (float)DeserializeFloat(game.blocktypes[item.BlockId].RecoilFloat);
             }
         }
         void Circle3i(float x, float y, float radius)
@@ -4118,7 +4121,7 @@ namespace ManicDigger
             {
                 var p = LocalPlayerPosition;
                 p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return p.Y < WaterLevel;
                 }
@@ -4131,7 +4134,7 @@ namespace ManicDigger
             {
                 var p = LocalPlayerPosition;
                 p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return p.Y < WaterLevel;
                 }
@@ -4144,7 +4147,7 @@ namespace ManicDigger
             {
                 var p = LocalPlayerPosition;
                 p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!MapUtil.IsValidPos(d_Map, (int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
+                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
                 {
                     return false;
                 }
@@ -4186,9 +4189,6 @@ namespace ManicDigger
         {
             get { return keyeventup; }
         }
-        #endregion
-        #region IMap Members
-        IMapStorage IMap.Map { get { return d_Map; } }
         #endregion
         AnimationHint localplayeranimationhint = new AnimationHint();
         #region IViewport3d Members
@@ -4287,7 +4287,7 @@ namespace ManicDigger
                 Vector3i? oldfillend = fillend;
                 if (mode == Packet_BlockSetModeEnum.Create)
                 {
-                    if (blocktypes[activematerial].IsTool)
+                    if (game.blocktypes[activematerial].IsTool)
                     {
                         OnPickUseWithTool(blockpos);
                         return;
@@ -4347,7 +4347,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    if (blocktypes[activematerial].IsTool)
+                    if (game.blocktypes[activematerial].IsTool)
                     {
                         OnPickUseWithTool(blockpos);
                         return;
@@ -4592,9 +4592,9 @@ namespace ManicDigger
         public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
 
         #region IMapStorage Members
-        public void SetChunk(int x, int y, int z, ushort[, ,] chunk)
+        public void SetChunk(int x, int y, int z, int[, ,] chunk)
         {
-            d_Map.SetMapPortion(x, y, z, chunk);
+            SetMapPortion(x, y, z, chunk);
         }
         #endregion
         #region IGameMode Members
@@ -4654,7 +4654,6 @@ namespace ManicDigger
         #endregion
         public ManicDiggerGameWindow mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
-        internal Packet_BlockType[] blocktypes;
         public int HourDetail = 4;
         public int[] NightLevels;
         public bool ENABLE_PER_SERVER_TEXTURES = false;
@@ -5198,11 +5197,11 @@ namespace ManicDigger
                 case Packet_ServerIdEnum.Chunk_:
                     {
                         var p = packet.Chunk_;
-                        ushort[, ,] receivedchunk;
+                        int[, ,] receivedchunk;
                         if (CurrentChunk.Length != 0)
                         {
                             byte[] decompressedchunk = d_Compression.Decompress(CurrentChunk.ToArray());
-                            receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
+                            receivedchunk = new int[p.SizeX, p.SizeY, p.SizeZ];
                             {
                                 BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
                                 for (int zz = 0; zz < p.SizeZ; zz++)
@@ -5219,10 +5218,10 @@ namespace ManicDigger
                         }
                         else
                         {
-                            receivedchunk = new ushort[p.SizeX, p.SizeY, p.SizeZ];
+                            receivedchunk = new int[p.SizeX, p.SizeY, p.SizeZ];
                         }
                         {
-                            d_Map.SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
+                            SetMapPortion(p.X, p.Y, p.Z, receivedchunk);
                             for (int xx = 0; xx < 2; xx++)
                             {
                                 for (int yy = 0; yy < 2; yy++)
@@ -5369,24 +5368,24 @@ namespace ManicDigger
                     NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
                     break;
                 case Packet_ServerIdEnum.BlockTypes:
-                    blocktypes = NewBlockTypes;
-                    NewBlockTypes = new Packet_BlockType[blocktypes.Length];
+                    game.blocktypes = NewBlockTypes;
+                    NewBlockTypes = new Packet_BlockType[game.blocktypes.Length];
 
                     Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
                     int lastTextureId = 0;
-                    for (int i = 0; i < blocktypes.Length; i++)
+                    for (int i = 0; i < game.blocktypes.Length; i++)
                     {
-                        if (blocktypes[i] != null)
+                        if (game.blocktypes[i] != null)
                         {
                             string[] to_load = new string[]
                             {
-                                blocktypes[i].TextureIdLeft,
-                                blocktypes[i].TextureIdRight,
-                                blocktypes[i].TextureIdFront,
-                                blocktypes[i].TextureIdBack,
-                                blocktypes[i].TextureIdTop,
-                                blocktypes[i].TextureIdBottom,
-                                blocktypes[i].TextureIdForInventory,
+                                game.blocktypes[i].TextureIdLeft,
+                                game.blocktypes[i].TextureIdRight,
+                                game.blocktypes[i].TextureIdFront,
+                                game.blocktypes[i].TextureIdBack,
+                                game.blocktypes[i].TextureIdTop,
+                                game.blocktypes[i].TextureIdBottom,
+                                game.blocktypes[i].TextureIdForInventory,
                             };
                             for (int k = 0; k < to_load.Length; k++)
                             {
@@ -5397,7 +5396,7 @@ namespace ManicDigger
                             }
                         }
                     }
-                    d_Data.UseBlockTypes(blocktypes, textureInAtlasIds);
+                    d_Data.UseBlockTypes(game.blocktypes, textureInAtlasIds);
                     UseTerrainTextures(textureInAtlasIds);
                     d_Weapon.redraw = true;
                     RedrawAllBlocks();
@@ -5463,9 +5462,10 @@ namespace ManicDigger
                     if (!ammostarted)
                     {
                         ammostarted = true;
-                        foreach (var k in packet.Ammo.TotalAmmo)
+                        for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
                         {
-                            LoadedAmmo[k.Key_] = Math.Min(k.Value_, blocktypes[k.Key_].AmmoMagazine);
+                            var k = packet.Ammo.TotalAmmo[i];
+                            LoadedAmmo[k.Key_] = Math.Min(k.Value_, game.blocktypes[k.Key_].AmmoMagazine);
                         }
                     }
                     TotalAmmo = new Dictionary<int, int>();
@@ -5730,35 +5730,18 @@ namespace ManicDigger
         public DateTime LastReceived { get; set; }
         //[Inject]
         //public IIsChunkDirty d_IsChunkReady;
-        public Chunk[] chunks;
         #region IMapStorage Members
-        public int MapSizeX { get; set; }
-        public int MapSizeY { get; set; }
-        public int MapSizeZ { get; set; }
+        public int MapSizeX { get { return game.MapSizeX; } set { game.MapSizeX = value; } }
+        public int MapSizeY { get { return game.MapSizeY; } set { game.MapSizeY = value; } }
+        public int MapSizeZ { get { return game.MapSizeZ; } set { game.MapSizeZ = value; } }
         public unsafe int GetBlock(int x, int y, int z)
         {
-            if (!MapUtil.IsValidPos(d_Map, x, y, z))
-            {
-                return 0;
-            }
-
-            int cx = x / chunksize;
-            int cy = y / chunksize;
-            int cz = z / chunksize;
-            int chunkpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
-            if (chunks[chunkpos] == null)
-            {
-                return 0;
-            }
-            else
-            {
-                return chunks[chunkpos].data[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
-            }
+            return game.GetBlock(x, y, z);
         }
 
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
-            ushort[] chunk = GetChunk(x, y, z);
+            int[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (ushort)tileType;
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             //d_Shadows.OnSetBlock(x, y, z);
@@ -5820,14 +5803,14 @@ namespace ManicDigger
 
 
         #endregion
-        public ushort[] GetChunk(int x, int y, int z)
+        public int[] GetChunk(int x, int y, int z)
         {
             x = x / chunksize;
             y = y / chunksize;
             z = z / chunksize;
             int mapsizexchunks = MapSizeX / chunksize;
             int mapsizeychunks = MapSizeY / chunksize;
-            Chunk chunk = chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+            Chunk chunk = game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
             if (chunk == null)
             {
                 //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
@@ -5838,23 +5821,23 @@ namespace ManicDigger
                 //}
                 //else
                 {
-                    chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new ushort[chunksize * chunksize * chunksize] };
+                    game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new int[chunksize * chunksize * chunksize] };
                 }
-                return chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
+                return game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
             }
             return chunk.data;
         }
-        public int chunksize = 16;
+        public int chunksize { get { return game.chunksize; } set { game.chunksize = value; } }
         public void Reset(int sizex, int sizey, int sizez)
         {
             MapSizeX = sizex;
             MapSizeY = sizey;
             MapSizeZ = sizez;
-            chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize) * (sizez / chunksize)];
+            game.chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize) * (sizez / chunksize)];
             SetAllChunksNotDirty();
         }
         #region IMapStorage Members
-        public unsafe void SetMapPortion(int x, int y, int z, ushort[, ,] chunk)
+        public unsafe void SetMapPortion(int x, int y, int z, int[, ,] chunk)
         {
             int chunksizex = chunk.GetUpperBound(0) + 1;
             int chunksizey = chunk.GetUpperBound(1) + 1;
@@ -5862,7 +5845,7 @@ namespace ManicDigger
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            ushort[, ,][] localchunks = new ushort[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            int[, ,][] localchunks = new int[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -5903,8 +5886,8 @@ namespace ManicDigger
                 && yy < MapSizeY / chunksize
                 && zz < MapSizeZ / chunksize;
         }
-        private unsafe void FillChunk(ushort[] destination, int destinationchunksize,
-            int sourcex, int sourcey, int sourcez, ushort[, ,] source)
+        private unsafe void FillChunk(int[] destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, int[, ,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
             {
@@ -5945,7 +5928,7 @@ namespace ManicDigger
         {
             //d_IsChunkReady.SetAllChunksNotDirty();
         }
-        public unsafe void GetMapPortion(ushort[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+        public unsafe void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {
             Array.Clear(outPortion, 0, outPortion.Length);
 
@@ -5972,7 +5955,7 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        Chunk chunk = chunks[cpos];
+                        Chunk chunk = game.chunks[cpos];
                         if (chunk == null || chunk.data == null)
                         {
                             continue;
@@ -6461,14 +6444,6 @@ namespace ManicDigger
         public DateTime lastuse;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public class Chunk
-    {
-        public ushort[] data;
-        public int LastUpdate;
-        public bool IsPopulated;
-        public int LastChange;
-    }
     public interface IResetMap
     {
         void Reset(int sizex, int sizey, int sizez);

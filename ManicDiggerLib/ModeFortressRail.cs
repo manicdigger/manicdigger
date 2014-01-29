@@ -82,13 +82,13 @@ namespace ManicDigger
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z, (int)LocalPlayerPosition.Y - 1);
-                if (!MapUtil.IsValidPos(d_Map, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
+                if (!MapUtil.IsValidPos(this, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
                 {
                     ExitVehicle();
                 }
                 else
                 {
-                    var railunderplayer = d_Data.Rail[d_Map.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
+                    var railunderplayer = d_Data.Rail[this.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
                     originalmodelheight = CharacterEyesHeight;
                     CharacterEyesHeight = minecartheight;
@@ -267,7 +267,7 @@ namespace ManicDigger
         {
             Vector3 new_position = enter.BlockPosition;
             VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
-            if (MapUtil.IsValidPos(d_Map, (int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
+            if (d_Map.IsValidPos((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
                 RailDirectionFlags newpositionrail = d_Data.Rail[
                     d_Map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
@@ -361,7 +361,7 @@ namespace ManicDigger
         }
         UpDown GetUpDownMove(Vector3 railblock, TileEnterDirection dir)
         {
-            if (!MapUtil.IsValidPos(d_Map, (int)railblock.X, (int)railblock.Y, (int)railblock.Z))
+            if (!d_Map.IsValidPos((int)railblock.X, (int)railblock.Y, (int)railblock.Z))
             {
                 return UpDown.None;
             }

@@ -62,10 +62,10 @@ namespace ManicDigger
     }
     public interface IMapStoragePortion
     {
-        void GetMapPortion(ushort[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
-        void SetMapPortion(int x, int y, int z, ushort[, ,] chunk);
+        void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
+        void SetMapPortion(int x, int y, int z, int[, ,] chunk);
         void UseMap(byte[, ,] map);
-        ushort[] GetChunk(int x, int y, int z);
+        int[] GetChunk(int x, int y, int z);
     }
     public interface IMapStorageLight
     {

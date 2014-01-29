@@ -68,4 +68,9 @@ public class GamePlatformNative : GamePlatform
 
         throw new FileNotFoundException(filename);
     }
+
+    public override int FloatToInt(float value)
+    {
+        return (int)value;
+    }
 }

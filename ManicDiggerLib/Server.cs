@@ -165,7 +165,7 @@ namespace ManicDiggerServer
                 BlockTypes[i] = new BlockType() { };
             }
 
-            map.d_Heightmap = new InfiniteMapChunked2d() { chunksize = Server.chunksize, d_Map = map };
+            map.d_Heightmap = new InfiniteMapChunked2dServer() { chunksize = Server.chunksize, d_Map = map };
             map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
             server.d_Map = map;
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
@@ -3895,10 +3895,15 @@ if (sent >= unknown.Count) { break; }
         public void SendAmmo(int playerid, Dictionary<int, int> totalAmmo)
         {
             Packet_ServerAmmo p = new Packet_ServerAmmo();
+            Packet_IntInt[] t = new Packet_IntInt[totalAmmo.Count];
+            int i = 0;
             foreach (var k in totalAmmo)
             {
-                p.TotalAmmoAdd(new Packet_IntInt() { Key_ = k.Key, Value_ = k.Value });
+                t[i++] = new Packet_IntInt() { Key_ = k.Key, Value_ = k.Value };
             }
+            p.TotalAmmoCount = totalAmmo.Count;
+            p.TotalAmmoLength = totalAmmo.Count;
+            p.TotalAmmo = t;
             SendPacket(playerid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Ammo, Ammo = p }));
         }
 

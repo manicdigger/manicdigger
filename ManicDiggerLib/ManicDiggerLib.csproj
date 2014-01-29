@@ -82,9 +82,9 @@
       <Link>Client\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Audio.cs" />
-    <Compile Include="CharacterPhysics.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
     <Compile Include="Client\CitoGl.ci.cs" />
+    <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="FrustumCulling.cs" />

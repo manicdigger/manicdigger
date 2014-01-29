@@ -241,14 +241,14 @@ namespace ManicDigger
             CalculateShadows(chunkx, chunky, chunkz);
         }
 
-        unsafe ushort[][] chunks3x3x3 = null;
-        unsafe ushort[][] heightchunks3x3 = null;
+        unsafe int[][] chunks3x3x3 = null;
+        unsafe int[][] heightchunks3x3 = null;
         private unsafe void CalculateShadows(int cx,int cy,int cz)
         {
             if (chunks3x3x3 == null)
             {
-                chunks3x3x3 = new ushort[3 * 3 * 3][]; //(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
-                heightchunks3x3 = new ushort[3 * 3][];//(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
+                chunks3x3x3 = new int[3 * 3 * 3][]; //(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
+                heightchunks3x3 = new int[3 * 3][];//(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
             }
             for (int i = 0; i < 3 * 3 * 3; i++)
             {
@@ -270,7 +270,7 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        Chunk chunk = chunks[MapUtil.Index3d(cx + x-1, cy + y-1, cz + z-1, MapSizeX / chunksize, MapSizeY / chunksize)];
+                        Chunk chunk = game.chunks[MapUtil.Index3d(cx + x - 1, cy + y - 1, cz + z - 1, MapSizeX / chunksize, MapSizeY / chunksize)];
                         if (chunk != null)
                         {
                             chunks3x3x3[MapUtil.Index3d(x, y, z, 3, 3)] = chunk.data;
@@ -291,7 +291,7 @@ namespace ManicDigger
                     {
                         continue;
                     }
-                    ushort[] chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x - 1, cy + y - 1, d_Map.MapSizeX / chunksize)];
+                    int[] chunk = d_Heightmap.chunks[MapUtil.Index2d(cx + x - 1, cy + y - 1, d_Map.MapSizeX / chunksize)];
                     heightchunks3x3[MapUtil.Index2d(x, y, 3)] = chunk;
                 }
             }
