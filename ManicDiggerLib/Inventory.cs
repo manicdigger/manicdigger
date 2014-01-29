@@ -521,7 +521,7 @@ namespace ManicDigger
 
         public int[] TextureIdForInventory
         {
-            get { return d_Data.TextureIdForInventory; }
+            get { return game.game.TextureIdForInventory; }
         }
     }
 }

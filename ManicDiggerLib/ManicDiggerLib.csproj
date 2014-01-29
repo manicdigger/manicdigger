@@ -87,6 +87,7 @@
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
+    <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />

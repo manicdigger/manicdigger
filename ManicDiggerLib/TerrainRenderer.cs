@@ -221,24 +221,52 @@ namespace ManicDigger
             chunkupdates++;
 
             List<int> ids = new List<int>();
-            var a = d_TerrainChunkTesselator.MakeChunk(CurrentRendererMapPositionG.x / chunksize + x,
-                CurrentRendererMapPositionG.y / chunksize + y, z);
-            foreach (var submesh in a)
+            int cx = CurrentRendererMapPositionG.x / chunksize + x;
+            int cy = CurrentRendererMapPositionG.y / chunksize + y;
+            int cz = z;
+            GetExtendedChunk(cx, cy, z);
+            if (!IsSolidChunk(currentChunk))
             {
-                if (submesh.indices.Length != 0)
+                CalculateShadows(cx, cy, z);
+                var a = d_TerrainChunkTesselator.MakeChunk(cx, cy, z, currentChunk, currentChunkShadows, d_Data.LightLevels);
+                foreach (var submesh in a)
                 {
-                    Vector3 center = new Vector3(submesh.position.X + chunksize / 2, submesh.position.Z + chunksize / 2, submesh.position.Y + chunksize / 2);
-                    float radius = chunksize;
-                    ids.Add(d_Batcher.Add(submesh.indices, submesh.indicesCount, submesh.vertices, submesh.verticesCount, submesh.transparent, submesh.texture, center, radius));
+                    if (submesh.indices.Length != 0)
+                    {
+                        Vector3 center = new Vector3(submesh.position.X + chunksize / 2, submesh.position.Z + chunksize / 2, submesh.position.Y + chunksize / 2);
+                        float radius = chunksize;
+                        ids.Add(d_Batcher.Add(submesh.indices, submesh.indicesCount, submesh.vertices, submesh.verticesCount, submesh.transparent, submesh.texture, center, radius));
+                    }
                 }
             }
             RendererMap[pos].ids = ids.ToArray();
             //if ((updated++) > 2 && framestopwatch.ElapsedMilliseconds > 5)
         }
 
-        public void OnMakeChunk(int chunkx, int chunky, int chunkz)
+        bool IsSolidChunk(int[] currentChunk)
         {
-            CalculateShadows(chunkx, chunky, chunkz);
+            int block = currentChunk[0];
+            for (int i = 0; i < currentChunk.Length; i++)
+            {
+                if (currentChunk[i] != currentChunk[0])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        int[] currentChunk = new int[18 * 18 * 18];
+        byte[] currentChunkShadows = new byte[18 * 18 * 18];
+        
+        //For performance, make a local copy of chunk and its surrounding.
+        //To render one chunk, we need to know all blocks that touch chunk boundaries.
+        //(because to render a single block we need to know all 6 blocks around it).
+        //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
+        private void GetExtendedChunk(int x, int y, int z)
+        {
+            GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
+                chunksize + 2, chunksize + 2, chunksize + 2);
         }
 
         unsafe int[][] chunks3x3x3 = null;
@@ -305,14 +333,14 @@ namespace ManicDigger
                 }
             }
 
-            shadows.Update(d_TerrainChunkTesselator.currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparentForLight, sunlight, cz * chunksize - chunksize);
+            shadows.Update(currentChunkShadows, chunks3x3x3, heightchunks3x3, d_Data.LightRadius, d_Data.IsTransparentForLight, sunlight, cz * chunksize - chunksize);
             
             //for MaybeGetLight
-            Array.Copy(d_TerrainChunkTesselator.currentChunkShadows,
+            Array.Copy(currentChunkShadows,
                 RendererMap[MapUtil.Index3d(cx - CurrentRendererMapPositionG.x / chunksize,
                 cy - CurrentRendererMapPositionG.y / chunksize,
                 cz - CurrentRendererMapPositionG.z / chunksize, mapAreaSize / chunksize, mapAreaSize / chunksize)].light,
-                d_TerrainChunkTesselator.currentChunkShadows.Length);
+                currentChunkShadows.Length);
         }
         public static bool aaa;
         public static int bbb;

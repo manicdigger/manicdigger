@@ -5396,6 +5396,21 @@ namespace ManicDigger
                         }
                     }
                     d_Data.UseBlockTypes(game.blocktypes, textureInAtlasIds);
+                    for (int i = 0; i < game.blocktypes.Length; i++)
+                    {
+                        Packet_BlockType b = game.blocktypes[i];
+                        //Indexed by block id and TileSide.
+                        if (textureInAtlasIds != null)
+                        {
+                            game.TextureId[i][0] = textureInAtlasIds[b.TextureIdTop];
+                            game.TextureId[i][1] = textureInAtlasIds[b.TextureIdBottom];
+                            game.TextureId[i][2] = textureInAtlasIds[b.TextureIdFront];
+                            game.TextureId[i][3] = textureInAtlasIds[b.TextureIdBack];
+                            game.TextureId[i][4] = textureInAtlasIds[b.TextureIdLeft];
+                            game.TextureId[i][5] = textureInAtlasIds[b.TextureIdRight];
+                            game.TextureIdForInventory[i] = textureInAtlasIds[b.TextureIdForInventory];
+                        }
+                    }
                     UseTerrainTextures(textureInAtlasIds);
                     d_Weapon.redraw = true;
                     RedrawAllBlocks();
@@ -6031,7 +6046,7 @@ namespace ManicDigger
         public int atlas1dheight { get { return maxTextureSize; } }
         public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
         public int[] terrainTextures1d { get; set; }
-        public int terrainTexturesPerAtlas { get; set; }
+        public int terrainTexturesPerAtlas { get { return game.terrainTexturesPerAtlas; } set { game.terrainTexturesPerAtlas = value; } }
 
 
 

@@ -13,6 +13,7 @@ namespace ManicDigger.Renderers
     //Special-shape (rare) blocks don't need as much performance.
     public class TerrainChunkTesselator
     {
+        internal TerrainChunkTesselatorCi tesselator = new TerrainChunkTesselatorCi();
         [Inject]
         public IMapStorage d_MapStorage;
         [Inject]
@@ -27,7 +28,6 @@ namespace ManicDigger.Renderers
         public ITerrainTextures d_TerrainTextures;
         [Inject]
         public ManicDiggerGameWindow game;
-        RailMapUtil railmaputil;
         public bool DONOTDRAWEDGES = true;
         public int chunksize = 16; //16x16
         public int texturesPacked = GlobalVar.MAX_BLOCKTYPES_SQRT;
@@ -44,59 +44,40 @@ namespace ManicDigger.Renderers
         public bool toprightoccupied = false;
         public bool bottomleftoccupied = false;
         public bool bottomrightoccupied = false;
-        public bool EnableSmoothLight = true;
+        public bool EnableSmoothLight { get { return tesselator.EnableSmoothLight; } set { tesselator.EnableSmoothLight = value; } }
         public float AtiArtifactFix = 0.995f;
         public float Yellowness = 1f;//lower is yellower//0.7
         public float Blueness = 0.9f;//lower is blue-er
-        int[] currentChunk;
-        bool started = false;
-        int mapsizex; //cache
-        int mapsizey;
-        int mapsizez;
+        int[] currentChunk18 { get { return tesselator.currentChunk18; } set { tesselator.currentChunk18 = value; } }
+        bool started { get { return tesselator.started; } set { tesselator.started = value; } }
+        int mapsizex { get { return tesselator.mapsizex; } set { tesselator.mapsizex = value; } }
+        int mapsizey { get { return tesselator.mapsizey; } set { tesselator.mapsizey = value; } }
+        int mapsizez { get { return tesselator.mapsizez; } set { tesselator.mapsizez = value; } }
         public void Start()
         {
-            currentChunk = new int[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
-            currentChunkShadows = new byte[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
-            currentChunkDraw = new byte[chunksize, chunksize, chunksize];
-            currentChunkDrawCount = new byte[chunksize, chunksize, chunksize, 6];
-            mapsizex = d_MapStorage.MapSizeX;
-            mapsizey = d_MapStorage.MapSizeY;
-            mapsizez = d_MapStorage.MapSizeZ;
-            started = true;
-            istransparent = d_Data.IsTransparent;
-            isvalid = d_Data.IsValid;
-            maxlight = game.maxlight;
-            maxlightInverse = 1f / maxlight;
-            terrainTexturesPerAtlas = d_TerrainTextures.terrainTexturesPerAtlas;
-            terrainTexturesPerAtlasInverse = 1f / d_TerrainTextures.terrainTexturesPerAtlas;
-
-
-            toreturnatlas1d = new ModelData[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
-            toreturnatlas1dtransparent = new ModelData[Math.Max(1, maxblocktypes / d_TerrainTextures.terrainTexturesPerAtlas)];
-            for (int i = 0; i < toreturnatlas1d.Length; i++)
-            {
-                toreturnatlas1d[i] = new ModelData();
-                toreturnatlas1d[i].xyz = new float[65536 * 3];
-                toreturnatlas1d[i].uv = new float[65536 * 2];
-                toreturnatlas1d[i].rgba = new byte[65536 * 4];
-                toreturnatlas1d[i].indices = new int[65536];
-
-                toreturnatlas1dtransparent[i] = new ModelData();
-                toreturnatlas1dtransparent[i].xyz = new float[65536 * 3];
-                toreturnatlas1dtransparent[i].uv = new float[65536 * 2];
-                toreturnatlas1dtransparent[i].rgba = new byte[65536 * 4];
-                toreturnatlas1dtransparent[i].indices = new int[65536];
-            }
+            tesselator.game = game.game;
+            tesselator.Start();
         }
-        int terrainTexturesPerAtlas;
-        float terrainTexturesPerAtlasInverse;
-        int maxlight;
-        float maxlightInverse;
-        bool[] istransparent;
-        bool[] isvalid;
+        int terrainTexturesPerAtlas { get { return tesselator.terrainTexturesPerAtlas; } set { tesselator.terrainTexturesPerAtlas = value; } }
+        float terrainTexturesPerAtlasInverse { get { return tesselator.terrainTexturesPerAtlasInverse; } set { tesselator.terrainTexturesPerAtlasInverse = value; } }
+        int maxlight { get { return TerrainChunkTesselatorCi.maxlight; } }
+        float maxlightInverse { get { return tesselator.maxlightInverse; } set { tesselator.maxlightInverse = value; } }
+        bool[] istransparent { get { return tesselator.istransparent; } set { tesselator.istransparent = value; } }
+        float[] lightlevels { get { return tesselator.lightlevels; } set { tesselator.lightlevels = value; } }
 
-        public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z)
+        public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z,
+            int[] chunk18, byte[] shadows18, float[] lightlevels_)
         {
+            this.currentChunk18 = chunk18;
+            this.currentChunkShadows18 = shadows18;
+            this.lightlevels = lightlevels_;
+
+            for (int i = 0; i < maxblocktypes; i++)
+            {
+                Packet_BlockType b = game.game.blocktypes[i];
+                istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
+            }
+
             if (x < 0 || y < 0 || z < 0) { yield break; }
             if (!started) { throw new Exception("not started"); }
             if (x >= mapsizex / chunksize
@@ -111,12 +92,8 @@ namespace ManicDigger.Renderers
                 toreturnatlas1dtransparent[i].indicesCount = 0;
             }
 
-            GetExtendedChunk(x, y, z);
-            if (IsSolidChunk(currentChunk)) { yield break; }
-            //ResetCurrentShadows();
-            game.OnMakeChunk(x, y, z);
-            CalculateVisibleFaces(currentChunk);
-            CalculateTilingCount(currentChunk, x * chunksize, y * chunksize, z * chunksize);
+            CalculateVisibleFaces(currentChunk18);
+            CalculateTilingCount(currentChunk18, x * chunksize, y * chunksize, z * chunksize);
             if (EnableSmoothLight)
             {
                 CalculateSmoothBlockPolygons(x, y, z);
@@ -199,9 +176,9 @@ namespace ManicDigger.Renderers
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
                         //Most blocks aren't rendered at all, quickly reject them.
-                        if (currentChunkDraw[xx, yy, zz] != 0)
+                        if (currentChunkDraw16[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
                         {                            
-                            BlockPolygons(xxx, yyy, zzz, currentChunk);
+                            BlockPolygons(xxx, yyy, zzz, currentChunk18);
                         }
                     }
                 }
@@ -219,41 +196,16 @@ namespace ManicDigger.Renderers
                         int yyy = y * chunksize + yy;
                         int zzz = z * chunksize + zz;
                         //Most blocks aren't rendered at all, quickly reject them.
-                        if (currentChunkDraw[xx, yy, zz] != 0)
+                        if (currentChunkDraw16[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
                         {
-                            SmoothLightBlockPolygons(xxx, yyy, zzz, currentChunk);
+                            SmoothLightBlockPolygons(xxx, yyy, zzz, currentChunk18);
                         }
                     }
                 }
             }
         }
-        private void ResetCurrentShadows()
-        {
-            Array.Clear(currentChunkShadows, 0, currentChunkShadows.Length);
-        }
-        private bool IsSolidChunk(int[] currentChunk)
-        {
-            int block = currentChunk[0];
-            for (int i = 0; i < currentChunk.Length; i++)
-            {
-                if (currentChunk[i] != currentChunk[0])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        //For performance, make a local copy of chunk and its surrounding.
-        //To render one chunk, we need to know all blocks that touch chunk boundaries.
-        //(because to render a single block we need to know all 6 blocks around it).
-        //So it's needed to copy 16x16x16 chunk and its Borders to make a 18x18x18 "extended" chunk.
-        private void GetExtendedChunk(int x, int y, int z)
-        {
-            d_MapStoragePortion.GetMapPortion(currentChunk, x * chunksize - 1, y * chunksize - 1, z * chunksize - 1,
-                chunksize + 2, chunksize + 2, chunksize + 2);
-        }
-        ModelData[] toreturnatlas1d;
-        ModelData[] toreturnatlas1dtransparent;
+        ModelData[] toreturnatlas1d { get { return tesselator.toreturnatlas1d; } set { tesselator.toreturnatlas1d = value; } }
+        ModelData[] toreturnatlas1dtransparent { get { return tesselator.toreturnatlas1dtransparent; } set { tesselator.toreturnatlas1dtransparent = value; } }
         class VerticesIndices
         {
             public ushort[] indices;
@@ -273,233 +225,54 @@ namespace ManicDigger.Renderers
             }
             return true;
         }
-        public byte[] currentChunkShadows;
-        byte[, ,] currentChunkDraw;
-        byte[, , ,] currentChunkDrawCount;
+        byte[] currentChunkShadows18 { get { return tesselator.currentChunkShadows18; } set { tesselator.currentChunkShadows18 = value; } }
+        byte[] currentChunkDraw16 { get { return tesselator.currentChunkDraw16; } set { tesselator.currentChunkDraw16 = value; } }
+        byte[][] currentChunkDrawCount16 { get { return tesselator.currentChunkDrawCount16; } set { tesselator.currentChunkDrawCount16 = value; } }
         void CalculateVisibleFaces(int[] currentChunk)
         {
-            int chunksize = this.chunksize;
-            int movez = (chunksize + 2) * (chunksize + 2);
-            unsafe
-            {
-                fixed (int* currentChunk_ = currentChunk)
-                fixed (bool* istransparent_ = istransparent)
-                {
-                    for (int zz = 1; zz < chunksize + 1; zz++)
-                    {
-                        for (int yy = 1; yy < chunksize + 1; yy++)
-                        {
-                            int posstart = MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
-                            for (int xx = 1; xx < chunksize + 1; xx++)
-                            {
-                                int pos = posstart + xx;
-                                int tt = currentChunk_[pos];
-                                if (tt == 0) { continue; }
-                                int draw = (int)TileSideFlags.None;
-                                //Instead of calculating position index with MapUtil.Index(),
-                                //relative moves are used
-                                //(just addition instead of multiplication - 1.5x - 2x faster)
-                                //z+1
-                                {
-                                    int pos2 = pos + movez;
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Top;
-                                    }
-                                }
-                                //z-1
-                                {
-                                    int pos2 = pos - movez;
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Bottom;
-                                    }
-                                }
-                                //x-1
-                                {
-                                    int pos2 = pos - 1;
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Front;
-                                    }
-                                }
-                                //x+1
-                                {
-                                    int pos2 = pos + 1;
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Back;
-                                    }
-                                }
-                                //y-1
-                                {
-                                    int pos2 = pos - (chunksize + 2);
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Left;
-                                    }
-                                }
-                                //y-1
-                                {
-                                    int pos2 = pos + (chunksize + 2);
-                                    int tt2 = currentChunk_[pos2];
-                                    if (tt2 == 0
-                                        || (IsWater(tt2) && (!IsWater(tt)))
-                                        || istransparent_[tt2])
-                                    {
-                                        draw |= (int)TileSideFlags.Right;
-                                    }
-                                }
-                                currentChunkDraw[xx - 1, yy - 1, zz - 1] = (byte)draw;
-                            }
-                        }
-                    }
-                }
-            }
+            tesselator.CalculateVisibleFaces(currentChunk);
         }
 
         bool IsWater(int tt2)
         {
-            return game.game.IsFluid(game.game.blocktypes[tt2]);
+            return tesselator.IsWater(tt2);
         }
 
         private void CalculateTilingCount(int[] currentChunk, int startx, int starty, int startz)
         {
-            Array.Clear(currentChunkDrawCount, 0, currentChunkDrawCount.Length);
-            unsafe
-            {
-                fixed (int* currentChunk_ = currentChunk)
-                for (int zz = 1; zz < chunksize + 1; zz++)
-                {
-                    for (int yy = 1; yy < chunksize + 1; yy++)
-                    {
-                        int pos = MapUtil.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
-                        for (int xx = 1; xx < chunksize + 1; xx++)
-                        {
-                            int tt = currentChunk_[pos + xx];
-                            if (tt == 0) { continue; } //faster
-                            int x = startx + xx - 1;
-                            int y = starty + yy - 1;
-                            int z = startz + zz - 1;
-                            int draw = currentChunkDraw[xx - 1, yy - 1, zz - 1];
-                            if (draw == 0) { continue; } //faster
-                            if (EnableSmoothLight)
-                            {
-                                if ((draw & (int)TileSideFlags.Top) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
-                                }
-                                if ((draw & (int)TileSideFlags.Bottom) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
-                                }
-                                if ((draw & (int)TileSideFlags.Front) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
-                                }
-                                if ((draw & (int)TileSideFlags.Back) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
-                                }
-                                if ((draw & (int)TileSideFlags.Left) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
-                                }
-                                if ((draw & (int)TileSideFlags.Right) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
-                                }
-                            }
-                            else
-                            {
-                                if ((draw & (int)TileSideFlags.Top) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
-                                }
-                                if ((draw & (int)TileSideFlags.Bottom) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
-                                }
-                                if ((draw & (int)TileSideFlags.Front) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
-                                }
-                                if ((draw & (int)TileSideFlags.Back) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
-                                }
-                                if ((draw & (int)TileSideFlags.Left) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
-                                }
-                                if ((draw & (int)TileSideFlags.Right) != 0)
-                                {
-                                    int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                    currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right] = (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            tesselator.CalculateTilingCount(currentChunk, startx, starty, startz);
         }
         float texrecLeft;
         float texrecTop;
         float texrecWidth;
         float texrecHeight;
-        FastColor ColorWhite = new FastColor(Color.White);
+        int ColorWhite = Game.ColorFromArgb(255, 255, 255, 255);
         private void BlockPolygons(int x, int y, int z, int[] currentChunk)
         {
             int xx = x % chunksize + 1;
             int yy = y % chunksize + 1;
             int zz = z % chunksize + 1;
             var tt = currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-            if (!isvalid[tt])
+            if (!isvalid(tt))
             {
                 return;
             }
-            byte drawtop = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top];
-            byte drawbottom = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom];
-            byte drawfront = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front];
-            byte drawback = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back];
-            byte drawleft = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left];
-            byte drawright = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right];
+            byte drawtop = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][(int)TileSide.Top];
+            byte drawbottom = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1,chunksize,chunksize)][ (int)TileSide.Bottom];
+            byte drawfront = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Front];
+            byte drawback = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Back];
+            byte drawleft = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Left];
+            byte drawright = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1,chunksize,chunksize)][(int)TileSide.Right];
             int tiletype = tt;
             if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
             {
                 return;
             }
-            FastColor color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
-            FastColor colorShadowSide = new FastColor(color.A,
-                (int)(color.R * BlockShadow),
-                (int)(color.G * BlockShadow),
-                (int)(color.B * BlockShadow));
+            int color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
+            int colorShadowSide = Game.ColorFromArgb(Game.ColorA(color),
+                (int)(Game.ColorR(color) * BlockShadow),
+                (int)(Game.ColorG(color) * BlockShadow),
+                (int)(Game.ColorB(color) * BlockShadow));
             if (DONOTDRAWEDGES)
             {
                 //On finite map don't draw borders:
@@ -511,7 +284,7 @@ namespace ManicDigger.Renderers
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (d_Data.IsFlower[tiletype])
+            if (IsFlower(tiletype))
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -576,14 +349,14 @@ namespace ManicDigger.Renderers
                 flowerfix = 0.5f;
 
                 //x-1, x+1
-                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
-                    || currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
+                    || currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
                 {
                     drawleft = 1;
                 }
                 //y-1, y+1
-                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
-                    || currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
+                    || currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
                 {
                     drawfront = 1;
                 }
@@ -626,7 +399,7 @@ namespace ManicDigger.Renderers
                     default: drawright = 1; break;
                 }
             }
-            RailDirectionFlags rail = d_Data.Rail[tiletype];
+            RailDirectionFlags rail = Rail(tiletype);
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
             if (rail != RailDirectionFlags.None)
             {
@@ -647,8 +420,8 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
-                TorchSideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
-                TorchTopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
+                TorchSideTexture = TextureId(tt, (int)TileSide.Front);
+                TorchTopTexture = TextureId(tt, (int)TileSide.Top);
                 AddTorch(x, y, z, type, currentChunk[MapUtil.Index3d(xx, yy , zz, chunksize + 2, chunksize + 2)]);
                 return;
             }
@@ -659,11 +432,7 @@ namespace ManicDigger.Renderers
             float blockheight11 = blockheight;
             if (rail != RailDirectionFlags.None)
             {
-                if (railmaputil == null)
-                {
-                    railmaputil = new RailMapUtil() { d_Data = d_Data, d_MapStorage = d_MapStorage };
-                }
-                RailSlope slope = railmaputil.GetRailSlope(x, y, z);
+                RailSlope slope = GetRailSlope(xx, yy, zz);
                 if (slope == RailSlope.TwoRightRaised)
                 {
                     blockheight10 += 1;
@@ -725,7 +494,7 @@ namespace ManicDigger.Renderers
                 }
             }
             */
-            FastColor curcolor = color;
+            int curcolor = color;
             texrecLeft = 0;//0
             texrecHeight = (float) terrainTexturesPerAtlasInverse * AtiArtifactFix;
             //top
@@ -735,13 +504,13 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(color.R * shadowratiof),
-                        (int)(color.G * shadowratiof),
-                        (int)(color.B * shadowratiof));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof),
+                        (int)(Game.ColorG(color) * shadowratiof),
+                        (int)(Game.ColorB(color) * shadowratiof));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Top);
                 int tilecount = drawtop;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -767,13 +536,13 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
-                        (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
-                        (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Math.Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Bottom);
                 int tilecount = drawbottom;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -799,13 +568,13 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(color.R * shadowratiof),
-                        (int)(color.G * shadowratiof),
-                        (int)(color.B * shadowratiof));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof),
+                        (int)(Game.ColorG(color) * shadowratiof),
+                        (int)(Game.ColorB(color) * shadowratiof));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Front);
                 int tilecount = drawfront;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -831,13 +600,13 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(color.R * shadowratiof),
-                        (int)(color.G * shadowratiof),
-                        (int)(color.B * shadowratiof));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof),
+                        (int)(Game.ColorG(color) * shadowratiof),
+                        (int)(Game.ColorB(color) * shadowratiof));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Back);
                 int tilecount = drawback;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -862,14 +631,14 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
-                        (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
-                        (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Math.Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
                 }
 
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Left);
                 int tilecount = drawleft;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -895,14 +664,14 @@ namespace ManicDigger.Renderers
                 int shadowratio = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
                 if (shadowratio != maxlight)
                 {
-                    float shadowratiof = d_Data.LightLevels[shadowratio];
-                    curcolor = new FastColor(color.A,
-                        (int)(Math.Min(curcolor.R, color.R * shadowratiof)),
-                        (int)(Math.Min(curcolor.G, color.G * shadowratiof)),
-                        (int)(Math.Min(curcolor.B, color.B * shadowratiof)));
+                    float shadowratiof = lightlevels[shadowratio];
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Math.Min(Game.ColorR(curcolor), Game.ColorR(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorG(curcolor), Game.ColorG(color) * shadowratiof)),
+                        (int)(Math.Min(Game.ColorB(curcolor), Game.ColorB(color) * shadowratiof)));
                 }
 
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Right);
                 int tilecount = drawright;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -923,17 +692,27 @@ namespace ManicDigger.Renderers
             }
         }
 
-        void AddVertex(ModelData model, float x, float y, float z, float u, float v, FastColor color)
+        bool isvalid(int tt)
+        {
+            return game.game.blocktypes[tt].Name != null;
+        }
+
+        int TextureId(int tiletype, int side)
+        {
+            return game.game.TextureId[tiletype][side];
+        }
+
+        void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)
         {
             model.xyz[model.GetXyzCount() + 0] = x;
             model.xyz[model.GetXyzCount() + 1] = y;
             model.xyz[model.GetXyzCount() + 2] = z;
             model.uv[model.GetUvCount() + 0] = u;
             model.uv[model.GetUvCount() + 1] = v;
-            model.rgba[model.GetRgbaCount() + 0] = color.R;
-            model.rgba[model.GetRgbaCount() + 1] = color.G;
-            model.rgba[model.GetRgbaCount() + 2] = color.B;
-            model.rgba[model.GetRgbaCount() + 3] = color.A;
+            model.rgba[model.GetRgbaCount() + 0] = Game.ColorR(color);
+            model.rgba[model.GetRgbaCount() + 1] = Game.ColorG(color);
+            model.rgba[model.GetRgbaCount() + 2] = Game.ColorB(color);
+            model.rgba[model.GetRgbaCount() + 3] = Game.ColorA(color);
             model.verticesCount++;
         }
 
@@ -943,26 +722,26 @@ namespace ManicDigger.Renderers
             int yy = y % chunksize + 1;
             int zz = z % chunksize + 1;
             var tt = currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-            if (!isvalid[tt])
+            if (!isvalid(tt))
             {
                 return;
             }
-            byte drawtop = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Top];
-            byte drawbottom = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Bottom];
-            byte drawfront = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Front];
-            byte drawback = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Back];
-            byte drawleft = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Left];
-            byte drawright = currentChunkDrawCount[xx - 1, yy - 1, zz - 1, (int)TileSide.Right];
+            byte drawtop = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Top];
+            byte drawbottom = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Bottom];
+            byte drawfront = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Front];
+            byte drawback = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Back];
+            byte drawleft = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize,chunksize)][(int)TileSide.Left];
+            byte drawright = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][(int)TileSide.Right];
             int tiletype = tt;
             if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
             {
                 return;
             }
-            FastColor color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
-            FastColor colorShadowSide = new FastColor(color.A,
-                (int)(color.R * BlockShadow),
-                (int)(color.G * BlockShadow),
-                (int)(color.B * BlockShadow));
+            int color = ColorWhite; //mapstorage.GetTerrainBlockColor(x, y, z);
+            int colorShadowSide = Game.ColorFromArgb(Game.ColorA(color),
+                (int)(Game.ColorR(color) * BlockShadow),
+                (int)(Game.ColorG(color) * BlockShadow),
+                (int)(Game.ColorB(color) * BlockShadow));
             if (DONOTDRAWEDGES)
             {
                 //On finite map don't draw borders:
@@ -974,7 +753,7 @@ namespace ManicDigger.Renderers
                 if (y == mapsizey - 1) { drawright = 0; }
             }
             float flowerfix = 0;
-            if (d_Data.IsFlower[tiletype])
+            if (IsFlower(tiletype))
             {
                 drawtop = 0;
                 drawbottom = 0;
@@ -1040,14 +819,14 @@ namespace ManicDigger.Renderers
                 flowerfix = 0.5f;
 
                 //x-1, x+1
-                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
-                    || currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
+                if (currentChunk[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
+                    || currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
                 {
                     drawleft = 1;
                 }
                 //y-1, y+1
-                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty
-                    || currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != d_Data.BlockIdEmpty)
+                if (currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
+                    || currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
                 {
                     drawfront = 1;
                 }
@@ -1090,7 +869,7 @@ namespace ManicDigger.Renderers
                     default: drawright = 1; break;
                 }
             }
-            RailDirectionFlags rail = d_Data.Rail[tiletype];
+            RailDirectionFlags rail = Rail(tiletype);
             float blockheight = 1;//= data.GetTerrainBlockHeight(tiletype);
             if (rail != RailDirectionFlags.None)
             {
@@ -1111,8 +890,8 @@ namespace ManicDigger.Renderers
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Back; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Left; }
                 if (CanSupportTorch(currentChunk[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchType.Right; }
-                TorchSideTexture = d_Data.TextureId[tt, (int)TileSide.Front];
-                TorchTopTexture = d_Data.TextureId[tt, (int)TileSide.Top];
+                TorchSideTexture = TextureId(tt, (int)TileSide.Front);
+                TorchTopTexture = TextureId(tt, (int)TileSide.Top);
                 AddTorch(x, y, z, type, tt);
                 return;
             }
@@ -1123,11 +902,7 @@ namespace ManicDigger.Renderers
             float blockheight11 = blockheight;
             if (rail != RailDirectionFlags.None)
             {
-                if (railmaputil == null)
-                {
-                    railmaputil = new RailMapUtil() { d_Data = d_Data, d_MapStorage = d_MapStorage };
-                }
-                RailSlope slope = railmaputil.GetRailSlope(x, y, z);
+                RailSlope slope = GetRailSlope(xx, yy, zz);
                 if (slope == RailSlope.TwoRightRaised)
                 {
                     blockheight10 += 1;
@@ -1157,10 +932,10 @@ namespace ManicDigger.Renderers
                 blockheight10 = 0.9f;
                 blockheight11 = 0.9f;
             }
-            FastColor curcolor = color;
-            FastColor curcolor2 = color;
-            FastColor curcolor3 = color;
-            FastColor curcolor4 = color;
+            int curcolor = color;
+            int curcolor2 = color;
+            int curcolor3 = color;
+            int curcolor4 = color;
             texrecLeft = 0;
             texrecHeight = (float)terrainTexturesPerAtlasInverse * AtiArtifactFix;
             //top
@@ -1190,25 +965,25 @@ namespace ManicDigger.Renderers
                     int shadowratio8 = shadowratio;//rightdown
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy - 1, zz + 1, x, y - 1, z + 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y, z + 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y, z + 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy, zz + 1, x - 1, y, z + 1); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy, zz + 1, x + 1, y, z + 1); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy + 1, zz + 1, x, y + 1, z + 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y, z + 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y, z + 1); }
                     
                     
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -1226,33 +1001,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                    byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                         //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -1272,27 +1047,27 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3: 
-                        curcolor = new FastColor(color.A,
-                            (int)(color.R * shadowratiof2),
-                            (int)(color.G * shadowratiof2),
-                            (int)(color.B * shadowratiof2 * Yellowness));
+                        curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                            (int)(Game.ColorR(color) * shadowratiof2),
+                            (int)(Game.ColorG(color) * shadowratiof2),
+                            (int)(Game.ColorB(color) * shadowratiof2 * Yellowness));
 
-                        curcolor2 = new FastColor(color.A,
-                            (int)(color.R * shadowratiof3),
-                            (int)(color.G * shadowratiof3),
-                            (int)(color.B * shadowratiof3 * Yellowness));
+                        curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                            (int)(Game.ColorR(color) * shadowratiof3),
+                            (int)(Game.ColorG(color) * shadowratiof3),
+                            (int)(Game.ColorB(color) * shadowratiof3 * Yellowness));
 
-                        curcolor3 = new FastColor(color.A,
-                            (int)(color.R * shadowratiof4),
-                            (int)(color.G * shadowratiof4),
-                            (int)(color.B * shadowratiof4 * Yellowness));
+                        curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                            (int)(Game.ColorR(color) * shadowratiof4),
+                            (int)(Game.ColorG(color) * shadowratiof4),
+                            (int)(Game.ColorB(color) * shadowratiof4 * Yellowness));
 
-                        curcolor4 = new FastColor(color.A,
-                            (int)(color.R * shadowratiof5),
-                            (int)(color.G * shadowratiof5),
-                            (int)(color.B * shadowratiof5 * Yellowness));
+                        curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                            (int)(Game.ColorR(color) * shadowratiof5),
+                            (int)(Game.ColorG(color) * shadowratiof5),
+                            (int)(Game.ColorB(color) * shadowratiof5 * Yellowness));
                     }
-                    int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Top];
+                    int sidetexture = TextureId(tiletype, (int)TileSide.Top);
                     int tilecount = drawtop;
                     ModelData toreturn = GetToReturn(tt, sidetexture);
                     texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -1330,7 +1105,7 @@ namespace ManicDigger.Renderers
                         }
                     }
 
-                    else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                    else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                     {
                         toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//0
                         toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//1
@@ -1380,25 +1155,25 @@ namespace ManicDigger.Renderers
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
                 
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy + 1, zz - 1, x, y - 1, z - 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y, z - 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y, z - 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy, zz - 1, x - 1, y, z - 1); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy, zz - 1, x + 1, y, z - 1); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy - 1, zz - 1, x, y + 1, z - 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y, z - 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y, z - 1); }
 
 
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -1416,33 +1191,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                     byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                     //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -1462,27 +1237,27 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3:
-                    curcolor = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof2),
-                        (int)(colorShadowSide.G * shadowratiof2),
-                        (int)(colorShadowSide.B * shadowratiof2 * Yellowness));
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
 
-                    curcolor2 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof3),
-                        (int)(colorShadowSide.G * shadowratiof3),
-                        (int)(colorShadowSide.B * shadowratiof3 * Yellowness));
+                    curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
 
-                    curcolor3 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof4),
-                        (int)(colorShadowSide.G * shadowratiof4),
-                        (int)(colorShadowSide.B * shadowratiof4 * Yellowness));
+                    curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
 
-                    curcolor4 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof5),
-                        (int)(colorShadowSide.G * shadowratiof5),
-                        (int)(colorShadowSide.B * shadowratiof5 * Yellowness));
+                    curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Bottom];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Bottom);
                 int tilecount = drawbottom;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -1520,7 +1295,7 @@ namespace ManicDigger.Renderers
                     }
                 }
 
-                else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                 {
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//0
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//1
@@ -1567,25 +1342,25 @@ namespace ManicDigger.Renderers
                     int shadowratio8 = shadowratio;//rightdown
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx - 1, yy, zz + 1, x - 1, y, z + 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y+1, z + 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy - 1, zz, x - 1, y-1, z); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx - 1, yy + 1, zz, x - 1, y+1, z); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx - 1, yy, zz - 1, x-1, y, z - 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
 
 
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -1601,33 +1376,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                     byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                     //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -1647,27 +1422,27 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3:
-                    curcolor = new FastColor(color.A,
-                        (int)(color.R * shadowratiof2),
-                        (int)(color.G * shadowratiof2),
-                        (int)(color.B * shadowratiof2 * Yellowness));
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof2),
+                        (int)(Game.ColorG(color) * shadowratiof2),
+                        (int)(Game.ColorB(color) * shadowratiof2 * Yellowness));
 
-                    curcolor2 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof3),
-                        (int)(color.G * shadowratiof3),
-                        (int)(color.B * shadowratiof3 * Yellowness));
+                    curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof3),
+                        (int)(Game.ColorG(color) * shadowratiof3),
+                        (int)(Game.ColorB(color) * shadowratiof3 * Yellowness));
 
-                    curcolor3 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof4),
-                        (int)(color.G * shadowratiof4),
-                        (int)(color.B * shadowratiof4 * Yellowness));
+                    curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof4),
+                        (int)(Game.ColorG(color) * shadowratiof4),
+                        (int)(Game.ColorB(color) * shadowratiof4 * Yellowness));
 
-                    curcolor4 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof5),
-                        (int)(color.G * shadowratiof5),
-                        (int)(color.B * shadowratiof5 * Yellowness));
+                    curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof5),
+                        (int)(Game.ColorG(color) * shadowratiof5),
+                        (int)(Game.ColorB(color) * shadowratiof5 * Yellowness));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Front];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Front);
                 int tilecount = drawfront;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -1701,7 +1476,7 @@ namespace ManicDigger.Renderers
                     }
                 }
 
-                else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                 {
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//0
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//1
@@ -1748,25 +1523,25 @@ namespace ManicDigger.Renderers
                     int shadowratio8 = shadowratio;//rightdown
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx + 1, yy, zz + 1, x - 1, y, z + 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y + 1, z + 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx + 1, yy - 1, zz, x - 1, y - 1, z); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy + 1, zz, x - 1, y + 1, z); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx + 1, yy, zz - 1, x - 1, y, z - 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
 
 
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -1782,33 +1557,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                     byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                     //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -1828,27 +1603,27 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3:
-                    curcolor = new FastColor(color.A,
-                        (int)(color.R * shadowratiof2),
-                        (int)(color.G * shadowratiof2),
-                        (int)(color.B * shadowratiof2 * Yellowness));
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof2),
+                        (int)(Game.ColorG(color) * shadowratiof2),
+                        (int)(Game.ColorB(color) * shadowratiof2 * Yellowness));
 
-                    curcolor2 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof3),
-                        (int)(color.G * shadowratiof3),
-                        (int)(color.B * shadowratiof3 * Yellowness));
+                    curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof3),
+                        (int)(Game.ColorG(color) * shadowratiof3),
+                        (int)(Game.ColorB(color) * shadowratiof3 * Yellowness));
 
-                    curcolor3 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof4),
-                        (int)(color.G * shadowratiof4),
-                        (int)(color.B * shadowratiof4 * Yellowness));
+                    curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof4),
+                        (int)(Game.ColorG(color) * shadowratiof4),
+                        (int)(Game.ColorB(color) * shadowratiof4 * Yellowness));
 
-                    curcolor4 = new FastColor(color.A,
-                        (int)(color.R * shadowratiof5),
-                        (int)(color.G * shadowratiof5),
-                        (int)(color.B * shadowratiof5 * Yellowness));
+                    curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(color) * shadowratiof5),
+                        (int)(Game.ColorG(color) * shadowratiof5),
+                        (int)(Game.ColorB(color) * shadowratiof5 * Yellowness));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Back];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Back);
                 int tilecount = drawback;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -1882,7 +1657,7 @@ namespace ManicDigger.Renderers
                     }
                 }
 
-                else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                 {
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//0
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//1
@@ -1927,25 +1702,25 @@ namespace ManicDigger.Renderers
                     int shadowratio8 = shadowratio;//rightdown
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy - 1, zz + 1, x - 1, y, z + 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx + 1, yy - 1, zz + 1, x - 1, y - 1, z + 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx - 1, yy - 1, zz + 1, x - 1, y + 1, z + 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx + 1, yy - 1, zz, x - 1, y - 1, z); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx - 1, yy - 1, zz, x - 1, y + 1, z); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy - 1, zz - 1, x - 1, y, z - 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx - 1, yy - 1, zz - 1, x - 1, y + 1, z - 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx + 1, yy - 1, zz - 1, x - 1, y - 1, z - 1); }
 
 
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -1961,33 +1736,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                     byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                     //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -2007,28 +1782,28 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3:
-                    curcolor = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof2),
-                        (int)(colorShadowSide.G * shadowratiof2),
-                        (int)(colorShadowSide.B * shadowratiof2 * Yellowness));
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
 
-                    curcolor2 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof3),
-                        (int)(colorShadowSide.G * shadowratiof3),
-                        (int)(colorShadowSide.B * shadowratiof3 * Yellowness));
+                    curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
 
-                    curcolor3 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof4),
-                        (int)(colorShadowSide.G * shadowratiof4),
-                        (int)(colorShadowSide.B * shadowratiof4 * Yellowness));
+                    curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
 
-                    curcolor4 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof5),
-                        (int)(colorShadowSide.G * shadowratiof5),
-                        (int)(colorShadowSide.B * shadowratiof5 * Yellowness));
+                    curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
                 }
 
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Left];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Left);
                 int tilecount = drawleft;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -2062,7 +1837,7 @@ namespace ManicDigger.Renderers
                     }
                 }
 
-                else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                 {
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//0
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//1
@@ -2108,25 +1883,25 @@ namespace ManicDigger.Renderers
                     int shadowratio8 = shadowratio;//rightdown
                     //check occupied blocks
                     //todo: if top !=0 { if transparentforlight { etc
-                    if (top != 0) { if (!d_Data.IsTransparentForLight[top]) { topoccupied = true; } else { topoccupied = false; } }
+                    if (top != 0) { if (!IsTransparentForLight(top)) { topoccupied = true; } else { topoccupied = false; } }
                     else { topoccupied = false; shadowratio5 = GetShadowRatio(xx, yy + 1, zz + 1, x - 1, y, z + 1); }
-                    if (topleft != 0) { if (!d_Data.IsTransparentForLight[topleft]) { topleftoccupied = true; } else { topleftoccupied = false; } }
+                    if (topleft != 0) { if (!IsTransparentForLight(topleft)) { topleftoccupied = true; } else { topleftoccupied = false; } }
                     else { topleftoccupied = false; shadowratio7 = GetShadowRatio(xx - 1, yy + 1, zz + 1, x - 1, y - 1, z + 1); }
-                    if (topright != 0) { if (!d_Data.IsTransparentForLight[topright]) { toprightoccupied = true; } else { toprightoccupied = false; } }
+                    if (topright != 0) { if (!IsTransparentForLight(topright)) { toprightoccupied = true; } else { toprightoccupied = false; } }
                     else { toprightoccupied = false; shadowratio6 = GetShadowRatio(xx + 1, yy + 1, zz + 1, x - 1, y + 1, z + 1); }
-                    if (left != 0) { if (!d_Data.IsTransparentForLight[left]) { leftoccupied = true; } else { leftoccupied = false; } }
+                    if (left != 0) { if (!IsTransparentForLight(left)) { leftoccupied = true; } else { leftoccupied = false; } }
                     else { leftoccupied = false; shadowratio2 = GetShadowRatio(xx - 1, yy + 1, zz, x - 1, y - 1, z); }
-                    if (right != 0) { if (!d_Data.IsTransparentForLight[right]) { rightoccupied = true; } else { rightoccupied = false; } }
+                    if (right != 0) { if (!IsTransparentForLight(right)) { rightoccupied = true; } else { rightoccupied = false; } }
                     else { rightoccupied = false; shadowratio4 = GetShadowRatio(xx + 1, yy + 1, zz, x - 1, y + 1, z); }
-                    if (bottom != 0) { if (!d_Data.IsTransparentForLight[bottom]) { bottomoccupied = true; } else { bottomoccupied = false; } }
+                    if (bottom != 0) { if (!IsTransparentForLight(bottom)) { bottomoccupied = true; } else { bottomoccupied = false; } }
                     else { bottomoccupied = false; shadowratio3 = GetShadowRatio(xx, yy + 1, zz - 1, x - 1, y, z - 1); }
-                    if (bottomright != 0) { if (!d_Data.IsTransparentForLight[bottomright]) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
+                    if (bottomright != 0) { if (!IsTransparentForLight(bottomright)) { bottomrightoccupied = true; } else { bottomrightoccupied = false; } }
                     else { bottomrightoccupied = false; shadowratio8 = GetShadowRatio(xx + 1, yy + 1, zz - 1, x - 1, y + 1, z - 1); }
-                    if (bottomleft != 0) { if (!d_Data.IsTransparentForLight[bottomleft]) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
+                    if (bottomleft != 0) { if (!IsTransparentForLight(bottomleft)) { bottomleftoccupied = true; } else { bottomleftoccupied = false; } }
                     else { bottomleftoccupied = false; shadowratio9 = GetShadowRatio(xx - 1, yy + 1, zz - 1, x - 1, y - 1, z - 1); }
 
 
-                    float shadowratiomain = d_Data.LightLevels[shadowratio];
+                    float shadowratiomain = lightlevels[shadowratio];
                     float shadowratiof5 = shadowratiomain;
                     float shadowratiof4 = shadowratiomain;
                     float shadowratiof3 = shadowratiomain;
@@ -2142,33 +1917,33 @@ namespace ManicDigger.Renderers
                     //topleft vertex
                     if (leftoccupied && topoccupied) { goto toprightvertex; }
                     byte facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio5]; }
-                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio7]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += d_Data.LightLevels[shadowratio2]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio5]; }
+                    if (topleftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio7]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof4 += lightlevels[shadowratio2]; }
                     shadowratiof4 /= facesconsidered;
                 toprightvertex:
                     //topright vertex
                     if (topoccupied && rightoccupied) { goto bottomrightvertex; }
                     facesconsidered = 4;
-                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio5]; }
-                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio6]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += d_Data.LightLevels[shadowratio4]; }
+                    if (topoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio5]; }
+                    if (toprightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio6]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof5 += lightlevels[shadowratio4]; }
                     shadowratiof5 /= facesconsidered;
                 bottomrightvertex:
                     //bottomright vertex
                     if (bottomoccupied && rightoccupied) { goto bottomleftvertex; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio8]; }
-                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += d_Data.LightLevels[shadowratio4]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio3]; }
+                    if (bottomrightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio8]; }
+                    if (rightoccupied) { facesconsidered -= 1; } else { shadowratiof3 += lightlevels[shadowratio4]; }
                     shadowratiof3 /= facesconsidered;
                 bottomleftvertex:
                     //bottomleft
                     if (bottomoccupied && leftoccupied) { goto done; }
                     facesconsidered = 4;
-                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio3]; }
-                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio9]; }
-                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += d_Data.LightLevels[shadowratio2]; }
+                    if (bottomoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio3]; }
+                    if (bottomleftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio9]; }
+                    if (leftoccupied) { facesconsidered -= 1; } else { shadowratiof2 += lightlevels[shadowratio2]; }
                     shadowratiof2 /= facesconsidered;
                 done:
                     //ambient occlusion, corners with 2 blocks get full occlusion, others half
@@ -2188,27 +1963,27 @@ namespace ManicDigger.Renderers
                     if (bottomoccupied || leftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                     else if (bottomleftoccupied) { occluded = true; occdirnorthwest = false; shadowratiof2 *= occ; }
                 next3:
-                    curcolor = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof2),
-                        (int)(colorShadowSide.G * shadowratiof2),
-                        (int)(colorShadowSide.B * shadowratiof2 * Yellowness));
+                    curcolor = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof2),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof2 * Yellowness));
 
-                    curcolor2 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof3),
-                        (int)(colorShadowSide.G * shadowratiof3),
-                        (int)(colorShadowSide.B * shadowratiof3 * Yellowness));
+                    curcolor2 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof3),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof3 * Yellowness));
 
-                    curcolor3 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof4),
-                        (int)(colorShadowSide.G * shadowratiof4),
-                        (int)(colorShadowSide.B * shadowratiof4 * Yellowness));
+                    curcolor3 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof4),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof4 * Yellowness));
 
-                    curcolor4 = new FastColor(color.A,
-                        (int)(colorShadowSide.R * shadowratiof5),
-                        (int)(colorShadowSide.G * shadowratiof5),
-                        (int)(colorShadowSide.B * shadowratiof5 * Yellowness));
+                    curcolor4 = Game.ColorFromArgb(Game.ColorA(color),
+                        (int)(Game.ColorR(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorG(colorShadowSide) * shadowratiof5),
+                        (int)(Game.ColorB(colorShadowSide) * shadowratiof5 * Yellowness));
                 }
-                int sidetexture = d_Data.TextureId[tiletype, (int)TileSide.Right];
+                int sidetexture = TextureId(tiletype, (int)TileSide.Right);
                 int tilecount = drawright;
                 ModelData toreturn = GetToReturn(tt, sidetexture);
                 texrecTop = (terrainTexturesPerAtlasInverse * (int)(sidetexture % terrainTexturesPerAtlas));
@@ -2242,7 +2017,7 @@ namespace ManicDigger.Renderers
                     }
                 }
 
-                else if (curcolor.R != curcolor4.R || curcolor3.R == curcolor2.R)
+                else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
                 {
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 1));//0
                     toreturn.indices[toreturn.indicesCount++] = ((ushort)(lastelement + 0));//1
@@ -2262,6 +2037,68 @@ namespace ManicDigger.Renderers
                 }
               }
         }
+
+        private RailSlope GetRailSlope(int xx, int yy, int zz)
+        {
+            int tiletype = currentChunk18[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+            RailDirectionFlags rail = Rail(tiletype);
+            int blocknear;
+            //if (x < d_MapStorage.MapSizeX - 1)
+            {
+                blocknear = currentChunk18[MapUtil.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)];
+                if (rail == RailDirectionFlags.Horizontal &&
+                     blocknear != 0 && Rail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoRightRaised;
+                }
+            }
+            //if (x > 0)
+            {
+                blocknear = currentChunk18[MapUtil.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)];
+                if (rail == RailDirectionFlags.Horizontal &&
+                     blocknear != 0 && Rail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoLeftRaised;
+
+                }
+            }
+            //if (y > 0)
+            {
+                blocknear = currentChunk18[MapUtil.Index3d(xx, yy -1, zz, chunksize + 2, chunksize + 2)];
+                if (rail == RailDirectionFlags.Vertical &&
+                      blocknear != 0 && Rail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoUpRaised;
+                }
+            }
+            //if (y < d_MapStorage.MapSizeY - 1)
+            {
+                blocknear = currentChunk18[MapUtil.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)];
+                if (rail == RailDirectionFlags.Vertical &&
+                      blocknear != 0 && Rail(blocknear) == RailDirectionFlags.None)
+                {
+                    return RailSlope.TwoDownRaised;
+                }
+            }
+            return RailSlope.Flat;
+        }
+
+        RailDirectionFlags Rail(int tiletype)
+        {
+            return (RailDirectionFlags)game.game.blocktypes[tiletype].Rail;
+        }
+
+        bool IsTransparentForLight(int block)
+        {
+            Packet_BlockType b = game.game.blocktypes[block];
+            return b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
+        }
+
+        bool IsFlower(int tiletype)
+        {
+            return game.game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.Plant;
+        }
+
         int waterLevelsCount = 8;
         int PartialWaterBlock = 118;
         private float Max(int a, int b, int c, int d)
@@ -2288,69 +2125,18 @@ namespace ManicDigger.Renderers
             return -1;
         }
         */
-        public bool ENABLE_TEXTURE_TILING = true; // tiling reduces number of triangles but causes white dots bug on some graphics cards.
+        public bool ENABLE_TEXTURE_TILING { get { return tesselator.ENABLE_TEXTURE_TILING; } set { tesselator.ENABLE_TEXTURE_TILING = value; } }
         //Texture tiling in one direction.
         private int GetTilingCount(int[] currentChunk, int xx, int yy, int zz, int tt, int x, int y, int z, int shadowratio, TileSide dir, TileSideFlags dirflags)
         {
-            if (!ENABLE_TEXTURE_TILING)
-            {
-                return 1;
-            }
-            //fixes tree Z-fighting
-            if (istransparent[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
-                && !d_Data.IsTransparentFully[currentChunk[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]) { return 1; }
-            if (dir == TileSide.Top || dir == TileSide.Bottom)
-            {
-                int shadowz = dir == TileSide.Top ? 1 : -1;
-                int newxx = xx + 1;
-                for (; ; )
-                {
-                    if (newxx >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                    int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
-                    if (shadowratio != shadowratio2) { break; }
-                    if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                    currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] = 0;
-                    currentChunkDraw[newxx - 1, yy - 1, zz - 1] &= (byte)~dirflags;
-                    newxx++;
-                }
-                return newxx - xx;
-            }
-            else if (dir == TileSide.Front || dir == TileSide.Back)
-            {
-                int shadowx = dir == TileSide.Front ? -1 : 1;
-                int newyy = yy + 1;
-                for (; ; )
-                {
-                    if (newyy >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                    int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
-                    if (shadowratio != shadowratio2) { break; }
-                    if ((currentChunkDraw[xx - 1, newyy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                    currentChunkDrawCount[xx - 1, newyy - 1, zz - 1, (int)dir] = 0;
-                    currentChunkDraw[xx - 1, newyy - 1, zz - 1] &= (byte)~dirflags;
-                    newyy++;
-                }
-                return newyy - yy;
-            }
-            else
-            {
-                int shadowy = dir == TileSide.Left ? -1 : 1;
-                int newxx = xx + 1;
-                for (; ; )
-                {
-                    if (newxx >= chunksize + 1) { break; }
-                    if (currentChunk[MapUtil.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
-                    int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
-                    if (shadowratio != shadowratio2) { break; }
-                    if ((currentChunkDraw[newxx - 1, yy - 1, zz - 1] & (int)dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                    currentChunkDrawCount[newxx - 1, yy - 1, zz - 1, (int)dir] = 0;
-                    currentChunkDraw[newxx - 1, yy - 1, zz - 1] &= (byte)~dirflags;
-                    newxx++;
-                }
-                return newxx - xx;
-            }
+            return tesselator.GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratio, (int)dir, (int)dirflags);
         }
+
+        bool IsTransparentFully(int p)
+        {
+            return tesselator.IsTransparentFully(p);
+        }
+
         private ModelData GetToReturn(int tiletype, int textureid)
         {
             if (!(istransparent[tiletype] || IsWater(tiletype)))
@@ -2362,24 +2148,9 @@ namespace ManicDigger.Renderers
                 return toreturnatlas1dtransparent[textureid / d_TerrainTextures.terrainTexturesPerAtlas];
             }
         }
-        //Calculate shadows lazily, many blocks don't need them.
         int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
         {
-            return currentChunkShadows[MapUtil.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
-            /*
-            if (currentChunkShadows[xx, yy, zz] == 0)
-            {
-                if (IsValidPos(globalx, globaly, globalz))
-                {
-                    currentChunkShadows[xx, yy, zz] = (byte)(d_MapStorageLight.GetLight(globalx, globaly, globalz) + 1);
-                }
-                else
-                {
-                    currentChunkShadows[xx, yy, zz] = (byte)(maxlight + 1);
-                }
-            }
-            return currentChunkShadows[xx, yy, zz] - 1;
-            */
+            return tesselator.GetShadowRatio(xx, yy, zz, globalx, globaly, globalz);
         }
         private bool CanSupportTorch(int blocktype)
         {
@@ -2454,7 +2225,7 @@ namespace ManicDigger.Renderers
         {
             var d_TerainRenderer = this;
 
-            FastColor curcolor = new FastColor(Color.White);
+            int curcolor = ColorWhite;
             float torchsizexy = 0.16f;
             float topx = 1f / 2f - torchsizexy / 2f;
             float topy = 1f / 2f - torchsizexy / 2f;

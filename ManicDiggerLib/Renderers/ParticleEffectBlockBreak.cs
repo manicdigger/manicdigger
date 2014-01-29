@@ -88,7 +88,7 @@ namespace ManicDigger.Renderers
             {
                 return;
             }
-            p.textureid = d_Data.TextureId[tiletype, (int)TileSide.Top];
+            p.textureid = d_Shadows.game.TextureId[tiletype][(int)TileSide.Top];
             p.light = (float)d_Shadows.MaybeGetLight((int)v.X, (int)v.Z, (int)v.Y) / d_Shadows.maxlight;
             for (int i = 0; i < particlecount; i++)
             {

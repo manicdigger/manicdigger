@@ -5,7 +5,17 @@
         chunksize = 16;
         p = GamePlatform.Create();
         player = new CharacterPhysicsState();
+
+
+        TextureId = new int[MaxBlockTypes][];
+        for (int i = 0; i < MaxBlockTypes; i++)
+        {
+            TextureId[i] = new int[6];
+        }
+        TextureIdForInventory = new int[MaxBlockTypes];
     }
+
+    const int MaxBlockTypes = 1024;
 
     internal GamePlatform p;
     internal Packet_BlockType[] blocktypes;
@@ -179,6 +189,42 @@
         return (byte)a;
 #endif
     }
+
+    public static int ColorFromArgb(int a, int r, int g, int b)
+    {
+        int iCol = (a << 24) | (r << 16) | (g << 8) | b;
+        return iCol;
+    }
+
+    public static byte ColorA(int color)
+    {
+        byte a = IntToByte(color >> 24);
+        return a;
+    }
+
+    public static byte ColorR(int color)
+    {
+        byte r = IntToByte(color >> 16);
+        return r;
+    }
+
+    public static byte ColorG(int color)
+    {
+        byte g = IntToByte(color >> 8);
+        return g;
+    }
+
+    public static byte ColorB(int color)
+    {
+        byte b = IntToByte(color);
+        return b;
+    }
+
+    //Indexed by block id and TileSide.
+    internal int[][] TextureId;
+    internal int[] TextureIdForInventory;
+
+    internal int terrainTexturesPerAtlas;
 }
 
 public class Chunk

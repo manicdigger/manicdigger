@@ -21,9 +21,6 @@ namespace ManicDigger
         bool[] IsTransparent { get; }
         bool[] IsValid { get; }
         bool[] IsTransparentFully { get; }
-        //Indexed by block id and TileSide.
-        int[,] TextureId { get; }
-        int[] TextureIdForInventory { get; }
         int[] WhenPlayerPlacesGetsConvertedTo { get; }//PlayerBuildableMaterialType
         bool[] IsFlower { get; }
         RailDirectionFlags[] Rail { get; }
@@ -61,11 +58,6 @@ namespace ManicDigger
 
 
     }
-    public class GlobalVar
-    {
-        public const int MAX_BLOCKTYPES = 1024;
-        public const int MAX_BLOCKTYPES_SQRT = 32;
-    }
     public class SpecialBlockId
     {
         public const int Empty = 0;
@@ -98,7 +90,6 @@ namespace ManicDigger
             mIsValid = new bool[count];
             mIsTransparentForLight = new bool[count];
             mIsTransparentFully = new bool[count];
-            mTextureId = new int[count, 6];
             mTextureIdForInventory = new int[count];
             mIsBuildable = new bool[count];
             mWhenPlayerPlacesGetsConvertedTo = new int[count];
@@ -147,8 +138,6 @@ namespace ManicDigger
         public bool[] IsValid { get { return mIsValid; } }
         public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
         public bool[] IsTransparentFully { get { return mIsTransparentFully; } }
-        public int[,] TextureId { get { return mTextureId; } }
-        public int[] TextureIdForInventory { get { return mTextureIdForInventory; } }
         public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
         public bool[] IsFlower { get { return mIsFlower; } }
         public RailDirectionFlags[] Rail { get { return mRail; } }
@@ -173,7 +162,6 @@ namespace ManicDigger
         private bool[] mIsValid;
         private bool[] mIsTransparentForLight;
         private bool[] mIsTransparentFully;
-        private int[,] mTextureId;
         private int[] mTextureIdForInventory;
         private bool[] mIsBuildable;
         private int[] mWhenPlayerPlacesGetsConvertedTo;
@@ -322,17 +310,7 @@ namespace ManicDigger
 
             IsTransparentFully[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Plant)
                  && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
-            //Indexed by block id and TileSide.
-            if (textureIds != null)
-            {
-                TextureId[id, 0] = textureIds[b.TextureIdTop];
-                TextureId[id, 1] = textureIds[b.TextureIdBottom];
-                TextureId[id, 2] = textureIds[b.TextureIdFront];
-                TextureId[id, 3] = textureIds[b.TextureIdBack];
-                TextureId[id, 4] = textureIds[b.TextureIdLeft];
-                TextureId[id, 5] = textureIds[b.TextureIdRight];
-                TextureIdForInventory[id] = textureIds[b.TextureIdForInventory];
-            }
+
             WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
             IsFlower[id] = b.DrawType == Packet_DrawTypeEnum.Plant;
             Rail[id] = (RailDirectionFlags)b.Rail;

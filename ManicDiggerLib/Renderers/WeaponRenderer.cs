@@ -33,12 +33,12 @@ namespace ManicDigger.Renderers
             if (item == null || IsCompass())
             {
                 //empty hand
-                if (side == TileSide.Top) { return d_Data.TextureId[d_Data.BlockIdEmptyHand, (int)TileSide.Top]; }
-                return d_Data.TextureId[d_Data.BlockIdEmptyHand, (int)TileSide.Front];
+                if (side == TileSide.Top) { return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Top]; }
+                return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Front];
             }
             if (item.ItemClass == ItemClass.Block)
             {
-                return d_Data.TextureId[item.BlockId, (int)side];
+                return d_Shadows.game.TextureId[item.BlockId][(int)side];
             }
             else
             {
