@@ -5740,8 +5740,7 @@ namespace ManicDigger
 
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
-            int[] chunk = GetChunk(x, y, z);
-            chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (ushort)tileType;
+            game.SetBlockRaw(x, y, z, tileType);
             SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
             //d_Shadows.OnSetBlock(x, y, z);
             ShadowsOnSetBlock(x, y, z);
@@ -5802,29 +5801,9 @@ namespace ManicDigger
 
 
         #endregion
-        public int[] GetChunk(int x, int y, int z)
+        public Chunk GetChunk(int x, int y, int z)
         {
-            x = x / chunksize;
-            y = y / chunksize;
-            z = z / chunksize;
-            int mapsizexchunks = MapSizeX / chunksize;
-            int mapsizeychunks = MapSizeY / chunksize;
-            Chunk chunk = game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
-            if (chunk == null)
-            {
-                //byte[, ,] newchunk = new byte[chunksize, chunksize, chunksize];
-                //byte[, ,] newchunk = generator.GetChunk(x, y, z, chunksize);
-                //if (newchunk != null)
-                //{
-                //    chunks[x, y, z] = new Chunk() { data = MapUtil.ToFlatMap(newchunk) };
-                //}
-                //else
-                {
-                    game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = new Chunk() { data = new int[chunksize * chunksize * chunksize] };
-                }
-                return game.chunks[MapUtil.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)].data;
-            }
-            return chunk.data;
+            return game.GetChunk(x, y, z);
         }
         public int chunksize { get { return game.chunksize; } set { game.chunksize = value; } }
         public void Reset(int sizex, int sizey, int sizez)
@@ -5844,7 +5823,7 @@ namespace ManicDigger
             if (chunksizex % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizey % chunksize != 0) { throw new ArgumentException(); }
             if (chunksizez % chunksize != 0) { throw new ArgumentException(); }
-            int[, ,][] localchunks = new int[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize][];
+            Chunk[, ,] localchunks = new Chunk[chunksizex / chunksize, chunksizey / chunksize, chunksizez / chunksize];
             for (int cx = 0; cx < chunksizex / chunksize; cx++)
             {
                 for (int cy = 0; cy < chunksizey / chunksize; cy++)
@@ -5885,8 +5864,8 @@ namespace ManicDigger
                 && yy < MapSizeY / chunksize
                 && zz < MapSizeZ / chunksize;
         }
-        private unsafe void FillChunk(int[] destination, int destinationchunksize,
-            int sourcex, int sourcey, int sourcez, int[, ,] source)
+        private unsafe void FillChunk(Chunk destination, int destinationchunksize,
+            int sourcex, int sourcey, int sourcez, int[,,] source)
         {
             for (int x = 0; x < destinationchunksize; x++)
             {
@@ -5898,8 +5877,8 @@ namespace ManicDigger
                         //    && y + sourcey < source.GetUpperBound(1) + 1
                         //    && z + sourcez < source.GetUpperBound(2) + 1)
                         {
-                            destination[MapUtil.Index3d(x, y, z, destinationchunksize, destinationchunksize)]
-                                = source[x + sourcex, y + sourcey, z + sourcez];
+                            game.SetBlockInChunk(destination, MapUtil.Index3d(x, y, z, destinationchunksize, destinationchunksize)
+                                , source[x + sourcex, y + sourcey, z + sourcez]);
                         }
                     }
                 }
@@ -5955,7 +5934,7 @@ namespace ManicDigger
                             continue;
                         }
                         Chunk chunk = game.chunks[cpos];
-                        if (chunk == null || chunk.data == null)
+                        if (chunk == null || !game.ChunkHasData(chunk))
                         {
                             continue;
                         }
@@ -5971,7 +5950,7 @@ namespace ManicDigger
                         //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
                         int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
 
-                        int block = chunk.data[pos];
+                        int block = game.GetBlockInChunk(chunk, pos);
                         //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
                         outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (ushort)block;
                     }

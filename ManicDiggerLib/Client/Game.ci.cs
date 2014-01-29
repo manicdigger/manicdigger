@@ -29,7 +29,7 @@
             || (block.WalkableType != Packet_WalkableTypeEnum.Solid && block.WalkableType != Packet_WalkableTypeEnum.Fluid);
     }
 
-    internal int GetBlock(int x, int y, int z)
+    public int GetBlock(int x, int y, int z)
     {
         if (!IsValidPos(x, y, z))
         {
@@ -46,11 +46,80 @@
         }
         else
         {
-            return chunks[chunkpos].data[MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
+            return GetBlockInChunk(chunks[chunkpos], MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize));
         }
     }
 
-    internal bool IsValidPos(int x, int y, int z)
+    public int GetBlockInChunk(Chunk chunk, int pos)
+    {
+        if (chunk.dataInt != null)
+        {
+            return chunk.dataInt[pos];
+        }
+        else
+        {
+            return chunk.data[pos];
+        }
+    }
+
+    public void SetBlockRaw(int x, int y, int z, int tileType)
+    {
+        Chunk chunk = GetChunk(x, y, z);
+        int pos = MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize);
+        SetBlockInChunk(chunk, pos, tileType);
+    }
+
+    public void SetBlockInChunk(Chunk chunk, int pos, int block)
+    {
+        if (chunk.dataInt == null)
+        {
+            if (block < 255)
+            {
+                chunk.data[pos] = IntToByte(block);
+            }
+            else
+            {
+                int n = chunksize * chunksize * chunksize;
+                chunk.dataInt = new int[n];
+                for (int i = 0; i < n; i++)
+                {
+                    chunk.dataInt[i] = chunk.data[i];
+                }
+                chunk.data = null;
+
+                chunk.dataInt[pos] = block;
+            }
+        }
+        else
+        {
+            chunk.dataInt[pos] = block;
+        }
+    }
+
+    internal bool ChunkHasData(Chunk chunk)
+    {
+        return chunk.data != null || chunk.dataInt != null;
+    }
+
+    public Chunk GetChunk(int x, int y, int z)
+    {
+        x = x / chunksize;
+        y = y / chunksize;
+        z = z / chunksize;
+        int mapsizexchunks = MapSizeX / chunksize;
+        int mapsizeychunks = MapSizeY / chunksize;
+        Chunk chunk = chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+        if (chunk == null)
+        {
+            Chunk c = new Chunk();
+            c.data = new byte[chunksize * chunksize * chunksize];
+            chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = c;
+            return chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+        }
+        return chunk;
+    }
+
+    public bool IsValidPos(int x, int y, int z)
     {
         if (x < 0 || y < 0 || z < 0)
         {
@@ -63,7 +132,7 @@
         return true;
     }
 
-    internal int blockheight(int x, int y)
+    public int blockheight(int x, int y)
     {
         for (int z = MapSizeZ - 1; z >= 0; z--)
         {
@@ -75,18 +144,47 @@
         return MapSizeZ / 2;
     }
 
-    internal bool IsValidChunkPos(int cx, int cy, int cz, int chunksize_)
+    public bool IsValidChunkPos(int cx, int cy, int cz, int chunksize_)
     {
         return cx >= 0 && cy >= 0 && cz >= 0
             && cx < MapSizeX / chunksize_
             && cy < MapSizeY / chunksize_
             && cz < MapSizeZ / chunksize_;
     }
+
+    public void CopyChunk(Chunk chunk, int[] output)
+    {
+        int n = chunksize * chunksize * chunksize;
+        if (chunk.dataInt != null)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                output[i] = chunk.dataInt[i];
+            }
+        }
+        else
+        {
+            for (int i = 0; i < n; i++)
+            {
+                output[i] = chunk.data[i];
+            }
+        }
+    }
+
+    public static byte IntToByte(int a)
+    {
+#if CITO
+        return a.LowByte;
+#else
+        return (byte)a;
+#endif
+    }
 }
 
 public class Chunk
 {
-    internal int[] data;
+    internal byte[] data;
+    internal int[] dataInt;
     internal int LastUpdate;
     internal bool IsPopulated;
     internal int LastChange;

@@ -248,11 +248,20 @@ namespace ManicDigger
             if (chunks3x3x3 == null)
             {
                 chunks3x3x3 = new int[3 * 3 * 3][]; //(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3 * 3);
+                for (int i = 0; i < 3 * 3 * 3; i++)
+                {
+                    chunks3x3x3[i] = new int[chunksize * chunksize * chunksize];
+                }
                 heightchunks3x3 = new int[3 * 3][];//(byte**)Marshal.AllocHGlobal(sizeof(byte*) * 3 * 3);
             }
             for (int i = 0; i < 3 * 3 * 3; i++)
             {
-                chunks3x3x3[i] = null;
+                int n = chunksize * chunksize * chunksize;
+                int[] c = chunks3x3x3[i];
+                for (int k = 0; k < n; k++)
+                {
+                    c[k] = 0;
+                }
             }
             for (int i = 0; i < 3 * 3; i++)
             {
@@ -273,7 +282,7 @@ namespace ManicDigger
                         Chunk chunk = game.chunks[MapUtil.Index3d(cx + x - 1, cy + y - 1, cz + z - 1, MapSizeX / chunksize, MapSizeY / chunksize)];
                         if (chunk != null)
                         {
-                            chunks3x3x3[MapUtil.Index3d(x, y, z, 3, 3)] = chunk.data;
+                            game.CopyChunk(chunk, chunks3x3x3[MapUtil.Index3d(x, y, z, 3, 3)]);
                         }
                         else
                         {
