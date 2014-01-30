@@ -276,9 +276,9 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
-            m.SetBlockType(32, "MagnetaCloth", new BlockType()
+            m.SetBlockType(32, "MagentaCloth", new BlockType()
             {
-                AllTextures = "MagnetaCloth",
+                AllTextures = "MagentaCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
@@ -911,7 +911,7 @@ namespace ManicDigger.Mods
             m.AddToCreativeInventory("PurpleCloth");
             m.AddToCreativeInventory("IndigoCloth");
             m.AddToCreativeInventory("VioletCloth");
-            m.AddToCreativeInventory("MagnetaCloth");
+            m.AddToCreativeInventory("MagentaCloth");
             m.AddToCreativeInventory("PinkCloth");
             m.AddToCreativeInventory("BlackCloth");
             m.AddToCreativeInventory("GrayCloth");
@@ -1007,8 +1007,8 @@ namespace ManicDigger.Mods
             m.AddCraftingRecipe("PurpleCloth", 1, "BlueCloth", 1);
             m.AddCraftingRecipe("IndigoCloth", 1, "PurpleCloth", 1);
             m.AddCraftingRecipe("VioletCloth", 1, "IndigoCloth", 1);
-            m.AddCraftingRecipe("MagnetaCloth", 1, "VioletCloth", 1);
-            m.AddCraftingRecipe("PinkCloth", 1, "MagnetaCloth", 1);
+            m.AddCraftingRecipe("MagentaCloth", 1, "VioletCloth", 1);
+            m.AddCraftingRecipe("PinkCloth", 1, "MagentaCloth", 1);
             m.AddCraftingRecipe("BlackCloth", 1, "PinkCloth", 1);
             m.AddCraftingRecipe("GrayCloth", 1, "BlackCloth", 1);
             m.AddCraftingRecipe("WhiteCloth", 1, "GrayCloth", 1);

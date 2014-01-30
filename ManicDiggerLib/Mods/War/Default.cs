@@ -278,9 +278,9 @@ namespace ManicDigger.Mods
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
             });
-            m.SetBlockType(32, "MagnetaCloth", new BlockType()
+            m.SetBlockType(32, "MagentaCloth", new BlockType()
             {
-                AllTextures = "MagnetaCloth",
+                AllTextures = "MagentaCloth",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
@@ -973,176 +973,6 @@ namespace ManicDigger.Mods
             m.SetGameDayRealHours(1);
             m.SetGameYearRealHours(24);
 
-            /*
-            //Creative inventory
-            m.AddToCreativeInventory("Stone");
-            m.AddToCreativeInventory("Dirt");
-            m.AddToCreativeInventory("Cobblestone");
-            m.AddToCreativeInventory("Wood");
-            m.AddToCreativeInventory("Sapling");
-            //m.AddToCreativeInventory("Adminium");
-            //m.AddToCreativeInventory("Water");
-            m.AddToCreativeInventory("Lava");
-            m.AddToCreativeInventory("Sand");
-            m.AddToCreativeInventory("Gravel");
-            m.AddToCreativeInventory("GoldOre");
-            m.AddToCreativeInventory("IronOre");
-            m.AddToCreativeInventory("CoalOre");
-            m.AddToCreativeInventory("TreeTrunk");
-            m.AddToCreativeInventory("Leaves");
-            m.AddToCreativeInventory("Sponge");
-            m.AddToCreativeInventory("Glass");
-            m.AddToCreativeInventory("RedCloth");
-            m.AddToCreativeInventory("OrangeCloth");
-            m.AddToCreativeInventory("YellowCloth");
-            m.AddToCreativeInventory("LightGreenCloth");
-            m.AddToCreativeInventory("GreenCloth");
-            m.AddToCreativeInventory("AquaGreenCloth");
-            m.AddToCreativeInventory("CyanCloth");
-            m.AddToCreativeInventory("BlueCloth");
-            m.AddToCreativeInventory("PurpleCloth");
-            m.AddToCreativeInventory("IndigoCloth");
-            m.AddToCreativeInventory("VioletCloth");
-            m.AddToCreativeInventory("MagnetaCloth");
-            m.AddToCreativeInventory("PinkCloth");
-            m.AddToCreativeInventory("BlackCloth");
-            m.AddToCreativeInventory("GrayCloth");
-            m.AddToCreativeInventory("WhiteCloth");
-            m.AddToCreativeInventory("YellowFlowerDecorations");
-            m.AddToCreativeInventory("RedRoseDecorations");
-            m.AddToCreativeInventory("RedMushroom");
-            m.AddToCreativeInventory("BrownMushroom");
-            m.AddToCreativeInventory("GoldBlock");
-            m.AddToCreativeInventory("IronBlock");
-            m.AddToCreativeInventory("DoubleStair");
-            m.AddToCreativeInventory("Stair");
-            m.AddToCreativeInventory("Brick");
-            m.AddToCreativeInventory("Bookcase");
-            m.AddToCreativeInventory("MossyCobblestone");
-            m.AddToCreativeInventory("Obsidian");
-            m.AddToCreativeInventory("Torch");
-            m.AddToCreativeInventory("BrushedMetal");
-            m.AddToCreativeInventory("ChemicalGreen");
-            m.AddToCreativeInventory("Salt");
-            m.AddToCreativeInventory("Roof");
-            m.AddToCreativeInventory("Camouflage");
-            m.AddToCreativeInventory("DirtForFarming");
-            m.AddToCreativeInventory("Apples");
-            m.AddToCreativeInventory("Hay");
-            m.AddToCreativeInventory("Crops1");
-            m.AddToCreativeInventory("CraftingTable");
-            m.AddToCreativeInventory("Trampoline");
-            m.AddToCreativeInventory("FillStart");
-            m.AddToCreativeInventory("Cuboid");
-            m.AddToCreativeInventory("FillArea");
-            m.AddToCreativeInventory("GrassTrap");
-            m.AddToCreativeInventory("GoldCoin");
-            m.AddToCreativeInventory("GoldBar");
-            m.AddToCreativeInventory("SilverOre");
-            m.AddToCreativeInventory("SilverCoin");
-            m.AddToCreativeInventory("DirtBrick");
-            m.AddToCreativeInventory("LuxuryRoof");
-            m.AddToCreativeInventory("SandBrick");
-            m.AddToCreativeInventory("FakeBookcase");
-            m.AddToCreativeInventory("WoodDesk");
-            m.AddToCreativeInventory("GlassDesk");
-            m.AddToCreativeInventory("Mosaik");
-            m.AddToCreativeInventory("Asphalt");
-            m.AddToCreativeInventory("Cake");
-            m.AddToCreativeInventory("Fire");
-            m.AddToCreativeInventory("Fence");
-            m.AddToCreativeInventory("Compass");
-            m.AddToCreativeInventory("Ladder");
-            m.AddToCreativeInventory("Rail3");
-            m.AddToCreativeInventory("Rail60");
-            m.AddToCreativeInventory("Pistol");
-            m.AddToCreativeInventory("SubmachineGun");
-            m.AddToCreativeInventory("Shotgun");
-            m.AddToCreativeInventory("Rifle");
-            
-            m.AddToStartInventory("Torch", 6);
-            m.AddToStartInventory("Crops1", 1);
-            m.AddToStartInventory("CraftingTable", 6);
-            m.AddToStartInventory("GoldCoin", 2);
-            m.AddToStartInventory("GoldBar", 5);
-            m.AddToStartInventory("SilverCoin", 1);
-            m.AddToStartInventory("Compass", 1);
-            */
-
-
-            m.AddCraftingRecipe("Cobblestone", 1, "Stone", 2);
-            m.AddCraftingRecipe("Stone", 2, "Cobblestone", 1);
-            m.AddCraftingRecipe("Wood", 2, "TreeTrunk", 1);
-            m.AddCraftingRecipe("Brick", 1, "Stone", 4);
-            m.AddCraftingRecipe2("GoldBlock", 1, "CoalOre", 1, "GoldOre", 1);
-            m.AddCraftingRecipe2("IronBlock", 1, "CoalOre", 1, "IronOre", 1);
-            m.AddCraftingRecipe2("Rail3", 4, "Wood", 1, "IronBlock", 1);
-            m.AddCraftingRecipe2("Rail60", 2, "Wood", 1, "IronBlock", 1);
-            m.AddCraftingRecipe("CraftingTable", 1, "Wood", 3);
-            m.AddCraftingRecipe("Stair", 1, "Stone", 2);
-            m.AddCraftingRecipe("DoubleStair", 1, "Stone", 2);
-            m.AddCraftingRecipe("Glass", 1, "Sand", 2);
-            m.AddCraftingRecipe("RedRoseDecorations", 1, "Leaves", 10);
-            m.AddCraftingRecipe("YellowFlowerDecorations", 1, "Leaves", 10);
-            m.AddCraftingRecipe("Sapling", 1, "Leaves", 3);
-            m.AddCraftingRecipe("RedMushroom", 1, "Dirt", 10);
-            m.AddCraftingRecipe("BrownMushroom", 1, "Dirt", 10);
-            m.AddCraftingRecipe("RedMushroom", 1, "Grass", 10);
-            m.AddCraftingRecipe("BrownMushroom", 1, "Grass", 10);
-            m.AddCraftingRecipe("Bookcase", 1, "Wood", 2);
-            m.AddCraftingRecipe("MossyCobblestone", 1, "Cobblestone", 1);
-            m.AddCraftingRecipe("Cobblestone", 1, "MossyCobblestone", 1);
-            m.AddCraftingRecipe("Sponge", 1, "GoldBlock", 1);
-            m.AddCraftingRecipe("RedCloth", 1, "GoldBlock", 1);
-            m.AddCraftingRecipe("OrangeCloth", 1, "RedCloth", 1);
-            m.AddCraftingRecipe("YellowCloth", 1, "OrangeCloth", 1);
-            m.AddCraftingRecipe("LightGreenCloth", 1, "YellowCloth", 1);
-            m.AddCraftingRecipe("GreenCloth", 1, "LightGreenCloth", 1);
-            m.AddCraftingRecipe("AquaGreenCloth", 1, "GreenCloth", 1);
-            m.AddCraftingRecipe("CyanCloth", 1, "AquaGreenCloth", 1);
-            m.AddCraftingRecipe("BlueCloth", 1, "CyanCloth", 1);
-            m.AddCraftingRecipe("PurpleCloth", 1, "BlueCloth", 1);
-            m.AddCraftingRecipe("IndigoCloth", 1, "PurpleCloth", 1);
-            m.AddCraftingRecipe("VioletCloth", 1, "IndigoCloth", 1);
-            m.AddCraftingRecipe("MagnetaCloth", 1, "VioletCloth", 1);
-            m.AddCraftingRecipe("PinkCloth", 1, "MagnetaCloth", 1);
-            m.AddCraftingRecipe("BlackCloth", 1, "PinkCloth", 1);
-            m.AddCraftingRecipe("GrayCloth", 1, "BlackCloth", 1);
-            m.AddCraftingRecipe("WhiteCloth", 1, "GrayCloth", 1);
-            m.AddCraftingRecipe("RedCloth", 1, "WhiteCloth", 1);
-            m.AddCraftingRecipe("Roof", 1, "Brick", 2);
-            m.AddCraftingRecipe("ChemicalGreen", 1, "GoldBlock", 1);
-            m.AddCraftingRecipe("Camouflage", 1, "GoldBlock", 1);
-            m.AddCraftingRecipe("DirtForFarming", 1, "Dirt", 2);
-            m.AddCraftingRecipe("DirtForFarming", 1, "Grass", 2);
-            m.AddCraftingRecipe("Crops1", 2, "Crops4", 1);
-            m.AddCraftingRecipe2("BrushedMetal", 1, "IronBlock", 1, "CoalOre", 1);
-            m.AddCraftingRecipe("Minecart", 1, "BrushedMetal", 5);
-            m.AddCraftingRecipe2("Trampoline", 1, "BrushedMetal", 1, "Wood", 1);
-            m.AddCraftingRecipe2("Torch", 1, "Wood", 1, "CoalOre", 1);
-            m.AddCraftingRecipe2("GrassTrap", 1, "Dirt", 10, "Camouflage", 5);
-            m.AddCraftingRecipe2("Sapling", 10, "Apples", 5, "DirtForFarming", 1);
-            m.AddCraftingRecipe2("DirtBrick", 1, "Dirt", 2, "Stone", 1);
-            m.AddCraftingRecipe("Salt", 1, "Crops4", 2);
-            m.AddCraftingRecipe("LuxuryRoof", 1, "Roof", 2);
-            m.AddCraftingRecipe2("SandBrick", 1, "Sand", 1, "Stone", 2);
-            m.AddCraftingRecipe("Fence", 1, "TreeTrunk", 2);
-            m.AddCraftingRecipe2("FakeBookcase", 1, "Bookcase", 1, "Camouflage", 5);
-            m.AddCraftingRecipe2("WoodDesk", 1, "Wood", 2, "TreeTrunk", 1);
-            m.AddCraftingRecipe2("GlassDesk", 1, "Glass", 2, "TreeTrunk", 1);
-            m.AddCraftingRecipe3("Mosaik", 1, "Sand", 2, "Gravel", 1, "Stone", 1);
-            m.AddCraftingRecipe2("Asphalt", 1, "CoalOre", 1, "Gravel", 2);
-            m.AddCraftingRecipe("Hay", 1, "Crops4", 4);
-            m.AddCraftingRecipe2("Cake", 1, "Salt", 2, "Crops4", 4);
-            m.AddCraftingRecipe2("Fire", 1, "TreeTrunk", 1, "Torch", 1);
-            m.AddCraftingRecipe("SilverCoin", 1, "SilverOre", 1);
-            m.AddCraftingRecipe("SilverCoin", 30, "GoldCoin", 1);
-            m.AddCraftingRecipe2("GoldCoin", 1, "SilverCoin", 25, "GoldOre", 5);
-            m.AddCraftingRecipe("GoldCoin", 30, "GoldBar", 1);
-            m.AddCraftingRecipe2("GoldBar", 1, "GoldCoin", 25, "GoldBlock", 5);
-            m.AddCraftingRecipe("Ladder", 1, "Wood", 4);
-
-
             m.SetSunLevels(sunLevels);
             m.SetLightLevels(lightLevels);
         }
@@ -1183,7 +1013,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "Apples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
@@ -1220,7 +1050,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "AutumnApples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
@@ -1250,7 +1080,7 @@ namespace ManicDigger.Mods
                     m.SetBlockType(106, "Apples", new BlockType()
                     {
                         AllTextures = "WinterApples",
-                        DrawType = DrawType.Solid,
+                        DrawType = DrawType.Transparent,
                         WalkableType = WalkableType.Solid,
                         Sounds = solidSounds,
                     });
