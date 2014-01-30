@@ -109,7 +109,12 @@ namespace ManicDigger.Collisions
         public delegate float GetBlockHeight(int x, int y, int z);
         bool BoxHit(Box3D box)
         {
-            return Intersection.CheckLineBox(box, currentLine, out currentHit);
+            Vector3Ref hit = new Vector3Ref();
+            bool ret = Intersection.CheckLineBox(box, currentLine, hit);
+            currentHit.X = hit.X;
+            currentHit.Y = hit.Y;
+            currentHit.Z = hit.Z;
+            return ret;
         }
         Line3D currentLine;
         Vector3 currentHit;
@@ -192,49 +197,6 @@ namespace ManicDigger.Collisions
     }
     public static class Intersection
     {
-        //http://www.3dkingdoms.com/weekly/weekly.php?a=3
-        static bool GetIntersection(float fDst1, float fDst2, Vector3 P1, Vector3 P2, out Vector3 Hit)
-        {
-            Hit = new Vector3();
-            if ((fDst1 * fDst2) >= 0.0f) return false;
-            if (fDst1 == fDst2) return false;
-            Hit = P1 + (P2 - P1) * (-fDst1 / (fDst2 - fDst1));
-            return true;
-        }
-        static bool InBox(Vector3 Hit, Vector3 B1, Vector3 B2, int Axis)
-        {
-            if (Axis == 1 && Hit.Z > B1.Z && Hit.Z < B2.Z && Hit.Y > B1.Y && Hit.Y < B2.Y) return true;
-            if (Axis == 2 && Hit.Z > B1.Z && Hit.Z < B2.Z && Hit.X > B1.X && Hit.X < B2.X) return true;
-            if (Axis == 3 && Hit.X > B1.X && Hit.X < B2.X && Hit.Y > B1.Y && Hit.Y < B2.Y) return true;
-            return false;
-        }
-        // returns true if line (L1, L2) intersects with the box (B1, B2)
-        // returns intersection point in Hit
-        public static bool CheckLineBox(Vector3 B1, Vector3 B2, Vector3 L1, Vector3 L2, out Vector3 Hit)
-        {
-            Hit = new Vector3();
-            if (L2.X < B1.X && L1.X < B1.X) return false;
-            if (L2.X > B2.X && L1.X > B2.X) return false;
-            if (L2.Y < B1.Y && L1.Y < B1.Y) return false;
-            if (L2.Y > B2.Y && L1.Y > B2.Y) return false;
-            if (L2.Z < B1.Z && L1.Z < B1.Z) return false;
-            if (L2.Z > B2.Z && L1.Z > B2.Z) return false;
-            if (L1.X > B1.X && L1.X < B2.X &&
-                L1.Y > B1.Y && L1.Y < B2.Y &&
-                L1.Z > B1.Z && L1.Z < B2.Z)
-            {
-                Hit = L1;
-                return true;
-            }
-            if ((GetIntersection(L1.X - B1.X, L2.X - B1.X, L1, L2, out Hit) && InBox(Hit, B1, B2, 1))
-              || (GetIntersection(L1.Y - B1.Y, L2.Y - B1.Y, L1, L2, out Hit) && InBox(Hit, B1, B2, 2))
-              || (GetIntersection(L1.Z - B1.Z, L2.Z - B1.Z, L1, L2, out Hit) && InBox(Hit, B1, B2, 3))
-              || (GetIntersection(L1.X - B2.X, L2.X - B2.X, L1, L2, out Hit) && InBox(Hit, B1, B2, 1))
-              || (GetIntersection(L1.Y - B2.Y, L2.Y - B2.Y, L1, L2, out Hit) && InBox(Hit, B1, B2, 2))
-              || (GetIntersection(L1.Z - B2.Z, L2.Z - B2.Z, L1, L2, out Hit) && InBox(Hit, B1, B2, 3)))
-                return true;
-            return false;
-        }
         /// <summary>
         /// Warning: randomly returns incorrect hit position (back side of box).
         /// </summary>
@@ -242,9 +204,13 @@ namespace ManicDigger.Collisions
         /// <param name="line"></param>
         /// <param name="hit"></param>
         /// <returns></returns>
-        public static bool CheckLineBox(Box3D box, Line3D line, out Vector3 hit)
+        public static bool CheckLineBox(Box3D box, Line3D line, Vector3Ref hit)
         {
-            return CheckLineBox(box.MinEdge, box.MaxEdge, line.Start, line.End, out hit);
+            Vector3Ref minEdge = Vector3Ref.Create(box.MinEdge.X, box.MinEdge.Y, box.MinEdge.Z);
+            Vector3Ref maxEdge = Vector3Ref.Create(box.MaxEdge.X, box.MaxEdge.Y, box.MaxEdge.Z);
+            Vector3Ref lineStart = Vector3Ref.Create(line.Start.X, line.Start.Y, line.Start.Z);
+            Vector3Ref lineEnd = Vector3Ref.Create(line.End.X, line.End.Y, line.End.Z);
+            return IntersectionCi.CheckLineBox(minEdge, maxEdge, lineStart, lineEnd, hit);
         }
         // Copyright 2001, softSurfer (www.softsurfer.com)
         // This code may be freely used and modified for any purpose

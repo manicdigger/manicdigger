@@ -84,6 +84,7 @@
     <Compile Include="Audio.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
     <Compile Include="Client\CitoGl.ci.cs" />
+    <Compile Include="Client\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
