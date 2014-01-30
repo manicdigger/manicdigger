@@ -78,11 +78,6 @@ namespace ManicDigger
             //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
             var map = w;
             var terrainchunktesselator = new TerrainChunkTesselator();
-            terrainchunktesselator.d_Config3d = config3d;
-            terrainchunktesselator.d_Data = gamedata;
-            terrainchunktesselator.d_MapStorage = clientgame;
-            terrainchunktesselator.d_MapStoragePortion = map;
-            terrainchunktesselator.d_MapStorageLight = clientgame;
             w.d_TerrainChunkTesselator = terrainchunktesselator;
             var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
             w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
