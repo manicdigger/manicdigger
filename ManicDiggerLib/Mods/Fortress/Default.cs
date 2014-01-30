@@ -591,7 +591,13 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(112, "CraftingTable", new BlockType()
             {
-                AllTextures = "CraftingTable",
+                TextureIdTop = "CraftingTableTopBottom",
+                TextureIdBack = "CraftingTableSide",
+                TextureIdFront = "CraftingTableSide",
+                TextureIdLeft = "CraftingTableSide",
+                TextureIdRight = "CraftingTableSide",
+                TextureIdForInventory = "CraftingTableTopBottom",
+                TextureIdBottom = "CraftingTableTopBottom",
                 DrawType = DrawType.Solid,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
