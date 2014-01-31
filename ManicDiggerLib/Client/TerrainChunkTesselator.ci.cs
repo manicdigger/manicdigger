@@ -1086,10 +1086,14 @@
         //if stationary water block, make slightly lower than terrain
         if (tt == 8)
         {
-            blockheight00 = one * 9 / 10; // 0.9f;
-            blockheight01 = one * 9 / 10;
-            blockheight10 = one * 9 / 10;
-            blockheight11 = one * 9 / 10;
+            //Only do this, when no other water block is above to prevent gaps
+            if (currentChunk[MapUtilCi.Index3d(xx, yy, zz+1, chunksize + 2, chunksize + 2)] != 8)
+            {
+                blockheight00 = one * 9 / 10; // 0.9f;
+                blockheight01 = one * 9 / 10;
+                blockheight10 = one * 9 / 10;
+                blockheight11 = one * 9 / 10;
+            }
         }
         int curcolor = color;
         int curcolor2 = color;
