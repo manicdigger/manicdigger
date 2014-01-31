@@ -203,6 +203,16 @@ namespace ManicDigger
                     internetgamefactory, blockrenderertorch, playerrenderer,
                     map, terrainchunktesselator);
             }
+
+            clientmods = new ClientMod[128];
+            clientmodsCount = 0;
+            modmanager.w = this;
+            AddMod(new ModAutoCamera());
+        }
+        void AddMod(ClientMod mod)
+        {
+            clientmods[clientmodsCount++] = mod;
+            mod.Start(modmanager);
         }
 
         internal Game game;
@@ -273,7 +283,7 @@ namespace ManicDigger
         [Inject]
         public InventoryUtil d_InventoryUtil;
         [Inject]
-        public IScreenshot d_Screenshot;
+        public Screenshot d_Screenshot;
         [Inject]
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
@@ -303,6 +313,10 @@ namespace ManicDigger
 
         public ServerInformation ServerInfo = new ServerInformation();
         public bool AllowFreemove = true;
+
+        public ClientModManager1 modmanager = new ClientModManager1();
+        public ClientMod[] clientmods;
+        public int clientmodsCount;
 
         public void SetTileAndUpdate(Vector3 pos, int type)
         {
@@ -697,6 +711,13 @@ namespace ManicDigger
                     }
                     else
                     {
+                        for (int i = 0; i < clientmodsCount; i++)
+                        {
+                            ClientCommandArgs args = new ClientCommandArgs();
+                            args.arguments = arguments;
+                            args.command = cmd;
+                            clientmods[i].OnClientCommand(args);
+                        }
                         string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
                         SendChat(chatline);
                     }
@@ -1496,7 +1517,7 @@ namespace ManicDigger
         }
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
-        bool ENABLE_NOCLIP = false;
+        public bool ENABLE_NOCLIP = false;
         public void OnUpdateFrame(FrameEventArgs e)
         {
             //..base.OnUpdateFrame(e);
@@ -2744,6 +2765,13 @@ namespace ManicDigger
             UpdateTerrain();
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
 
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                NewFrameEventArgs args_ = new NewFrameEventArgs();
+                args_.SetDt((float)e.Time);
+                clientmods[i].OnNewFrame(args_);
+            }
+
             //Sleep is required in Mono for running the terrain background thread.
             if (IsMono)
             {
@@ -3166,7 +3194,7 @@ namespace ManicDigger
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);*/
         }
         public event EventHandler BeforeRenderFrame;
-        bool ENABLE_DRAW2D = true;
+        public bool ENABLE_DRAW2D = true;
         int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
@@ -3545,6 +3573,11 @@ namespace ManicDigger
                     break;
                 case GuiState.EscapeMenu:
                     {
+                        if (!ENABLE_DRAW2D)
+                        {
+                            PerspectiveMode();
+                            return;
+                        }
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         DrawDialogs();
                         EscapeMenuDraw();
@@ -6435,5 +6468,181 @@ namespace ManicDigger
     public interface IResetMap
     {
         void Reset(int sizex, int sizey, int sizez);
+    }
+
+    public class ClientModManager1 : ClientModManager
+    {
+        internal ManicDiggerGameWindow w;
+
+        public override void MakeScreenshot()
+        {
+            w.d_Screenshot.SaveScreenshot();
+        }
+
+        public override void SetLocalPosition(float glx, float gly, float glz)
+        {
+            w.LocalPlayerPosition = new Vector3(glx, gly, glz);
+        }
+
+        public override float GetLocalPositionX()
+        {
+            return w.LocalPlayerPosition.X;
+        }
+
+        public override float GetLocalPositionY()
+        {
+            return w.LocalPlayerPosition.Y;
+        }
+
+        public override float GetLocalPositionZ()
+        {
+            return w.LocalPlayerPosition.Z;
+        }
+
+        public override void SetLocalOrientation(float glx, float gly, float glz)
+        {
+            w.LocalPlayerOrientation = new Vector3(glx, gly, glz);
+        }
+
+        public override float GetLocalOrientationX()
+        {
+            return w.LocalPlayerOrientation.X;
+        }
+
+        public override float GetLocalOrientationY()
+        {
+            return w.LocalPlayerOrientation.Y;
+        }
+
+        public override float GetLocalOrientationZ()
+        {
+            return w.LocalPlayerOrientation.Z;
+        }
+
+        public override void DisplayNotification(string message)
+        {
+            w.AddChatline(message);
+        }
+
+        public override void SendChatMessage(string message)
+        {
+            w.SendChat(message);
+        }
+
+        public override GamePlatform GetPlatform()
+        {
+            return w.game.p;
+        }
+
+        public override void ShowGui(int level)
+        {
+            if (level == 0)
+            {
+                w.ENABLE_DRAW2D = false;
+            }
+            else
+            {
+                w.ENABLE_DRAW2D = true;
+            }
+        }
+
+        public override void SetFreemove(int level)
+        {
+            if (level == FreemoveLevelEnum.None)
+            {
+                w.ENABLE_FREEMOVE = false;
+                w.ENABLE_NOCLIP = false;
+            }
+
+            if (level == FreemoveLevelEnum.Freemove)
+            {
+                w.ENABLE_FREEMOVE = true;
+                w.ENABLE_NOCLIP = false;
+            }
+
+            if (level == FreemoveLevelEnum.Noclip)
+            {
+                w.ENABLE_FREEMOVE = true;
+                w.ENABLE_NOCLIP = true;
+            }
+        }
+
+        public override int GetFreemove()
+        {
+            if (!w.ENABLE_FREEMOVE)
+            {
+                return FreemoveLevelEnum.None;
+            }
+            if (w.ENABLE_NOCLIP)
+            {
+                return FreemoveLevelEnum.Noclip;
+            }
+            else
+            {
+                return FreemoveLevelEnum.Freemove;
+            }
+        }
+
+        public override BitmapCi GrabScreenshot()
+        {
+            BitmapCiCs bmp = new BitmapCiCs();
+            bmp.bmp = w.d_Screenshot.GrabScreenshot();
+            return bmp;
+        }
+
+        public class BitmapCiCs : BitmapCi
+        {
+            public Bitmap bmp;
+        }
+
+        public override AviWriterCi AviWriterCreate()
+        {
+            AviWriterCiCs avi = new AviWriterCiCs();
+            return avi;
+        }
+
+        public class AviWriterCiCs : AviWriterCi
+        {
+            public AviWriterCiCs()
+            {
+                avi = new AviWriter();
+            }
+
+            public AviWriter avi;
+            public Bitmap openbmp;
+
+            public override void Open(string filename, int framerate, int width, int height)
+            {
+                openbmp = avi.Open(filename, (uint)framerate, width, height);
+            }
+
+            public override void AddFrame(BitmapCi bitmap)
+            {
+                var bmp_ = (BitmapCiCs)bitmap;
+
+                using (Graphics g = Graphics.FromImage(openbmp))
+                {
+                    g.DrawImage(bmp_.bmp, 0, 0);
+                }
+                openbmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+                avi.AddFrame();
+            }
+
+            public override void Close()
+            {
+                avi.Close();
+            }
+        }
+
+        public override int GetWindowWidth()
+        {
+            return w.Width;
+        }
+
+        public override int GetWindowHeight()
+        {
+            return w.Height;
+        }
     }
 }

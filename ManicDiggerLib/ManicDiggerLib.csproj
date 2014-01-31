@@ -82,6 +82,8 @@
       <Link>Client\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Audio.cs" />
+    <Compile Include="AviWriter.cs" />
+    <Compile Include="Client\ModAutoCamera.ci.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
     <Compile Include="Client\CitoGl.ci.cs" />
     <Compile Include="Client\Collisions.ci.cs" />

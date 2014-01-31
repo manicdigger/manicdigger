@@ -243,3 +243,58 @@ public class MapUtilCi
         return (h * sizey + y) * sizex + x;
     }
 }
+
+public abstract class ClientModManager
+{
+    public abstract void MakeScreenshot();
+    public abstract void SetLocalPosition(float glx, float gly, float glz);
+    public abstract float GetLocalPositionX();
+    public abstract float GetLocalPositionY();
+    public abstract float GetLocalPositionZ();
+    public abstract void SetLocalOrientation(float glx, float gly, float glz);
+    public abstract float GetLocalOrientationX();
+    public abstract float GetLocalOrientationY();
+    public abstract float GetLocalOrientationZ();
+    public abstract void DisplayNotification(string message);
+    public abstract void SendChatMessage(string message);
+    public abstract GamePlatform GetPlatform();
+    public abstract void ShowGui(int level);
+    public abstract void SetFreemove(int level);
+    public abstract int GetFreemove();
+    public abstract BitmapCi GrabScreenshot();
+    public abstract AviWriterCi AviWriterCreate();
+    public abstract int GetWindowWidth();
+    public abstract int GetWindowHeight();
+}
+
+public abstract class AviWriterCi
+{
+    public abstract void Open(string filename, int framerate, int width, int height);
+    public abstract void AddFrame(BitmapCi bitmap);
+    public abstract void Close();
+}
+
+public class BitmapCi
+{
+    public virtual void Dispose(){}
+}
+
+public class FreemoveLevelEnum
+{
+    public const int None = 0;
+    public const int Freemove = 1;
+    public const int Noclip = 2;
+}
+
+public abstract class ClientMod
+{
+    public abstract void Start(ClientModManager modmanager);
+    public virtual bool OnClientCommand(ClientCommandArgs args) { return false; }
+    public virtual void OnNewFrame(NewFrameEventArgs args) { }
+}
+
+public class ClientCommandArgs
+{
+    internal string command;
+    internal string arguments;
+}

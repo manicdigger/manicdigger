@@ -73,4 +73,57 @@ public class GamePlatformNative : GamePlatform
     {
         return (int)value;
     }
+
+    public override string[] StringSplit(string value, string separator, IntRef returnLength)
+    {
+        string[] ret = value.Split(new char[] { separator[0] });
+        returnLength.value = ret.Length;
+        return ret;
+    }
+
+    public override int IntParse(string value)
+    {
+        return System.Int32.Parse(value);
+    }
+
+    public override float FloatParse(string value)
+    {
+        return System.Single.Parse(value);
+    }
+
+    public override float MathSqrt(float value)
+    {
+        return (float)System.Math.Sqrt(value);
+    }
+
+    public override string StringTrim(string value)
+    {
+        return value.Trim();
+    }
+
+    public override string IntToString(int value)
+    {
+        return value.ToString();
+    }
+
+    public override string Timestamp()
+    {
+        string time = string.Format("{0:yyyy-MM-dd_HH-mm-ss}", System.DateTime.Now);
+        return time;
+    }
+
+    public override string StringFormat(string format, string arg0)
+    {
+        return string.Format(format, arg0);
+    }
+
+    public override string StringFormat2(string format, string arg0, string arg1)
+    {
+        return string.Format(format, arg0, arg1);
+    }
+
+    public override void ClipboardSetText(string s)
+    {
+        System.Windows.Forms.Clipboard.SetText(s);
+    }
 }

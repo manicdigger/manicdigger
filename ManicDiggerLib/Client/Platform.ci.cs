@@ -33,4 +33,19 @@
     // Returns URL in JavaScript
     public abstract string GetFullFilePath(string filename);
     public abstract int FloatToInt(float value);
+    public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
+    public abstract int IntParse(string value);
+    public abstract float FloatParse(string value);
+    public abstract float MathSqrt(float value);
+    public abstract string StringTrim(string value);
+    public abstract string IntToString(int value);
+    public abstract string Timestamp();
+    public abstract string StringFormat(string format, string arg0);
+    public abstract string StringFormat2(string format, string arg0, string arg1);
+    public abstract void ClipboardSetText(string s);
+}
+
+public class IntRef
+{
+    internal int value;
 }
