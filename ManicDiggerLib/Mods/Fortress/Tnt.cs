@@ -23,7 +23,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(46, "TNT", new BlockType()
             {
                 TextureIdTop = "TNTTop",
-                TextureIdBottom = "WoodBlock",
+                TextureIdBottom = "TNTBottom",
                 TextureIdBack = "TNT",
                 TextureIdFront = "TNT",
                 TextureIdLeft = "TNT",
