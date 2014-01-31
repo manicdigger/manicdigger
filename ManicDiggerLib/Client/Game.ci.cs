@@ -265,6 +265,7 @@ public abstract class ClientModManager
     public abstract AviWriterCi AviWriterCreate();
     public abstract int GetWindowWidth();
     public abstract int GetWindowHeight();
+    public abstract bool IsFreemoveAllowed();
 }
 
 public abstract class AviWriterCi

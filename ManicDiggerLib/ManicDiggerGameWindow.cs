@@ -6644,5 +6644,10 @@ namespace ManicDigger
         {
             return w.Height;
         }
+
+        public override bool IsFreemoveAllowed()
+        {
+            return w.AllowFreemove;
+        }
     }
 }

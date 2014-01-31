@@ -44,6 +44,11 @@
             }
             if (arguments[0] == "start" || arguments[0] == "play" || arguments[0] == "rec")
             {
+                if (!m.IsFreemoveAllowed())
+                {
+                    m.DisplayNotification("Free move not allowed.");
+                    return true;
+                }
                 if (cameraPointsCount == 0)
                 {
                     m.DisplayNotification("No points defined. Enter points with \".cam p\" command.");
