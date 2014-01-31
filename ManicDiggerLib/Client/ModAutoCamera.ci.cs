@@ -212,24 +212,39 @@
         {
             CameraPoint a = cameraPoints[foundPoint];
             CameraPoint b = cameraPoints[foundPoint + 1];
-            float dist = Distance(a, b);
-            float dx = (b.positionGlX - a.positionGlX) / dist;
-            float dy = (b.positionGlY - a.positionGlY) / dist;
-            float dz = (b.positionGlZ - a.positionGlZ) / dist;
+            CameraPoint aminus = a;
+            CameraPoint bplus = b;
+            if (foundPoint -1 >= 0)
+            {
+                aminus = cameraPoints[foundPoint - 1];
+            }
+            if (foundPoint + 2 < cameraPointsCount)
+            {
+                bplus = cameraPoints[foundPoint + 2];
+            }
 
-            float x = a.positionGlX + dx * (playingDist - distA);
-            float y = a.positionGlY + dy * (playingDist - distA);
-            float z = a.positionGlZ + dz * (playingDist - distA);
+            float t = (playingDist - distA) / Distance(a, b);
+            float x = q(t, aminus.positionGlX, a.positionGlX, b.positionGlX, bplus.positionGlX);
+            float y = q(t, aminus.positionGlY, a.positionGlY, b.positionGlY, bplus.positionGlY);
+            float z = q(t, aminus.positionGlZ, a.positionGlZ, b.positionGlZ, bplus.positionGlZ);
             m.SetLocalPosition(x, y, z);
 
-            float dorientx = (b.orientationGlX - a.orientationGlX) / dist;
-            float dorienty = (b.orientationGlY - a.orientationGlY) / dist;
-            float dorientz = (b.orientationGlZ - a.orientationGlZ) / dist;
-            float orientx = a.orientationGlX + dorientx * (playingDist - distA);
-            float orienty = a.orientationGlY + dorienty * (playingDist - distA);
-            float orientz = a.orientationGlZ + dorientz * (playingDist - distA);
+            float orientx = q(t, aminus.orientationGlX, a.orientationGlX, b.orientationGlX, bplus.orientationGlX);
+            float orienty = q(t, aminus.orientationGlY, a.orientationGlY, b.orientationGlY, bplus.orientationGlY);
+            float orientz = q(t, aminus.orientationGlZ, a.orientationGlZ, b.orientationGlZ, bplus.orientationGlZ);
             m.SetLocalOrientation(orientx, orienty, orientz);
         }
+    }
+
+    // http://stackoverflow.com/questions/939874/is-there-a-java-library-with-3d-spline-functions/2623619#2623619
+    // Catmull-Rom spline interpolation function
+    public static float q(float t, float p0, float p1, float p2, float p3)
+    {
+        float one_ = 1;
+        return (one_ / 2) * ((2 * p1) + (-p0 + p2) * t
+                + (2 * p0 - 5 * p1 + 4 * p2 - p3) * (t * t) + (-p0 + 3 * p1 - 3
+                * p2 + p3)
+                * (t * t * t));
     }
 
     float recspeed;
