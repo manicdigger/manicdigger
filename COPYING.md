@@ -35,6 +35,9 @@ Samples used from Freesound
             Running Up The Stairs (www.rutgermuller.nl).wav (http://www.freesound.org/samplesViewSingle.php?id=51163)
         By TicTacShutUp (http://www.freesound.org/usersViewSingle.php?id=196)
             thump 7 big.wav (http://www.freesound.org/samplesViewSingle.php?id=415)
+
+http://www.freesound.org/people/nextmaking/sounds/86001/
+footstep on gravel.aif - nextmaking - Sampling+ License.
             
             
 Permissive licenses
