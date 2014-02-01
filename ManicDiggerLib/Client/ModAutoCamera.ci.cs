@@ -152,12 +152,15 @@
 
     void Stop()
     {
-        playingTime = -1;
         m.ShowGui(1);
-        m.SetFreemove(previousFreemove);
-        m.SetLocalPosition(previousPositionX, previousPositionY, previousPositionZ);
-        m.SetLocalOrientation(previousOrientationX, previousOrientationY, previousOrientationZ);
         m.EnableCameraControl(true);
+        if (playingTime != -1)
+        {
+            m.SetFreemove(previousFreemove);
+            m.SetLocalPosition(previousPositionX, previousPositionY, previousPositionZ);
+            m.SetLocalOrientation(previousOrientationX, previousOrientationY, previousOrientationZ);
+        }
+        playingTime = -1;
         if (avi != null)
         {
             avi.Close();
