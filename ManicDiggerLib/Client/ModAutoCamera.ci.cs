@@ -27,7 +27,14 @@
             string[] arguments = p.StringSplit(args.arguments, " ", argumentsLength);
             if (p.StringTrim(args.arguments) == "")
             {
-                m.DisplayNotification("Camera help.");
+                m.DisplayNotification("&6AutoCamera help.");
+                m.DisplayNotification("&6.cam p&f - add a point to path");
+                m.DisplayNotification("&6.cam start [real seconds]&f - play the path");
+                m.DisplayNotification("&6.cam rec [real seconds] [video seconds]&f - play and record to .avi file");
+                m.DisplayNotification("&6.cam stop&f - stop playing and recording");
+                m.DisplayNotification("&6.cam clear&f - remove all points from path");
+                m.DisplayNotification("&6.cam save&f - copy path points to clipboard");
+                m.DisplayNotification("&6.cam load [points]&f - load path points");
                 return true;
             }
             if (arguments[0] == "p")
