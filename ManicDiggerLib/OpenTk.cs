@@ -1104,7 +1104,7 @@ namespace CitoGl
     class MainWindow : GameWindow
     {
         public MainWindow(GraphicsMode mode)
-            : base(800, 600, mode)
+            : base(1280, 720, mode)
         {
             VSync = VSyncMode.Off;
             WindowState = WindowState.Normal;

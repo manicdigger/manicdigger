@@ -234,8 +234,8 @@ namespace ManicDigger
             }
             else
             {
-                d_GlWindow.Width = res.Width;
-                d_GlWindow.Height = res.Height;
+                //d_GlWindow.Width = res.Width;
+                //d_GlWindow.Height = res.Height;
             }
         }
 

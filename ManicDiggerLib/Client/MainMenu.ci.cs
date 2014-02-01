@@ -249,9 +249,9 @@
             Mat4.Ortho(pMatrix, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight(), 0, 0, 10);
         }
 
-        float scale = one * gl.GetCanvasWidth() / 800;
+        float scale = one * gl.GetCanvasWidth() / 1280;
         float size = one * 80 / 100;
-        Draw2dQuad(GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 800 * scale / 2 * size, 0, 800 * scale * size, 288 * scale * size);
+        Draw2dQuad(GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
         Draw2dQuad(GetTexture("background.png"), 0, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight());
     }
 

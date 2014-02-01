@@ -315,7 +315,7 @@ namespace ManicDigger
         public IMyGameWindow mywindow;
         const bool ENABLE_FULLSCREEN = false;
         public GlWindow(IMyGameWindow mywindow)
-            : base(800, 600, GraphicsMode.Default, "",
+            : base(1280, 720, GraphicsMode.Default, "",
                 ENABLE_FULLSCREEN ? GameWindowFlags.Fullscreen : GameWindowFlags.Default) { this.mywindow = mywindow; }
         protected override void OnLoad(EventArgs e)
         {
