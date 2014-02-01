@@ -203,6 +203,7 @@ namespace ManicDigger
                     internetgamefactory, blockrenderertorch, playerrenderer,
                     map, terrainchunktesselator);
             }
+            enableCameraControl = true;
 
             clientmods = new ClientMod[128];
             clientmodsCount = 0;
@@ -1548,7 +1549,7 @@ namespace ManicDigger
             //UpdateTerrain();
             OnNewFrame(e.Time);
             UpdateMousePosition();
-            if (guistate == GuiState.Normal)
+            if (guistate == GuiState.Normal && enableCameraControl)
             {
                 UpdateMouseViewportControl(e);
             }
@@ -6438,6 +6439,8 @@ namespace ManicDigger
 
         public int sunlight_ = 15;
         public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
+
+        internal bool enableCameraControl;
     }
 
     struct TextAndSize
@@ -6653,6 +6656,11 @@ namespace ManicDigger
         public override bool IsFreemoveAllowed()
         {
             return w.AllowFreemove;
+        }
+
+        public override void EnableCameraControl(bool enable)
+        {
+            w.enableCameraControl = enable;
         }
     }
 }

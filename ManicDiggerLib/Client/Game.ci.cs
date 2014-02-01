@@ -266,6 +266,7 @@ public abstract class ClientModManager
     public abstract int GetWindowWidth();
     public abstract int GetWindowHeight();
     public abstract bool IsFreemoveAllowed();
+    public abstract void EnableCameraControl(bool enable);
 }
 
 public abstract class AviWriterCi

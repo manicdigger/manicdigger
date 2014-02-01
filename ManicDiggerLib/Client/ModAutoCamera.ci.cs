@@ -91,6 +91,7 @@
                 m.ShowGui(0);
                 previousFreemove = m.GetFreemove();
                 m.SetFreemove(FreemoveLevelEnum.Noclip);
+                m.EnableCameraControl(false);
             }
             if (arguments[0] == "stop")
             {
@@ -156,6 +157,7 @@
         m.SetFreemove(previousFreemove);
         m.SetLocalPosition(previousPositionX, previousPositionY, previousPositionZ);
         m.SetLocalOrientation(previousOrientationX, previousOrientationY, previousOrientationZ);
+        m.EnableCameraControl(true);
         if (avi != null)
         {
             avi.Close();
