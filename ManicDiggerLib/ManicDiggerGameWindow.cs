@@ -518,8 +518,13 @@ namespace ManicDigger
             }
             foreach (var d in dialogs)
             {
-                foreach (var w in d.Value.Widgets)
+                for (int i = 0; i < d.Value.WidgetsCount; i++)
                 {
+                    Packet_Widget w = d.Value.Widgets[i];
+                    if (w == null)
+                    {
+                        continue;
+                    }
                     if (("abcdefghijklmnopqrstuvwxyz1234567890\t " + (char)27).Contains("" + (char)w.ClickKey))
                     {
                         if (e.KeyChar == w.ClickKey)
