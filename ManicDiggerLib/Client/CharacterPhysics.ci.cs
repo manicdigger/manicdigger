@@ -459,7 +459,7 @@ public class CharacterPhysicsCi
             float p0 = newposition[0] + 0;
             float p1 = newposition[1] + modelheight;
             float p2 = newposition[2] + 0;
-            bool newempty = NewEmpty(high, p0, p1, p2);
+            bool newempty = IsTileEmptyForPhysics(FloatToInt(p0), FloatToInt(p2), FloatToInt(p1));
             if (newposition[1] - oldposition[1] > 0)
             {
                 if (!newempty)
