@@ -82,6 +82,7 @@
                     }
                 }
                 playingTime = 0;
+                firstFrameDone = false;
                 previousPositionX = m.GetLocalPositionX();
                 previousPositionY = m.GetLocalPositionY();
                 previousPositionZ = m.GetLocalPositionZ();
@@ -254,10 +255,17 @@
 
     float recspeed;
     float writeAccum;
+    bool firstFrameDone;
     void UpdateAvi(float dt)
     {
         if (avi == null)
         {
+            return;
+        }
+        if (!firstFrameDone)
+        {
+            // skip first frame, because screen is not redrawn yet.
+            firstFrameDone = true;
             return;
         }
         writeAccum += dt;
