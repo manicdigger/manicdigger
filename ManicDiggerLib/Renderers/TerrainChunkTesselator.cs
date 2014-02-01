@@ -33,6 +33,7 @@ namespace ManicDigger.Renderers
             tesselator.Start();
         }
         bool[] istransparent { get { return tesselator.istransparent; } set { tesselator.istransparent = value; } }
+        bool[] ishalfheight { get { return tesselator.ishalfheight; } set { tesselator.ishalfheight = value; } }
         float[] lightlevels { get { return tesselator.lightlevels; } set { tesselator.lightlevels = value; } }
 
         public IEnumerable<VerticesIndicesToLoad> MakeChunk(int x, int y, int z,
@@ -46,6 +47,7 @@ namespace ManicDigger.Renderers
             {
                 Packet_BlockType b = game.game.blocktypes[i];
                 istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
+                ishalfheight[i] = (b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0);
             }
 
             if (x < 0 || y < 0 || z < 0) { yield break; }

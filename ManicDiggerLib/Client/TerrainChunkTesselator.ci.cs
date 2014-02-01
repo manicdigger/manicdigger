@@ -34,6 +34,7 @@
     internal const int maxlight = 15;
     internal float maxlightInverse;
     internal bool[] istransparent;
+    internal bool[] ishalfheight;
     internal float[] lightlevels;
 
     internal ModelData[] toreturnatlas1d;
@@ -58,6 +59,7 @@
         mapsizez = game.MapSizeZ;
         started = true;
         istransparent = new bool[GlobalVar.MAX_BLOCKTYPES];
+        ishalfheight = new bool[GlobalVar.MAX_BLOCKTYPES];
         maxlightInverse = one / maxlight;
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
         terrainTexturesPerAtlasInverse = one / game.terrainTexturesPerAtlas;
@@ -105,6 +107,7 @@
         {
             int[] currentChunk_ = currentChunk;
             bool[] istransparent_ = istransparent;
+            bool[] ishalfheight_ = ishalfheight;
             {
                 for (int zz = 1; zz < chunksize + 1; zz++)
                 {
@@ -126,7 +129,8 @@
                                 int tt2 = currentChunk_[pos2];
                                 if (tt2 == 0
                                     || (IsWater(tt2) && (!IsWater(tt)))
-                                    || istransparent_[tt2])
+                                    || istransparent_[tt2]
+                                    || ishalfheight_[tt])
                                 {
                                     draw |= TileSideFlagsEnum.Top;
                                 }
@@ -1086,10 +1090,14 @@
         //if stationary water block, make slightly lower than terrain
         if (tt == 8)
         {
-            blockheight00 = one * 9 / 10; // 0.9f;
-            blockheight01 = one * 9 / 10;
-            blockheight10 = one * 9 / 10;
-            blockheight11 = one * 9 / 10;
+            //Only do this, when no other water block is above to prevent gaps
+            if (currentChunk[MapUtilCi.Index3d(xx, yy, zz+1, chunksize + 2, chunksize + 2)] != 8)
+            {
+                blockheight00 = one * 9 / 10; // 0.9f;
+                blockheight01 = one * 9 / 10;
+                blockheight10 = one * 9 / 10;
+                blockheight11 = one * 9 / 10;
+            }
         }
         int curcolor = color;
         int curcolor2 = color;

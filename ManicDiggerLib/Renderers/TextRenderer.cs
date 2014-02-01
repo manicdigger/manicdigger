@@ -35,14 +35,14 @@ namespace ManicDigger.Renderers
 
     public enum FontType
     {
-        Default,
-        Simple,
         Nice,
+        Simple,
         BlackBackground,
+        Default,
     }
     public class TextRenderer
     {
-        public FontType Font = FontType.Default;
+        public FontType Font = FontType.Nice;
 
         public virtual Bitmap MakeTextTexture(Text t, Font font)
         {

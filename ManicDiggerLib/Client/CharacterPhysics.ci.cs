@@ -286,7 +286,7 @@ public class CharacterPhysicsCi
                     state.jumpacceleration = 0;
                     state.movedz = 0;
                 }
-                if (move.wantsjump && state.jumpacceleration == 0 && standingontheground)
+                if (move.wantsjump && state.jumpacceleration == 0 && standingontheground && loaded)
                 {
                     state.jumpacceleration = move.jumpstartacceleration;
                     soundnow.value = true;
