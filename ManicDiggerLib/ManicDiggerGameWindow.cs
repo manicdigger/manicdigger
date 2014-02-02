@@ -3684,6 +3684,12 @@ namespace ManicDigger
                     string s = string.Format("{0}/{1}", loaded, total - loaded);
                     Draw2dText(s, Width - TextSize(s, 18).Width - 50,
                         Height - TextSize(s, 18).Height - 50, 18, loaded == 0 ? Color.Red : Color.White);
+                    if (loaded == 0)
+                    {
+                        string pressR = "Press R to reload";
+                        Draw2dText(pressR, Width - TextSize(pressR, 14).Width - 50,
+                            Height - TextSize(s, 14).Height - 80, 14, Color.Red);
+                    }
                 }
             }
         }
