@@ -30,6 +30,11 @@ namespace ManicDigger
         IMapStorage, IInventoryController, IMapStorageLight,
         IMapStoragePortion, ICurrentShadows, IResetMap, ITerrainTextures
     {
+        public ManicDiggerGameWindow()
+        {
+            one = 1;
+        }
+        float one;
         public void Start()
         {
             game = new Game();
@@ -2255,13 +2260,13 @@ namespace ManicDigger
             }
             bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - ToVector3(player.playerposition)).Length <= pick_distance;
             bool playertileempty = IsTileEmptyForPhysics(
-                        (int)ToMapPos(ToVector3(player.playerposition)).X,
-                        (int)ToMapPos(ToVector3(player.playerposition)).Y,
-                        (int)ToMapPos(ToVector3(player.playerposition)).Z);
+                        (int)(player.playerposition.X),
+                        (int)(player.playerposition.Z),
+                        (int)(player.playerposition.Y + (one / 2)));
             bool playertileemptyclose = IsTileEmptyForPhysicsClose(
-                        (int)ToMapPos(ToVector3(player.playerposition)).X,
-                        (int)ToMapPos(ToVector3(player.playerposition)).Y,
-                        (int)ToMapPos(ToVector3(player.playerposition)).Z);
+                        (int)(player.playerposition.X),
+                        (int)(player.playerposition.Z),
+                        (int)(player.playerposition.Y + (one / 2)));
             BlockPosSide pick0;
             if (pick2.Count > 0 &&
                 ((pickdistanceok && (playertileempty || (playertileemptyclose)))
