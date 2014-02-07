@@ -487,7 +487,7 @@ namespace CitoGl
 
         public override void Disable(int cap)
         {
-            throw new NotImplementedException();
+            GL.Disable((EnableCap)cap);
         }
 
         public override void DisableVertexAttribArray(int index)
@@ -806,17 +806,22 @@ namespace CitoGl
                 bmp2.RotateFlip(RotateFlipType.RotateNoneFlipY);
             }
 
+            LoadBitmap(target, level, type, bmp2);
+
+            if (UnpackFlipYWebgl != 0)
+            {
+                bmp2.Dispose();
+            }
+        }
+
+        void LoadBitmap(int target, int level, int type, Bitmap bmp2)
+        {
             BitmapData bmp_data = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
             GL.TexImage2D((TextureTarget)target, level, PixelInternalFormat.Rgba,
                 bmp2.Width, bmp2.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, (PixelType)type, bmp_data.Scan0);
 
             bmp2.UnlockBits(bmp_data);
-
-            if (UnpackFlipYWebgl != 0)
-            {
-                bmp2.Dispose();
-            }
         }
 
         public override void TexImage2DCanvas(int target, int level, int internalformat,

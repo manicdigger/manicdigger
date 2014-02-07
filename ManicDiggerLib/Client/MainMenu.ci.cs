@@ -6,11 +6,15 @@
         p = GamePlatform.Create();
         textures = new LoadedTexture[256];
         texturesCount = 0;
+        textTextures = new TextTexture[256];
+        textTexturesCount = 0;
+        screen = new ScreenMain();
+        screen.menu = this;
     }
 
-    GamePlatform p;
+    internal GamePlatform p;
 
-    float one;
+    internal float one;
 
     public void Start(Gl gl_)
     {
@@ -91,7 +95,7 @@
         shaderProgrammvMatrixUniform = gl.GetUniformLocation(shaderProgram, "uMVMatrix");
         shaderProgramsamplerUniform = gl.GetUniformLocation(shaderProgram, "uSampler");
     }
-    Gl gl;
+    internal Gl gl;
 
     int viewportWidth;
     int viewportHeight;
@@ -128,6 +132,11 @@
                 filter = 0;
             }
         }
+        if (e.GetKeyChar() == 96) // '`'
+        {
+            screen.OnBackPressed();
+        }
+        screen.OnKeyPress(e);
     }
 
     void HandleKeys()
@@ -239,6 +248,7 @@
     {
         gl.Viewport(0, 0, viewportWidth, viewportHeight);
         gl.Clear(Gl.ColorBufferBit | Gl.DepthBufferBit);
+        gl.Disable(Gl.DepthTest);
         {
             //Mat4.Perspective(pMatrix, 45, one * viewportWidth / viewportHeight, one / 100, one * 1000);
             //Mat4.Identity_(mvMatrix);
@@ -249,13 +259,65 @@
             Mat4.Ortho(pMatrix, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight(), 0, 0, 10);
         }
 
-        float scale = one * gl.GetCanvasWidth() / 1280;
-        float size = one * 80 / 100;
-        Draw2dQuad(GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
-        Draw2dQuad(GetTexture("background.png"), 0, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight());
+        screen.Render();
     }
 
-    WebGLTexture GetTexture(string name)
+    Screen screen;
+
+    internal void DrawButton(string text, float fontSize, float dx, float dy, float dw, float dh, bool pressed)
+    {
+        Draw2dQuad(pressed ? GetTexture("button_sel.png") : GetTexture("button.png"), dx, dy, dw, dh);
+        
+        if (text != "")
+        {
+            DrawText(text, fontSize, dx + dw / 2, dy + dh / 2, TextAlign.Center, TextBaseline.Middle);
+        }
+    }
+
+    internal void DrawText(string text, float fontSize, float x, float y, TextAlign align, TextBaseline baseline)
+    {
+        TextTexture t = GetTextTexture(text, fontSize);
+        int dx = 0;
+        int dy = 0;
+        if (align == TextAlign.Center)
+        {
+            dx -= t.textwidth / 2;
+        }
+        if (align == TextAlign.Right)
+        {
+            dx -= t.textwidth;
+        }
+        if (baseline == TextBaseline.Middle)
+        {
+            dy -= t.textheight / 2;
+        }
+        if (baseline == TextBaseline.Bottom)
+        {
+            dy -= t.textheight;
+        }
+        Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
+    }
+    
+    TextTexture GetTextTexture(string text, float fontSize)
+    {
+        for (int i = 0; i < textTexturesCount; i++)
+        {
+            TextTexture t = textTextures[i];
+            if (t == null)
+            {
+                continue;
+            }
+            if (t.text == text && t.size == fontSize)
+            {
+                return t;
+            }
+        }
+        TextTexture tnew = p.CreateTextTexture(gl, text, fontSize);
+        textTextures[textTexturesCount++] = tnew;
+        return tnew;
+    }
+
+    internal WebGLTexture GetTexture(string name)
     {
         for (int i = 0; i < texturesCount; i++)
         {
@@ -370,11 +432,13 @@
         mousePressed = true;
         previousMouseX = e.GetX();
         previousMouseY = e.GetY();
+        screen.OnMouseDown(e);
     }
 
     public void HandleMouseUp(MouseEventArgs e)
     {
         mousePressed = false;
+        screen.OnMouseUp(e);
     }
 
     bool mousePressed;
@@ -393,11 +457,13 @@
             ySpeed += dx / 10;
             xSpeed += dy / 10;
         }
+        screen.OnMouseMove(e);
     }
 
     public void HandleMouseWheel(MouseWheelEventArgs e)
     {
         z += e.GetDeltaPrecise() / 5;
+        screen.OnMouseWheel(e);
     }
 
     public void HandleTouchStart(TouchEventArgs e)
@@ -432,6 +498,78 @@
 
     LoadedTexture[] textures;
     int texturesCount;
+    TextTexture[] textTextures;
+    int textTexturesCount;
+
+    internal void StartSingleplayer()
+    {
+        screen = new ScreenSingleplayer();
+        screen.menu = this;
+    }
+
+    internal void StartLogin()
+    {
+        screen = new ScreenLogin();
+        screen.menu = this;
+    }
+
+    internal void Exit()
+    {
+        p.Exit();
+    }
+
+    internal void StartMainMenu()
+    {
+        screen = new ScreenMain();
+        screen.menu = this;
+    }
+
+    internal void DrawBackground()
+    {
+        float scale = one * gl.GetCanvasWidth() / 1280;
+        Draw2dQuad(GetTexture("background.png"), 0, 0, 1280 * scale, 1280 * scale);
+    }
+
+    internal void StartMultiplayer()
+    {
+        screen = new ScreenMultiplayer();
+        screen.menu = this;
+    }
+
+    internal void Login(string user, string password, LoginResultRef loginResult)
+    {
+        if (user == "" || password == "")
+        {
+            loginResult.value = LoginResult.Failed;
+        }
+        else
+        {
+            loginResult.value = LoginResult.Ok;
+        }
+    }
+
+    internal void CreateAccount(string user, string password, LoginResultRef loginResult)
+    {
+        if (user == "" || password == "")
+        {
+            loginResult.value = LoginResult.Failed;
+        }
+        else
+        {
+            loginResult.value = LoginResult.Ok;
+        }
+    }
+}
+
+public class TextTexture
+{
+    internal float size;
+    internal string text;
+    internal WebGLTexture texture;
+    internal int texturewidth;
+    internal int textureheight;
+    internal int textwidth;
+    internal int textheight;
 }
 
 public class LoadedTexture
@@ -439,6 +577,502 @@ public class LoadedTexture
     internal string name;
     internal HTMLImageElement image;
     internal WebGLTexture texture;
+}
+
+public class Screen
+{
+    public Screen()
+    {
+        widgets = new MenuWidget[WidgetCount];
+    }
+    internal MainMenu menu;
+    public virtual void Render() { }
+    public virtual void OnKeyDown(KeyEventArgs e) {  }
+    public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
+    public virtual void OnKeyUp(KeyEventArgs e) { }
+    public virtual void OnTouchStart(TouchEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
+    public virtual void OnTouchMove(TouchEventArgs e) { }
+    public virtual void OnTouchEnd(TouchEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
+    public virtual void OnMouseDown(MouseEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
+    public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
+    public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
+    public virtual void OnBackPressed() { }
+   
+    void KeyPress(KeyPressEventArgs e)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Textbox)
+                {
+                    if (w.editing)
+                    {
+                        string s = CharToString(e.GetKeyChar());
+                        if (e.GetKeyChar() == 8) // backspace
+                        {
+                            if (StringLength(w.text) > 0)
+                            {
+                                w.text = StringSubstring(w.text, 0, StringLength(w.text) - 1);
+                            }
+                            return;
+                        }
+                        if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
+                        {
+                            return;
+                        }
+                        w.text = StringAppend(w.text, s);
+                    }
+                }
+            }
+        }
+    }
+
+    int StringLength(string p)
+    {
+        IntRef length = new IntRef();
+        menu.p.StringToCharArray(p, length);
+        return length.value;
+    }
+
+    string CharToString(int a)
+    {
+        int[] arr = new int[1];
+        arr[0] = a;
+        return menu.p.CharArrayToString(arr, 1);
+    }
+
+    string StringAppend(string a, string b)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = menu.p.StringToCharArray(a, aLength);
+        IntRef bLength = new IntRef();
+        int[] bChars = menu.p.StringToCharArray(b, bLength);
+
+        int[] cChars = new int[aLength.value + bLength.value];
+        for (int i = 0; i < aLength.value; i++)
+        {
+            cChars[i] = aChars[i];
+        }
+        for (int i = 0; i < bLength.value; i++)
+        {
+            cChars[i + aLength.value] = bChars[i];
+        }
+        return menu.p.CharArrayToString(cChars, aLength.value + bLength.value);
+    }
+
+    string StringSubstring(string a, int start, int count)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = menu.p.StringToCharArray(a, aLength);
+
+        int[] bChars = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            bChars[i] = aChars[start + i];
+        }
+        return menu.p.CharArrayToString(bChars, count);
+    }
+
+    void MouseDown(int x, int y)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Button)
+                {
+                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                }
+                if (w.type == WidgetType.Textbox)
+                {
+                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    w.editing = w.pressed;
+                }
+            }
+        }
+    }
+    
+    void MouseUp(int x, int y)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                w.pressed = false;
+            }
+        }
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Button)
+                {
+                    if (pointInRect(x, y, w.x, w.y, w.sizex, w.sizey))
+                    {
+                        OnButton(w);
+                    }
+                }
+            }
+        }
+    }
+
+    public virtual void OnButton(MenuWidget w) { }
+
+    void MouseMove(MouseEventArgs e)
+    {
+    }
+
+    bool pointInRect(float x, float y, float rx, float ry, float rw, float rh)
+    {
+        return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+    }
+
+    public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
+    public const int WidgetCount = 64;
+    internal MenuWidget[] widgets;
+    public void DrawWidgets()
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                string text = w.text;
+                if (w.type == WidgetType.Button)
+                {
+                    menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                }
+                if (w.type == WidgetType.Textbox)
+                {
+                    if (w.password)
+                    {
+                        text = CharRepeat(42, StringLength(w.text)); // '*'
+                    }
+                    if (w.editing)
+                    {
+                        text = StringAppend(text, "_");
+                    }
+                    menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                }
+                if (w.description != null)
+                {
+                    menu.DrawText(w.description, w.fontSize, w.x, w.y, TextAlign.Right, TextBaseline.Top);
+                }
+            }
+        }
+    }
+
+    string CharRepeat(int c, int length)
+    {
+        int[] charArray = new int[length];
+        for (int i = 0; i < length; i++)
+        {
+            charArray[i] = c;
+        }
+        return menu.p.CharArrayToString(charArray, length);
+    }
+}
+
+
+public class ScreenMain : Screen
+{
+    public ScreenMain()
+    {
+        singleplayer = new MenuWidget();
+        multiplayer = new MenuWidget();
+        widgets[0] = singleplayer;
+        widgets[1] = multiplayer;
+    }
+    MenuWidget singleplayer;
+    MenuWidget multiplayer;
+    public override void Render()
+    {
+        Gl gl = menu.gl;
+        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        float size = menu.one * 80 / 100;
+        menu.DrawBackground();
+        menu.Draw2dQuad(menu.GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
+
+        singleplayer.text = "Singleplayer";
+        singleplayer.x = gl.GetCanvasWidth() / 2 - (256 + 100) * scale;
+        singleplayer.y = gl.GetCanvasHeight() * 7 / 10;
+        singleplayer.sizex = 256 * scale;
+        singleplayer.sizey = 64 * scale;
+
+        multiplayer.text = "Multiplayer";
+        multiplayer.x = gl.GetCanvasWidth() / 2 + (100) * scale;
+        multiplayer.y = gl.GetCanvasHeight() * 7 / 10;
+        multiplayer.sizex = 256 * scale;
+        multiplayer.sizey = 64 * scale;
+        DrawWidgets();
+    }
+
+    public override void OnButton(MenuWidget w)
+    {
+        if (w == singleplayer)
+        {
+            menu.StartSingleplayer();
+        }
+        if (w == multiplayer)
+        {
+            menu.StartLogin();
+        }
+    }
+
+    public override void OnBackPressed()
+    {
+        menu.Exit();
+    }
+}
+
+public class ScreenSingleplayer : Screen
+{
+    public override void Render()
+    {
+        Gl gl = menu.gl;
+        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+        menu.DrawText("Singleplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+
+        DrawWidgets();
+    }
+
+    public override void OnBackPressed()
+    {
+        menu.StartMainMenu();
+    }
+}
+
+public class ScreenLogin : Screen
+{
+    public ScreenLogin()
+    {
+        login = new MenuWidget();
+        login.text = "Login";
+        login.type = WidgetType.Button;
+        loginUsername = new MenuWidget();
+        loginUsername.type = WidgetType.Textbox;
+        loginUsername.text = "";
+        loginUsername.description = "Username";
+        loginPassword = new MenuWidget();
+        loginPassword.type = WidgetType.Textbox;
+        loginPassword.text = "";
+        loginPassword.description = "Password";
+        loginPassword.password = true;
+        loginRememberMe = new MenuWidget();
+        loginRememberMe.text = "Yes";
+        loginRememberMe.type = WidgetType.Button;
+        loginRememberMe.description = "Remember me";
+
+        createAccount = new MenuWidget();
+        createAccount.text = "Create account";
+        createAccount.type = WidgetType.Button;
+        createAccountUsername = new MenuWidget();
+        createAccountUsername.text = "";
+        createAccountUsername.type = WidgetType.Textbox;
+        createAccountUsername.description = "Username";
+        createAccountPassword = new MenuWidget();
+        createAccountPassword.text = "";
+        createAccountPassword.type = WidgetType.Textbox;
+        createAccountPassword.description = "Password";
+        createAccountPassword.password = true;
+        createAccountRememberMe = new MenuWidget();
+        createAccountRememberMe.text = "Yes";
+        createAccountRememberMe.type = WidgetType.Button;
+        createAccountRememberMe.description = "Remember me";
+
+        widgets[0] = login;
+        widgets[1] = loginUsername;
+        widgets[2] = loginPassword;
+        widgets[3] = loginRememberMe;
+        widgets[4] = createAccount;
+        widgets[5] = createAccountUsername;
+        widgets[6] = createAccountPassword;
+        widgets[7] = createAccountRememberMe;
+
+        loginResult = new LoginResultRef();
+    }
+
+    MenuWidget login;
+    MenuWidget loginUsername;
+    MenuWidget loginPassword;
+    MenuWidget loginRememberMe;
+    
+    MenuWidget createAccount;
+    MenuWidget createAccountUsername;
+    MenuWidget createAccountPassword;
+    MenuWidget createAccountRememberMe;
+
+    public override void Render()
+    {
+        if (loginResult.value == LoginResult.Ok)
+        {
+            menu.StartMultiplayer();
+        }
+
+        Gl gl = menu.gl;
+        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+
+
+        float leftx = gl.GetCanvasWidth() / 2 - 400 * scale;
+        float y = gl.GetCanvasHeight() / 2 - 200 * scale;
+
+        if (loginResult.value == LoginResult.Failed)
+        {
+            menu.DrawText("&4Invalid username or password", 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+        }
+
+        menu.DrawText("Login", 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+
+        loginUsername.x = leftx;
+        loginUsername.y = y + 100 * scale;
+        loginUsername.sizex = 256 * scale;
+        loginUsername.sizey = 64 * scale;
+        loginUsername.fontSize = 14 * scale;
+
+        loginPassword.x = leftx;
+        loginPassword.y = y + 200 * scale;
+        loginPassword.sizex = 256 * scale;
+        loginPassword.sizey = 64 * scale;
+        loginPassword.fontSize = 14 * scale;
+
+        loginRememberMe.x = leftx;
+        loginRememberMe.y = y + 300 * scale;
+        loginRememberMe.sizex = 256 * scale;
+        loginRememberMe.sizey = 64 * scale;
+        loginRememberMe.fontSize = 14 * scale;
+
+        login.x = leftx;
+        login.y = y + 400 * scale;
+        login.sizex = 256 * scale;
+        login.sizey = 64 * scale;
+        login.fontSize = 14 * scale;
+
+        float rightx = gl.GetCanvasWidth() / 2 + 100 * scale;
+
+        menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+
+        createAccountUsername.x = rightx;
+        createAccountUsername.y = y + 100 * scale;
+        createAccountUsername.sizex = 256 * scale;
+        createAccountUsername.sizey = 64 * scale;
+        createAccountUsername.fontSize = 14 * scale;
+
+        createAccountPassword.x = rightx;
+        createAccountPassword.y = y + 200 * scale;
+        createAccountPassword.sizex = 256 * scale;
+        createAccountPassword.sizey = 64 * scale;
+        createAccountPassword.fontSize = 14 * scale;
+
+        createAccountRememberMe.x = rightx;
+        createAccountRememberMe.y = y + 300 * scale;
+        createAccountRememberMe.sizex = 256 * scale;
+        createAccountRememberMe.sizey = 64 * scale;
+        createAccountRememberMe.fontSize = 14 * scale;
+
+        createAccount.x = rightx;
+        createAccount.y = y + 400 * scale;
+        createAccount.sizex = 256 * scale;
+        createAccount.sizey = 64 * scale;
+        createAccount.fontSize = 14 * scale;
+
+        DrawWidgets();
+    }
+
+    public override void OnBackPressed()
+    {
+        menu.StartMainMenu();
+    }
+
+    LoginResultRef loginResult;
+
+    public override void OnButton(MenuWidget w)
+    {
+        if (w == login)
+        {
+            menu.Login(loginUsername.text, loginPassword.text, loginResult);
+        }
+        if (w == createAccount)
+        {
+            menu.CreateAccount(createAccountUsername.text, createAccountPassword.text, loginResult);
+        }
+        if (w == loginRememberMe || w == createAccountRememberMe)
+        {
+            if (w.text == "Yes")
+            {
+                w.text = "No";
+            }
+            else
+            {
+                w.text = "Yes";
+            }
+        }
+    }
+}
+
+public enum LoginResult
+{
+    None,
+    Connecting,
+    Failed,
+    Ok
+}
+
+public class LoginResultRef
+{
+    internal LoginResult value;
+}
+
+public class ScreenMultiplayer : Screen
+{
+    public override void Render()
+    {
+        Gl gl = menu.gl;
+        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+        menu.DrawText("Multiplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+
+        DrawWidgets();
+    }
+
+    public override void OnBackPressed()
+    {
+        menu.StartMainMenu();
+    }
+}
+
+public enum WidgetType
+{
+    Button,
+    Textbox,
+    Label
+}
+
+public class MenuWidget
+{
+    public MenuWidget()
+    {
+        visible = true;
+        fontSize = 14;
+    }
+    internal string text;
+    internal float x;
+    internal float y;
+    internal float sizex;
+    internal float sizey;
+    internal bool pressed;
+    internal WidgetType type;
+    internal bool editing;
+    internal bool visible;
+    internal float fontSize;
+    internal string description;
+    internal bool password;
 }
 
 public class Model

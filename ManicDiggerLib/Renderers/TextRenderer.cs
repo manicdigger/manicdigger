@@ -467,6 +467,7 @@ namespace ManicDigger.Renderers
 
        public virtual SizeF MeasureTextSize(string text, float fontsize)
        {
+           fontsize = Math.Max(fontsize, 9);
             using(Font font = new Font("Verdana", fontsize))
             {
                 using(Bitmap bmp = new Bitmap(1, 1))

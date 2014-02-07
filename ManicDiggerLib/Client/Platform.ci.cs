@@ -43,6 +43,25 @@
     public abstract string StringFormat(string format, string arg0);
     public abstract string StringFormat2(string format, string arg0, string arg1);
     public abstract void ClipboardSetText(string s);
+    public abstract TextTexture CreateTextTexture(Gl gl, string text, float fontSize);
+    public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
+    public abstract void Exit();
+    public abstract int[] StringToCharArray(string s, IntRef length);
+    public abstract string CharArrayToString(int[] charArray, int length);
+}
+
+public enum TextAlign
+{
+    Left,
+    Center,
+    Right
+}
+
+public enum TextBaseline
+{
+    Top,
+    Middle,
+    Bottom
 }
 
 public class IntRef

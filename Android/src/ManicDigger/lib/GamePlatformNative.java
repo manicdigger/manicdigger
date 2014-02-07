@@ -2,7 +2,22 @@ package ManicDigger.lib;
 
 public class GamePlatformNative extends GamePlatform {
     @Override
+    public String charArrayToString(int[] charArray, int length) {
+        return null;
+    }
+
+    @Override
     public void clipboardSetText(String s) {
+
+    }
+
+    @Override
+    public TextTexture createTextTexture(Gl gl, String text, float fontSize) {
+        return null;
+    }
+
+    @Override
+    public void exit() {
 
     }
 
@@ -52,8 +67,18 @@ public class GamePlatformNative extends GamePlatform {
     }
 
     @Override
+    public int[] stringToCharArray(String s, IntRef length) {
+        return new int[0];
+    }
+
+    @Override
     public String stringTrim(String value) {
         return null;
+    }
+
+    @Override
+    public void textSize(String text, float fontSize, IntRef outWidth, IntRef outHeight) {
+
     }
 
     @Override
