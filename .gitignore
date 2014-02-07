@@ -15,3 +15,5 @@ _ReSharper.*
 /Packet.cs
 
 /ProtocolParser.cs
+
+local.properties
