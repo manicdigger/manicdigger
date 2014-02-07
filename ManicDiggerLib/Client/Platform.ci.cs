@@ -7,17 +7,17 @@
 #if CS
         native
         {
-            gl = new ManicDigger.GamePlatformNative();
+            platform = new ManicDigger.GamePlatformNative();
         }
 #elif JAVA
         native
         {
-            gl = new ManicDigger.lib.GamePlatformNative();
+            platform = new ManicDigger.lib.GamePlatformNative();
         }
 #elif JS
         native
         {
-            gl = new GamePlatformNative();
+            platform = new GamePlatformNative();
         }
 #elif C
 #endif
