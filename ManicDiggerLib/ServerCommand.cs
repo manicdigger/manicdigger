@@ -27,6 +27,14 @@ namespace ManicDiggerServer
                     }
                     SendMessage(sourceClientId, colorError + "Invalid arguments. Type /help to see command's usage.");
                     return;
+                case "re":
+                    if (!string.IsNullOrEmpty(argument))
+                    {
+                        this.AnswerMessage(sourceClientId, argument);
+                        return;
+                    }
+                    SendMessage(sourceClientId, colorError + "You can't send an empty message.");
+                    return;
                 case "op":
                 case "chgrp":
                 case "cg":
@@ -742,6 +750,7 @@ namespace ManicDiggerServer
             }
         }
         public Dictionary<string, string> commandhelps = new Dictionary<string, string>();
+        public Dictionary<string, string> lastSender = new Dictionary<string, string>();
 
         public bool PrivateMessage(int sourceClientId, string recipient, string message)
         {
@@ -757,11 +766,39 @@ namespace ManicDiggerServer
             {
                 SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
                 SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
+                lastSender[targetClient.playername] = sourceClient.playername;
                 // TODO: move message sound to client
                 //SendSound(k.Key, "message.wav");
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, recipient));
+            return false;
+        }
+
+        public bool AnswerMessage(int sourceClientId, string message)
+        {
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.pm))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Insufficient privileges to access this command.", colorError));
+                return false;
+            }
+            
+            Client sourceClient = GetClient(sourceClientId);
+            if (!lastSender.ContainsKey(sourceClient.playername))
+            {
+                SendMessage(sourceClientId, string.Format("{0}Nobody sent you a PM yet.", colorError));
+                return false;
+            }
+
+            Client targetClient = GetClient(lastSender[sourceClient.playername]);
+            if (targetClient != null)
+            {
+                SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
+                SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
+                lastSender[targetClient.playername] = sourceClient.playername;
+                return true;
+            }
+            SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, lastSender[sourceClient.playername]));
             return false;
         }
 
