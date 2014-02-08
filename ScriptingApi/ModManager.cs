@@ -138,6 +138,7 @@ namespace ManicDigger
         ServerClient GetServerClient();
         long TotalReceivedBytes();
         long TotalSentBytes();
+        void SetPlayerNameColor(int player, string color);
     }
 
     public enum SpecialKey
