@@ -48,6 +48,8 @@
     public abstract void Exit();
     public abstract int[] StringToCharArray(string s, IntRef length);
     public abstract string CharArrayToString(int[] charArray, int length);
+    public abstract string PathSavegames();
+    public abstract string[] DirectoryGetFiles(string path, IntRef length);
 }
 
 public enum TextAlign

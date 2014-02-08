@@ -17,6 +17,11 @@ public class GamePlatformNative extends GamePlatform {
     }
 
     @Override
+    public String[] directoryGetFiles(String path, IntRef length) {
+        return new String[0];
+    }
+
+    @Override
     public void exit() {
 
     }
@@ -49,6 +54,11 @@ public class GamePlatformNative extends GamePlatform {
     @Override
     public float mathSqrt(float value) {
         return 0;
+    }
+
+    @Override
+    public String pathSavegames() {
+        return null;
     }
 
     @Override

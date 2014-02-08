@@ -559,6 +559,83 @@
             loginResult.value = LoginResult.Ok;
         }
     }
+
+    internal string[] GetSavegames(IntRef length)
+    {
+        string[] files = p.DirectoryGetFiles(p.PathSavegames(), length);
+        string[] savegames = new string[length.value];
+        int count = 0;
+        for (int i = 0; i < length.value; i++)
+        {
+            if(StringEndsWith(files[i], ".mddbs"))
+            {
+                savegames[count++] = files[i];
+            }
+        }
+        length.value = count;
+        return savegames;
+    }
+
+    public bool StringEndsWith(string s, string value)
+    {
+        return StringSubstring(s, StringLength(s) - StringLength(value), StringLength(value)) == value;
+    }
+
+    public int StringLength(string a)
+    {
+        IntRef length = new IntRef();
+        p.StringToCharArray(a, length);
+        return length.value;
+    }
+
+    public string CharToString(int a)
+    {
+        int[] arr = new int[1];
+        arr[0] = a;
+        return p.CharArrayToString(arr, 1);
+    }
+
+    public string StringAppend(string a, string b)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = p.StringToCharArray(a, aLength);
+        IntRef bLength = new IntRef();
+        int[] bChars = p.StringToCharArray(b, bLength);
+
+        int[] cChars = new int[aLength.value + bLength.value];
+        for (int i = 0; i < aLength.value; i++)
+        {
+            cChars[i] = aChars[i];
+        }
+        for (int i = 0; i < bLength.value; i++)
+        {
+            cChars[i + aLength.value] = bChars[i];
+        }
+        return p.CharArrayToString(cChars, aLength.value + bLength.value);
+    }
+
+    public string StringSubstring(string a, int start, int count)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = p.StringToCharArray(a, aLength);
+
+        int[] bChars = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            bChars[i] = aChars[start + i];
+        }
+        return p.CharArrayToString(bChars, count);
+    }
+
+    public string CharRepeat(int c, int length)
+    {
+        int[] charArray = new int[length];
+        for (int i = 0; i < length; i++)
+        {
+            charArray[i] = c;
+        }
+        return p.CharArrayToString(charArray, length);
+    }
 }
 
 public class TextTexture
@@ -609,12 +686,12 @@ public class Screen
                 {
                     if (w.editing)
                     {
-                        string s = CharToString(e.GetKeyChar());
+                        string s = menu.CharToString(e.GetKeyChar());
                         if (e.GetKeyChar() == 8) // backspace
                         {
-                            if (StringLength(w.text) > 0)
+                            if (menu.StringLength(w.text) > 0)
                             {
-                                w.text = StringSubstring(w.text, 0, StringLength(w.text) - 1);
+                                w.text = menu.StringSubstring(w.text, 0, menu.StringLength(w.text) - 1);
                             }
                             return;
                         }
@@ -622,57 +699,11 @@ public class Screen
                         {
                             return;
                         }
-                        w.text = StringAppend(w.text, s);
+                        w.text = menu.StringAppend(w.text, s);
                     }
                 }
             }
         }
-    }
-
-    int StringLength(string p)
-    {
-        IntRef length = new IntRef();
-        menu.p.StringToCharArray(p, length);
-        return length.value;
-    }
-
-    string CharToString(int a)
-    {
-        int[] arr = new int[1];
-        arr[0] = a;
-        return menu.p.CharArrayToString(arr, 1);
-    }
-
-    string StringAppend(string a, string b)
-    {
-        IntRef aLength = new IntRef();
-        int[] aChars = menu.p.StringToCharArray(a, aLength);
-        IntRef bLength = new IntRef();
-        int[] bChars = menu.p.StringToCharArray(b, bLength);
-
-        int[] cChars = new int[aLength.value + bLength.value];
-        for (int i = 0; i < aLength.value; i++)
-        {
-            cChars[i] = aChars[i];
-        }
-        for (int i = 0; i < bLength.value; i++)
-        {
-            cChars[i + aLength.value] = bChars[i];
-        }
-        return menu.p.CharArrayToString(cChars, aLength.value + bLength.value);
-    }
-
-    string StringSubstring(string a, int start, int count)
-    {
-        IntRef aLength = new IntRef();
-        int[] aChars = menu.p.StringToCharArray(a, aLength);
-
-        int[] bChars = new int[count];
-        for (int i = 0; i < count; i++)
-        {
-            bChars[i] = aChars[start + i];
-        }
-        return menu.p.CharArrayToString(bChars, count);
     }
 
     void MouseDown(int x, int y)
@@ -742,6 +773,10 @@ public class Screen
             MenuWidget w = widgets[i];
             if (w != null)
             {
+                if (!w.visible)
+                {
+                    continue;
+                }
                 string text = w.text;
                 if (w.type == WidgetType.Button)
                 {
@@ -751,11 +786,11 @@ public class Screen
                 {
                     if (w.password)
                     {
-                        text = CharRepeat(42, StringLength(w.text)); // '*'
+                        text = menu.CharRepeat(42, menu.StringLength(w.text)); // '*'
                     }
                     if (w.editing)
                     {
-                        text = StringAppend(text, "_");
+                        text = menu.StringAppend(text, "_");
                     }
                     menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
                 }
@@ -767,15 +802,6 @@ public class Screen
         }
     }
 
-    string CharRepeat(int c, int length)
-    {
-        int[] charArray = new int[length];
-        for (int i = 0; i < length; i++)
-        {
-            charArray[i] = c;
-        }
-        return menu.p.CharArrayToString(charArray, length);
-    }
 }
 
 
@@ -832,12 +858,69 @@ public class ScreenMain : Screen
 
 public class ScreenSingleplayer : Screen
 {
+    public ScreenSingleplayer()
+    {
+        play = new MenuWidget();
+        play.text = "Play";
+        newWorld = new MenuWidget();
+        newWorld.text = "New World";
+        modify = new MenuWidget();
+        modify.text = "Modify";
+
+        widgets[0] = play;
+        widgets[1] = newWorld;
+        widgets[2] = modify;
+
+        worldButtons = new MenuWidget[10];
+        for (int i = 0; i < 10; i++)
+        {
+            worldButtons[i] = new MenuWidget();
+            worldButtons[i].visible = false;
+            widgets[3 + i] = worldButtons[i];
+        }
+    }
+
+    MenuWidget newWorld;
+    MenuWidget play;
+    MenuWidget modify;
+
+    MenuWidget[] worldButtons;
+
+    string[] savegames;
+
     public override void Render()
     {
         Gl gl = menu.gl;
         float scale = menu.one * gl.GetCanvasWidth() / 1280;
         menu.DrawBackground();
         menu.DrawText("Singleplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+
+        float leftx = gl.GetCanvasWidth() / 2 - 128 * scale;
+        float y = gl.GetCanvasHeight() / 2 + 0 * scale;
+
+        play.x = leftx;
+        play.y = y + 100 * scale;
+        play.sizex = 256 * scale;
+        play.sizey = 64 * scale;
+        play.fontSize = 14 * scale;
+
+        newWorld.x = leftx;
+        newWorld.y = y + 170 * scale;
+        newWorld.sizex = 256 * scale;
+        newWorld.sizey = 64 * scale;
+        newWorld.fontSize = 14 * scale;
+
+        modify.x = leftx;
+        modify.y = y + 240 * scale;
+        modify.sizex = 256 * scale;
+        modify.sizey = 64 * scale;
+        modify.fontSize = 14 * scale;
+        
+        IntRef savegamesCount = new IntRef();
+        if (savegames == null)
+        {
+            savegames = menu.GetSavegames(savegamesCount);
+        }
 
         DrawWidgets();
     }
@@ -847,6 +930,29 @@ public class ScreenSingleplayer : Screen
         menu.StartMainMenu();
     }
 }
+
+public class ScreenModifyWorld : Screen
+{
+    public ScreenModifyWorld()
+    {
+    }
+
+    public override void Render()
+    {
+        Gl gl = menu.gl;
+        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+        menu.DrawText("Modify World", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+
+        DrawWidgets();
+    }
+
+    public override void OnBackPressed()
+    {
+        menu.StartSingleplayer();
+    }
+}
+
 
 public class ScreenLogin : Screen
 {

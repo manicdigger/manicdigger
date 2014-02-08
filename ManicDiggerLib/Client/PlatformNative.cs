@@ -193,4 +193,16 @@ public class GamePlatformNative : GamePlatform
         }
         return s.ToString();
     }
+
+    public override string PathSavegames()
+    {
+        return ".";
+    }
+
+    public override string[] DirectoryGetFiles(string path, IntRef length)
+    {
+        string[] files = Directory.GetFiles(path);
+        length.value = files.Length;
+        return files;
+    }
 }
