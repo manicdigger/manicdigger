@@ -27,6 +27,11 @@ public class GamePlatformNative extends GamePlatform {
     }
 
     @Override
+    public String fileName(String fullpath) {
+        return null;
+    }
+
+    @Override
     public float floatParse(String value) {
         return 0;
     }
@@ -94,5 +99,10 @@ public class GamePlatformNative extends GamePlatform {
     @Override
     public String timestamp() {
         return null;
+    }
+
+    @Override
+    public void webClientDownloadStringAsync(String url, HttpResponseCi response) {
+
     }
 }
