@@ -6,6 +6,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Drawing;
 using System;
 using System.Text;
+using System.Net;
 
 public class GamePlatformNative : GamePlatform
 {
@@ -204,5 +205,27 @@ public class GamePlatformNative : GamePlatform
         string[] files = Directory.GetFiles(path);
         length.value = files.Length;
         return files;
+    }
+
+    public override void WebClientDownloadStringAsync(string url, HttpResponseCi response)
+    {
+        WebClient c = new WebClient();
+        c.DownloadStringCompleted += new DownloadStringCompletedEventHandler(c_DownloadStringCompleted);
+        c.DownloadStringAsync(new Uri(url), response);
+    }
+
+    void c_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+    {
+        if (e.Error == null)
+        {
+            ((HttpResponseCi)e.UserState).value = e.Result;
+            ((HttpResponseCi)e.UserState).done = true;
+        }
+    }
+
+    public override string FileName(string fullpath)
+    {
+        FileInfo info = new FileInfo(fullpath);
+        return info.Name.Replace(info.Extension, "");
     }
 }

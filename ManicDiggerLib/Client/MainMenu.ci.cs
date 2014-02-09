@@ -636,6 +636,14 @@
         }
         return p.CharArrayToString(charArray, length);
     }
+    
+    internal void StartNewWorld()
+    {
+    }
+
+    internal void StartModifyWorld()
+    {
+    }
 }
 
 public class TextTexture
@@ -660,6 +668,7 @@ public class Screen
 {
     public Screen()
     {
+        WidgetCount = 64;
         widgets = new MenuWidget[WidgetCount];
     }
     internal MainMenu menu;
@@ -764,7 +773,7 @@ public class Screen
     }
 
     public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
-    public const int WidgetCount = 64;
+    internal int WidgetCount;
     internal MenuWidget[] widgets;
     public void DrawWidgets()
     {
@@ -778,9 +787,20 @@ public class Screen
                     continue;
                 }
                 string text = w.text;
+                if (w.selected)
+                {
+                    text = menu.StringAppend("&2", text);
+                }
                 if (w.type == WidgetType.Button)
                 {
-                    menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                    if (w.buttonStyle == ButtonStyle.Text)
+                    {
+                        menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                    }
+                    else
+                    {
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                    }
                 }
                 if (w.type == WidgetType.Textbox)
                 {
@@ -792,11 +812,18 @@ public class Screen
                     {
                         text = menu.StringAppend(text, "_");
                     }
-                    menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                    if (w.buttonStyle == ButtonStyle.Text)
+                    {
+                        menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
+                    }
+                    else
+                    {
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                    }
                 }
                 if (w.description != null)
                 {
-                    menu.DrawText(w.description, w.fontSize, w.x, w.y, TextAlign.Right, TextBaseline.Top);
+                    menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
                 }
             }
         }
@@ -866,27 +893,33 @@ public class ScreenSingleplayer : Screen
         newWorld.text = "New World";
         modify = new MenuWidget();
         modify.text = "Modify";
+        back = new MenuWidget();
+        back.text = "Back";
+        back.type = WidgetType.Button;
 
         widgets[0] = play;
         widgets[1] = newWorld;
         widgets[2] = modify;
+        widgets[3] = back;
 
         worldButtons = new MenuWidget[10];
         for (int i = 0; i < 10; i++)
         {
             worldButtons[i] = new MenuWidget();
             worldButtons[i].visible = false;
-            widgets[3 + i] = worldButtons[i];
+            widgets[4 + i] = worldButtons[i];
         }
     }
 
     MenuWidget newWorld;
     MenuWidget play;
     MenuWidget modify;
+    MenuWidget back;
 
     MenuWidget[] worldButtons;
 
     string[] savegames;
+    int savegamesCount;
 
     public override void Render()
     {
@@ -915,11 +948,33 @@ public class ScreenSingleplayer : Screen
         modify.sizex = 256 * scale;
         modify.sizey = 64 * scale;
         modify.fontSize = 14 * scale;
+
+        back.x = 40 * scale;
+        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.sizex = 256 * scale;
+        back.sizey = 64 * scale;
+        back.fontSize = 14 * scale;
         
-        IntRef savegamesCount = new IntRef();
         if (savegames == null)
         {
-            savegames = menu.GetSavegames(savegamesCount);
+            IntRef savegamesCount_ = new IntRef();
+            savegames = menu.GetSavegames(savegamesCount_);
+            savegamesCount = savegamesCount_.value;
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            worldButtons[i].visible = false;
+        }
+        for (int i = 0; i < savegamesCount; i++)
+        {
+            worldButtons[i].visible = true;
+            worldButtons[i].text = menu.p.FileName(savegames[i]);
+            worldButtons[i].x = leftx;
+            worldButtons[i].y = 100 + 100 * scale * i;
+            worldButtons[i].sizex = 256 * scale;
+            worldButtons[i].sizey = 64 * scale;
+            worldButtons[i].fontSize = 14 * scale;
         }
 
         DrawWidgets();
@@ -929,13 +984,54 @@ public class ScreenSingleplayer : Screen
     {
         menu.StartMainMenu();
     }
+
+    public override void OnButton(MenuWidget w)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            worldButtons[i].selected = false;
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            if (worldButtons[i] == w)
+            {
+                worldButtons[i].selected = true;
+            }
+        }
+
+        if (w == newWorld)
+        {
+            menu.StartNewWorld();
+        }
+
+        if (w == play)
+        {
+        }
+
+        if (w == modify)
+        {
+            menu.StartModifyWorld();
+        }
+
+        if (w == back)
+        {
+            OnBackPressed();
+        }
+    }
 }
 
 public class ScreenModifyWorld : Screen
 {
     public ScreenModifyWorld()
     {
+        back = new MenuWidget();
+        back.text = "Back";
+        back.type = WidgetType.Button;
+
+        widgets[0] = back;
     }
+
+    MenuWidget back;
 
     public override void Render()
     {
@@ -944,12 +1040,26 @@ public class ScreenModifyWorld : Screen
         menu.DrawBackground();
         menu.DrawText("Modify World", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
+        back.x = 40 * scale;
+        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.sizex = 256 * scale;
+        back.sizey = 64 * scale;
+        back.fontSize = 14 * scale;
+
         DrawWidgets();
     }
 
     public override void OnBackPressed()
     {
         menu.StartSingleplayer();
+    }
+
+    public override void OnButton(MenuWidget w)
+    {
+        if (w == back)
+        {
+            OnBackPressed();
+        }
     }
 }
 
@@ -991,6 +1101,9 @@ public class ScreenLogin : Screen
         createAccountRememberMe.text = "Yes";
         createAccountRememberMe.type = WidgetType.Button;
         createAccountRememberMe.description = "Remember me";
+        back = new MenuWidget();
+        back.text = "Back";
+        back.type = WidgetType.Button;
 
         widgets[0] = login;
         widgets[1] = loginUsername;
@@ -1000,6 +1113,7 @@ public class ScreenLogin : Screen
         widgets[5] = createAccountUsername;
         widgets[6] = createAccountPassword;
         widgets[7] = createAccountRememberMe;
+        widgets[9] = back;
 
         loginResult = new LoginResultRef();
     }
@@ -1014,6 +1128,8 @@ public class ScreenLogin : Screen
     MenuWidget createAccountPassword;
     MenuWidget createAccountRememberMe;
 
+    MenuWidget back;
+
     public override void Render()
     {
         if (loginResult.value == LoginResult.Ok)
@@ -1027,7 +1143,7 @@ public class ScreenLogin : Screen
 
 
         float leftx = gl.GetCanvasWidth() / 2 - 400 * scale;
-        float y = gl.GetCanvasHeight() / 2 - 200 * scale;
+        float y = gl.GetCanvasHeight() / 2 - 250 * scale;
 
         if (loginResult.value == LoginResult.Failed)
         {
@@ -1060,7 +1176,7 @@ public class ScreenLogin : Screen
         login.sizey = 64 * scale;
         login.fontSize = 14 * scale;
 
-        float rightx = gl.GetCanvasWidth() / 2 + 100 * scale;
+        float rightx = gl.GetCanvasWidth() / 2 + 150 * scale;
 
         menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
@@ -1087,6 +1203,12 @@ public class ScreenLogin : Screen
         createAccount.sizex = 256 * scale;
         createAccount.sizey = 64 * scale;
         createAccount.fontSize = 14 * scale;
+
+        back.x = 40 * scale;
+        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.sizex = 256 * scale;
+        back.sizey = 64 * scale;
+        back.fontSize = 14 * scale;
 
         DrawWidgets();
     }
@@ -1119,6 +1241,10 @@ public class ScreenLogin : Screen
                 w.text = "Yes";
             }
         }
+        if (w == back)
+        {
+            OnBackPressed();
+        }
     }
 }
 
@@ -1137,20 +1263,199 @@ public class LoginResultRef
 
 public class ScreenMultiplayer : Screen
 {
+    public ScreenMultiplayer()
+    {
+        WidgetCount = 64 + serverButtonsCount;
+        widgets = new MenuWidget[WidgetCount];
+        back = new MenuWidget();
+        back.text = "Back";
+        back.type = WidgetType.Button;
+        connect = new MenuWidget();
+        connect.text = "Connect";
+        connect.type = WidgetType.Button;
+        refresh = new MenuWidget();
+        refresh.text = "Refresh";
+        refresh.type = WidgetType.Button;
+
+        widgets[0] = back;
+        widgets[1] = connect;
+        widgets[2] = refresh;
+
+        serverListAddress = new HttpResponseCi();
+        serverListCsv = new HttpResponseCi();
+        serversOnList = new ServerOnList[serversOnListCount];
+
+        serverButtons = new MenuWidget[serverButtonsCount];
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            MenuWidget b = new MenuWidget();
+            b = new MenuWidget();
+            b.text = "Invalid";
+            b.type = WidgetType.Button;
+            b.visible = false;
+            serverButtons[i] = b;
+            widgets[3 + i] = b;
+        }
+    }
+
+    bool loaded;
+    HttpResponseCi serverListAddress;
+    HttpResponseCi serverListCsv;
+    ServerOnList[] serversOnList;
+    const int serversOnListCount = 1024;
+
+
     public override void Render()
     {
+        if (!loaded)
+        {
+            menu.p.WebClientDownloadStringAsync("http://manicdigger.sourceforge.net/serverlistcsv.txt", serverListAddress);
+            loaded = true;
+        }
+        if (serverListAddress.done)
+        {
+            serverListAddress.done = false;
+            menu.p.WebClientDownloadStringAsync(serverListAddress.value, serverListCsv);
+        }
+        if (serverListCsv.done)
+        {
+            serverListCsv.done = false;
+            for (int i = 0; i < serversOnListCount; i++)
+            {
+                serversOnList[i] = null;
+            }
+            IntRef serversCount = new IntRef();
+            string[] servers = menu.p.StringSplit(serverListCsv.value, "\n", serversCount);
+            for (int i = 0; i < serversCount.value; i++)
+            {
+                IntRef ssCount = new IntRef();
+                string[] ss = menu.p.StringSplit(servers[i], "\t", ssCount);
+                if (ssCount.value < 10)
+                {
+                    continue;
+                }
+                ServerOnList s = new ServerOnList();
+                s.hash = ss[0];
+                s.name = ss[1];
+                s.motd = ss[2];
+                s.port = menu.p.IntParse(ss[3]);
+                s.ip = ss[4];
+                s.version = ss[5];
+                s.users = menu.p.IntParse(ss[6]);
+                s.max = menu.p.IntParse(ss[7]);
+                s.gamemode = ss[8];
+                s.players = ss[9];
+                serversOnList[i] = s;
+            }
+        }
+
         Gl gl = menu.gl;
         float scale = menu.one * gl.GetCanvasWidth() / 1280;
+
+        back.x = 40 * scale;
+        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.sizex = 256 * scale;
+        back.sizey = 64 * scale;
+        back.fontSize = 14 * scale;
+
+        connect.x = gl.GetCanvasWidth() / 2 - 200 * scale;
+        connect.y = gl.GetCanvasHeight() - 104 * scale;
+        connect.sizex = 256 * scale;
+        connect.sizey = 64 * scale;
+        connect.fontSize = 14 * scale;
+
+        refresh.x = gl.GetCanvasWidth() / 2 + 200 * scale;
+        refresh.y = gl.GetCanvasHeight() - 104 * scale;
+        refresh.sizex = 256 * scale;
+        refresh.sizey = 64 * scale;
+        refresh.fontSize = 14 * scale;
+
         menu.DrawBackground();
         menu.DrawText("Multiplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            serverButtons[i].visible = false;
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            ServerOnList s = serversOnList[i];
+            if (s == null)
+            {
+                continue;
+            }
+            string t = menu.p.StringFormat2("{0}. {1}", menu.p.IntToString(i), s.name);
+            t = menu.p.StringFormat2("{0} {1}", t, menu.p.IntToString(s.users));
+            t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
+            t = menu.p.StringFormat2("{0} {1}", t, s.gamemode);
+
+            serverButtons[i].text = t;
+            serverButtons[i].x = 100 * scale;
+            serverButtons[i].y = 100 * scale + i * 50 * scale;
+            serverButtons[i].sizex = 4 * 256 * scale;
+            serverButtons[i].sizey = 64 * scale;
+            serverButtons[i].fontSize = 14 * scale;
+            serverButtons[i].visible = true;
+            serverButtons[i].buttonStyle = ButtonStyle.Text;
+        }
+
         DrawWidgets();
     }
+
+    MenuWidget back;
+    MenuWidget connect;
+    MenuWidget refresh;
+    MenuWidget[] serverButtons;
+    const int serverButtonsCount = 1024;
 
     public override void OnBackPressed()
     {
         menu.StartMainMenu();
     }
+
+    public override void OnButton(MenuWidget w)
+    {
+        for (int i = 0; i < serverButtonsCount; i++)
+        {
+            serverButtons[i].selected = false;
+            if (serverButtons[i] == w)
+            {
+                serverButtons[i].selected = true;
+            }
+        }
+        if (w == back)
+        {
+            OnBackPressed();
+        }
+        if (w == connect)
+        {
+        }
+        if (w == refresh)
+        {
+            loaded = false;
+        }
+    }
+}
+
+public class HttpResponseCi
+{
+    internal bool done;
+    internal string value;
+}
+
+public class ServerOnList
+{
+    internal string hash;
+    internal string name;
+    internal string motd;
+    internal int port;
+    internal string ip;
+    internal string version;
+    internal int users;
+    internal int max;
+    internal string gamemode;
+    internal string players;
 }
 
 public enum WidgetType
@@ -1179,6 +1484,14 @@ public class MenuWidget
     internal float fontSize;
     internal string description;
     internal bool password;
+    internal bool selected;
+    internal ButtonStyle buttonStyle;
+}
+
+public enum ButtonStyle
+{
+    Button,
+    Text
 }
 
 public class Model
