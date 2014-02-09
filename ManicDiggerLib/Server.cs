@@ -2358,7 +2358,7 @@ if (sent >= unknown.Count) { break; }
             Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
             {
                 PlayerId = spawnedplayer,
-                PlayerName = c.playername,
+                PlayerName = c.displayColor + c.playername,
                 PositionAndOrientation = new Packet_PositionAndOrientation()
                 {
                     X = c.PositionMul32GlX,
@@ -3450,6 +3450,7 @@ if (sent >= unknown.Count) { break; }
             }
             public List<string> privileges = new List<string>();
             public string color;
+            public string displayColor = "&f";
             public string ColoredPlayername(string subsequentColor)
             {
                 return this.color + this.playername + subsequentColor;

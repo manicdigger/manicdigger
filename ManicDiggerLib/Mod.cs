@@ -807,5 +807,17 @@ namespace ManicDigger
         {
             return server.TotalSentBytes;
         }
+
+        public void SetPlayerNameColor(int player, string color)
+        {
+            if (color.Equals("&0") || color.Equals("&1") || color.Equals("&2") || color.Equals("&3") ||
+                color.Equals("&4") || color.Equals("&5") || color.Equals("&6") || color.Equals("&7") ||
+                color.Equals("&8") || color.Equals("&9") || color.Equals("&a") || color.Equals("&b") ||
+                color.Equals("&c") || color.Equals("&d") || color.Equals("&e") || color.Equals("&f"))
+            {
+                server.clients[player].displayColor = color;
+                server.SendPlayerSpawnToAll(player);
+            }
+        }
     }
 }
