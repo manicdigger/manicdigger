@@ -371,7 +371,13 @@ namespace ManicDigger.Mods
             });
             m.SetBlockType(44, "Stair", new BlockType()
             {
-                AllTextures = "Stair",
+                TextureIdTop = "Stair",
+                TextureIdBottom = "Stair",
+                TextureIdBack = "StairSide",
+                TextureIdFront = "StairSide",
+                TextureIdLeft = "StairSide",
+                TextureIdRight = "StairSide",
+                TextureIdForInventory = "Stair",
                 DrawType = DrawType.HalfHeight,
                 WalkableType = WalkableType.Solid,
                 Sounds = solidSounds,
