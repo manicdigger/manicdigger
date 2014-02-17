@@ -38,7 +38,7 @@ namespace ManicDigger.Renderers
         public float day_length_in_seconds = 30;
         public void Draw(float dt)
         {
-            GL.MatrixMode(MatrixMode.Modelview);
+            game.GLMatrixModeModelView();
             if (suntexture == -1)
             {
                 suntexture = game.LoadTexture(d_GetFile.GetFile("sun.png"));
@@ -54,14 +54,14 @@ namespace ManicDigger.Renderers
             }
             Vector3 pos = new Vector3((float)Math.Cos(tt) * 20, (float)Math.Sin(tt) * 20, (float)Math.Sin(t) * 20);
             pos += d_LocalPlayerPosition.LocalPlayerPosition;
-            GL.PushMatrix();
-            GL.Translate(pos.X, pos.Y, pos.Z);
-            GL.Rotate(-d_LocalPlayerPosition.LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
-            GL.Rotate(-d_LocalPlayerPosition.LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
-            GL.Scale(0.02, 0.02, 0.02);
+            game.GLPushMatrix();
+            game.GLTranslate(pos.X, pos.Y, pos.Z);
+            game.GLRotate(-d_LocalPlayerPosition.LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
+            game.GLRotate(-d_LocalPlayerPosition.LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
+            game.GLScale(0.02, 0.02, 0.02);
             //GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
             game.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
-            GL.PopMatrix();
+            game.GLPopMatrix();
         }
     }
 }

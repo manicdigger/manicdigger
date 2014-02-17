@@ -218,6 +218,12 @@
         return b;
     }
 
+    public static float GetPi()
+    {
+        float a = 3141592;
+        return a / 1000000;
+    }
+
     //Indexed by block id and TileSide.
     internal int[][] TextureId;
     internal int[] TextureIdForInventory;

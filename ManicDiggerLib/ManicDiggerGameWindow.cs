@@ -33,6 +33,8 @@ namespace ManicDigger
         public ManicDiggerGameWindow()
         {
             one = 1;
+            mvMatrix.Push(Mat4.Create());
+            pMatrix.Push(Mat4.Create());
         }
         float one;
         public void Start()
@@ -109,8 +111,9 @@ namespace ManicDigger
             w.d_TextRenderer = textrenderer;
             Inventory inventory = Inventory.Create();
             var weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = this, d_Inventory = inventory, d_LocalPlayerPosition = w };
-            w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w };
+            w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w, game = this };
             var playerrenderer = new CharacterRendererMonsterCode();
+            playerrenderer.game = this;
             playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.txt"))));
             w.d_CharacterRenderer = playerrenderer;
             var particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
@@ -120,7 +123,7 @@ namespace ManicDigger
             clientgame.d_Data = gamedata;
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage, d_Data = gamedata };
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
-            clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d };
+            clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d, game = this };
             clientgame.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
             w.Reset(10 * 1000, 10 * 1000, 128);
@@ -221,6 +224,9 @@ namespace ManicDigger
             clientmods[clientmodsCount++] = mod;
             mod.Start(modmanager);
         }
+
+        internal Stack<float[]> mvMatrix = new Stack<float[]>();
+        internal Stack<float[]> pMatrix = new Stack<float[]>();
 
         internal Game game;
 
@@ -2882,7 +2888,7 @@ namespace ManicDigger
 
             GL.BindTexture(TextureTarget.Texture2D, d_TerrainTextures.terrainTexture);
 
-            GL.MatrixMode(MatrixMode.Modelview);
+            GLMatrixModeModelView();
 
             Matrix4 camera;
             if (overheadcamera)
@@ -2893,7 +2899,7 @@ namespace ManicDigger
             {
                 camera = FppCamera();
             }
-            GL.LoadMatrix(ref camera);
+            GLLoadMatrix(camera);
             d_The3d.ModelViewMatrix = camera;
 
             if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
@@ -2908,6 +2914,7 @@ namespace ManicDigger
                     SetFog();
                 }
                 d_SunMoonRenderer.Draw((float)e.Time);
+                
                 DrawPlayers((float)e.Time);
                 DrawTerrain();
                 DrawPlayerNames();
@@ -2916,18 +2923,17 @@ namespace ManicDigger
                 {
                     DrawLinesAroundSelectedCube(SelectedBlockPosition);
                 }
-
                 DrawCharacters((float)e.Time);
                 foreach (Sprite b in new List<Sprite>(sprites))
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
+                    GLMatrixModeModelView();
                     Vector3 pos = b.position;
-                    GL.PushMatrix();
-                    GL.Translate(pos.X, pos.Y, pos.Z);
-                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
-                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
-                    GL.Scale(0.02, 0.02, 0.02);
-                    GL.Translate(-b.size / 2, -b.size / 2, 0);
+                    GLPushMatrix();
+                    GLTranslate(pos.X, pos.Y, pos.Z);
+                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    GLScale(0.02, 0.02, 0.02);
+                    GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
                     //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
                     int? n = null;
                     if (b.animationcount > 0)
@@ -2936,7 +2942,7 @@ namespace ManicDigger
                             * (b.animationcount * b.animationcount - 1));
                     }
                     Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Color.White, true);
-                    GL.PopMatrix();
+                    GLPopMatrix();
                     if ((DateTime.UtcNow - b.time) > b.timespan) { sprites.Remove(b); }
                 }
                 foreach (Bullet b in new List<Bullet>(bullets))
@@ -2951,30 +2957,32 @@ namespace ManicDigger
                     dir.Normalize();
                     pos += dir * (b.progress + b.speed * (float)dt);
                     b.progress += b.speed * (float)dt;
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    GL.Translate(pos.X, pos.Y, pos.Z);
-                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
-                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
-                    GL.Scale(0.02, 0.02, 0.02);
+                    GLMatrixModeModelView();
+                    GLPushMatrix();
+                    GLTranslate(pos.X, pos.Y, pos.Z);
+                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    float scale = one * 2 / 100;
+                    GLScale(scale, scale, scale);
                     int ImageSize = 4;
-                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
                     Draw2dTexture(GetTexture("Sponge.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
-                    GL.PopMatrix();
+                    GLPopMatrix();
                     if (b.progress > length) { bullets.Remove(b); }
                 }
                 foreach (Projectile b in new List<Projectile>(projectiles))
                 {
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.PushMatrix();
-                    GL.Translate(b.position.X, b.position.Y, b.position.Z);
-                    GL.Rotate(-LocalPlayerOrientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
-                    GL.Rotate(-LocalPlayerOrientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
-                    GL.Scale(0.02, 0.02, 0.02);
+                    GLMatrixModeModelView();
+                    GLPushMatrix();
+                    GLTranslate(b.position.X, b.position.Y, b.position.Z);
+                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
+                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
+                    float scale = one * 2 / 100;
+                    GLScale(scale, scale, scale);
                     int ImageSize = 14;
-                    GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
+                    GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
                     Draw2dTexture(GetTexture("ChemicalGreen.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
-                    GL.PopMatrix();
+                    GLPopMatrix();
                 }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
@@ -2988,16 +2996,16 @@ namespace ManicDigger
                     }
                     m.Draw((float)e.Time);
                     //GL.Color3(Color.White);
-                    /*
-                    GL.Begin(BeginMode.Triangles);
-                    foreach (var tri in m.TrianglesForPicking)
-                    {
-                        GL.Vertex3(tri.PointA);
-                        GL.Vertex3(tri.PointB);
-                        GL.Vertex3(tri.PointC);
-                    }
-                    GL.End();
-                    */
+                    
+                    //GL.Begin(BeginMode.Triangles);
+                    //foreach (var tri in m.TrianglesForPicking)
+                    //{
+                    //    GL.Vertex3(tri.PointA);
+                    //    GL.Vertex3(tri.PointB);
+                    //    GL.Vertex3(tri.PointC);
+                    //}
+                    //GL.End();
+                    
                 }
                 if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
                 {
@@ -3032,6 +3040,184 @@ namespace ManicDigger
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
             if (!startedconnecting) { startedconnecting = true; Connect(); }
+        }
+
+        bool currentMatrixModeProjection;
+
+        float[] Matrix4ToFloat(Matrix4 m)
+        {
+            float[] m2 = Mat4.Create();
+            m2[0] = m.M11;
+            m2[1] = m.M12;
+            m2[2] = m.M13;
+            m2[3] = m.M14;
+            m2[4] = m.M21;
+            m2[5] = m.M22;
+            m2[6] = m.M23;
+            m2[7] = m.M24;
+            m2[8] = m.M31;
+            m2[9] = m.M32;
+            m2[10] = m.M33;
+            m2[11] = m.M34;
+            m2[12] = m.M41;
+            m2[13] = m.M42;
+            m2[14] = m.M43;
+            m2[15] = m.M44;
+            return m2;
+        }
+
+        void SetMatrixUniforms()
+        {
+            game.p.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+        }
+
+        public void GLLoadMatrix(Matrix4 m)
+        {
+            if (currentMatrixModeProjection)
+            {
+                if (pMatrix.Count > 0)
+                {
+                    pMatrix.Pop();
+                }
+                pMatrix.Push(Matrix4ToFloat(m));
+            }
+            else
+            {
+                if (pMatrix.Count > 0)
+                {
+                    mvMatrix.Pop();
+                }
+                mvMatrix.Push(Matrix4ToFloat(m));
+            }
+
+            SetMatrixUniforms();
+        }
+
+        public void GLPopMatrix()
+        {
+            if (currentMatrixModeProjection)
+            {
+                if (pMatrix.Count > 1)
+                {
+                    pMatrix.Pop();
+                }
+            }
+            else
+            {
+                if (mvMatrix.Count > 1)
+                {
+                    mvMatrix.Pop();
+                }
+            }
+
+            SetMatrixUniforms();
+        }
+
+        public void GLScale(double x, double y, double z)
+        {
+            float[] m;
+            if (currentMatrixModeProjection)
+            {
+                m = pMatrix.Peek();
+            }
+            else
+            {
+                m = mvMatrix.Peek();
+            }
+            Mat4.Scale(m, m, Vec3.FromValues((float)x, (float)y, (float)z));
+
+            SetMatrixUniforms();
+        }
+
+        public void GLRotate(float angle, float x, float y, float z)
+        {
+            angle /= 360;
+            angle *= 2 * Game.GetPi();
+            float[] m;
+            if (currentMatrixModeProjection)
+            {
+                m = pMatrix.Peek();
+            }
+            else
+            {
+                m = mvMatrix.Peek();
+            }
+            Mat4.Rotate(m, m, angle, Vec3.FromValues((float)x, (float)y, (float)z));
+            SetMatrixUniforms();
+        }
+
+        public void GLTranslate(float x, float y, float z)
+        {
+            float[] m;
+            if (currentMatrixModeProjection)
+            {
+                m = pMatrix.Peek();
+            }
+            else
+            {
+                m = mvMatrix.Peek();
+            }
+            Mat4.Translate(m, m, Vec3.FromValues((float)x, (float)y, (float)z));
+            SetMatrixUniforms();
+        }
+
+        public void GLPushMatrix()
+        {
+            if (currentMatrixModeProjection)
+            {
+                pMatrix.Push(Mat4.CloneIt(pMatrix.Peek()));
+            }
+            else
+            {
+                mvMatrix.Push(Mat4.CloneIt(mvMatrix.Peek()));
+            }
+            SetMatrixUniforms();
+        }
+
+        public void GLLoadIdentity()
+        {
+            if (currentMatrixModeProjection)
+            {
+                if (pMatrix.Count > 0)
+                {
+                    pMatrix.Pop();
+                }
+                pMatrix.Push(Mat4.Identity_(Mat4.Create()));
+            }
+            else
+            {
+                if (mvMatrix.Count > 0)
+                {
+                    mvMatrix.Pop();
+                }
+                mvMatrix.Push(Mat4.Identity_(Mat4.Create()));
+            }
+            SetMatrixUniforms();
+        }
+
+        void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
+        {
+            float[] m;
+            if (currentMatrixModeProjection)
+            {
+                m = pMatrix.Peek();
+            }
+            else
+            {
+                m = mvMatrix.Peek();
+            }
+            Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
+            SetMatrixUniforms();
+        }
+
+        public void GLMatrixModeModelView()
+        {
+            currentMatrixModeProjection = false;
+        }
+
+        void GLMatrixModeProjection()
+        {
+            currentMatrixModeProjection = true;
         }
 
         private int GetTexture(string s)
@@ -3496,6 +3682,7 @@ namespace ManicDigger
                 {
                     string[] lines = MyStream.ReadAllLines(d_GetFile.GetFile(modelfilename));
                     var renderer = new CharacterRendererMonsterCode();
+                    renderer.game = this;
                     renderer.Load(new List<string>(lines));
                     MonsterRenderers[modelfilename] = renderer;
                 }
@@ -3902,8 +4089,8 @@ namespace ManicDigger
         void Circle3i(float x, float y, float radius)
         {
             float angle;
-            GL.PushMatrix();
-            GL.LoadIdentity();
+            GLPushMatrix();
+            GLLoadIdentity();
             GL.Disable(EnableCap.Texture2D);
             GL.Color3(1.0f, 1.0f, 1.0f);
             GL.LineWidth(1.0f);
@@ -3916,8 +4103,9 @@ namespace ManicDigger
             }
             GL.End();
             GL.Enable(EnableCap.Texture2D);
-            GL.PopMatrix();
+            GLPopMatrix();
         }
+
         private void DrawPlayerNames()
         {
             foreach (KeyValuePair<int, Player> k in d_Clients.Players)
@@ -3944,15 +4132,15 @@ namespace ManicDigger
                         {
                             pos = k.Value.Position.Value;
                         }
-                        GL.PushMatrix();
-                        GL.Translate(pos.X, pos.Y + CharacterModelHeight + 0.8f, pos.Z);
+                        GLPushMatrix();
+                        GLTranslate(pos.X, pos.Y + CharacterModelHeight + 0.8f, pos.Z);
                         if (k.Value.Type == PlayerType.Monster)
                         {
-                            GL.Translate(0, 1f, 0);
+                            GLTranslate(0, 1f, 0);
                         }
-                        GL.Rotate(-player.playerorientation.Y * 360 / (2 * Math.PI), 0.0f, 1.0f, 0.0f);
-                        GL.Rotate(-player.playerorientation.X * 360 / (2 * Math.PI), 1.0f, 0.0f, 0.0f);
-                        GL.Scale(0.02, 0.02, 0.02);
+                        GLRotate(-player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
+                        GLRotate(-player.playerorientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
+                        GLScale(0.02, 0.02, 0.02);
 
                         //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
                         //Todo: Can't change text color because text has outline anyway.
@@ -3963,7 +4151,7 @@ namespace ManicDigger
                         }
                         Draw2dText(name, -TextSize(name, 14).Width / 2, 0, 14, Color.White, true);
                         //                        GL.Translate(0, 1, 0);
-                        GL.PopMatrix();
+                        GLPopMatrix();
                     }
                 }
             }
@@ -6452,8 +6640,8 @@ namespace ManicDigger
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov1, aspect_ratio, znear, zfar);
             d_The3d.ProjectionMatrix = perpective;
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref perpective);
+            GLMatrixModeProjection();
+            GLLoadMatrix(perpective);
         }
         public float znear = 0.1f;
         public float zfar
@@ -6472,24 +6660,24 @@ namespace ManicDigger
         public void OrthoMode(int width, int height)
         {
             //GL.Disable(EnableCap.DepthTest);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Ortho(0, width, height, 0, 0, 1);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
+            GLMatrixModeProjection();
+            GLPushMatrix();
+            GLLoadIdentity();
+            GLOrtho(0, width, height, 0, 0, 1);
+            GLMatrixModeModelView();
+            GLPushMatrix();
+            GLLoadIdentity();
         }
 
         public void PerspectiveMode()
         {
             // Enter into our projection matrix mode
-            GL.MatrixMode(MatrixMode.Projection);
+            GLMatrixModeProjection();
             // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
-            GL.PopMatrix();
+            GLPopMatrix();
             // Go back to our model view matrix like normal
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
+            GLMatrixModeModelView();
+            GLPopMatrix();
             //GL.LoadIdentity();
             //GL.Enable(EnableCap.DepthTest);
         }

@@ -89,6 +89,7 @@ namespace ManicDigger.Renderers
     }
     public class WeaponRenderer
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public WeaponBlockInfo d_Info;
         [Inject]
@@ -178,14 +179,14 @@ namespace ManicDigger.Renderers
                 myvertices[i] = v;
             }
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
+            game.GLMatrixModeModelView();
+            game.GLPushMatrix();
+            game.GLLoadIdentity();
 
-            GL.Translate(0.3 + zzzposz - attackt * 5, -1.5f + zzzposx - buildt * 10, -1.5f + zzzposy);
-            GL.Rotate(30 + (zzzx) - attackt * 300, new Vector3(1, 0, 0));
-            GL.Rotate(60 + zzzy, new Vector3(0, 1, 0));
-            GL.Scale(0.8, 0.8, 0.8);
+            game.GLTranslate(0.3f + zzzposz - attackt * 5, -1.5f + zzzposx - buildt * 10, -1.5f + zzzposy);
+            game.GLRotate(30 + (zzzx) - attackt * 300, 1, 0, 0);
+            game.GLRotate(60 + zzzy, 0, 1, 0);
+            game.GLScale(0.8f, 0.8f, 0.8f);
 
             bool move = oldplayerpos != d_LocalPlayerPosition.LocalPlayerPosition;
             oldplayerpos = d_LocalPlayerPosition.LocalPlayerPosition;
@@ -251,7 +252,7 @@ namespace ManicDigger.Renderers
                 GL.Vertex3(myvertices[myelements[i]].Position);
             }
             GL.End();
-            GL.PopMatrix();
+            game.GLPopMatrix();
         }
         float attackt = 0;
         float buildt;

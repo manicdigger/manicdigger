@@ -30,6 +30,7 @@ namespace ManicDigger.Renderers
     }
     public class MinecartRenderer
     {
+        public ManicDiggerGameWindow game;
         [Inject]
         public IGetFileStream d_GetFile { get; set; }
         [Inject]
@@ -42,18 +43,20 @@ namespace ManicDigger.Renderers
             {
             	minecarttexture = d_The3d.LoadTexture(new System.Drawing.Bitmap(new System.IO.MemoryStream(MyStream.ReadAllBytes(d_GetFile.GetFile("minecart.png")))));
             }
-            GL.PushMatrix();
-            GL.Translate(position + new Vector3(0, -0.7f, 0));
+            game.GLPushMatrix();
+            Vector3 p = position + new Vector3(0, -0.7f, 0);
+            game.GLTranslate(p.X, p.Y, p.Z);
             double currot = vehiclerotation(dir);
             double lastrot = vehiclerotation(lastdir);
             //double rot = lastrot + (currot - lastrot) * progress;
-            double rot = AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
-            GL.Rotate(-rot - 90, 0, 1, 0);
+            float rot = (float)AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
+            game.GLRotate(-rot - 90, 0, 1, 0);
             var c = new CharacterRendererMonsterCode();
+            c.game = game;
             var cc = c.CuboidNet(8, 8, 8, 0, 0);
             CharacterRendererMonsterCode.CuboidNetNormalize(cc, 32, 16);
             c.DrawCuboid(new Vector3(-0.5f, -0.3f, -0.5f), new Vector3(1, 1, 1), minecarttexture, cc);
-            GL.PopMatrix();
+            game.GLPopMatrix();
         }
         #endregion
         double vehiclerotation(VehicleDirection12 dir)

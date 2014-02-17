@@ -17,6 +17,7 @@ namespace ManicDigger.Renderers
     }
     public class CharacterRendererMonsterCode : ICharacterRenderer
     {
+        public ManicDiggerGameWindow game;
         public void Load(List<string> code)
         {
             this.code.Clear();
@@ -79,9 +80,9 @@ namespace ManicDigger.Renderers
                     animstate.interp += dt;
                 }
             }
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.Translate(pos);
+            game.GLMatrixModeModelView();
+            game.GLPushMatrix();
+            game.GLTranslate(pos.X, pos.Y, pos.Z);
 
             variables["heading"] = (double)heading;
             variables["pitch"] = (double)pitch;
@@ -115,17 +116,17 @@ namespace ManicDigger.Renderers
                     {
                         case "set":
                             {
-                                variables[(string)ss[1]] = getval(ss[2], variables);
+                                variables[(string)ss[1]] = (double)getval(ss[2], variables);
                             }
                             break;
                         case "pushmatrix":
                             {
-                                GL.PushMatrix();
+                                game.GLPushMatrix();
                             }
                             break;
                         case "popmatrix":
                             {
-                                GL.PopMatrix();
+                                game.GLPopMatrix();
                             }
                             break;
                         case "mul":
@@ -140,7 +141,7 @@ namespace ManicDigger.Renderers
                             break;
                         case "rotate":
                             {
-                                GL.Rotate(
+                                game.GLRotate(
                                     getval(ss[1], variables),
                                     getval(ss[2], variables),
                                     getval(ss[3], variables),
@@ -149,7 +150,7 @@ namespace ManicDigger.Renderers
                             break;
                         case "translate":
                             {
-                                GL.Translate(
+                                game.GLTranslate(
                                     getval(ss[1], variables),
                                     getval(ss[2], variables),
                                     getval(ss[3], variables));
@@ -157,7 +158,7 @@ namespace ManicDigger.Renderers
                             break;
                         case "scale":
                             {
-                                GL.Scale(
+                                game.GLScale(
                                     getval(ss[1], variables),
                                     getval(ss[2], variables),
                                     getval(ss[3], variables));
@@ -199,7 +200,7 @@ namespace ManicDigger.Renderers
                             {
                                 if (!variables.ContainsKey((string)ss[1]))
                                 {
-                                    variables[(string)ss[1]] = getval(ss[2], variables);
+                                    variables[(string)ss[1]] = (double)getval(ss[2], variables);
                                 }
                             }
                             break;
@@ -222,7 +223,7 @@ namespace ManicDigger.Renderers
                         case "ifeq":
                             {
                                 if (variables.ContainsKey((string)ss[1])
-                                    && (double)variables[(string)ss[1]] != getval(ss[2], variables))
+                                    && (double)variables[(string)ss[1]] != (double)getval(ss[2], variables))
                                 {
                                     //find endif
                                     for (int i = pc; i < code.Count; i++)
@@ -242,7 +243,7 @@ namespace ManicDigger.Renderers
             next:
                 ;
             }
-            GL.PopMatrix();
+            game.GLPopMatrix();
         }
         public static float Normalize(float p, float period)
         {
@@ -267,15 +268,15 @@ namespace ManicDigger.Renderers
             t += Math.PI / 2;
             return (float)Math.Abs(2f * (t / period - Math.Floor(t / period + 0.5f))) * 2 - 1;
         }
-        private double getval(object ss2, Dictionary<string, object> variables)
+        private float getval(object ss2, Dictionary<string, object> variables)
         {
             if (ss2 is double)
             {
-                return (double)ss2;
+                return (float)((double)ss2);
             }
             else
             {
-                return (double)variables[(string)ss2];
+                return (float)((double)variables[(string)ss2]);
             }
         }
         double ParseDouble(string s)

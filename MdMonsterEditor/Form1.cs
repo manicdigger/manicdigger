@@ -230,7 +230,7 @@ namespace MdMonsterEditor
             GL.TexCoord2(rect.Left, rect.Top); GL.Vertex3(x1, z1, y1);
             GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex3(x1, z1, y2);
         }
-        CharacterRendererMonsterCode d = new CharacterRendererMonsterCode();
+        CharacterRendererMonsterCode d = new CharacterRendererMonsterCode() { game = new ManicDiggerGameWindow() };
         //CharacterDrawerBlock d = new CharacterDrawerBlock();
         AnimationState animstate = new AnimationState();
         Config3d config3d = new Config3d();
