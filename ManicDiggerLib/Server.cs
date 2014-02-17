@@ -1487,6 +1487,8 @@ if (sent >= unknown.Count) { break; }
             Packet_ServerPlayerStats p = new Packet_ServerPlayerStats();
             p.CurrentHealth = stats.CurrentHealth;
             p.MaxHealth = stats.MaxHealth;
+            p.CurrentOxygen = stats.CurrentOxygen;
+            p.MaxOxygen = stats.MaxOxygen;
             return p;
         }
 
@@ -1782,6 +1784,8 @@ if (sent >= unknown.Count) { break; }
             var p = new PacketServerPlayerStats();
             p.CurrentHealth = 20;
             p.MaxHealth = 20;
+            p.CurrentOxygen = 10;
+            p.MaxOxygen = 10;
             return p;
         }
         public Vector3i PlayerBlockPosition(Client c)
@@ -2132,6 +2136,14 @@ if (sent >= unknown.Count) { break; }
                             //todo respawn
                             stats.CurrentHealth = stats.MaxHealth;
                         }
+                        clients[clientid].IsPlayerStatsDirty = true;
+                    }
+                    break;
+                case Packet_ClientIdEnum.Oxygen:
+                    {
+                        //todo server side
+                        var stats = GetPlayerStats(clients[clientid].playername);
+                        stats.CurrentOxygen = packet.Oxygen.CurrentOxygen;
                         clients[clientid].IsPlayerStatsDirty = true;
                     }
                     break;

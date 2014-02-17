@@ -101,6 +101,9 @@ namespace ManicDigger
         int GetPlayerHealth(int playerid);
         int GetPlayerMaxHealth(int playerid);
         void SetPlayerHealth(int playerid, int health, int maxhealth);
+        int GetPlayerOxygen(int playerid);
+        int GetPlayerMaxOxygen(int playerid);
+        void SetPlayerOxygen(int playerid, int oxygen, int maxoxygen);
         void RegisterOnWeaponHit(ModDelegates.WeaponHit a);
         void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a);
         float[] GetDefaultSpawnPosition(int player);

@@ -596,6 +596,27 @@ namespace ManicDigger
             server.NotifyPlayerStats(playerid);
         }
 
+        public int GetPlayerOxygen(int playerid)
+        {
+            string name = GetPlayerName(playerid);
+            return server.GetPlayerStats(name).CurrentOxygen;
+        }
+
+        public int GetPlayerMaxOxygen(int playerid)
+        {
+            string name = GetPlayerName(playerid);
+            return server.GetPlayerStats(name).MaxOxygen;
+        }
+
+        public void SetPlayerOxygen(int playerid, int oxygen, int maxoxygen)
+        {
+            string name = GetPlayerName(playerid);
+            server.GetPlayerStats(name).CurrentOxygen = oxygen;
+            server.GetPlayerStats(name).MaxOxygen = maxoxygen;
+            server.clients[playerid].IsPlayerStatsDirty = true;
+            server.NotifyPlayerStats(playerid);
+        }
+
         public void RegisterOnWeaponHit(ModDelegates.WeaponHit a)
         {
             server.modEventHandlers.onweaponhit.Add(a);

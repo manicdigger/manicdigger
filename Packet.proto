@@ -19,6 +19,7 @@ package Packet;
         ActiveMaterialSlot = 56;
         Leave = 57;
         Reload = 58;
+        Oxygen = 59;
         ExtendedPacketCommand = 100;
 	}
 	
@@ -150,6 +151,11 @@ package Packet;
         optional int32 currentHealth = 1;
     }
     
+    message ClientOxygen
+    {
+        optional int32 currentOxygen = 1;
+    }
+    
     message ClientDialogClick
     {
         optional string widgetId = 1;
@@ -219,6 +225,7 @@ package Packet;
         optional ClientActiveMaterialSlot activeMaterialSlot = 14;
         optional ClientLeave leave = 15;
         optional ClientReload reload = 16;
+        optional ClientOxygen oxygen = 17;
 	}
     
     
@@ -679,6 +686,8 @@ package Packet;
     {
         optional int32 currentHealth = 1;
         optional int32 maxHealth = 2;
+        optional int32 currentOxygen = 3;
+        optional int32 maxOxygen = 4;
     }
     
     message ServerMonsters

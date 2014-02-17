@@ -507,6 +507,7 @@ namespace ManicDigger
                 {
                     d_HudChat.GuiTypingBuffer += e.KeyChar;
                 }
+                //Handles player name autocomplete in chat
                 if (c == '\t' && d_HudChat.GuiTypingBuffer.Trim() != "")
                 {
                     foreach (var k in players)
@@ -515,9 +516,10 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        if (k.Value.Name.StartsWith(d_HudChat.GuiTypingBuffer, StringComparison.InvariantCultureIgnoreCase))
+                        //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
+                        if (k.Value.Name.Substring(2).StartsWith(d_HudChat.GuiTypingBuffer, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            d_HudChat.GuiTypingBuffer = k.Value.Name + ": ";
+                            d_HudChat.GuiTypingBuffer = k.Value.Name.Substring(2) + ": ";
                             break;
                         }
                     }
@@ -1881,7 +1883,8 @@ namespace ManicDigger
             return new Vector3i((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y));
         }
 
-        //TODO server side, damage parameter in Blocks.csv
+        //TODO server side?
+        DateTime lastOxygenTick = DateTime.UtcNow;
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
@@ -1896,12 +1899,36 @@ namespace ManicDigger
             {
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
-
-            //TODO swimming in water too long.
+            
             int damage = d_Data.DamageToPlayer[block1] + d_Data.DamageToPlayer[block2];
             if (damage > 0)
             {
                 BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage); });
+            }
+
+            //Player drowning
+            int deltaTime = (int)(DateTime.UtcNow - lastOxygenTick).TotalMilliseconds;
+            if (deltaTime >= 1000)
+            {
+            	if (WaterSwimming)
+            	{
+            		PlayerStats.CurrentOxygen -= 1;
+            		if (PlayerStats.CurrentOxygen <= 0)
+            		{
+            			PlayerStats.CurrentOxygen = 0;
+            			BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer((int)Math.Ceiling((float)PlayerStats.MaxHealth / 10.0f)); });
+            		}
+            	}
+            	else
+            	{
+            		PlayerStats.CurrentOxygen = PlayerStats.MaxOxygen;
+            	}
+            	SendPacketClient(new Packet_Client()
+            	{
+            	    Id = Packet_ClientIdEnum.Oxygen,
+            	    Oxygen = new Packet_ClientOxygen() { CurrentOxygen = PlayerStats.CurrentOxygen },
+            	});
+            	lastOxygenTick = DateTime.UtcNow;
             }
         }
 
@@ -2620,18 +2647,35 @@ namespace ManicDigger
         Vector3i? currentAttackedBlock;
 
         public Packet_ServerPlayerStats PlayerStats;
+        //Size of Health/Oxygen bar
+        private Point barSize = new Point(20, 120);
+        private int barOffset = 30;
+        private int barDistanceToMargin = 40;
 
         public void DrawPlayerHealth()
         {
             if (PlayerStats != null)
             {
                 float progress = (float)PlayerStats.CurrentHealth / PlayerStats.MaxHealth;
-                Point size = new Point(30, 140);
-                Point pos = new Point((int)(0.06f * Width), Height - 50);
-                Draw2dTexture(WhiteTexture(), pos.X, pos.Y - size.Y, size.X, size.Y, null, Color.Black);
-                Draw2dTexture(WhiteTexture(), pos.X, pos.Y - (progress * size.Y), size.X, (progress) * size.Y, null, Color.Red);
+                Point pos = new Point(barDistanceToMargin, Height - barDistanceToMargin);
+                Draw2dTexture(WhiteTexture(), pos.X, pos.Y - barSize.Y, barSize.X, barSize.Y, null, Color.Black);
+                Draw2dTexture(WhiteTexture(), pos.X, pos.Y - (progress * barSize.Y), barSize.X, (progress) * barSize.Y, null, Color.Red);
             }
             //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
+        }
+
+        public void DrawPlayerOxygen()
+        {
+            if (PlayerStats != null)
+            {
+            	if (PlayerStats.CurrentOxygen < PlayerStats.MaxOxygen)
+            	{
+            		float progress = (float)PlayerStats.CurrentOxygen / PlayerStats.MaxOxygen;
+            		Point pos = new Point(barDistanceToMargin + barOffset, Height - barDistanceToMargin);
+            		Draw2dTexture(WhiteTexture(), pos.X, pos.Y - barSize.Y, barSize.X, barSize.Y, null, Color.Black);
+            		Draw2dTexture(WhiteTexture(), pos.X, pos.Y - (progress * barSize.Y), barSize.X, (progress) * barSize.Y, null, Color.Blue);
+            	}
+            }
         }
 
         void DrawEnemyHealthBlock()
@@ -3572,6 +3616,7 @@ namespace ManicDigger
                         }
                         DrawMaterialSelector();
                         DrawPlayerHealth();
+                        DrawPlayerOxygen();
                         DrawEnemyHealthBlock();
                         DrawCompass();
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
