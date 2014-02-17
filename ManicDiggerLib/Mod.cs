@@ -7,6 +7,7 @@ using GameModeFortress;
 using Jint.Delegates;
 using System.Net;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace ManicDigger
 {
@@ -621,14 +622,59 @@ namespace ManicDigger
             return server.config.Motd;
         }
 
+        [DllImport("libc")]
+        static extern int uname(IntPtr buf);
+
+        static bool checkedIsArm;
+        static bool isArm;
+
+        public static bool IsArm
+        {
+            get
+            {
+                if (Environment.OSVersion.Platform != PlatformID.Unix)
+                    return false;
+
+                if (!checkedIsArm)
+                {
+                    IntPtr buf = Marshal.AllocHGlobal(8192);
+                    if (uname(buf) == 0)
+                    {
+                        // todo
+                        for (int i = 0; i < 8192 - 3; i++)
+                        {
+                            if (Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 0)) == 'a'
+                                && Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 1)) == 'r'
+                                && Marshal.ReadByte(new IntPtr(buf.ToInt64() + i + 2)) == 'm')
+                            {
+                                isArm = true;
+                            }
+                        }
+                    }
+                    Marshal.FreeHGlobal(buf);
+                    checkedIsArm = true;
+                }
+
+                return isArm;
+            }
+        }
+
         public float[] MeasureTextSize(string text, DialogFont font)
         {
-            using (Bitmap bmp = new Bitmap(1, 1))
+            if (IsArm)
             {
-                using (Graphics g = Graphics.FromImage(bmp))
+                // fixes crash
+                return new float[] { text.Length * 1f * font.Size, 1.7f * font.Size };
+            }
+            else
+            {
+                using (Bitmap bmp = new Bitmap(1, 1))
                 {
-                    SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                    return new float[] { size.Width, size.Height };
+                    using (Graphics g = Graphics.FromImage(bmp))
+                    {
+                        SizeF size = g.MeasureString(text, new System.Drawing.Font(font.FamilyName, font.Size, (FontStyle)font.FontStyle), new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        return new float[] { size.Width, size.Height };
+                    }
                 }
             }
         }
