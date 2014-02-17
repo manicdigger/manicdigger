@@ -506,6 +506,7 @@ namespace ManicDigger
                 {
                     d_HudChat.GuiTypingBuffer += e.KeyChar;
                 }
+                //Handles player name autocomplete in chat
                 if (c == '\t' && d_HudChat.GuiTypingBuffer.Trim() != "")
                 {
                     foreach (var k in players)
@@ -514,9 +515,10 @@ namespace ManicDigger
                         {
                             continue;
                         }
-                        if (k.Value.Name.StartsWith(d_HudChat.GuiTypingBuffer, StringComparison.InvariantCultureIgnoreCase))
+                        //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
+                        if (k.Value.Name.Substring(2).StartsWith(d_HudChat.GuiTypingBuffer, StringComparison.InvariantCultureIgnoreCase))
                         {
-                            d_HudChat.GuiTypingBuffer = k.Value.Name + ": ";
+                            d_HudChat.GuiTypingBuffer = k.Value.Name.Substring(2) + ": ";
                             break;
                         }
                     }
