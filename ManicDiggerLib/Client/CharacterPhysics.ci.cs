@@ -353,55 +353,56 @@ public class CharacterPhysicsCi
         }
     }
 
-    float[] wallslideplayerposition;
     float[] diff;
     float[] previousposition;
-    float[] playerposition;//temp
+    float[] playerposition;		//Temporarily stores the player's position. Used in WallSlide()
     public float[] WallSlide(CharacterPhysicsState state, float[] oldposition, float[] newposition, float modelheight)
     {
         bool high = false;
-        if (modelheight >= 2) { high = true; }
-        oldposition[1] += walldistance;
-        newposition[1] += walldistance;
+        if (modelheight >= 2) { high = true; }	//Set high to true if player model is bigger than standard height
+        oldposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
+        newposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
 
         reachedceiling = false;
         reachedwall = false;
 
-        playerposition[0] = newposition[0];
-        playerposition[1] = newposition[1];
-        playerposition[2] = newposition[2];
+        playerposition[0] = newposition[0];	//MD: X
+        playerposition[1] = newposition[1];	//MD: Z - top axis
+        playerposition[2] = newposition[2];	//MD: Y
 
-        //left
+        //left - positive Y axis
         {
             float p0 = newposition[0] + 0;
             float p1 = newposition[1] + 0;
-            float p2 = newposition[2] + walldistance;
-            bool newempty = NewEmpty(high, p0, p1, p2);
+            float p2 = newposition[2] + walldistance;	//Add walldistance so player is kept at a little distance
+            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[2] - oldposition[2] > 0)
             {
                 if (!newempty)
                 {
+                	//New Y coordinate of position not valid. Set back to old coordinate.
                     reachedwall = true;
                     playerposition[2] = oldposition[2];
                 }
             }
         }
-        //front
+        //front - positive X axis
         {
-            float p0 = newposition[0] + walldistance;
+            float p0 = newposition[0] + walldistance;	//Add walldistance so player is kept at a little distance
             float p1 = newposition[1] + 0;
             float p2 = newposition[2] + 0;
-            bool newempty = NewEmpty(high, p0, p1, p2);
+            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[0] - oldposition[0] > 0)
             {
                 if (!newempty)
                 {
+                	//New X coordinate of position not valid. Set back to old coordinate.
                     reachedwall = true;
                     playerposition[0] = oldposition[0];
                 }
             }
         }
-        //top
+        //top - negative Z axis. Floor collision.
         {
             float qnewposition0 = newposition[0] + 0;
             float qnewposition1 = newposition[1] - walldistance;
@@ -410,7 +411,10 @@ public class CharacterPhysicsCi
             int y = FloatToInt(Floor(qnewposition2));
             int z = FloatToInt(Floor(qnewposition1));
             float a = walldistance;
+            //float half = one / 2;
+            //Check if block at new Z coordinate is NOT empty for physics (check for solid block)
             bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+            	//These 4 lines let you walk a little over the block's edge. Also part of the 2 block high jump problem
                 || (qnewposition0 - Floor(qnewposition0) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
                 || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
                 || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
@@ -419,47 +423,56 @@ public class CharacterPhysicsCi
             {
                 if (newfull)
                 {
+                	//If new block is solid, don't change height of position (no falling through solid blocks)
                     playerposition[1] = oldposition[1];
                     standingontheground = true;
                 }
+//                if (isHalfHeight(x, y, z))
+//                {
+//                	//Block is HalfStep
+//                	playerposition[1] = z + half + walldistance;
+//                    standingontheground = true;
+//                }
             }
         }
-        //right
+        //right - negative Y axis
         {
             float p0 = newposition[0] + 0;
             float p1 = newposition[1] + 0;
-            float p2 = newposition[2] - walldistance;
-            bool newempty = NewEmpty(high, p0, p1, p2);
+            float p2 = newposition[2] - walldistance;	//Add walldistance so player is kept at a little distance
+            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[2] - oldposition[2] < 0)
             {
                 if (!newempty)
                 {
+                	//New Y coordinate of position not valid. Set back to old coordinate.
                     reachedwall = true;
                     playerposition[2] = oldposition[2];
                 }
             }
         }
-        //back
+        //back - negative X axis
         {
-            float p0 = newposition[0] - walldistance;
+            float p0 = newposition[0] - walldistance;	//Add walldistance so player is kept at a little distance
             float p1 = newposition[1] + 0;
             float p2 = newposition[2] + 0;
-            bool newempty = NewEmpty(high, p0, p1, p2);
+            bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[0] - oldposition[0] < 0)
             {
                 if (!newempty)
                 {
+                	//New X coordinate of position not valid. Set back to old coordinate.
                     reachedwall = true;
                     playerposition[0] = oldposition[0];
                 }
             }
         }
-        //bottom
+        //bottom - positive Z axis. Ceiling collision.
         {
             float p0 = newposition[0] + 0;
-            float p1 = newposition[1] + modelheight;
+            float p1 = newposition[1] + modelheight;	//Add model height to correctly determine ceiling collisions
             float p2 = newposition[2] + 0;
-            bool newempty = IsTileEmptyForPhysics(FloatToInt(p0), FloatToInt(p2), FloatToInt(p1));
+            bool newempty = IsTileEmptyForPhysics(FloatToInt(p0), FloatToInt(p2), FloatToInt(p1));	//Check if block at new position is empty for physics
             if (newposition[1] - oldposition[1] > 0)
             {
                 if (!newempty)
@@ -469,8 +482,13 @@ public class CharacterPhysicsCi
                 }
             }
         }
-        playerposition[1] -= walldistance;
-        return playerposition;
+        playerposition[1] -= walldistance;	//Remove the temporary walldistance again
+        return playerposition;	//Return valid position
+    }
+    
+    bool isHalfHeight(int x, int y, int z)
+    {
+    	return game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight;
     }
 
     float Floor(float aFloat)
