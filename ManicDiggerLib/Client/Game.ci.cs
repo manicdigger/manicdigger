@@ -11,12 +11,14 @@
             TextureId[i] = new int[6];
         }
         TextureIdForInventory = new int[MaxBlockTypes];
+        language = new Language();
     }
 
     const int MaxBlockTypes = 1024;
 
     internal GamePlatform p;
     internal Packet_BlockType[] blocktypes;
+    internal Language language;
 
     internal Chunk[] chunks;
     internal int MapSizeX;

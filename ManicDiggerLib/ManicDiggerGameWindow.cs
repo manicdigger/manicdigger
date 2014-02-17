@@ -218,6 +218,7 @@ namespace ManicDigger
             clientmodsCount = 0;
             modmanager.w = this;
             AddMod(new ModAutoCamera());
+            applicationname = language.GameName();
         }
         void AddMod(ClientMod mod)
         {
@@ -601,7 +602,7 @@ namespace ManicDigger
             string[] ss = s.Split(new char[] { ' ' });
             if (s.StartsWith("."))
             {
-                string strFreemoveNotAllowed = Language.FreemoveNotAllowed;
+                string strFreemoveNotAllowed = game.language.FreemoveNotAllowed();
                 try
                 {
                     string cmd = ss[0].Substring(1);
@@ -954,7 +955,7 @@ namespace ManicDigger
                         return;
                     }
                     movespeed = basemovespeed * 10;
-                    Log(string.Format(Language.MoveSpeed, 10.ToString()));
+                    Log(string.Format(language.MoveSpeed(), 10.ToString()));
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F3))
                 {
@@ -967,18 +968,18 @@ namespace ManicDigger
                     if (!ENABLE_FREEMOVE)
                     {
                         ENABLE_FREEMOVE = true;
-                        Log(Language.MoveFree);
+                        Log(language.MoveFree());
                     }
                     else if (ENABLE_FREEMOVE && (!ENABLE_NOCLIP))
                     {
                         ENABLE_NOCLIP = true;
-                        Log(Language.MoveFreeNoclip);
+                        Log(language.MoveFreeNoclip());
                     }
                     else if (ENABLE_FREEMOVE && ENABLE_NOCLIP)
                     {
                         ENABLE_FREEMOVE = false;
                         ENABLE_NOCLIP = false;
-                        Log(Language.MoveNormal);
+                        Log(language.MoveNormal());
                     }
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.I))
@@ -1056,9 +1057,9 @@ namespace ManicDigger
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
                     ToggleVsync();
-                    if (ENABLE_LAG == 0) { Log(Language.FrameRateVsync); }
-                    if (ENABLE_LAG == 1) { Log(Language.FrameRateUnlimited); }
-                    if (ENABLE_LAG == 2) { Log(Language.FrameRateLagSimulation); }
+                    if (ENABLE_LAG == 0) { Log(language.FrameRateVsync()); }
+                    if (ENABLE_LAG == 1) { Log(language.FrameRateUnlimited()); }
+                    if (ENABLE_LAG == 2) { Log(language.FrameRateLagSimulation()); }
                 }
                 if (e.Key == OpenTK.Input.Key.F9)
                 {
@@ -1141,7 +1142,7 @@ namespace ManicDigger
                 if (e.Key == GetKey(OpenTK.Input.Key.F))
                 {
                     ToggleFog();
-                    Log(string.Format(Language.FogDistance, d_Config3d.viewdistance));
+                    Log(string.Format(language.FogDistance(), d_Config3d.viewdistance));
                     OnResize(new EventArgs());
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.B))
@@ -2761,10 +2762,12 @@ namespace ManicDigger
             Draw2dText(name, xcenter(TextSize(name, 14).Width), 40, 14, null);
             if (useInfo)
             {
-                name = string.Format(Language.PressToUse, "E");
+                name = string.Format(language.PressToUse(), "E");
                 Draw2dText(name, xcenter(TextSize(name, 10).Width), 70, 10, null);
             }
         }
+
+        Language language { get { return game.language; } }
 
         public const float RailHeight = 0.3f;
 
@@ -4302,9 +4305,9 @@ namespace ManicDigger
                 longestframedt = 0;
                 fpscount = 0;
                 performanceinfo["fps"] = fpstext1;
-                performanceinfo["triangles"] = string.Format(Language.Triangles, TrianglesCount());
+                performanceinfo["triangles"] = string.Format(language.Triangles(), TrianglesCount());
                 int chunkupdates = ChunkUpdates;
-                performanceinfo["chunk updates"] = string.Format(Language.ChunkUpdates, (chunkupdates - lastchunkupdates));
+                performanceinfo["chunk updates"] = string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates));
                 lastchunkupdates = ChunkUpdates;
 
                 string s = "";
@@ -4331,7 +4334,7 @@ namespace ManicDigger
             }
         }
         bool titleset = false;
-        string applicationname = Language.GameName;
+        string applicationname;
         #region ILocalPlayerPosition Members
         public Vector3 LocalPlayerPosition
         {
@@ -5180,7 +5183,7 @@ namespace ManicDigger
             {
                 case Packet_ServerIdEnum.ServerIdentification:
                     {
-                        string invalidversionstr = Language.InvalidVersionConnectAnyway;
+                        string invalidversionstr = language.InvalidVersionConnectAnyway();
                         {
                             string servergameversion = packet.Identification.MdProtocolVersion;
                             if (servergameversion != GameVersion.Version)
@@ -5259,7 +5262,7 @@ namespace ManicDigger
                 case Packet_ServerIdEnum.LevelInitialize:
                     {
                         ReceivedMapLength = 0;
-                        InvokeMapLoadingProgress(0, 0, Language.Connecting);
+                        InvokeMapLoadingProgress(0, 0, language.Connecting());
                     }
                     break;
                 case Packet_ServerIdEnum.LevelDataChunk:
@@ -5353,7 +5356,7 @@ namespace ManicDigger
                             ENABLE_FREEMOVE = false;
                             ENABLE_NOCLIP = false;
                             movespeed = basemovespeed;
-                            Log(Language.MoveNormal);
+                            Log(language.MoveNormal());
                         }
                     }
                     break;
@@ -5363,7 +5366,7 @@ namespace ManicDigger
                         int y = packet.PlayerSpawnPosition.Y;
                         int z = packet.PlayerSpawnPosition.Z;
                         this.PlayerPositionSpawn = new Vector3(x, z, y);
-                        Log(string.Format(Language.SpawnPositionSetTo, x + "," + y + "," + z));
+                        Log(string.Format(language.SpawnPositionSetTo(), x + "," + y + "," + z));
                     }
                     break;
                 case Packet_ServerIdEnum.SpawnPlayer:
@@ -5936,7 +5939,7 @@ namespace ManicDigger
             }
             catch
             {
-                Console.WriteLine(Language.CannotWriteChatLog, filename);
+                Console.WriteLine(language.CannotWriteChatLog(), filename);
             }
         }
         private static string MakeValidFileName(string name)

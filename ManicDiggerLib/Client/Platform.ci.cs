@@ -42,6 +42,7 @@
     public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
     public abstract void GlEnableDepthTest();
     public abstract Texture LoadTextureFromFile(string fullPath);
+    public abstract string GetLanguageIso6391();
 }
 
 public class KeyEventArgs

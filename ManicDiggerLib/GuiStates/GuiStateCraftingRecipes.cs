@@ -56,7 +56,7 @@ namespace ManicDigger
             int menustarty = ycenter(okrecipes.Count * 80);
             if (okrecipes.Count == 0)
             {
-                Draw2dText(Language.NoMaterialsForCrafting, xcenter(200), ycenter(20), 12, Color.White);
+                Draw2dText(language.NoMaterialsForCrafting(), xcenter(200), ycenter(20), 12, Color.White);
                 return;
             }
             for (int i = 0; i < okrecipes.Count; i++)

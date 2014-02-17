@@ -83,6 +83,7 @@
     </Compile>
     <Compile Include="Audio.cs" />
     <Compile Include="AviWriter.cs" />
+    <Compile Include="Client\Language.ci.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
     <Compile Include="Client\Collisions.ci.cs" />
@@ -100,11 +101,6 @@
     <Compile Include="Interpolation.cs" />
     <Compile Include="Inventory.cs" />
     <Compile Include="IterableSet.cs" />
-    <Compile Include="Language.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Language.resx</DependentUpon>
-    </Compile>
     <Compile Include="ChunkDb.cs" />
     <Compile Include="GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="GuiStates\GuiStateEscapeMenu.cs" />
@@ -210,11 +206,6 @@
     <None Include="c.snk" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Language.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Language.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Forms\Menu.resx">
       <DependentUpon>Menu.cs</DependentUpon>
       <SubType>Designer</SubType>

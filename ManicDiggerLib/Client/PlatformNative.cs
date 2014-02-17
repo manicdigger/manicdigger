@@ -618,6 +618,11 @@ public class GamePlatformNative : GamePlatform
         }
         return id;
     }
+
+    public override string GetLanguageIso6391()
+    {
+        return "en";
+    }
 }
 
 public class TextureNative : Texture

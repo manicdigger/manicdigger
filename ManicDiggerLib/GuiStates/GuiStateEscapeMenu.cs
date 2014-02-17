@@ -58,9 +58,9 @@ namespace ManicDigger
             widgets.Clear();
             if (state == EscapeMenuState.Main)
             {
-                AddButton(Language.ReturnToGame,(a, b) => { GuiStateBackToGame(); });
-                AddButton(Language.Options, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
-                AddButton(Language.Exit, (a, b) =>
+                AddButton(language.ReturnToGame(),(a, b) => { GuiStateBackToGame(); });
+                AddButton(language.Options(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(language.Exit(), (a, b) =>
                 {
                     RestoreResolution();
                     SendLeave(Packet_LeaveReasonEnum.Leave);
@@ -71,10 +71,10 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Options)
             {
-                AddButton(Language.Graphics, (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
-                AddButton(Language.Keys, (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
-                AddButton(Language.Other, (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
-                AddButton(Language.ReturnToMainMenu, (a, b) => { SaveOptions(); SetEscapeMenuState(EscapeMenuState.Main); });
+                AddButton(language.Graphics(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Graphics); });
+                AddButton(language.Keys(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Keys); });
+                AddButton(language.Other(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Other); });
+                AddButton(language.ReturnToMainMenu(), (a, b) => { SaveOptions(); SetEscapeMenuState(EscapeMenuState.Main); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Graphics)
@@ -87,7 +87,7 @@ namespace ManicDigger
                         RedrawAllBlocks();
                     });
                 */
-                    AddButton(string.Format("Smooth shadows: {0}", options.Smoothshadows ? Language.On : Language.Off),
+                    AddButton(string.Format("Smooth shadows: {0}", options.Smoothshadows ? language.On() : language.Off()),
                     (a, b) =>
                     {
                         options.Smoothshadows = !options.Smoothshadows;
@@ -104,7 +104,7 @@ namespace ManicDigger
                         }
                         RedrawAllBlocks();
                     });
-                AddButton(string.Format(Language.ViewDistanceOption, (d_Config3d.viewdistance)),
+                AddButton(string.Format(language.ViewDistanceOption(), (d_Config3d.viewdistance)),
                     (a, b) =>
                     {
                         ToggleFog();
@@ -119,51 +119,56 @@ namespace ManicDigger
                     {
                         ToggleResolution();
                     });
-                AddButton(string.Format("Fullscreen: {0}", options.Fullscreen ? Language.On : Language.Off),
+                AddButton(string.Format("Fullscreen: {0}", options.Fullscreen ? language.On() : language.Off()),
                     (a, b) =>
                     {
                         options.Fullscreen = !options.Fullscreen;
                     });
-                AddButton(string.Format(Language.UseServerTexturesOption, (options.UseServerTextures ? Language.On : Language.Off)),
+                AddButton(string.Format(language.UseServerTexturesOption(), (options.UseServerTextures ? language.On() : language.Off())),
                     (a, b) =>
                     {
                         options.UseServerTextures = !options.UseServerTextures;
                     });
-                AddButton(string.Format(Language.FontOption, (FontString())),
+                AddButton(string.Format(language.FontOption(), (FontString())),
                     (a, b) =>
                     {
                         ToggleFont();
                     });
-                AddButton(Language.ReturnToOptionsMenu, (a, b) => { UseFullscreen(); UseResolution(); SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(language.ReturnToOptionsMenu(), (a, b) => { UseFullscreen(); UseResolution(); SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Other)
             {
-                AddButton(string.Format(Language.SoundOption, (d_Audio.Enabled ? Language.On : Language.Off)),
+                AddButton(string.Format(language.SoundOption(), (d_Audio.Enabled ? language.On() : language.Off())),
                     (a, b) =>
                     {
                         d_Audio.Enabled = !d_Audio.Enabled;
                     });
-                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(language.ReturnToOptionsMenu(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
             }
             else if (state == EscapeMenuState.Keys)
             {
                 int fontsize = 12;
                 int textheight = 20;
-                for (int i = 0; i < keyhelps.Length; i++)
+                KeyHelp[] helps = keyhelps();
+                for (int i = 0; i < 1024; i++)
                 {
+                    if (helps[i] == null)
+                    {
+                        break;
+                    }
                     int ii = i; //a copy for closure
-                    int defaultkey = keyhelps[i].DefaultKey;
+                    int defaultkey = helps[i].DefaultKey;
                     int key = defaultkey;
                     if (options.Keys.ContainsKey(defaultkey))
                     {
                         key = options.Keys[defaultkey];
                     }
-                    AddButton(string.Format(Language.KeyChange, keyhelps[i].Text, KeyName(key)), (a, b) => { keyselectid = ii; });
+                    AddButton(string.Format(language.KeyChange(), helps[i].Text, KeyName(key)), (a, b) => { keyselectid = ii; });
                 }
-                AddButton(Language.DefaultKeys, (a, b) => { options.Keys.Clear(); });
-                AddButton(Language.ReturnToOptionsMenu, (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
+                AddButton(language.DefaultKeys(), (a, b) => { options.Keys.Clear(); });
+                AddButton(language.ReturnToOptionsMenu(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(fontsize, textheight);
             }
         }
@@ -333,38 +338,46 @@ namespace ManicDigger
             MouseLeftClick = 200,
             MouseRightClick = 201,
         }
-        KeyHelp[] keyhelps = new KeyHelp[]
+        KeyHelp[] keyhelps()
         {
-            new KeyHelp(){Text=Language.KeyMoveFoward, DefaultKey=(int)OpenTK.Input.Key.W},
-            new KeyHelp(){Text=Language.KeyMoveBack, DefaultKey=(int)OpenTK.Input.Key.S},
-            new KeyHelp(){Text=Language.KeyMoveLeft, DefaultKey=(int)OpenTK.Input.Key.A},
-            new KeyHelp(){Text=Language.KeyMoveRight, DefaultKey=(int)OpenTK.Input.Key.D},
-            new KeyHelp(){Text=Language.KeyJump, DefaultKey=(int)OpenTK.Input.Key.Space},
+            int n = 1024;
+            KeyHelp[] helps = new KeyHelp[n];
+            for (int i = 0; i < n; i++)
+            {
+                helps[i] = null;
+            }
+            int count = 0;
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveFoward(), DefaultKey = (int)OpenTK.Input.Key.W };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveBack(), DefaultKey = (int)OpenTK.Input.Key.S };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveLeft(), DefaultKey = (int)OpenTK.Input.Key.A };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveRight(), DefaultKey = (int)OpenTK.Input.Key.D };
+            helps[count++] = new KeyHelp() { Text = language.KeyJump(), DefaultKey = (int)OpenTK.Input.Key.Space };
             //new KeyHelp(){Text="Remove block", DefaultKey=(int)SpecialKey.MouseLeftClick},
             //new KeyHelp(){Text="Place block", DefaultKey=(int)SpecialKey.MouseRightClick},
-            new KeyHelp(){Text=Language.KeyShowMaterialSelector, DefaultKey=(int)OpenTK.Input.Key.B},
-            new KeyHelp(){Text=Language.KeySetSpawnPosition, DefaultKey=(int)OpenTK.Input.Key.P},
-            new KeyHelp(){Text=Language.KeyRespawn, DefaultKey=(int)OpenTK.Input.Key.O},
-            new KeyHelp(){Text=Language.KeyReloadWeapon, DefaultKey=(int)OpenTK.Input.Key.R},
-            new KeyHelp(){Text=Language.KeyToggleFogDistance, DefaultKey=(int)OpenTK.Input.Key.F},
-            new KeyHelp(){Text=string.Format(Language.KeyMoveSpeed, "1"), DefaultKey=(int)OpenTK.Input.Key.F1},
-            new KeyHelp(){Text=string.Format(Language.KeyMoveSpeed, "10"), DefaultKey=(int)OpenTK.Input.Key.F2},
-            new KeyHelp(){Text=Language.KeyFreeMove, DefaultKey=(int)OpenTK.Input.Key.F3},
-            new KeyHelp(){Text=Language.KeyThirdPersonCamera, DefaultKey=(int)OpenTK.Input.Key.F5},
-            new KeyHelp(){Text=Language.KeyTextEditor, DefaultKey=(int)OpenTK.Input.Key.F9},
-            new KeyHelp(){Text=Language.KeyFullscreen, DefaultKey=(int)OpenTK.Input.Key.F11},
-            new KeyHelp(){Text=Language.KeyScreenshot, DefaultKey=(int)OpenTK.Input.Key.F12},
-            new KeyHelp(){Text=Language.KeyPlayersList, DefaultKey=(int)OpenTK.Input.Key.Tab},
-            new KeyHelp(){Text=Language.KeyChat, DefaultKey=(int)OpenTK.Input.Key.T},
-            new KeyHelp(){Text=Language.KeyTeamChat, DefaultKey=(int)OpenTK.Input.Key.Y},
+            helps[count++] = new KeyHelp() { Text = language.KeyShowMaterialSelector(), DefaultKey = (int)OpenTK.Input.Key.B };
+            helps[count++] = new KeyHelp() { Text = language.KeySetSpawnPosition(), DefaultKey = (int)OpenTK.Input.Key.P };
+            helps[count++] = new KeyHelp() { Text = language.KeyRespawn(), DefaultKey = (int)OpenTK.Input.Key.O };
+            helps[count++] = new KeyHelp() { Text = language.KeyReloadWeapon(), DefaultKey = (int)OpenTK.Input.Key.R };
+            helps[count++] = new KeyHelp() { Text = language.KeyToggleFogDistance(), DefaultKey = (int)OpenTK.Input.Key.F };
+            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "1"), DefaultKey = (int)OpenTK.Input.Key.F1 };
+            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "10"), DefaultKey = (int)OpenTK.Input.Key.F2 };
+            helps[count++] = new KeyHelp() { Text = language.KeyFreeMove(), DefaultKey = (int)OpenTK.Input.Key.F3 };
+            helps[count++] = new KeyHelp() { Text = language.KeyThirdPersonCamera(), DefaultKey = (int)OpenTK.Input.Key.F5 };
+            helps[count++] = new KeyHelp() { Text = language.KeyTextEditor(), DefaultKey = (int)OpenTK.Input.Key.F9 };
+            helps[count++] = new KeyHelp() { Text = language.KeyFullscreen(), DefaultKey = (int)OpenTK.Input.Key.F11 };
+            helps[count++] = new KeyHelp() { Text = language.KeyScreenshot(), DefaultKey = (int)OpenTK.Input.Key.F12 };
+            helps[count++] = new KeyHelp() { Text = language.KeyPlayersList(), DefaultKey = (int)OpenTK.Input.Key.Tab };
+            helps[count++] = new KeyHelp() { Text = language.KeyChat(), DefaultKey = (int)OpenTK.Input.Key.T };
+            helps[count++] = new KeyHelp() { Text = language.KeyTeamChat(), DefaultKey = (int)OpenTK.Input.Key.Y };
             //new KeyHelp(){Text="Unload blocks", DefaultKey=(int)OpenTK.Input.Key.U},
-            new KeyHelp(){Text=Language.KeyCraft, DefaultKey=(int)OpenTK.Input.Key.C},
+            helps[count++] = new KeyHelp() { Text = language.KeyCraft(), DefaultKey = (int)OpenTK.Input.Key.C };
             //new KeyHelp(){Text="Load blocks", DefaultKey=(int)OpenTK.Input.Key.L},
-            new KeyHelp(){Text=Language.KeyBlockInfo, DefaultKey=(int)OpenTK.Input.Key.I},
-            new KeyHelp(){Text=Language.KeyUse, DefaultKey=(int)OpenTK.Input.Key.E},
-            new KeyHelp(){Text=Language.KeyReverseMinecart, DefaultKey=(int)OpenTK.Input.Key.Q},
+            helps[count++] = new KeyHelp() { Text = language.KeyBlockInfo(), DefaultKey = (int)OpenTK.Input.Key.I };
+            helps[count++] = new KeyHelp() { Text = language.KeyUse(), DefaultKey = (int)OpenTK.Input.Key.E };
+            helps[count++] = new KeyHelp() { Text = language.KeyReverseMinecart(), DefaultKey = (int)OpenTK.Input.Key.Q };
             //new KeyHelp(){Text="Swap mouse up-down", BoolId="SwapMouseUpDown"},
-        };
+            return helps;
+        }
         int keyselectid = -1;
         private void EscapeMenuKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
         {
@@ -390,7 +403,7 @@ namespace ManicDigger
             {
                 if (keyselectid != -1)
                 {
-                    options.Keys[keyhelps[keyselectid].DefaultKey] = (int)e.Key;
+                    options.Keys[keyhelps()[keyselectid].DefaultKey] = (int)e.Key;
                     keyselectid = -1;
                 }
             }
