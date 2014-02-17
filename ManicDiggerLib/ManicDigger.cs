@@ -89,7 +89,7 @@ namespace ManicDigger
         public PlayerType Type;
         public int MonsterType;
         public int Health;
-        public DateTime LastUpdate;
+        public int LastUpdateMilliseconds;
         public string Model = "player.txt";
         public string Texture;
         public float EyeHeight = 1.5f;

@@ -802,7 +802,7 @@ namespace ManicDigger
         {
             if (e.Key == GetKey(OpenTK.Input.Key.F6))
             {
-                double lagSeconds = (DateTime.UtcNow - LastReceived).TotalSeconds;
+                float lagSeconds = one * (game.p.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
                 if ((lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS) || guistate == GuiState.MapLoading)
                 {
                     Reconnect();
@@ -1106,11 +1106,11 @@ namespace ManicDigger
                     Item item = d_Inventory.RightHand[ActiveMaterial];
                     if (item != null && item.ItemClass == ItemClass.Block
                         && game.blocktypes[item.BlockId].IsPistol
-                        && reloadstart.Ticks == 0)
+                        && reloadstartMilliseconds == 0)
                     {
                         int sound = rnd.Next(game.blocktypes[item.BlockId].Sounds.Reload.Length);
                         d_Audio.Play(game.blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
-                        reloadstart = DateTime.UtcNow;
+                        reloadstartMilliseconds = game.p.TimeMillisecondsFromStart();
                         reloadblock = item.BlockId;
                         SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Reload, Reload = new Packet_ClientReload() });
                     }
@@ -1486,7 +1486,7 @@ namespace ManicDigger
         float movespeed = basemovespeed;
         float fallspeed { get { return movespeed / 10; } }
         public const float basemovespeed = 5f;
-        DateTime lastbuild = new DateTime();
+        int lastbuildMilliseconds;
         float walksoundtimer = 0;
         int lastwalksound = 0;
         float stepsoundduration = 0.4f;
@@ -1727,7 +1727,7 @@ namespace ManicDigger
                     Vector3 diff = LocalPlayerPosition - kpos;
                     push += diff;
                 }
-                if ((DateTime.UtcNow - k.date) > TimeSpan.FromSeconds(DeserializeFloat(k.explosion.TimeFloat)))
+                if ((one * (game.p.TimeMillisecondsFromStart() - k.dateMilliseconds) / 1000) > DeserializeFloat(k.explosion.TimeFloat))
                 {
                     explosions.Remove(k);
                 }
@@ -1804,15 +1804,16 @@ namespace ManicDigger
             playervelocity = LocalPlayerPosition - lastplayerposition;
             playervelocity *= 75;
             lastplayerposition = LocalPlayerPosition;
-            if (reloadstart.Ticks != 0
-                && (DateTime.UtcNow - reloadstart).TotalSeconds > DeserializeFloat(game.blocktypes[reloadblock].ReloadDelayFloat))
+            if (reloadstartMilliseconds != 0
+                && (one * (game.p.TimeMillisecondsFromStart() - reloadstartMilliseconds) / 1000)
+                > DeserializeFloat(game.blocktypes[reloadblock].ReloadDelayFloat))
             {
                 if (TotalAmmo.ContainsKey(reloadblock))
                 {
                     int loaded = TotalAmmo[reloadblock];
                     loaded = Math.Min(game.blocktypes[reloadblock].AmmoMagazine, loaded);
                     LoadedAmmo[reloadblock] = loaded;
-                    reloadstart = new DateTime(0);
+                    reloadstartMilliseconds = 0;
                     reloadblock = -1;
                 }
             }
@@ -1825,12 +1826,12 @@ namespace ManicDigger
         {
             public Vector3 position;
             public Vector3 velocity;
-            public DateTime start;
+            public int startMilliseconds;
             public int block;
             public float explodesafter;
         }
         int reloadblock;
-        DateTime reloadstart;
+        int reloadstartMilliseconds;
         Vector3 lastplayerposition;
         Vector3 playervelocity;
         int PreviousActiveMaterialBlock;
@@ -1872,16 +1873,16 @@ namespace ManicDigger
                     else if (fallspeed < 5.5) { severity = 0.6f; }
                     else if (fallspeed < 6.0) { severity = 0.8f; }
                     else { severity = 1f; }
-                    if ((DateTime.UtcNow - lastfalldamagetime).TotalSeconds < 1)
+                    if ((one * (game.p.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
                     {
                         return;
                     }
-                    lastfalldamagetime = DateTime.UtcNow;
+                    lastfalldamagetimeMilliseconds = game.p.TimeMillisecondsFromStart();
                     ApplyDamageToPlayer((int)(severity * PlayerStats.MaxHealth));
                 }
             }
         }
-        DateTime lastfalldamagetime;
+        int lastfalldamagetimeMilliseconds;
 
         Vector3i GetPlayerEyesBlock()
         {
@@ -1891,7 +1892,7 @@ namespace ManicDigger
         }
 
         //TODO server side?
-        DateTime lastOxygenTick = DateTime.UtcNow;
+        int lastOxygenTickMilliseconds;
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
@@ -1914,7 +1915,7 @@ namespace ManicDigger
             }
 
             //Player drowning
-            int deltaTime = (int)(DateTime.UtcNow - lastOxygenTick).TotalMilliseconds;
+            int deltaTime = (int)(one * (game.p.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds) / 1000);
             if (deltaTime >= 1000)
             {
             	if (WaterSwimming)
@@ -1935,7 +1936,7 @@ namespace ManicDigger
             	    Id = Packet_ClientIdEnum.Oxygen,
             	    Oxygen = new Packet_ClientOxygen() { CurrentOxygen = PlayerStats.CurrentOxygen },
             	});
-            	lastOxygenTick = DateTime.UtcNow;
+                lastOxygenTickMilliseconds = game.p.TimeMillisecondsFromStart();
             }
         }
 
@@ -2094,15 +2095,15 @@ namespace ManicDigger
         class Sprite
         {
             public Vector3 position;
-            public DateTime time;
-            public TimeSpan timespan;
+            public int timeMilliseconds;
+            public float timespanSeconds;
             public string image;
             public int size = 40;
             public int animationcount;
         }
-        DateTime lastironsightschange;
+        int lastironsightschangeMilliseconds;
         List<Sprite> sprites = new List<Sprite>();
-        DateTime grenadecookingstart;
+        int grenadecookingstartMilliseconds;
         float grenadetime = 3;
         private void UpdatePicking()
         {
@@ -2157,7 +2158,7 @@ namespace ManicDigger
             //grenade cooking
             if (mouseleftclick)
             {
-                grenadecookingstart = DateTime.UtcNow;
+                grenadecookingstartMilliseconds = game.p.TimeMillisecondsFromStart();
                 if (ispistol && isgrenade)
                 {
                     if (game.blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
@@ -2166,10 +2167,10 @@ namespace ManicDigger
                     }
                 }
             }
-            float wait = (float)(DateTime.UtcNow - grenadecookingstart).TotalSeconds;
+            float wait = ((float)(game.p.TimeMillisecondsFromStart() - grenadecookingstartMilliseconds) / 1000);
             if (isgrenade && left)
             {
-                if (wait >= grenadetime && isgrenade && grenadecookingstart != new DateTime())
+                if (wait >= grenadetime && isgrenade && grenadecookingstartMilliseconds != 0)
                 {
                     ispistolshoot = true;
                     mouseleftdeclick = true;
@@ -2181,13 +2182,13 @@ namespace ManicDigger
             }
             else
             {
-                grenadecookingstart = new DateTime();
+                grenadecookingstartMilliseconds = 0;
             }
 
-            if (ispistol && mouserightclick && (DateTime.UtcNow - lastironsightschange).TotalSeconds >= 0.5)
+            if (ispistol && mouserightclick && (game.p.TimeMillisecondsFromStart() - lastironsightschangeMilliseconds) >= 500)
             {
                 IronSights = !IronSights;
-                lastironsightschange = DateTime.UtcNow;
+                lastironsightschangeMilliseconds = game.p.TimeMillisecondsFromStart();
             }
 
             float unit_x = 0;
@@ -2331,7 +2332,8 @@ namespace ManicDigger
             {
                 currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
             }
-            if ((DateTime.Now - lastbuild).TotalSeconds >= BuildDelay || IsNextShot)
+            if ((one * (game.p.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay
+                || IsNextShot)
             {
                 if (left && d_Inventory.RightHand[ActiveMaterial] == null)
                 {
@@ -2345,13 +2347,13 @@ namespace ManicDigger
                 }
                 if ((left || right || middle) && (!isgrenade))
                 {
-                    lastbuild = DateTime.Now;
+                    lastbuildMilliseconds = game.p.TimeMillisecondsFromStart();
                 }
                 if (isgrenade && mouseleftdeclick)
                 {
-                    lastbuild = DateTime.Now;
+                    lastbuildMilliseconds = game.p.TimeMillisecondsFromStart();
                 }
-                if (reloadstart.Ticks != 0)
+                if (reloadstartMilliseconds != 0)
                 {
                     goto end;
                 }
@@ -2425,7 +2427,7 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = p.Value.pos, timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 1;
@@ -2438,7 +2440,7 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = p.Value.pos, time = DateTime.UtcNow, timespan = TimeSpan.FromSeconds(0.2), image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = p.Value.pos, timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 0;
@@ -2459,7 +2461,7 @@ namespace ManicDigger
                         v.Normalize();
                         v *= projectilespeed;
                         shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
-                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, start = DateTime.UtcNow, block = item.BlockId, explodesafter = grenadetime - wait });
+                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, startMilliseconds = game.p.TimeMillisecondsFromStart(), block = item.BlockId, explodesafter = grenadetime - wait });
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
@@ -2606,7 +2608,7 @@ namespace ManicDigger
             fastclicking = false;
             if ((!(left || right || middle)) && (!ispistol))
             {
-                lastbuild = new DateTime();
+                lastbuildMilliseconds = 0;
                 fastclicking = true;
             }
         }
@@ -2941,12 +2943,12 @@ namespace ManicDigger
                     int? n = null;
                     if (b.animationcount > 0)
                     {
-                        n = (int)((DateTime.UtcNow - b.time).TotalSeconds / b.timespan.TotalSeconds
+                        n = (int)((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
                             * (b.animationcount * b.animationcount - 1));
                     }
                     Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Color.White, true);
                     GLPopMatrix();
-                    if ((DateTime.UtcNow - b.time) > b.timespan) { sprites.Remove(b); }
+                    if ((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
                 }
                 foreach (Bullet b in new List<Bullet>(bullets))
                 {
@@ -3239,12 +3241,12 @@ namespace ManicDigger
             Vector3 newpos = b.position + b.velocity * (float)dt;
             b.velocity.Y += -projectilegravity * (float)dt;
             b.position = GrenadeBounce(oldpos, newpos, ref b.velocity, dt);
-            if ((DateTime.UtcNow - b.start).TotalSeconds > b.explodesafter)
+            if ((one * (game.p.TimeMillisecondsFromStart() - b.startMilliseconds) / 1000) > b.explodesafter)
             {
                 projectiles.Remove(b);
                 d_Audio.Play("grenadeexplosion.ogg", b.position);
 
-                sprites.Add(new Sprite() { time = DateTime.UtcNow, image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespan = TimeSpan.FromSeconds(1), size = 200, animationcount = 4 });
+                sprites.Add(new Sprite() { timeMilliseconds = game.p.TimeMillisecondsFromStart(), image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespanSeconds = 1, size = 200, animationcount = 4 });
 
                 Packet_ServerExplosion explosion = new Packet_ServerExplosion();
                 explosion.XFloat = SerializeFloat(b.position.X);
@@ -3253,7 +3255,7 @@ namespace ManicDigger
                 explosion.RangeFloat = game.blocktypes[b.block].ExplosionRangeFloat;
                 explosion.IsRelativeToPlayerPosition = 0;
                 explosion.TimeFloat = game.blocktypes[b.block].ExplosionTimeFloat;
-                explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = explosion });
+                explosions.Add(new Explosion() { dateMilliseconds = game.p.TimeMillisecondsFromStart(), explosion = explosion });
                 float dist = (LocalPlayerPosition - b.position).Length;
                 float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
                 if ((int)dmg > 0)
@@ -3890,7 +3892,7 @@ namespace ManicDigger
                 DrawScreenshotFlash();
                 screenshotflash--;
             }
-            double lagSeconds = (DateTime.UtcNow - LastReceived).TotalSeconds;
+            double lagSeconds = one * (game.p.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
             if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
             {
                 Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
@@ -4283,7 +4285,7 @@ namespace ManicDigger
         void Mouse_Move(object sender, OpenTK.Input.MouseMoveEventArgs e)
         {
         }
-        DateTime lasttitleupdate;
+        int lasttitleupdateMilliseconds;
         int fpscount = 0;
         string fpstext = "";
         float longestframedt = 0;
@@ -4294,13 +4296,13 @@ namespace ManicDigger
         {
             fpscount++;
             longestframedt = (float)Math.Max(longestframedt, e.Time);
-            TimeSpan elapsed = (DateTime.Now - lasttitleupdate);
+            float elapsed = one * (game.p.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
             d_FpsHistoryGraphRenderer.Update((float)e.Time);
-            if (elapsed.TotalSeconds >= 1)
+            if (elapsed >= 1)
             {
                 string fpstext1 = "";
-                lasttitleupdate = DateTime.Now;
-                fpstext1 += "FPS: " + (int)((float)fpscount / elapsed.TotalSeconds);
+                lasttitleupdateMilliseconds = game.p.TimeMillisecondsFromStart();
+                fpstext1 += "FPS: " + (int)((float)fpscount / elapsed);
                 fpstext1 += string.Format(" (min: {0})", (int)(1f / longestframedt));
                 longestframedt = 0;
                 fpscount = 0;
@@ -4686,7 +4688,7 @@ namespace ManicDigger
                 {
                     blockid = SpecialBlockId.Empty;
                 }
-                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), time = DateTime.UtcNow };
+                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), timeMilliseconds = game.p.TimeMillisecondsFromStart() };
                 SetBlock(x, y, z, blockid);
                 RedrawBlock(x, y, z);
             }
@@ -4778,7 +4780,7 @@ namespace ManicDigger
         }
         struct Speculative
         {
-            public DateTime time;
+            public int timeMilliseconds;
             public int blocktype;
         }
         Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
@@ -4817,7 +4819,7 @@ namespace ManicDigger
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
             {
-                if ((DateTime.UtcNow - k.Value.time).TotalSeconds > 2)
+                if ((one * (game.p.TimeMillisecondsFromStart() - k.Value.timeMilliseconds) / 1000) > 2)
                 {
                     speculative.Remove(k.Key);
                     RedrawBlock(k.Key.x, k.Key.y, k.Key.z);
@@ -5042,7 +5044,7 @@ namespace ManicDigger
         void EmptyCallback(IAsyncResult result)
         {
         }
-        DateTime lastpositionsent;
+        int lastpositionsentMilliseconds;
         public void SendSetBlock(Vector3 position, int mode, int type, int materialslot)
         {
             Packet_ClientSetBlock p = new Packet_ClientSetBlock()
@@ -5098,7 +5100,7 @@ namespace ManicDigger
         /// </summary>
         public void NetworkProcess()
         {
-            currentTime = DateTime.UtcNow;
+            currentTimeMilliseconds = game.p.TimeMillisecondsFromStart();
             stopwatch.Reset();
             stopwatch.Start();
             if (main == null)
@@ -5110,15 +5112,15 @@ namespace ManicDigger
             {
                 TryReadPacket(msg.ReadBytes(msg.LengthBytes));
             }
-            if (spawned && ((DateTime.UtcNow - lastpositionsent).TotalSeconds > 0.1))
+            if (spawned && ((game.p.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
             {
-                lastpositionsent = DateTime.UtcNow;
+                lastpositionsentMilliseconds = game.p.TimeMillisecondsFromStart();
                 SendPosition(LocalPlayerPosition, LocalPlayerOrientation);
             }
-            DateTime now = DateTime.UtcNow;
+            int now = game.p.TimeMillisecondsFromStart();
             foreach (var k in players)
             {
-                if ((now - k.Value.LastUpdate).TotalSeconds > 2)
+                if ((one * (now - k.Value.LastUpdateMilliseconds) / 1000) > 2)
                 {
                     playerdrawinfo.Remove(k.Key);
                     k.Value.Position = null;
@@ -5283,7 +5285,6 @@ namespace ManicDigger
                         {
                             MapLoaded.Invoke(this, new MapLoadedEventArgs() { });
                         }
-                        loadedtime = DateTime.Now;
                     }
                     break;
                 case Packet_ServerIdEnum.SetBlock:
@@ -5771,13 +5772,13 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Explosion:
-                    explosions.Add(new Explosion() { date = DateTime.UtcNow, explosion = packet.Explosion });
+                    explosions.Add(new Explosion() { dateMilliseconds = game.p.TimeMillisecondsFromStart(), explosion = packet.Explosion });
                     break;
                 case Packet_ServerIdEnum.Projectile:
                     Projectile projectile = new Projectile();
                     projectile.position = new Vector3(DeserializeFloat(packet.Projectile.FromXFloat), DeserializeFloat(packet.Projectile.FromYFloat), DeserializeFloat(packet.Projectile.FromZFloat));
                     projectile.velocity = new Vector3(DeserializeFloat(packet.Projectile.VelocityXFloat), DeserializeFloat(packet.Projectile.VelocityYFloat), DeserializeFloat(packet.Projectile.VelocityZFloat));
-                    projectile.start = DateTime.UtcNow;
+                    projectile.startMilliseconds = game.p.TimeMillisecondsFromStart();
                     projectile.block = packet.Projectile.BlockId;
                     projectile.explodesafter = DeserializeFloat(packet.Projectile.ExplodesAfterFloat);
                     projectiles.Add(projectile);
@@ -5785,7 +5786,7 @@ namespace ManicDigger
                 default:
                     break;
             }
-            LastReceived = currentTime;
+            LastReceivedMilliseconds = currentTimeMilliseconds;
             //return lengthPrefixLength + packetLength;
         }
 
@@ -5835,7 +5836,7 @@ namespace ManicDigger
 
         public class Explosion
         {
-            public DateTime date;
+            public int dateMilliseconds;
             public Packet_ServerExplosion explosion;
         }
         List<Explosion> explosions = new List<Explosion>();
@@ -5881,7 +5882,7 @@ namespace ManicDigger
         Dictionary<string, Packet_Dialog> dialogs = new Dictionary<string, Packet_Dialog>();
         public GameDataMonsters d_DataMonsters;
         public int MonsterIdFirst = 1000;
-        DateTime currentTime;
+        int currentTimeMilliseconds;
         private void SendRequestBlob(List<byte[]> needed)
         {
             Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
@@ -5906,7 +5907,7 @@ namespace ManicDigger
             return sb.ToString();
         }
         public int ReceivedMapLength = 0;
-        DateTime loadedtime;
+
         private void InvokeMapLoadingProgress(int progressPercent, int progressBytes, string status)
         {
             if (MapLoadingProgress != null)
@@ -6001,7 +6002,7 @@ namespace ManicDigger
                 }
                 d_Clients.Players[playerid].Heading = heading;
                 d_Clients.Players[playerid].Pitch = pitch;
-                d_Clients.Players[playerid].LastUpdate = DateTime.UtcNow;
+                d_Clients.Players[playerid].LastUpdateMilliseconds = game.p.TimeMillisecondsFromStart();
             }
         }
         List<byte> received = new List<byte>();
@@ -6023,7 +6024,7 @@ namespace ManicDigger
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
         #endregion
-        public DateTime LastReceived { get; set; }
+        public int LastReceivedMilliseconds;
         //[Inject]
         //public IIsChunkDirty d_IsChunkReady;
         #region IMapStorage Members
@@ -6377,11 +6378,11 @@ namespace ManicDigger
         void DeleteUnusedCachedTextTextures()
         {
             List<Text> toremove = new List<Text>();
-            DateTime now = DateTime.UtcNow;
+            int now = game.p.TimeMillisecondsFromStart();
             foreach (var k in cachedTextTextures)
             {
                 var ct = k.Value;
-                if ((now - ct.lastuse).TotalSeconds > 1)
+                if ((one * (now - ct.lastuseMilliseconds) / 1000) > 1)
                 {
                     GL.DeleteTexture(ct.textureId);
                     toremove.Add(k.Key);
@@ -6418,7 +6419,7 @@ namespace ManicDigger
                 cachedTextTextures.Add(t, ct);
             }
             ct = cachedTextTextures[t];
-            ct.lastuse = DateTime.UtcNow;
+            ct.lastuseMilliseconds = game.p.TimeMillisecondsFromStart();
             GL.Disable(EnableCap.AlphaTest);
             Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
             GL.Enable(EnableCap.AlphaTest);
@@ -6450,7 +6451,7 @@ namespace ManicDigger
                 cachedTextTextures.Add(t, ct);
             }
             ct = cachedTextTextures[t];
-            ct.lastuse = DateTime.UtcNow;
+            ct.lastuseMilliseconds = game.p.TimeMillisecondsFromStart();
             GL.Disable(EnableCap.AlphaTest);
             Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
             GL.Enable(EnableCap.AlphaTest);
@@ -6718,7 +6719,7 @@ namespace ManicDigger
     {
         public int textureId;
         public SizeF size;
-        public DateTime lastuse;
+        public int lastuseMilliseconds;
     }
 
     public interface IResetMap

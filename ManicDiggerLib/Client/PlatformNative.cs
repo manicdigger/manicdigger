@@ -9,12 +9,14 @@ using System.Text;
 using System.Net;
 using OpenTK.Input;
 using OpenTK;
+using System.Diagnostics;
 
 public class GamePlatformNative : GamePlatform
 {
     public GamePlatformNative()
     {
         datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
+        start.Start();
     }
 
     public GameWindowNative window;
@@ -622,6 +624,13 @@ public class GamePlatformNative : GamePlatform
     public override string GetLanguageIso6391()
     {
         return "en";
+    }
+
+    Stopwatch start = new Stopwatch();
+
+    public override int TimeMillisecondsFromStart()
+    {
+        return (int)start.ElapsedMilliseconds;
     }
 }
 

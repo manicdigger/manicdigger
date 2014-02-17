@@ -8,6 +8,11 @@ namespace ManicDigger.Gui
 {
     public class HudChat
     {
+        public HudChat()
+        {
+            one = 1;
+        }
+
         public ManicDiggerGameWindow game;
         [Inject]
         public IDraw2d d_Draw2d;
@@ -24,6 +29,8 @@ namespace ManicDigger.Gui
         public bool IsTeamchat;
         public string Name { get { return "Chat"; } }
 
+        public float one;
+
         public void Render()
         {
             if (d_Draw2d != null)
@@ -37,27 +44,28 @@ namespace ManicDigger.Gui
         }
         public void AddChatline(string s)
         {
+            int now = game.game.p.TimeMillisecondsFromStart();
             if (s.Length > 192)
             {
-                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(128, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(192), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(128, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(192), timeMilliseconds = now });
             }
             else if (s.Length > 128)
             {
-                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(128), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(128), timeMilliseconds = now });
             }
             else if (s.Length > 64)
             {
-                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), time = DateTime.Now });
-                ChatLines.Add(new Chatline() { text = s.Substring(64), time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s.Substring(0, 64), timeMilliseconds = now });
+                ChatLines.Add(new Chatline() { text = s.Substring(64), timeMilliseconds = now });
             }
             else
             {
-                ChatLines.Add(new Chatline() { text = s, time = DateTime.Now });
+                ChatLines.Add(new Chatline() { text = s, timeMilliseconds = now });
             }
         }
         public void DrawChatLines(bool all)
@@ -73,7 +81,7 @@ namespace ManicDigger.Gui
             {
                 foreach (Chatline c in ChatLines)
                 {
-                    if ((DateTime.Now - c.time).TotalSeconds < ChatScreenExpireTimeSeconds)
+                    if ((one * (game.game.p.TimeMillisecondsFromStart() - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds)
                     {
                         chatlines2.Add(c);
                     }
@@ -118,6 +126,6 @@ namespace ManicDigger.Gui
     public class Chatline
     {
         public string text;
-        public DateTime time;
+        public int timeMilliseconds;
     }
 }

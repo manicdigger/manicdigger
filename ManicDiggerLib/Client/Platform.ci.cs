@@ -43,6 +43,7 @@
     public abstract void GlEnableDepthTest();
     public abstract Texture LoadTextureFromFile(string fullPath);
     public abstract string GetLanguageIso6391();
+    public abstract int TimeMillisecondsFromStart();
 }
 
 public class KeyEventArgs
