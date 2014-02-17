@@ -3,7 +3,6 @@
     public MainMenu()
     {
         one = 1;
-        p = GamePlatform.Create();
         textures = new LoadedTexture[256];
         texturesCount = 0;
         textTextures = new TextTexture[256];
@@ -16,9 +15,9 @@
 
     internal float one;
 
-    public void Start(Gl gl_)
+    public void Start(GamePlatform p_)
     {
-        this.gl = gl_;
+        this.p = p_;
 
         xRot = 0;
         xSpeed = 0;
@@ -34,81 +33,17 @@
         pMatrix = Mat4.Create();
 
         currentlyPressedKeys = new bool[256];
-        gl.AddOnNewFrame(MainMenuNewFrameHandler.Create(this));
-        gl.AddOnKeyEvent(MainMenuKeyEventHandler.Create(this));
-        gl.AddOnMouseEvent(MainMenuMouseEventHandler.Create(this));
-        gl.AddOnTouchEvent(MainMenuTouchEventHandler.Create(this));
+        p.AddOnNewFrame(MainMenuNewFrameHandler.Create(this));
+        p.AddOnKeyEvent(MainMenuKeyEventHandler.Create(this));
+        p.AddOnMouseEvent(MainMenuMouseEventHandler.Create(this));
+        p.AddOnTouchEvent(MainMenuTouchEventHandler.Create(this));
     }
-
-    void InitShaders()
-    {
-        string vertexShaderSource = "    attribute vec3 aVertexPosition;"
-   + "attribute vec2 aTextureCoord;"
-
-   + "uniform mat4 uMVMatrix;"
-   + "uniform mat4 uPMatrix;"
-
-   + "varying vec2 vTextureCoord;"
-
-
-    + "void main(void) {"
-    + "    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);"
-    + "    vTextureCoord = aTextureCoord;"
-    + "}";
-
-        string fragmentShaderSource = "     precision mediump float;"
-
-    + "varying vec2 vTextureCoord;"
-   + "uniform sampler2D uSampler;"
-
-   + "void main(void) {"
-   + "gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));"
-   + "}";
-
-        WebGLShader vertexShader = gl.CreateShader(Gl.VertexShader);
-        gl.ShaderSource(vertexShader, vertexShaderSource);
-        gl.CompileShader(vertexShader);
-        WebGLShader fragmentShader = gl.CreateShader(Gl.FragmentShader);
-        gl.ShaderSource(fragmentShader, fragmentShaderSource);
-        gl.CompileShader(fragmentShader);
-
-        shaderProgram = gl.CreateProgram();
-        gl.AttachShader(shaderProgram, vertexShader);
-        gl.AttachShader(shaderProgram, fragmentShader);
-        gl.LinkProgram(shaderProgram);
-
-        //if (gl.GetProgramParameter(shaderProgram, Gl.LinkStatus) == null)
-        //{
-        //    //alert("Could not initialise shaders");
-        //    //return;
-        //}
-
-        gl.UseProgram(shaderProgram);
-
-        shaderProgramvertexPositionAttribute = gl.GetAttribLocation(shaderProgram, "aVertexPosition");
-        gl.EnableVertexAttribArray(shaderProgramvertexPositionAttribute);
-
-        shaderProgramtextureCoordAttribute = gl.GetAttribLocation(shaderProgram, "aTextureCoord");
-        gl.EnableVertexAttribArray(shaderProgramtextureCoordAttribute);
-
-        shaderProgrampMatrixUniform = gl.GetUniformLocation(shaderProgram, "uPMatrix");
-        shaderProgrammvMatrixUniform = gl.GetUniformLocation(shaderProgram, "uMVMatrix");
-        shaderProgramsamplerUniform = gl.GetUniformLocation(shaderProgram, "uSampler");
-    }
-    internal Gl gl;
 
     int viewportWidth;
     int viewportHeight;
 
     float[] mvMatrix;
     float[] pMatrix;
-
-    WebGLProgram shaderProgram;
-    int shaderProgramvertexPositionAttribute;
-    int shaderProgramtextureCoordAttribute;
-    WebGLUniformLocation shaderProgrampMatrixUniform;
-    WebGLUniformLocation shaderProgrammvMatrixUniform;
-    WebGLUniformLocation shaderProgramsamplerUniform;
 
     bool[] currentlyPressedKeys;
 
@@ -174,81 +109,11 @@
         }
     }
 
-    Model CreateModel(ModelData data)
-    {
-        Model m = new Model();
-        WebGLBuffer xyzBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ArrayBuffer_, xyzBuffer);
-
-        gl.BufferDataFloat(Gl.ArrayBuffer_, data.xyz, Gl.StaticDraw);
-        m.xyzBuffer = xyzBuffer;
-        m.xyzBufferitemSize = 3;
-        m.xyzBuffernumItems = data.verticesCount;
-
-        WebGLBuffer uvBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ArrayBuffer_, uvBuffer);
-
-        gl.BufferDataFloat(Gl.ArrayBuffer_, data.uv, Gl.StaticDraw);
-        m.uvBuffer = uvBuffer;
-        m.uvBufferitemSize = 2;
-        m.uvBuffernumItems = data.verticesCount;
-
-        WebGLBuffer indexBuffer = gl.CreateBuffer();
-        gl.BindBuffer(Gl.ElementArrayBuffer, indexBuffer);
-        gl.BufferDataUshort(Gl.ElementArrayBuffer, data.indices, Gl.StaticDraw);
-        m.indexBuffer = indexBuffer;
-        m.indexBufferitemSize = 1;
-        m.indexBuffernumItems = data.indicesCount;
-        return m;
-    }
-
-    public void HandleLoadedTexture(WebGLTexture textures, HTMLImageElement images)
-    {
-        //gl.PixelStorei(Gl.UnpackFlipYWebgl, 1);
-
-        //gl.BindTexture(Gl.Texture2d, textures[0]);
-        //gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[0]);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Nearest);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Nearest);
-
-        //gl.BindTexture(Gl.Texture2d, textures[1]);
-        //gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images[1]);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.Linear);
-
-        gl.BindTexture(Gl.Texture2d, textures);
-        gl.TexImage2DImage(Gl.Texture2d, 0, Gl.Rgba, Gl.Rgba, Gl.UnsignedByte, images);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
-        gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.LinearMipmapNearest);
-        gl.GenerateMipmap(Gl.Texture2d);
-
-        gl.BindTexture(Gl.Texture2d, null);
-
-#if !CITO
-        OpenTK.Graphics.OpenGL.GL.Enable(OpenTK.Graphics.OpenGL.EnableCap.AlphaTest);
-        OpenTK.Graphics.OpenGL.GL.AlphaFunc(OpenTK.Graphics.OpenGL.AlphaFunction.Greater, 0.5f);
-        OpenTK.Graphics.OpenGL.GL.Enable(OpenTK.Graphics.OpenGL.EnableCap.Blend);
-        OpenTK.Graphics.OpenGL.GL.BlendFunc(OpenTK.Graphics.OpenGL.BlendingFactorSrc.SrcAlpha,
-            OpenTK.Graphics.OpenGL.BlendingFactorDest.OneMinusSrcAlpha);
-#endif
-    }
-
-    public void ImageOnLoad(string name)
-    {
-        for (int i = 0; i < texturesCount; i++)
-        {
-            if (textures[i] != null && textures[i].name == name)
-            {
-                HandleLoadedTexture(textures[i].texture, textures[i].image);
-            }
-        }
-    }
-
     void DrawScene()
     {
-        gl.Viewport(0, 0, viewportWidth, viewportHeight);
-        gl.Clear(Gl.ColorBufferBit | Gl.DepthBufferBit);
-        gl.Disable(Gl.DepthTest);
+        p.GlViewport(0, 0, viewportWidth, viewportHeight);
+        p.GlClearColorBufferAndDepthBuffer();
+        p.GlDisableDepthTest();
         {
             //Mat4.Perspective(pMatrix, 45, one * viewportWidth / viewportHeight, one / 100, one * 1000);
             //Mat4.Identity_(mvMatrix);
@@ -256,7 +121,7 @@
         }
         {
             Mat4.Identity_(pMatrix);
-            Mat4.Ortho(pMatrix, 0, gl.GetCanvasWidth(), gl.GetCanvasHeight(), 0, 0, 10);
+            Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
         }
 
         screen.Render();
@@ -312,12 +177,12 @@
                 return t;
             }
         }
-        TextTexture tnew = p.CreateTextTexture(gl, text, fontSize);
+        TextTexture tnew = p.CreateTextTexture(text, fontSize);
         textTextures[textTexturesCount++] = tnew;
         return tnew;
     }
 
-    internal WebGLTexture GetTexture(string name)
+    internal Texture GetTexture(string name)
     {
         for (int i = 0; i < texturesCount; i++)
         {
@@ -326,20 +191,15 @@
                 return textures[i].texture;
             }
         }
-        HTMLImageElement image = gl.CreateHTMLImageElement();
-        WebGLTexture texture = gl.CreateTexture();
         LoadedTexture t = new LoadedTexture();
         t.name = name;
-        t.image = image;
-        t.texture = texture;
+        t.texture = p.LoadTextureFromFile(p.GetFullFilePath(name));
         textures[texturesCount++] = t;
-        image.SetOnLoad(MainMenuImageOnLoadHandler.Create(this, name));
-        image.SetSrc(p.GetFullFilePath(name));
         return t.texture;
     }
 
     Model cubeModel;
-    public void Draw2dQuad(WebGLTexture textureid, float dx, float dy, float dw, float dh)
+    public void Draw2dQuad(Texture textureid, float dx, float dy, float dw, float dh)
     {
         Mat4.Identity_(mvMatrix);
         Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(dx, dy, 0));
@@ -349,31 +209,15 @@
         SetMatrixUniforms();
         if (cubeModel == null)
         {
-            cubeModel = CreateModel(QuadModelData.GetQuadModelData());
+            cubeModel = p.CreateModel(QuadModelData.GetQuadModelData());
         }
-        DrawModel(textureid, cubeModel);
-    }
-
-    void DrawModel(WebGLTexture texture, Model model)
-    {
-        gl.BindBuffer(Gl.ArrayBuffer_, model.xyzBuffer);
-        gl.VertexAttribPointer(shaderProgramvertexPositionAttribute, model.xyzBufferitemSize, Gl.Float, false, 0, 0);
-
-        gl.BindBuffer(Gl.ArrayBuffer_, model.uvBuffer);
-        gl.VertexAttribPointer(shaderProgramtextureCoordAttribute, model.uvBufferitemSize, Gl.Float, false, 0, 0);
-
-        gl.ActiveTexture(Gl.Texture0);
-        gl.BindTexture(Gl.Texture2d, texture);
-        gl.Uniform1i(shaderProgramsamplerUniform, 0);
-
-        gl.BindBuffer(Gl.ElementArrayBuffer, model.indexBuffer);
-        gl.DrawElements(Gl.Triangles, model.indexBuffernumItems, Gl.UnsignedShort, 0);
+        p.BindTexture2d(textureid);
+        p.DrawModel(cubeModel);
     }
 
     void SetMatrixUniforms()
     {
-        gl.UniformMatrix4fv(shaderProgrampMatrixUniform, false, pMatrix);
-        gl.UniformMatrix4fv(shaderProgrammvMatrixUniform, false, mvMatrix);
+        p.SetMatrixUniforms(pMatrix, mvMatrix);
     }
 
     float degToRad(float degrees)
@@ -407,24 +251,16 @@
         if (!initialized)
         {
             initialized = true;
-            InitShaders();
+            p.InitShaders();
 
-            gl.ClearColor(0, 0, 0, 1);
-            gl.Enable(Gl.DepthTest);
+            p.GlClearColorRgbaf(0, 0, 0, 1);
+            p.GlEnableDepthTest();
         }
-        viewportWidth = gl.GetCanvasWidth();
-        viewportHeight = gl.GetCanvasHeight();
+        viewportWidth = p.GetCanvasWidth();
+        viewportHeight = p.GetCanvasHeight();
         HandleKeys();
         DrawScene();
         Animate();
-    }
-
-    public static void RunMain()
-    {
-        Gl g = Gl.Create();
-        MainMenu l = new MainMenu();
-        l.Start(g);
-        g.Start();
     }
 
     public void HandleMouseDown(MouseEventArgs e)
@@ -526,7 +362,7 @@
 
     internal void DrawBackground()
     {
-        float scale = one * gl.GetCanvasWidth() / 1280;
+        float scale = one * p.GetCanvasWidth() / 1280;
         Draw2dQuad(GetTexture("background.png"), 0, 0, 1280 * scale, 1280 * scale);
     }
 
@@ -650,7 +486,7 @@ public class TextTexture
 {
     internal float size;
     internal string text;
-    internal WebGLTexture texture;
+    internal Texture texture;
     internal int texturewidth;
     internal int textureheight;
     internal int textwidth;
@@ -660,8 +496,7 @@ public class TextTexture
 public class LoadedTexture
 {
     internal string name;
-    internal HTMLImageElement image;
-    internal WebGLTexture texture;
+    internal Texture texture;
 }
 
 public class Screen
@@ -845,21 +680,22 @@ public class ScreenMain : Screen
     MenuWidget multiplayer;
     public override void Render()
     {
-        Gl gl = menu.gl;
-        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        GamePlatform p = menu.p;
+
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
         float size = menu.one * 80 / 100;
         menu.DrawBackground();
-        menu.Draw2dQuad(menu.GetTexture("logo.png"), gl.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
+        menu.Draw2dQuad(menu.GetTexture("logo.png"), p.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
 
         singleplayer.text = "Singleplayer";
-        singleplayer.x = gl.GetCanvasWidth() / 2 - (256 + 100) * scale;
-        singleplayer.y = gl.GetCanvasHeight() * 7 / 10;
+        singleplayer.x = p.GetCanvasWidth() / 2 - (256 + 100) * scale;
+        singleplayer.y = p.GetCanvasHeight() * 7 / 10;
         singleplayer.sizex = 256 * scale;
         singleplayer.sizey = 64 * scale;
 
         multiplayer.text = "Multiplayer";
-        multiplayer.x = gl.GetCanvasWidth() / 2 + (100) * scale;
-        multiplayer.y = gl.GetCanvasHeight() * 7 / 10;
+        multiplayer.x = p.GetCanvasWidth() / 2 + (100) * scale;
+        multiplayer.y = p.GetCanvasHeight() * 7 / 10;
         multiplayer.sizex = 256 * scale;
         multiplayer.sizey = 64 * scale;
         DrawWidgets();
@@ -923,13 +759,14 @@ public class ScreenSingleplayer : Screen
 
     public override void Render()
     {
-        Gl gl = menu.gl;
-        float scale = menu.one * gl.GetCanvasWidth() / 1280;
-        menu.DrawBackground();
-        menu.DrawText("Singleplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+        GamePlatform p = menu.p;
 
-        float leftx = gl.GetCanvasWidth() / 2 - 128 * scale;
-        float y = gl.GetCanvasHeight() / 2 + 0 * scale;
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+        menu.DrawText("Singleplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+
+        float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
+        float y = p.GetCanvasHeight() / 2 + 0 * scale;
 
         play.x = leftx;
         play.y = y + 100 * scale;
@@ -950,7 +787,7 @@ public class ScreenSingleplayer : Screen
         modify.fontSize = 14 * scale;
 
         back.x = 40 * scale;
-        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
@@ -1035,13 +872,14 @@ public class ScreenModifyWorld : Screen
 
     public override void Render()
     {
-        Gl gl = menu.gl;
-        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        GamePlatform p = menu.p;
+
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
         menu.DrawBackground();
-        menu.DrawText("Modify World", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText("Modify World", 14 * scale, menu.p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
         back.x = 40 * scale;
-        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
@@ -1137,13 +975,13 @@ public class ScreenLogin : Screen
             menu.StartMultiplayer();
         }
 
-        Gl gl = menu.gl;
-        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        GamePlatform p = menu.p;
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
         menu.DrawBackground();
 
 
-        float leftx = gl.GetCanvasWidth() / 2 - 400 * scale;
-        float y = gl.GetCanvasHeight() / 2 - 250 * scale;
+        float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
+        float y = p.GetCanvasHeight() / 2 - 250 * scale;
 
         if (loginResult.value == LoginResult.Failed)
         {
@@ -1176,7 +1014,7 @@ public class ScreenLogin : Screen
         login.sizey = 64 * scale;
         login.fontSize = 14 * scale;
 
-        float rightx = gl.GetCanvasWidth() / 2 + 150 * scale;
+        float rightx = p.GetCanvasWidth() / 2 + 150 * scale;
 
         menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
@@ -1205,7 +1043,7 @@ public class ScreenLogin : Screen
         createAccount.fontSize = 14 * scale;
 
         back.x = 40 * scale;
-        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
@@ -1349,29 +1187,30 @@ public class ScreenMultiplayer : Screen
             }
         }
 
-        Gl gl = menu.gl;
-        float scale = menu.one * gl.GetCanvasWidth() / 1280;
+        GamePlatform p = menu.p;
+
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
 
         back.x = 40 * scale;
-        back.y = gl.GetCanvasHeight() - 104 * scale;
+        back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
 
-        connect.x = gl.GetCanvasWidth() / 2 - 200 * scale;
-        connect.y = gl.GetCanvasHeight() - 104 * scale;
+        connect.x = p.GetCanvasWidth() / 2 - 200 * scale;
+        connect.y = p.GetCanvasHeight() - 104 * scale;
         connect.sizex = 256 * scale;
         connect.sizey = 64 * scale;
         connect.fontSize = 14 * scale;
 
-        refresh.x = gl.GetCanvasWidth() / 2 + 200 * scale;
-        refresh.y = gl.GetCanvasHeight() - 104 * scale;
+        refresh.x = p.GetCanvasWidth() / 2 + 200 * scale;
+        refresh.y = p.GetCanvasHeight() - 104 * scale;
         refresh.sizex = 256 * scale;
         refresh.sizey = 64 * scale;
         refresh.fontSize = 14 * scale;
 
         menu.DrawBackground();
-        menu.DrawText("Multiplayer", 14 * scale, gl.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText("Multiplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
         for (int i = 0; i < serverButtonsCount; i++)
         {
@@ -1496,15 +1335,6 @@ public enum ButtonStyle
 
 public class Model
 {
-    internal WebGLBuffer xyzBuffer;
-    internal int xyzBufferitemSize;
-    internal int xyzBuffernumItems;
-    internal WebGLBuffer uvBuffer;
-    internal int uvBufferitemSize;
-    internal int uvBuffernumItems;
-    internal WebGLBuffer indexBuffer;
-    internal int indexBufferitemSize;
-    internal int indexBuffernumItems;
 }
 
 public class ModelData
@@ -1554,24 +1384,6 @@ public class MainMenuNewFrameHandler : NewFrameHandler
     public override void OnNewFrame(NewFrameEventArgs args)
     {
         l.OnNewFrame(args);
-    }
-}
-
-public class MainMenuImageOnLoadHandler : ImageOnLoadHandler
-{
-    public static MainMenuImageOnLoadHandler Create(MainMenu l, string name)
-    {
-        MainMenuImageOnLoadHandler h = new MainMenuImageOnLoadHandler();
-        h.l = l;
-        h.name = name;
-        return h;
-    }
-    MainMenu l;
-    string name;
-
-    public override void OnLoad()
-    {
-        l.ImageOnLoad(name);
     }
 }
 

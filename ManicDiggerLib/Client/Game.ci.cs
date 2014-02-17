@@ -3,9 +3,7 @@
     public Game()
     {
         chunksize = 16;
-        p = GamePlatform.Create();
         player = new CharacterPhysicsState();
-
 
         TextureId = new int[MaxBlockTypes][];
         for (int i = 0; i < MaxBlockTypes; i++)

@@ -75,7 +75,18 @@ namespace GameModeFortress
                 {
                     if (File.Exists("cito.txt"))
                     {
-                        MainMenu.RunMain();
+                        MainMenu mainmenu = new MainMenu();
+                        GamePlatformNative platform = new GamePlatformNative();
+                        OpenTK.Graphics.GraphicsMode mode = new OpenTK.Graphics.GraphicsMode(new OpenTK.Graphics.ColorFormat(32), 24, 0, 2, new OpenTK.Graphics.ColorFormat(32));
+                        using (GameWindowNative game = new GameWindowNative(mode))
+                        {
+                            platform.window = game;
+                            game.platform = platform;
+                            mainmenu.Start(platform);
+                            platform.Start();
+                            //g.Start();
+                            game.Run(60.0);
+                        }
                     }
                 }
                 catch

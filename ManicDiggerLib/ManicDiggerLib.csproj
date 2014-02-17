@@ -85,7 +85,6 @@
     <Compile Include="AviWriter.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
-    <Compile Include="Client\CitoGl.ci.cs" />
     <Compile Include="Client\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
@@ -154,7 +153,6 @@
     <Compile Include="Network\Lidgren.cs" />
     <Compile Include="Network\Network.cs" />
     <Compile Include="Network\TcpNetwork.cs" />
-    <Compile Include="OpenTk.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Forms\PasswordForm.cs">
       <SubType>Form</SubType>

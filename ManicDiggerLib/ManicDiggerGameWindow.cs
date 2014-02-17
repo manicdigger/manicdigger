@@ -38,6 +38,7 @@ namespace ManicDigger
         public void Start()
         {
             game = new Game();
+            game.p = new GamePlatformNative();
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
