@@ -5986,6 +5986,7 @@ namespace ManicDigger
                 if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
                 {
                     LocalPlayerPosition = realpos;
+                    LocalPlayerOrientation = HeadingPitchToOrientation(heading, pitch);
                 }
                 spawned = true;
             }
