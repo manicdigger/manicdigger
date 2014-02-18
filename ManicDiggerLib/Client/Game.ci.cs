@@ -240,6 +240,20 @@ public class Chunk
     internal int LastUpdate;
     internal bool IsPopulated;
     internal int LastChange;
+    internal RenderedChunk rendered;
+}
+
+public class RenderedChunk
+{
+    public RenderedChunk()
+    {
+        dirty = true;
+        shadowsdirty = true;
+    }
+    internal int[] ids;
+    internal bool dirty;
+    internal bool shadowsdirty;
+    internal byte[] light;
 }
 
 public class MapUtilCi

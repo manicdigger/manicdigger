@@ -1339,6 +1339,7 @@ namespace ManicDigger
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
             StartTerrain();
+            RedrawAllBlocks();
             materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
             OnNewMap();
@@ -6039,7 +6040,7 @@ namespace ManicDigger
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
             game.SetBlockRaw(x, y, z, tileType);
-            SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true);
+            SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
             //d_Shadows.OnSetBlock(x, y, z);
             ShadowsOnSetBlock(x, y, z);
             lastplacedblock = new Vector3i(x, y, z);
@@ -6057,7 +6058,7 @@ namespace ManicDigger
             {
                 if (i / chunksize != z / chunksize)
                 {
-                    SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true);
+                    SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
                 }
             }
             //Todo: too many redraws. Optimize.
@@ -6075,7 +6076,7 @@ namespace ManicDigger
                         int cz = z / chunksize + zz - 1;
                         if (MapUtil.IsValidChunkPos(this, cx, cy, cz, chunksize))
                         {
-                            SetChunkDirty(cx, cy, cz, true);
+                            SetChunkDirty(cx, cy, cz, true, false);
                         }
                     }
                 }
@@ -6139,7 +6140,7 @@ namespace ManicDigger
                 {
                     for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
                     {
-                        SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true);
+                        SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true, true);
                         SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
                     }
                 }
@@ -6147,13 +6148,13 @@ namespace ManicDigger
         }
         private void SetChunksAroundDirty(int cx, int cy, int cz)
         {
-            if (IsValidChunkPosition(cx, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true); }
-            if (IsValidChunkPosition(cx - 1, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true); }
-            if (IsValidChunkPosition(cx + 1, cy, cz)) { SetChunkDirty(cx + 1, cy, cz, true); }
-            if (IsValidChunkPosition(cx, cy - 1, cz)) { SetChunkDirty(cx, cy - 1, cz, true); }
-            if (IsValidChunkPosition(cx, cy + 1, cz)) { SetChunkDirty(cx, cy + 1, cz, true); }
-            if (IsValidChunkPosition(cx, cy, cz - 1)) { SetChunkDirty(cx, cy, cz - 1, true); }
-            if (IsValidChunkPosition(cx, cy, cz + 1)) { SetChunkDirty(cx, cy, cz + 1, true); }
+            if (IsValidChunkPosition(cx, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx - 1, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx + 1, cy, cz)) { SetChunkDirty(cx + 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy - 1, cz)) { SetChunkDirty(cx, cy - 1, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy + 1, cz)) { SetChunkDirty(cx, cy + 1, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy, cz - 1)) { SetChunkDirty(cx, cy, cz - 1, true, false); }
+            if (IsValidChunkPosition(cx, cy, cz + 1)) { SetChunkDirty(cx, cy, cz + 1, true, false); }
         }
         private bool IsValidChunkPosition(int xx, int yy, int zz)
         {
