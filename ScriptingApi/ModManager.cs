@@ -80,6 +80,10 @@ namespace ManicDigger
         float GetPlayerPositionY(int player);
         float GetPlayerPositionZ(int player);
         void SetPlayerPosition(int player, float x, float y, float z);
+        int GetPlayerHeading(int player);
+        void SetPlayerHeading(int player, int heading);
+        int GetPlayerPitch(int player);
+        void SetPlayerPitch(int player, int pitch);
         int[] AllPlayers();
         void SetPlayerAreaSize(int size);
         bool IsSinglePlayer();
@@ -114,6 +118,7 @@ namespace ManicDigger
         string GetServerPort();
         float GetPlayerPing(int player);
         int AddBot(string name);
+        bool IsBot(int player);
         void SetPlayerHeight(int playerid, float eyeheight, float modelheight);
         void DisablePrivilege(string privilege); //todo privileges
         void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a);

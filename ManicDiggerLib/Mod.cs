@@ -465,6 +465,26 @@ namespace ManicDigger
                     (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
             }
         }
+        
+        public int GetPlayerHeading(int player)
+        {
+        	return server.GetClient(player).positionheading;
+        }
+        
+        public void SetPlayerHeading(int player, int heading)
+        {
+        	server.clients[player].positionheading = heading;
+        }
+        
+        public int GetPlayerPitch(int player)
+        {
+        	return server.GetClient(player).positionpitch;
+        }
+        
+        public void SetPlayerPitch(int player, int pitch)
+        {
+        	server.clients[player].positionpitch = pitch;
+        }
 
         public int[] AllPlayers()
         {
@@ -714,6 +734,7 @@ namespace ManicDigger
         {
             return server.clients[player].LastPing;
         }
+        
         public int AddBot(string name)
         {
             int id = server.GenerateClientId();
@@ -727,10 +748,16 @@ namespace ManicDigger
             c.Ping.TimeoutValue = int.MaxValue;
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
+            c.clientGroup = server.defaultGroupRegistered;
             server.SendPlayerSpawnToAll(id);
             return id;
         }
-
+        
+        public bool IsBot(int player)
+        {
+        	return server.clients[player].IsBot;
+        }
+        
         public void SetPlayerHeight(int playerid, float eyeheight, float modelheight)
         {
             server.clients[playerid].EyeHeight = eyeheight;
