@@ -1916,7 +1916,7 @@ namespace ManicDigger
             }
 
             //Player drowning
-            int deltaTime = (int)(one * (game.p.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds) / 1000);
+            int deltaTime = (int)(one * (game.p.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
             if (deltaTime >= 1000)
             {
             	if (WaterSwimming)
