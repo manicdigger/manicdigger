@@ -37,6 +37,7 @@ namespace ManicDigger
             pMatrix.Push(Mat4.Create());
         }
         float one;
+        public byte localstance = 0;
         public void Start()
         {
             game = new Game();
@@ -1634,8 +1635,11 @@ namespace ManicDigger
                     {
                         if (Keyboard[GetKey(OpenTK.Input.Key.W)]) { movedy += 1; }
                         if (Keyboard[GetKey(OpenTK.Input.Key.S)]) { movedy += -1; }
-                        if (Keyboard[GetKey(OpenTK.Input.Key.A)]) { movedx += -1; }
-                        if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { movedx += 1; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.A)]) { movedx += -1; localplayeranimationhint.leanleft = true; localstance = 1; }
+                        else { localplayeranimationhint.leanleft = false; }
+                        if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { movedx += 1; localplayeranimationhint.leanright = true; localstance = 2; }
+                        else { localplayeranimationhint.leanright = false; }
+                        if (!localplayeranimationhint.leanleft && !localplayeranimationhint.leanright) { localstance = 0; }
                     }
                 }
                 if (ENABLE_FREEMOVE || Swimming)
@@ -1834,7 +1838,7 @@ namespace ManicDigger
         int reloadblock;
         int reloadstartMilliseconds;
         Vector3 lastplayerposition;
-        Vector3 playervelocity;
+        public Vector3 playervelocity;
         int PreviousActiveMaterialBlock;
         //bool test;
         private void UpdateFallDamageToPlayer()
@@ -2992,7 +2996,7 @@ namespace ManicDigger
                 }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint());
+                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint(), new float());
                 }
                 foreach (IModelToDraw m in Models)
                 {
@@ -3544,6 +3548,8 @@ namespace ManicDigger
             public Vector3 lastcurpos;
             public byte lastrealheading;
             public byte lastrealpitch;
+            public Vector3 velocity;
+            public Vector3 lastvelocity;
         }
         class PlayerInterpolationState
         {
@@ -3623,6 +3629,18 @@ namespace ManicDigger
                     curstate.position = k.Value.Position.Value;
                 }
                 Vector3 curpos = curstate.position;
+                //get acceleration - FIXME: crazy arms
+                info.velocity = curpos - info.lastcurpos;
+                float playeraccel = (info.velocity.Length / dt) - (info.lastvelocity.Length / dt);
+                if (playeraccel > 3.5)
+                {
+                    info.velocity = info.lastvelocity;
+                }
+                else
+                {
+                    info.lastvelocity = info.velocity;
+                }
+                float playerspeed = (info.velocity.Length / dt) * 0.04f;
                 bool moves = curpos != info.lastcurpos;
                 info.lastcurpos = curpos;
                 info.lastrealpos = realpos;
@@ -3644,7 +3662,7 @@ namespace ManicDigger
                 {
                     var r = GetCharacterRenderer(k.Value.Model);
                     r.SetAnimation("walk");
-                    r.DrawCharacter(info.anim, FeetPos, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+                    r.DrawCharacter(info.anim, FeetPos, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint, playerspeed);
                     //DrawCharacter(info.anim, FeetPos,
                     //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
@@ -3657,12 +3675,14 @@ namespace ManicDigger
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
                     r.DrawCharacter(info.anim, curpos,
                         (byte)(-curstate.heading - 256 / 4), curstate.pitch,
-                        moves, dt, GetPlayerTexture(k.Key), animHint);
+                        moves, dt, GetPlayerTexture(k.Key), animHint, playerspeed);
                 }
                 GL.Color3(1f, 1f, 1f);
             }
             if (ENABLE_TPP_VIEW)
             {
+                Vector3 velocity = lastlocalplayerpos - LocalPlayerPosition;
+                bool moves = lastlocalplayerpos != LocalPlayerPosition; //bool moves = velocity.Length > 0.08;
                 float shadow = (float)d_Shadows.MaybeGetLight(
                     (int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z,
@@ -3671,11 +3691,13 @@ namespace ManicDigger
                 GL.Color3(shadow, shadow, shadow);
                 var r = GetCharacterRenderer(d_Clients.Players[LocalPlayerId].Model);
                 r.SetAnimation("walk");
+                Vector3 playerspeed = playervelocity / 60;
+                float playerspeedf = playerspeed.Length * 1.5f;
                 r.DrawCharacter
                     (localplayeranim, LocalPlayerPosition,
                     (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
-                    lastlocalplayerpos != LocalPlayerPosition, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint);
+                    moves, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint, playerspeedf);
                 lastlocalplayerpos = LocalPlayerPosition;
                 GL.Color3(1f, 1f, 1f);
             }
@@ -3877,7 +3899,9 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWPOSITION)
             {
-                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Z) + "; Z: " + Math.Floor(player.playerposition.Y);
+                byte heading = (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4);
+                double headingdeg = ((double)heading / 256) * 360;
+                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Z) + "; Z: " + Math.Floor(player.playerposition.Y) + "; heading: " + headingdeg.ToString();
                 Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
             }
             if (drawblockinfo)
@@ -5142,6 +5166,7 @@ namespace ManicDigger
                 Z = (int)(position.Z * 32),
                 Heading = HeadingByte(orientation),
                 Pitch = PitchByte(orientation),
+                Stance = localstance,
             };
             SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PositionandOrientation, PositionAndOrientation = p }));
             lastsentposition = position;
@@ -5980,6 +6005,12 @@ namespace ManicDigger
             float z = (float)((double)positionAndOrientation.Z / 32);
             byte heading = (byte)positionAndOrientation.Heading;
             byte pitch = (byte)positionAndOrientation.Pitch;
+            bool leanleft = false;
+            bool leanright = false;
+            if (positionAndOrientation.Stance == 1)
+            { leanleft = true; }
+            if (positionAndOrientation.Stance == 2)
+            { leanright = true; }
             Vector3 realpos = new Vector3(x, y, z);
             if (playerid == this.LocalPlayerId)
             {
@@ -6003,6 +6034,8 @@ namespace ManicDigger
                 }
                 d_Clients.Players[playerid].Heading = heading;
                 d_Clients.Players[playerid].Pitch = pitch;
+                d_Clients.Players[playerid].AnimationHint.leanleft = leanleft;
+                d_Clients.Players[playerid].AnimationHint.leanright = leanright;
                 d_Clients.Players[playerid].LastUpdateMilliseconds = game.p.TimeMillisecondsFromStart();
             }
         }

@@ -913,6 +913,7 @@ namespace ManicDiggerServer
                         }
                         break;
                     case ManicDigger.MessageType.Disconnect:
+                        Console.WriteLine("Client disconnected.");
                         KillPlayer(clientid);
                         break;
                 }
@@ -993,7 +994,8 @@ namespace ManicDiggerServer
                                     a.Value.PositionMul32GlY,
                                     a.Value.PositionMul32GlZ,
                                     (byte)a.Value.positionheading,
-                                    (byte)a.Value.positionpitch);
+                                    (byte)a.Value.positionpitch,
+                                    a.Value.stance);
                             }
                         }
                     }
@@ -2067,13 +2069,14 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].PositionMul32GlZ = p.Z;
                         clients[clientid].positionheading = p.Heading;
                         clients[clientid].positionpitch = p.Pitch;
+                        clients[clientid].stance = (byte)p.Stance;
                         foreach (var k in clients)
                         {
                             if (k.Key != clientid)
                             {
                                 if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
                                 {
-                                    SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch);
+                                	SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch, (byte)p.Stance);
                                 }
                             }
                         }
@@ -2378,6 +2381,7 @@ if (sent >= unknown.Count) { break; }
                     Z = c.PositionMul32GlZ,
                     Heading = (byte)c.positionheading,
                     Pitch = (byte)c.positionpitch,
+                    Stance = 0,
                 },
                 Model_ = c.Model,
                 Texture_ = c.Texture,
@@ -3040,7 +3044,7 @@ if (sent >= unknown.Count) { break; }
                 PlayerSpawnPosition = p,
             }));
         }
-        public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
+        public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch, byte stance)
         {
             //spectators invisible to players
             if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
@@ -3057,6 +3061,7 @@ if (sent >= unknown.Count) { break; }
                     Z = z,
                     Heading = heading,
                     Pitch = pitch,
+                    Stance = stance,
                 }
             };
             SendPacket(clientid, Serialize(new Packet_Server()
@@ -3120,7 +3125,8 @@ if (sent >= unknown.Count) { break; }
             }
             catch (Exception)
             {
-                KillPlayer(clientid);
+                Console.WriteLine("Network exception.");
+            	KillPlayer(clientid);
             }
         }
         void EmptyCallback(IAsyncResult result)
@@ -3441,6 +3447,7 @@ if (sent >= unknown.Count) { break; }
             public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
+            public byte stance = 0;
             public string Model = "player.txt";
             public string Texture;
             public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();

@@ -462,7 +462,7 @@ namespace ManicDigger
             foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
-                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
+                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch, server.GetClient(player).stance);
             }
         }
 

@@ -2122,7 +2122,7 @@ namespace ManicDiggerServer
             }
             Client t = clients[clientTo];
             SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
-                t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch);
+                t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch, t.stance);
             return true;
         }
 
@@ -2156,7 +2156,7 @@ namespace ManicDiggerServer
             }
 
             Client client = GetClient(sourceClientId);
-            SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch);
+            SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch, client.stance);
             SendMessage(client.Id, string.Format("{0}New Position ({1},{2},{3}).", colorSuccess, x, y, rZ));
             return true;
         }
@@ -2192,7 +2192,7 @@ namespace ManicDiggerServer
             Client targetClient = GetClient(target);
             if(targetClient != null)
             {
-                SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch);
+                SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch, targetClient.stance);
                 SendMessage(targetClient.Id, string.Format("{0}You have been teleported to ({1},{2},{3}) by {4}.", colorImportant, x, y, rZ, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
                 SendMessage(sourceClientId, string.Format("{0}You teleported {1} to ({2},{3},{4}).", colorSuccess, targetClient.ColoredPlayername(colorSuccess), x, y, rZ));
                 ServerEventLog(string.Format("{0} teleports {1} to {2} {3} {4}.", GetClient(sourceClientId).playername, targetClient.playername, x, y, rZ));

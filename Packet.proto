@@ -67,6 +67,7 @@ package Packet;
         optional int32 z = 4;
         optional int32 heading = 5;
         optional int32 pitch = 6;
+        optional int32 stance = 7;
     }
     
     message ClientMessage
@@ -119,6 +120,7 @@ package Packet;
         optional int32 z = 3;
         optional int32 heading = 4;
         optional int32 pitch = 5;
+        optional int32 stance = 6;
     }
     
     enum BlockSetMode

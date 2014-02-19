@@ -281,6 +281,11 @@ namespace ManicDigger
         public int frame;
         public object data;
         public float slowdownTimer;
+        public double headbodydelta;
+        public bool fullbodyrotate;
+        public double lastheading;
+        public double bodyrotation = 270;
+        public double speed;
     }
     public interface ICurrentShadows
     {
