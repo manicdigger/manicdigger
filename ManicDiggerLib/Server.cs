@@ -977,11 +977,12 @@ namespace ManicDiggerServer
             }
             if ((DateTime.UtcNow - botpositionupdate).TotalSeconds >= 0.1)
             {
+            	//Send player position updates to every other player
                 foreach (var a in clients)
                 {
                     if (!a.Value.IsBot)
                     {
-                        continue;
+                        //continue;	//Excludes bots positions from being sent
                     }
                     foreach (var b in clients)
                     {
@@ -2369,33 +2370,36 @@ if (sent >= unknown.Count) { break; }
 
         public void SendPlayerSpawn(int clientid, int spawnedplayer)
         {
-            Client c = clients[spawnedplayer];
-            Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
-            {
-                PlayerId = spawnedplayer,
-                PlayerName = c.displayColor + c.playername,
-                PositionAndOrientation = new Packet_PositionAndOrientation()
+        	if (!clients[clientid].IsBot)	//Bots don't need to be sent packets with other player's positions
+        	{
+                Client c = clients[spawnedplayer];
+                Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
                 {
-                    X = c.PositionMul32GlX,
-                    Y = c.PositionMul32GlY,
-                    Z = c.PositionMul32GlZ,
-                    Heading = (byte)c.positionheading,
-                    Pitch = (byte)c.positionpitch,
-                    Stance = 0,
-                },
-                Model_ = c.Model,
-                Texture_ = c.Texture,
-                EyeHeightFloat = SerializeFloat(c.EyeHeight),
-                ModelHeightFloat = SerializeFloat(c.ModelHeight),
-            };
-            if (clients[spawnedplayer].IsSpectator && (!clients[clientid].IsSpectator))
-            {
-                p.PositionAndOrientation.X = -1000 * 32;
-                p.PositionAndOrientation.Y = -1000 * 32;
-                p.PositionAndOrientation.Z = 0;
+                	PlayerId = spawnedplayer,
+                    PlayerName = c.displayColor + c.playername,
+                    PositionAndOrientation = new Packet_PositionAndOrientation()
+                    {
+                        X = c.PositionMul32GlX,
+                        Y = c.PositionMul32GlY,
+                        Z = c.PositionMul32GlZ,
+                        Heading = (byte)c.positionheading,
+                        Pitch = (byte)c.positionpitch,
+                        Stance = 0,
+                    },
+                    Model_ = c.Model,
+                    Texture_ = c.Texture,
+                    EyeHeightFloat = SerializeFloat(c.EyeHeight),
+                    ModelHeightFloat = SerializeFloat(c.ModelHeight),
+                };
+                if (clients[spawnedplayer].IsSpectator && (!clients[clientid].IsSpectator))
+                {
+                    p.PositionAndOrientation.X = -1000 * 32;
+                    p.PositionAndOrientation.Y = -1000 * 32;
+                    p.PositionAndOrientation.Z = 0;
+                }
+                Packet_Server pp = new Packet_Server() { Id = Packet_ServerIdEnum.SpawnPlayer, SpawnPlayer = p };
+                SendPacket(clientid, Serialize(pp));
             }
-            Packet_Server pp = new Packet_Server() { Id = Packet_ServerIdEnum.SpawnPlayer, SpawnPlayer = p };
-            SendPacket(clientid, Serialize(pp));
         }
 
 
