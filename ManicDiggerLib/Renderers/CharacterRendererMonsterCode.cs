@@ -52,13 +52,17 @@ namespace ManicDigger.Renderers
         public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint, float playerspeed)
         {
             animstate.interp += dt;
-        	animstate.speed = playerspeed * 10;//*20
+        	animstate.speed = playerspeed * 10;
         	speed = animstate.speed;
+        	//Caps maximum player arm/leg movement. Fixes "crazy arms" at 10x speed.
+        	if (speed > 2)
+        	{
+        		speed = 2;
+        	}
         	if (animationhint.InVehicle)
             {
                 moves = false;
             }
-            //pos += animationhint.DrawFix; //FIXME: comment out?
             if (animstate.data == null)
             {
                 Dictionary<string, object> d = new Dictionary<string, object>();

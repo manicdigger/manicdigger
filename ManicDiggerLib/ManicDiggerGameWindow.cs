@@ -3629,7 +3629,6 @@ namespace ManicDigger
                     curstate.position = k.Value.Position.Value;
                 }
                 Vector3 curpos = curstate.position;
-                //get acceleration - FIXME: crazy arms
                 info.velocity = curpos - info.lastcurpos;
                 float playeraccel = (info.velocity.Length / dt) - (info.lastvelocity.Length / dt);
                 if (playeraccel > 3.5)
