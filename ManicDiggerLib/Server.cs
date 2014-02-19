@@ -685,21 +685,25 @@ namespace ManicDiggerServer
             */
             d_MainSocket.Configuration.Port = port;
             d_MainSocket.Start();
-            try
+            if (config.EnableHTTPServer)
             {
-                httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
-                var m = new MainHttpModule();
-                m.server = this;
-                httpServer.Install(m);
-                foreach (var module in httpModules)
-                {
-                    httpServer.Install(module.module);
-                }
-                httpServer.Start();
-            }
-            catch
-            {
-                Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            	try
+            	{
+                	httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
+                	var m = new MainHttpModule();
+                	m.server = this;
+                	httpServer.Install(m);
+                	foreach (var module in httpModules)
+                	{
+                    	httpServer.Install(module.module);
+                	}
+                	httpServer.Start();
+                	Console.WriteLine("HTTP server listening on TCP port {0}.", port);
+            	}
+            	catch
+            	{
+                	Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            	}
             }
         }
 
@@ -2002,30 +2006,49 @@ if (sent >= unknown.Count) { break; }
                         int x = packet.SetBlock.X;
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
-                        if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
+                        if (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Use)	//Check if player only uses block
                         {
-                            SendMessage(clientid, colorError + "Insufficient privileges to build.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
+                        	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.use))
+                        	{
+                        		SendMessage(clientid, colorError + "Insufficient privileges to use blocks.");
+                        		break;
+                        	}
+                        	if (clients[clientid].IsSpectator && !config.AllowSpectatorUse)
+                        	{
+                        		SendMessage(clientid, colorError + "Spectators are not allowed to use blocks.");
+                        		break;
+                        	}
+                        	DoCommandBuild(clientid, true, packet.SetBlock);
                         }
-                        if (clients[clientid].IsSpectator)
+                        else	//Player builds, deletes or uses block with tool
                         {
-                            SendMessage(clientid, colorError + "Spectators are not allowed to build.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
+                        	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
+                        	{
+                            	SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
+                        	{
+                            	SendMessage(clientid, colorError + "Spectators are not allowed to build.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
+                            	&& !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
+                        	{
+                            	SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (!DoCommandBuild(clientid, true, packet.SetBlock))
+                        	{
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                        	}
+                        	//Only log when building/destroying blocks. Prevents VandalFinder entries
+                        	if (packet.SetBlock.Mode != Packet_BlockSetModeEnum.UseWithTool)
+                        		BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                         }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
-                            && !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
-                        {
-                            SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
-                        }
-                        if (!DoCommandBuild(clientid, true, packet.SetBlock))
-                        {
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                        }
-                        BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                     }
                     break;
                 case Packet_ClientIdEnum.FillArea:
@@ -2035,7 +2058,7 @@ if (sent >= unknown.Count) { break; }
                             SendMessage(clientid, colorError + "Insufficient privileges to build.");
                             break;
                         }
-                        if (clients[clientid].IsSpectator)
+                        if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
                         {
                             SendMessage(clientid, colorError + "Spectators are not allowed to build.");
                             break;

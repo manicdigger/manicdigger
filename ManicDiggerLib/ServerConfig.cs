@@ -41,6 +41,9 @@ namespace GameModeFortress
         public List<AreaConfig> Areas { get; set; }
         public int Seed { get; set; }
         public bool RandomSeed { get; set; }
+        public bool EnableHTTPServer { get; set; }
+        public bool AllowSpectatorUse { get; set; }
+        public bool AllowSpectatorBuild { get; set; }
 
         public bool IsPasswordProtected()
         {
@@ -130,6 +133,9 @@ namespace GameModeFortress
             this.AutoRestartCycle = 6;
             this.Seed = 0;
             this.RandomSeed = true;
+            this.EnableHTTPServer = true;
+            this.AllowSpectatorUse = false;
+            this.AllowSpectatorBuild = false;
         }
     }
 
