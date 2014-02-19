@@ -604,6 +604,96 @@ namespace ManicDiggerServer
             if (config == null)
             {
                 config = new ServerConfig();
+                //Ask for config parameters the first time the server is started
+                string line;
+                bool wantsconfig = false;
+                Console.WriteLine("It seems this is the first time you started this server.");
+                Console.WriteLine("Would you like to set up some basic parameters? (Y/N)");
+                line = Console.ReadLine();
+                if (!string.IsNullOrEmpty(line))
+                {
+                	if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                		wantsconfig = true;
+                	else
+                		wantsconfig = false;
+                }
+                //Only ask these questions if user wants to
+                if (wantsconfig)
+                {
+                	Console.WriteLine("Please enter the server's name");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.Name = line;
+                	}
+                	Console.WriteLine("Enter the MOTD (displayed on server list)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.Motd = line;
+                	}
+                	Console.WriteLine("Enter the welcome message (displayed when joining your server)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.WelcomeMessage = line;
+                	}
+                	Console.WriteLine("Enter the port the server shall run on (Default: 25565)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		int port;
+                		try
+                		{
+                			port = int.Parse(line);
+                			if (port > 0 && port <= 65565)
+                			{
+                				config.Port = port;
+                			}
+                			else
+                			{
+                				Console.WriteLine("Out of port range. Using default (25565)");
+                			}
+                		}
+                		catch
+                		{
+                			Console.WriteLine("Invalid input. Using default (25565)");
+                		}
+                	}
+                	Console.WriteLine("Enter the maximum number of clients (Default: 16)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		int players;
+                		try
+                		{
+                			players = int.Parse(line);
+                			if (players > 0)
+                			{
+                				config.MaxClients = players;
+                			}
+                			else
+                			{
+                				Console.WriteLine("Number may not be negative. Using default (16)");
+                			}
+                		}
+                		catch
+                		{
+                			Console.WriteLine("Invalid input. Using default (16)");
+                		}
+                	}
+                	Console.WriteLine("Dou you want to enable the builtin HTTP server? (Y/N)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		bool choice;
+                		if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                			choice = true;
+                		else
+                			choice = false;
+                		config.EnableHTTPServer = choice;
+                	}
+                }
             }
             if (config.Areas.Count == 0)
             {
