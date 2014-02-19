@@ -243,9 +243,9 @@ namespace ManicDigger.Renderers
                 }
             }
 
-            GL.Begin(BeginMode.Triangles);
             GL.BindTexture(TextureTarget.Texture2D, d_Info.terrainTexture);
             GL.Enable(EnableCap.Texture2D);
+            GL.Begin(BeginMode.Triangles);
             for (int i = 0; i < myelements.Count; i++)
             {
                 GL.TexCoord2(myvertices[myelements[i]].u, myvertices[myelements[i]].v);

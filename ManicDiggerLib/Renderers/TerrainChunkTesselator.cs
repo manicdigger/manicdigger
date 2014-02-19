@@ -97,36 +97,13 @@ namespace ManicDigger.Renderers
             }
         }
 
-        VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, int texture, bool transparent)
+        VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, Texture texture, bool transparent)
         {
             VerticesIndicesToLoad v = new VerticesIndicesToLoad();
-            v.indices = new ushort[m.indicesCount];
-            for (int i = 0; i < m.indicesCount; i++)
-            {
-                v.indices[i] = (ushort)m.indices[i];
-            }
-            v.indicesCount = m.indicesCount;
-
-            v.vertices = new VertexPositionTexture[m.verticesCount];
-            for (int i = 0; i < m.verticesCount; i++)
-            {
-                VertexPositionTexture vert = new VertexPositionTexture();
-                vert.Position.X = m.xyz[i * 3 + 0];
-                vert.Position.Y = m.xyz[i * 3 + 1];
-                vert.Position.Z = m.xyz[i * 3 + 2];
-                vert.u = m.uv[i * 2 + 0];
-                vert.v = m.uv[i * 2 + 1];
-                vert.r = m.rgba[i * 4 + 0];
-                vert.g = m.rgba[i * 4 + 1];
-                vert.b = m.rgba[i * 4 + 2];
-                vert.a = m.rgba[i * 4 + 3];
-                v.vertices[i] = vert;
-            }
-            v.verticesCount = m.verticesCount;
+            v.modelData = m;
             v.position = new Vector3(x * chunksize, y * chunksize, z * chunksize);
             v.texture = texture;
             v.transparent = transparent;
-
             return v;
         }
 

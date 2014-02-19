@@ -67,13 +67,10 @@ namespace ManicDigger
     }
     public class VerticesIndicesToLoad
     {
-        public VertexPositionTexture[] vertices;
-        public int verticesCount;
-        public ushort[] indices;
-        public int indicesCount;
+        public ModelData modelData;
         public Vector3 position;
         public bool transparent;
-        public int texture;
+        public Texture texture;
     }
     public class Config3d
     {

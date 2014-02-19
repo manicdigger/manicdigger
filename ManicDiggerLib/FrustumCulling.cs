@@ -5,20 +5,15 @@ using OpenTK;
 
 namespace ManicDigger
 {
-    public interface IFrustumCulling
-    {
-        bool SphereInFrustum(float x, float y, float z, float radius);
-        void CalcFrustumEquations();
-    }
     public class FrustumCullingDummy : IFrustumCulling
     {
         #region IFrustumCulling Members
-        public void CalcFrustumEquations()
+        public override void CalcFrustumEquations()
         {
         }
         #endregion
         #region IFrustumCulling Members
-        public bool SphereInFrustum(float x, float y, float z, float radius)
+        public override bool SphereInFrustum(float x, float y, float z, float radius)
         {
             return true;
         }
@@ -63,7 +58,7 @@ namespace ManicDigger
         float frustum51;
         float frustum52;
         float frustum53;
-        public bool SphereInFrustum(float x, float y, float z, float radius)
+        public override bool SphereInFrustum(float x, float y, float z, float radius)
         {
             float d = 0;
 
@@ -96,7 +91,7 @@ namespace ManicDigger
         /// calculate the frustum plane equations (Ax+By+Cz+D=0, n=(A,B,C))
         /// The equations can then be used to see on which side points are.
         /// </remarks>
-        public void CalcFrustumEquations()
+        public override void CalcFrustumEquations()
         {
             float t;
 

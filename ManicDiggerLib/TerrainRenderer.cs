@@ -254,7 +254,7 @@ namespace ManicDigger
 
         public void DrawTerrain()
         {
-            d_Batcher.Draw(LocalPlayerPosition);
+            d_Batcher.Draw(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z);
         }
 
         public bool IsChunkRendered(int cx, int cy, int cz)
@@ -402,12 +402,12 @@ namespace ManicDigger
                 IEnumerable<VerticesIndicesToLoad> a = d_TerrainChunkTesselator.MakeChunk(x, y, z, currentChunk, currentChunkShadows, d_Data.LightLevels);
                 foreach (VerticesIndicesToLoad submesh in a)
                 {
-                    if (submesh.indices.Length != 0)
+                    if (submesh.modelData.GetIndicesCount() != 0)
                     {
                         float[] center = new float[] { submesh.position.X + chunksize / 2, submesh.position.Z + chunksize / 2, submesh.position.Y + chunksize / 2 };
                         Vector3 centerVec = new Vector3(center[0], center[1], center[2]);
                         float radius = 0.866025404f * chunksize;
-                        ids.Add(d_Batcher.Add(submesh.indices, submesh.indicesCount, submesh.vertices, submesh.verticesCount, submesh.transparent, submesh.texture, centerVec, radius));
+                        ids.Add(d_Batcher.Add(submesh.modelData, submesh.transparent, submesh.texture, centerVec.X, centerVec.Y, centerVec.Z, radius));
                     }
                 }
             }
@@ -527,7 +527,7 @@ namespace ManicDigger
 
         public int TrianglesCount()
         {
-            return d_Batcher.TotalTriangleCount;
+            return d_Batcher.TotalTriangleCount();
         }
 
         bool shadowssimple = false;

@@ -509,6 +509,21 @@ public class GamePlatformNative : GamePlatform
         GL.CallList(((DisplayListModel)model).listId);
     }
 
+    int[] lists = new int[1024];
+
+    public override void DrawModels(Model[] model, int count)
+    {
+        if (lists.Length < count)
+        {
+            lists = new int[count * 2];
+        }
+        for (int i = 0; i < count; i++)
+        {
+            lists[i] = ((DisplayListModel)model[i]).listId;
+        }
+        GL.CallLists(count, ListNameType.Int, lists);
+    }
+
     public override void InitShaders()
     {
     }
@@ -631,6 +646,16 @@ public class GamePlatformNative : GamePlatform
     public override int TimeMillisecondsFromStart()
     {
         return (int)start.ElapsedMilliseconds;
+    }
+
+    public override void GlDisableCullFace()
+    {
+        GL.Disable(EnableCap.CullFace);
+    }
+
+    public override void GlEnableCullFace()
+    {
+        GL.Enable(EnableCap.CullFace);
     }
 }
 

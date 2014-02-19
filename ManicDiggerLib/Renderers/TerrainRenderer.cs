@@ -19,7 +19,7 @@ namespace ManicDigger.Renderers
     {
         int texturesPacked { get; }
         int terrainTexture { get; }
-        int[] terrainTextures1d { get; }
+        Texture[] terrainTextures1d { get; }
         int terrainTexturesPerAtlas { get; }
         void UseTerrainTextureAtlas2d(Bitmap atlas2d);
     }

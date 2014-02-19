@@ -88,7 +88,7 @@ namespace ManicDigger
             var terrainchunktesselator = new TerrainChunkTesselator();
             w.d_TerrainChunkTesselator = terrainchunktesselator;
             var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
-            w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling };
+            w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling, game = game };
             w.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             terrainchunktesselator.d_TerrainTextures = terrainTextures;
@@ -103,7 +103,7 @@ namespace ManicDigger
             w.PickDistance = 4.5f;
             var skysphere = new SkySphere();
             skysphere.game = this;
-            skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy() };
+            skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy(), game = game };
             skysphere.d_LocalPlayerPosition = localplayerposition;
             skysphere.d_The3d = the3d;
             w.skysphere = skysphere;
@@ -2223,8 +2223,10 @@ namespace ManicDigger
             //Matrix4 the_modelview;
             //Read the current modelview matrix into the array the_modelview
             //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
-            if (d_The3d.ModelViewMatrix.Equals(new Matrix4())) { return; }
-            Matrix4 theModelView = d_The3d.ModelViewMatrix;
+            
+            Matrix4 theModelView = ToMatrix4(mvMatrix.Peek());
+            if (theModelView.M11 == float.NaN || theModelView.Equals(new Matrix4())) { return; }
+            //Matrix4 theModelView = d_The3d.ModelViewMatrix;
             theModelView.Invert();
             //the_modelview = new Matrix4();
             ray = Vector3.Transform(ray, theModelView);
@@ -2612,6 +2614,27 @@ namespace ManicDigger
                 lastbuildMilliseconds = 0;
                 fastclicking = true;
             }
+        }
+
+        Matrix4 ToMatrix4(float[] mvMatrix)
+        {
+            return new Matrix4(
+                mvMatrix[0],
+                mvMatrix[1],
+                mvMatrix[2],
+                mvMatrix[3],
+                mvMatrix[4],
+                mvMatrix[5],
+                mvMatrix[6],
+                mvMatrix[7],
+                mvMatrix[8],
+                mvMatrix[9],
+                mvMatrix[10],
+                mvMatrix[11],
+                mvMatrix[12],
+                mvMatrix[13],
+                mvMatrix[14],
+                mvMatrix[15]);
         }
 
         private Packet_InventoryPosition InventoryPositionMaterialSelector(int materialId)
@@ -6315,13 +6338,15 @@ namespace ManicDigger
         public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
         {
             terrainTexture = d_The3d.LoadTexture(atlas2d);
-            List<int> terrainTextures1d = new List<int>();
+            List<Texture> terrainTextures1d = new List<Texture>();
             {
                 terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
                 List<Bitmap> atlases1d = d_TextureAtlasConverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
                 foreach (Bitmap bmp in atlases1d)
                 {
-                    terrainTextures1d.Add(d_The3d.LoadTexture(bmp));
+                    int texture = LoadTexture(bmp);
+                    var t = new TextureNative() { value = texture };
+                    terrainTextures1d.Add(t);
                     bmp.Dispose();
                 }
             }
@@ -6330,7 +6355,7 @@ namespace ManicDigger
         int maxTextureSize; // detected at runtime
         public int atlas1dheight { get { return maxTextureSize; } }
         public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
-        public int[] terrainTextures1d { get; set; }
+        public Texture[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get { return game.terrainTexturesPerAtlas; } set { game.terrainTexturesPerAtlas = value; } }
 
 

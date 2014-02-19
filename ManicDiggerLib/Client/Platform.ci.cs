@@ -44,6 +44,9 @@
     public abstract Texture LoadTextureFromFile(string fullPath);
     public abstract string GetLanguageIso6391();
     public abstract int TimeMillisecondsFromStart();
+    public abstract void DrawModels(Model[] model, int count);
+    public abstract void GlDisableCullFace();
+    public abstract void GlEnableCullFace();
 }
 
 public class KeyEventArgs
