@@ -81,9 +81,9 @@ namespace ManicDigger
         float GetPlayerPositionZ(int player);
         void SetPlayerPosition(int player, float x, float y, float z);
         int GetPlayerHeading(int player);
-        void SetPlayerHeading(int player, int heading);
         int GetPlayerPitch(int player);
-        void SetPlayerPitch(int player, int pitch);
+        int GetPlayerStance(int player);
+        void SetPlayerOrientation(int player, int heading, int pitch, int stance);
         int[] AllPlayers();
         void SetPlayerAreaSize(int size);
         bool IsSinglePlayer();

@@ -6018,6 +6018,7 @@ namespace ManicDigger
                 {
                     LocalPlayerPosition = realpos;
                     LocalPlayerOrientation = HeadingPitchToOrientation(heading, pitch);
+                    localstance = (byte)positionAndOrientation.Stance;
                 }
                 spawned = true;
             }
