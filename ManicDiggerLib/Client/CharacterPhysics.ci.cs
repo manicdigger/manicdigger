@@ -80,6 +80,7 @@ public class MoveInfo
     internal bool moveup;
     internal bool movedown;
     internal float jumpstartacceleration;
+    internal bool shiftkeydown;
 }
 
 public class CharacterPhysicsCi
@@ -108,6 +109,7 @@ public class CharacterPhysicsCi
     internal bool standingontheground;
     internal float one;
     internal float jumpconst;
+    internal bool shiftkeypressed;
     
     public bool IsTileEmptyForPhysics(int x, int y, int z)
     {
@@ -136,6 +138,7 @@ public class CharacterPhysicsCi
     public void Move(CharacterPhysicsState state, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
     {
         soundnow.value = false;
+        shiftkeypressed = move.shiftkeydown;
         Vector3Ref diff1ref = new Vector3Ref();
         VectorTool.ToVectorInFixedSystem
             (move.movedx * move.movespeednow * dt,
@@ -415,10 +418,10 @@ public class CharacterPhysicsCi
             //Check if block at new Z coordinate is NOT empty for physics (check for solid block)
             bool newfull = (!IsTileEmptyForPhysics(x, y, z))
             	//These 4 lines let you walk a little over the block's edge. Also part of the 2 block high jump problem
-                || (qnewposition0 - Floor(qnewposition0) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
-                || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
-                || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
-                || (qnewposition2 - Floor(qnewposition2) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+                || (qnewposition0 - Floor(qnewposition0) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)) && shiftkeypressed)
+                || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)) && shiftkeypressed)
+                || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)) && shiftkeypressed)
+                || (qnewposition2 - Floor(qnewposition2) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)) && shiftkeypressed);
             if (newposition[1] - oldposition[1] < 0)
             {
                 if (newfull)

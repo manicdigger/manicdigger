@@ -1597,6 +1597,7 @@ namespace ManicDigger
                 }
             }
             bool wantsjump = GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)];
+            bool shiftkeydown = Keyboard[GetKey(OpenTK.Input.Key.ShiftLeft)];
             int movedx = 0;
             int movedy = 0;
             bool moveup = false;
@@ -1750,6 +1751,7 @@ namespace ManicDigger
                 movedown = movedown,
                 Swimming = Swimming,
                 wantsjump = wantsjump,
+                shiftkeydown = shiftkeydown,
             };
             BoolRef soundnow = new BoolRef();
             if (FollowId == null)
