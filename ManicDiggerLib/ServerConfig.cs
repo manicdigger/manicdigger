@@ -33,10 +33,6 @@ namespace GameModeFortress
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
-        [XmlArrayItem(ElementName = "User")]
-        public List<string> BannedUsers { get; set; }
-        [XmlArrayItem(ElementName = "IP")]
-        public List<string> BannedIPs { get; set; }
         [XmlArrayItem(ElementName = "Area")]
         public List<AreaConfig> Areas { get; set; }
         public int Seed { get; set; }
@@ -48,42 +44,6 @@ namespace GameModeFortress
         public bool IsPasswordProtected()
         {
             return !string.IsNullOrEmpty(this.Password);
-        }
-
-        public bool IsIPBanned(string ipAddress)
-        {
-            foreach (string bannedip in this.BannedIPs)
-            {
-                if(bannedip == ipAddress)
-                    return true;
-            }
-            return false;
-        }
-
-        public bool IsUserBanned(string username)
-        {
-            foreach (string banneduser in this.BannedUsers)
-            {
-                if (username.Equals(banneduser, StringComparison.InvariantCultureIgnoreCase))
-                    return true;
-            }
-            return false;
-        }
-
-        public bool UnbanPlayer(string username)
-        {
-            bool exists = false;
-            for (int i = this.BannedUsers.Count - 1; i >= 0; i--)
-            {
-                string banneduser = this.BannedUsers[i];
-                if (banneduser.Equals(username, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    exists = true;
-                    this.BannedUsers.RemoveAt(i);
-                    break;
-                }
-            }
-            return exists;
         }
 
         public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y, int z)
@@ -127,8 +87,6 @@ namespace GameModeFortress
             this.MapSizeX = 9984;
             this.MapSizeY = 9984;
             this.MapSizeZ = 128;
-            this.BannedIPs = new List<string>();
-            this.BannedUsers = new List<string>();
             this.Areas = new List<AreaConfig>();
             this.AutoRestartCycle = 6;
             this.Seed = 0;

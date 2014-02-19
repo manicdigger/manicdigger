@@ -58,6 +58,7 @@ namespace ManicDigger.Renderers
         	if (speed > 2)
         	{
         		speed = 2;
+        		animstate.speed = speed;
         	}
         	if (animationhint.InVehicle)
             {

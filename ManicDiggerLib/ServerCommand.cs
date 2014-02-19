@@ -1237,7 +1237,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                config.BannedUsers.Add(targetName);
+                banlist.BannedUsers.Add(targetName);
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} bans {1}.{2}", sourceName, targetName, reason));
@@ -1293,7 +1293,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                config.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
+                banlist.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was IP banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
@@ -1366,7 +1366,7 @@ namespace ManicDiggerServer
             }
 
             // Finally ban user.
-            config.BannedUsers.Add(target);
+            banlist.BannedUsers.Add(target);
             SaveConfig();
             SendMessageToAll(string.Format("{0}{1} (offline) was banned by {2}.{3}", colorImportant, target, GetClient(sourceClientId).ColoredPlayername(colorImportant), reason));
             ServerEventLog(string.Format("{0} bans {1}.{2}", GetClient(sourceClientId).playername, target, reason));
@@ -1384,8 +1384,8 @@ namespace ManicDiggerServer
             if (type.Equals("-p"))
             {
                 // case insensitive
-                bool exists = config.UnbanPlayer(target);
-                SaveConfig();
+                bool exists = banlist.UnbanPlayer(target);
+                SaveBanlist();
                 if (!exists)
                 {
                     SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
@@ -1400,8 +1400,8 @@ namespace ManicDiggerServer
             // unban an IP
             else if (type.Equals("-ip"))
             {
-                bool exists = config.BannedIPs.Remove(target);
-                SaveConfig();
+                bool exists = banlist.UnbanIP(target);
+                SaveBanlist();
                 if (!exists)
                 {
                     SendMessage(sourceClientId, string.Format("{0}IP {1} not found.", colorError, target));
@@ -1470,7 +1470,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned Users:");
-                    foreach (string currentUser in config.BannedUsers)
+                    foreach (string currentUser in banlist.BannedUsers)
                     {
                         SendMessage(sourceClientId, currentUser);
                     }
@@ -1483,7 +1483,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned IPs:");
-                    foreach (string currentIP in config.BannedIPs)
+                    foreach (string currentIP in banlist.BannedIPs)
                     {
                         SendMessage(sourceClientId, currentIP);
                     }

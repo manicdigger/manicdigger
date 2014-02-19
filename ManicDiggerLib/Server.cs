@@ -156,6 +156,7 @@ namespace ManicDiggerServer
         {
             Server server = this;
             server.LoadConfig();
+            server.LoadBanlist();
             var map = new ManicDiggerServer.ServerMap();
             map.server = this;
             map.d_CurrentTime = server;
@@ -586,6 +587,7 @@ namespace ManicDiggerServer
         }
 
         public ServerConfig config;
+        public ServerBanlist banlist;
 
         public void SaveConfig()
         {
@@ -609,6 +611,64 @@ namespace ManicDiggerServer
             }
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, config);
+            textWriter.Close();
+        }
+        
+        public void LoadBanlist()
+        {
+        	string filename = "ServerBanlist.txt";
+            if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+            {
+                Console.WriteLine("Server banlist not found, creating new.");
+                SaveBanlist();
+                return;
+            }
+            try
+            {
+                using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+                {
+                    XmlSerializer deserializer = new XmlSerializer(typeof(ServerBanlist));
+                    banlist = (ServerBanlist)deserializer.Deserialize(textReader);
+                    textReader.Close();
+                }
+            }
+            catch
+            {
+            	//Banlist corrupt. Try to backup old, then create new one.
+            	try
+            	{
+            	    File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
+            	    Console.WriteLine("Banlist corrupt! Created new. Backup saved as ServerBanlist.txt.old");
+            	}
+            	catch
+            	{
+            		Console.WriteLine("Banlist corrupt! Created new. COULD NOT BACKUP OLD!");
+            	}
+            	banlist = null;
+                SaveBanlist();
+            }
+            Console.WriteLine("Server banlist loaded.");
+        }
+        
+        public void SaveBanlist()
+        {
+        	//Verify that we have a directory to place the file into.
+            if (!Directory.Exists(GameStorePath.gamepathconfig))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathconfig);
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(ServerBanlist));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerBanlist.txt"));
+
+            //Check to see if banlist has been initialized
+            if (banlist == null)
+            {
+                banlist = new ServerBanlist();
+            }
+            
+            //Serialize the ServerBanlist class to XML
+            serializer.Serialize(textWriter, banlist);
             textWriter.Close();
         }
 
@@ -883,7 +943,7 @@ namespace ManicDiggerServer
                             SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
                             KillPlayer(this.lastClientId);
                         }
-                        else if (config.IsIPBanned(iep1.Address.ToString()))
+                        else if (banlist.IsIPBanned(iep1.Address.ToString()))
                         {
                             SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
                             ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
@@ -1897,7 +1957,7 @@ if (sent >= unknown.Count) { break; }
                             break;
                         }
 
-                        if (config.IsUserBanned(username))
+                        if (banlist.IsUserBanned(username))
                         {
                             SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
                             ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
