@@ -48,6 +48,8 @@
     public abstract void GlDisableCullFace();
     public abstract void GlEnableCullFace();
     public abstract void ThrowException(string message);
+    public abstract void DeleteModel(Model model);
+    public abstract void GlEnableTexture2d();
 }
 
 public class KeyEventArgs

@@ -48,6 +48,10 @@ namespace ManicDigger.Renderers
             if (todraw == null)
             {
                 todraw = new Draw2dData[MAX_COUNT];
+                for (int i = 0; i < MAX_COUNT; i++)
+                {
+                    todraw[i] = new Draw2dData();
+                }
             }
             for (int i = 0; i < fpshistory.Count; i++)
             {
@@ -59,7 +63,7 @@ namespace ManicDigger.Renderers
                 todraw[i].width = 1;
                 todraw[i].height = time;
                 todraw[i].inAtlasId = null;
-                todraw[i].color = c;
+                todraw[i].color = Game.ColorFromArgb(c.A, c.R, c.G, c.B);
             }
             game.Draw2dTextures(todraw, game.WhiteTexture());
 

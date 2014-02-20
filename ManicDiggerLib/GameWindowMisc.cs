@@ -268,15 +268,6 @@ namespace ManicDigger
     {
         bool ShadowsFull { get; set; }
     }
-    public struct Draw2dData
-    {
-        public float x1;
-        public float y1;
-        public float width;
-        public float height;
-        public int? inAtlasId;
-        public FastColor color;
-    }
     public interface IMyGameWindow
     {
         void OnLoad(EventArgs e);
