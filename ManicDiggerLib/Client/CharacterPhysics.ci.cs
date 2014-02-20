@@ -414,26 +414,30 @@ public class CharacterPhysicsCi
                 	}
                 	else	//Block is empty or halfstep
                 	{
-//                		int x = FloatToInt(Floor(p0));
-//                		int y = FloatToInt(Floor(p2));
-//                		int z = FloatToInt(Floor(p1));
-//                		bool newstairs = isHalfHeight(x, y, z);
-//                		if (newstairs)
-//                		{
-//                			//Boost player up - TODO: smooth
-//                			playerposition[1] += half;
-//                			steppedonstair = true;
-//                		}
+                		int x = FloatToInt(Floor(newposition[0]));
+                		int y = FloatToInt(Floor(newposition[2]));
+                		int z = FloatToInt(Floor(newposition[1]));
+                		bool newstairs = isHalfHeight(x, y, z);
+                		if (newstairs)
+                		{
+                			//Boost player up - TODO: smooth
+                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
+                			if (relPos < half)
+                			{
+                				playerposition[1] += half;
+                				steppedonstair = true;
+                			}
+                		}
                 	}
             	}
             	else
             	{
-            		if (!newempty)	//Block is solid
+            		if (!NewEmpty(high, p0, p1, newposition[2]))	//Block is solid
             		{
-            			int x = FloatToInt(Floor(p0));
-                		int y = FloatToInt(Floor(p2));
-                		int z = FloatToInt(Floor(p1));
-                		bool nextempty = IsTileEmptyForPhysics(x, y, z) && !isHalfHeight(x, y, z); //Ensure that block is empty and not a halfstep
+            			int x = FloatToInt(Floor(newposition[0]));
+                		int y = FloatToInt(Floor(newposition[2]));
+                		int z = FloatToInt(Floor(newposition[1]));
+                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
                 		if (!nextempty)
                 		{
                 			reachedwall = true;
@@ -441,8 +445,13 @@ public class CharacterPhysicsCi
                 		}
                 		else	//Block is empty
                 		{
-//                			//Boost player up - TODO: smooth
-//                			playerposition[1] += (one / 2);
+                			//Boost player up - TODO: smooth
+                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
+                			if (relPos >= half)
+                			{
+                				playerposition[1] += half;
+                				steppedonstair = true;
+                			}
                 		}
             		}
             	}
@@ -483,7 +492,7 @@ public class CharacterPhysicsCi
             bool newhalf = isHalfHeight(x, y, z);
             if (newposition[1] - oldposition[1] < 0)
             {
-                if (newfull)
+                if (newfull && !steppedonstair)
                 {
                 	//If new block is solid, don't change height of position (no falling through solid blocks)
                 	playerposition[1] = oldposition[1];
