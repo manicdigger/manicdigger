@@ -176,7 +176,6 @@
     <Compile Include="MapTools\WorldGeneratorTools.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Network\LoginClient.cs" />
-    <Compile Include="MeshBatcher.cs" />
     <Compile Include="Hud\HudFpsHistoryGraphRenderer.cs" />
     <Compile Include="OggDecoder.cs" />
     <Compile Include="Renderers\CharacterRendererMonsterCode.cs" />
