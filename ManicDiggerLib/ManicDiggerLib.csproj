@@ -36,6 +36,15 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FastBuild|AnyCPU' ">
+    <OutputPath>bin\FastBuild\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BCrypt.Net, Version=0.1.4056.18965, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -172,7 +181,6 @@
     <Compile Include="ServerMap.cs" />
     <Compile Include="ServerMonitor.cs" />
     <Compile Include="ServerWorldManager.cs" />
-    <Compile Include="TerrainRenderer.cs" />
     <Compile Include="MapTools\NoiseTools.cs" />
     <Compile Include="MapTools\PopulationTools.cs" />
     <Compile Include="MapTools\WorldGeneratorTools.cs" />
@@ -257,8 +265,12 @@
     </When>
   </Choose>
   <PropertyGroup>
-    <PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">cd $(SolutionDir)
+    <PreBuildEvent Condition=" ('$(OS)' == 'Windows_NT') and ( $(Configuration) != 'FastBuild')">cd $(SolutionDir)
 cmd /c "$(SolutionDir)\BuildCito.bat"</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent Condition=" ('$(OS)' == 'Windows_NT') and ( $(Configuration) == 'FastBuild')">cd $(SolutionDir)
+cmd /c "$(SolutionDir)\BuildCito.bat fast"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">cd $(SolutionDir)
