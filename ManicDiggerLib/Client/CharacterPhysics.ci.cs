@@ -67,6 +67,22 @@ public class Vector3Ref
     }
 }
 
+public class Vector3IntRef
+{
+    internal int X;
+    internal int Y;
+    internal int Z;
+
+    internal static Vector3IntRef Create(int x, int y, int z)
+    {
+        Vector3IntRef v = new Vector3IntRef();
+        v.X = x;
+        v.Y = y;
+        v.Z = z;
+        return v;
+    }
+}
+
 public class MoveInfo
 {
     internal bool ENABLE_FREEMOVE;

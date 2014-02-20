@@ -16,9 +16,9 @@
         emptyCount = 0;
     }
 
-    public Game game;
-    public IFrustumCulling d_FrustumCulling;
-    public bool BindTexture;
+    internal Game game;
+    internal IFrustumCulling d_FrustumCulling;
+    internal bool BindTexture;
     ListInfo[] models;
     int modelsCount;
 
@@ -114,8 +114,8 @@
         glTextures = glTextures2;
         glTexturesLength = glTexturesLength + increase;
 
-        glTextures[glTextures.Length - increase] = glTexture;
-        return glTextures.Length - increase;
+        glTextures[glTexturesLength - increase] = glTexture;
+        return glTexturesLength - increase;
     }
 
     int ArrayIndexOf(Texture[] glTextures, int length, Texture glTexture)

@@ -84,13 +84,14 @@
     <Compile Include="Audio.cs" />
     <Compile Include="AviWriter.cs" />
     <Compile Include="Client\Language.ci.cs" />
-    <Compile Include="Client\MeshBatcher.cs" />
+    <Compile Include="Client\MeshBatcher.ci.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />
     <Compile Include="Client\CharacterPhysics.ci.cs" />
     <Compile Include="Client\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
+    <Compile Include="Client\Shadows.ci.cs" />
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="FrustumCulling.cs" />
     <Compile Include="GameData.cs" />
