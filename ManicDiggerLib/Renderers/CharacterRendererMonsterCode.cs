@@ -13,7 +13,7 @@ namespace ManicDigger.Renderers
         string[] Animations();
         double AnimPeriod { get; set; }
         void SetAnimation(string p);
-        void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint);
+        void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint, float playerspeed);
     }
     public class CharacterRendererMonsterCode : ICharacterRenderer
     {
@@ -43,50 +43,98 @@ namespace ManicDigger.Renderers
             }
         }
         List<object[]> code = new List<object[]>();
-        double animperiod = 0.8;
+        double animperiod = 0.3; //was 0.8
+        double characterlight = 0;
+        double outofphase;
+        double speed;
         public double AnimPeriod { get { return animperiod; } set { animperiod = value; } }
         #region ICharacterRenderer Members
-        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint)
+        public void DrawCharacter(AnimationState animstate, Vector3 pos, byte heading, byte pitch, bool moves, float dt, int playertexture, AnimationHint animationhint, float playerspeed)
         {
-            if (animationhint.InVehicle)
+            animstate.interp += dt;
+        	animstate.speed = playerspeed * 10;
+        	speed = animstate.speed;
+        	//Caps maximum player arm/leg movement. Fixes "crazy arms" at 10x speed.
+        	if (speed > 2)
+        	{
+        		speed = 2;
+        		animstate.speed = speed;
+        	}
+        	if (animationhint.InVehicle)
             {
                 moves = false;
             }
-            pos += animationhint.DrawFix;
             if (animstate.data == null)
             {
                 Dictionary<string, object> d = new Dictionary<string, object>();
                 animstate.data = d;
             }
             var variables = (Dictionary<string, object>)animstate.data;
-            if (moves)
+            double headingdeg = ((double)heading / 256) * 360;
+            characterlight = 127 + (heading / 2);
+            //keep track of how far neck is turned
+            if (!moves)
             {
-                animstate.interp += dt;
-                animstate.slowdownTimer = float.MaxValue;
-            }
-            else
-            {
-                if (animstate.slowdownTimer == float.MaxValue)
+                if (headingdeg > animstate.lastheading && !(Math.Abs(headingdeg - animstate.lastheading) > 180))
                 {
-                    animstate.slowdownTimer = (float)(animperiod / 2 - (animstate.interp % (animperiod / 2)));
+                    animstate.headbodydelta += Math.Abs(headingdeg - animstate.lastheading);
                 }
-                animstate.slowdownTimer -= dt;
-                if (animstate.slowdownTimer < 0)
+                if (headingdeg < animstate.lastheading && !(Math.Abs(headingdeg - animstate.lastheading) > 180))
                 {
-                    animstate.interp = 0;
-                }
-                else
-                {
-                    animstate.interp += dt;
+                    animstate.headbodydelta -= Math.Abs(headingdeg - animstate.lastheading);
                 }
             }
+            //slowly realign body when walking straight forward
+            if (moves && !(animationhint.leanleft || animationhint.leanright))
+            {
+                if (animstate.headbodydelta > 0)
+                {
+                    animstate.headbodydelta -= (500 * dt) * (speed*0.375f);
+                    animstate.bodyrotation = headingdeg - animstate.headbodydelta;
+                }
+                if (animstate.headbodydelta < 0)
+                {
+                    animstate.headbodydelta += (500 * dt)* (speed*0.375f);
+                    animstate.bodyrotation = headingdeg - animstate.headbodydelta;
+                }
+            }
+            //rotate body when strafing
+            if (animationhint.leanleft)
+            {
+                animstate.headbodydelta -= (500 * dt);
+                animstate.bodyrotation = headingdeg - animstate.headbodydelta;
+            }
+            if (animationhint.leanright)
+            {
+                animstate.headbodydelta += (500 * dt);
+                animstate.bodyrotation = headingdeg - animstate.headbodydelta;
+            }
+            //restrict neck rotation
+            if (!(animstate.headbodydelta <= -45) && !(animstate.headbodydelta >= 45))
+            {
+                animstate.fullbodyrotate = false;
+            }
+            if (animstate.headbodydelta >= 45)
+            {
+                animstate.fullbodyrotate = true;
+                animstate.headbodydelta = 45;
+                animstate.bodyrotation = (headingdeg - animstate.headbodydelta);
+            }
+            if (animstate.headbodydelta <= -45)
+            {
+                animstate.fullbodyrotate = true;
+                animstate.headbodydelta = -45;
+                animstate.bodyrotation = (headingdeg - animstate.headbodydelta);
+            }
+            animstate.lastheading = headingdeg;
+            
             game.GLMatrixModeModelView();
             game.GLPushMatrix();
             game.GLTranslate(pos.X, pos.Y, pos.Z);
 
             variables["heading"] = (double)heading;
             variables["pitch"] = (double)pitch;
-            variables["headingdeg"] = ((double)heading / 256) * 360;
+            variables["headingdeg"] = ((double)headingdeg);
             variables["pitchdeg"] = ((double)pitch / 256) * 360;
             variables["updown"] = (double)UpDown(animstate.interp, (float)animperiod);
             variables["limbrotation1"] = (double)LeftLegRotation(animstate.interp, (float)animperiod);
@@ -95,6 +143,10 @@ namespace ManicDigger.Renderers
             variables["dt"] = (double)dt;
             variables["time"] = (double)animstate.interp;
             variables["anim"] = (double)currentanim;
+            variables["hintleanleft"] = (double)GetLeanLeft(animationhint.leanleft);
+            variables["hintleanright"] = (double)GetLeanRight(animationhint.leanright);
+            variables["bodyrotation"] = (double)animstate.bodyrotation;
+            variables["fullbodyrotate"] = (double)GetFullBodyRotate(animstate.fullbodyrotate);
             string[] animations = Animations();
             for (int i = 0; i < animations.Length; i++)
             {
@@ -251,16 +303,39 @@ namespace ManicDigger.Renderers
         }
         float UpDown(float time, float period)
         {
-            float jumpheight = 0.10f;
-            return (float)TriWave(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
+            //float jumpheight = 0.10f;
+            //return (float)TriWave(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
+            float jumpheight = 0.025f;
+            return (float)Math.Sin(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
         }
         float LeftLegRotation(float time, float period)
         {
-            return (float)TriWave(2 * Math.PI * time / period) * 90;
+            //return (float)TriWave(2 * Math.PI * time / period) * 90;
+            outofphase = Math.PI;
+            return (float)(((Math.Cos(2 * Math.PI * time / 0.5 + outofphase) * speed) * 30));// *speed
         }
         float RightLegRotation(float time, float period)
         {
-            return (float)TriWave(2 * Math.PI * time / period + Math.PI) * 90;
+            //return (float)TriWave(2 * Math.PI * time / period + Math.PI) * 90;
+            return (float)((Math.Cos(2 * Math.PI * time / 0.5) * speed) * 30);
+        }
+        float GetLeanLeft(bool leaning)
+        {
+            if (leaning)
+            { return 1; }
+            else { return 0; }
+        }
+        float GetLeanRight(bool leaning)
+        {
+            if (leaning)
+            { return 1; }
+            else { return 0; }
+        }
+        float GetFullBodyRotate(bool fullbodyrotate)
+        {
+            if (fullbodyrotate)
+            { return 1; }
+            else { return 0; }
         }
         private float TriWave(double t)
         {

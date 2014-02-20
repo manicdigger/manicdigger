@@ -156,6 +156,7 @@ namespace ManicDiggerServer
         {
             Server server = this;
             server.LoadConfig();
+            server.LoadBanlist();
             var map = new ManicDiggerServer.ServerMap();
             map.server = this;
             map.d_CurrentTime = server;
@@ -586,6 +587,7 @@ namespace ManicDiggerServer
         }
 
         public ServerConfig config;
+        public ServerBanlist banlist;
 
         public void SaveConfig()
         {
@@ -602,6 +604,96 @@ namespace ManicDiggerServer
             if (config == null)
             {
                 config = new ServerConfig();
+                //Ask for config parameters the first time the server is started
+                string line;
+                bool wantsconfig = false;
+                Console.WriteLine("It seems this is the first time you started this server.");
+                Console.WriteLine("Would you like to set up some basic parameters? (Y/N)");
+                line = Console.ReadLine();
+                if (!string.IsNullOrEmpty(line))
+                {
+                	if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                		wantsconfig = true;
+                	else
+                		wantsconfig = false;
+                }
+                //Only ask these questions if user wants to
+                if (wantsconfig)
+                {
+                	Console.WriteLine("Please enter the server's name");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.Name = line;
+                	}
+                	Console.WriteLine("Enter the MOTD (displayed on server list)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.Motd = line;
+                	}
+                	Console.WriteLine("Enter the welcome message (displayed when joining your server)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		config.WelcomeMessage = line;
+                	}
+                	Console.WriteLine("Enter the port the server shall run on (Default: 25565)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		int port;
+                		try
+                		{
+                			port = int.Parse(line);
+                			if (port > 0 && port <= 65565)
+                			{
+                				config.Port = port;
+                			}
+                			else
+                			{
+                				Console.WriteLine("Out of port range. Using default (25565)");
+                			}
+                		}
+                		catch
+                		{
+                			Console.WriteLine("Invalid input. Using default (25565)");
+                		}
+                	}
+                	Console.WriteLine("Enter the maximum number of clients (Default: 16)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		int players;
+                		try
+                		{
+                			players = int.Parse(line);
+                			if (players > 0)
+                			{
+                				config.MaxClients = players;
+                			}
+                			else
+                			{
+                				Console.WriteLine("Number may not be negative. Using default (16)");
+                			}
+                		}
+                		catch
+                		{
+                			Console.WriteLine("Invalid input. Using default (16)");
+                		}
+                	}
+                	Console.WriteLine("Dou you want to enable the builtin HTTP server? (Y/N)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		bool choice;
+                		if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                			choice = true;
+                		else
+                			choice = false;
+                		config.EnableHTTPServer = choice;
+                	}
+                }
             }
             if (config.Areas.Count == 0)
             {
@@ -609,6 +701,64 @@ namespace ManicDiggerServer
             }
             //Serialize the ServerConfig class to XML
             serializer.Serialize(textWriter, config);
+            textWriter.Close();
+        }
+        
+        public void LoadBanlist()
+        {
+        	string filename = "ServerBanlist.txt";
+            if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
+            {
+                Console.WriteLine("Server banlist not found, creating new.");
+                SaveBanlist();
+                return;
+            }
+            try
+            {
+                using (TextReader textReader = new StreamReader(Path.Combine(GameStorePath.gamepathconfig, filename)))
+                {
+                    XmlSerializer deserializer = new XmlSerializer(typeof(ServerBanlist));
+                    banlist = (ServerBanlist)deserializer.Deserialize(textReader);
+                    textReader.Close();
+                }
+            }
+            catch
+            {
+            	//Banlist corrupt. Try to backup old, then create new one.
+            	try
+            	{
+            	    File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
+            	    Console.WriteLine("Banlist corrupt! Created new. Backup saved as ServerBanlist.txt.old");
+            	}
+            	catch
+            	{
+            		Console.WriteLine("Banlist corrupt! Created new. COULD NOT BACKUP OLD!");
+            	}
+            	banlist = null;
+                SaveBanlist();
+            }
+            Console.WriteLine("Server banlist loaded.");
+        }
+        
+        public void SaveBanlist()
+        {
+        	//Verify that we have a directory to place the file into.
+            if (!Directory.Exists(GameStorePath.gamepathconfig))
+            {
+                Directory.CreateDirectory(GameStorePath.gamepathconfig);
+            }
+
+            XmlSerializer serializer = new XmlSerializer(typeof(ServerBanlist));
+            TextWriter textWriter = new StreamWriter(Path.Combine(GameStorePath.gamepathconfig, "ServerBanlist.txt"));
+
+            //Check to see if banlist has been initialized
+            if (banlist == null)
+            {
+                banlist = new ServerBanlist();
+            }
+            
+            //Serialize the ServerBanlist class to XML
+            serializer.Serialize(textWriter, banlist);
             textWriter.Close();
         }
 
@@ -685,21 +835,25 @@ namespace ManicDiggerServer
             */
             d_MainSocket.Configuration.Port = port;
             d_MainSocket.Start();
-            try
+            if (config.EnableHTTPServer)
             {
-                httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
-                var m = new MainHttpModule();
-                m.server = this;
-                httpServer.Install(m);
-                foreach (var module in httpModules)
-                {
-                    httpServer.Install(module.module);
-                }
-                httpServer.Start();
-            }
-            catch
-            {
-                Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            	try
+            	{
+                	httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
+                	var m = new MainHttpModule();
+                	m.server = this;
+                	httpServer.Install(m);
+                	foreach (var module in httpModules)
+                	{
+                    	httpServer.Install(module.module);
+                	}
+                	httpServer.Start();
+                	Console.WriteLine("HTTP server listening on TCP port {0}.", port);
+            	}
+            	catch
+            	{
+                	Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            	}
             }
         }
 
@@ -879,7 +1033,7 @@ namespace ManicDiggerServer
                             SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
                             KillPlayer(this.lastClientId);
                         }
-                        else if (config.IsIPBanned(iep1.Address.ToString()))
+                        else if (banlist.IsIPBanned(iep1.Address.ToString()))
                         {
                             SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
                             ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
@@ -913,6 +1067,7 @@ namespace ManicDiggerServer
                         }
                         break;
                     case ManicDigger.MessageType.Disconnect:
+                        Console.WriteLine("Client disconnected.");
                         KillPlayer(clientid);
                         break;
                 }
@@ -994,7 +1149,8 @@ namespace ManicDiggerServer
                                     a.Value.PositionMul32GlY,
                                     a.Value.PositionMul32GlZ,
                                     (byte)a.Value.positionheading,
-                                    (byte)a.Value.positionpitch);
+                                    (byte)a.Value.positionpitch,
+                                    a.Value.stance);
                             }
                         }
                     }
@@ -1891,7 +2047,7 @@ if (sent >= unknown.Count) { break; }
                             break;
                         }
 
-                        if (config.IsUserBanned(username))
+                        if (banlist.IsUserBanned(username))
                         {
                             SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
                             ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
@@ -2000,30 +2156,49 @@ if (sent >= unknown.Count) { break; }
                         int x = packet.SetBlock.X;
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
-                        if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
+                        if (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Use)	//Check if player only uses block
                         {
-                            SendMessage(clientid, colorError + "Insufficient privileges to build.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
+                        	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.use))
+                        	{
+                        		SendMessage(clientid, colorError + "Insufficient privileges to use blocks.");
+                        		break;
+                        	}
+                        	if (clients[clientid].IsSpectator && !config.AllowSpectatorUse)
+                        	{
+                        		SendMessage(clientid, colorError + "Spectators are not allowed to use blocks.");
+                        		break;
+                        	}
+                        	DoCommandBuild(clientid, true, packet.SetBlock);
                         }
-                        if (clients[clientid].IsSpectator)
+                        else	//Player builds, deletes or uses block with tool
                         {
-                            SendMessage(clientid, colorError + "Spectators are not allowed to build.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
+                        	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
+                        	{
+                            	SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
+                        	{
+                            	SendMessage(clientid, colorError + "Spectators are not allowed to build.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
+                            	&& !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
+                        	{
+                            	SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                            	break;
+                        	}
+                        	if (!DoCommandBuild(clientid, true, packet.SetBlock))
+                        	{
+                            	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
+                        	}
+                        	//Only log when building/destroying blocks. Prevents VandalFinder entries
+                        	if (packet.SetBlock.Mode != Packet_BlockSetModeEnum.UseWithTool)
+                        		BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                         }
-                        if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
-                            && !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
-                        {
-                            SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                            break;
-                        }
-                        if (!DoCommandBuild(clientid, true, packet.SetBlock))
-                        {
-                            SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
-                        }
-                        BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
                     }
                     break;
                 case Packet_ClientIdEnum.FillArea:
@@ -2033,7 +2208,7 @@ if (sent >= unknown.Count) { break; }
                             SendMessage(clientid, colorError + "Insufficient privileges to build.");
                             break;
                         }
-                        if (clients[clientid].IsSpectator)
+                        if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
                         {
                             SendMessage(clientid, colorError + "Spectators are not allowed to build.");
                             break;
@@ -2068,13 +2243,14 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].PositionMul32GlZ = p.Z;
                         clients[clientid].positionheading = p.Heading;
                         clients[clientid].positionpitch = p.Pitch;
+                        clients[clientid].stance = (byte)p.Stance;
                         foreach (var k in clients)
                         {
                             if (k.Key != clientid)
                             {
                                 if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
                                 {
-                                    SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch);
+                                	SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch, (byte)p.Stance);
                                 }
                             }
                         }
@@ -2372,7 +2548,7 @@ if (sent >= unknown.Count) { break; }
                 Client c = clients[spawnedplayer];
                 Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
                 {
-                    PlayerId = spawnedplayer,
+                	PlayerId = spawnedplayer,
                     PlayerName = c.displayColor + c.playername,
                     PositionAndOrientation = new Packet_PositionAndOrientation()
                     {
@@ -2381,6 +2557,7 @@ if (sent >= unknown.Count) { break; }
                         Z = c.PositionMul32GlZ,
                         Heading = (byte)c.positionheading,
                         Pitch = (byte)c.positionpitch,
+                        Stance = 0,
                     },
                     Model_ = c.Model,
                     Texture_ = c.Texture,
@@ -2395,7 +2572,7 @@ if (sent >= unknown.Count) { break; }
                 }
                 Packet_Server pp = new Packet_Server() { Id = Packet_ServerIdEnum.SpawnPlayer, SpawnPlayer = p };
                 SendPacket(clientid, Serialize(pp));
-        	}
+            }
         }
 
 
@@ -3044,7 +3221,7 @@ if (sent >= unknown.Count) { break; }
                 PlayerSpawnPosition = p,
             }));
         }
-        public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch)
+        public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch, byte stance)
         {
             //spectators invisible to players
             if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
@@ -3061,6 +3238,7 @@ if (sent >= unknown.Count) { break; }
                     Z = z,
                     Heading = heading,
                     Pitch = pitch,
+                    Stance = stance,
                 }
             };
             SendPacket(clientid, Serialize(new Packet_Server()
@@ -3124,7 +3302,8 @@ if (sent >= unknown.Count) { break; }
             }
             catch (Exception)
             {
-                KillPlayer(clientid);
+                Console.WriteLine("Network exception.");
+            	KillPlayer(clientid);
             }
         }
         void EmptyCallback(IAsyncResult result)
@@ -3445,6 +3624,7 @@ if (sent >= unknown.Count) { break; }
             public int PositionMul32GlZ;
             public int positionheading;
             public int positionpitch;
+            public byte stance = 0;
             public string Model = "player.txt";
             public string Texture;
             public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();

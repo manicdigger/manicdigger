@@ -1237,7 +1237,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                config.BannedUsers.Add(targetName);
+                banlist.BannedUsers.Add(targetName);
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} bans {1}.{2}", sourceName, targetName, reason));
@@ -1293,7 +1293,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                config.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
+                banlist.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was IP banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
@@ -1366,7 +1366,7 @@ namespace ManicDiggerServer
             }
 
             // Finally ban user.
-            config.BannedUsers.Add(target);
+            banlist.BannedUsers.Add(target);
             SaveConfig();
             SendMessageToAll(string.Format("{0}{1} (offline) was banned by {2}.{3}", colorImportant, target, GetClient(sourceClientId).ColoredPlayername(colorImportant), reason));
             ServerEventLog(string.Format("{0} bans {1}.{2}", GetClient(sourceClientId).playername, target, reason));
@@ -1384,8 +1384,8 @@ namespace ManicDiggerServer
             if (type.Equals("-p"))
             {
                 // case insensitive
-                bool exists = config.UnbanPlayer(target);
-                SaveConfig();
+                bool exists = banlist.UnbanPlayer(target);
+                SaveBanlist();
                 if (!exists)
                 {
                     SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, target));
@@ -1400,8 +1400,8 @@ namespace ManicDiggerServer
             // unban an IP
             else if (type.Equals("-ip"))
             {
-                bool exists = config.BannedIPs.Remove(target);
-                SaveConfig();
+                bool exists = banlist.UnbanIP(target);
+                SaveBanlist();
                 if (!exists)
                 {
                     SendMessage(sourceClientId, string.Format("{0}IP {1} not found.", colorError, target));
@@ -1470,7 +1470,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned Users:");
-                    foreach (string currentUser in config.BannedUsers)
+                    foreach (string currentUser in banlist.BannedUsers)
                     {
                         SendMessage(sourceClientId, currentUser);
                     }
@@ -1483,7 +1483,7 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned IPs:");
-                    foreach (string currentIP in config.BannedIPs)
+                    foreach (string currentIP in banlist.BannedIPs)
                     {
                         SendMessage(sourceClientId, currentIP);
                     }
@@ -2122,7 +2122,7 @@ namespace ManicDiggerServer
             }
             Client t = clients[clientTo];
             SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
-                t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch);
+                t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch, t.stance);
             return true;
         }
 
@@ -2156,7 +2156,7 @@ namespace ManicDiggerServer
             }
 
             Client client = GetClient(sourceClientId);
-            SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch);
+            SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch, client.stance);
             SendMessage(client.Id, string.Format("{0}New Position ({1},{2},{3}).", colorSuccess, x, y, rZ));
             return true;
         }
@@ -2192,7 +2192,7 @@ namespace ManicDiggerServer
             Client targetClient = GetClient(target);
             if(targetClient != null)
             {
-                SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch);
+                SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch, targetClient.stance);
                 SendMessage(targetClient.Id, string.Format("{0}You have been teleported to ({1},{2},{3}) by {4}.", colorImportant, x, y, rZ, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
                 SendMessage(sourceClientId, string.Format("{0}You teleported {1} to ({2},{3},{4}).", colorSuccess, targetClient.ColoredPlayername(colorSuccess), x, y, rZ));
                 ServerEventLog(string.Format("{0} teleports {1} to {2} {3} {4}.", GetClient(sourceClientId).playername, targetClient.playername, x, y, rZ));

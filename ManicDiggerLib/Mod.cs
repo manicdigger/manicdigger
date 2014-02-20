@@ -462,7 +462,7 @@ namespace ManicDigger
             foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, (int)(x * 32), (int)(z * 32), (int)(y * 32),
-                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch);
+                    (byte)server.GetClient(player).positionheading, (byte)server.GetClient(player).positionpitch, server.GetClient(player).stance);
             }
         }
         
@@ -471,28 +471,23 @@ namespace ManicDigger
         	return server.GetClient(player).positionheading;
         }
         
-        public void SetPlayerHeading(int player, int heading)
-        {
-        	server.clients[player].positionheading = heading;
-        	foreach (var k in server.clients)
-            {
-                server.SendPlayerTeleport(k.Key, player, server.clients[player].PositionMul32GlX, server.clients[player].PositionMul32GlY, server.clients[player].PositionMul32GlZ,
-                    (byte)heading, (byte)server.GetClient(player).positionpitch);
-            }
-        }
-        
         public int GetPlayerPitch(int player)
         {
         	return server.GetClient(player).positionpitch;
         }
         
-        public void SetPlayerPitch(int player, int pitch)
+        public int GetPlayerStance(int player)
+        {
+        	return server.GetClient(player).stance;
+        }
+        
+        public void SetPlayerOrientation(int player, int heading, int pitch, int stance)
         {
         	server.clients[player].positionpitch = pitch;
         	foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, server.clients[player].PositionMul32GlX, server.clients[player].PositionMul32GlY, server.clients[player].PositionMul32GlZ,
-                    (byte)server.GetClient(player).positionheading, (byte)pitch);
+                    (byte)heading, (byte)pitch, (byte)stance);
             }
         }
 

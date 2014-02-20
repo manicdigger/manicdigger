@@ -132,12 +132,13 @@ namespace MdMonsterEditor
             bool exception = false;
             byte headingbyte = (byte)(HeadingDeg() / 360 * 256);
             byte pitchbyte = (byte)(PitchDeg() / 360 * 256);
+            float speed = 1.0f;
             d.AnimPeriod = 1.0 / (trackBar3.Value * 0.1);
             progressBar1.Value = (int)((animstate.interp % (d.AnimPeriod)) / d.AnimPeriod * 100);
             try
             {
                 d.DrawCharacter(animstate, new OpenTK.Vector3(0, 0, 0),
-                   headingbyte, pitchbyte, true, dt, playertexture, new AnimationHint());
+                   headingbyte, pitchbyte, true, dt, playertexture, new AnimationHint(), speed);
             }
             catch (Exception ee)
             {

@@ -198,15 +198,22 @@ namespace ManicDigger
 
         public enum ClientColor
         {
-            White,
-            Black,
-            Red,
-            Green,
-            Blue,
-            Yellow,
-            Cyan,
-            Purple,
-            Grey
+            Black,		// &0
+            Blue,		// &1
+            Green,		// &2
+            Cyan,		// &3
+            Red,		// &4
+            Purple,		// &5
+            Yellow,		// &6
+            Grey,		// &7
+            DarkGrey,	// &8
+            LightBlue,	// &9
+            LightGreen,	// &a
+            LightCyan,	// &b
+            LightRed,	// &c
+            LightPink,	// &d
+            LightYellow,// &e
+            White		// &f
         };
 
         public class Privilege
@@ -216,6 +223,7 @@ namespace ManicDigger
                 return new string[]
                 {
                     build,
+                    use,
                     freemove,
                     chat,
                     pm,
@@ -263,6 +271,7 @@ namespace ManicDigger
                 };
             }
             public static string build = "build";
+            public static string use = "use";
             public static string freemove = "freemove";
             public static string chat = "chat";
             public static string pm = "pm";
@@ -319,6 +328,7 @@ namespace ManicDigger
             guest.GroupPrivileges.Add(Privilege.chat);
             guest.GroupPrivileges.Add(Privilege.pm);
             guest.GroupPrivileges.Add(Privilege.build);
+            guest.GroupPrivileges.Add(Privilege.use);
             guest.GroupPrivileges.Add(Privilege.login);
             guest.GroupPrivileges.Add(Privilege.tp);
             guest.GroupPrivileges.Add(Privilege.tp_pos);
@@ -333,6 +343,7 @@ namespace ManicDigger
             builder.GroupPrivileges.Add(Privilege.chat);
             builder.GroupPrivileges.Add(Privilege.pm);
             builder.GroupPrivileges.Add(Privilege.build);
+            builder.GroupPrivileges.Add(Privilege.use);
             builder.GroupPrivileges.Add(Privilege.login);
             builder.GroupPrivileges.Add(Privilege.tp);
             builder.GroupPrivileges.Add(Privilege.tp_pos);
@@ -348,6 +359,7 @@ namespace ManicDigger
             moderator.GroupPrivileges.Add(Privilege.chat);
             moderator.GroupPrivileges.Add(Privilege.pm);
             moderator.GroupPrivileges.Add(Privilege.build);
+            moderator.GroupPrivileges.Add(Privilege.use);
             moderator.GroupPrivileges.Add(Privilege.freemove);
             moderator.GroupPrivileges.Add(Privilege.kick);
             moderator.GroupPrivileges.Add(Privilege.ban);
@@ -379,6 +391,7 @@ namespace ManicDigger
             admin.GroupPrivileges.Add(Privilege.chat);
             admin.GroupPrivileges.Add(Privilege.pm);
             admin.GroupPrivileges.Add(Privilege.build);
+            admin.GroupPrivileges.Add(Privilege.use);
             admin.GroupPrivileges.Add(Privilege.freemove);
             admin.GroupPrivileges.Add(Privilege.kick);
             admin.GroupPrivileges.Add(Privilege.ban);
@@ -447,22 +460,36 @@ namespace ManicDigger
             {
                 case ClientColor.Black:
                     return "&0";
-                case ClientColor.White:
-                    return "&f";
-                case ClientColor.Red:
-                    return "&4";
-                case ClientColor.Green:
-                    return "&2";
                 case ClientColor.Blue:
                     return "&1";
+                case ClientColor.Green:
+                    return "&2";
                 case ClientColor.Cyan:
                     return "&3";
-                case ClientColor.Yellow:
-                    return "&6";
+                case ClientColor.Red:
+                    return "&4";
                 case ClientColor.Purple:
                     return "&5";
+                case ClientColor.Yellow:
+                    return "&6";
                 case ClientColor.Grey:
                     return "&7";
+                case ClientColor.DarkGrey:
+                    return "&8";
+                case ClientColor.LightBlue:
+                    return "&9";
+                case ClientColor.LightGreen:
+                    return "&a";
+                case ClientColor.LightCyan:
+                    return "&b";
+                case ClientColor.LightRed:
+                    return "&c";
+                case ClientColor.LightPink:
+                    return "&d";
+                case ClientColor.LightYellow:
+                    return "&e";
+                case ClientColor.White:
+                    return "&f";
                 default:
                     return "&f"; // white
             }
