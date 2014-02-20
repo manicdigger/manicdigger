@@ -227,8 +227,8 @@ namespace ManicDigger
             mod.Start(modmanager);
         }
 
-        internal Stack<float[]> mvMatrix = new Stack<float[]>();
-        internal Stack<float[]> pMatrix = new Stack<float[]>();
+        internal StackFloatArray mvMatrix { get { return game.mvMatrix; } set { game.mvMatrix = value; } }
+        internal StackFloatArray pMatrix { get { return game.pMatrix; } set { game.pMatrix = value; } }
 
         internal Game game;
 
@@ -2965,7 +2965,7 @@ namespace ManicDigger
                     GLTranslate(pos.X, pos.Y, pos.Z);
                     GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
                     GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
-                    GLScale(0.02, 0.02, 0.02);
+                    GLScale(0.02f, 0.02f, 0.02f);
                     GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
                     //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
                     int? n = null;
@@ -3075,7 +3075,7 @@ namespace ManicDigger
             if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
 
-        bool currentMatrixModeProjection;
+        bool currentMatrixModeProjection { get { return game.currentMatrixModeProjection; } set { game.currentMatrixModeProjection = value; } }
 
         float[] Matrix4ToFloat(Matrix4 m)
         {
@@ -3101,14 +3101,14 @@ namespace ManicDigger
 
         void SetMatrixUniforms()
         {
-            game.p.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+            game.SetMatrixUniforms();
         }
 
         public void GLLoadMatrix(Matrix4 m)
         {
             if (currentMatrixModeProjection)
             {
-                if (pMatrix.Count > 0)
+                if (pMatrix.Count() > 0)
                 {
                     pMatrix.Pop();
                 }
@@ -3116,7 +3116,7 @@ namespace ManicDigger
             }
             else
             {
-                if (pMatrix.Count > 0)
+                if (pMatrix.Count() > 0)
                 {
                     mvMatrix.Pop();
                 }
@@ -3128,119 +3128,37 @@ namespace ManicDigger
 
         public void GLPopMatrix()
         {
-            if (currentMatrixModeProjection)
-            {
-                if (pMatrix.Count > 1)
-                {
-                    pMatrix.Pop();
-                }
-            }
-            else
-            {
-                if (mvMatrix.Count > 1)
-                {
-                    mvMatrix.Pop();
-                }
-            }
-
-            SetMatrixUniforms();
+            game.GLPopMatrix();
         }
 
-        public void GLScale(double x, double y, double z)
+        public void GLScale(float x, float y, float z)
         {
-            float[] m;
-            if (currentMatrixModeProjection)
-            {
-                m = pMatrix.Peek();
-            }
-            else
-            {
-                m = mvMatrix.Peek();
-            }
-            Mat4.Scale(m, m, Vec3.FromValues((float)x, (float)y, (float)z));
-
-            SetMatrixUniforms();
+            game.GLScale(x, y, z);
         }
 
         public void GLRotate(float angle, float x, float y, float z)
         {
-            angle /= 360;
-            angle *= 2 * Game.GetPi();
-            float[] m;
-            if (currentMatrixModeProjection)
-            {
-                m = pMatrix.Peek();
-            }
-            else
-            {
-                m = mvMatrix.Peek();
-            }
-            Mat4.Rotate(m, m, angle, Vec3.FromValues((float)x, (float)y, (float)z));
-            SetMatrixUniforms();
+            game.GLRotate(angle, x, y, z);
         }
 
         public void GLTranslate(float x, float y, float z)
         {
-            float[] m;
-            if (currentMatrixModeProjection)
-            {
-                m = pMatrix.Peek();
-            }
-            else
-            {
-                m = mvMatrix.Peek();
-            }
-            Mat4.Translate(m, m, Vec3.FromValues((float)x, (float)y, (float)z));
-            SetMatrixUniforms();
+            game.GLTranslate(x, y, z);
         }
 
         public void GLPushMatrix()
         {
-            if (currentMatrixModeProjection)
-            {
-                pMatrix.Push(Mat4.CloneIt(pMatrix.Peek()));
-            }
-            else
-            {
-                mvMatrix.Push(Mat4.CloneIt(mvMatrix.Peek()));
-            }
-            SetMatrixUniforms();
+            game.GLPushMatrix();
         }
 
         public void GLLoadIdentity()
         {
-            if (currentMatrixModeProjection)
-            {
-                if (pMatrix.Count > 0)
-                {
-                    pMatrix.Pop();
-                }
-                pMatrix.Push(Mat4.Identity_(Mat4.Create()));
-            }
-            else
-            {
-                if (mvMatrix.Count > 0)
-                {
-                    mvMatrix.Pop();
-                }
-                mvMatrix.Push(Mat4.Identity_(Mat4.Create()));
-            }
-            SetMatrixUniforms();
+            game.GLLoadIdentity();
         }
 
         void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
         {
-            float[] m;
-            if (currentMatrixModeProjection)
-            {
-                m = pMatrix.Peek();
-            }
-            else
-            {
-                m = mvMatrix.Peek();
-            }
-            Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
-            SetMatrixUniforms();
+            game.GLOrtho(left, right, bottom, top, zNear, zFar);
         }
 
         public void GLMatrixModeModelView()
@@ -4192,7 +4110,7 @@ namespace ManicDigger
                         }
                         GLRotate(-player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
                         GLRotate(-player.playerorientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
-                        GLScale(0.02, 0.02, 0.02);
+                        GLScale(0.02f, 0.02f, 0.02f);
 
                         //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
                         //Todo: Can't change text color because text has outline anyway.

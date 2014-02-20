@@ -58,7 +58,7 @@ namespace ManicDigger.Renderers
             game.GLTranslate(pos.X, pos.Y, pos.Z);
             game.GLRotate(-d_LocalPlayerPosition.LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
             game.GLRotate(-d_LocalPlayerPosition.LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
-            game.GLScale(0.02, 0.02, 0.02);
+            game.GLScale(0.02f, 0.02f, 0.02f);
             //GL.Translate(-ImageSize / 2, -ImageSize / 2, 0);
             game.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
             game.GLPopMatrix();
