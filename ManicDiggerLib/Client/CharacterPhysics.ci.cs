@@ -384,6 +384,13 @@ public class CharacterPhysicsCi
 
         reachedceiling = false;
         reachedwall = false;
+        
+        int oldPosX = FloatToInt(Floor(oldposition[0]));
+        int oldPosY = FloatToInt(Floor(oldposition[2]));
+        int oldPosZ = FloatToInt(Floor(oldposition[1]));
+        bool wasonstairs = isHalfHeight(oldPosX, oldPosY, oldPosZ);	//Checks if player is coming from a half height block
+        bool steppedonstair = false;	//Indicates if the player just stepped on a stair in this collision tick
+        float half = one * 1 / 2;
 
         playerposition[0] = newposition[0];	//MD: X
         playerposition[1] = newposition[1];	//MD: Z - top axis
@@ -397,12 +404,48 @@ public class CharacterPhysicsCi
             bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[2] - oldposition[2] > 0)
             {
-                if (!newempty)
-                {
-                	//New Y coordinate of position not valid. Set back to old coordinate.
-                    reachedwall = true;
-                    playerposition[2] = oldposition[2];
-                }
+            	if (!wasonstairs)
+            	{
+                	if (!newempty)	//Block is solid
+                	{
+                		//New Y coordinate of position not valid. Set back to old coordinate.
+                	    reachedwall = true;
+                	    playerposition[2] = oldposition[2];
+                	}
+                	else	//Block is empty or halfstep
+                	{
+//                		int x = FloatToInt(Floor(p0));
+//                		int y = FloatToInt(Floor(p2));
+//                		int z = FloatToInt(Floor(p1));
+//                		bool newstairs = isHalfHeight(x, y, z);
+//                		if (newstairs)
+//                		{
+//                			//Boost player up - TODO: smooth
+//                			playerposition[1] += half;
+//                			steppedonstair = true;
+//                		}
+                	}
+            	}
+            	else
+            	{
+            		if (!newempty)	//Block is solid
+            		{
+            			int x = FloatToInt(Floor(p0));
+                		int y = FloatToInt(Floor(p2));
+                		int z = FloatToInt(Floor(p1));
+                		bool nextempty = IsTileEmptyForPhysics(x, y, z) && !isHalfHeight(x, y, z); //Ensure that block is empty and not a halfstep
+                		if (!nextempty)
+                		{
+                			reachedwall = true;
+                			playerposition[2] = oldposition[2];
+                		}
+                		else	//Block is empty
+                		{
+//                			//Boost player up - TODO: smooth
+//                			playerposition[1] += (one / 2);
+                		}
+            		}
+            	}
             }
         }
         //front - positive X axis
@@ -430,7 +473,6 @@ public class CharacterPhysicsCi
             int y = FloatToInt(Floor(qnewposition2));
             int z = FloatToInt(Floor(qnewposition1));
             float a = walldistance;
-            //float half = one / 2;
             //Check if block at new Z coordinate is NOT empty for physics (check for solid block)
             bool newfull = (!IsTileEmptyForPhysics(x, y, z))
             	//These 4 lines let you walk a little over the block's edge. Also part of the 2 block high jump problem
@@ -438,20 +480,25 @@ public class CharacterPhysicsCi
                 || (qnewposition0 - Floor(qnewposition0) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)) && shiftkeypressed)
                 || (qnewposition2 - Floor(qnewposition2) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)) && shiftkeypressed)
                 || (qnewposition2 - Floor(qnewposition2) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)) && shiftkeypressed);
+            bool newhalf = isHalfHeight(x, y, z);
             if (newposition[1] - oldposition[1] < 0)
             {
                 if (newfull)
                 {
                 	//If new block is solid, don't change height of position (no falling through solid blocks)
-                    playerposition[1] = oldposition[1];
+                	playerposition[1] = oldposition[1];
                     standingontheground = true;
                 }
-//                if (isHalfHeight(x, y, z))
-//                {
-//                	//Block is HalfStep
-//                	playerposition[1] = z + half + walldistance;
-//                    standingontheground = true;
-//                }
+                else if (newhalf && !steppedonstair)
+                {
+                	//Block is half height
+                	float relPos = qnewposition1 - z;	//relative position inside block (between 0 and 1)
+                	if (relPos < half)
+                	{
+                		playerposition[1] = oldposition[1];
+                    	standingontheground = true;
+                	}
+                }
             }
         }
         //right - negative Y axis
