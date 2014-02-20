@@ -269,9 +269,3 @@ public class ListInfo
     internal int texture;
     internal Model model;
 }
-
-public abstract class IFrustumCulling
-{
-    public abstract bool SphereInFrustum(float x, float y, float z, float radius);
-    public abstract void CalcFrustumEquations();
-}

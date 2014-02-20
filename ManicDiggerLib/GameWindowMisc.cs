@@ -65,27 +65,7 @@ namespace ManicDigger
             return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
         }
     }
-    public class VerticesIndicesToLoad
-    {
-        public ModelData modelData;
-        public Vector3 position;
-        public bool transparent;
-        public Texture texture;
-    }
-    public class Config3d
-    {
-        public bool ENABLE_BACKFACECULLING = true;
-        public bool ENABLE_TRANSPARENCY = true;
-        public bool ENABLE_MIPMAPS = true;
-        public bool ENABLE_VSYNC = false;
-        public bool ENABLE_VISIBILITY_CULLING = false;
-        public float viewdistance = 128;
-    }
-    public interface IGetCameraMatrix
-    {
-        Matrix4 ModelViewMatrix { get; }
-        Matrix4 ProjectionMatrix { get; }
-    }
+
     public interface IThe3d
     {
         int LoadTexture(Bitmap bmp);

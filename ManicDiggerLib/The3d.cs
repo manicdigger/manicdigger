@@ -12,7 +12,7 @@ namespace ManicDigger
 {
     //Eventually all calls to OpenGL should be here.
     //This class should become replaceable with DirectX.
-    public class The3d : IThe3d, IDraw2d, IGetCameraMatrix
+    public class The3d : IGetCameraMatrix, IThe3d, IDraw2d
     {
         public ManicDiggerGameWindow game;
         [Inject]
@@ -107,10 +107,21 @@ namespace ManicDigger
         public Matrix4 ModelViewMatrix { get; set; }
         public Matrix4 ProjectionMatrix { get; set; }
         #endregion
-        
-       
-        
 
 
+
+
+
+        internal float[] lastmvmatrix;
+        internal float[] lastpmatrix;
+        public override float[] GetModelViewMatrix()
+        {
+            return lastmvmatrix;
+        }
+
+        public override float[] GetProjectionMatrix()
+        {
+            return lastpmatrix;
+        }
     }
 }

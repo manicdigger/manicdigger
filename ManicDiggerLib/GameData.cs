@@ -35,7 +35,6 @@ namespace ManicDigger
         int[] DamageToPlayer { get; }
 
         int[] DefaultMaterialSlots { get; }
-        float[] LightLevels { get; } //maps light level (0-15) to GL.Color value.
 
         //Special blocks
         //Block 0 is empty block.
@@ -128,7 +127,6 @@ namespace ManicDigger
             mWalkableType = new WalkableType[count];
 
             mDefaultMaterialSlots = new int[10];
-            mLightLevels = new float[16];
             mIsValid[0] = true;
         }
 
@@ -154,7 +152,6 @@ namespace ManicDigger
         public WalkableType[] WalkableType1 { get { return mWalkableType; } }
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
-        public float[] LightLevels { get { return mLightLevels; } }
 
         private bool[] mIsWater;
         private bool[] mIsLava;
@@ -181,7 +178,6 @@ namespace ManicDigger
         private WalkableType[] mWalkableType;
 
         private int[] mDefaultMaterialSlots;
-        private float[] mLightLevels;
 
         // TODO: hardcoded IDs
         // few code sections still expect some hardcoded IDs

@@ -47,6 +47,7 @@
     public abstract void DrawModels(Model[] model, int count);
     public abstract void GlDisableCullFace();
     public abstract void GlEnableCullFace();
+    public abstract void ThrowException(string message);
 }
 
 public class KeyEventArgs
@@ -177,5 +178,11 @@ public enum TextBaseline
 
 public class IntRef
 {
+    public static IntRef Create(int value_)
+    {
+        IntRef intref = new IntRef();
+        intref.value = value_;
+        return intref;
+    }
     internal int value;
 }

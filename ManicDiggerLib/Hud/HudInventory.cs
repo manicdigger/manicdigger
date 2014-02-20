@@ -470,7 +470,7 @@ namespace ManicDigger.Hud
             }
             if (item.ItemClass == ItemClass.Block)
             {
-                game.Draw2dTexture(terraintextures.terrainTexture, screenpos.X, screenpos.Y,
+                game.Draw2dTexture(terraintextures.terrainTexture(), screenpos.X, screenpos.Y,
                     drawsize.Value.X, drawsize.Value.Y, dataItems.TextureIdForInventory[item.BlockId]);
                 if (item.BlockCount > 1)
                 {

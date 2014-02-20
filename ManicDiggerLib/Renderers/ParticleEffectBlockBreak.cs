@@ -25,14 +25,14 @@ namespace ManicDigger.Renderers
         public IGameData d_Data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {
-            GL.BindTexture(TextureTarget.Texture2D, d_Terrain.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, d_Terrain.terrainTexture());
             foreach (ParticleEffect p in new List<ParticleEffect>(particleEffects))
             {
                 foreach (Particle pp in p.particles)
                 {
                     float l = p.light;
                     GL.Begin(BeginMode.Triangles);
-                    RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, d_Terrain.texturesPacked);
+                    RectangleF texrec = TextureAtlas.TextureCoords2d(p.textureid, d_Terrain.texturesPacked());
                     GL.TexCoord2(texrec.Left, texrec.Top);
                     GL.Color3(l, l, l);
                     GL.Vertex3(pp.position);

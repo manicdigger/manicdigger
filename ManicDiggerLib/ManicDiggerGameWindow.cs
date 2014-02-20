@@ -28,7 +28,7 @@ namespace ManicDigger
         IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
-        IMapStoragePortion, ICurrentShadows, IResetMap, ITerrainTextures
+        IMapStoragePortion, ICurrentShadows, IResetMap
     {
         public ManicDiggerGameWindow()
         {
@@ -67,32 +67,30 @@ namespace ManicDigger
             ICompression compression = new CompressionGzip(); //IsSinglePlayer ? (ICompression)new CompressionGzip() : new CompressionGzip();
             network.d_Compression = compression;
             //network.d_ResetMap = this;
-            var terrainTextures = this;
-            terrainTextures.d_GetFile = getfile;
+            var terrainTextures = new ITerrainTextures();
+            terrainTextures.game = game;
             bool IsMono = Type.GetType("Mono.Runtime") != null;
-            terrainTextures.d_TextureAtlasConverter = new TextureAtlasConverter();
+            d_TextureAtlasConverter = new TextureAtlasConverter();
             if (IsMono)
             {
-                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmapDummy(); };
+                d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmapDummy(); };
             }
             else
             {
-                terrainTextures.d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmap(); };
+                d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmap(); };
             }
-            terrainTextures.StartTerrainTextures();
-            w.d_TerrainTextures = terrainTextures;
+            w.game.d_TerrainTextures = terrainTextures;
             var blockrenderertorch = new BlockRendererTorch();
             blockrenderertorch.d_TerainRenderer = terrainTextures;
             blockrenderertorch.d_Data = gamedata;
             //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
             var map = w;
-            var terrainchunktesselator = new TerrainChunkTesselator();
+            var terrainchunktesselator = new TerrainChunkTesselatorCi();
             w.d_TerrainChunkTesselator = terrainchunktesselator;
-            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d };
+            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d, platform = game.p };
             w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling, game = game };
             w.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
-            terrainchunktesselator.d_TerrainTextures = terrainTextures;
             //w.d_Map = clientgame.mapforphysics;
             w.d_Physics = physics;
             w.d_Clients = clientgame;
@@ -125,7 +123,7 @@ namespace ManicDigger
             clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage, d_Data = gamedata };
             clientgame.d_RailMapUtil = new RailMapUtil() { d_Data = gamedata, d_MapStorage = clientgame };
             clientgame.d_MinecartRenderer = new MinecartRenderer() { d_GetFile = getfile, d_The3d = the3d, game = this };
-            clientgame.d_TerrainTextures = terrainTextures;
+            clientgame.game.d_TerrainTextures = terrainTextures;
             clientgame.d_GetFile = getfile;
             w.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.d_Map = game;
@@ -156,13 +154,13 @@ namespace ManicDigger
             var sunmoonrenderer = new SunMoonRenderer() { d_Draw2d = the3d, d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d, game = this };
             w.d_SunMoonRenderer = sunmoonrenderer;
             clientgame.d_SunMoonRenderer = sunmoonrenderer;
-            this.d_Heightmap = new InfiniteMapChunked2d() { d_Map = map };
+            this.d_Heightmap = new InfiniteMapChunked2d() { d_Map = game };
             d_Heightmap.Restart();
             network.d_Heightmap = d_Heightmap;
             //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
             //light.Restart();
             w.d_TerrainChunkTesselator = terrainchunktesselator;
-            terrainchunktesselator.game = w;
+            terrainchunktesselator.game = game;
             /*
             if (fullshadows)
             {
@@ -173,6 +171,8 @@ namespace ManicDigger
                 UseShadowsSimple();
             }
             */
+            terrainRenderer = new TerrainRenderer();
+            terrainRenderer.game = game;
             w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w, game = this };
             w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w, game = this };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata, game = this };
@@ -190,7 +190,7 @@ namespace ManicDigger
             hudInventory.getfile = getfile;
             hudInventory.ActiveMaterial = w;
             hudInventory.viewport3d = w;
-            hudInventory.terraintextures = d_TerrainTextures;
+            hudInventory.terraintextures = game.d_TerrainTextures;
             w.d_Inventory = inventory;
             w.d_InventoryController = inventoryController;
             w.d_InventoryUtil = inventoryUtil;
@@ -268,7 +268,7 @@ namespace ManicDigger
         [Inject]
         public GameData d_Data;
         [Inject]
-        public Config3d d_Config3d;
+        public Config3d d_Config3d { get { return game.d_Config3d; } set { game.d_Config3d = value; } }
         [Inject]
         public WeaponRenderer d_Weapon;
         [Inject]
@@ -283,8 +283,6 @@ namespace ManicDigger
         public SunMoonRenderer d_SunMoonRenderer;
         [Inject]
         public IGameExit d_Exit;
-        [Inject]
-        public ITerrainTextures d_TerrainTextures;
         [Inject]
         public HudChat d_HudChat;
         [Inject]
@@ -304,7 +302,7 @@ namespace ManicDigger
         [Inject]
         public INetClient main;
         [Inject]
-        public InfiniteMapChunked2d d_Heightmap;
+        public InfiniteMapChunked2d d_Heightmap { get { return game.d_Heightmap; } set { game.d_Heightmap = value; } }
         [Inject]
         public IResetMap d_ResetMap;
         [Inject]
@@ -312,9 +310,8 @@ namespace ManicDigger
         [Inject]
         public IFrustumCulling d_FrustumCulling;
         [Inject]
-        public MeshBatcher d_Batcher;
-        [Inject]
-        public TerrainChunkTesselator d_TerrainChunkTesselator;
+        public MeshBatcher d_Batcher { get { return game.d_Batcher; } set { game.d_Batcher = value; } }
+        public TerrainChunkTesselatorCi d_TerrainChunkTesselator { get { return game.d_TerrainChunkTesselator; } set { game.d_TerrainChunkTesselator = value; } }
         public ManicDiggerGameWindow d_Shadows;
         public Packet_CraftingRecipe[] d_CraftingRecipes;
 
@@ -1270,7 +1267,7 @@ namespace ManicDigger
             }
             d_Config3d.viewdistance = drawDistances[0];
         end:
-            StartTerrain();
+            terrainRenderer.StartTerrain();
         }
         public enum CameraType
         {
@@ -1339,7 +1336,7 @@ namespace ManicDigger
         }
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
-            StartTerrain();
+            terrainRenderer.StartTerrain();
             RedrawAllBlocks();
             materialSlots = d_Data.DefaultMaterialSlots;
             GuiStateBackToGame();
@@ -2859,7 +2856,7 @@ namespace ManicDigger
         {
             framestopwatch = new Stopwatch();
             framestopwatch.Start();
-            UpdateTerrain();
+            terrainRenderer.UpdateTerrain();
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
 
             for (int i = 0; i < clientmodsCount; i++)
@@ -2921,7 +2918,7 @@ namespace ManicDigger
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.BindTexture(TextureTarget.Texture2D, d_TerrainTextures.terrainTexture);
+            GL.BindTexture(TextureTarget.Texture2D, game.d_TerrainTextures.terrainTexture());
 
             GLMatrixModeModelView();
 
@@ -2936,6 +2933,7 @@ namespace ManicDigger
             }
             GLLoadMatrix(camera);
             d_The3d.ModelViewMatrix = camera;
+            d_The3d.lastmvmatrix = Matrix4ToFloat(camera);
 
             if (BeforeRenderFrame != null) { BeforeRenderFrame(this, new EventArgs()); }
 
@@ -2951,7 +2949,7 @@ namespace ManicDigger
                 d_SunMoonRenderer.Draw((float)e.Time);
                 
                 DrawPlayers((float)e.Time);
-                DrawTerrain();
+                terrainRenderer.DrawTerrain();
                 DrawPlayerNames();
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
@@ -3443,7 +3441,7 @@ namespace ManicDigger
             float density = 0.0025f;
             //float[] fogColor = new[] { 1f, 1f, 1f, 1.0f };
             float[] fogColor;
-            if (SkySphereNight && (!shadowssimple))
+            if (SkySphereNight && (!terrainRenderer.shadowssimple))
             {
                 fogColor = new[] { 0f, 0f, 0f, 1.0f };
             }
@@ -3555,7 +3553,7 @@ namespace ManicDigger
                 skyspherenighttexture = LoadTexture("skyspherenight.png");
             }
             int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
-            if (shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
+            if (terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
             {
                 texture = skyspheretexture;
             }
@@ -3674,7 +3672,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (!IsChunkRendered((int)curpos.X / chunksize, (int)curpos.Z / chunksize, (int)curpos.Y / chunksize))
+                if (!terrainRenderer.IsChunkRendered((int)curpos.X / chunksize, (int)curpos.Z / chunksize, (int)curpos.Y / chunksize))
                 {
                     continue;
                 }
@@ -4356,10 +4354,10 @@ namespace ManicDigger
                 longestframedt = 0;
                 fpscount = 0;
                 performanceinfo["fps"] = fpstext1;
-                performanceinfo["triangles"] = string.Format(language.Triangles(), TrianglesCount());
-                int chunkupdates = ChunkUpdates;
+                performanceinfo["triangles"] = string.Format(language.Triangles(), terrainRenderer.TrianglesCount());
+                int chunkupdates = terrainRenderer.ChunkUpdates();
                 performanceinfo["chunk updates"] = string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates));
-                lastchunkupdates = ChunkUpdates;
+                lastchunkupdates = terrainRenderer.ChunkUpdates();
 
                 string s = "";
                 List<string> l = new List<string>(performanceinfo.Values);
@@ -5281,7 +5279,7 @@ namespace ManicDigger
                                 packet.Identification.MapSizeZ);
                         }
                         //serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
-                        shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
+                        terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
                         maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
                         if (maxdrawdistance == 0)
                         {
@@ -5754,7 +5752,7 @@ namespace ManicDigger
                 case Packet_ServerIdEnum.LightLevels:
                     for (int i = 0; i < packet.LightLevels.LightlevelsCount; i++)
                     {
-                        d_Data.LightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
+                        game.mLightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
                     }
                     break;
                 case Packet_ServerIdEnum.CraftingRecipes:
@@ -6099,12 +6097,14 @@ namespace ManicDigger
         public unsafe void SetBlock(int x, int y, int z, int tileType)
         {
             game.SetBlockRaw(x, y, z, tileType);
-            SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
+            terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
             //d_Shadows.OnSetBlock(x, y, z);
             ShadowsOnSetBlock(x, y, z);
-            lastplacedblock = new Vector3i(x, y, z);
+            game.lastplacedblockX = x;
+            game.lastplacedblockY = y;
+            game.lastplacedblockZ = z;
         }
-        Vector3i? lastplacedblock = null;
+
         public void ShadowsOnSetBlock(int x, int y, int z)
         {
             int oldheight = d_Heightmap.GetBlock(x, y);
@@ -6117,7 +6117,7 @@ namespace ManicDigger
             {
                 if (i / chunksize != z / chunksize)
                 {
-                    SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
+                    terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
                 }
             }
             //Todo: too many redraws. Optimize.
@@ -6135,7 +6135,7 @@ namespace ManicDigger
                         int cz = z / chunksize + zz - 1;
                         if (MapUtil.IsValidChunkPos(this, cx, cy, cz, chunksize))
                         {
-                            SetChunkDirty(cx, cy, cz, true, false);
+                            terrainRenderer.SetChunkDirty(cx, cy, cz, true, false);
                         }
                     }
                 }
@@ -6199,7 +6199,7 @@ namespace ManicDigger
                 {
                     for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
                     {
-                        SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true, true);
+                        terrainRenderer.SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true, true);
                         SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
                     }
                 }
@@ -6207,20 +6207,17 @@ namespace ManicDigger
         }
         private void SetChunksAroundDirty(int cx, int cy, int cz)
         {
-            if (IsValidChunkPosition(cx, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true, false); }
-            if (IsValidChunkPosition(cx - 1, cy, cz)) { SetChunkDirty(cx - 1, cy, cz, true, false); }
-            if (IsValidChunkPosition(cx + 1, cy, cz)) { SetChunkDirty(cx + 1, cy, cz, true, false); }
-            if (IsValidChunkPosition(cx, cy - 1, cz)) { SetChunkDirty(cx, cy - 1, cz, true, false); }
-            if (IsValidChunkPosition(cx, cy + 1, cz)) { SetChunkDirty(cx, cy + 1, cz, true, false); }
-            if (IsValidChunkPosition(cx, cy, cz - 1)) { SetChunkDirty(cx, cy, cz - 1, true, false); }
-            if (IsValidChunkPosition(cx, cy, cz + 1)) { SetChunkDirty(cx, cy, cz + 1, true, false); }
+            if (IsValidChunkPosition(cx, cy, cz)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx - 1, cy, cz)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx + 1, cy, cz)) { terrainRenderer.SetChunkDirty(cx + 1, cy, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy - 1, cz)) { terrainRenderer.SetChunkDirty(cx, cy - 1, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy + 1, cz)) { terrainRenderer.SetChunkDirty(cx, cy + 1, cz, true, false); }
+            if (IsValidChunkPosition(cx, cy, cz - 1)) { terrainRenderer.SetChunkDirty(cx, cy, cz - 1, true, false); }
+            if (IsValidChunkPosition(cx, cy, cz + 1)) { terrainRenderer.SetChunkDirty(cx, cy, cz + 1, true, false); }
         }
-        private bool IsValidChunkPosition(int xx, int yy, int zz)
+        bool IsValidChunkPosition(int xx, int yy, int zz)
         {
-            return xx >= 0 && yy >= 0 && zz >= 0
-                && xx < MapSizeX / chunksize
-                && yy < MapSizeY / chunksize
-                && zz < MapSizeZ / chunksize;
+            return game.IsValidChunkPos(xx, yy, zz, chunksize);
         }
         private unsafe void FillChunk(Chunk destination, int destinationchunksize,
             int sourcex, int sourcey, int sourcez, int[,,] source)
@@ -6264,79 +6261,16 @@ namespace ManicDigger
         {
             //d_IsChunkReady.SetAllChunksNotDirty();
         }
-        public unsafe void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+
+        public void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
         {
-            Array.Clear(outPortion, 0, outPortion.Length);
-
-            int chunksizebits = (int)Math.Log(chunksize, 2);
-            int mapchunksx = MapSizeX / chunksize;
-            int mapchunksy = MapSizeY / chunksize;
-            int mapchunksz = MapSizeZ / chunksize;
-            int mapsizechunks = mapchunksx * mapchunksy * mapchunksz;
-
-            for (int xx = 0; xx < portionsizex; xx++)
-            {
-                for (int yy = 0; yy < portionsizey; yy++)
-                {
-                    for (int zz = 0; zz < portionsizez; zz++)
-                    {
-                        //Find chunk.
-                        int cx = (x + xx) >> chunksizebits;
-                        int cy = (y + yy) >> chunksizebits;
-                        int cz = (z + zz) >> chunksizebits;
-                        //int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
-                        int cpos = (cz * mapchunksy + cy) * mapchunksx + cx;
-                        //if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
-                        if (cpos < 0 || cpos >= mapsizechunks)
-                        {
-                            continue;
-                        }
-                        Chunk chunk = game.chunks[cpos];
-                        if (chunk == null || !game.ChunkHasData(chunk))
-                        {
-                            continue;
-                        }
-                        //int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
-                        int chunkGlobalX = cx << chunksizebits;
-                        int chunkGlobalY = cy << chunksizebits;
-                        int chunkGlobalZ = cz << chunksizebits;
-
-                        int inChunkX = (x + xx) - chunkGlobalX;
-                        int inChunkY = (y + yy) - chunkGlobalY;
-                        int inChunkZ = (z + zz) - chunkGlobalZ;
-
-                        //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
-                        int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
-
-                        int block = game.GetBlockInChunk(chunk, pos);
-                        //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
-                        outPortion[(zz * portionsizey + yy) * portionsizex + xx] = (ushort)block;
-                    }
-                }
-            }
-        }
-        public static int DistanceSquared(int x1, int y1, int z1, int x2, int y2, int z2)
-        {
-            int dx = x1 - x2;
-            int dy = y1 - y2;
-            int dz = z1 - z2;
-            return dx * dx + dy * dy + dz * dz;
+            game.GetMapPortion(outPortion, x, y, z, portionsizex, portionsizey, portionsizez);
         }
 
         [Inject]
         public TextureAtlasConverter d_TextureAtlasConverter;
-        public int texturesPacked { get { return GlobalVar.MAX_BLOCKTYPES_SQRT; } } //16x16
-        public int terrainTexture { get; set; }
-        public void StartTerrainTextures()
-        {
-            GL.Enable(EnableCap.Texture2D);
-            /*
-            using (var atlas2d = new Bitmap(d_GetFile.GetFile("terrain.png")))
-            {
-                UseTerrainTextureAtlas2d(atlas2d);
-            }
-            */
-        }
+
+
         public void UseTerrainTextures(Dictionary<string, int> textureIds)
         {
             //todo bigger than 32x32
@@ -6354,8 +6288,8 @@ namespace ManicDigger
                     if (IsMono) { bmpFast = new FastBitmapDummy(); } else { bmpFast = new FastBitmap(); }
                     bmpFast.bmp = bmp;
                     bmpFast.Lock();
-                    int x = k.Value % texturesPacked;
-                    int y = k.Value / texturesPacked;
+                    int x = k.Value % game.texturesPacked();
+                    int y = k.Value / game.texturesPacked();
                     for (int xx = 0; xx < tilesize; xx++)
                     {
                         for (int yy = 0; yy < tilesize; yy++)
@@ -6372,7 +6306,7 @@ namespace ManicDigger
         }
         public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
         {
-            terrainTexture = d_The3d.LoadTexture(atlas2d);
+            game.terrainTexture = d_The3d.LoadTexture(atlas2d);
             List<Texture> terrainTextures1d = new List<Texture>();
             {
                 terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
@@ -6385,12 +6319,11 @@ namespace ManicDigger
                     bmp.Dispose();
                 }
             }
-            this.terrainTextures1d = terrainTextures1d.ToArray();
+            game.terrainTextures1d = terrainTextures1d.ToArray();
         }
         int maxTextureSize; // detected at runtime
         public int atlas1dheight { get { return maxTextureSize; } }
         public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
-        public Texture[] terrainTextures1d { get; set; }
         public int terrainTexturesPerAtlas { get { return game.terrainTexturesPerAtlas; } set { game.terrainTexturesPerAtlas = value; } }
 
 
@@ -6540,7 +6473,7 @@ namespace ManicDigger
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
         {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, texturesPacked, color, enabledepthtest);
+            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, game.texturesPacked(), color, enabledepthtest);
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, Color color, bool enabledepthtest)
         {
@@ -6618,7 +6551,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, texturesPacked);
+                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, game.texturesPacked());
                 }
                 float x2 = v.x1 + v.width;
                 float y2 = v.y1 + v.height;
@@ -6705,6 +6638,7 @@ namespace ManicDigger
             }
             Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(fov1, aspect_ratio, znear, zfar);
             d_The3d.ProjectionMatrix = perpective;
+            d_The3d.lastpmatrix = Matrix4ToFloat(perpective);
             //Matrix4 perpective = Matrix4.CreateOrthographic(800 * 0.10f, 600 * 0.10f, 0.0001f, zfar);
             GLMatrixModeProjection();
             GLLoadMatrix(perpective);
@@ -6748,10 +6682,25 @@ namespace ManicDigger
             //GL.Enable(EnableCap.DepthTest);
         }
 
-        public int sunlight_ = 15;
-        public int sunlight { get { return sunlight_; } set { sunlight_ = value; } }
+        public int sunlight { get { return game.sunlight_; } set { game.sunlight_ = value; } }
 
         internal bool enableCameraControl;
+
+        public bool ShadowsFull { get { return false; } set { } }
+        internal int? MaybeGetLight(int x, int y, int z)
+        {
+            IntRef ret = terrainRenderer.MaybeGetLight(x, y, z);
+            if (ret == null)
+            {
+                return null;
+            }
+            return ret.value;
+        }
+
+        internal int maxlight { get { return terrainRenderer.maxlight(); } }
+        public TerrainRenderer terrainRenderer;
+        void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
+        void RedrawBlock(int x, int y, int z) { terrainRenderer.RedrawBlock(x, y, z); }
     }
 
     struct TextAndSize

@@ -12,6 +12,11 @@
         }
         TextureIdForInventory = new int[MaxBlockTypes];
         language = new Language();
+        lastplacedblockX = -1;
+        lastplacedblockY = -1;
+        lastplacedblockZ = -1;
+        mLightLevels = new float[16];
+        sunlight_ = 15;
     }
 
     const int MaxBlockTypes = 1024;
@@ -19,6 +24,7 @@
     internal GamePlatform p;
     internal Packet_BlockType[] blocktypes;
     internal Language language;
+    internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
 
     internal Chunk[] chunks;
     internal int MapSizeX;
@@ -243,6 +249,83 @@
             return b;
         }
     }
+
+    public void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
+    {
+        int outPortionCount = portionsizex * portionsizey * portionsizez;
+        for (int i = 0; i < outPortionCount; i++)
+        {
+            outPortion[i] = 0;
+        }
+
+        //int chunksizebits = p.FloatToInt(p.MathLog(chunksize, 2));
+        if (chunksize != 16)
+        {
+            p.ThrowException("GetMapPortion");
+        }
+        int chunksizebits = 4;
+        int mapchunksx = MapSizeX / chunksize;
+        int mapchunksy = MapSizeY / chunksize;
+        int mapchunksz = MapSizeZ / chunksize;
+        int mapsizechunks = mapchunksx * mapchunksy * mapchunksz;
+
+        for (int xx = 0; xx < portionsizex; xx++)
+        {
+            for (int yy = 0; yy < portionsizey; yy++)
+            {
+                for (int zz = 0; zz < portionsizez; zz++)
+                {
+                    //Find chunk.
+                    int cx = (x + xx) >> chunksizebits;
+                    int cy = (y + yy) >> chunksizebits;
+                    int cz = (z + zz) >> chunksizebits;
+                    //int cpos = MapUtil.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
+                    int cpos = (cz * mapchunksy + cy) * mapchunksx + cx;
+                    //if (cpos < 0 || cpos >= ((MapSizeX / chunksize) * (MapSizeY / chunksize) * (MapSizeZ / chunksize)))
+                    if (cpos < 0 || cpos >= mapsizechunks)
+                    {
+                        continue;
+                    }
+                    Chunk chunk = chunks[cpos];
+                    if (chunk == null || !ChunkHasData(chunk))
+                    {
+                        continue;
+                    }
+                    //int pos = MapUtil.Index3d((x + xx) % chunksize, (y + yy) % chunksize, (z + zz) % chunksize, chunksize, chunksize);
+                    int chunkGlobalX = cx << chunksizebits;
+                    int chunkGlobalY = cy << chunksizebits;
+                    int chunkGlobalZ = cz << chunksizebits;
+
+                    int inChunkX = (x + xx) - chunkGlobalX;
+                    int inChunkY = (y + yy) - chunkGlobalY;
+                    int inChunkZ = (z + zz) - chunkGlobalZ;
+
+                    //int pos = MapUtil.Index3d(inChunkX, inChunkY, inChunkZ, chunksize, chunksize);
+                    int pos = (((inChunkZ << chunksizebits) + inChunkY) << chunksizebits) + inChunkX;
+
+                    int block = GetBlockInChunk(chunk, pos);
+                    //outPortion[MapUtil.Index3d(xx, yy, zz, portionsizex, portionsizey)] = (byte)block;
+                    outPortion[(zz * portionsizey + yy) * portionsizex + xx] = block;
+                }
+            }
+        }
+    }
+    internal int texturesPacked() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } //16x16
+    internal int terrainTexture;
+    internal Texture[] terrainTextures1d;
+    internal ITerrainTextures d_TerrainTextures;
+
+    internal int lastplacedblockX;
+    internal int lastplacedblockY;
+    internal int lastplacedblockZ;
+
+    internal InfiniteMapChunked2d d_Heightmap;
+    internal Config3d d_Config3d;
+
+    //maps light level (0-15) to GL.Color value.
+    internal float[] mLightLevels;
+    internal MeshBatcher d_Batcher;
+    internal int sunlight_;
 }
 
 public class Chunk
@@ -263,9 +346,41 @@ public class RenderedChunk
         shadowsdirty = true;
     }
     internal int[] ids;
+    internal int idsCount;
     internal bool dirty;
     internal bool shadowsdirty;
     internal byte[] light;
+}
+
+public class ITerrainTextures
+{
+    internal Game game;
+
+    public int texturesPacked() { return game.texturesPacked(); }
+    public int terrainTexture() { return game.terrainTexture; }
+    public Texture[] terrainTextures1d() { return game.terrainTextures1d; }
+    public int terrainTexturesPerAtlas() { return game.terrainTexturesPerAtlas; }
+}
+
+public class Config3d
+{
+    public Config3d()
+    {
+        ENABLE_BACKFACECULLING = true;
+        ENABLE_TRANSPARENCY = true;
+        ENABLE_MIPMAPS = true;
+        ENABLE_VSYNC = false;
+        ENABLE_VISIBILITY_CULLING = false;
+        viewdistance = 128;
+    }
+    internal bool ENABLE_BACKFACECULLING;
+    internal bool ENABLE_TRANSPARENCY;
+    internal bool ENABLE_MIPMAPS;
+    internal bool ENABLE_VSYNC;
+    internal bool ENABLE_VISIBILITY_CULLING;
+    internal float viewdistance;
+    public float GetViewDistance() { return viewdistance; }
+    public void SetViewDistance(float value) { viewdistance = value; }
 }
 
 public class MapUtilCi
@@ -298,6 +413,55 @@ public class MapUtilCi
         ret.X = x;
         ret.Y = y;
         ret.Z = h;
+    }
+}
+
+public class InfiniteMapChunked2d
+{
+    internal Game d_Map;
+    public const int chunksize = 16;
+    internal int[][] chunks;
+    public int GetBlock(int x, int y)
+    {
+        int[] chunk = GetChunk(x, y);
+        return chunk[MapUtilCi.Index2d(x % chunksize, y % chunksize, chunksize)];
+    }
+    public int[] GetChunk(int x, int y)
+    {
+        int[] chunk = null;
+        int kx = x / chunksize;
+        int ky = y / chunksize;
+        if (chunks[MapUtilCi.Index2d(kx, ky, d_Map.MapSizeX / chunksize)] == null)
+        {
+            chunk = new int[chunksize * chunksize];// (byte*)Marshal.AllocHGlobal(chunksize * chunksize);
+            for (int i = 0; i < chunksize * chunksize; i++)
+            {
+                chunk[i] = 0;
+            }
+            chunks[MapUtilCi.Index2d(kx, ky, d_Map.MapSizeX / chunksize)] = chunk;
+        }
+        chunk = chunks[MapUtilCi.Index2d(kx, ky, d_Map.MapSizeX / chunksize)];
+        return chunk;
+    }
+    public void SetBlock(int x, int y, int blocktype)
+    {
+        GetChunk(x, y)[MapUtilCi.Index2d(x % chunksize, y % chunksize, chunksize)] = blocktype;
+    }
+    public void Restart()
+    {
+        //chunks = new byte[d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize][,];
+        int n = (d_Map.MapSizeX / chunksize) * (d_Map.MapSizeY / chunksize);
+        chunks = new int[n][];//(byte**)Marshal.AllocHGlobal(n * sizeof(IntPtr));
+        for (int i = 0; i < n; i++)
+        {
+            chunks[i] = null;
+        }
+    }
+    public void ClearChunk(int x, int y)
+    {
+        int px = x / chunksize;
+        int py = y / chunksize;
+        chunks[MapUtilCi.Index2d(px, py, d_Map.MapSizeX / chunksize)] = null;
     }
 }
 

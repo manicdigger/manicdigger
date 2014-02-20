@@ -25,8 +25,8 @@ namespace ManicDigger.Renderers
         public ManicDiggerGameWindow d_Shadows;
         [Inject]
         public Inventory d_Inventory;
-        public int terrainTexture { get { return d_Terrain.terrainTexture; } }
-        public int texturesPacked { get { return d_Terrain.texturesPacked; } }
+        public int terrainTexture { get { return d_Terrain.terrainTexture(); } }
+        public int texturesPacked { get { return d_Terrain.texturesPacked(); } }
         public int GetWeaponTextureId(TileSide side)
         {
             Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];

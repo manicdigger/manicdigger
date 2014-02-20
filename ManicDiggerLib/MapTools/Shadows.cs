@@ -70,55 +70,6 @@ namespace ManicDigger
         int? MaybeGetLight(int x, int y, int z);
         int maxlight { get; }
     }
-    public class InfiniteMapChunked2d
-    {
-        [Inject]
-        public IMapStorage d_Map;
-        public int chunksize = 16;
-        public int[][] chunks;
-        public unsafe int GetBlock(int x, int y)
-        {
-            int[] chunk = GetChunk(x, y);
-            return chunk[MapUtil.Index2d(x % chunksize, y % chunksize, chunksize)];
-        }
-        public int[] GetChunk(int x, int y)
-        {
-            int[] chunk = null;
-            int kx = x / chunksize;
-            int ky = y / chunksize;
-            if (chunks[MapUtil.Index2d(kx, ky, d_Map.MapSizeX / chunksize)] == null)
-            {
-                chunk = new int[chunksize * chunksize];// (byte*)Marshal.AllocHGlobal(chunksize * chunksize);
-                for (int i = 0; i < chunksize * chunksize; i++)
-                {
-                    chunk[i] = 0;
-                }
-                chunks[MapUtil.Index2d(kx, ky, d_Map.MapSizeX / chunksize)] = chunk;
-            }
-            chunk = chunks[MapUtil.Index2d(kx, ky, d_Map.MapSizeX / chunksize)];
-            return chunk;
-        }
-        public unsafe void SetBlock(int x, int y, int blocktype)
-        {
-            GetChunk(x, y)[MapUtil.Index2d(x % chunksize, y % chunksize, chunksize)] = (byte)blocktype;
-        }
-        public unsafe void Restart()
-        {
-            //chunks = new byte[d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize][,];
-            int n = (d_Map.MapSizeX / chunksize) * (d_Map.MapSizeY / chunksize);
-            chunks = new int[n][];//(byte**)Marshal.AllocHGlobal(n * sizeof(IntPtr));
-            for (int i = 0; i < n; i++)
-            {
-                chunks[i] = null;
-            }
-        }
-        public unsafe void ClearChunk(int x, int y)
-        {
-            int px = x / chunksize;
-            int py = y / chunksize;
-            chunks[MapUtil.Index2d(px, py, d_Map.MapSizeX/chunksize)] = null;
-        }
-    }
     public class InfiniteMapChunked2dServer
     {
         [Inject]

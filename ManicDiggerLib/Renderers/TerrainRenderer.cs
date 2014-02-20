@@ -10,19 +10,6 @@ using System.IO;
 
 namespace ManicDigger.Renderers
 {
-    public class TextureAtlasRef
-    {
-        public int TextureId;
-        public int TextureInAtlasId;
-    }
-    public interface ITerrainTextures
-    {
-        int texturesPacked { get; }
-        int terrainTexture { get; }
-        Texture[] terrainTextures1d { get; }
-        int terrainTexturesPerAtlas { get; }
-        void UseTerrainTextureAtlas2d(Bitmap atlas2d);
-    }
     public class TextureAtlas
     {
         public static RectangleF TextureCoords2d(int textureId, int texturesPacked)
@@ -134,7 +121,7 @@ namespace ManicDigger.Renderers
             //top
             {
                 int sidetexture = TopTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -151,7 +138,7 @@ namespace ManicDigger.Renderers
             //bottom - same as top, but z is 1 less.
             {
                 int sidetexture = SideTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Top, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -168,7 +155,7 @@ namespace ManicDigger.Renderers
             //front
             {
                 int sidetexture = SideTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Right, texrec.Bottom, curcolor));
@@ -185,7 +172,7 @@ namespace ManicDigger.Renderers
             //back - same as front, but x is 1 greater.
             {
                 int sidetexture = SideTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom10.X, bottom10.Y, bottom10.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(bottom11.X, bottom11.Y, bottom11.Z, texrec.Left, texrec.Bottom, curcolor));
@@ -201,7 +188,7 @@ namespace ManicDigger.Renderers
 
             {
                 int sidetexture = SideTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom00.X, bottom00.Y, bottom00.Z, texrec.Right, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top00.X, top00.Y, top00.Z, texrec.Right, texrec.Top, curcolor));
@@ -218,7 +205,7 @@ namespace ManicDigger.Renderers
             //right - same as left, but y is 1 greater.
             {
                 int sidetexture = SideTexture;
-                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked);
+                RectangleF texrec = TextureAtlas.TextureCoords2d(sidetexture, d_TerainRenderer.texturesPacked());
                 short lastelement = (short)myvertices.Count;
                 myvertices.Add(new VertexPositionTexture(bottom01.X, bottom01.Y, bottom01.Z, texrec.Left, texrec.Bottom, curcolor));
                 myvertices.Add(new VertexPositionTexture(top01.X, top01.Y, top01.Z, texrec.Left, texrec.Top, curcolor));

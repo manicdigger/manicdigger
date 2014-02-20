@@ -1,4 +1,8 @@
-﻿public class TerrainChunkTesselatorCi
+﻿// Generates triangles for a single 16x16x16 chunk.
+// Needs to know the surrounding of the chunk (18x18x18 blocks total).
+// This class is heavily inlined and unrolled for performance.
+// Special-shape (rare) blocks don't need as much performance.
+public class TerrainChunkTesselatorCi
 {
     public TerrainChunkTesselatorCi()
     {
@@ -64,7 +68,7 @@
         terrainTexturesPerAtlas = game.terrainTexturesPerAtlas;
         terrainTexturesPerAtlasInverse = one / game.terrainTexturesPerAtlas;
 
-        int toreturnatlas1dLength = Max(1, GlobalVar.MAX_BLOCKTYPES / game.terrainTexturesPerAtlas);
+        toreturnatlas1dLength = Max(1, GlobalVar.MAX_BLOCKTYPES / game.terrainTexturesPerAtlas);
         toreturnatlas1d = new ModelData[toreturnatlas1dLength];
         toreturnatlas1dtransparent = new ModelData[toreturnatlas1dLength];
         for (int i = 0; i < toreturnatlas1dLength; i++)
@@ -82,6 +86,7 @@
             toreturnatlas1dtransparent[i].indices = new int[65536];
         }
     }
+    int toreturnatlas1dLength;
 
     int Max(int a, int b)
     {
@@ -2749,6 +2754,91 @@
             toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
         }
     }
+
+    public VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, Texture texture, bool transparent)
+    {
+        VerticesIndicesToLoad v = new VerticesIndicesToLoad();
+        v.modelData = m;
+        v.positionX = x * chunksize;
+        v.positionY = y * chunksize;
+        v.positionZ = z * chunksize;
+        v.texture = texture;
+        v.transparent = transparent;
+        return v;
+    }
+
+    public VerticesIndicesToLoad[] GetFinalVerticesIndices(int x, int y, int z, IntRef retCount)
+    {
+        VerticesIndicesToLoad[] ret = new VerticesIndicesToLoad[toreturnatlas1dLength + toreturnatlas1dLength];
+        retCount.value = 0;
+        for (int i = 0; i < toreturnatlas1dLength; i++)
+        {
+            if (toreturnatlas1d[i].indicesCount > 0)
+            {
+                ret[retCount.value++] = GetVerticesIndices(toreturnatlas1d[i], x, y, z, game.d_TerrainTextures.terrainTextures1d()[i % game.d_TerrainTextures.terrainTexturesPerAtlas()], false);
+            }
+        }
+        for (int i = 0; i < toreturnatlas1dLength; i++)
+        {
+            if (toreturnatlas1dtransparent[i].indicesCount > 0)
+            {
+                ret[retCount.value++] = GetVerticesIndices(toreturnatlas1dtransparent[i], x, y, z, game.d_TerrainTextures.terrainTextures1d()[i % game.d_TerrainTextures.terrainTexturesPerAtlas()], true);
+            }
+        }
+        return ret;
+    }
+
+    public VerticesIndicesToLoad[] MakeChunk(int x, int y, int z,
+    int[] chunk18, byte[] shadows18, float[] lightlevels_, IntRef retCount)
+    {
+        this.currentChunk18 = chunk18;
+        this.currentChunkShadows18 = shadows18;
+        this.lightlevels = lightlevels_;
+
+        for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+        {
+            Packet_BlockType b = game.blocktypes[i];
+            istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
+            ishalfheight[i] = (b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0);
+        }
+
+        if (x < 0 || y < 0 || z < 0) { retCount.value = 0; return new VerticesIndicesToLoad[0]; }
+        if (!started) { game.p.ThrowException("not started"); }
+        if (x >= mapsizex / chunksize
+            || y >= mapsizey / chunksize
+            || z >= mapsizez / chunksize) { retCount.value = 0; return new VerticesIndicesToLoad[0]; }
+
+        for (int i = 0; i < toreturnatlas1dLength; i++)
+        {
+            toreturnatlas1d[i].verticesCount = 0;
+            toreturnatlas1d[i].indicesCount = 0;
+            toreturnatlas1dtransparent[i].verticesCount = 0;
+            toreturnatlas1dtransparent[i].indicesCount = 0;
+        }
+
+        CalculateVisibleFaces(currentChunk18);
+        CalculateTilingCount(currentChunk18, x * chunksize, y * chunksize, z * chunksize);
+        if (EnableSmoothLight)
+        {
+            CalculateSmoothBlockPolygons(x, y, z);
+        }
+        else
+        {
+            CalculateBlockPolygons(x, y, z);
+        }
+        VerticesIndicesToLoad[] ret = GetFinalVerticesIndices(x, y, z, retCount);
+        return ret;
+    }
+}
+
+public class VerticesIndicesToLoad
+{
+    internal ModelData modelData;
+    internal float positionX;
+    internal float positionY;
+    internal float positionZ;
+    internal bool transparent;
+    internal Texture texture;
 }
 
 public class TorchTypeEnum

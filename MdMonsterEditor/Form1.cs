@@ -261,7 +261,7 @@ namespace MdMonsterEditor
             GL.LoadMatrix(ref camera);
         }
         float znear = 0.1f;
-        float zfar { get { return ENABLE_ZFAR ? config3d.viewdistance * 3f / 4 : 99999; } }
+        float zfar { get { return ENABLE_ZFAR ? config3d.GetViewDistance() * 3f / 4 : 99999; } }
         bool ENABLE_ZFAR = false;
         public float fov = MathHelper.PiOver3;
         int oldmousex = 0;

@@ -657,6 +657,11 @@ public class GamePlatformNative : GamePlatform
     {
         GL.Enable(EnableCap.CullFace);
     }
+
+    public override void ThrowException(string message)
+    {
+        throw new Exception(message);
+    }
 }
 
 public class TextureNative : Texture

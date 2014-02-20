@@ -83,6 +83,7 @@
     </Compile>
     <Compile Include="Audio.cs" />
     <Compile Include="AviWriter.cs" />
+    <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\Language.ci.cs" />
     <Compile Include="Client\MeshBatcher.ci.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />
@@ -93,7 +94,7 @@
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="Client\Shadows.ci.cs" />
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
-    <Compile Include="FrustumCulling.cs" />
+    <Compile Include="Client\TerrainRenderer.ci.cs" />
     <Compile Include="GameData.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
     <Compile Include="Hud\Hud.cs" />
@@ -195,7 +196,6 @@
     <Compile Include="Renderers\ParticleEffectBlockBreak.cs" />
     <Compile Include="Renderers\SkySphere.cs" />
     <Compile Include="Renderers\SunMoonRenderer.cs" />
-    <Compile Include="Renderers\TerrainChunkTesselator.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="Renderers\TextRenderer.cs" />
     <Compile Include="TextureAtlasConverter.cs" />
