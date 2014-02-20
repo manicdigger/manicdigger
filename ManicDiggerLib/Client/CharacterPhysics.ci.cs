@@ -624,12 +624,57 @@ public class CharacterPhysicsCi
             bool newempty = NewEmpty(high, p0, p1, p2);	//Check if block at new position is empty for physics
             if (newposition[0] - oldposition[0] < 0)
             {
-                if (!newempty)
-                {
-                	//New X coordinate of position not valid. Set back to old coordinate.
-                    reachedwall = true;
-                    playerposition[0] = oldposition[0];
-                }
+                if (!wasonstairs)
+            	{
+                	if (!newempty)	//Block is solid
+                	{
+                		//New X coordinate of position not valid. Set back to old coordinate.
+                	    reachedwall = true;
+                	    playerposition[0] = oldposition[0];
+                	}
+                	else	//Block is empty or halfstep
+                	{
+                		int x = FloatToInt(Floor(newposition[0]));
+                		int y = FloatToInt(Floor(newposition[2]));
+                		int z = FloatToInt(Floor(newposition[1]));
+                		bool newstairs = isHalfHeight(x, y, z);
+                		if (newstairs)
+                		{
+                			//Boost player up - TODO: smooth
+                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
+                			if (relPos < half && !steppedonstair)
+                			{
+                				playerposition[1] += half;
+                				steppedonstair = true;
+                			}
+                		}
+                	}
+            	}
+            	else
+            	{
+            		if (!NewEmpty(high, newposition[0], p1, p2))	//Block is solid
+            		{
+            			int x = FloatToInt(Floor(newposition[0]));
+                		int y = FloatToInt(Floor(newposition[2]));
+                		int z = FloatToInt(Floor(newposition[1]));
+                		bool nextempty = IsTileEmptyForPhysics(x, y, z + 1) && !isHalfHeight(x, y, z + 1); //Ensure that block is empty and not a halfstep
+                		if (!nextempty)
+                		{
+                			reachedwall = true;
+                			playerposition[0] = oldposition[0];
+                		}
+                		else	//Block is empty
+                		{
+                			//Boost player up - TODO: smooth
+                			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
+                			if (relPos >= half && !steppedonstair)
+                			{
+                				playerposition[1] += half;
+                				steppedonstair = true;
+                			}
+                		}
+            		}
+            	}
             }
         }
         //bottom - positive Z axis. Ceiling collision.
