@@ -326,6 +326,130 @@
     internal float[] mLightLevels;
     internal MeshBatcher d_Batcher;
     internal int sunlight_;
+
+    public void Draw2dTexture(Texture textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
+    {
+        RectFRef rect = RectFRef.Create(0, 0, 1, 1);
+        if (inAtlasId != null)
+        {
+            TextureAtlasCi.TextureCoords2d(inAtlasId.value, atlastextures, rect);
+        }
+        p.GlDisableCullFace();
+        p.GlEnableTexture2d();
+        p.BindTexture2d(textureid);
+
+        if (!enabledepthtest)
+        {
+            p.GlDisableDepthTest();
+        }
+        Model model = p.CreateModel(QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
+            x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color)));
+        p.DrawModel(model);
+        p.DeleteModel(model);
+        if (!enabledepthtest)
+        {
+            p.GlEnableDepthTest();
+        }
+        p.GlDisableCullFace();
+        p.GlEnableTexture2d();
+    }
+
+    public ModelData CombineModelData(ModelData[] modelDatas, int count)
+    {
+        ModelData ret = new ModelData();
+        int totalIndices = 0;
+        int totalVertices = 0;
+        for (int i = 0; i < count; i++)
+        {
+            ModelData m = modelDatas[i];
+            totalIndices += m.indicesCount;
+            totalVertices += m.verticesCount;
+        }
+        ret.indices = new int[totalIndices];
+        ret.xyz = new float[totalVertices * 3];
+        ret.uv = new float[totalVertices * 2];
+        ret.rgba = new byte[totalVertices * 4];
+
+        for (int i = 0; i < count; i++)
+        {
+            ModelData m = modelDatas[i];
+            int retVerticesCount = ret.verticesCount;
+            int retIndicesCount = ret.indicesCount;
+            for (int k = 0; k < m.indicesCount; k++)
+            {
+                ret.indices[ret.indicesCount++] = m.indices[k] + retVerticesCount;
+            }
+            for (int k = 0; k < m.verticesCount * 3; k++)
+            {
+                ret.xyz[retVerticesCount * 3 + k] = m.xyz[k];
+            }
+            for (int k = 0; k < m.verticesCount * 2; k++)
+            {
+                ret.uv[retVerticesCount * 2 + k] = m.uv[k];
+            }
+            for (int k = 0; k < m.verticesCount * 4; k++)
+            {
+                ret.rgba[retVerticesCount * 4 + k] = m.rgba[k];
+            }
+            ret.verticesCount += m.verticesCount;
+        }
+        return ret;
+    }
+
+    public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, Texture textureid, float angle)
+    {
+        ModelData[] modelDatas = new ModelData[512];
+        int modelDatasCount = 0;
+        for (int i = 0; i < todrawLength; i++)
+        {
+            Draw2dData d = todraw[i];
+            float x1 = d.x1;
+            float y1 = d.y1;
+            float width = d.width;
+            float height = d.height;
+            IntRef inAtlasId = d.inAtlasId;
+            Texture textureId = textureid;
+            int color = d.color;
+
+            RectFRef rect = RectFRef.Create(0, 0, 1, 1);
+            if (inAtlasId != null)
+            {
+                TextureAtlasCi.TextureCoords2d(inAtlasId.value, texturesPacked(), rect);
+            }
+
+            ModelData modelData =
+                QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
+                x1, y1, width, height, ColorR(color), ColorG(color), ColorB(color), ColorA(color));
+            modelDatas[modelDatasCount++] = modelData;
+        }
+
+        ModelData combined = CombineModelData(modelDatas, modelDatasCount);
+
+        p.GlDisableCullFace();
+        p.GlEnableTexture2d();
+        p.BindTexture2d(textureid);
+
+        p.GlDisableDepthTest();
+
+        Model model = p.CreateModel(combined);
+        p.DrawModel(model);
+        p.DeleteModel(model);
+
+        p.GlEnableDepthTest();
+
+        p.GlDisableCullFace();
+        p.GlEnableTexture2d();
+    }
+}
+
+public class Draw2dData
+{
+    internal float x1;
+    internal float y1;
+    internal float width;
+    internal float height;
+    internal IntRef inAtlasId;
+    internal int color;
 }
 
 public class Chunk
@@ -520,4 +644,16 @@ public class ClientCommandArgs
 {
     internal string command;
     internal string arguments;
+}
+
+public class TextureAtlasCi
+{
+    public static void TextureCoords2d(int textureId, int texturesPacked, RectFRef r)
+    {
+        float one = 1;
+        r.y = (one / texturesPacked * (textureId / texturesPacked));
+        r.x = (one / texturesPacked * (textureId % texturesPacked));
+        r.w = one / texturesPacked;
+        r.h = one / texturesPacked;
+    }
 }

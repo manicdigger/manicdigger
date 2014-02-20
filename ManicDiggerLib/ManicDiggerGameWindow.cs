@@ -2772,10 +2772,10 @@ namespace ManicDigger
             todraw[0].width = size;
             todraw[0].height = size;
             todraw[0].inAtlasId = null;
-            todraw[0].color = new FastColor(Color.White);
+            todraw[0].color = Game.ColorFromArgb(255, 255, 255, 255);
 
             Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null);
-            Draw2dTextures(todraw, needleid, compassangle);
+            Draw2dTextures(todraw, todraw.Length, GetTexture_(needleid), compassangle);
         }
 
         void DrawEnemyHealthCommon(string name, float progress)
@@ -2974,7 +2974,7 @@ namespace ManicDigger
                         n = (int)((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
                             * (b.animationcount * b.animationcount - 1));
                     }
-                    Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Color.White, true);
+                    Draw2dTexture(GetTexture_(GetTexture(b.image)), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
                     GLPopMatrix();
                     if ((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
                 }
@@ -6463,6 +6463,12 @@ namespace ManicDigger
             Draw2dTexture(textures[filename], x1, y1, width, height, null);
         }
 
+        Texture GetTexture_(int textureid)
+        {
+            Texture t = new TextureNative() { value = textureid };
+            return t;
+        }
+
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
         {
             Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
@@ -6473,130 +6479,25 @@ namespace ManicDigger
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
         {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, game.texturesPacked(), color, enabledepthtest);
+            Draw2dTexture(GetTexture_(textureid), x1, y1, width, height, inAtlasId, game.texturesPacked(), Game.ColorFromArgb(color.A,color.R, color.G, color.B), enabledepthtest);
         }
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, Color color, bool enabledepthtest)
+        public void Draw2dTexture(Texture textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, int color, bool enabledepthtest)
         {
-            RectangleF rect;
-            if (inAtlasId == null)
+            IntRef inatlasid = null;
+            if (inAtlasId != null)
             {
-                rect = new RectangleF(0, 0, 1, 1);
+                inatlasid = IntRef.Create(inAtlasId.Value);
             }
-            else
-            {
-                rect = TextureAtlas.TextureCoords2d(inAtlasId.Value, atlastextures);
-            }
-            GL.PushAttrib(AttribMask.ColorBufferBit);
-            GL.Color3(color);
-            GL.BindTexture(TextureTarget.Texture2D, textureid);
-            GL.Enable(EnableCap.Texture2D);
-            if (!enabledepthtest)
-            {
-                GL.Disable(EnableCap.DepthTest);
-            }
-            GL.Begin(BeginMode.Quads);
-            float x2 = x1 + width;
-            float y2 = y1 + height;
-
-            GL.TexCoord2(rect.Right, rect.Bottom); GL.Vertex2(x2, y2);
-            GL.TexCoord2(rect.Right, rect.Top); GL.Vertex2(x2, y1);
-            GL.TexCoord2(rect.Left, rect.Top); GL.Vertex2(x1, y1);
-            GL.TexCoord2(rect.Left, rect.Bottom); GL.Vertex2(x1, y2);
-            GL.End();
-            if (!enabledepthtest)
-            {
-                GL.Enable(EnableCap.DepthTest);
-            }
-            GL.PopAttrib();
+            game.Draw2dTexture(textureid, x1, y1, width, height, inatlasid, atlastextures, color, enabledepthtest);
         }
 
-        VertexPositionTexture[] draw2dtexturesVertices;
-        ushort[] draw2dtexturesIndices;
-        int draw2dtexturesMAX = 512;
         public void Draw2dTextures(Draw2dData[] todraw, int textureid)
         {
-            Draw2dTextures(todraw, textureid, 0);
+            Draw2dTextures(todraw, todraw.Length, GetTexture_(textureid), 0);
         }
-        public void Draw2dTextures(Draw2dData[] todraw, int textureid, float angle)
+        public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, Texture textureid, float angle)
         {
-            GL.PushAttrib(AttribMask.ColorBufferBit);
-            GL.BindTexture(TextureTarget.Texture2D, textureid);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Disable(EnableCap.DepthTest);
-
-            VertexPositionTexture[] vertices;
-            ushort[] indices;
-            if (todraw.Length >= draw2dtexturesMAX)
-            {
-                vertices = new VertexPositionTexture[todraw.Length * 4];
-                indices = new ushort[todraw.Length * 4];
-            }
-            else
-            {
-                if (draw2dtexturesVertices == null)
-                {
-                    draw2dtexturesVertices = new VertexPositionTexture[draw2dtexturesMAX * 4];
-                    draw2dtexturesIndices = new ushort[draw2dtexturesMAX * 4];
-                }
-                vertices = draw2dtexturesVertices;
-                indices = draw2dtexturesIndices;
-            }
-            ushort i = 0;
-            foreach (Draw2dData v in todraw)
-            {
-                RectangleF rect;
-                if (v.inAtlasId == null)
-                {
-                    rect = new RectangleF(0, 0, 1, 1);
-                }
-                else
-                {
-                    rect = TextureAtlas.TextureCoords2d(v.inAtlasId.Value, game.texturesPacked());
-                }
-                float x2 = v.x1 + v.width;
-                float y2 = v.y1 + v.height;
-
-                PointF[] pnts = new PointF[4] {
-					new PointF(x2, y2),
-					new PointF(x2,v.y1),
-					new PointF(v.x1,v.y1),
-					new PointF(v.x1,y2)};
-                if (angle != 0)
-                {
-                    System.Drawing.Drawing2D.Matrix mx = new System.Drawing.Drawing2D.Matrix();
-                    mx.RotateAt(angle, new PointF(v.x1 + v.width / 2, v.y1 + v.height / 2));
-                    mx.TransformPoints(pnts);
-                }
-
-                vertices[i] = new VertexPositionTexture(pnts[0].X, pnts[0].Y, 0, rect.Right, rect.Bottom, v.color);
-                vertices[i + 1] = new VertexPositionTexture(pnts[1].X, pnts[1].Y, 0, rect.Right, rect.Top, v.color);
-                vertices[i + 2] = new VertexPositionTexture(pnts[2].X, pnts[2].Y, 0, rect.Left, rect.Top, v.color);
-                vertices[i + 3] = new VertexPositionTexture(pnts[3].X, pnts[3].Y, 0, rect.Left, rect.Bottom, v.color);
-                indices[i] = i;
-                indices[i + 1] = (ushort)(i + 1);
-                indices[i + 2] = (ushort)(i + 2);
-                indices[i + 3] = (ushort)(i + 3);
-                i += 4;
-            }
-            GL.EnableClientState(ArrayCap.TextureCoordArray);
-            GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableClientState(ArrayCap.ColorArray);
-            unsafe
-            {
-                fixed (VertexPositionTexture* p = vertices)
-                {
-                    GL.VertexPointer(3, VertexPointerType.Float, StrideOfVertices, (IntPtr)(0 + (byte*)p));
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, StrideOfVertices, (IntPtr)(12 + (byte*)p));
-                    GL.ColorPointer(4, ColorPointerType.UnsignedByte, StrideOfVertices, (IntPtr)(20 + (byte*)p));
-                    GL.DrawElements(BeginMode.Quads, i, DrawElementsType.UnsignedShort, indices);
-                }
-            }
-            GL.DisableClientState(ArrayCap.TextureCoordArray);
-            GL.DisableClientState(ArrayCap.VertexArray);
-            GL.DisableClientState(ArrayCap.ColorArray);
-
-            GL.Enable(EnableCap.DepthTest);
-            GL.PopAttrib();
+            game.Draw2dTextures(todraw, todrawLength, textureid, angle);
         }
 
         int strideofvertices = -1;

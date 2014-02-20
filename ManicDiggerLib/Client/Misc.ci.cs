@@ -26,3 +26,21 @@
         output.Z = z;
     }
 }
+
+public class RectFRef
+{
+    internal float x;
+    internal float y;
+    internal float w;
+    internal float h;
+
+    public static RectFRef Create(float x_, float y_, float w_, float h_)
+    {
+        RectFRef r = new RectFRef();
+        r.x = x_;
+        r.y = y_;
+        r.w = w_;
+        r.h = h_;
+        return r;
+    }
+}

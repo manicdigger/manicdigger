@@ -31,6 +31,7 @@ namespace ManicDigger.Renderers
             return r;
         }
     }
+
     public class TerrainRenderer
     {
         public static int DistanceSquared(int x1, int y1, int z1, int x2, int y2, int z2)

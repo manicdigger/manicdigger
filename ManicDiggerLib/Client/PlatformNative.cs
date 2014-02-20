@@ -662,6 +662,17 @@ public class GamePlatformNative : GamePlatform
     {
         throw new Exception(message);
     }
+
+    public override void DeleteModel(Model model)
+    {
+        DisplayListModel m = (DisplayListModel)model;
+        GL.DeleteLists(m.listId, 1);
+    }
+
+    public override void GlEnableTexture2d()
+    {
+        GL.Enable(EnableCap.Texture2D);
+    }
 }
 
 public class TextureNative : Texture

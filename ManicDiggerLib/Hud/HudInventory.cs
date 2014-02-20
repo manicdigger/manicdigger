@@ -495,8 +495,8 @@ namespace ManicDigger.Hud
             if (screenpos.Y < h + 20) { screenpos.Y = (int)h + 20; }
             if (screenpos.X > viewport_size.Width - (w + 20)) { screenpos.X = viewport_size.Width - ((int)w + 20); }
             if (screenpos.Y > viewport_size.Height - (h + 20)) { screenpos.Y = viewport_size.Height - ((int)h + 20); }
-            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(0, Color.Black));
-            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w + 2, screenpos.Y - h + 2, w - 4, h - 4, null, Color.FromArgb(0, Color.DimGray));
+            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(255, Color.Black));
+            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w + 2, screenpos.Y - h + 2, w - 4, h - 4, null, Color.FromArgb(255, Color.DimGray));
             game.Draw2dText(dataItems.ItemInfo(item), screenpos.X - tw + 4, screenpos.Y - h + 2, 10, null);
             DrawItem(new Point(screenpos.X - (int)w + 2, screenpos.Y - (int)h + 2), new Item { BlockId = item.BlockId }, null);
         }
