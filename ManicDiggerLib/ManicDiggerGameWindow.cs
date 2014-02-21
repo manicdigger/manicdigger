@@ -3822,9 +3822,13 @@ namespace ManicDigger
             }
             if (ENABLE_DRAWPOSITION)
             {
-                byte heading = (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4);
-                double headingdeg = ((double)heading / 256) * 360;
-                string postext = "X: " + Math.Floor(player.playerposition.X) + "; Y: " + Math.Floor(player.playerposition.Z) + "; Z: " + Math.Floor(player.playerposition.Y) + "; heading: " + headingdeg.ToString();
+                double heading = (double)NetworkHelper.HeadingByte(LocalPlayerOrientation);
+                double pitch = (double)NetworkHelper.PitchByte(LocalPlayerOrientation);
+                string postext = "X: " + Math.Floor(player.playerposition.X)
+                	+ ",\tY: " + Math.Floor(player.playerposition.Z)
+                	+ ",\tZ: " + Math.Floor(player.playerposition.Y)
+                	+ "\nHeading: " + Math.Floor(heading)
+                	+ "\nPitch: " + Math.Floor(pitch);
                 Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
             }
             if (drawblockinfo)
