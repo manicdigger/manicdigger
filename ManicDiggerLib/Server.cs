@@ -2373,13 +2373,13 @@ if (sent >= unknown.Count) { break; }
                         {
                             continue;
                         }
-                        ManicDigger.Collisions.Line3D pick = new ManicDigger.Collisions.Line3D();
-                        pick.Start = new Vector3(DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ));
-                        pick.End = new Vector3(DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ));
+                        Line3D pick = new Line3D();
+                        pick.Start = new float[] { DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ) };
+                        pick.End = new float[] { DeserializeFloat(packet.Shot.ToX), DeserializeFloat(packet.Shot.ToY), DeserializeFloat(packet.Shot.ToZ) };
 
                         Vector3 feetpos = new Vector3((float)k.Value.PositionMul32GlX / 32, (float)k.Value.PositionMul32GlY / 32, (float)k.Value.PositionMul32GlZ / 32);
                         //var p = PlayerPositionSpawn;
-                        ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
+                        Box3D bodybox = new Box3D();
                         float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
                         float h = k.Value.ModelHeight - headsize;
                         float r = 0.35f;
@@ -2394,7 +2394,7 @@ if (sent >= unknown.Count) { break; }
                         bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
                         bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
 
-                        ManicDigger.Collisions.Box3D headbox = new ManicDigger.Collisions.Box3D();
+                        Box3D headbox = new Box3D();
 
                         headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
                         headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);

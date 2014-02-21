@@ -18,7 +18,7 @@ namespace ManicDigger.Renderers
         {
             renderer.Draw(position, direction, lastdirection, progress);
         }
-        public IEnumerable<ManicDigger.Collisions.Triangle3D> TrianglesForPicking
+        public IEnumerable<Triangle3D> TrianglesForPicking
         {
             get { yield break; }
         }

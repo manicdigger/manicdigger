@@ -96,7 +96,7 @@ namespace ManicDigger.Network
                             break;
                         }
                         name = texturestodownload.Dequeue();
-                        texturestodownloadlist.Remove(name);
+                        //texturestodownloadlist.Remove(name);
                     }
                     try
                     {

@@ -6,150 +6,184 @@ using OpenTK;
 
 namespace ManicDigger.Collisions
 {
-    public interface ITriangleContainer
-    {
-    }
-    public struct Line3D
-    {
-        public Vector3 Start;
-        public Vector3 End;
-    }
-    public struct Triangle3D
-    {
-        public Vector3 PointA;
-        public Vector3 PointB;
-        public Vector3 PointC;
-    }
-    public struct Box3D
-    {
-        public Box3D(float x, float y, float z, float size)
-        {
-            this.MinEdge = new Vector3(x, y, z);
-            this.MaxEdge = new Vector3(x + size, y + size, z + size);
-        }
-        public Vector3 MinEdge;
-        public Vector3 MaxEdge;
-        //public Vector3 MaxEdge { get { return new Vector3(MinEdge.X + size, MinEdge.Y + size, MinEdge.Z + size); } }
-        //float size;
-        public float LengthX { get { return MaxEdge.X - MinEdge.X; } }
-        public float LengthY { get { return MaxEdge.Y - MinEdge.Y; } }
-        public float LengthZ { get { return MaxEdge.Z - MinEdge.Z; } }
-        public void AddPoint(float x, float y, float z)
-        {
-            //if is empty
-            if (MinEdge == new Vector3(0, 0, 0) && MaxEdge == new Vector3(0, 0, 0))
-            {
-                MinEdge = new Vector3(x, y, z);
-                MaxEdge = new Vector3(x, y, z);
-            }
-            MinEdge.X = Math.Min(MinEdge.X, x);
-            MinEdge.Y = Math.Min(MinEdge.Y, y);
-            MinEdge.Z = Math.Min(MinEdge.Z, z);
-            MaxEdge.X = Math.Max(MaxEdge.X, x);
-            MaxEdge.Y = Math.Max(MaxEdge.Y, y);
-            MaxEdge.Z = Math.Max(MaxEdge.Z, z);
-        }
-        public Vector3 Center()
-        {
-            return (MinEdge + MaxEdge) / 2;
-        }
-    }
-    public interface ITriangleSearcher
-    {
-        int AddTriangle(Triangle3D triangle);
-        void DeleteTriangle(int triangle_id);
-        IEnumerable<Vector3> LineIntersection(Line3D line);
-    }
     public class BlockOctreeSearcher
     {
-        public Box3D StartBox;
-        IEnumerable<Box3D> Search(Predicate<Box3D> query)
+        public BlockOctreeSearcher()
         {
-            if (StartBox.LengthX == 0)
+            pool = new Box3D[10000];
+            for (int i = 0; i < 10000; i++)
+            {
+                pool[i] = new Box3D();
+            }
+            listpool = new ListBox3d[50];
+            for (int i = 0; i < 50; i++)
+            {
+                listpool[i] = new ListBox3d();
+                listpool[i].arr = new Box3D[1000];
+            }
+            blockpossides = new BlockPosSide[1000];
+            for (int i = 0; i < 1000; i++)
+            {
+                blockpossides[i] = BlockPosSide.Create(0, 0, 0, TileSide.Top);
+            }
+        }
+        public Box3D StartBox;
+        ListBox3d Search(PredicateBox3D query)
+        {
+            pool_i = 0;
+            listpool_i = 0;
+            if (StartBox.LengthX() == 0)
             {
                 throw new Exception();
             }
             return SearchPrivate(query, StartBox);
         }
-        IEnumerable<Box3D> SearchPrivate(Predicate<Box3D> query, Box3D box)
+        ListBox3d SearchPrivate(PredicateBox3D query, Box3D box)
         {
-            if (box.LengthX == 1)
+            if (box.LengthX() == 1)
             {
-                yield return box;
-                yield break;
+                ListBox3d l1 = newListBox3d();
+                l1.count = 1;
+                l1.arr[0] = box;
+                return l1;
             }
-            foreach (Box3D child in Children(box))
+            ListBox3d l = newListBox3d();
+            l.count = 0;
+            ListBox3d children = Children(box);
+            for (int k = 0; k < children.count; k++)
             {
-                if (query(child))
+                Box3D child = children.arr[k];
+                if (query.Hit(child))
                 {
-                    foreach (Box3D n in SearchPrivate(query, child))
+                    ListBox3d l2 = SearchPrivate(query, child);
+                    for (int i = 0; i < l2.count; i++)
                     {
-                        yield return n;
+                        Box3D n = l2.arr[i];
+                        l.arr[l.count++] = n;
                     }
+                    recycleListBox3d(l2);
                 }
             }
+            recycleListBox3d(children);
+            return l;
         }
-        IEnumerable<Box3D> Children(Box3D box)
+        public static int created;
+        public static int returned;
+        Box3D[] pool;
+        int pool_i;
+        ListBox3d[] listpool;
+        int listpool_i;
+        Box3D newBox3d()
         {
-            float x = box.MinEdge.X;
-            float y = box.MinEdge.Y;
-            float z = box.MinEdge.Z;
-            float size = box.LengthX / 2;
-            yield return new Box3D(x, y, z, size);
-            yield return new Box3D(x + size, y, z, size);
-            yield return new Box3D(x, y, z + size, size);
-            yield return new Box3D(x + size, y, z + size, size);
+            return pool[pool_i++];
+        }
+        void recycleBox3d(Box3D l)
+        {
+            pool_i--;
+            pool[pool_i] = l;
+        }
+        ListBox3d newListBox3d()
+        {
+            ListBox3d l = listpool[listpool_i++];
+            l.count = 0;
+            return l;
+        }
+        void recycleListBox3d(ListBox3d l)
+        {
+            listpool_i--;
+            listpool[listpool_i] = l;
+        }
+        ListBox3d Children(Box3D box)
+        {
+            ListBox3d l = newListBox3d();
+            l.count = 8;
+            Box3D[] c = l.arr;
+            for (int i = 0; i < 8; i++)
+            {
+                c[i] = newBox3d();
+            }
+            float x = box.MinEdge[0];
+            float y = box.MinEdge[1];
+            float z = box.MinEdge[2];
+            float size = box.LengthX() / 2;
+            c[0].Set(x, y, z, size);
+            c[1].Set(x + size, y, z, size);
+            c[2].Set(x, y, z + size, size);
+            c[3].Set(x + size, y, z + size, size);
 
-            yield return new Box3D(x, y + size, z, size);
-            yield return new Box3D(x + size, y + size, z, size);
-            yield return new Box3D(x, y + size, z + size, size);
-            yield return new Box3D(x + size, y + size, z + size, size);
+            c[4].Set(x, y + size, z, size);
+            c[5].Set(x + size, y + size, z, size);
+            c[6].Set(x, y + size, z + size, size);
+            c[7].Set(x + size, y + size, z + size, size);
+            return l;
         }
-        public delegate bool IsBlockEmpty(int x, int y, int z);
-        public delegate float GetBlockHeight(int x, int y, int z);
-        bool BoxHit(Box3D box)
+        public bool BoxHit(Box3D box)
         {
-            Vector3Ref hit = new Vector3Ref();
-            bool ret = Intersection.CheckLineBox(box, currentLine, hit);
-            currentHit.X = hit.X;
-            currentHit.Y = hit.Y;
-            currentHit.Z = hit.Z;
-            return ret;
+            currentHit[0] = 0;
+            currentHit[1] = 0;
+            currentHit[2] = 0;
+            return Intersection.CheckLineBox(box, currentLine, currentHit);
         }
         Line3D currentLine;
-        Vector3 currentHit;
-        public IEnumerable<BlockPosSide> LineIntersection(IsBlockEmpty isEmpty, GetBlockHeight getBlockHeight, Line3D line)
+        float[] currentHit = new float[3];
+        BlockPosSide[] blockpossides;
+        int blockpossides_i;
+        public BlockPosSide[] LineIntersection(IsBlockEmpty isEmpty, GetBlockHeight getBlockHeight, Line3D line)
         {
+            blockpossides_i = 0;
+            List<BlockPosSide> l = new List<BlockPosSide>();
             currentLine = line;
-            currentHit = new Vector3();
-            foreach (var node in Search(BoxHit))
+            currentHit[0] = 0;
+            currentHit[1] = 0;
+            currentHit[2] = 0;
+            ListBox3d l1 = Search(PredicateBox3DHit.Create(this));
+            for (int i = 0; i < l1.count; i++)
             {
-                Vector3 hit = currentHit;
-                int x = (int)node.MinEdge.X;
-                int y = (int)node.MinEdge.Z;
-                int z = (int)node.MinEdge.Y;
+                Box3D node = l1.arr[i];
+                float[] hit = currentHit;
+                int x = (int)node.MinEdge[0];
+                int y = (int)node.MinEdge[2];
+                int z = (int)node.MinEdge[1];
                 if (!isEmpty(x, y, z))
                 {
-                    var node2 = node;
-                    node2.MaxEdge.Y = node2.MinEdge.Y + getBlockHeight(x, y, z);
-                    var hit2 = Intersection.CheckLineBoxExact(line, node2);
+                    Box3D node2 = node;
+                    node2.MaxEdge[1] = node2.MinEdge[1] + getBlockHeight(x, y, z);
+                    //BlockPosSide hit2 = new BlockPosSide(0, 0, 0, TileSide.Top);
+                    //BlockPosSide hit2 = blockpossides[blockpossides_i];
+                    //blockpossides_i++;
+                    //hit2.pos = new float[] { x, z, y };
+                    BlockPosSide hit2 = Intersection.CheckLineBoxExact(line, node2);
                     if (hit2 != null)
                     {
-                        yield return hit2.Value;
+                        hit2.pos = new float[] { x, z, y };
+                        l.Add(hit2);
                     }
                 }
             }
+            BlockPosSide[] ll = new BlockPosSide[l.Count];
+            for (int i = 0; i < l.Count; i++)
+            {
+                ll[i] = l[i];
+            }
+            return ll;
         }
     }
-    public enum TileSide
+    public class PredicateBox3DHit : PredicateBox3D
     {
-        Top,
-        Bottom,
-        Front,
-        Back,
-        Left,
-        Right,
+        public static PredicateBox3DHit Create(BlockOctreeSearcher s_)
+        {
+            PredicateBox3DHit p = new PredicateBox3DHit();
+            p.s = s_;
+            return p;
+        }
+        BlockOctreeSearcher s;
+        public override bool Hit(Box3D o)
+        {
+            return s.BoxHit(o);
+        }
     }
+    public delegate bool IsBlockEmpty(int x, int y, int z);
+    public delegate float GetBlockHeight(int x, int y, int z);
     public enum TileSideFlags
     {
         None = 0,
@@ -160,43 +194,57 @@ namespace ManicDigger.Collisions
         Left = 16,
         Right = 32,
     }
-    public struct BlockPosSide
-    {
-        public BlockPosSide(int x, int y, int z, TileSide side)
-        {
-            this.pos = new Vector3(x, y, z);
-            this.side = side;
-        }
-        public Vector3 pos;
-        public TileSide side;
-        public Vector3 Translated()
-        {
-            if (side == TileSide.Top) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Bottom) { return pos + new Vector3(0, -1, 0); }
-            if (side == TileSide.Front) { return pos + new Vector3(-1, 0, 0); }
-            if (side == TileSide.Back) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Left) { return pos + new Vector3(0, 0, -1); }
-            if (side == TileSide.Right) { return pos + new Vector3(0, 0, 0); }
-            throw new Exception();
-        }
-        public Vector3 Current()
-        {
-            //these are block coordinates. 0.1f is used instead of 1f,
-            //because some blocks have height less than 1.
-            //After substracting 0.1f from 0.3f block height and Math.flooring
-            //it will be a correct block coordinate.
-            //todo check.
-            if (side == TileSide.Top) { return pos + new Vector3(0, -0.1f, 0); }
-            if (side == TileSide.Bottom) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Front) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Back) { return pos + new Vector3(-0.1f, 0, 0); }
-            if (side == TileSide.Left) { return pos + new Vector3(0, 0, 0); }
-            if (side == TileSide.Right) { return pos + new Vector3(0, 0, -0.1f); }
-            throw new Exception();
-        }
-    }
     public static class Intersection
     {
+        //http://www.3dkingdoms.com/weekly/weekly.php?a=3
+        static bool GetIntersection(float fDst1, float fDst2, float[] P1, float[] P2, float[] Hit)
+        {
+            /*Hit = new Vector3();*/
+            if ((fDst1 * fDst2) >= 0.0f) return false;
+            if (fDst1 == fDst2) return false;
+            /*Hit = P1 + (P2 - P1) * (-fDst1 / (fDst2 - fDst1));*/
+            Hit[0] = P1[0] + (P2[0] - P1[0]) * (-fDst1 / (fDst2 - fDst1));
+            Hit[1] = P1[1] + (P2[1] - P1[1]) * (-fDst1 / (fDst2 - fDst1));
+            Hit[2] = P1[2] + (P2[2] - P1[2]) * (-fDst1 / (fDst2 - fDst1));
+            return true;
+        }
+        static bool InBox(float[] Hit, float[] B1, float[] B2, int Axis)
+        {
+            if (Axis == 1 && Hit[2] > B1[2] && Hit[2] < B2[2] && Hit[1] > B1[1] && Hit[1] < B2[1]) return true;
+            if (Axis == 2 && Hit[2] > B1[2] && Hit[2] < B2[2] && Hit[0] > B1[0] && Hit[0] < B2[0]) return true;
+            if (Axis == 3 && Hit[0] > B1[0] && Hit[0] < B2[0] && Hit[1] > B1[1] && Hit[1] < B2[1]) return true;
+            return false;
+        }
+        // returns true if line (L1, L2) intersects with the box (B1, B2)
+        // returns intersection point in Hit
+        public static bool CheckLineBox1(float[] B1, float[] B2, float[] L1, float[] L2, float[] Hit)
+        {
+            /*Hit = new Vector3();*/
+            if (L2[0] < B1[0] && L1[0] < B1[0]) return false;
+            if (L2[0] > B2[0] && L1[0] > B2[0]) return false;
+            if (L2[1] < B1[1] && L1[1] < B1[1]) return false;
+            if (L2[1] > B2[1] && L1[1] > B2[1]) return false;
+            if (L2[2] < B1[2] && L1[2] < B1[2]) return false;
+            if (L2[2] > B2[2] && L1[2] > B2[2]) return false;
+            if (L1[0] > B1[0] && L1[0] < B2[0] &&
+                L1[1] > B1[1] && L1[1] < B2[1] &&
+                L1[2] > B1[2] && L1[2] < B2[2])
+            {
+                /*Hit = L1;*/
+                Hit[0] = L1[0];
+                Hit[1] = L1[1];
+                Hit[2] = L1[2];
+                return true;
+            }
+            if ((GetIntersection(L1[0] - B1[0], L2[0] - B1[0], L1, L2, Hit) && InBox(Hit, B1, B2, 1))
+              || (GetIntersection(L1[1] - B1[1], L2[1] - B1[1], L1, L2, Hit) && InBox(Hit, B1, B2, 2))
+              || (GetIntersection(L1[2] - B1[2], L2[2] - B1[2], L1, L2, Hit) && InBox(Hit, B1, B2, 3))
+              || (GetIntersection(L1[0] - B2[0], L2[0] - B2[0], L1, L2, Hit) && InBox(Hit, B1, B2, 1))
+              || (GetIntersection(L1[1] - B2[1], L2[1] - B2[1], L1, L2, Hit) && InBox(Hit, B1, B2, 2))
+              || (GetIntersection(L1[2] - B2[2], L2[2] - B2[2], L1, L2, Hit) && InBox(Hit, B1, B2, 3)))
+                return true;
+            return false;
+        }
         /// <summary>
         /// Warning: randomly returns incorrect hit position (back side of box).
         /// </summary>
@@ -204,13 +252,9 @@ namespace ManicDigger.Collisions
         /// <param name="line"></param>
         /// <param name="hit"></param>
         /// <returns></returns>
-        public static bool CheckLineBox(Box3D box, Line3D line, Vector3Ref hit)
+        public static bool CheckLineBox(Box3D box, Line3D line, float[] hit)
         {
-            Vector3Ref minEdge = Vector3Ref.Create(box.MinEdge.X, box.MinEdge.Y, box.MinEdge.Z);
-            Vector3Ref maxEdge = Vector3Ref.Create(box.MaxEdge.X, box.MaxEdge.Y, box.MaxEdge.Z);
-            Vector3Ref lineStart = Vector3Ref.Create(line.Start.X, line.Start.Y, line.Start.Z);
-            Vector3Ref lineEnd = Vector3Ref.Create(line.End.X, line.End.Y, line.End.Z);
-            return IntersectionCi.CheckLineBox(minEdge, maxEdge, lineStart, lineEnd, hit);
+            return CheckLineBox1(box.MinEdge, box.MaxEdge, line.Start, line.End, hit);
         }
         // Copyright 2001, softSurfer (www.softsurfer.com)
         // This code may be freely used and modified for any purpose
@@ -241,7 +285,22 @@ namespace ManicDigger.Collisions
 
         static float SMALL_NUM = 0.00000001f; // anything that avoids division overflow
         // dot product (3D) which allows vector operations in arguments
-        static float dot(Vector3 u, Vector3 v) { return (u).X * (v).X + (u).Y * (v).Y + (u).Z * (v).Z; }
+        static float dot(float[] u, float[] v) { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
+        static void cross(float[] a, float[] b, float[] result)
+        {
+            result[0] = a[1] * b[2] - a[2] * b[1];
+            result[1] = a[2] * b[0] - a[0] * b[2];
+            result[2] = a[0] * b[1] - a[1] * b[0];
+        }
+
+        static float[] u = new float[3];// triangle vectors
+        static float[] v = new float[3];
+        static float[] n = new float[3];
+
+
+        static float[] dir = new float[3];// ray vectors
+        static float[] w0 = new float[3];
+        static float[] w = new float[3];
 
         // intersect_RayTriangle(): intersect a ray with a 3D triangle
         //    Input:  a ray R, and a triangle T
@@ -251,24 +310,32 @@ namespace ManicDigger.Collisions
         //             1 = intersect in unique point I1
         //             2 = are in the same plane
         public static int
-        RayTriangle(Line3D R, Triangle3D T, out Vector3 I)
+        RayTriangle(Line3D R, Triangle3D T, float[] I)
         {
-            Vector3 u, v, n;             // triangle vectors
-            Vector3 dir, w0, w;          // ray vectors
             float r, a, b;             // params to calc ray-plane intersect
 
-            I = new Vector3();
+            I[0] = 0;
+            I[1] = 0;
+            I[2] = 0;
 
             // get triangle edge vectors and plane normal
-            u = T.PointB - T.PointA;
-            v = T.PointC - T.PointA;
+            u[0] = T.PointB[0] - T.PointA[0];
+            u[1] = T.PointB[1] - T.PointA[1];
+            u[2] = T.PointB[2] - T.PointA[2];
+            v[0] = T.PointC[0] - T.PointA[0];
+            v[1] = T.PointC[1] - T.PointA[1];
+            v[2] = T.PointC[2] - T.PointA[2];
             //n = u.CrossProduct(v);             // cross product
-            Vector3.Cross(ref u, ref v, out n);
+            cross(u, v, n);
             //if (n == (Vector3D)0)            // triangle is degenerate
             //    return -1;                 // do not deal with this case
 
-            dir = R.End - R.Start;             // ray direction vector
-            w0 = R.Start - T.PointA;
+            dir[0] = R.End[0] - R.Start[0];             // ray direction vector
+            dir[1] = R.End[1] - R.Start[1];
+            dir[2] = R.End[2] - R.Start[2];
+            w0[0] = R.Start[0] - T.PointA[0];
+            w0[1] = R.Start[1] - T.PointA[1];
+            w0[2] = R.Start[2] - T.PointA[2];
             a = -dot(n, w0);
             b = dot(n, dir);
             if (Math.Abs(b) < SMALL_NUM)
@@ -284,14 +351,18 @@ namespace ManicDigger.Collisions
                 return 0;                  // => no intersect
             // for a segment, also test if (r > 1.0) => no intersect
 
-            I = R.Start + r * dir;           // intersect point of ray and plane
+            I[0] = R.Start[0] + r * dir[0];           // intersect point of ray and plane
+            I[1] = R.Start[1] + r * dir[1];
+            I[2] = R.Start[2] + r * dir[2];
 
             // is I inside T?
             float uu, uv, vv, wu, wv, D;
             uu = dot(u, u);
             uv = dot(u, v);
             vv = dot(v, v);
-            w = I - T.PointA;
+            w[0] = I[0] - T.PointA[0];
+            w[1] = I[1] - T.PointA[1];
+            w[2] = I[2] - T.PointA[2];
             wu = dot(w, u);
             wv = dot(w, v);
             D = uv * uv - uu * vv;
@@ -307,37 +378,63 @@ namespace ManicDigger.Collisions
 
             return 1;                      // I is in T
         }
-        public static BlockPosSide? CheckLineBoxExact(Line3D line, Box3D box)
+        const float floatMaxValue = 3.40282e+038f;
+        static float[] big = new float[3];
+        static float[] closest = new float[3];
+        static float[] a = new float[3];
+        static float[] b = new float[3];
+        static float[] outIntersection = new float[3];
+        public static BlockPosSide CheckLineBoxExact(Line3D line, Box3D box)
         {
-            if (PointInBox(line.Start, box)) { return new BlockPosSide() { pos = line.Start }; }
-            Vector3 big = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-            Vector3 closest = big;
+            if (PointInBox(line.Start, box))
+            {
+                BlockPosSide p = BlockPosSide.Create(0, 0, 0, TileSide.Top);
+                p.pos = line.Start;
+                return p;
+            }
+            Vec3.Set(big, floatMaxValue, floatMaxValue, floatMaxValue);
+            Vec3.Set(closest, floatMaxValue, floatMaxValue, floatMaxValue);
             TileSide side = TileSide.Top;
             foreach (Triangle3DAndSide t in BoxTrianglesAndSides(box.MinEdge, box.MaxEdge))
             {
-                Vector3 i;
-                if (RayTriangle(line, t.t, out i) != 0)
+                if (RayTriangle(line, t.t, outIntersection) != 0)
                 {
-                    if ((line.Start - i).Length < (line.Start - closest).Length)
+                    a[0] = line.Start[0] - outIntersection[0];
+                    a[1] = line.Start[1] - outIntersection[1];
+                    a[2] = line.Start[2] - outIntersection[2];
+                    b[0] = line.Start[0] - closest[0];
+                    b[1] = line.Start[1] - closest[1];
+                    b[2] = line.Start[2] - closest[2];
+                    if (Vec3.Len(a) < Vec3.Len(b))
                     {
-                        closest = i;
+                        closest[0] = outIntersection[0];
+                        closest[1] = outIntersection[1];
+                        closest[2] = outIntersection[2];
                         side = t.side;
                     }
                 }
             }
             //if (closest == big) { throw new Exception(); }
-            if (closest == big) { return null; }
-            return new BlockPosSide() { pos = closest, side = side };
+            if (closest[0] == big[0] && closest[1] == big[1] && closest[2] == big[2]) { return null; }
+            BlockPosSide bps = BlockPosSide.Create(0, 0, 0, TileSide.Top);
+            bps.pos = closest;
+            bps.side = side;
+            return bps;
             //if (PointInBox(line.End, box)) { return new TilePosSide() { pos = line.End }; }
             throw new Exception();
         }
-        public class Triangle3DAndSide
+
+        static Triangle3DAndSide[] triangleandside_pool;
+        public static Triangle3DAndSide[] BoxTrianglesAndSides(float[] a, float[] b)
         {
-            public Triangle3D t;
-            public TileSide side;
-        }
-        public static IEnumerable<Triangle3DAndSide> BoxTrianglesAndSides(Vector3 a, Vector3 b)
-        {
+            if (triangleandside_pool == null)
+            {
+                triangleandside_pool = new Triangle3DAndSide[12];
+                for (int i = 0; i < 12; i++)
+                {
+                    triangleandside_pool[i] = new Triangle3DAndSide();
+                }
+            }
             TileSide side = TileSide.Top;
             TileSide sidei = TileSide.Top;
             int ii = 0;
@@ -354,128 +451,156 @@ namespace ManicDigger.Collisions
                     else if (sidei == TileSide.Left) { sidei = TileSide.Right; }
                     else if (sidei == TileSide.Right) { sidei = TileSide.Top; }
                 }
-                yield return new Triangle3DAndSide() { t = t, side = side };
+                //Triangle3DAndSide tt = new Triangle3DAndSide();
+                Triangle3DAndSide tt = triangleandside_pool[ii - 1];
+                tt.t = t;
+                tt.side = side;
+                //l.Add(tt);
             }
+            return triangleandside_pool;
         }
-        public static IEnumerable<Triangle3D> BoxTriangles(Vector3 a, Vector3 b)
+        static short[] myelements;
+        static float[][] myvertices;
+        static Triangle3D[] trianglespool;
+        public static Triangle3D[] BoxTriangles(float[] a, float[] b)
         {
-            float x = a.X;
-            float z = a.Y;
-            float y = a.Z;
-            float sx = b.X - a.X;
-            float sz = b.Y - a.Y;
-            float sy = b.Z - a.Z;
-            List<short> myelements = new List<short>();
-            List<Vector3> myvertices = new List<Vector3>();
+            float x = a[0];
+            float z = a[1];
+            float y = a[2];
+            float sx = b[0] - a[0];
+            float sz = b[1] - a[1];
+            float sy = b[2] - a[2];
+            //List<short> myelements = new List<short>();
+            if (myelements == null)
+            {
+                myelements = new short[6 * 6];
+                myvertices = new float[6 * 4][];
+                for (int i = 0; i < 6 * 4; i++)
+                {
+                    myvertices[i] = new float[3];
+                }
+                trianglespool = new Triangle3D[6 * 2];
+                for (int i = 0; i < 6 * 2; i++)
+                {
+                    trianglespool[i] = new Triangle3D();
+                }
+            }
+            int myverticesCount = 0;
+            int myelementsCount = 0;
             //top
             //if (drawtop)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 0.0f * sx, z + 1.0f * sz, y + 0.0f * sy));
-                myvertices.Add(new Vector3(x + 0.0f * sx, z + 1.0f * sz, y + 1.0f * sy));
-                myvertices.Add(new Vector3(x + 1.0f * sx, z + 1.0f * sz, y + 0.0f * sy));
-                myvertices.Add(new Vector3(x + 1.0f * sx, z + 1.0f * sz, y + 1.0f * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 0.0f * sx, z + 1.0f * sz, y + 0.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0.0f * sx, z + 1.0f * sz, y + 1.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1.0f * sx, z + 1.0f * sz, y + 0.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1.0f * sx, z + 1.0f * sz, y + 1.0f * sy);
+                myelements[myelementsCount++] = (short)(lastelement + 0);
+                myelements[myelementsCount++] = (short)(lastelement + 1);
+                myelements[myelementsCount++] = (short)(lastelement + 2);
+                myelements[myelementsCount++] = (short)(lastelement + 3);
+                myelements[myelementsCount++] = (short)(lastelement + 1);
+                myelements[myelementsCount++] = (short)(lastelement + 2);
             }
             //bottom - same as top, but z is 1 less.
             //if (drawbottom)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 0.0f * sx, z + 0 * sz, y + 0.0f * sy));
-                myvertices.Add(new Vector3(x + 0.0f * sx, z + 0 * sz, y + 1.0f * sy));
-                myvertices.Add(new Vector3(x + 1.0f * sx, z + 0 * sz, y + 0.0f * sy));
-                myvertices.Add(new Vector3(x + 1.0f * sx, z + 0 * sz, y + 1.0f * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 0.0f * sx, z + 0 * sz, y + 0.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0.0f * sx, z + 0 * sz, y + 1.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1.0f * sx, z + 0 * sz, y + 0.0f * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1.0f * sx, z + 0 * sz, y + 1.0f * sy);
+                myelements[myelementsCount++] = ((short)(lastelement + 0));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
+                myelements[myelementsCount++] = ((short)(lastelement + 3));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
             }
             //front
             //if (drawfront)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 0 * sx, z + 0 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 0 * sx, z + 0 * sz, y + 1 * sy));
-                myvertices.Add(new Vector3(x + 0 * sx, z + 1 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 0 * sx, z + 1 * sz, y + 1 * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 1 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 1 * sy);
+                myelements[myelementsCount++] = ((short)(lastelement + 0));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
+                myelements[myelementsCount++] = ((short)(lastelement + 3));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
             }
             //back - same as front, but x is 1 greater.
             //if (drawback)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 1 * sx, z + 0 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 0 * sz, y + 1 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 1 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 1 * sz, y + 1 * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 1 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 1 * sy);
+                myelements[myelementsCount++] = ((short)(lastelement + 0));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
+                myelements[myelementsCount++] = ((short)(lastelement + 3));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
             }
             //if (drawleft)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 0 * sx, z + 0 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 0 * sx, z + 1 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 0 * sz, y + 0 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 1 * sz, y + 0 * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 0 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 0 * sy);
+
+                myelements[myelementsCount++] = ((short)(lastelement + 0));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
+                myelements[myelementsCount++] = ((short)(lastelement + 3));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
             }
             //right - same as left, but y is 1 greater.
             //if (drawright)
             {
-                short lastelement = (short)myvertices.Count;
-                myvertices.Add(new Vector3(x + 0 * sx, z + 0 * sz, y + 1 * sy));
-                myvertices.Add(new Vector3(x + 0 * sx, z + 1 * sz, y + 1 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 0 * sz, y + 1 * sy));
-                myvertices.Add(new Vector3(x + 1 * sx, z + 1 * sz, y + 1 * sy));
-                myelements.Add((short)(lastelement + 0));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
-                myelements.Add((short)(lastelement + 3));
-                myelements.Add((short)(lastelement + 1));
-                myelements.Add((short)(lastelement + 2));
+                short lastelement = (short)myverticesCount;
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 1 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 1 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 1 * sy);
+                Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 1 * sy);
+                myelements[myelementsCount++] = ((short)(lastelement + 0));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
+                myelements[myelementsCount++] = ((short)(lastelement + 3));
+                myelements[myelementsCount++] = ((short)(lastelement + 1));
+                myelements[myelementsCount++] = ((short)(lastelement + 2));
             }
-            for (int i = 0; i < myelements.Count / 3; i++)
+            //Triangle3D[] triangles = new Triangle3D[myelementsCount / 3];
+            for (int i = 0; i < myelementsCount / 3; i++)
             {
-                Triangle3D t = new Triangle3D();
+                //Triangle3D t = new Triangle3D();
+                Triangle3D t = trianglespool[i];
                 t.PointA = myvertices[myelements[i * 3 + 0]];
                 t.PointB = myvertices[myelements[i * 3 + 1]];
                 t.PointC = myvertices[myelements[i * 3 + 2]];
-                yield return t;
+                //triangles[i] = t;
             }
+            return trianglespool;
         }
-        private static bool PointInBox(Vector3 v, Box3D node)
+        private static bool PointInBox(float[] v, Box3D node)
         {
-            return v.X >= node.MinEdge.X && v.Y >= node.MinEdge.Y && v.Z >= node.MinEdge.Z
-                && v.X <= node.MaxEdge.X && v.Y <= node.MaxEdge.Y && v.Z <= node.MaxEdge.Z;
+            return v[0] >= node.MinEdge[0] && v[1] >= node.MinEdge[1] && v[2] >= node.MinEdge[1]
+                && v[0] <= node.MaxEdge[0] && v[1] <= node.MaxEdge[1] && v[2] <= node.MaxEdge[2];
         }
-        private static Vector3 Interpolate(Vector3 a, Vector3 b, float f)
+        private static float[] Interpolate(float[] a, float[] b, float f)
         {
-            float x = a.X + (b.X - a.X) * f;
-            float y = a.Y + (b.Y - a.Y) * f;
-            float z = a.Z + (b.Z - a.Z) * f;
-            return new Vector3(x, y, z);
+            float x = a[0] + (b[0] - a[0]) * f;
+            float y = a[1] + (b[1] - a[1]) * f;
+            float z = a[2] + (b[2] - a[2]) * f;
+            return new float[] { x, y, z };
         }
+
     }
 }

@@ -2237,8 +2237,8 @@ namespace ManicDigger
             Line3D pick = new Line3D();
             Vector3 raydir = -(ray - ray_start_point);
             raydir.Normalize();
-            pick.Start = ray + Vector3.Multiply(raydir, 1f); //do not pick behind
-            pick.End = ray + Vector3.Multiply(raydir, pick_distance * ((ispistolshoot) ? 100 : 2));
+            pick.Start = Vector3ToFloatArray(ray + Vector3.Multiply(raydir, 1f)); //do not pick behind
+            pick.End = Vector3ToFloatArray( ray + Vector3.Multiply(raydir, pick_distance * ((ispistolshoot) ? 100 : 2)));
 
             //pick models
             selectedmodelid = -1;
@@ -2247,14 +2247,15 @@ namespace ManicDigger
                 Vector3 closestmodelpos = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
                 foreach (var t in m.TrianglesForPicking)
                 {
-                    Vector3 intersection;
-                    if (Collisions.Intersection.RayTriangle(pick, t, out intersection) == 1)
+                    float[] intersection_ = new float[3];
+                    if (Collisions.Intersection.RayTriangle(pick, t, intersection_) == 1)
                     {
-                        if ((pick.Start - intersection).Length > pick_distance)
+                        Vector3 intersection = FloatArrayToVector3(intersection_);
+                        if ((FloatArrayToVector3(pick.Start) - intersection).Length > pick_distance)
                         {
                             continue;
                         }
-                        if ((pick.Start - intersection).Length < (pick.Start - closestmodelpos).Length)
+                        if ((FloatArrayToVector3(pick.Start) - intersection).Length < (FloatArrayToVector3(pick.Start) - closestmodelpos).Length)
                         {
                             closestmodelpos = intersection;
                             selectedmodelid = m.Id;
@@ -2291,16 +2292,16 @@ namespace ManicDigger
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
-            pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
+            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
 
             if (overheadcamera && pick2.Count > 0 && left)
             {
                 //if not picked any object, and mouse button is pressed, then walk to destination.
-                playerdestination = pick2[0].pos;
+                playerdestination = FloatArrayToVector3(pick2[0].pos);
             }
-            bool pickdistanceok = pick2.Count > 0 && (pick2[0].pos - ToVector3(player.playerposition)).Length <= pick_distance;
+            bool pickdistanceok = pick2.Count > 0 && (FloatArrayToVector3(pick2[0].pos) - ToVector3(player.playerposition)).Length <= pick_distance;
             bool playertileempty = IsTileEmptyForPhysics(
                         (int)(player.playerposition.X),
                         (int)(player.playerposition.Z),
@@ -2309,20 +2310,20 @@ namespace ManicDigger
                         (int)(player.playerposition.X),
                         (int)(player.playerposition.Z),
                         (int)(player.playerposition.Y + (one / 2)));
-            BlockPosSide pick0;
+            BlockPosSide pick0 = new BlockPosSide();
             if (pick2.Count > 0 &&
                 ((pickdistanceok && (playertileempty || (playertileemptyclose)))
                 || overheadcamera)
                 )
             {
-                SelectedBlockPosition = pick2[0].Current();
+                SelectedBlockPosition = FloatArrayToVector3(pick2[0].Current());
                 SelectedBlockPosition = new Vector3((int)SelectedBlockPosition.X, (int)SelectedBlockPosition.Y, (int)SelectedBlockPosition.Z);
                 pick0 = pick2[0];
             }
             else
             {
                 SelectedBlockPosition = new Vector3(-1, -1, -1);
-                pick0.pos = new Vector3(-1, -1, -1);
+                pick0.pos = new float[] { -1, -1, -1 };
                 pick0.side = TileSide.Front;
             }
             if (FreeMouse)
@@ -2333,7 +2334,7 @@ namespace ManicDigger
                 }
                 return;
             }
-            var ntile = pick0.Current();
+            var ntile = FloatArrayToVector3(pick0.Current());
             if (IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y)))
             {
                 currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
@@ -2374,16 +2375,16 @@ namespace ManicDigger
                 }
                 if (ispistolshoot)
                 {
-                    Vector3 to = pick.End;
+                    Vector3 to = FloatArrayToVector3(pick.End);
                     if (pick2.Count > 0)
                     {
-                        to = pick2[0].pos;
+                        to = FloatArrayToVector3(pick2[0].pos);
                     }
 
                     Packet_ClientShot shot = new Packet_ClientShot();
-                    shot.FromX = SerializeFloat(pick.Start.X);
-                    shot.FromY = SerializeFloat(pick.Start.Y);
-                    shot.FromZ = SerializeFloat(pick.Start.Z);
+                    shot.FromX = SerializeFloat(FloatArrayToVector3(pick.Start).X);
+                    shot.FromY = SerializeFloat(FloatArrayToVector3(pick.Start).Y);
+                    shot.FromZ = SerializeFloat(FloatArrayToVector3(pick.Start).Z);
                     shot.ToX = SerializeFloat(to.X);
                     shot.ToY = SerializeFloat(to.Y);
                     shot.ToZ = SerializeFloat(to.Z);
@@ -2397,7 +2398,7 @@ namespace ManicDigger
                         }
                         Vector3 feetpos = new Vector3((float)k.Value.Position.Value.X, (float)k.Value.Position.Value.Y, (float)k.Value.Position.Value.Z);
                         //var p = PlayerPositionSpawn;
-                        ManicDigger.Collisions.Box3D bodybox = new ManicDigger.Collisions.Box3D();
+                        Box3D bodybox = new Box3D();
                         float headsize = (k.Value.ModelHeight - k.Value.EyeHeight) * 2; //0.4f;
                         float h = k.Value.ModelHeight - headsize;
                         float r = 0.35f;
@@ -2412,7 +2413,7 @@ namespace ManicDigger
                         bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z - r);
                         bodybox.AddPoint(feetpos.X + r, feetpos.Y + h, feetpos.Z + r);
 
-                        ManicDigger.Collisions.Box3D headbox = new ManicDigger.Collisions.Box3D();
+                        Box3D headbox = new Box3D();
 
                         headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z - r);
                         headbox.AddPoint(feetpos.X - r, feetpos.Y + h, feetpos.Z + r);
@@ -2424,16 +2425,16 @@ namespace ManicDigger
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
 
-                        BlockPosSide? p;
+                        BlockPosSide p;
                         Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, players[LocalPlayerId].ModelHeight, 0);
                         if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox)) != null)
                         {
                             //do not allow to shoot through terrain
-                            if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
+                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = p.Value.pos, timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p.pos), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 1;
@@ -2442,11 +2443,11 @@ namespace ManicDigger
                         else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
                         {
                             //do not allow to shoot through terrain
-                            if (pick2.Count == 0 || ((pick2[0].pos - localeyepos).Length > (p.Value.pos - localeyepos).Length))
+                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = p.Value.pos, timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p.pos), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 0;
@@ -2459,15 +2460,15 @@ namespace ManicDigger
                     float projectilespeed = DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
                     if (projectilespeed == 0)
                     {
-                        bullets.Add(new Bullet() { from = pick.Start, to = to, speed = 150 });
+                        bullets.Add(new Bullet() { from = FloatArrayToVector3(pick.Start), to = to, speed = 150 });
                     }
                     else
                     {
-                        Vector3 v = to - pick.Start;
+                        Vector3 v = to - FloatArrayToVector3(pick.Start);
                         v.Normalize();
                         v *= projectilespeed;
                         shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
-                        projectiles.Add(new Projectile() { position = pick.Start, velocity = v, startMilliseconds = game.p.TimeMillisecondsFromStart(), block = item.BlockId, explodesafter = grenadetime - wait });
+                        projectiles.Add(new Projectile() { position = FloatArrayToVector3(pick.Start), velocity = v, startMilliseconds = game.p.TimeMillisecondsFromStart(), block = item.BlockId, explodesafter = grenadetime - wait });
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
@@ -2498,7 +2499,7 @@ namespace ManicDigger
                 {
                     if (middle)
                     {
-                        var newtile = pick0.Current();
+                        var newtile = FloatArrayToVector3(pick0.Current());
                         if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
@@ -2553,11 +2554,11 @@ namespace ManicDigger
                     {
                         BlockPosSide tile = pick0;
                         Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
-                        Vector3 newtile = right ? tile.Translated() : tile.Current();
+                        Vector3 newtile = right ? FloatArrayToVector3(tile.Translated()) : FloatArrayToVector3(tile.Current());
                         if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
-                            if (pick0.pos != new Vector3(-1, -1, -1))
+                            if (FloatArrayToVector3(pick0.pos) != new Vector3(-1, -1, -1))
                             {
                                 int blocktype;
                                 if (left) { blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
@@ -2602,7 +2603,7 @@ namespace ManicDigger
                             }
                         broken:
                             OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
-                                new Vector3((int)tile.Current().X, (int)tile.Current().Z, (int)tile.Current().Y), tile.pos,
+                                new Vector3((int)tile.Current()[0], (int)tile.Current()[2], (int)tile.Current()[1]), FloatArrayToVector3(tile.pos),
                                 right);
                             //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                             //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
@@ -2617,6 +2618,16 @@ namespace ManicDigger
                 lastbuildMilliseconds = 0;
                 fastclicking = true;
             }
+        }
+
+        Vector3 FloatArrayToVector3(float[] v)
+        {
+            return new Vector3(v[0], v[1], v[2]);
+        }
+
+        float[] Vector3ToFloatArray(Vector3 v)
+        {
+            return Vec3.FromValues(v.X, v.Y, v.Z);
         }
 
         Matrix4 ToMatrix4(float[] mvMatrix)
@@ -3687,17 +3698,17 @@ namespace ManicDigger
             var raydir = (raytarget - ray_start_point);
             raydir.Normalize();
             raydir = Vector3.Multiply(raydir, tppcameradistance + 1);
-            pick.Start = ray_start_point;
-            pick.End = ray_start_point + raydir;
+            pick.Start = Vector3ToFloatArray(ray_start_point);
+            pick.End = Vector3ToFloatArray(ray_start_point + raydir);
 
             //pick terrain
             var s = new BlockOctreeSearcher();
-            s.StartBox = new Box3D(0, 0, 0, BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
-            pick2.Sort((a, b) => { return (a.pos - ray_start_point).Length.CompareTo((b.pos - ray_start_point).Length); });
+            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
             if (pick2.Count > 0)
             {
-                var pickdistance = (pick2[0].pos - target).Length;
+                var pickdistance = (FloatArrayToVector3(pick2[0].pos) - target).Length;
                 curtppcameradistance = Math.Min(pickdistance - 1, curtppcameradistance);
                 if (curtppcameradistance < 0.3f) { curtppcameradistance = 0.3f; }
             }

@@ -648,6 +648,18 @@
         return this.whitetexture;
     }
     int whitetexture;
+
+    public static float MinFloat(float a, float b)
+    {
+        if (a <= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
 }
 
 public class Draw2dData
