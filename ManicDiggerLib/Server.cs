@@ -3056,6 +3056,10 @@ if (sent >= unknown.Count) { break; }
                 inventory.RightHand[cmd.MaterialSlot] = null;
             }
             SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
+            for (int i = 0; i < modEventHandlers.onbuild.Count; i++)
+            {
+                modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+            }
 
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
@@ -3066,8 +3070,8 @@ if (sent >= unknown.Count) { break; }
         {
             Inventory inventory = GetPlayerInventory(clients[player_id].playername).Inventory;
             //add to inventory
-            int blocktype = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
-            blocktype = d_Data.WhenPlayerPlacesGetsConvertedTo[blocktype];
+            int blockid = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
+            int blocktype = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
             if ((!d_Data.IsValid[blocktype])
                 || blocktype == SpecialBlockId.Empty)
             {
@@ -3090,6 +3094,10 @@ if (sent >= unknown.Count) { break; }
                 GetInventoryUtil(inventory).GrabItem(item, cmd.MaterialSlot);
             }
             SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
+            for (int i = 0; i < modEventHandlers.ondelete.Count; i++)
+            {
+                modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+            }
 
             clients[player_id].IsInventoryDirty = true;
             NotifyInventory(player_id);
