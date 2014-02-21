@@ -3284,7 +3284,7 @@ if (sent >= unknown.Count) { break; }
             p.Message = truncated;
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Message, Message = p }));
         }
-        private void SendDisconnectPlayer(int clientid, string disconnectReason)
+        public void SendDisconnectPlayer(int clientid, string disconnectReason)
         {
             Packet_ServerDisconnectPlayer p = new Packet_ServerDisconnectPlayer() { DisconnectReason = disconnectReason };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.DisconnectPlayer, DisconnectPlayer = p }));

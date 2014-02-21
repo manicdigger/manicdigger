@@ -871,6 +871,12 @@ namespace ManicDigger
         {
             server.KillPlayer(player);
         }
+        
+        public void DisconnectPlayer(int player, string message)
+        {
+            server.SendDisconnectPlayer(player, message);
+            server.KillPlayer(player);
+        }
 
         public string GetGroupColor(int player)
         {
