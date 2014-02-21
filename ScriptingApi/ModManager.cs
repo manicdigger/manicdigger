@@ -139,6 +139,7 @@ namespace ManicDigger
         string[] GetModPaths();
         void SendExplosion(int targetplayer, float dx, float dy, float dz, bool relativeposition, float range, float time);
         void DisconnectPlayer(int player);
+        void DisconnectPlayer(int player, string message);
         string GetGroupColor(int player);
         string GetGroupName(int player);
         void InstallHttpModule(string name, Func<string> description, FragLabs.HTTP.IHttpModule module);

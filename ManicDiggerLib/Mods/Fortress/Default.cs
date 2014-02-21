@@ -1297,6 +1297,11 @@ namespace ManicDigger.Mods
                 }
                 m.UpdateBlockTypes();
                 lastseason = currentSeason;
+                
+                //Readd "lost blocks" to inventory
+                m.AddToCreativeInventory("Leaves");
+                m.AddToCreativeInventory("Apples");
+                m.AddToCreativeInventory("Water");
             }
         }
 

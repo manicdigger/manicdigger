@@ -148,7 +148,8 @@ public class CharacterPhysicsCi
         return game.GetBlock(x, y, z) == 0
             || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight && game.GetBlock(x, y, z + 2) == 0 && game.GetBlock(x, y, z + 1) == 0) // also check if the block above the stair is empty
             || (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) && (!swimmingtop))
-            || game.IsEmptyForPhysics(game.blocktypes[game.GetBlock(x, y, z)]);
+            || game.IsEmptyForPhysics(game.blocktypes[game.GetBlock(x, y, z)])
+        	|| game.IsRail(game.blocktypes[game.GetBlock(x, y, z)]);
     }
 
     public void Move(CharacterPhysicsState state, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
@@ -698,7 +699,8 @@ public class CharacterPhysicsCi
     
     bool isHalfHeight(int x, int y, int z)
     {
-    	return game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight;
+    	return (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight
+    	        || game.IsRail(game.blocktypes[game.GetBlock(x, y, z)]));
     }
 
     float Floor(float aFloat)
