@@ -660,6 +660,18 @@
             return b;
         }
     }
+
+    public static float AbsFloat(float b)
+    {
+        if (b >= 0)
+        {
+            return b;
+        }
+        else
+        {
+            return 0 - b;
+        }
+    }
 }
 
 public class Draw2dData

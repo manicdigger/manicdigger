@@ -2058,7 +2058,7 @@ namespace ManicDigger
                 player.playerorientation.X = MyMath.Clamp(player.playerorientation.X, (float)Math.PI / 2 + 0.015f, (float)(Math.PI / 2 + Math.PI - 0.015f));
             }
         }
-        bool IsTileEmptyForPhysics(int x, int y, int z)
+        public bool IsTileEmptyForPhysics(int x, int y, int z)
         {
             if (z >= d_Map.MapSizeZ)
             {
@@ -2242,13 +2242,14 @@ namespace ManicDigger
 
             //pick models
             selectedmodelid = -1;
+            Intersection intersection1 = new Intersection();
             foreach (var m in Models)
             {
                 Vector3 closestmodelpos = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
                 foreach (var t in m.TrianglesForPicking)
                 {
                     float[] intersection_ = new float[3];
-                    if (Collisions.Intersection.RayTriangle(pick, t, intersection_) == 1)
+                    if (intersection1.RayTriangle(pick, t, intersection_) == 1)
                     {
                         Vector3 intersection = FloatArrayToVector3(intersection_);
                         if ((FloatArrayToVector3(pick.Start) - intersection).Length > pick_distance)
@@ -2291,9 +2292,9 @@ namespace ManicDigger
             }
 
             //pick terrain
-            var s = new BlockOctreeSearcher();
+            var s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
-            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
+            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
 
             if (overheadcamera && pick2.Count > 0 && left)
@@ -2427,7 +2428,7 @@ namespace ManicDigger
 
                         BlockPosSide p;
                         Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, players[LocalPlayerId].ModelHeight, 0);
-                        if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, headbox)) != null)
+                        if ((p = intersection1.CheckLineBoxExact(pick, headbox)) != null)
                         {
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
@@ -2440,7 +2441,7 @@ namespace ManicDigger
                                 shot.IsHitHead = 1;
                             }
                         }
-                        else if ((p = ManicDigger.Collisions.Intersection.CheckLineBoxExact(pick, bodybox)) != null)
+                        else if ((p = intersection1.CheckLineBoxExact(pick, bodybox)) != null)
                         {
                             //do not allow to shoot through terrain
                             if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
@@ -2811,7 +2812,7 @@ namespace ManicDigger
 
         public const float RailHeight = 0.3f;
 
-        float getblockheight(int x, int y, int z)
+        public float getblockheight(int x, int y, int z)
         {
             if (!d_Map.IsValidPos(x, y, z))
             {
@@ -3702,9 +3703,9 @@ namespace ManicDigger
             pick.End = Vector3ToFloatArray(ray_start_point + raydir);
 
             //pick terrain
-            var s = new BlockOctreeSearcher();
+            var s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
-            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsTileEmptyForPhysics, getblockheight, pick));
+            List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
             if (pick2.Count > 0)
             {
@@ -6489,6 +6490,36 @@ namespace ManicDigger
         public TerrainRenderer terrainRenderer;
         void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
         void RedrawBlock(int x, int y, int z) { terrainRenderer.RedrawBlock(x, y, z); }
+    }
+
+    public class GetBlockHeight_ : DelegateGetBlockHeight
+    {
+        public static GetBlockHeight_ Create(ManicDiggerGameWindow w_)
+        {
+            GetBlockHeight_ g = new GetBlockHeight_();
+            g.w = w_;
+            return g;
+        }
+        internal ManicDiggerGameWindow w;
+        public override float GetBlockHeight(int x, int y, int z)
+        {
+            return w.getblockheight(x, y, z);
+        }
+    }
+
+    public class IsBlockEmpty_ : DelegateIsBlockEmpty
+    {
+        public static IsBlockEmpty_ Create(ManicDiggerGameWindow w_)
+        {
+            IsBlockEmpty_ g = new IsBlockEmpty_();
+            g.w = w_;
+            return g;
+        }
+        ManicDiggerGameWindow w;
+        public override bool IsBlockEmpty(int x, int y, int z)
+        {
+            return w.IsTileEmptyForPhysics(x, y, z);
+        }
     }
 
     struct TextAndSize
