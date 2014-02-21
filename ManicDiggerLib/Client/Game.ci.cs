@@ -17,6 +17,8 @@
         lastplacedblockZ = -1;
         mLightLevels = new float[16];
         sunlight_ = 15;
+        mvMatrix = new StackFloatArray();
+        pMatrix = new StackFloatArray();
     }
 
     const int MaxBlockTypes = 1024;

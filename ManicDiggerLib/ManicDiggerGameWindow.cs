@@ -33,6 +33,7 @@ namespace ManicDigger
         public ManicDiggerGameWindow()
         {
             one = 1;
+            game = new Game();
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
         }
@@ -40,7 +41,7 @@ namespace ManicDigger
         public byte localstance = 0;
         public void Start()
         {
-            game = new Game();
+            //game = new Game();
             game.p = new GamePlatformNative();
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
