@@ -924,5 +924,10 @@ namespace ManicDigger
                 server.SendPlayerSpawnToAll(player);
             }
         }
+        
+        public int GetAutoRestartInterval()
+        {
+        	return server.config.AutoRestartCycle;
+        }
     }
 }

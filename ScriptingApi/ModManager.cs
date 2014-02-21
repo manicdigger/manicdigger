@@ -148,6 +148,7 @@ namespace ManicDigger
         long TotalReceivedBytes();
         long TotalSentBytes();
         void SetPlayerNameColor(int player, string color);
+        int GetAutoRestartInterval();
     }
 
     public enum SpecialKey
