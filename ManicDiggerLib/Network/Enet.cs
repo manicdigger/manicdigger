@@ -6,7 +6,7 @@ namespace ManicDigger
 {
     public class EnetNetServer : INetServer
     {
-        public void Start()
+        public override void Start()
         {
             host = new ENet.Host();
             host.InitializeServer(configuration.Port, 256);
@@ -14,11 +14,11 @@ namespace ManicDigger
 
         ENet.Host host;
 
-        public void Recycle(INetIncomingMessage msg)
+        public override void Recycle(INetIncomingMessage msg)
         {
         }
 
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             if (messages.Count > 0)
             {
@@ -36,17 +36,17 @@ namespace ManicDigger
                             var peer = event_.Peer;
                             peer.UserData = new IntPtr(clientid++);
                             var senderConnectionConnect = new EnetNetConnection() { peer = event_.Peer };
-                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionConnect, Type = MessageType.Connect });
+                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionConnect, type = NetworkMessageType.Connect });
                             break;
                         case ENet.EventType.Receive:
                             byte[] data = event_.Packet.GetBytes();
                             event_.Packet.Dispose();
                             var senderConnectionReceive = new EnetNetConnection() { peer = event_.Peer };
-                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionReceive, message = data, Type = MessageType.Data });
+                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionReceive, message = data, type = NetworkMessageType.Data });
                             break;
                         case ENet.EventType.Disconnect:
                             var senderConnectionDisconnect = new EnetNetConnection() { peer = event_.Peer };
-                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionDisconnect, Type = MessageType.Disconnect });
+                            messages.Enqueue(new EnetNetIncomingMessage() { senderconnection = senderConnectionDisconnect, type = NetworkMessageType.Disconnect });
                             break;
                     }
                 }
@@ -64,15 +64,25 @@ namespace ManicDigger
         private ENetPeerConfiguration configuration = new ENetPeerConfiguration();
         public class ENetPeerConfiguration : INetPeerConfiguration
         {
-            public int Port { get; set; }
+            internal int Port;
+
+            public override int GetPort()
+            {
+                return Port;
+            }
+
+            public override void SetPort(int value)
+            {
+                Port = value;
+            }
         }
 
-        public INetPeerConfiguration Configuration
+        public override INetPeerConfiguration Configuration()
         {
-            get { return configuration; }
+            return configuration;
         }
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new EnetNetOutgoingMessage();
         }
@@ -82,41 +92,42 @@ namespace ManicDigger
     {
         public EnetNetConnection senderconnection;
 
-        public INetConnection SenderConnection
+        public override INetConnection SenderConnection()
         {
-            get { return senderconnection; }
+            return senderconnection;
         }
 
         public byte[] message;
 
-        public byte[] ReadBytes(int numberOfBytes)
+        public override byte[] ReadBytes(int numberOfBytes)
         {
             return message;
         }
 
-        public int LengthBytes
+        public override int LengthBytes()
         {
-            get { return message.Length; }
+            return message.Length;
         }
 
-        public MessageType Type { get; set; }
+        internal NetworkMessageType type;
+        public override NetworkMessageType Type() { return type; }
     }
 
     public class EnetNetConnection : INetConnection
     {
         public ENet.Peer peer;
-        public IPEndPoint RemoteEndPoint
+        public override IPEndPointCi RemoteEndPoint()
         {
-            get { return peer.GetRemoteAddress(); }
+            return IPEndPointCiDefault.Create(peer.GetRemoteAddress().Address.ToString());
         }
 
-        public void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
+        public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
         {
             var msg1 = (EnetNetOutgoingMessage)msg;
             peer.Send(0, msg1.message, ENet.PacketFlags.Reliable);
         }
 
-        public void Update()
+        public override void Update()
         {
         }
 
@@ -134,7 +145,7 @@ namespace ManicDigger
     public class EnetNetOutgoingMessage : INetOutgoingMessage
     {
         public byte[] message;
-        public void Write(byte[] source)
+        public override void Write(byte[] source)
         {
             message = (byte[])source.Clone();
         }
@@ -142,7 +153,7 @@ namespace ManicDigger
 
     public class EnetNetClient : INetClient
     {
-        public void Start()
+        public override void Start()
         {
             host = new ENet.Host();
             host.Initialize(null, 1, 0, 0, 0);
@@ -152,14 +163,14 @@ namespace ManicDigger
         bool connected;
         bool connected2;
 
-        public INetConnection Connect(string ip, int port)
+        public override INetConnection Connect(string ip, int port)
         {
             peer = host.Connect(ip, port, 1234, 200);
             connected = true;
             return null;
         }
 
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             if (!connected)
             {
@@ -212,12 +223,12 @@ namespace ManicDigger
 
         Queue<EnetNetIncomingMessage> messages = new Queue<EnetNetIncomingMessage>();
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new EnetNetOutgoingMessage();
         }
         Queue<EnetNetOutgoingMessage> tosend = new Queue<EnetNetOutgoingMessage>();
-        public void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
+        public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
         {
             var msg = (EnetNetOutgoingMessage)message;
             if (!connected2)

@@ -2755,7 +2755,7 @@ public class TerrainChunkTesselatorCi
         }
     }
 
-    public VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, Texture texture, bool transparent)
+    public VerticesIndicesToLoad GetVerticesIndices(ModelData m, int x, int y, int z, int texture, bool transparent)
     {
         VerticesIndicesToLoad v = new VerticesIndicesToLoad();
         v.modelData = m;
@@ -2838,7 +2838,7 @@ public class VerticesIndicesToLoad
     internal float positionY;
     internal float positionZ;
     internal bool transparent;
-    internal Texture texture;
+    internal int texture;
 }
 
 public class TorchTypeEnum

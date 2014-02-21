@@ -17,6 +17,9 @@
         lastplacedblockZ = -1;
         mLightLevels = new float[16];
         sunlight_ = 15;
+        mvMatrix = new StackFloatArray();
+        pMatrix = new StackFloatArray();
+        whitetexture = -1;
     }
 
     const int MaxBlockTypes = 1024;
@@ -312,7 +315,7 @@
     }
     internal int texturesPacked() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } //16x16
     internal int terrainTexture;
-    internal Texture[] terrainTextures1d;
+    internal int[] terrainTextures1d;
     internal ITerrainTextures d_TerrainTextures;
 
     internal int lastplacedblockX;
@@ -327,7 +330,7 @@
     internal MeshBatcher d_Batcher;
     internal int sunlight_;
 
-    public void Draw2dTexture(Texture textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
+    public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
     {
         RectFRef rect = RectFRef.Create(0, 0, 1, 1);
         if (inAtlasId != null)
@@ -396,7 +399,7 @@
         return ret;
     }
 
-    public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, Texture textureid, float angle)
+    public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid, float angle)
     {
         ModelData[] modelDatas = new ModelData[512];
         int modelDatasCount = 0;
@@ -408,7 +411,7 @@
             float width = d.width;
             float height = d.height;
             IntRef inAtlasId = d.inAtlasId;
-            Texture textureId = textureid;
+            int textureId = textureid;
             int color = d.color;
 
             RectFRef rect = RectFRef.Create(0, 0, 1, 1);
@@ -445,9 +448,41 @@
     internal StackFloatArray mvMatrix;
     internal StackFloatArray pMatrix;
 
+    public void GLMatrixModeModelView()
+    {
+        currentMatrixModeProjection = false;
+    }
+
+    public void GLMatrixModeProjection()
+    {
+        currentMatrixModeProjection = true;
+    }
+
     public void SetMatrixUniforms()
     {
         p.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+    }
+
+    public void GLLoadMatrix(float[] m)
+    {
+        if (currentMatrixModeProjection)
+        {
+            if (pMatrix.Count() > 0)
+            {
+                pMatrix.Pop();
+            }
+            pMatrix.Push(m);
+        }
+        else
+        {
+            if (pMatrix.Count() > 0)
+            {
+                mvMatrix.Pop();
+            }
+            mvMatrix.Push(m);
+        }
+
+        SetMatrixUniforms();
     }
 
     public void GLPopMatrix()
@@ -566,6 +601,48 @@
         Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
         SetMatrixUniforms();
     }
+
+    public void OrthoMode(int width, int height)
+    {
+        //GL.Disable(EnableCap.DepthTest);
+        GLMatrixModeProjection();
+        GLPushMatrix();
+        GLLoadIdentity();
+        GLOrtho(0, width, height, 0, 0, 1);
+        GLMatrixModeModelView();
+        GLPushMatrix();
+        GLLoadIdentity();
+    }
+
+    public void PerspectiveMode()
+    {
+        // Enter into our projection matrix mode
+        GLMatrixModeProjection();
+        // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
+        GLPopMatrix();
+        // Go back to our model view matrix like normal
+        GLMatrixModeModelView();
+        GLPopMatrix();
+        //GL.LoadIdentity();
+        //GL.Enable(EnableCap.DepthTest);
+    }
+
+    public int WhiteTexture()
+    {
+        if (this.whitetexture == -1)
+        {
+            BitmapCi bmp = p.BitmapCreate(1, 1);
+            byte[] pixels = new byte[4];
+            pixels[0] = 255;
+            pixels[1] = 255;
+            pixels[2] = 255;
+            pixels[3] = 255;
+            p.BitmapSetPixelsRgba(bmp, pixels);
+            this.whitetexture = p.LoadTextureFromBitmap(bmp);
+        }
+        return this.whitetexture;
+    }
+    int whitetexture;
 }
 
 public class Draw2dData
@@ -608,7 +685,7 @@ public class ITerrainTextures
 
     public int texturesPacked() { return game.texturesPacked(); }
     public int terrainTexture() { return game.terrainTexture; }
-    public Texture[] terrainTextures1d() { return game.terrainTextures1d; }
+    public int[] terrainTextures1d() { return game.terrainTextures1d; }
     public int terrainTexturesPerAtlas() { return game.terrainTexturesPerAtlas; }
 }
 

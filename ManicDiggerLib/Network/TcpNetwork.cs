@@ -9,7 +9,7 @@ namespace ManicDigger
 {
     public class TcpNetServer : INetServer
     {
-        public void Start()
+        public override void Start()
         {
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.NoDelay = true;
@@ -20,14 +20,14 @@ namespace ManicDigger
 
         Socket socket;
 
-        public void Recycle(INetIncomingMessage msg)
+        public override void Recycle(INetIncomingMessage msg)
         {
         }
 
         Dictionary<Socket, TcpNetConnection> clients = new Dictionary<Socket, TcpNetConnection>();
 
         byte[] data = new byte[1024 * 16];
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             if (messages.Count > 0)
             {
@@ -103,24 +103,34 @@ namespace ManicDigger
 
         TcpNetPeerConfiguration configuration = new TcpNetPeerConfiguration();
 
-        public INetPeerConfiguration Configuration
+        public override INetPeerConfiguration Configuration()
         {
-            get { return configuration; }
+            return configuration;
         }
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new TcpNetOutgoingMessage();
         }
     }
     public class TcpNetPeerConfiguration : INetPeerConfiguration
     {
-        public int Port { get; set; }
+        internal int Port;
+
+        public override int GetPort()
+        {
+            return Port;
+        }
+
+        public override void SetPort(int value)
+        {
+            Port = value;
+        }
     }
     public class TcpNetOutgoingMessage : INetOutgoingMessage
     {
         public byte[] message;
-        public void Write(byte[] source)
+        public override void Write(byte[] source)
         {
             message = (byte[])source.Clone();
         }
@@ -129,27 +139,28 @@ namespace ManicDigger
     {
         public byte[] data;
         public TcpNetConnection senderconnection;
-        public INetConnection SenderConnection { get { return senderconnection; } }
+        public override INetConnection SenderConnection() { return senderconnection; }
 
-        public byte[] ReadBytes(int numberOfBytes)
+        public override byte[] ReadBytes(int numberOfBytes)
         {
             return data;
         }
 
-        public int LengthBytes
+        public override int LengthBytes()
         {
-            get { return data.Length; }
+            return data.Length;
         }
 
-        public MessageType Type { get; set; }
+        internal NetworkMessageType type;
+        public override NetworkMessageType Type() { return type; }
     }
     public class TcpNetClient : INetClient
     {
-        public void Start()
+        public override void Start()
         {
         }
 
-        public INetConnection Connect(string ip, int port)
+        public override INetConnection Connect(string ip, int port)
         {
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.NoDelay = true;
@@ -158,7 +169,7 @@ namespace ManicDigger
         }
         Socket socket;
         List<byte> received = new List<byte>();
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             if (messages.Count > 0)
             {
@@ -228,12 +239,12 @@ namespace ManicDigger
         }
         Queue<INetIncomingMessage> messages = new Queue<INetIncomingMessage>();
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new TcpNetOutgoingMessage();
         }
 
-        public void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
+        public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
         {
             var msg = (TcpNetOutgoingMessage)message;
             MemoryStream ms = new MemoryStream();
@@ -255,12 +266,12 @@ namespace ManicDigger
     {
         public Socket socket;
         public List<byte> received = new List<byte>();
-        public IPEndPoint RemoteEndPoint
+        public override IPEndPointCi RemoteEndPoint()
         {
-            get { return (IPEndPoint)socket.RemoteEndPoint; }
+            return IPEndPointCiDefault.Create(((IPEndPoint)socket.RemoteEndPoint).Address.ToString());
         }
 
-        public void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
+        public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
         {
             var msg1 = (TcpNetOutgoingMessage)msg;
             MemoryStream ms = new MemoryStream();
@@ -273,7 +284,7 @@ namespace ManicDigger
         {
         }
 
-        public void Update()
+        public override void Update()
         {
         }
 

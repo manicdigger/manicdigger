@@ -33,6 +33,7 @@ namespace ManicDigger
         public ManicDiggerGameWindow()
         {
             one = 1;
+            game = new Game();
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
         }
@@ -40,7 +41,6 @@ namespace ManicDigger
         public byte localstance = 0;
         public void Start()
         {
-            game = new Game();
             game.p = new GamePlatformNative();
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
@@ -2775,7 +2775,7 @@ namespace ManicDigger
             todraw[0].color = Game.ColorFromArgb(255, 255, 255, 255);
 
             Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null);
-            Draw2dTextures(todraw, todraw.Length, GetTexture_(needleid), compassangle);
+            Draw2dTextures(todraw, todraw.Length, needleid, compassangle);
         }
 
         void DrawEnemyHealthCommon(string name, float progress)
@@ -2974,7 +2974,7 @@ namespace ManicDigger
                         n = (int)((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
                             * (b.animationcount * b.animationcount - 1));
                     }
-                    Draw2dTexture(GetTexture_(GetTexture(b.image)), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
+                    Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
                     GLPopMatrix();
                     if ((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
                 }
@@ -3106,24 +3106,7 @@ namespace ManicDigger
 
         public void GLLoadMatrix(Matrix4 m)
         {
-            if (currentMatrixModeProjection)
-            {
-                if (pMatrix.Count() > 0)
-                {
-                    pMatrix.Pop();
-                }
-                pMatrix.Push(Matrix4ToFloat(m));
-            }
-            else
-            {
-                if (pMatrix.Count() > 0)
-                {
-                    mvMatrix.Pop();
-                }
-                mvMatrix.Push(Matrix4ToFloat(m));
-            }
-
-            SetMatrixUniforms();
+            game.GLLoadMatrix(Matrix4ToFloat(m));
         }
 
         public void GLPopMatrix()
@@ -3163,12 +3146,12 @@ namespace ManicDigger
 
         public void GLMatrixModeModelView()
         {
-            currentMatrixModeProjection = false;
+            game.GLMatrixModeModelView();
         }
 
         void GLMatrixModeProjection()
         {
-            currentMatrixModeProjection = true;
+            game.GLMatrixModeProjection();
         }
 
         private int GetTexture(string s)
@@ -5075,7 +5058,7 @@ namespace ManicDigger
             INetIncomingMessage msg;
             while ((msg = main.ReadMessage()) != null)
             {
-                TryReadPacket(msg.ReadBytes(msg.LengthBytes));
+                TryReadPacket(msg.ReadBytes(msg.LengthBytes()));
             }
             if (spawned && ((game.p.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
             {
@@ -6225,15 +6208,14 @@ namespace ManicDigger
         public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
         {
             game.terrainTexture = d_The3d.LoadTexture(atlas2d);
-            List<Texture> terrainTextures1d = new List<Texture>();
+            List<int> terrainTextures1d = new List<int>();
             {
                 terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
                 List<Bitmap> atlases1d = d_TextureAtlasConverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
                 foreach (Bitmap bmp in atlases1d)
                 {
                     int texture = LoadTexture(bmp);
-                    var t = new TextureNative() { value = texture };
-                    terrainTextures1d.Add(t);
+                    terrainTextures1d.Add(texture);
                     bmp.Dispose();
                 }
             }
@@ -6381,12 +6363,6 @@ namespace ManicDigger
             Draw2dTexture(textures[filename], x1, y1, width, height, null);
         }
 
-        Texture GetTexture_(int textureid)
-        {
-            Texture t = new TextureNative() { value = textureid };
-            return t;
-        }
-
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
         {
             Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
@@ -6397,9 +6373,9 @@ namespace ManicDigger
         }
         public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
         {
-            Draw2dTexture(GetTexture_(textureid), x1, y1, width, height, inAtlasId, game.texturesPacked(), Game.ColorFromArgb(color.A,color.R, color.G, color.B), enabledepthtest);
+            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, game.texturesPacked(), Game.ColorFromArgb(color.A,color.R, color.G, color.B), enabledepthtest);
         }
-        public void Draw2dTexture(Texture textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, int color, bool enabledepthtest)
+        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, int color, bool enabledepthtest)
         {
             IntRef inatlasid = null;
             if (inAtlasId != null)
@@ -6411,9 +6387,9 @@ namespace ManicDigger
 
         public void Draw2dTextures(Draw2dData[] todraw, int textureid)
         {
-            Draw2dTextures(todraw, todraw.Length, GetTexture_(textureid), 0);
+            Draw2dTextures(todraw, todraw.Length, textureid, 0);
         }
-        public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, Texture textureid, float angle)
+        public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid, float angle)
         {
             game.Draw2dTextures(todraw, todrawLength, textureid, angle);
         }
@@ -6430,15 +6406,8 @@ namespace ManicDigger
 
         public int WhiteTexture()
         {
-            if (this.whitetexture == -1)
-            {
-                var bmp = new Bitmap(1, 1);
-                bmp.SetPixel(0, 0, Color.White);
-                this.whitetexture = LoadTexture(bmp);
-            }
-            return this.whitetexture;
+            return game.WhiteTexture();
         }
-        public int whitetexture = -1;
         public Dictionary<string, int> textures = new Dictionary<string, int>();
         public float fov = MathHelper.PiOver3;
         public Func<float> currentfov;
@@ -6478,27 +6447,12 @@ namespace ManicDigger
 
         public void OrthoMode(int width, int height)
         {
-            //GL.Disable(EnableCap.DepthTest);
-            GLMatrixModeProjection();
-            GLPushMatrix();
-            GLLoadIdentity();
-            GLOrtho(0, width, height, 0, 0, 1);
-            GLMatrixModeModelView();
-            GLPushMatrix();
-            GLLoadIdentity();
+            game.OrthoMode(width, height);
         }
 
         public void PerspectiveMode()
         {
-            // Enter into our projection matrix mode
-            GLMatrixModeProjection();
-            // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
-            GLPopMatrix();
-            // Go back to our model view matrix like normal
-            GLMatrixModeModelView();
-            GLPopMatrix();
-            //GL.LoadIdentity();
-            //GL.Enable(EnableCap.DepthTest);
+            game.PerspectiveMode();
         }
 
         public int sunlight { get { return game.sunlight_; } set { game.sunlight_ = value; } }

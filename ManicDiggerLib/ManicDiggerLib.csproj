@@ -100,6 +100,7 @@
     <Compile Include="Client\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
+    <Compile Include="Client\Network.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="Client\Shadows.ci.cs" />
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
@@ -158,8 +159,6 @@
     <Compile Include="Mods\War\WaterSimple.cs" />
     <Compile Include="Network\DummyNetwork.cs" />
     <Compile Include="Network\Enet.cs" />
-    <Compile Include="Network\Lidgren.cs" />
-    <Compile Include="Network\Network.cs" />
     <Compile Include="Network\TcpNetwork.cs" />
     <Compile Include="Packets.cs" />
     <Compile Include="Forms\PasswordForm.cs">

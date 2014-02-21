@@ -1293,7 +1293,7 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                banlist.BannedIPs.Add(((IPEndPoint)targetClient.socket.RemoteEndPoint).Address.ToString());
+                banlist.BannedIPs.Add((targetClient.socket.RemoteEndPoint()).AddressToString());
                 SaveConfig();
                 SendMessageToAll(string.Format("{0}{1} was IP banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
@@ -1432,7 +1432,7 @@ namespace ManicDiggerServer
                     foreach (var k in clients)
                     {
                         // Format: Key Playername IP
-                        SendMessage(sourceClientId, string.Format("[{0}] {1} {2}", k.Key, k.Value.ColoredPlayername(colorNormal), ((IPEndPoint)k.Value.socket.RemoteEndPoint).Address.ToString()));
+                        SendMessage(sourceClientId, string.Format("[{0}] {1} {2}", k.Key, k.Value.ColoredPlayername(colorNormal), (k.Value.socket.RemoteEndPoint()).AddressToString()));
                     }
                     return true;
                 case "-clients2":

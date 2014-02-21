@@ -34,14 +34,14 @@
     public abstract void GlViewport(int x, int y, int width, int height);
     public abstract void GlClearColorBufferAndDepthBuffer();
     public abstract void GlDisableDepthTest();
-    public abstract void BindTexture2d(Texture texture);
+    public abstract void BindTexture2d(int texture);
     public abstract Model CreateModel(ModelData modelData);
     public abstract void DrawModel(Model model);
     public abstract void InitShaders();
     public abstract void SetMatrixUniforms(float[] pMatrix, float[] mvMatrix);
     public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
     public abstract void GlEnableDepthTest();
-    public abstract Texture LoadTextureFromFile(string fullPath);
+    public abstract int LoadTextureFromFile(string fullPath);
     public abstract string GetLanguageIso6391();
     public abstract int TimeMillisecondsFromStart();
     public abstract void DrawModels(Model[] model, int count);
@@ -50,6 +50,9 @@
     public abstract void ThrowException(string message);
     public abstract void DeleteModel(Model model);
     public abstract void GlEnableTexture2d();
+    public abstract BitmapCi BitmapCreate(int width, int height);
+    public abstract void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels);
+    public abstract int LoadTextureFromBitmap(BitmapCi bmp);
 }
 
 public class KeyEventArgs

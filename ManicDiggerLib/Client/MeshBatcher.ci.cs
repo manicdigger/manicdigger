@@ -10,7 +10,7 @@
         }
         modelsCount = 0;
         BindTexture = true;
-        glTextures = new Texture[10];
+        glTextures = new int[10];
         glTexturesLength = 10;
         empty = new int[modelsMax];
         emptyCount = 0;
@@ -26,7 +26,7 @@
     int emptyCount;
 
 
-    public int Add(ModelData modelData, bool transparent, Texture texture, float centerX, float centerY, float centerZ, float radius)
+    public int Add(ModelData modelData, bool transparent, int texture, float centerX, float centerY, float centerZ, float radius)
     {
         int id;
         if (emptyCount > 0)
@@ -91,14 +91,14 @@
     }
 
     // Finds an index in glTextures array.
-    int GetTextureId(Texture glTexture)
+    int GetTextureId(int glTexture)
     {
         int id = ArrayIndexOf(glTextures, glTexturesLength, glTexture);
         if (id != -1)
         {
             return id;
         }
-        id = ArrayIndexOf(glTextures, glTexturesLength, null);
+        id = ArrayIndexOf(glTextures, glTexturesLength, 0);
         if (id != -1)
         {
             glTextures[id] = glTexture;
@@ -106,7 +106,7 @@
         }
         int increase = 10;
         //Array.Resize(ref glTextures, glTextures.Length + increase);
-        Texture[] glTextures2 = new Texture[glTexturesLength + increase];
+        int[] glTextures2 = new int[glTexturesLength + increase];
         for (int i = 0; i < glTexturesLength; i++)
         {
             glTextures2[i] = glTextures[i];
@@ -118,7 +118,7 @@
         return glTexturesLength - increase;
     }
 
-    int ArrayIndexOf(Texture[] glTextures, int length, Texture glTexture)
+    int ArrayIndexOf(int[] glTextures, int length, int glTexture)
     {
         for (int i = 0; i < length; i++)
         {
@@ -178,7 +178,7 @@
     }
 
     // Maps from inner texture id to real opengl texture id.
-    Texture[] glTextures;
+    int[] glTextures;
     int glTexturesLength;
     ToCall[] tocallSolid;
     ToCall[] tocallTransparent;

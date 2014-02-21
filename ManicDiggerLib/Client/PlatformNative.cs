@@ -156,9 +156,7 @@ public class GamePlatformNative : GamePlatform
         //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.LinearMipmapNearest);
         //gl.GenerateMipmap(Gl.Texture2d);
         //gl.BindTexture(Gl.Texture2d, null);
-        TextureNative texture = new TextureNative();
-        texture.value = LoadTexture(bmp, true);
-        t.texture = texture;
+        t.texture = LoadTexture(bmp, true);
         return t;
     }
     ManicDigger.Renderers.TextRenderer r = new ManicDigger.Renderers.TextRenderer();
@@ -405,19 +403,9 @@ public class GamePlatformNative : GamePlatform
         GL.Disable(EnableCap.DepthTest);
     }
 
-    public override void BindTexture2d(Texture texture)
+    public override void BindTexture2d(int texture)
     {
-        TextureNative texture_ = (TextureNative)texture;
-        int textureValue;
-        if (texture_ != null)
-        {
-            textureValue = texture_.value;
-        }
-        else
-        {
-            textureValue = 0;
-        }
-        GL.BindTexture(TextureTarget.Texture2D, textureValue);
+        GL.BindTexture(TextureTarget.Texture2D, texture);
     }
 
     public override Model CreateModel(ModelData data)
@@ -546,16 +534,12 @@ public class GamePlatformNative : GamePlatform
         GL.Enable(EnableCap.DepthTest);
     }
 
-    public override Texture LoadTextureFromFile(string fullPath)
+    public override int LoadTextureFromFile(string fullPath)
     {
-        TextureNative t = new TextureNative();
-
         using (Bitmap bmp = new Bitmap(fullPath))
         {
-            t.value = LoadTexture(bmp, true);
+            return LoadTexture(bmp, true);
         }
-
-        return t;
     }
 
     public bool ALLOW_NON_POWER_OF_TWO = false;
@@ -673,6 +657,42 @@ public class GamePlatformNative : GamePlatform
     {
         GL.Enable(EnableCap.Texture2D);
     }
+
+    public override BitmapCi BitmapCreate(int width, int height)
+    {
+        BitmapCiCs bmp = new BitmapCiCs();
+        bmp.bmp = new Bitmap(width, height);
+        return bmp;
+    }
+
+    public override void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        int width = bmp_.bmp.Width;
+        int height = bmp_.bmp.Height;
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                byte r = pixels[x * 4 + y * width + 0];
+                byte g = pixels[x * 4 + y * width + 1];
+                byte b = pixels[x * 4 + y * width + 2];
+                byte a = pixels[x * 4 + y * width + 3];
+                bmp_.bmp.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+            }
+        }
+    }
+
+    public override int LoadTextureFromBitmap(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return LoadTexture(bmp_.bmp, true);
+    }
+}
+
+public class BitmapCiCs : BitmapCi
+{
+    public Bitmap bmp;
 }
 
 public class TextureNative : Texture

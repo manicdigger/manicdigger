@@ -339,7 +339,7 @@ namespace ManicDigger
 
         public string GetPlayerIp(int player)
         {
-            return ((IPEndPoint)server.GetClient(player).socket.RemoteEndPoint).Address.ToString();
+            return (server.GetClient(player).socket.RemoteEndPoint()).AddressToString();
         }
 
         public string GetPlayerName(int player)

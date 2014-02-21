@@ -833,7 +833,7 @@ namespace ManicDiggerServer
                 iep = new IPEndPoint(IPAddress.Any, port);
             }
             */
-            d_MainSocket.Configuration.Port = port;
+            d_MainSocket.Configuration().SetPort(port);
             d_MainSocket.Start();
             if (config.EnableHTTPServer)
             {
@@ -989,25 +989,25 @@ namespace ManicDiggerServer
             s.Start();
             while ((msg = d_MainSocket.ReadMessage()) != null)
             {
-                if (msg.SenderConnection == null)
+                if (msg.SenderConnection() == null)
                 {
                     continue;
                 }
                 int clientid = -1;
                 foreach (var k in clients)
                 {
-                    if (k.Value.socket.Equals(msg.SenderConnection))
+                    if (k.Value.socket.Equals(msg.SenderConnection()))
                     {
                         clientid = k.Key;
                     }
                 }
-                switch (msg.Type)
+                switch (msg.Type())
                 {
-                    case ManicDigger.MessageType.Connect:
+                    case NetworkMessageType.Connect:
                         //new connection
                         //ISocket client1 = d_MainSocket.Accept();
-                        INetConnection client1 = msg.SenderConnection;
-                        IPEndPoint iep1 = (IPEndPoint)client1.RemoteEndPoint;
+                        INetConnection client1 = msg.SenderConnection();
+                        IPEndPointCi iep1 = client1.RemoteEndPoint();
 
                         Client c = new Client();
                         c.socket = client1;
@@ -1033,14 +1033,14 @@ namespace ManicDiggerServer
                             SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
                             KillPlayer(this.lastClientId);
                         }
-                        else if (banlist.IsIPBanned(iep1.Address.ToString()))
+                        else if (banlist.IsIPBanned(iep1.AddressToString()))
                         {
                             SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
-                            ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.Address.ToString()));
+                            ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             KillPlayer(this.lastClientId);
                         }
                         break;
-                    case ManicDigger.MessageType.Data:
+                    case NetworkMessageType.Data:
                         if (clientid == -1)
                         {
                             break;
@@ -1049,8 +1049,8 @@ namespace ManicDiggerServer
                         // process packet
                         try
                         {
-                            TotalReceivedBytes += msg.LengthBytes;
-                            TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes));
+                            TotalReceivedBytes += msg.LengthBytes();
+                            TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes()));
                             d_MainSocket.Recycle(msg);
                         }
                         catch (Exception e)
@@ -1066,7 +1066,7 @@ namespace ManicDiggerServer
                             break;
                         }
                         break;
-                    case ManicDigger.MessageType.Disconnect:
+                    case NetworkMessageType.Disconnect:
                         Console.WriteLine("Client disconnected.");
                         KillPlayer(clientid);
                         break;
@@ -2024,12 +2024,12 @@ if (sent >= unknown.Count) { break; }
                         if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
                         {
                             SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
-                            ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
+                            ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
                             break;
                         }
 
-                        bool isClientLocalhost = (((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString() == "127.0.0.1");
+                        bool isClientLocalhost = ((c.socket.RemoteEndPoint()).AddressToString() == "127.0.0.1");
                         bool verificationFailed = false;
 
                         if ((ComputeMd5(config.Key.Replace("-", "") + username) != packet.Identification.VerificationKey)
@@ -2050,7 +2050,7 @@ if (sent >= unknown.Count) { break; }
                         if (banlist.IsUserBanned(username))
                         {
                             SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
-                            ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), username));
+                            ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
                             break;
                         }
@@ -2126,7 +2126,7 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].PositionMul32GlY = position.y + (int)(0.5 * 32);
                         clients[clientid].PositionMul32GlZ = position.z;
 
-                        string ip = ((IPEndPoint)clients[clientid].socket.RemoteEndPoint).Address.ToString();
+                        string ip = (clients[clientid].socket.RemoteEndPoint()).AddressToString();
                         SendMessageToAll(string.Format("Player {0} joins.", clients[clientid].ColoredPlayername(colorNormal)));
                         ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
                         SendMessage(clientid, colorSuccess + config.WelcomeMessage);
@@ -2197,7 +2197,7 @@ if (sent >= unknown.Count) { break; }
                         	}
                         	//Only log when building/destroying blocks. Prevents VandalFinder entries
                         	if (packet.SetBlock.Mode != Packet_BlockSetModeEnum.UseWithTool)
-                        		BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(), d_Map.GetBlock(x, y, z)));
+                        		BuildLog(string.Format("{0} {1} {2} {3} {4} {5}", x, y, z, c.playername, (c.socket.RemoteEndPoint()).AddressToString(), d_Map.GetBlock(x, y, z)));
                         }
                     }
                     break;
@@ -2231,7 +2231,7 @@ if (sent >= unknown.Count) { break; }
                         this.DoFillArea(clientid, packet.FillArea, blockCount);
 
                         BuildLog(string.Format("{0} {1} {2} - {3} {4} {5} {6} {7} {8}", a.x, a.y, a.z, b.x, b.y, b.z,
-                            c.playername, ((IPEndPoint)c.socket.RemoteEndPoint).Address.ToString(),
+                            c.playername, (c.socket.RemoteEndPoint()).AddressToString(),
                             d_Map.GetBlock(a.x, a.y, a.z)));
                     }
                     break;
@@ -3660,7 +3660,7 @@ if (sent >= unknown.Count) { break; }
                 string ip = "";
                 if (this.socket != null)
                 {
-                    ip = ((IPEndPoint)this.socket.RemoteEndPoint).Address.ToString();
+                    ip = (this.socket.RemoteEndPoint()).AddressToString();
                 }
                 // Format: Playername:Group:Privileges IP
                 return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,

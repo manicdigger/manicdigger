@@ -7,16 +7,16 @@ namespace ManicDigger
     public class DummyNetClient : INetClient
     {
         public DummyNetwork network;
-        public INetConnection Connect(string ip, int port)
+        public override INetConnection Connect(string ip, int port)
         {
             return new DummyNetConnection();
         }
 
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             lock (network.ClientReceiveBuffer)
             {
-                if (network.ClientReceiveBuffer.Count > 0)
+                if (network.ClientReceiveBuffer.Count() > 0)
                 {
                     var msg = new DummyNetIncomingmessage();
                     msg.message = network.ClientReceiveBuffer.Dequeue();
@@ -29,12 +29,12 @@ namespace ManicDigger
             }
         }
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new DummyNetOutgoingMessage();
         }
 
-        public void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
+        public override void SendMessage(INetOutgoingMessage message, MyNetDeliveryMethod method)
         {
             lock (network.ServerReceiveBuffer)
             {
@@ -42,34 +42,43 @@ namespace ManicDigger
             }
         }
 
-        public void Start()
+        public override void Start()
         {
         }
     }
     public class DummyNetConnection : INetConnection
     {
         public DummyNetwork network;
-        public void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
+        public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
         {
             lock (network.ClientReceiveBuffer)
             {
                 network.ClientReceiveBuffer.Enqueue(((DummyNetOutgoingMessage)msg).data);
             }
         }
-        public IPEndPoint RemoteEndPoint
+        public override IPEndPointCi RemoteEndPoint()
         {
-            get { return new IPEndPoint(IPAddress.Loopback, 0); }
+            return new DummyIpEndPoint();
         }
-        public void Update()
+        public override void Update()
         {
         }
     }
+    public class DummyIpEndPoint : IPEndPointCi
+    {
+        public override string AddressToString()
+        {
+            return "127.0.0.1";
+        }
+    }
+
     public class DummyNetIncomingmessage : INetIncomingMessage
     {
         public byte[] message;
-        public INetConnection SenderConnection { get; set; }
+        internal INetConnection senderConnection;
+        public override INetConnection SenderConnection() { return senderConnection; }
 
-        public byte[] ReadBytes(int numberOfBytes)
+        public override byte[] ReadBytes(int numberOfBytes)
         {
             if (numberOfBytes != message.Length)
             {
@@ -78,14 +87,15 @@ namespace ManicDigger
             return message;
         }
 
-        public int LengthBytes { get { return message.Length; } }
+        public override int LengthBytes (){ return message.Length; }
 
-        public MessageType Type { get; set; }
+        internal NetworkMessageType type;
+        public override NetworkMessageType Type (){ return type; }
     }
     public class DummyNetOutgoingMessage : INetOutgoingMessage
     {
         public byte[] data;
-        public void Write(byte[] source)
+        public override void Write(byte[] source)
         {
             data = new byte[source.Length];
             Array.Copy(source, data, source.Length);
@@ -94,11 +104,11 @@ namespace ManicDigger
     public class DummyNetServer : INetServer
     {
         public DummyNetwork network;
-        public void Start()
+        public override void Start()
         {
         }
 
-        public void Recycle(INetIncomingMessage msg)
+        public override void Recycle(INetIncomingMessage msg)
         {
         }
 
@@ -106,19 +116,19 @@ namespace ManicDigger
 
         bool receivedAnyMessage;
 
-        public INetIncomingMessage ReadMessage()
+        public override INetIncomingMessage ReadMessage()
         {
             ((DummyNetConnection)connectedClient).network = network;
             lock (network.ServerReceiveBuffer)
             {
-                if (network.ServerReceiveBuffer.Count > 0)
+                if (network.ServerReceiveBuffer.Count() > 0)
                 {
                     if (!receivedAnyMessage)
                     {
                         receivedAnyMessage = true;
-                        return new DummyNetIncomingmessage() { Type = MessageType.Connect, SenderConnection = connectedClient };
+                        return new DummyNetIncomingmessage() { type = NetworkMessageType.Connect, senderConnection = connectedClient };
                     }
-                    return new DummyNetIncomingmessage() { message = network.ServerReceiveBuffer.Dequeue(), SenderConnection = connectedClient };
+                    return new DummyNetIncomingmessage() { message = network.ServerReceiveBuffer.Dequeue(), senderConnection = connectedClient };
                 }
                 else
                 {
@@ -128,12 +138,12 @@ namespace ManicDigger
         }
 
         DummyNetPeerConfiguration configuration = new DummyNetPeerConfiguration();
-        public INetPeerConfiguration Configuration
+        public override INetPeerConfiguration Configuration()
         {
-            get { return configuration; }
+            return configuration;
         }
 
-        public INetOutgoingMessage CreateMessage()
+        public override INetOutgoingMessage CreateMessage()
         {
             return new DummyNetOutgoingMessage();
         }
@@ -141,13 +151,67 @@ namespace ManicDigger
 
     public class DummyNetPeerConfiguration : INetPeerConfiguration
     {
-        public int Port { get; set; }
+        internal int Port;
+
+        public override int GetPort()
+        {
+            return Port;
+        }
+
+        public override void SetPort(int value)
+        {
+            Port = value;
+        }
     }
 
     public class DummyNetwork
     {
-        public Queue<byte[]> ServerReceiveBuffer = new Queue<byte[]>();
-        public Queue<byte[]> ClientReceiveBuffer = new Queue<byte[]>();
+        public QueueByteArray ServerReceiveBuffer = new QueueByteArray();
+        public QueueByteArray ClientReceiveBuffer = new QueueByteArray();
+    }
+
+    public class QueueByteArray
+    {
+        public QueueByteArray()
+        {
+            items = new byte[1][];
+            itemsSize = 1;
+            count = 0;
+        }
+        byte[][] items;
+        int count;
+        int itemsSize;
+
+        internal int Count()
+        {
+            return count;
+        }
+
+        internal byte[] Dequeue()
+        {
+            byte[] ret = items[0];
+            for (int i = 0; i < count - 1; i++)
+            {
+                items[i] = items[i + 1];
+            }
+            count--;
+            return ret;
+        }
+
+        internal void Enqueue(byte[] p)
+        {
+            if (count == itemsSize)
+            {
+                byte[][] items2 = new byte[itemsSize * 2][];
+                for (int i = 0; i < itemsSize; i++)
+                {
+                    items2[i] = items[i];
+                }
+                itemsSize = itemsSize * 2;
+                items = items2;
+            }
+            items[count++] = p;
+        }
     }
 }
 

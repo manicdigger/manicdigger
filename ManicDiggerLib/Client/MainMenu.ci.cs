@@ -182,7 +182,7 @@
         return tnew;
     }
 
-    internal Texture GetTexture(string name)
+    internal int GetTexture(string name)
     {
         for (int i = 0; i < texturesCount; i++)
         {
@@ -199,7 +199,7 @@
     }
 
     Model cubeModel;
-    public void Draw2dQuad(Texture textureid, float dx, float dy, float dw, float dh)
+    public void Draw2dQuad(int textureid, float dx, float dy, float dw, float dh)
     {
         Mat4.Identity_(mvMatrix);
         Mat4.Translate(mvMatrix, mvMatrix, Vec3.FromValues(dx, dy, 0));
@@ -486,7 +486,7 @@ public class TextTexture
 {
     internal float size;
     internal string text;
-    internal Texture texture;
+    internal int texture;
     internal int texturewidth;
     internal int textureheight;
     internal int textwidth;
@@ -496,7 +496,7 @@ public class TextTexture
 public class LoadedTexture
 {
     internal string name;
-    internal Texture texture;
+    internal int texture;
 }
 
 public class Screen
