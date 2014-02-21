@@ -445,6 +445,132 @@
         p.GlDisableCullFace();
         p.GlEnableTexture2d();
     }
+
+    internal bool currentMatrixModeProjection;
+    internal StackFloatArray mvMatrix;
+    internal StackFloatArray pMatrix;
+
+    public void SetMatrixUniforms()
+    {
+        p.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+    }
+
+    public void GLPopMatrix()
+    {
+        if (currentMatrixModeProjection)
+        {
+            if (pMatrix.Count() > 1)
+            {
+                pMatrix.Pop();
+            }
+        }
+        else
+        {
+            if (mvMatrix.Count() > 1)
+            {
+                mvMatrix.Pop();
+            }
+        }
+
+        SetMatrixUniforms();
+    }
+
+    public void GLScale(float x, float y, float z)
+    {
+        float[] m;
+        if (currentMatrixModeProjection)
+        {
+            m = pMatrix.Peek();
+        }
+        else
+        {
+            m = mvMatrix.Peek();
+        }
+        Mat4.Scale(m, m, Vec3.FromValues(x, y, z));
+
+        SetMatrixUniforms();
+    }
+
+    public void GLRotate(float angle, float x, float y, float z)
+    {
+        angle /= 360;
+        angle *= 2 * Game.GetPi();
+        float[] m;
+        if (currentMatrixModeProjection)
+        {
+            m = pMatrix.Peek();
+        }
+        else
+        {
+            m = mvMatrix.Peek();
+        }
+        Mat4.Rotate(m, m, angle, Vec3.FromValues(x, y, z));
+        SetMatrixUniforms();
+    }
+
+    public void GLTranslate(float x, float y, float z)
+    {
+        float[] m;
+        if (currentMatrixModeProjection)
+        {
+            m = pMatrix.Peek();
+        }
+        else
+        {
+            m = mvMatrix.Peek();
+        }
+        Mat4.Translate(m, m, Vec3.FromValues(x, y, z));
+        SetMatrixUniforms();
+    }
+
+    public void GLPushMatrix()
+    {
+        if (currentMatrixModeProjection)
+        {
+            pMatrix.Push(Mat4.CloneIt(pMatrix.Peek()));
+        }
+        else
+        {
+            mvMatrix.Push(Mat4.CloneIt(mvMatrix.Peek()));
+        }
+        SetMatrixUniforms();
+    }
+
+    public void GLLoadIdentity()
+    {
+        if (currentMatrixModeProjection)
+        {
+            if (pMatrix.Count() > 0)
+            {
+                pMatrix.Pop();
+            }
+            pMatrix.Push(Mat4.Identity_(Mat4.Create()));
+        }
+        else
+        {
+            if (mvMatrix.Count() > 0)
+            {
+                mvMatrix.Pop();
+            }
+            mvMatrix.Push(Mat4.Identity_(Mat4.Create()));
+        }
+        SetMatrixUniforms();
+    }
+
+    public void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
+    {
+        float[] m;
+        if (currentMatrixModeProjection)
+        {
+            m = pMatrix.Peek();
+        }
+        else
+        {
+            m = mvMatrix.Peek();
+        }
+        Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
+        SetMatrixUniforms();
+    }
 }
 
 public class Draw2dData
@@ -660,5 +786,38 @@ public class TextureAtlasCi
         r.x = (one / texturesPacked * (textureId % texturesPacked));
         r.w = one / texturesPacked;
         r.h = one / texturesPacked;
+    }
+}
+
+public class StackFloatArray
+{
+    public StackFloatArray()
+    {
+        values = new float[max][];
+    }
+    float[][] values;
+    const int max = 1024;
+    int count;
+
+    internal void Push(float[] p)
+    {
+        values[count++] = p;
+    }
+
+    internal float[] Peek()
+    {
+        return values[count - 1];
+    }
+
+    internal int Count()
+    {
+        return count;
+    }
+
+    internal float[] Pop()
+    {
+        float[] ret = values[count - 1];
+        count--;
+        return ret;
     }
 }
