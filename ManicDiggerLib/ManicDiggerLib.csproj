@@ -100,6 +100,7 @@
     <Compile Include="Client\Collisions.ci.cs" />
     <Compile Include="Client\Game.ci.cs" />
     <Compile Include="Client\Misc.ci.cs" />
+    <Compile Include="Client\ModFpsHistoryGraph.ci.cs" />
     <Compile Include="Client\Network.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="Client\Shadows.ci.cs" />
@@ -185,13 +186,11 @@
     <Compile Include="MapTools\WorldGeneratorTools.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Network\LoginClient.cs" />
-    <Compile Include="Hud\HudFpsHistoryGraphRenderer.cs" />
     <Compile Include="OggDecoder.cs" />
     <Compile Include="Renderers\CharacterRendererMonsterCode.cs" />
     <Compile Include="Renderers\MonospacedTextRenderer.cs" />
     <Compile Include="Renderers\MinecartRenderer.cs" />
     <Compile Include="Network\NetworkClient.cs" />
-    <Compile Include="Collisions.cs" />
     <Compile Include="GameWindowMisc.cs" />
     <Compile Include="ManicDigger.cs" />
     <Compile Include="Misc.cs" />

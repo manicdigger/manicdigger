@@ -44,3 +44,90 @@ public class RectFRef
         return r;
     }
 }
+
+public class InterpolationCi
+{
+    public static int InterpolateColor(GamePlatform platform, float progress, int[] colors, int colorsLength)
+    {
+        float one = 1;
+        int colora = platform.FloatToInt((colorsLength - 1) * progress);
+        if (colora < 0) { colora = 0; }
+        if (colora >= colorsLength) { colora = colorsLength - 1; }
+        int colorb = colora + 1;
+        if (colorb >= colorsLength) { colorb = colorsLength - 1; }
+        int a = colors[colora];
+        int b = colors[colorb];
+        float p = (progress - (one * colora) / (colorsLength - 1)) * (colorsLength - 1);
+        int A = platform.FloatToInt(Game.ColorA(a) + (Game.ColorA(b) - Game.ColorA(a)) * p);
+        int R = platform.FloatToInt(Game.ColorR(a) + (Game.ColorR(b) - Game.ColorR(a)) * p);
+        int G = platform.FloatToInt(Game.ColorG(a) + (Game.ColorG(b) - Game.ColorG(a)) * p);
+        int B = platform.FloatToInt(Game.ColorB(a) + (Game.ColorB(b) - Game.ColorB(a)) * p);
+        return Game.ColorFromArgb(A, R, G, B);
+    }
+}
+
+public class DictionaryStringString
+{
+    public DictionaryStringString()
+    {
+        items = new KeyValueStringString[64];
+        count = 64;
+    }
+    internal KeyValueStringString[] items;
+    internal int count;
+
+    public void Set(string key, string value)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (items[i] == null)
+            {
+                continue;
+            }
+            if (items[i].key == key)
+            {
+                items[i].value = value;
+                return;
+            }
+        }
+        for (int i = 0; i < count; i++)
+        {
+            if (items[i] == null)
+            {
+                items[i] = new KeyValueStringString();
+                items[i].key = key;
+                items[i].value = value;
+                return;
+            }
+        }
+    }
+}
+
+public class KeyValueStringString
+{
+    internal string key;
+    internal string value;
+}
+
+
+public class StringTools
+{
+    public static string StringAppend(GamePlatform p, string a, string b)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = p.StringToCharArray(a, aLength);
+        IntRef bLength = new IntRef();
+        int[] bChars = p.StringToCharArray(b, bLength);
+
+        int[] cChars = new int[aLength.value + bLength.value];
+        for (int i = 0; i < aLength.value; i++)
+        {
+            cChars[i] = aChars[i];
+        }
+        for (int i = 0; i < bLength.value; i++)
+        {
+            cChars[i + aLength.value] = bChars[i];
+        }
+        return p.CharArrayToString(cChars, aLength.value + bLength.value);
+    }
+}

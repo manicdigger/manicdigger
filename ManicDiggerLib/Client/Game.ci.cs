@@ -2,6 +2,7 @@
 {
     public Game()
     {
+        one = 1;
         chunksize = 16;
         player = new CharacterPhysicsState();
 
@@ -21,6 +22,7 @@
         pMatrix = new StackFloatArray();
         whitetexture = -1;
     }
+    float one;
 
     const int MaxBlockTypes = 1024;
 
@@ -672,6 +674,66 @@
             return 0 - b;
         }
     }
+
+    public static float MaxFloat(float a, float b)
+    {
+        if (a >= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    Model wireframeCube;
+    public void DrawLinesAroundSelectedBlock(int x, int y, int z)
+    {
+        if (x == -1 && y == -1 && z == -1)
+        {
+            return;
+        }
+
+        float pickcubeheight = getblockheight(x, y, z);
+
+        float posx = x + one/2;
+        float posy = y + pickcubeheight * one/2;
+        float posz = z + one / 2;
+
+        p.GLLineWidth(2);
+        float size = one * 51 / 100;
+        p.BindTexture2d(0);
+
+        if (wireframeCube == null)
+        {
+            ModelData data = WireframeCube.Get();
+            wireframeCube = p.CreateModel(data);
+        }
+        GLPushMatrix();
+        GLTranslate(posx, posy, posz);
+        GLScale(size, size, size);
+        p.DrawModel(wireframeCube);
+        GLPopMatrix();
+    }
+
+    public float getblockheight(int x, int y, int z)
+    {
+        float RailHeight = one * 3 / 10;
+        if (!IsValidPos(x, y, z))
+        {
+            return 1;
+        }
+        if (blocktypes[GetBlock(x, y, z)].Rail != 0)
+        {
+            return RailHeight;
+        }
+        if (blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+        {
+            return one / 2;
+        }
+        return 1;
+    }
 }
 
 public class Draw2dData
@@ -844,6 +906,13 @@ public abstract class ClientModManager
     public abstract int GetWindowHeight();
     public abstract bool IsFreemoveAllowed();
     public abstract void EnableCameraControl(bool enable);
+    public abstract int WhiteTexture();
+    public abstract void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color);
+    public abstract void Draw2dTextures(Draw2dData[] todraw, int textureId);
+    public abstract void Draw2dText(string text, float x, float y, float fontsize);
+    public abstract void OrthoMode();
+    public abstract void PerspectiveMode();
+    public abstract DictionaryStringString GetPerformanceInfo();
 }
 
 public abstract class AviWriterCi
@@ -870,6 +939,8 @@ public abstract class ClientMod
     public abstract void Start(ClientModManager modmanager);
     public virtual bool OnClientCommand(ClientCommandArgs args) { return false; }
     public virtual void OnNewFrame(NewFrameEventArgs args) { }
+    public virtual void OnKeyDown(KeyEventArgs args) { }
+    public virtual void OnKeyUp(KeyEventArgs args) { }
 }
 
 public class ClientCommandArgs

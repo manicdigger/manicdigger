@@ -368,7 +368,7 @@ public class GamePlatformNative : GamePlatform
         }
     }
 
-    int ToGlKey(OpenTK.Input.Key key)
+    public static int ToGlKey(OpenTK.Input.Key key)
     {
         switch (key)
         {
@@ -384,6 +384,30 @@ public class GamePlatformNative : GamePlatform
                 return GlKeys.PageUp;
             case OpenTK.Input.Key.PageDown:
                 return GlKeys.PageDown;
+            case OpenTK.Input.Key.F1:
+                return GlKeys.F1;
+            case OpenTK.Input.Key.F2:
+                return GlKeys.F2;
+            case OpenTK.Input.Key.F3:
+                return GlKeys.F3;
+            case OpenTK.Input.Key.F4:
+                return GlKeys.F4;
+            case OpenTK.Input.Key.F5:
+                return GlKeys.F5;
+            case OpenTK.Input.Key.F6:
+                return GlKeys.F6;
+            case OpenTK.Input.Key.F7:
+                return GlKeys.F7;
+            case OpenTK.Input.Key.F8:
+                return GlKeys.F8;
+            case OpenTK.Input.Key.F9:
+                return GlKeys.F9;
+            case OpenTK.Input.Key.F10:
+                return GlKeys.F10;
+            case OpenTK.Input.Key.F11:
+                return GlKeys.F11;
+            case OpenTK.Input.Key.F12:
+                return GlKeys.F12;
         }
         return (int)key;
     }
@@ -688,6 +712,11 @@ public class GamePlatformNative : GamePlatform
     {
         BitmapCiCs bmp_ = (BitmapCiCs)bmp;
         return LoadTexture(bmp_.bmp, true);
+    }
+
+    public override void GLLineWidth(int width)
+    {
+        GL.LineWidth(width);
     }
 }
 

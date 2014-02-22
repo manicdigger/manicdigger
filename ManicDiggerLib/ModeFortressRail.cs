@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using ManicDigger;
 using OpenTK;
-using ManicDigger.Collisions;
 using ManicDigger.Renderers;
 
 namespace ManicDigger

@@ -53,6 +53,7 @@
     public abstract BitmapCi BitmapCreate(int width, int height);
     public abstract void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels);
     public abstract int LoadTextureFromBitmap(BitmapCi bmp);
+    public abstract void GLLineWidth(int width);
 }
 
 public class KeyEventArgs
@@ -77,6 +78,18 @@ public class GlKeys
     public const int Up = 38;
     public const int Right = 39;
     public const int Down = 40;
+    public const int F1 = 112;
+    public const int F2 = 113;
+    public const int F3 = 114;
+    public const int F4 = 115;
+    public const int F5 = 116;
+    public const int F6 = 117;
+    public const int F7 = 118;
+    public const int F8 = 119;
+    public const int F9 = 120;
+    public const int F10 = 121;
+    public const int F11 = 122;
+    public const int F12 = 123;
 }
 
 public abstract class NewFrameHandler

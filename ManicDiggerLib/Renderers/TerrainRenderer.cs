@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenTK;
-using ManicDigger.Collisions;
 using System.Drawing;
 using System.Threading;
 using OpenTK.Graphics.OpenGL;

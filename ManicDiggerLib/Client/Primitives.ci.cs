@@ -316,3 +316,86 @@ public class SphereModelData
         return data;
     }
 }
+
+//(-1,-1,-1) to (1,1,1)
+public class WireframeCube
+{
+    public static ModelData Get()
+    {
+        ModelData m = new ModelData();
+        m.setMode(DrawModeEnum.Lines);
+        m.xyz = new float[3 * 4 * 6];
+        m.uv = new float[2 * 4 * 6];
+        m.rgba = new byte[4 * 4 * 6];
+        m.indices = new int[8 * 6];
+
+        DrawLineLoop(m,
+                Vector3Ref.Create(-1, -1, -1),
+                Vector3Ref.Create(-1, 1, -1),
+                Vector3Ref.Create(1, 1, -1),
+                Vector3Ref.Create(1, -1, -1)
+            );
+        DrawLineLoop(m,
+                Vector3Ref.Create(-1, -1, -1),
+                Vector3Ref.Create(1, -1, -1),
+                Vector3Ref.Create(1, -1, 1),
+                Vector3Ref.Create(-1, -1, 1)
+            );
+        DrawLineLoop(m,
+                Vector3Ref.Create(-1, -1, -1),
+                Vector3Ref.Create(-1, -1, 1),
+                Vector3Ref.Create(-1, 1, 1),
+                Vector3Ref.Create(-1, 1, -1)
+            );
+        DrawLineLoop(m,
+                Vector3Ref.Create(-1, -1, 1),
+                Vector3Ref.Create(1, -1, 1),
+                Vector3Ref.Create(1, 1, 1),
+                Vector3Ref.Create(-1, 1, 1)
+            );
+        DrawLineLoop(m,
+                Vector3Ref.Create(-1, 1, -1),
+                Vector3Ref.Create(-1, 1, 1),
+                Vector3Ref.Create(1, 1, 1),
+                Vector3Ref.Create(1, 1, -1)
+            );
+        DrawLineLoop(m,
+                Vector3Ref.Create(1, -1, -1),
+                Vector3Ref.Create(1, 1, -1),
+                Vector3Ref.Create(1, 1, 1),
+                Vector3Ref.Create(1, -1, 1)
+            );
+
+        return m;
+    }
+    static void DrawLineLoop(ModelData m, Vector3Ref p0, Vector3Ref p1, Vector3Ref p2, Vector3Ref p3)
+    {
+        int startVertex = m.GetVerticesCount();
+        AddVertex(m, p0.X, p0.Y, p0.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
+        AddVertex(m, p1.X, p1.Y, p1.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
+        AddVertex(m, p2.X, p2.Y, p2.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
+        AddVertex(m, p3.X, p3.Y, p3.Z, 0, 0, Game.ColorFromArgb(255, 255, 255, 255));
+        m.indices[m.indicesCount++] = startVertex + 0;
+        m.indices[m.indicesCount++] = startVertex + 1;
+        m.indices[m.indicesCount++] = startVertex + 1;
+        m.indices[m.indicesCount++] = startVertex + 2;
+        m.indices[m.indicesCount++] = startVertex + 2;
+        m.indices[m.indicesCount++] = startVertex + 3;
+        m.indices[m.indicesCount++] = startVertex + 3;
+        m.indices[m.indicesCount++] = startVertex + 0;
+    }
+
+    static void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)
+    {
+        model.xyz[model.GetXyzCount() + 0] = x;
+        model.xyz[model.GetXyzCount() + 1] = y;
+        model.xyz[model.GetXyzCount() + 2] = z;
+        model.uv[model.GetUvCount() + 0] = u;
+        model.uv[model.GetUvCount() + 1] = v;
+        model.rgba[model.GetRgbaCount() + 0] = Game.ColorR(color);
+        model.rgba[model.GetRgbaCount() + 1] = Game.ColorG(color);
+        model.rgba[model.GetRgbaCount() + 2] = Game.ColorB(color);
+        model.rgba[model.GetRgbaCount() + 3] = Game.ColorA(color);
+        model.verticesCount++;
+    }
+}

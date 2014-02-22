@@ -12,7 +12,7 @@ namespace ManicDigger
 {
     //Eventually all calls to OpenGL should be here.
     //This class should become replaceable with DirectX.
-    public class The3d : IGetCameraMatrix, IThe3d, IDraw2d
+    public class The3d : IGetCameraMatrix, IThe3d
     {
         public ManicDiggerGameWindow game;
         [Inject]

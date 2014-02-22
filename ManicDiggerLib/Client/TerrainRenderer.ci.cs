@@ -27,11 +27,11 @@
     {
         sqrt3half = game.p.MathSqrt(3) / 2;
         game.d_TerrainChunkTesselator.Start();
-        if (shadowssimple)
+        //if (shadowssimple)
         {
             //shadows = new Shadows3x3x3Simple();
         }
-        else
+        //else
         {
             shadows = new Shadows3x3x3();
         }

@@ -431,25 +431,6 @@
         return p.CharArrayToString(arr, 1);
     }
 
-    public string StringAppend(string a, string b)
-    {
-        IntRef aLength = new IntRef();
-        int[] aChars = p.StringToCharArray(a, aLength);
-        IntRef bLength = new IntRef();
-        int[] bChars = p.StringToCharArray(b, bLength);
-
-        int[] cChars = new int[aLength.value + bLength.value];
-        for (int i = 0; i < aLength.value; i++)
-        {
-            cChars[i] = aChars[i];
-        }
-        for (int i = 0; i < bLength.value; i++)
-        {
-            cChars[i + aLength.value] = bChars[i];
-        }
-        return p.CharArrayToString(cChars, aLength.value + bLength.value);
-    }
-
     public string StringSubstring(string a, int start, int count)
     {
         IntRef aLength = new IntRef();
@@ -543,7 +524,7 @@ public class Screen
                         {
                             return;
                         }
-                        w.text = menu.StringAppend(w.text, s);
+                        w.text = StringTools.StringAppend(menu.p, w.text, s);
                     }
                 }
             }
@@ -624,7 +605,7 @@ public class Screen
                 string text = w.text;
                 if (w.selected)
                 {
-                    text = menu.StringAppend("&2", text);
+                    text = StringTools.StringAppend(menu.p, "&2", text);
                 }
                 if (w.type == WidgetType.Button)
                 {
@@ -645,7 +626,7 @@ public class Screen
                     }
                     if (w.editing)
                     {
-                        text = menu.StringAppend(text, "_");
+                        text = StringTools.StringAppend(menu.p, text, "_");
                     }
                     if (w.buttonStyle == ButtonStyle.Text)
                     {

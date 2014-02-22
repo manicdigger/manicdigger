@@ -15,8 +15,6 @@ namespace ManicDigger.Gui
 
         public ManicDiggerGameWindow game;
         [Inject]
-        public IDraw2d d_Draw2d;
-        [Inject]
         public IViewportSize d_ViewportSize;
 
         public bool IsTyping;
@@ -33,13 +31,10 @@ namespace ManicDigger.Gui
 
         public void Render()
         {
-            if (d_Draw2d != null)
+            DrawChatLines(IsTyping);
+            if (IsTyping)
             {
-                DrawChatLines(IsTyping);
-                if (IsTyping)
-                {
-                    DrawTypingBuffer();
-                }
+                DrawTypingBuffer();
             }
         }
         public void AddChatline(string s)

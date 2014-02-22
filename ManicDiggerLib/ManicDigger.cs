@@ -19,7 +19,6 @@ using System.Media;
 using OpenTK.Audio.OpenAL;
 using OpenTK.Audio;
 using System.Diagnostics;
-using ManicDigger.Collisions;
 using ManicDigger;
 using System.Net;
 using System.Windows.Forms;

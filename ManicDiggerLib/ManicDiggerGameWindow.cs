@@ -7,7 +7,6 @@ using ManicDigger.Renderers;
 using OpenTK;
 using ManicDigger.Gui;
 using System.Drawing;
-using ManicDigger.Collisions;
 using ManicDigger.Network;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
@@ -36,6 +35,7 @@ namespace ManicDigger
             game = new Game();
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
+            performanceinfo = new DictionaryStringString();
         }
         float one;
         public byte localstance = 0;
@@ -143,7 +143,6 @@ namespace ManicDigger
                 playerskindownloader.skinserver = "";
             }
             w.playerskindownloader = playerskindownloader;
-            w.d_FpsHistoryGraphRenderer = new HudFpsHistoryGraphRenderer() { d_Draw = the3d, d_ViewportSize = w, game = this };
             w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
             w.d_FrustumCulling = frustumculling;
             d_Audio.d_GetFile = getfile;
@@ -151,7 +150,7 @@ namespace ManicDigger
             the3d.d_Terrain = terrainTextures;
             the3d.d_TextRenderer = textrenderer;
             //w.d_CurrentShadows = this;
-            var sunmoonrenderer = new SunMoonRenderer() { d_Draw2d = the3d, d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d, game = this };
+            var sunmoonrenderer = new SunMoonRenderer() { d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d, game = this };
             w.d_SunMoonRenderer = sunmoonrenderer;
             clientgame.d_SunMoonRenderer = sunmoonrenderer;
             this.d_Heightmap = new InfiniteMapChunked2d() { d_Map = game };
@@ -173,7 +172,7 @@ namespace ManicDigger
             */
             terrainRenderer = new TerrainRenderer();
             terrainRenderer.game = game;
-            w.d_HudChat = new ManicDigger.Gui.HudChat() { d_Draw2d = the3d, d_ViewportSize = w, game = this };
+            w.d_HudChat = new ManicDigger.Gui.HudChat() { d_ViewportSize = w, game = this };
             w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w, game = this };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata, game = this };
             var inventoryController = clientgame;
@@ -219,6 +218,7 @@ namespace ManicDigger
             clientmodsCount = 0;
             modmanager.w = this;
             AddMod(new ModAutoCamera());
+            AddMod(new ModFpsHistoryGraph());
             applicationname = language.GameName();
         }
         void AddMod(ClientMod mod)
@@ -275,8 +275,6 @@ namespace ManicDigger
         public ICharacterRenderer d_CharacterRenderer;
         [Inject]
         public ICurrentShadows d_CurrentShadows;
-        [Inject]
-        public HudFpsHistoryGraphRenderer d_FpsHistoryGraphRenderer;
         [Inject]
         public MapManipulator d_MapManipulator;
         [Inject]
@@ -610,12 +608,7 @@ namespace ManicDigger
                     else
                     { arguments = s.Substring(s.IndexOf(" ")); }
                     arguments = arguments.Trim();
-                    if (cmd == "fps")
-                    {
-                        ENABLE_DRAWFPS = BoolCommandArgument(arguments) || arguments.Trim() == "2";
-                        ENABLE_DRAWFPSHISTORY = arguments.Trim() == "2";
-                    }
-                    else if (cmd == "pos")
+                    if (cmd == "pos")
                     {
                         ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
                     }
@@ -784,6 +777,12 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                KeyEventArgs args_ = new KeyEventArgs();
+                args_.SetKeyCode(GamePlatformNative.ToGlKey(e.Key));
+                clientmods[i].OnKeyUp(args_);
+            }
             if (e.Key == GetKey(OpenTK.Input.Key.ShiftLeft) || e.Key == GetKey(OpenTK.Input.Key.ShiftRight))
                 IsShiftPressed = false;
             if (GuiTyping == TypingState.None)
@@ -798,6 +797,12 @@ namespace ManicDigger
         bool IsShiftPressed = false;
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                KeyEventArgs args_ = new KeyEventArgs();
+                args_.SetKeyCode(GamePlatformNative.ToGlKey(e.Key));
+                clientmods[i].OnKeyDown(args_);
+            }
             if (e.Key == GetKey(OpenTK.Input.Key.F6))
             {
                 float lagSeconds = one * (game.p.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
@@ -984,7 +989,7 @@ namespace ManicDigger
                 {
                     drawblockinfo = !drawblockinfo;
                 }
-                performanceinfo["height"] = "height:" + d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z);
+                performanceinfo.Set("height", "height:" + d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z));
                 if (e.Key == GetKey(OpenTK.Input.Key.F5))
                 {
                     if (cameratype == CameraType.Fpp)
@@ -1040,17 +1045,6 @@ namespace ManicDigger
                 if (e.Key == GetKey(OpenTK.Input.Key.F6))
                 {
                     RedrawAllBlocks();
-                }
-                if (e.Key == GetKey(OpenTK.Input.Key.F7))
-                {
-                    if (ENABLE_DRAWFPSHISTORY)
-                    {
-                        ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = false;
-                    }
-                    else
-                    {
-                        ENABLE_DRAWFPS = ENABLE_DRAWFPSHISTORY = true;
-                    }
                 }
                 if (e.Key == OpenTK.Input.Key.F8)
                 {
@@ -2814,19 +2808,7 @@ namespace ManicDigger
 
         public float getblockheight(int x, int y, int z)
         {
-            if (!d_Map.IsValidPos(x, y, z))
-            {
-                return 1;
-            }
-            if (d_Data.Rail[d_Map.GetBlock(x, y, z)] != RailDirectionFlags.None)
-            {
-                return RailHeight;
-            }
-            if (game.blocktypes[d_Map.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
-            {
-                return 0.5f;
-            }
-            return 1;
+            return game.getblockheight(x, y, z);
         }
         private void OnPick(BlockPosSide pick0)
         {
@@ -2870,13 +2852,6 @@ namespace ManicDigger
             framestopwatch.Start();
             terrainRenderer.UpdateTerrain();
             GL.ClearColor(guistate == GuiState.MapLoading ? Color.Black : clearcolor);
-
-            for (int i = 0; i < clientmodsCount; i++)
-            {
-                NewFrameEventArgs args_ = new NewFrameEventArgs();
-                args_.SetDt((float)e.Time);
-                clientmods[i].OnNewFrame(args_);
-            }
 
             //Sleep is required in Mono for running the terrain background thread.
             if (IsMono)
@@ -2966,7 +2941,8 @@ namespace ManicDigger
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
-                    DrawLinesAroundSelectedCube(SelectedBlockPosition);
+                    game.DrawLinesAroundSelectedBlock((int)SelectedBlockPosition.X,
+                        (int)SelectedBlockPosition.Y, (int)SelectedBlockPosition.Z);
                 }
                 DrawCharacters((float)e.Time);
                 foreach (Sprite b in new List<Sprite>(sprites))
@@ -3079,6 +3055,13 @@ namespace ManicDigger
         draw2d:
             SetAmbientLight(Color.White);
             Draw2d();
+
+            for (int i = 0; i < clientmodsCount; i++)
+            {
+                NewFrameEventArgs args_ = new NewFrameEventArgs();
+                args_.SetDt((float)e.Time);
+                clientmods[i].OnNewFrame(args_);
+            }
 
             //OnResize(new EventArgs());
             d_GlWindow.SwapBuffers();
@@ -3824,14 +3807,6 @@ namespace ManicDigger
                     throw new Exception();
             }
             //d_The3d.OrthoMode(Width, Height);
-            if (ENABLE_DRAWFPS)
-            {
-                Draw2dText(fpstext, 20f, 20f, d_HudChat.ChatFontSize, Color.White);
-            }
-            if (ENABLE_DRAWFPSHISTORY)
-            {
-                d_FpsHistoryGraphRenderer.DrawFpsHistoryGraph();
-            }
             if (ENABLE_DRAWPOSITION)
             {
                 double heading = (double)NetworkHelper.HeadingByte(LocalPlayerOrientation);
@@ -4161,8 +4136,6 @@ namespace ManicDigger
             return (int)(Height / 2 - height / 2);
         }
         int ENABLE_LAG = 0;
-        bool ENABLE_DRAWFPS = false;
-        bool ENABLE_DRAWFPSHISTORY = false;
         bool ENABLE_DRAWPOSITION = false;
 
         //int targettexture = -1;
@@ -4181,117 +4154,24 @@ namespace ManicDigger
         public ParticleEffectBlockBreak particleEffectBlockBreak = new ParticleEffectBlockBreak();
         Random rnd = new Random();
         public int ActiveMaterial { get; set; }
-        private void DrawLinesAroundSelectedCube(Vector3 posx)
-        {
-            float pickcubeheight = 1;
-            if (posx != new Vector3(-1, -1, -1))
-            {
-                pickcubeheight = getblockheight((int)posx.X, (int)posx.Z, (int)posx.Y);
-            }
-            Vector3 pos = posx;
-            pos += new Vector3(0.5f, pickcubeheight * 0.5f, 0.5f);
-            GL.LineWidth(2);
-            float size = 0.51f;
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.Begin(BeginMode.Lines);
-            GL.Color3(Color.White);
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-            });
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-            });
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-            });
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + -1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-            });
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + -1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-            });
-            DrawLineLoop(new[]{
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + -1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + pickcubeheight * size, pos.Z + 1.0f * size),
-                new Vector3(pos.X + 1.0f * size, pos.Y + -pickcubeheight * size, pos.Z + 1.0f * size),
-            });
 
-            GL.Color3(Color.White);
-            GL.End();
-        }
-        void DrawLineLoop(Vector3[] points)
-        {
-            GL.Vertex3(points[0]);
-            GL.Vertex3(points[1]);
-            GL.Vertex3(points[1]);
-            GL.Vertex3(points[2]);
-            GL.Vertex3(points[2]);
-            GL.Vertex3(points[3]);
-            GL.Vertex3(points[3]);
-            GL.Vertex3(points[0]);
-        }
         void Mouse_Move(object sender, OpenTK.Input.MouseMoveEventArgs e)
         {
         }
-        int lasttitleupdateMilliseconds;
-        int fpscount = 0;
-        string fpstext = "";
-        float longestframedt = 0;
-        Dictionary<string, string> performanceinfo = new Dictionary<string, string>();
-        public Dictionary<string, string> PerformanceInfo { get { return performanceinfo; } }
+        DictionaryStringString performanceinfo;
+        public DictionaryStringString PerformanceInfo { get { return performanceinfo; } }
         int lastchunkupdates;
-        private void UpdateTitleFps(FrameEventArgs e)
+        int lasttitleupdateMilliseconds;
+        void UpdateTitleFps(FrameEventArgs e)
         {
-            fpscount++;
-            longestframedt = (float)Math.Max(longestframedt, e.Time);
             float elapsed = one * (game.p.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
-            d_FpsHistoryGraphRenderer.Update((float)e.Time);
             if (elapsed >= 1)
             {
-                string fpstext1 = "";
                 lasttitleupdateMilliseconds = game.p.TimeMillisecondsFromStart();
-                fpstext1 += "FPS: " + (int)((float)fpscount / elapsed);
-                fpstext1 += string.Format(" (min: {0})", (int)(1f / longestframedt));
-                longestframedt = 0;
-                fpscount = 0;
-                performanceinfo["fps"] = fpstext1;
-                performanceinfo["triangles"] = string.Format(language.Triangles(), terrainRenderer.TrianglesCount());
                 int chunkupdates = terrainRenderer.ChunkUpdates();
-                performanceinfo["chunk updates"] = string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates));
+                performanceinfo.Set("chunk updates", string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates)));
                 lastchunkupdates = terrainRenderer.ChunkUpdates();
-
-                string s = "";
-                List<string> l = new List<string>(performanceinfo.Values);
-                int perline = 2;
-                for (int i = 0; i < l.Count; i++)
-                {
-                    s += l[i];
-                    if ((i % perline == 0) && (i != l.Count - 1))
-                    {
-                        s += ", ";
-                    }
-                    if (i % perline != 0)
-                    {
-                        s += Environment.NewLine;
-                    }
-                }
-                fpstext = s;
+                performanceinfo.Set("triangles", string.Format(language.Triangles(), terrainRenderer.TrianglesCount()));
             }
             if (!titleset)
             {
@@ -6740,6 +6620,50 @@ namespace ManicDigger
         public override void EnableCameraControl(bool enable)
         {
             w.enableCameraControl = enable;
+        }
+
+        public override int WhiteTexture()
+        {
+            return w.WhiteTexture();
+        }
+
+        public override void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color)
+        {
+            int? inAtlasId_ = null;
+            if (inAtlasId != null)
+            {
+                inAtlasId_ = inAtlasId.value;
+            }
+            int a = Game.ColorA(color);
+            int r = Game.ColorR(color);
+            int g = Game.ColorG(color);
+            int b = Game.ColorB(color);
+            w.Draw2dTexture(textureid, (int)x1, (int)y1, (int)width, (int)height, inAtlasId_, Color.FromArgb(a, r, g, b));
+        }
+
+        public override void Draw2dTextures(Draw2dData[] todraw, int textureId)
+        {
+            w.Draw2dTextures(todraw, textureId);
+        }
+
+        public override void Draw2dText(string text, float x, float y, float fontsize)
+        {
+            w.Draw2dText(text, x, y, fontsize, null);
+        }
+
+        public override void OrthoMode()
+        {
+            w.OrthoMode(GetWindowWidth(), GetWindowHeight());
+        }
+
+        public override void PerspectiveMode()
+        {
+            w.PerspectiveMode();
+        }
+
+        public override DictionaryStringString GetPerformanceInfo()
+        {
+            return w.PerformanceInfo;
         }
     }
 }

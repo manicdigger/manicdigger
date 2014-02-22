@@ -11,8 +11,6 @@ namespace ManicDigger.Renderers
     {
         public ManicDiggerGameWindow game;
         [Inject]
-        public IDraw2d d_Draw2d { get; set; }
-        [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition { get; set; }
         [Inject]
         public IThe3d d_The3d { get; set; }
