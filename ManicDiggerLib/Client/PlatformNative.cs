@@ -408,6 +408,11 @@ public class GamePlatformNative : GamePlatform
         GL.BindTexture(TextureTarget.Texture2D, texture);
     }
 
+    float[] xyz = new float[65536 * 3];
+    float[] uv = new float[65536 * 2];
+    byte[] rgba = new byte[65536 * 4];
+    ushort[] indices = new ushort[65536];
+
     public override Model CreateModel(ModelData data)
     {
         int id = GL.GenLists(1);
@@ -421,9 +426,6 @@ public class GamePlatformNative : GamePlatform
         float[] dataXyz = data.getXyz();
         float[] dataUv = data.getUv();
         byte[] dataRgba = data.getRgba();
-        float[] xyz = new float[data.GetXyzCount()];
-        float[] uv = new float[data.GetUvCount()];
-        byte[] rgba = new byte[data.GetRgbaCount()];
 
         for (int i = 0; i < data.GetXyzCount(); i++)
         {
@@ -467,8 +469,7 @@ public class GamePlatformNative : GamePlatform
             throw new Exception();
         }
 
-        var dataIndices = data.getIndices();
-        ushort[] indices = new ushort[data.GetIndicesCount()];
+        int[] dataIndices = data.getIndices();
         for (int i = 0; i < data.GetIndicesCount(); i++)
         {
             indices[i] = (ushort)dataIndices[i];
