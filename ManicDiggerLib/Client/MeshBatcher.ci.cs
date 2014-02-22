@@ -58,6 +58,7 @@
 
     public void Remove(int id)
     {
+        game.p.DeleteModel(models[id].model);
         models[id].empty = true;
         empty[emptyCount++] = id;
     }
