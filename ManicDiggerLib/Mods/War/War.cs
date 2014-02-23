@@ -413,7 +413,12 @@ namespace ManicDigger.Mods
         void ResetInventoryOnRespawn(int playerid)
         {
             ClearInventory(playerid);
-
+            if (players[playerid].team == Team.Spectator)
+            {
+            	//Don't give spectators weapons when they die.
+            	return;
+            }
+            
             PlayerClass pclass = players[playerid].playerclass;
             if (pclass == PlayerClass.Soldier)
             {
