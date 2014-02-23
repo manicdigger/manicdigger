@@ -11,27 +11,6 @@ namespace ManicDigger.Renderers
         public Color color;
         public string text;
     }
-    public struct Text
-    {
-        public string text;
-        public float fontsize;
-        public Color color;
-        public override int GetHashCode()
-        {
-            return text.GetHashCode() % fontsize.GetHashCode() % color.GetHashCode();
-        }
-        public override bool Equals(object obj)
-        {
-            if (obj is Text)
-            {
-                Text other = (Text)obj;
-                return other.fontsize.Equals(this.fontsize)
-                    && other.color.Equals(this.color)
-                    && other.text.Equals(this.text);
-            }
-            return base.Equals(obj);
-        }
-    }
 
     public enum FontType
     {
@@ -44,26 +23,29 @@ namespace ManicDigger.Renderers
     {
         public FontType Font = FontType.Nice;
 
-        public virtual Bitmap MakeTextTexture(Text t, Font font)
+        public virtual Bitmap MakeTextTexture(Text_ t, FontCi font)
         {
-            var parts = DecodeColors(t.text, t.color);
+            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF>();
             using(Bitmap bmp = new Bitmap(1, 1))
             {
-                using(Graphics g = Graphics.FromImage(bmp))
+                using (Font f = new Font(font.family, font.size, (FontStyle)font.style))
                 {
-                    for(int i = 0; i < parts.Count; i++)
+                    using (Graphics g = Graphics.FromImage(bmp))
                     {
-                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                        if(size.Width == 0 || size.Height == 0)
+                        for (int i = 0; i < parts.Count; i++)
                         {
-                            continue;
+                            SizeF size = g.MeasureString(parts[i].text, f, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                            if (size.Width == 0 || size.Height == 0)
+                            {
+                                continue;
+                            }
+                            totalwidth += size.Width;
+                            totalheight = Math.Max(totalheight, size.Height);
+                            sizes.Add(size);
                         }
-                        totalwidth += size.Width;
-                        totalheight = Math.Max(totalheight, size.Height);
-                        sizes.Add(size);
                     }
                 }
             }
@@ -71,24 +53,27 @@ namespace ManicDigger.Renderers
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using(Graphics g2 = Graphics.FromImage(bmp2))
             {
-                g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                float currentwidth = 0;
-                for(int i = 0; i < parts.Count; i++)
+                using (Font f = new Font(font.family, font.size, (FontStyle)font.style))
                 {
-                    SizeF sizei = sizes[i];
-                    if(sizei.Width == 0 || sizei.Height == 0)
+                    g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                    float currentwidth = 0;
+                    for (int i = 0; i < parts.Count; i++)
                     {
-                        continue;
+                        SizeF sizei = sizes[i];
+                        if (sizei.Width == 0 || sizei.Height == 0)
+                        {
+                            continue;
+                        }
+                        g2.DrawString(parts[i].text, f, new SolidBrush(parts[i].color), currentwidth, 0);
+                        currentwidth += sizei.Width;
                     }
-                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                    currentwidth += sizei.Width;
                 }
             }
             return bmp2;
         }
 
         // TODO: Currently broken in mono (Graphics Path).
-        private Bitmap defaultFont(Text t)
+        private Bitmap defaultFont(Text_ t)
         {
             Font font;
             //outlined font looks smaller
@@ -103,7 +88,7 @@ namespace ManicDigger.Renderers
             {
                 throw new Exception();
             }
-            var parts = DecodeColors (t.text, t.color);
+            var parts = DecodeColors (t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF> ();
@@ -162,10 +147,10 @@ namespace ManicDigger.Renderers
             return bmp2;
         }
 
-		private Bitmap blackBackgroundFont(Text t)
+		private Bitmap blackBackgroundFont(Text_ t)
         {
             Font font = new Font("Verdana", t.fontsize);
-            var parts = DecodeColors(t.text, t.color);
+            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF>();
@@ -206,21 +191,22 @@ namespace ManicDigger.Renderers
             return bmp2;
         }
 
-        private Bitmap simpleFont(Text t)
+        private Bitmap simpleFont(Text_ t)
         {
+            float fontsize = t.fontsize;
             Font font;
-            t.fontsize = Math.Max (t.fontsize, 9);
-            t.fontsize *= 1.1f;
+            fontsize = Math.Max(t.fontsize, 9);
+            fontsize *= 1.1f;
             try
             {
-               font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+               font = new Font ("Arial", fontsize, FontStyle.Bold);
             }
             catch
             {
                 throw new Exception();
             }
 
-            var parts = DecodeColors(t.text, t.color);
+            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF>();
@@ -262,21 +248,22 @@ namespace ManicDigger.Renderers
             return bmp2;
         }
 
-        private Bitmap niceFont(Text t)
+        private Bitmap niceFont(Text_ t)
         {
+            float fontsize = t.fontsize;
             Font font;
-            t.fontsize = Math.Max (t.fontsize, 9);
-            t.fontsize *= 1.1f;
+            fontsize = Math.Max (fontsize, 9);
+            fontsize *= 1.1f;
             try
             {
-               font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+               font = new Font ("Arial", fontsize, FontStyle.Bold);
             }
             catch
             {
                 throw new Exception();
             }
 
-            var parts = DecodeColors(t.text, t.color);
+            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF>();
@@ -342,7 +329,7 @@ namespace ManicDigger.Renderers
             return bmp2;
         }
 
-        public virtual Bitmap MakeTextTexture(Text t)
+        public virtual Bitmap MakeTextTexture(Text_ t)
         {
             switch(this.Font)
             {

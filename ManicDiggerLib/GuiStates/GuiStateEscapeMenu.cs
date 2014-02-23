@@ -259,7 +259,10 @@ namespace ManicDigger
                 options.Font = 0;
             }
             d_TextRenderer.Font = fontValues[options.Font];
-            cachedTextTextures.Clear();
+            for (int i = 0; i < game.cachedTextTexturesMax; i++)
+            {
+                game.cachedTextTextures[i] = null;
+            }
         }
 
         private string KeyName(int key)

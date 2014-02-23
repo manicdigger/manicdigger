@@ -21,6 +21,8 @@
         mvMatrix = new StackFloatArray();
         pMatrix = new StackFloatArray();
         whitetexture = -1;
+        cachedTextTexturesMax = 1024;
+        cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
     }
     float one;
 
@@ -734,6 +736,98 @@
         }
         return 1;
     }
+
+    internal CachedTextTexture[] cachedTextTextures;
+    internal int cachedTextTexturesMax;
+
+    public void DeleteUnusedCachedTextTextures()
+    {
+        int now = p.TimeMillisecondsFromStart();
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            CachedTextTexture t = cachedTextTextures[i];
+            if (t == null)
+            {
+                continue;
+            }
+            if ((one * (now - t.texture.lastuseMilliseconds) / 1000) > 1)
+            {
+                p.GLDeleteTexture(t.texture.textureId);
+                cachedTextTextures[i] = null;
+            }
+        }
+    }
+
+    CachedTexture GetCachedTextTexture(Text_ t)
+    {
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            CachedTextTexture ct = cachedTextTextures[i];
+            if (ct == null)
+            {
+                continue;
+            }
+            if (ct.text.Equals_(t))
+            {
+                return ct.texture;
+            }
+        }
+        return null;
+    }
+
+    public void Draw2dText(string text, FontCi font, float x, float y, IntRef color, bool enabledepthtest)
+    {
+        if (text == null || p.StringTrim(text) == "")
+        {
+            return;
+        }
+        if (color == null) { color = IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)); }
+        Text_ t = new Text_();
+        t.text = text;
+        t.color = color.value;
+        t.fontsize = font.size;
+        t.fontfamily = font.family;
+        t.fontstyle = font.style;
+        CachedTexture ct;
+
+        if (GetCachedTextTexture(t) == null)
+        {
+            ct = MakeTextTexture(t);
+            if (ct == null)
+            {
+                return;
+            }
+            for (int i = 0; i < cachedTextTexturesMax; i++)
+            {
+                if (cachedTextTextures[i] == null)
+                {
+                    CachedTextTexture ct1 = new CachedTextTexture();
+                    ct1.text = t;
+                    ct1.texture = ct;
+                    cachedTextTextures[i] = ct1;
+                    break;
+                }
+            }
+        }
+
+        ct = GetCachedTextTexture(t);
+        ct.lastuseMilliseconds = p.TimeMillisecondsFromStart();
+        p.GLDisableAlphaTest();
+        Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, Game.ColorFromArgb(255, 255, 255, 255), enabledepthtest);
+        p.GLEnableAlphaTest();
+        DeleteUnusedCachedTextTextures();
+    }
+
+    CachedTexture MakeTextTexture(Text_ t)
+    {
+        CachedTexture ct = new CachedTexture();
+        BitmapCi bmp = p.CreateTextTexture2(t);
+        ct.sizeX = p.BitmapGetWidth(bmp);
+        ct.sizeY = p.BitmapGetHeight(bmp);
+        ct.textureId = p.LoadTextureFromBitmap(bmp);
+        p.BitmapDelete(bmp);
+        return ct;
+    }
 }
 
 public class Draw2dData
@@ -991,5 +1085,53 @@ public class StackFloatArray
         float[] ret = values[count - 1];
         count--;
         return ret;
+    }
+}
+
+public class CachedTexture
+{
+    internal int textureId;
+    internal float sizeX;
+    internal float sizeY;
+    internal int lastuseMilliseconds;
+}
+
+public class Text_
+{
+    internal string text;
+    internal float fontsize;
+    internal int color;
+    internal string fontfamily;
+    internal int fontstyle;
+
+    internal bool Equals_(Text_ t)
+    {
+        return this.text == t.text
+            && this.fontsize == t.fontsize
+            && this.color == t.color
+            && this.fontfamily == t.fontfamily
+            && this.fontstyle == t.fontstyle;
+    }
+}
+
+public class CachedTextTexture
+{
+    internal Text_ text;
+    internal CachedTexture texture;
+}
+
+public class FontCi
+{
+    internal string family;
+    internal float size;
+    internal int style;
+
+    internal static FontCi Create(string family_, float size_, int style_)
+    {
+        FontCi f = new FontCi();
+        f.family = family_;
+        f.size = size_;
+        f.style = style_;
+        return f;
     }
 }

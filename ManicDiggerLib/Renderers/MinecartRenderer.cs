@@ -18,10 +18,6 @@ namespace ManicDigger.Renderers
         {
             renderer.Draw(position, direction, lastdirection, progress);
         }
-        public IEnumerable<Triangle3D> TrianglesForPicking
-        {
-            get { yield break; }
-        }
         public int Id
         {
             get { return 0; }

@@ -414,7 +414,7 @@
 
     public bool StringEndsWith(string s, string value)
     {
-        return StringSubstring(s, StringLength(s) - StringLength(value), StringLength(value)) == value;
+        return StringTools.StringSubstring(p, s, StringLength(s) - StringLength(value), StringLength(value)) == value;
     }
 
     public int StringLength(string a)
@@ -429,19 +429,6 @@
         int[] arr = new int[1];
         arr[0] = a;
         return p.CharArrayToString(arr, 1);
-    }
-
-    public string StringSubstring(string a, int start, int count)
-    {
-        IntRef aLength = new IntRef();
-        int[] aChars = p.StringToCharArray(a, aLength);
-
-        int[] bChars = new int[count];
-        for (int i = 0; i < count; i++)
-        {
-            bChars[i] = aChars[start + i];
-        }
-        return p.CharArrayToString(bChars, count);
     }
 
     public string CharRepeat(int c, int length)
@@ -516,7 +503,7 @@ public class Screen
                         {
                             if (menu.StringLength(w.text) > 0)
                             {
-                                w.text = menu.StringSubstring(w.text, 0, menu.StringLength(w.text) - 1);
+                                w.text = StringTools.StringSubstring(menu.p, w.text, 0, menu.StringLength(w.text) - 1);
                             }
                             return;
                         }

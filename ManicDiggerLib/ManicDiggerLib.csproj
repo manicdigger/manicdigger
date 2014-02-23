@@ -93,6 +93,7 @@
     <Compile Include="Audio.cs" />
     <Compile Include="AviWriter.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
+    <Compile Include="Client\HudChat.ci.cs" />
     <Compile Include="Client\Language.ci.cs" />
     <Compile Include="Client\MeshBatcher.ci.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />
@@ -109,7 +110,6 @@
     <Compile Include="GameData.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
     <Compile Include="Hud\Hud.cs" />
-    <Compile Include="Hud\HudChat.cs" />
     <Compile Include="Hud\HudInventory.cs" />
     <Compile Include="Hud\HudTextEditor.cs" />
     <Compile Include="Interpolation.cs" />

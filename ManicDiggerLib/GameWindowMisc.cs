@@ -14,7 +14,6 @@ using System.Net;
 using System.Drawing.Drawing2D;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
-using ManicDigger.Gui;
 using ManicDigger.Hud;
 
 namespace ManicDigger
@@ -240,7 +239,6 @@ namespace ManicDigger
     public interface IModelToDraw
     {
         void Draw(float dt);
-        IEnumerable<Triangle3D> TrianglesForPicking { get; }
         int Id { get; }
     }
     public interface ICharacterToDraw : IModelToDraw

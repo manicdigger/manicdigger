@@ -10,11 +10,11 @@ namespace ManicDigger.Renderers
     public class MonospacedTextRenderer : TextRenderer
     {
         const string FONT_FAMILY = "Courier New";
-        public override Bitmap MakeTextTexture(Text t)
+        public override Bitmap MakeTextTexture(Text_ t)
         {
             Font font;
             font = new Font(FONT_FAMILY, t.fontsize);
-            var parts = DecodeColors(t.text, t.color);
+            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
             List<SizeF> sizes = new List<SizeF>();

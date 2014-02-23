@@ -3,12 +3,6 @@
     internal float[] Start;
     internal float[] End;
 }
-public class Triangle3D
-{
-    internal float[] PointA;
-    internal float[] PointB;
-    internal float[] PointC;
-}
 public class Box3D
 {
     public void Set(float x, float y, float z, float size)
@@ -68,11 +62,6 @@ public abstract class PredicateBox3D
 public class ListBox3d
 {
     internal Box3D[] arr;
-    internal int count;
-}
-public class ListBlockPosSide
-{
-    internal BlockPosSide[] arr;
     internal int count;
 }
 

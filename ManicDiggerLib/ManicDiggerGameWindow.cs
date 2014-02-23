@@ -5,7 +5,6 @@ using ManicDigger;
 using ManicDigger.Hud;
 using ManicDigger.Renderers;
 using OpenTK;
-using ManicDigger.Gui;
 using System.Drawing;
 using ManicDigger.Network;
 using OpenTK.Graphics.OpenGL;
@@ -41,7 +40,7 @@ namespace ManicDigger
         public byte localstance = 0;
         public void Start()
         {
-            game.p = new GamePlatformNative();
+            game.p = new GamePlatformNative() { window = d_GlWindow };
             d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
@@ -172,7 +171,7 @@ namespace ManicDigger
             */
             terrainRenderer = new TerrainRenderer();
             terrainRenderer.game = game;
-            w.d_HudChat = new ManicDigger.Gui.HudChat() { d_ViewportSize = w, game = this };
+            w.d_HudChat = new HudChat() { game = this.game };
             w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w, game = this };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata, game = this };
             var inventoryController = clientgame;
@@ -864,7 +863,7 @@ namespace ManicDigger
                 {
                     d_HudChat.ChatPageScroll--;
                 }
-                d_HudChat.ChatPageScroll = MyMath.Clamp(d_HudChat.ChatPageScroll, 0, d_HudChat.ChatLines.Count / d_HudChat.ChatLinesMaxToDraw);
+                d_HudChat.ChatPageScroll = MyMath.Clamp(d_HudChat.ChatPageScroll, 0, d_HudChat.ChatLinesCount / d_HudChat.ChatLinesMaxToDraw);
                 if (e.Key == GetKey(OpenTK.Input.Key.Enter) || e.Key == GetKey(OpenTK.Input.Key.KeypadEnter))
                 {
                     if (GuiTyping == TypingState.Typing)
@@ -3887,7 +3886,7 @@ namespace ManicDigger
                         w.Text = w.Text.Replace("!SERVER_PORT!", ServerInfo.connectdata.Port.ToString());
                         if (w.Font != null)
                         {
-                            Font font = new Font(ValidFont(w.Font.FamilyName), DeserializeFloat(w.Font.SizeFloat), (FontStyle)w.Font.FontStyle);
+                            FontCi font = FontCi.Create(ValidFont(w.Font.FamilyName), DeserializeFloat(w.Font.SizeFloat), w.Font.FontStyle);
                             Draw2dText(w.Text, font, w.X + x, w.Y + y, Color.FromArgb(w.Color));
                         }
                         else
@@ -4087,7 +4086,7 @@ namespace ManicDigger
                             Draw2dTexture(WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
                             Draw2dTexture(WhiteTexture(), -25, -10, 50 * (k.Value.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
                         }
-                        Draw2dText(name, -TextSize(name, 14).Width / 2, 0, 14, Color.White, true);
+                        Draw2dText(name, -TextSize(name, 14).Width / 2, 0, 14, Game.ColorFromArgb(255, 255, 255, 255), true);
                         //                        GL.Translate(0, 1, 0);
                         GLPopMatrix();
                     }
@@ -6144,103 +6143,44 @@ namespace ManicDigger
             textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
             return size;
         }
-
-
-        public Dictionary<Text, CachedTexture> cachedTextTextures = new Dictionary<Text, CachedTexture>();
-
-        CachedTexture MakeTextTexture(Text t)
-        {
-            Bitmap bmp = d_TextRenderer.MakeTextTexture(t);
-            int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, size = bmp.Size };
-        }
-        CachedTexture MakeTextTexture(Text t, Font font)
+        CachedTexture MakeTextTexture(Text_ t, FontCi font)
         {
             Bitmap bmp = d_TextRenderer.MakeTextTexture(t, font);
             int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, size = bmp.Size };
-        }
-        void DeleteUnusedCachedTextTextures()
-        {
-            List<Text> toremove = new List<Text>();
-            int now = game.p.TimeMillisecondsFromStart();
-            foreach (var k in cachedTextTextures)
-            {
-                var ct = k.Value;
-                if ((one * (now - ct.lastuseMilliseconds) / 1000) > 1)
-                {
-                    GL.DeleteTexture(ct.textureId);
-                    toremove.Add(k.Key);
-                }
-            }
-            foreach (var k in toremove)
-            {
-                cachedTextTextures.Remove(k);
-            }
+            return new CachedTexture() { textureId = texture, sizeX = bmp.Size.Width, sizeY = bmp.Size.Height };
         }
         public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
         {
-            Draw2dText(text, x, y, fontsize, color, false);
-        }
-        public void Draw2dText(string text, float x, float y, float fontsize, Color? color, bool enabledepthtest)
-        {
-            if (text == null || text.Trim() == "")
+            int? c = null;
+            if (color != null)
             {
-                return;
+                c = Game.ColorFromArgb(color.Value.A, color.Value.R, color.Value.G, color.Value.B);
             }
-            if (color == null) { color = Color.White; }
-            var t = new Text();
-            t.text = text;
-            t.color = color.Value;
-            t.fontsize = fontsize;
-            CachedTexture ct;
-            if (!cachedTextTextures.ContainsKey(t))
-            {
-                ct = MakeTextTexture(t);
-                if (ct == null)
-                {
-                    return;
-                }
-                cachedTextTextures.Add(t, ct);
-            }
-            ct = cachedTextTextures[t];
-            ct.lastuseMilliseconds = game.p.TimeMillisecondsFromStart();
-            GL.Disable(EnableCap.AlphaTest);
-            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
-            GL.Enable(EnableCap.AlphaTest);
-            DeleteUnusedCachedTextTextures();
+            Draw2dText(text, x, y, fontsize, c, false);
         }
-        public void Draw2dText(string text, Font font, float x, float y, Color? color)
+        public void Draw2dText(string text, float x, float y, float fontsize, int? color, bool enabledepthtest)
         {
+            FontCi font = FontCi.Create("Arial", fontsize, 0);
             Draw2dText(text, font, x, y, color, false);
         }
-        public void Draw2dText(string text, Font font, float x, float y, Color? color, bool enabledepthtest)
+
+        public void Draw2dText(string text, FontCi font, float x, float y, Color? color)
         {
-            if (text == null || text.Trim() == "")
+            int? c = null;
+            if (color != null)
             {
-                return;
+                c = Game.ColorFromArgb(color.Value.A, color.Value.R, color.Value.G, color.Value.B);
             }
-            if (color == null) { color = Color.White; }
-            var t = new Text();
-            t.text = text;
-            t.color = color.Value;
-            t.fontsize = font.Size;
-            CachedTexture ct;
-            if (!cachedTextTextures.ContainsKey(t))
+            Draw2dText(text, font, x, y, c, false);
+        }
+        public void Draw2dText(string text, FontCi font, float x, float y, int? color, bool enabledepthtest)
+        {
+            IntRef c = null;
+            if (color != null)
             {
-                ct = MakeTextTexture(t, font);
-                if (ct == null)
-                {
-                    return;
-                }
-                cachedTextTextures.Add(t, ct);
+                c = IntRef.Create(color.Value);
             }
-            ct = cachedTextTextures[t];
-            ct.lastuseMilliseconds = game.p.TimeMillisecondsFromStart();
-            GL.Disable(EnableCap.AlphaTest);
-            Draw2dTexture(ct.textureId, x, y, ct.size.Width, ct.size.Height, null, Color.White, enabledepthtest);
-            GL.Enable(EnableCap.AlphaTest);
-            DeleteUnusedCachedTextTextures();
+            game.Draw2dText(text, font, x, y, c, enabledepthtest);
         }
 
 
@@ -6417,13 +6357,6 @@ namespace ManicDigger
             }
             return base.Equals(obj);
         }
-    }
-
-    public class CachedTexture
-    {
-        public int textureId;
-        public SizeF size;
-        public int lastuseMilliseconds;
     }
 
     public interface IResetMap

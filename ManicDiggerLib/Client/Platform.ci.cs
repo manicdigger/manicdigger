@@ -54,6 +54,13 @@
     public abstract void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels);
     public abstract int LoadTextureFromBitmap(BitmapCi bmp);
     public abstract void GLLineWidth(int width);
+    public abstract void GLDisableAlphaTest();
+    public abstract void GLEnableAlphaTest();
+    public abstract void GLDeleteTexture(int id);
+    public abstract BitmapCi CreateTextTexture2(Text_ t);
+    public abstract float BitmapGetWidth(BitmapCi bmp);
+    public abstract float BitmapGetHeight(BitmapCi bmp);
+    public abstract void BitmapDelete(BitmapCi bmp);
 }
 
 public class KeyEventArgs

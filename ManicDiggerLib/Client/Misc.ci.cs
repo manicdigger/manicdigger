@@ -130,4 +130,29 @@ public class StringTools
         }
         return p.CharArrayToString(cChars, aLength.value + bLength.value);
     }
+
+    public static string StringSubstring(GamePlatform p, string a, int start, int count)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = p.StringToCharArray(a, aLength);
+
+        int[] bChars = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            bChars[i] = aChars[start + i];
+        }
+        return p.CharArrayToString(bChars, count);
+    }
+
+    public static string StringSubstringToEnd(GamePlatform p, string a, int start)
+    {
+        return StringSubstring(p, a, start, StringLength(p, a) - start);
+    }
+
+    public static int StringLength(GamePlatform p, string a)
+    {
+        IntRef aLength = new IntRef();
+        int[] aChars = p.StringToCharArray(a, aLength);
+        return aLength.value;
+    }
 }

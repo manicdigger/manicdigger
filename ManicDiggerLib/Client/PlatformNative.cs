@@ -10,6 +10,7 @@ using System.Net;
 using OpenTK.Input;
 using OpenTK;
 using System.Diagnostics;
+using ManicDigger.Renderers;
 
 public class GamePlatformNative : GamePlatform
 {
@@ -19,7 +20,7 @@ public class GamePlatformNative : GamePlatform
         start.Start();
     }
 
-    public GameWindowNative window;
+    public GameWindow window;
 
     string[] datapaths;
     Dictionary<string, string> cache = new Dictionary<string, string>();
@@ -143,7 +144,7 @@ public class GamePlatformNative : GamePlatform
         TextTexture t = new TextTexture();
         t.text = text;
         t.size = fontSize;
-        System.Drawing.Bitmap bmp = r.MakeTextTexture(new ManicDigger.Renderers.Text() { fontsize = fontSize, text = text, color = Color.White });
+        System.Drawing.Bitmap bmp = r.MakeTextTexture(new Text_() { fontsize = fontSize, text = text, color = Game.ColorFromArgb(255, 255, 255, 255) });
         t.texturewidth = bmp.Width;
         t.textureheight = bmp.Height;
         var size = r.MeasureTextSize(text, fontSize);
@@ -717,6 +718,47 @@ public class GamePlatformNative : GamePlatform
     public override void GLLineWidth(int width)
     {
         GL.LineWidth(width);
+    }
+
+    public override void GLDisableAlphaTest()
+    {
+        GL.Disable(EnableCap.AlphaTest);
+    }
+
+    public override void GLEnableAlphaTest()
+    {
+        GL.Enable(EnableCap.AlphaTest);
+    }
+
+    public override void GLDeleteTexture(int id)
+    {
+        GL.DeleteTexture(id);
+    }
+
+    TextRenderer textrenderer = new TextRenderer();
+
+    public override BitmapCi CreateTextTexture2(Text_ t)
+    {
+        Bitmap bmp= textrenderer.MakeTextTexture(t);
+        return new BitmapCiCs() { bmp = bmp };
+    }
+
+    public override float BitmapGetWidth(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return bmp_.bmp.Width;
+    }
+
+    public override float BitmapGetHeight(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        return bmp_.bmp.Height;
+    }
+
+    public override void BitmapDelete(BitmapCi bmp)
+    {
+        BitmapCiCs bmp_ = (BitmapCiCs)bmp;
+        bmp_.bmp.Dispose();
     }
 }
 

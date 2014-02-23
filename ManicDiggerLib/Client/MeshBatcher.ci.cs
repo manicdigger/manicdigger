@@ -241,18 +241,6 @@ public class ToCall
     internal int Count;
 }
 
-public class ToAdd
-{
-    internal ModelData modelData;
-    internal int id;
-    internal bool transparent;
-    internal int texture;
-    internal float centerX;
-    internal float centerY;
-    internal float centerZ;
-    internal float radius;
-}
-
 public class ListInfo
 {
     public ListInfo()
