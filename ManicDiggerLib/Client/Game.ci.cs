@@ -688,14 +688,14 @@
     }
 
     Model wireframeCube;
-    public void DrawLinesAroundSelectedBlock(int x, int y, int z)
+    public void DrawLinesAroundSelectedBlock(float x, float y, float z)
     {
         if (x == -1 && y == -1 && z == -1)
         {
             return;
         }
 
-        float pickcubeheight = getblockheight(x, y, z);
+        float pickcubeheight = getblockheight(p.FloatToInt(x),p.FloatToInt(z),p.FloatToInt(y));
 
         float posx = x + one/2;
         float posy = y + pickcubeheight * one/2;
@@ -712,7 +712,7 @@
         }
         GLPushMatrix();
         GLTranslate(posx, posy, posz);
-        GLScale(size, size, size);
+        GLScale(size, pickcubeheight * size, size);
         p.DrawModel(wireframeCube);
         GLPopMatrix();
     }

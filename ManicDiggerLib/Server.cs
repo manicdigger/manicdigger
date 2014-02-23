@@ -2406,15 +2406,14 @@ if (sent >= unknown.Count) { break; }
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
 
-                        Intersection intersection = new Intersection();
-                        if (intersection.CheckLineBoxExact(pick, headbox) != null)
+                        if (Intersection.CheckLineBoxExact(pick, headbox) != null)
                         {
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
                                 modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
                             }
                         }
-                        else if (intersection.CheckLineBoxExact(pick, bodybox) != null)
+                        else if (Intersection.CheckLineBoxExact(pick, bodybox) != null)
                         {
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {

@@ -2236,28 +2236,28 @@ namespace ManicDigger
 
             //pick models
             selectedmodelid = -1;
-            Intersection intersection1 = new Intersection();
-            foreach (var m in Models)
-            {
-                Vector3 closestmodelpos = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
-                foreach (var t in m.TrianglesForPicking)
-                {
-                    float[] intersection_ = new float[3];
-                    if (intersection1.RayTriangle(pick, t, intersection_) == 1)
-                    {
-                        Vector3 intersection = FloatArrayToVector3(intersection_);
-                        if ((FloatArrayToVector3(pick.Start) - intersection).Length > pick_distance)
-                        {
-                            continue;
-                        }
-                        if ((FloatArrayToVector3(pick.Start) - intersection).Length < (FloatArrayToVector3(pick.Start) - closestmodelpos).Length)
-                        {
-                            closestmodelpos = intersection;
-                            selectedmodelid = m.Id;
-                        }
-                    }
-                }
-            }
+            //Intersection intersection1 = new Intersection();
+            //foreach (var m in Models)
+            //{
+            //    Vector3 closestmodelpos = new Vector3(int.MaxValue, int.MaxValue, int.MaxValue);
+            //    foreach (var t in m.TrianglesForPicking)
+            //    {
+            //        float[] intersection_ = new float[3];
+            //        if (intersection1.RayTriangle(pick, t, intersection_) == 1)
+            //        {
+            //            Vector3 intersection = FloatArrayToVector3(intersection_);
+            //            if ((FloatArrayToVector3(pick.Start) - intersection).Length > pick_distance)
+            //            {
+            //                continue;
+            //            }
+            //            if ((FloatArrayToVector3(pick.Start) - intersection).Length < (FloatArrayToVector3(pick.Start) - closestmodelpos).Length)
+            //            {
+            //                closestmodelpos = intersection;
+            //                selectedmodelid = m.Id;
+            //            }
+            //        }
+            //    }
+            //}
             if (selectedmodelid != -1)
             {
                 SelectedBlockPosition = new Vector3(-1, -1, -1);
@@ -2279,24 +2279,19 @@ namespace ManicDigger
                 d_Weapon.SetAttack(true, true);
             }
 
-            //if (iii++ % 2 == 0)
-            {
-                //To improve speed, update picking only every second frame.
-                //return;
-            }
-
             //pick terrain
-            var s = new BlockOctreeSearcher() { platform = game.p };
+            BlockOctreeSearcher s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
-            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
+            
+            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
 
             if (overheadcamera && pick2.Count > 0 && left)
             {
                 //if not picked any object, and mouse button is pressed, then walk to destination.
-                playerdestination = FloatArrayToVector3(pick2[0].pos);
+                playerdestination = FloatArrayToVector3(pick2[0].blockPos);
             }
-            bool pickdistanceok = pick2.Count > 0 && (FloatArrayToVector3(pick2[0].pos) - ToVector3(player.playerposition)).Length <= pick_distance;
+            bool pickdistanceok = pick2.Count > 0 && (FloatArrayToVector3(pick2[0].blockPos) - ToVector3(player.playerposition)).Length <= pick_distance;
             bool playertileempty = IsTileEmptyForPhysics(
                         (int)(player.playerposition.X),
                         (int)(player.playerposition.Z),
@@ -2318,8 +2313,7 @@ namespace ManicDigger
             else
             {
                 SelectedBlockPosition = new Vector3(-1, -1, -1);
-                pick0.pos = new float[] { -1, -1, -1 };
-                pick0.side = TileSide.Front;
+                pick0.blockPos = new float[] { -1, -1, -1 };
             }
             if (FreeMouse)
             {
@@ -2373,7 +2367,7 @@ namespace ManicDigger
                     Vector3 to = FloatArrayToVector3(pick.End);
                     if (pick2.Count > 0)
                     {
-                        to = FloatArrayToVector3(pick2[0].pos);
+                        to = FloatArrayToVector3(pick2[0].blockPos);
                     }
 
                     Packet_ClientShot shot = new Packet_ClientShot();
@@ -2420,29 +2414,29 @@ namespace ManicDigger
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z - r);
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
 
-                        BlockPosSide p;
+                        float[] p;
                         Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, players[LocalPlayerId].ModelHeight, 0);
-                        if ((p = intersection1.CheckLineBoxExact(pick, headbox)) != null)
+                        if ((p = Intersection.CheckLineBoxExact(pick, headbox)) != null)
                         {
                             //do not allow to shoot through terrain
-                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
+                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].blockPos) - localeyepos).Length > (FloatArrayToVector3(p) - localeyepos).Length))
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p.pos), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 1;
                             }
                         }
-                        else if ((p = intersection1.CheckLineBoxExact(pick, bodybox)) != null)
+                        else if ((p = Intersection.CheckLineBoxExact(pick, bodybox)) != null)
                         {
                             //do not allow to shoot through terrain
-                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].pos) - localeyepos).Length > (FloatArrayToVector3(p.pos) - localeyepos).Length))
+                            if (pick2.Count == 0 || ((FloatArrayToVector3(pick2[0].blockPos) - localeyepos).Length > (FloatArrayToVector3(p) - localeyepos).Length))
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p.pos), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 0;
@@ -2548,12 +2542,11 @@ namespace ManicDigger
                     if (left || right)
                     {
                         BlockPosSide tile = pick0;
-                        Console.Write(tile.pos + ":" + Enum.GetName(typeof(TileSide), tile.side));
                         Vector3 newtile = right ? FloatArrayToVector3(tile.Translated()) : FloatArrayToVector3(tile.Current());
                         if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y));
-                            if (FloatArrayToVector3(pick0.pos) != new Vector3(-1, -1, -1))
+                            if (FloatArrayToVector3(pick0.blockPos) != new Vector3(-1, -1, -1))
                             {
                                 int blocktype;
                                 if (left) { blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
@@ -2597,8 +2590,9 @@ namespace ManicDigger
                                 throw new Exception();
                             }
                         broken:
-                            OnPick(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
-                                new Vector3((int)tile.Current()[0], (int)tile.Current()[2], (int)tile.Current()[1]), FloatArrayToVector3(tile.pos),
+                            OnPick(new Vector3(newtile.X, newtile.Z, newtile.Y),
+                                new Vector3((int)tile.Current()[0], (int)tile.Current()[2], (int)tile.Current()[1]),
+                                tile.collisionPos,
                                 right);
                             //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
                             //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
@@ -2941,8 +2935,8 @@ namespace ManicDigger
                 particleEffectBlockBreak.DrawImmediateParticleEffects(e.Time);
                 if (ENABLE_DRAW2D)
                 {
-                    game.DrawLinesAroundSelectedBlock((int)SelectedBlockPosition.X,
-                        (int)SelectedBlockPosition.Y, (int)SelectedBlockPosition.Z);
+                    game.DrawLinesAroundSelectedBlock(SelectedBlockPosition.X,
+                        SelectedBlockPosition.Y, SelectedBlockPosition.Z);
                 }
                 DrawCharacters((float)e.Time);
                 foreach (Sprite b in new List<Sprite>(sprites))
@@ -3689,10 +3683,10 @@ namespace ManicDigger
             var s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
-            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.pos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.pos) - ray_start_point).Length); });
+            pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
             if (pick2.Count > 0)
             {
-                var pickdistance = (FloatArrayToVector3(pick2[0].pos) - target).Length;
+                var pickdistance = (FloatArrayToVector3(pick2[0].blockPos) - target).Length;
                 curtppcameradistance = Math.Min(pickdistance - 1, curtppcameradistance);
                 if (curtppcameradistance < 0.3f) { curtppcameradistance = 0.3f; }
             }
@@ -4373,10 +4367,10 @@ namespace ManicDigger
         {
             SendSetBlock(new Vector3(pos.X, pos.Y, pos.Z), Packet_BlockSetModeEnum.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
         }
-        public void OnPick(Vector3 blockpos, Vector3 blockposold, Vector3 pos3d, bool right)
+        public void OnPick(Vector3 blockpos, Vector3 blockposold, float[] collisionPos, bool right)
         {
-            float xfract = pos3d.X - (float)Math.Floor(pos3d.X);
-            float zfract = pos3d.Z - (float)Math.Floor(pos3d.Z);
+            float xfract = collisionPos[0] - (float)Math.Floor(collisionPos[0]);
+            float zfract = collisionPos[2] - (float)Math.Floor(collisionPos[2]);
             int activematerial = (ushort)MaterialSlots[ActiveMaterial];
             int railstart = d_Data.BlockIdRailstart;
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical

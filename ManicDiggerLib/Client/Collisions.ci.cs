@@ -1,60 +1,4 @@
-﻿public class IntersectionCi
-{
-    //http://www.3dkingdoms.com/weekly/weekly.php?a=3
-    public static bool GetIntersection(float fDst1, float fDst2, Vector3Ref P1, Vector3Ref P2, Vector3Ref Hit)
-    {
-        Hit.X = 0;
-        Hit.Y = 0;
-        Hit.Z = 0;
-        if ((fDst1 * fDst2) >= 0) return false;
-        if (fDst1 == fDst2) return false;
-        Hit.X = P1.X + (P2.X - P1.X) * (-fDst1 / (fDst2 - fDst1));
-        Hit.Y = P1.Y + (P2.Y - P1.Y) * (-fDst1 / (fDst2 - fDst1));
-        Hit.Z = P1.Z + (P2.Z - P1.Z) * (-fDst1 / (fDst2 - fDst1));
-        return true;
-    }
-
-    public static bool InBox(Vector3Ref Hit, Vector3Ref B1, Vector3Ref B2, int Axis)
-    {
-        if (Axis == 1 && Hit.Z > B1.Z && Hit.Z < B2.Z && Hit.Y > B1.Y && Hit.Y < B2.Y) return true;
-        if (Axis == 2 && Hit.Z > B1.Z && Hit.Z < B2.Z && Hit.X > B1.X && Hit.X < B2.X) return true;
-        if (Axis == 3 && Hit.X > B1.X && Hit.X < B2.X && Hit.Y > B1.Y && Hit.Y < B2.Y) return true;
-        return false;
-    }
-
-    // returns true if line (L1, L2) intersects with the box (B1, B2)
-    // returns intersection point in Hit
-    public static bool CheckLineBox(Vector3Ref B1, Vector3Ref B2, Vector3Ref L1, Vector3Ref L2, Vector3Ref Hit)
-    {
-        Hit.X = 0;
-        Hit.Y = 0;
-        Hit.Z = 0;
-
-        if (L2.X < B1.X && L1.X < B1.X) return false;
-        if (L2.X > B2.X && L1.X > B2.X) return false;
-        if (L2.Y < B1.Y && L1.Y < B1.Y) return false;
-        if (L2.Y > B2.Y && L1.Y > B2.Y) return false;
-        if (L2.Z < B1.Z && L1.Z < B1.Z) return false;
-        if (L2.Z > B2.Z && L1.Z > B2.Z) return false;
-        if (L1.X > B1.X && L1.X < B2.X &&
-            L1.Y > B1.Y && L1.Y < B2.Y &&
-            L1.Z > B1.Z && L1.Z < B2.Z)
-        {
-            Hit = L1;
-            return true;
-        }
-        if ((GetIntersection(L1.X - B1.X, L2.X - B1.X, L1, L2, Hit) && InBox(Hit, B1, B2, 1))
-          || (GetIntersection(L1.Y - B1.Y, L2.Y - B1.Y, L1, L2, Hit) && InBox(Hit, B1, B2, 2))
-          || (GetIntersection(L1.Z - B1.Z, L2.Z - B1.Z, L1, L2, Hit) && InBox(Hit, B1, B2, 3))
-          || (GetIntersection(L1.X - B2.X, L2.X - B2.X, L1, L2, Hit) && InBox(Hit, B1, B2, 1))
-          || (GetIntersection(L1.Y - B2.Y, L2.Y - B2.Y, L1, L2, Hit) && InBox(Hit, B1, B2, 2))
-          || (GetIntersection(L1.Z - B2.Z, L2.Z - B2.Z, L1, L2, Hit) && InBox(Hit, B1, B2, 3)))
-            return true;
-        return false;
-    }
-}
-
-public class Line3D
+﻿public class Line3D
 {
     internal float[] Start;
     internal float[] End;
@@ -100,9 +44,9 @@ public class Box3D
         MinEdge[0] = Game.MinFloat(MinEdge[0], x);
         MinEdge[1] = Game.MinFloat(MinEdge[1], y);
         MinEdge[2] = Game.MinFloat(MinEdge[2], z);
-        MaxEdge[0] = Game.MinFloat(MaxEdge[0], x);
-        MaxEdge[1] = Game.MinFloat(MaxEdge[1], y);
-        MaxEdge[2] = Game.MinFloat(MaxEdge[2], z);
+        MaxEdge[0] = Game.MaxFloat(MaxEdge[0], x);
+        MaxEdge[1] = Game.MaxFloat(MaxEdge[1], y);
+        MaxEdge[2] = Game.MaxFloat(MaxEdge[2], z);
     }
     public float[] Center()
     {
@@ -147,37 +91,39 @@ public class BlockPosSide
     public BlockPosSide()
     {
     }
-    public static BlockPosSide Create(int x, int y, int z, TileSide side)
+    public static BlockPosSide Create(int x, int y, int z)
     {
         BlockPosSide p=new BlockPosSide();
-        p.pos = Vec3.FromValues(x, y, z);
-        p.side = side;
+        p.blockPos = Vec3.FromValues(x, y, z);
         return p;
     }
-    internal float[] pos;
-    internal TileSide side;
+    internal float[] blockPos;
+    internal float[] collisionPos;
     public float[] Translated()
     {
-        if (side == TileSide.Top) { return Vec3.FromValues(pos[0] + 0, pos[1] + 1, pos[2] + 0); }
-        if (side == TileSide.Bottom) { return Vec3.FromValues(pos[0] + 0, pos[1] + -1, pos[2] + 0); }
-        if (side == TileSide.Front) { return Vec3.FromValues(pos[0] + -1, pos[1] + 0, pos[2] + 0); }
-        if (side == TileSide.Back) { return Vec3.FromValues(pos[0] + 1, pos[1] + 0, pos[2] + 0); }
-        if (side == TileSide.Left) { return Vec3.FromValues(pos[0] + 0, pos[1] + 0, pos[2] + -1); }
-        if (side == TileSide.Right) { return Vec3.FromValues(pos[0] + 0, pos[1] + 0, pos[2] + 1); }
-        //throw new Exception();
-        return null;
+        float[] translated = new float[3];
+        translated[0] = blockPos[0];
+        translated[1] = blockPos[1];
+        translated[2] = blockPos[2];
+
+        if (collisionPos == null)
+        {
+            return translated;
+        }
+
+        if (collisionPos[0] == blockPos[0] ) { translated[0] = translated[0] - 1; }
+        if (collisionPos[1] == blockPos[1] ) { translated[1] = translated[1] - 1; }
+        if (collisionPos[2] == blockPos[2] ) { translated[2] = translated[2] - 1; }
+        if (collisionPos[0] == blockPos[0] + 1) { translated[0] = translated[0] + 1; }
+        if (collisionPos[1] == blockPos[1] + 1) { translated[1] = translated[1] + 1; }
+        if (collisionPos[2] == blockPos[2] + 1) { translated[2] = translated[2] + 1; }
+
+        return translated;
     }
     public float[] Current()
     {
-        return pos;
-        //throw new Exception();
+        return blockPos;
     }
-}
-
-public class Triangle3DAndSide
-{
-    internal Triangle3D t;
-    internal TileSide side;
 }
 
 public class BlockOctreeSearcher
@@ -196,11 +142,6 @@ public class BlockOctreeSearcher
         {
             listpool[i] = new ListBox3d();
             listpool[i].arr = new Box3D[1000];
-        }
-        blockpossides = new BlockPosSide[1000];
-        for (int i = 0; i < 1000; i++)
-        {
-            blockpossides[i] = BlockPosSide.Create(0, 0, 0, TileSide.Top);
         }
         l = new BlockPosSide[1024];
         lCount = 0;
@@ -304,14 +245,11 @@ public class BlockOctreeSearcher
     }
     Line3D currentLine;
     float[] currentHit;
-    BlockPosSide[] blockpossides;
-    int blockpossides_i;
     Intersection intersection;
     BlockPosSide[] l;
     int lCount;
     public BlockPosSide[] LineIntersection(DelegateIsBlockEmpty isEmpty, DelegateGetBlockHeight getBlockHeight, Line3D line)
     {
-        blockpossides_i = 0;
         lCount = 0;
         currentLine = line;
         currentHit[0] = 0;
@@ -322,22 +260,30 @@ public class BlockOctreeSearcher
         {
             Box3D node = l1.arr[i];
             float[] hit = currentHit;
-            int x = platform.FloatToInt(node.MinEdge[0]);
-            int y = platform.FloatToInt(node.MinEdge[2]);
-            int z = platform.FloatToInt(node.MinEdge[1]);
-            if (!isEmpty.IsBlockEmpty(x, y, z))
+            float x = node.MinEdge[0];
+            float y = node.MinEdge[2];
+            float z = node.MinEdge[1];
+            if (!isEmpty.IsBlockEmpty(platform.FloatToInt(x),platform.FloatToInt(y),platform.FloatToInt( z)))
             {
-                Box3D node2 = node;
-                node2.MaxEdge[1] = node2.MinEdge[1] + getBlockHeight.GetBlockHeight(x, y, z);
-                //BlockPosSide hit2 = new BlockPosSide(0, 0, 0, TileSide.Top);
-                //BlockPosSide hit2 = blockpossides[blockpossides_i];
-                //blockpossides_i++;
-                //hit2.pos = new float[] { x, z, y };
-                BlockPosSide hit2 = intersection.CheckLineBoxExact(line, node2);
-                if (hit2 != null)
+                Box3D node2 = new Box3D();
+                node2.MinEdge = Vec3.CloneIt(node.MinEdge);
+                node2.MaxEdge = Vec3.CloneIt(node.MaxEdge);
+                node2.MaxEdge[1] = node2.MinEdge[1] + getBlockHeight.GetBlockHeight(platform.FloatToInt(x),platform.FloatToInt(y),platform.FloatToInt(z));
+
+                BlockPosSide b = new BlockPosSide();
+                float[] hit2 = new float[3];
+
+                float[] dir = new float[3];
+                dir[0] = line.End[0] - line.Start[0];
+                dir[1] = line.End[1] - line.Start[1];
+                dir[2] = line.End[2] - line.Start[2];
+                bool ishit = Intersection.HitBoundingBox(node2.MinEdge, node2.MaxEdge, line.Start, dir, hit2);
+                if (ishit)
                 {
-                    hit2.pos = Vec3.FromValues(x, z, y);
-                    l[lCount++] = hit2;
+                    //hit2.pos = Vec3.FromValues(x, z, y);
+                    b.blockPos = Vec3.FromValues(platform.FloatToInt(x), platform.FloatToInt(z), platform.FloatToInt(y));
+                    b.collisionPos = hit2;
+                    l[lCount++] = b;
                 }
             }
         }
@@ -378,23 +324,78 @@ public class Intersection
     public Intersection()
     {
         float one = 1;
-        SMALL_NUM = one / 100000000; // anything that avoids division overflow
+    }
+    // http://tog.acm.org/resources/GraphicsGems/gems/RayBox.c
+    // Fast Ray-Box Intersection
+    // by Andrew Woo
+    // from "Graphics Gems", Academic Press, 1990
+    const int LEFT = 1;
+    const int MIDDLE = 2;
+    const int RIGHT = 0;
+    public static bool HitBoundingBox(float[] minB, float[] maxB, float[] origin, float[] dir, float[] coord)
+    {
+        bool inside = true;
+        byte[] quadrant = new byte[3];
+        int i;
+        int whichPlane;
+        float[] maxT = new float[3];
+        float[] candidatePlane = new float[3];
 
-        u = new float[3];// triangle vectors
-        v = new float[3];
-        n = new float[3];
+        // Find candidate planes; this loop can be avoided if
+        // rays cast all from the eye(assume perpsective view)
+        for (i = 0; i < 3; i++)
+            if (origin[i] < minB[i])
+            {
+                quadrant[i] = LEFT;
+                candidatePlane[i] = minB[i];
+                inside = false;
+            }
+            else if (origin[i] > maxB[i])
+            {
+                quadrant[i] = RIGHT;
+                candidatePlane[i] = maxB[i];
+                inside = false;
+            }
+            else
+            {
+                quadrant[i] = MIDDLE;
+            }
 
-        dir = new float[3];// ray vectors
-        w0 = new float[3];
-        w = new float[3];
+        // Ray origin inside bounding box
+        if (inside)
+        {
+            coord = origin;
+            return (true);
+        }
 
-        floatMaxValue = 1000 * 1000;
-        floatMaxValue *= 1000;
-        big = new float[3];
-        closest = new float[3];
-        a = new float[3];
-        b = new float[3];
-        outIntersection = new float[3];
+
+        // Calculate T distances to candidate planes
+        for (i = 0; i < 3; i++)
+            if (quadrant[i] != MIDDLE && dir[i] != 0)
+                maxT[i] = (candidatePlane[i] - origin[i]) / dir[i];
+            else
+                maxT[i] = -1;
+
+        // Get largest of the maxT's for final choice of intersection
+        whichPlane = 0;
+        for (i = 1; i < 3; i++)
+            if (maxT[whichPlane] < maxT[i])
+                whichPlane = i;
+
+        // Check final candidate actually inside box
+        if (maxT[whichPlane] < 0) return (false);
+        for (i = 0; i < 3; i++)
+            if (whichPlane != i)
+            {
+                coord[i] = origin[i] + maxT[whichPlane] * dir[i];
+                if (coord[i] < minB[i] || coord[i] > maxB[i])
+                    return (false);
+            }
+            else
+            {
+                coord[i] = candidatePlane[i];
+            }
+        return (true);				// ray hits box
     }
 
     //http://www.3dkingdoms.com/weekly/weekly.php?a=3
@@ -457,363 +458,16 @@ public class Intersection
     {
         return CheckLineBox1(box.MinEdge, box.MaxEdge, line.Start, line.End, hit);
     }
-    // Copyright 2001, softSurfer (www.softsurfer.com)
-    // This code may be freely used and modified for any purpose
-    // providing that this copyright notice is included with it.
-    // SoftSurfer makes no warranty for this code, and cannot be held
-    // liable for any real or imagined damage resulting from its use.
-    // Users of this code must verify correctness for their application.
 
-    // Assume that classes are already given for the objects:
-    //    Point and Vector with
-    //        coordinates {float x, y, z;}
-    //        operators for:
-    //            == to test equality
-    //            != to test inequality
-    //            (Vector)0 = (0,0,0)         (null vector)
-    //            Point  = Point ± Vector
-    //            Vector = Point - Point
-    //            Vector = Scalar * Vector    (scalar product)
-    //            Vector = Vector * Vector    (cross product)
-    //    Line and Ray and Segment with defining points {Point P0, P1;}
-    //        (a Line is infinite, Rays and Segments start at P0)
-    //        (a Ray extends beyond P1, but a Segment ends at P1)
-    //    Plane with a point and a normal {Point V0; Vector n;}
-    //    Triangle with defining vertices {Point V0, V1, V2;}
-    //    Polyline and Polygon with n vertices {int n; Point *V;}
-    //        (a Polygon has V[n]=V[0])
-    //===================================================================
 
-    float SMALL_NUM; // anything that avoids division overflow
-    // dot product (3D) which allows vector operations in arguments
-    float dot(float[] u, float[] v) { return u[0] * v[0] + u[1] * v[1] + u[2] * v[2]; }
-    static void cross(float[] a, float[] b, float[] result)
+    public static float[] CheckLineBoxExact(Line3D line, Box3D box)
     {
-        result[0] = a[1] * b[2] - a[2] * b[1];
-        result[1] = a[2] * b[0] - a[0] * b[2];
-        result[2] = a[0] * b[1] - a[1] * b[0];
+        float[] dir_ = new float[3];
+        dir_[0] = line.End[0] - line.Start[0];
+        dir_[1] = line.End[1] - line.Start[1];
+        dir_[2] = line.End[2] - line.Start[2];
+        float[] hit = new float[3];
+        Intersection.HitBoundingBox(box.MinEdge, box.MaxEdge, line.Start, dir_, hit);
+        return hit;
     }
-
-    float[] u;// triangle vectors
-    float[] v;
-    float[] n;
-
-
-    float[] dir;// ray vectors
-    float[] w0;
-    float[] w;
-
-    // intersect_RayTriangle(): intersect a ray with a 3D triangle
-    //    Input:  a ray R, and a triangle T
-    //    Output: *I = intersection point (when it exists)
-    //    Return: -1 = triangle is degenerate (a segment or point)
-    //             0 = disjoint (no intersect)
-    //             1 = intersect in unique point I1
-    //             2 = are in the same plane
-    public int
-    RayTriangle(Line3D R, Triangle3D T, float[] I)
-    {
-        float r;             // params to calc ray-plane intersect
-        float a;
-        float b;
-
-        I[0] = 0;
-        I[1] = 0;
-        I[2] = 0;
-
-        // get triangle edge vectors and plane normal
-        u[0] = T.PointB[0] - T.PointA[0];
-        u[1] = T.PointB[1] - T.PointA[1];
-        u[2] = T.PointB[2] - T.PointA[2];
-        v[0] = T.PointC[0] - T.PointA[0];
-        v[1] = T.PointC[1] - T.PointA[1];
-        v[2] = T.PointC[2] - T.PointA[2];
-        //n = u.CrossProduct(v);             // cross product
-        cross(u, v, n);
-        //if (n == (Vector3D)0)            // triangle is degenerate
-        //    return -1;                 // do not deal with this case
-
-        dir[0] = R.End[0] - R.Start[0];             // ray direction vector
-        dir[1] = R.End[1] - R.Start[1];
-        dir[2] = R.End[2] - R.Start[2];
-        w0[0] = R.Start[0] - T.PointA[0];
-        w0[1] = R.Start[1] - T.PointA[1];
-        w0[2] = R.Start[2] - T.PointA[2];
-        a = -dot(n, w0);
-        b = dot(n, dir);
-        if (Game.AbsFloat(b) < SMALL_NUM)
-        {     // ray is parallel to triangle plane
-            if (a == 0)                // ray lies in triangle plane
-                return 2;
-            else return 0;             // ray disjoint from plane
-        }
-
-        // get intersect point of ray with triangle plane
-        r = a / b;
-        if (r < 0)                   // ray goes away from triangle
-            return 0;                  // => no intersect
-        // for a segment, also test if (r > 1.0) => no intersect
-
-        I[0] = R.Start[0] + r * dir[0];           // intersect point of ray and plane
-        I[1] = R.Start[1] + r * dir[1];
-        I[2] = R.Start[2] + r * dir[2];
-
-        // is I inside T?
-        float uu;
-        float uv;
-        float vv;
-        float wu;
-        float wv;
-        float D;
-        uu = dot(u, u);
-        uv = dot(u, v);
-        vv = dot(v, v);
-        w[0] = I[0] - T.PointA[0];
-        w[1] = I[1] - T.PointA[1];
-        w[2] = I[2] - T.PointA[2];
-        wu = dot(w, u);
-        wv = dot(w, v);
-        D = uv * uv - uu * vv;
-
-        // get and test parametric coords
-        float s;
-        float t;
-        s = (uv * wv - vv * wu) / D;
-        if (s < 0 || s > 1)        // I is outside T
-            return 0;
-        t = (uv * wu - uu * wv) / D;
-        if (t < 0 || (s + t) > 1)  // I is outside T
-            return 0;
-
-        return 1;                      // I is in T
-    }
-    float floatMaxValue;
-    float[] big;
-    float[] closest;
-    float[] a;
-    float[] b;
-    float[] outIntersection;
-    public BlockPosSide CheckLineBoxExact(Line3D line, Box3D box)
-    {
-        if (PointInBox(line.Start, box))
-        {
-            BlockPosSide p = BlockPosSide.Create(0, 0, 0, TileSide.Top);
-            p.pos = line.Start;
-            return p;
-        }
-        Vec3.Set(big, floatMaxValue, floatMaxValue, floatMaxValue);
-        Vec3.Set(closest, floatMaxValue, floatMaxValue, floatMaxValue);
-        TileSide side = TileSide.Top;
-        
-        Triangle3DAndSide[] triangles = BoxTrianglesAndSides(box.MinEdge, box.MaxEdge);
-        for (int i = 0; i < 12; i++)
-        {
-            Triangle3DAndSide t = triangles[i];
-            if (RayTriangle(line, t.t, outIntersection) != 0)
-            {
-                a[0] = line.Start[0] - outIntersection[0];
-                a[1] = line.Start[1] - outIntersection[1];
-                a[2] = line.Start[2] - outIntersection[2];
-                b[0] = line.Start[0] - closest[0];
-                b[1] = line.Start[1] - closest[1];
-                b[2] = line.Start[2] - closest[2];
-                if (Vec3.Len(a) < Vec3.Len(b))
-                {
-                    closest[0] = outIntersection[0];
-                    closest[1] = outIntersection[1];
-                    closest[2] = outIntersection[2];
-                    side = t.side;
-                }
-            }
-        }
-        //if (closest == big) { throw new Exception(); }
-        if (closest[0] == big[0] && closest[1] == big[1] && closest[2] == big[2]) { return null; }
-        BlockPosSide bps = BlockPosSide.Create(0, 0, 0, TileSide.Top);
-        bps.pos = closest;
-        bps.side = side;
-        return bps;
-        //if (PointInBox(line.End, box)) { return new TilePosSide() { pos = line.End }; }
-        //throw new Exception();
-    }
-
-    Triangle3DAndSide[] triangleandside_pool;
-    public Triangle3DAndSide[] BoxTrianglesAndSides(float[] aa, float[] bb)
-    {
-        if (triangleandside_pool == null)
-        {
-            triangleandside_pool = new Triangle3DAndSide[12];
-            for (int i = 0; i < 12; i++)
-            {
-                triangleandside_pool[i] = new Triangle3DAndSide();
-            }
-        }
-        TileSide side = TileSide.Top;
-        TileSide sidei = TileSide.Top;
-        int ii = 0;
-        Triangle3D[] triangles = BoxTriangles(aa, bb);
-        for (int i = 0; i < 12; i++)
-        {
-            Triangle3D t = triangles[i];
-            side = sidei;
-            ii++;
-            if (ii % 2 == 0)
-            {
-                if (sidei == TileSide.Top) { sidei = TileSide.Bottom; }
-                else if (sidei == TileSide.Bottom) { sidei = TileSide.Front; }
-                else if (sidei == TileSide.Front) { sidei = TileSide.Back; }
-                else if (sidei == TileSide.Back) { sidei = TileSide.Left; }
-                else if (sidei == TileSide.Left) { sidei = TileSide.Right; }
-                else if (sidei == TileSide.Right) { sidei = TileSide.Top; }
-            }
-            //Triangle3DAndSide tt = new Triangle3DAndSide();
-            Triangle3DAndSide tt = triangleandside_pool[ii - 1];
-            tt.t = t;
-            tt.side = side;
-            //l.Add(tt);
-        }
-        return triangleandside_pool;
-    }
-    int[] myelements;
-    float[][] myvertices;
-    Triangle3D[] trianglespool;
-    public Triangle3D[] BoxTriangles(float[] aa, float[] bb)
-    {
-        float x = aa[0];
-        float z = aa[1];
-        float y = aa[2];
-        float sx = bb[0] - aa[0];
-        float sz = bb[1] - aa[1];
-        float sy = bb[2] - aa[2];
-        //List<short> myelements = new List<short>();
-        if (myelements == null)
-        {
-            myelements = new int[6 * 6];
-            myvertices = new float[6 * 4][];
-            for (int i = 0; i < 6 * 4; i++)
-            {
-                myvertices[i] = new float[3];
-            }
-            trianglespool = new Triangle3D[6 * 2];
-            for (int i = 0; i < 6 * 2; i++)
-            {
-                trianglespool[i] = new Triangle3D();
-            }
-        }
-        int myverticesCount = 0;
-        int myelementsCount = 0;
-        //top
-        //if (drawtop)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 1 * sy);
-            myelements[myelementsCount++] = (lastelement + 0);
-            myelements[myelementsCount++] = (lastelement + 1);
-            myelements[myelementsCount++] = (lastelement + 2);
-            myelements[myelementsCount++] = (lastelement + 3);
-            myelements[myelementsCount++] = (lastelement + 1);
-            myelements[myelementsCount++] = (lastelement + 2);
-        }
-        //bottom - same as top, but z is 1 less.
-        //if (drawbottom)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 1 * sy);
-            myelements[myelementsCount++] = ((lastelement + 0));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-            myelements[myelementsCount++] = ((lastelement + 3));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-        }
-        //front
-        //if (drawfront)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 1 * sy);
-            myelements[myelementsCount++] = ((lastelement + 0));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-            myelements[myelementsCount++] = ((lastelement + 3));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-        }
-        //back - same as front, but x is 1 greater.
-        //if (drawback)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 1 * sy);
-            myelements[myelementsCount++] = ((lastelement + 0));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-            myelements[myelementsCount++] = ((lastelement + 3));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-        }
-        //if (drawleft)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 0 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 0 * sy);
-
-            myelements[myelementsCount++] = ((lastelement + 0));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-            myelements[myelementsCount++] = ((lastelement + 3));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-        }
-        //right - same as left, but y is 1 greater.
-        //if (drawright)
-        {
-            int lastelement = myverticesCount;
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 0 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 0 * sx, z + 1 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 0 * sz, y + 1 * sy);
-            Vec3.Set(myvertices[myverticesCount++], x + 1 * sx, z + 1 * sz, y + 1 * sy);
-            myelements[myelementsCount++] = ((lastelement + 0));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-            myelements[myelementsCount++] = ((lastelement + 3));
-            myelements[myelementsCount++] = ((lastelement + 1));
-            myelements[myelementsCount++] = ((lastelement + 2));
-        }
-        //Triangle3D[] triangles = new Triangle3D[myelementsCount / 3];
-        for (int i = 0; i < myelementsCount / 3; i++)
-        {
-            //Triangle3D t = new Triangle3D();
-            Triangle3D t = trianglespool[i];
-            t.PointA = myvertices[myelements[i * 3 + 0]];
-            t.PointB = myvertices[myelements[i * 3 + 1]];
-            t.PointC = myvertices[myelements[i * 3 + 2]];
-            //triangles[i] = t;
-        }
-        return trianglespool;
-    }
-    static bool PointInBox(float[] vv, Box3D node)
-    {
-        return vv[0] >= node.MinEdge[0] && vv[1] >= node.MinEdge[1] && vv[2] >= node.MinEdge[1]
-            && vv[0] <= node.MaxEdge[0] && vv[1] <= node.MaxEdge[1] && vv[2] <= node.MaxEdge[2];
-    }
-    static float[] Interpolate(float[] aa, float[] bb, float f)
-    {
-        float x = aa[0] + (bb[0] - aa[0]) * f;
-        float y = aa[1] + (bb[1] - aa[1]) * f;
-        float z = aa[2] + (bb[2] - aa[2]) * f;
-        return Vec3.FromValues(x, y, z);
-    }
-
 }
