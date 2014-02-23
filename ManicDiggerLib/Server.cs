@@ -1035,7 +1035,12 @@ namespace ManicDiggerServer
                         }
                         else if (banlist.IsIPBanned(iep1.AddressToString()))
                         {
-                            SendDisconnectPlayer(this.lastClientId, "Your IP has been banned from this server.");
+                            IPEntry entry = banlist.GetIPEntry(iep1.AddressToString());
+                            string reason = entry.Reason;
+                            if (string.IsNullOrEmpty(reason))
+                                reason = "";
+                            SendDisconnectPlayer(this.lastClientId, string.Format("Your IP has been banned from this server.\n{0}", reason));
+                            Console.WriteLine(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             KillPlayer(this.lastClientId);
                         }
@@ -2049,7 +2054,12 @@ if (sent >= unknown.Count) { break; }
 
                         if (banlist.IsUserBanned(username))
                         {
-                            SendDisconnectPlayer(clientid, "Your username has been banned from this server.");
+                            UserEntry entry = banlist.GetUserEntry(username);
+                            string reason = entry.Reason;
+                            if (string.IsNullOrEmpty(reason))
+                                reason = "";
+                            SendDisconnectPlayer(clientid, string.Format("Your username has been banned from this server.\n{0}", reason));
+                            Console.WriteLine(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
                             break;
