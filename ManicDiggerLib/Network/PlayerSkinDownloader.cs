@@ -23,6 +23,7 @@ namespace ManicDigger.Network
         {
         	foreach (var loadedTexture in new Dictionary<string, int>(playertextures))
         	{
+        		//Delete loaded textures for players who left the game
         		bool bFound = false;
         		foreach (string name in players)
         		{
@@ -35,6 +36,7 @@ namespace ManicDigger.Network
         		if (!bFound)
         		{
         			playertextures.Remove(loadedTexture.Key);
+        			texturestodownloadlist.Remove(loadedTexture.Key);		//Remove from this list so it will be downloaded again
         		}
         	}
             foreach (string name in players)
@@ -96,7 +98,6 @@ namespace ManicDigger.Network
                             break;
                         }
                         name = texturestodownload.Dequeue();
-                        //texturestodownloadlist.Remove(name);
                     }
                     try
                     {
