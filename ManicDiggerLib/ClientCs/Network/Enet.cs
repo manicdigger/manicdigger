@@ -6,6 +6,8 @@ namespace ManicDigger
 {
     public class EnetNetServer : INetServer
     {
+        internal GamePlatform platform;
+
         public override void Start()
         {
             host = new ENet.Host();

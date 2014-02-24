@@ -73,6 +73,41 @@
     public abstract MonitorObject MonitorCreate();
     public abstract void MonitorEnter(MonitorObject monitorObject);
     public abstract void MonitorExit(MonitorObject monitorObject);
+    public abstract bool EnetAvailable();
+    public abstract EnetHost EnetCreateHost();
+    public abstract void EnetHostInitializeServer(EnetHost host, int port, int peerLimit);
+    public abstract bool EnetHostService(EnetHost host, int timeout, EnetEvent enetEvent);
+    public abstract bool EnetHostCheckEvents(EnetHost host, EnetEvent event_);
+    public abstract EnetPeer EnetHostConnect(string hostName, int port, int data, int channelLimit);
+    public abstract void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags);
+}
+
+public class EnetHost
+{
+}
+
+public class EnetEvent
+{
+    internal EnetEventType type;
+    internal EnetPeer peer;
+}
+
+public enum EnetEventType
+{
+    Connect,
+    Receive,
+    Disconnect
+}
+
+public abstract class EnetPeer
+{
+    public abstract int UserData();
+}
+
+public abstract class EnetPacket
+{
+    public abstract int GetBytesCount();
+    public abstract byte[] GetBytes();
 }
 
 public class MonitorObject

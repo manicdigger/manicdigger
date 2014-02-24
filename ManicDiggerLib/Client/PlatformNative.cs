@@ -839,6 +839,60 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         System.Threading.Monitor.Exit(monitorObject);
     }
+
+    public override bool EnetAvailable()
+    {
+        return true;
+    }
+
+    public override EnetHost EnetCreateHost()
+    {
+        return new EnetHostNative() { host = new ENet.Host() };
+    }
+
+    public override void EnetHostInitializeServer(EnetHost host, int port, int peerLimit)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        host_.host.InitializeServer(port, peerLimit);
+    }
+
+    public override bool EnetHostService(EnetHost host, int timeout, EnetEvent enetEvent)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Event e;
+        bool ret = host_.host.Service(timeout, out e);
+        return ret;
+    }
+
+    public override bool EnetHostCheckEvents(EnetHost host, EnetEvent event_)
+    {
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Event e;
+        bool ret = host_.host.CheckEvents(out e);
+        return ret;
+    }
+
+    public override EnetPeer EnetHostConnect(string hostName, int port, int data, int channelLimit)
+    {
+        return null;
+    }
+
+    public override void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags)
+    {
+    }
+}
+public class EnetHostNative : EnetHost
+{
+    public ENet.Host host;
+}
+
+public class EnetPeerNative : EnetPeer
+{
+    public ENet.Peer peer;
+    public override int UserData()
+    {
+        return peer.UserData.ToInt32();
+    }
 }
 
 public class BitmapCiCs : BitmapCi
