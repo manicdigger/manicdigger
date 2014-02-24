@@ -1237,8 +1237,8 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                banlist.BannedUsers.Add(targetName);
-                SaveConfig();
+                banlist.BanPlayer(targetName, sourceName, reason);
+                SaveBanlist();
                 SendMessageToAll(string.Format("{0}{1} was banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} bans {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were banned by an administrator.{0}", reason));
@@ -1293,8 +1293,8 @@ namespace ManicDiggerServer
                 string sourceName = GetClient(sourceClientId).playername;
                 string targetNameColored = targetClient.ColoredPlayername(colorImportant);
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
-                banlist.BannedIPs.Add((targetClient.socket.RemoteEndPoint()).AddressToString());
-                SaveConfig();
+                banlist.BanIP((targetClient.socket.RemoteEndPoint()).AddressToString(), sourceName, reason);
+                SaveBanlist();
                 SendMessageToAll(string.Format("{0}{1} was IP banned by {2}.{3}", colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
                 SendDisconnectPlayer(targetClientId, string.Format("You were IP banned by an administrator.{0}", reason));
@@ -1366,8 +1366,8 @@ namespace ManicDiggerServer
             }
 
             // Finally ban user.
-            banlist.BannedUsers.Add(target);
-            SaveConfig();
+            banlist.BanPlayer(target, GetClient(sourceClientId).playername, reason);
+            SaveBanlist();
             SendMessageToAll(string.Format("{0}{1} (offline) was banned by {2}.{3}", colorImportant, target, GetClient(sourceClientId).ColoredPlayername(colorImportant), reason));
             ServerEventLog(string.Format("{0} bans {1}.{2}", GetClient(sourceClientId).playername, target, reason));
             return true;
@@ -1470,9 +1470,13 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned Users:");
-                    foreach (string currentUser in banlist.BannedUsers)
+                    foreach (UserEntry currentUser in banlist.BannedUsers)
                     {
-                        SendMessage(sourceClientId, currentUser);
+                    	//Format:	Name: Reason
+                    	string reason = currentUser.Reason;
+                    	if (string.IsNullOrEmpty(reason))
+                    		reason = "";
+                    	SendMessage(sourceClientId, string.Format("{0}:{1}", currentUser.UserName, reason));
                     }
                     return true;
                 case "-bannedips":
@@ -1483,9 +1487,13 @@ namespace ManicDiggerServer
                         return false;
                     }
                     SendMessage(sourceClientId, colorImportant + "List of Banned IPs:");
-                    foreach (string currentIP in banlist.BannedIPs)
+                    foreach (IPEntry currentIP in banlist.BannedIPs)
                     {
-                        SendMessage(sourceClientId, currentIP);
+                    	//Format:	IP: Reason
+                        string reason = currentIP.Reason;
+                    	if (string.IsNullOrEmpty(reason))
+                    		reason = "";
+                    	SendMessage(sourceClientId, string.Format("{0}:{1}", currentIP.IPAdress, reason));
                     }
                     return true;
                 case "-groups":
