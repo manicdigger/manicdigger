@@ -518,3 +518,62 @@ public class FastStackVector3IntRef
         return count;
     }
 }
+
+public class Shadows3x3x3Simple : IShadows3x3x3
+{
+    public override void Start()
+    {
+    }
+
+    const int shadowlight = 10;
+    const int maxlight = 15;
+
+    public override void Update(byte[] outputChunkLight, int[][] inputMapChunks, int[][] inputHeightmapChunks, int[] dataLightRadius, bool[] dataTransparent, int currentSunlight, int baseheight)
+    {
+        this.inputHeightmapChunks = inputHeightmapChunks;
+
+        int outputChunkLightLength = (chunksize + 2) * (chunksize + 2) * (chunksize + 2);
+        for (int i = 0; i < outputChunkLightLength; i++)
+        {
+            outputChunkLight[i] = Game.IntToByte(shadowlight);
+        }
+        int zplus = 18 * 18;
+        for (int xx = 0; xx < 18; xx++)
+        {
+            for (int yy = 0; yy < 18; yy++)
+            {
+                int height = GetLightHeight(16 - 1 + xx, 16 - 1 + yy) - 16;
+                int h = height - baseheight;
+                if (h < 0) { h = 0; }
+                if (h > 18) { continue; }
+                int pos = MapUtilCi.Index3d(xx, yy, h, 18, 18);
+                
+                //for (int zz = 0; zz < h; zz++)
+                //{
+                //    worklight[pos] = (byte)minlight;
+                //    pos += zplus;
+                //}
+                
+                for (int zz = h; zz < 18; zz++)
+                {
+                    //int pos = MapUtil.Index3d(xx, yy, zz, portionsize, portionsize);
+                    outputChunkLight[pos] =  Game.IntToByte(maxlight);
+                    pos += zplus;
+                }
+            }
+        }
+    }
+    int[][] inputHeightmapChunks;
+    const int chunksize = 16;
+    int GetLightHeight(int xx, int yy)
+    {
+        int[] chunk = inputHeightmapChunks[MapUtilCi.Index2d(xx / chunksize, yy / chunksize, 3)];
+        if (chunk == null)
+        {
+            //throw new Exception();
+            //return 64;
+            return 0;
+        }
+        return chunk[MapUtilCi.Index2d(xx % chunksize, yy % chunksize, chunksize)];
+    }
+}

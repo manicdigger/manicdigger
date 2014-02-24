@@ -280,7 +280,7 @@ namespace ManicDiggerServer
 
         Dictionary<string, string> GetScriptSources()
         {
-            string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Mods"), "Mods" };
+            string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
 
             for (int i = 0; i < modpaths.Length; i++)
             {
