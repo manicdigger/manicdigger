@@ -3,7 +3,6 @@ using System;
 using System.IO;
 using GameModeFortress;
 using ManicDigger;
-using ManicDigger.MapTools;
 using ProtoBuf;
 using System.Collections.Generic;
 using Jint.Delegates;

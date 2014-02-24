@@ -28,7 +28,7 @@ cp MdMonsterEditor/bin/Release/*.dll output
 cp MdMonsterEditor/bin/Release/*.exe output
 
 # Mods
-cp -R ManicDiggerLib/Mods output
+cp -R ManicDiggerLib/Server/Mods output
 
 cp Lib/* output
 rm -f output/*vshost.exe

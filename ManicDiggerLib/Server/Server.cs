@@ -9,7 +9,6 @@ using System.Text;
 using System.Xml;
 using GameModeFortress;
 using ManicDigger;
-using ManicDigger.MapTools;
 using OpenTK;
 using ProtoBuf;
 using System.Xml.Serialization;

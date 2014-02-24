@@ -23,7 +23,7 @@ xcopy /s /y MdMonsterEditor\bin\Release\*.exe output\
 
 REM Mods
 mkdir output\Mods
-xcopy /s ManicDiggerLib\Mods output\Mods\
+xcopy /s ManicDiggerLib\Server\Mods output\Mods\
 
 xcopy /y /s Lib\*.* output\
 del output\*vshost.exe

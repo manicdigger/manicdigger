@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading;
 using GameModeFortress;
 using ManicDigger;
-using ManicDigger.MapTools;
 using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
