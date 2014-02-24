@@ -570,6 +570,11 @@ namespace ManicDigger
             server.modEventHandlers.onplayerchat.Add(a);
         }
 
+        public void RegisterOnPlayerDeath(ModDelegates.PlayerDeath a)
+        {
+            server.modEventHandlers.onplayerdeath.Add(a);
+        }
+
         public int[] GetScreenResolution(int playerid)
         {
             return new int[] { 800, 600 };

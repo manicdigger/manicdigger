@@ -2325,6 +2325,14 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].IsPlayerStatsDirty = true;
                     }
                     break;
+                case Packet_ClientIdEnum.Death:
+                    {
+                        for (int i = 0; i < modEventHandlers.onplayerdeath.Count; i++)
+                        {
+                            modEventHandlers.onplayerdeath[i](clientid, (DeathReason)packet.Death.Reason, packet.Death.SourcePlayer);
+                        }
+                    }
+                    break;
                 case Packet_ClientIdEnum.Oxygen:
                     {
                         //todo server side
@@ -2480,6 +2488,7 @@ if (sent >= unknown.Count) { break; }
                     VelocityZFloat = SerializeFloat(velocityz),
                     BlockId = block,
                     ExplodesAfterFloat = SerializeFloat(explodesafter),
+                    SourcePlayerID = player,
                 };
                 SendPacket(k.Key, Serialize(p));
             }
@@ -4186,6 +4195,7 @@ if (sent >= unknown.Count) { break; }
         public List<ModDelegates.PlayerLeave> onplayerleave = new List<ModDelegates.PlayerLeave>();
         public List<ModDelegates.PlayerDisconnect> onplayerdisconnect = new List<ModDelegates.PlayerDisconnect>();
         public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
+        public List<ModDelegates.PlayerDeath> onplayerdeath = new List<ModDelegates.PlayerDeath>();
         public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
     }
 

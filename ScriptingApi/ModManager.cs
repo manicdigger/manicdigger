@@ -96,6 +96,7 @@ namespace ManicDigger
         void RegisterOnPlayerLeave(ModDelegates.PlayerLeave a);
         void RegisterOnPlayerDisconnect(ModDelegates.PlayerDisconnect a);
         void RegisterOnPlayerChat(ModDelegates.PlayerChat a);
+        void RegisterOnPlayerDeath(ModDelegates.PlayerDeath a);
         int[] GetScreenResolution(int playerid);
         void SendDialog(int player, string id, Dialog dialog);
         void RegisterOnDialogClick(ModDelegates.DialogClick a);
@@ -158,6 +159,14 @@ namespace ManicDigger
         TabPlayerList,
         SelectTeam,
     }
+    
+    public enum DeathReason
+    {
+    	FallDamage,
+    	BlockDamage,
+    	Drowning,
+    	Explosion,
+    }
 
     public class ModDelegates
     {
@@ -173,6 +182,7 @@ namespace ManicDigger
         public delegate void PlayerLeave(int player);
         public delegate void PlayerDisconnect(int player);
         public delegate string PlayerChat(int player, string message, bool toteam);
+        public delegate void PlayerDeath(int player, DeathReason reason, int sourceID);
         public delegate void DialogClick(int player, string widgetId);
         public delegate void WeaponHit(int sourcePlayer, int targetPlayer, int block, bool headshot);
         public delegate void WeaponShot(int sourceplayer, int block);
