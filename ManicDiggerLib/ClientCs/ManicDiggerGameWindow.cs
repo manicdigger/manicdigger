@@ -1874,6 +1874,7 @@ namespace ManicDigger
             public int startMilliseconds;
             public int block;
             public float explodesafter;
+            public int sourcePlayer;
         }
         int reloadblock;
         int reloadstartMilliseconds;
@@ -1923,7 +1924,7 @@ namespace ManicDigger
                         return;
                     }
                     lastfalldamagetimeMilliseconds = game.p.TimeMillisecondsFromStart();
-                    ApplyDamageToPlayer((int)(severity * PlayerStats.MaxHealth));
+                    ApplyDamageToPlayer((int)(severity * PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
                 }
             }
         }
@@ -1956,7 +1957,7 @@ namespace ManicDigger
             int damage = d_Data.DamageToPlayer[block1] + d_Data.DamageToPlayer[block2];
             if (damage > 0)
             {
-                BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage); });
+                BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, block1); });
             }
 
             //Player drowning
@@ -1969,7 +1970,7 @@ namespace ManicDigger
             		if (PlayerStats.CurrentOxygen <= 0)
             		{
             			PlayerStats.CurrentOxygen = 0;
-            			BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer((int)Math.Ceiling((float)PlayerStats.MaxHealth / 10.0f)); });
+            			BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer((int)Math.Ceiling((float)PlayerStats.MaxHealth / 10.0f), Packet_DeathReasonEnum.Drowning, 0); });
             		}
             	}
             	else
@@ -1987,13 +1988,22 @@ namespace ManicDigger
 
         public const int BlockDamageToPlayerEvery = 1;
 
-        void ApplyDamageToPlayer(int damage)
+        void ApplyDamageToPlayer(int damage, int damageSource, int sourceId)
         {
             PlayerStats.CurrentHealth -= damage;
             if (PlayerStats.CurrentHealth <= 0)
             {
                 AudioPlay("death.wav");
-                Respawn();
+                SendPacketClient(new Packet_Client()
+            	{
+            	    Id = Packet_ClientIdEnum.Death,
+            	    Death = new Packet_ClientDeath()
+            	    {
+            	    	Reason = damageSource,
+            	    	SourcePlayer = sourceId
+            	    },
+            	});
+                //Respawn(); //Death is not respawn ;)
             }
             else
             {
@@ -3227,7 +3237,7 @@ namespace ManicDigger
                 float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
                 if ((int)dmg > 0)
                 {
-                    ApplyDamageToPlayer((int)dmg);
+                    ApplyDamageToPlayer((int)dmg, Packet_DeathReasonEnum.Explosion, b.sourcePlayer);
                 }
             }
         }
@@ -5672,6 +5682,7 @@ namespace ManicDigger
                     projectile.startMilliseconds = game.p.TimeMillisecondsFromStart();
                     projectile.block = packet.Projectile.BlockId;
                     projectile.explodesafter = DeserializeFloat(packet.Projectile.ExplodesAfterFloat);
+                    projectile.sourcePlayer = packet.Projectile.SourcePlayerID;
                     projectiles.Add(projectile);
                     break;
                 default:

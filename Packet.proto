@@ -20,6 +20,7 @@ package Packet;
         Leave = 57;
         Reload = 58;
         Oxygen = 59;
+        Death = 60;
         ExtendedPacketCommand = 100;
 	}
 	
@@ -207,6 +208,20 @@ package Packet;
         optional int32 activeMaterialSlot = 1;
     }
     
+    enum DeathReason
+    {
+        FallDamage = 0;
+        BlockDamage = 1;
+        Drowning = 2;
+        Explosion = 3;
+    }
+    
+    message ClientDeath
+    {
+        optional DeathReason reason = 1 [default = FallDamage];
+        optional int32 sourcePlayer = 2;
+    }
+    
     message Client
     {
     
@@ -228,6 +243,7 @@ package Packet;
         optional ClientLeave leave = 15;
         optional ClientReload reload = 16;
         optional ClientOxygen oxygen = 17;
+        optional ClientDeath death = 18;
 	}
     
     
@@ -587,6 +603,7 @@ package Packet;
         optional int32 velocityZFloat = 6;
         optional int32 blockId = 7;
         optional int32 explodesAfterFloat = 8;
+        optional int32 sourcePlayerID = 9;
     }
     
     message ServerExplosion
