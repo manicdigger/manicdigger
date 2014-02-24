@@ -104,6 +104,7 @@
     <Compile Include="Client\Misc.ci.cs" />
     <Compile Include="Client\ModFpsHistoryGraph.ci.cs" />
     <Compile Include="Client\Network.ci.cs" />
+    <Compile Include="Client\NetworkDummy.ci.cs" />
     <Compile Include="Client\Primitives.ci.cs" />
     <Compile Include="Client\Shadows.ci.cs" />
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
@@ -157,9 +158,7 @@
     <Compile Include="Server\Mods\War\TreeGenerator.cs" />
     <Compile Include="Server\Mods\War\War.cs" />
     <Compile Include="Server\Mods\War\WaterSimple.cs" />
-    <Compile Include="ClientCs\Network\DummyNetwork.cs" />
     <Compile Include="ClientCs\Network\Enet.cs" />
-    <Compile Include="ClientCs\Network\TcpNetwork.cs" />
     <Compile Include="Server\Packets.cs" />
     <Compile Include="ClientCs\PasswordForm.cs">
       <SubType>Form</SubType>

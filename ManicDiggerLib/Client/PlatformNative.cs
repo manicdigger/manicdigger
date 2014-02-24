@@ -819,6 +819,26 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         Console.WriteLine(s);
     }
+
+    public override DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message)
+    {
+        return (DummyNetOutgoingMessage)message;
+    }
+
+    public override MonitorObject MonitorCreate()
+    {
+        return new MonitorObject();
+    }
+
+    public override void MonitorEnter(MonitorObject monitorObject)
+    {
+        System.Threading.Monitor.Enter(monitorObject);
+    }
+
+    public override void MonitorExit(MonitorObject monitorObject)
+    {
+        System.Threading.Monitor.Exit(monitorObject);
+    }
 }
 
 public class BitmapCiCs : BitmapCi

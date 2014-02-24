@@ -3314,7 +3314,7 @@ if (sent >= unknown.Count) { break; }
             try
             {
                 INetOutgoingMessage msg = d_MainSocket.CreateMessage();
-                msg.Write(packet);
+                msg.Write(packet, packet.Length);
                 clients[clientid].socket.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered, 0);
             }
             catch (Exception)

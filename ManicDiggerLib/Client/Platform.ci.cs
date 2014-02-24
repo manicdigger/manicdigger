@@ -69,6 +69,14 @@
     public abstract void AudioPlayLoop(string path, bool play, bool restart);
     public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
     public abstract void ConsoleWriteLine(string p);
+    public abstract DummyNetOutgoingMessage CastToDummyNetOutgoingMessage(INetOutgoingMessage message);
+    public abstract MonitorObject MonitorCreate();
+    public abstract void MonitorEnter(MonitorObject monitorObject);
+    public abstract void MonitorExit(MonitorObject monitorObject);
+}
+
+public class MonitorObject
+{
 }
 
 public class FloatRef

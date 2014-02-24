@@ -145,7 +145,7 @@ namespace ManicDigger
     public class EnetNetOutgoingMessage : INetOutgoingMessage
     {
         public byte[] message;
-        public override void Write(byte[] source)
+        public override void Write(byte[] source, int sourceCount)
         {
             message = (byte[])source.Clone();
         }

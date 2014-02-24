@@ -4879,7 +4879,7 @@ namespace ManicDigger
             this.auth = auth;
             byte[] n = CreateLoginPacket(username, auth);
             var msg = main.CreateMessage();
-            msg.Write(n);
+            msg.Write(n, n.Length);
             main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
         }
         public void Connect(string serverAddress, int port, string username, string auth, string serverPassword)
@@ -4891,7 +4891,7 @@ namespace ManicDigger
             this.auth = auth;
             byte[] n = CreateLoginPacket(username, auth, serverPassword);
             var msg = main.CreateMessage();
-            msg.Write(n);
+            msg.Write(n, n.Length);
             main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
         }
         string username;
@@ -4923,7 +4923,7 @@ namespace ManicDigger
             try
             {
                 var msg = main.CreateMessage();
-                msg.Write(packet);
+                msg.Write(packet, packet.Length);
                 main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
             }
             catch

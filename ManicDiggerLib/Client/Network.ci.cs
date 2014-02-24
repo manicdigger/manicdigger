@@ -42,7 +42,7 @@ public enum NetworkMessageType
 }
 public abstract class INetOutgoingMessage
 {
-    public abstract void Write(byte[] source);
+    public abstract void Write(byte[] source, int sourceCount);
 }
 
 public abstract class IPEndPointCi
@@ -74,3 +74,4 @@ public enum MyNetDeliveryMethod
     ReliableSequenced,// = 35,
     ReliableOrdered// = 67,
 }
+

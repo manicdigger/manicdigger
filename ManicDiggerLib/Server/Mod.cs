@@ -749,7 +749,8 @@ namespace ManicDigger
             c.playername = name;
             server.clients[id] = c;
             c.state = Server.ClientStateOnServer.Playing;
-            c.socket = new DummyNetConnection() { network = new DummyNetwork() };
+            DummyNetwork network = new DummyNetwork() { ClientReceiveBufferLock = new MonitorObject(), ServerReceiveBufferLock = new MonitorObject() };
+            c.socket = new DummyNetConnection() { network = network , platform = new GamePlatformNative() };
             c.Ping.TimeoutValue = int.MaxValue;
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];

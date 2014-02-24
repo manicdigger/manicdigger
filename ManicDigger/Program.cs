@@ -28,6 +28,8 @@ namespace GameModeFortress
         }
         public ManicDiggerProgram(string[] args)
         {
+            dummyNetwork = new DummyNetwork();
+            dummyNetwork.Start(new MonitorObject(), new MonitorObject());
             crashreporter = new CrashReporter();
             crashreporter.Start(delegate { Start(args); });
         }
@@ -147,7 +149,10 @@ namespace GameModeFortress
             this.curw = w;
             if (issingleplayer)
             {
-                w.main = new DummyNetClient() { network = this.dummyNetwork };
+                DummyNetClient netclient = new DummyNetClient();
+                netclient.SetPlatform(new GamePlatformNative());
+                netclient.SetNetwork(dummyNetwork);
+                w.main = netclient;
             }
             else
             {
@@ -171,7 +176,7 @@ namespace GameModeFortress
         }
         ManicDiggerGameWindow curw;
 
-        DummyNetwork dummyNetwork = new DummyNetwork();
+        DummyNetwork dummyNetwork;
 
         string savefilename;
         public IGameExit exit = new GameExitDummy();
@@ -183,8 +188,10 @@ namespace GameModeFortress
                 Server server = new Server();
                 server.SaveFilenameOverride = savefilename;
                 server.exit = exit;
-                var socket = new DummyNetServer() { network = dummyNetwork };
-                server.d_MainSocket = socket;
+                DummyNetServer netServer = new DummyNetServer();
+                netServer.SetPlatform(new GamePlatformNative());
+                netServer.SetNetwork(dummyNetwork);
+                server.d_MainSocket = netServer;
                 server.Start();
                 for (; ; )
                 {
