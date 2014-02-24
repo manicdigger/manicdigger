@@ -1957,7 +1957,9 @@ namespace ManicDigger
             int damage = d_Data.DamageToPlayer[block1] + d_Data.DamageToPlayer[block2];
             if (damage > 0)
             {
-                BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, block1); });
+            	int hurtingBlock = block1;	//Use block at eyeheight as source block
+            	if (hurtingBlock == 0) { hurtingBlock = block2; }	//Fallback to block at feet if eyeheight block is air
+                BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, hurtingBlock); });
             }
 
             //Player drowning
@@ -1970,7 +1972,7 @@ namespace ManicDigger
             		if (PlayerStats.CurrentOxygen <= 0)
             		{
             			PlayerStats.CurrentOxygen = 0;
-            			BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer((int)Math.Ceiling((float)PlayerStats.MaxHealth / 10.0f), Packet_DeathReasonEnum.Drowning, 0); });
+            			BlockDamageToPlayerTimer.Update(delegate { ApplyDamageToPlayer((int)Math.Ceiling((float)PlayerStats.MaxHealth / 10.0f), Packet_DeathReasonEnum.Drowning, block1); });
             		}
             	}
             	else

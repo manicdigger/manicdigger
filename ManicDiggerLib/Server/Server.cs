@@ -2327,6 +2327,7 @@ if (sent >= unknown.Count) { break; }
                     break;
                 case Packet_ClientIdEnum.Death:
                     {
+                        //Console.WriteLine("Death Packet Received. Client: {0}, Reason: {1}, Source: {2}", clientid, packet.Death.Reason, packet.Death.SourcePlayer);
                         for (int i = 0; i < modEventHandlers.onplayerdeath.Count; i++)
                         {
                             modEventHandlers.onplayerdeath[i](clientid, (DeathReason)packet.Death.Reason, packet.Death.SourcePlayer);

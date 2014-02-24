@@ -37,6 +37,7 @@ namespace ManicDigger.Mods
             m.RegisterOnCommand(OnCommand);
             m.SetWorldDatabaseReadOnly(true); // WarMode.TeamDeathmatch
             m.RegisterOnBlockBuild(OnBuild);
+            m.RegisterOnPlayerDeath(OnPlayerDeath);
         }
 
         public enum WarMode
@@ -488,6 +489,87 @@ namespace ManicDigger.Mods
             ShowTeamSelectionDialog(player);
         }
 
+        void OnPlayerDeath(int player, DeathReason reason, int sourceID)
+        {
+        	string deathMessage = "";
+        	switch (reason)
+        	{
+        		case DeathReason.FallDamage:
+        			Die(player);
+        	        deathMessage = string.Format("{0} was doomed to fall.", m.GetPlayerName(player));
+        			break;
+        		case DeathReason.BlockDamage:
+        			if (sourceID == m.GetBlockId("Lava"))
+        			{
+        				Die(player);
+        				deathMessage = string.Format("{0} thought they could swim in Lava.", m.GetPlayerName(player));
+        			}
+        			else if (sourceID == m.GetBlockId("Fire"))
+        			{
+        				Die(player);
+        				deathMessage = string.Format("{0} was burned alive.", m.GetPlayerName(player));
+        			}
+        			else
+        			{
+        				Die(player);
+        				deathMessage = string.Format("{0} was killed by {1}.", m.GetPlayerName(player), m.GetBlockName(sourceID));
+        			}
+        			break;
+        		case DeathReason.Drowning:
+        			Die(player);
+        			deathMessage = string.Format("{0} tried to breathe under water.", m.GetPlayerName(player));
+        			break;
+        		case DeathReason.Explosion:
+        			if (!EnableTeamkill)
+                    {
+                        if (players[sourceID].team == players[player].team)
+                        {
+                            break;
+                        }
+                    }
+                    if (players[sourceID].team == Team.Spectator || players[player].team == Team.Spectator)
+                    {
+                    	//Just here for safety. Spectators shouldn't have weapons...
+                        break;
+                    }
+                    if (players[player].isdead)
+                    {
+                        break;
+                    }
+                    Die(player);
+                    if (sourceID == player)
+                    {
+                    	deathMessage = string.Format("{0} blew himself up.", m.GetPlayerName(player));
+                    	break;
+                    }
+                    if (players[sourceID].team != players[player].team)
+                    {
+                        players[sourceID].kills = players[sourceID].kills + 1;
+                    }
+                    else
+                    {
+                        players[sourceID].kills = players[sourceID].kills - 2;
+                    }
+                    if (players[sourceID].team == players[player].team)
+                    {
+                    	deathMessage = string.Format("{0} was blown into pieces by {1}. - {2}TEAMKILL", m.GetPlayerName(player), m.GetPlayerName(sourceID), m.colorError());
+                    }
+                    else
+                    {
+                        deathMessage = string.Format("{0} was blown into pieces by {1}.", m.GetPlayerName(player), m.GetPlayerName(sourceID));
+                    }
+        			break;
+        		default:
+        			Die(player);
+        			deathMessage = string.Format("{0} died.", m.GetPlayerName(player));
+        			break;
+        	}
+        	if (!string.IsNullOrEmpty(deathMessage))
+        	{
+        		m.SendMessageToAll(deathMessage);
+        	}
+        }
+        
         void Respawn(int playerid)
         {
             int posx = -1;

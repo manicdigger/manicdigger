@@ -1064,6 +1064,7 @@ namespace ManicDigger.Mods
             m.RegisterOnCommand(OnCommandSetModel);
             m.RegisterOnSpecialKey(OnRespawnKey);
             m.RegisterOnSpecialKey(OnSetSpawnKey);
+            m.RegisterOnPlayerDeath(OnPlayerDeath);
         }
 
         Dictionary<string, float[]> spawnPositions = new Dictionary<string, float[]>();
@@ -1088,7 +1089,49 @@ namespace ManicDigger.Mods
             {
                 return;
             }
-            if (!spawnPositions.ContainsKey(m.GetPlayerName(player)))
+            Respawn(player);
+            m.SendMessage(player, "Respawn.");
+        }
+        
+        void OnPlayerDeath(int player, DeathReason reason, int sourceID)
+        {
+        	Respawn(player);
+        	string deathMessage = "";
+        	switch (reason)
+        	{
+        		case DeathReason.FallDamage:
+        			deathMessage = string.Format("{0} was doomed to fall.", m.GetPlayerName(player));
+        			break;
+        		case DeathReason.BlockDamage:
+        			if (sourceID == m.GetBlockId("Lava"))
+        			{
+        				deathMessage = string.Format("{0} thought they could swim in Lava.", m.GetPlayerName(player));
+        			}
+        			else if (sourceID == m.GetBlockId("Fire"))
+        			{
+        				deathMessage = string.Format("{0} was burned alive.", m.GetPlayerName(player));
+        			}
+        			else
+        			{
+        				deathMessage = string.Format("{0} was killed by {1}.", m.GetPlayerName(player), m.GetBlockName(sourceID));
+        			}
+        			break;
+        		case DeathReason.Drowning:
+        			deathMessage = string.Format("{0} tried to breathe under water.", m.GetPlayerName(player));
+        			break;
+        		case DeathReason.Explosion:
+        			deathMessage = string.Format("{0} was blown into pieces by {1}.", m.GetPlayerName(player), m.GetPlayerName(sourceID));
+        			break;
+        		default:
+        			deathMessage = string.Format("{0} died.", m.GetPlayerName(player));
+        			break;
+        	}
+        	m.SendMessageToAll(deathMessage);
+        }
+        
+        void Respawn(int player)
+        {
+        	if (!spawnPositions.ContainsKey(m.GetPlayerName(player)))
             {
                 float[] pos = m.GetDefaultSpawnPosition(player);
                 m.SetPlayerPosition(player, pos[0], pos[1], pos[2]);
@@ -1097,7 +1140,6 @@ namespace ManicDigger.Mods
             {
                 float[] pos = (float[])spawnPositions[m.GetPlayerName(player)];
                 m.SetPlayerPosition(player, pos[0], pos[1], pos[2]);
-                m.SendMessage(player, "Respawn.");
             }
         }
 
