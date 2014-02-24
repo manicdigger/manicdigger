@@ -354,10 +354,9 @@
         {
             p.GlDisableDepthTest();
         }
-        Model model = p.CreateModel(QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-            x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color)));
-        p.DrawModel(model);
-        p.DeleteModel(model);
+        ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
+            x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color));
+        p.DrawModelData(data);
         if (!enabledepthtest)
         {
             p.GlEnableDepthTest();
@@ -443,9 +442,7 @@
 
         p.GlDisableDepthTest();
 
-        Model model = p.CreateModel(combined);
-        p.DrawModel(model);
-        p.DeleteModel(model);
+        p.DrawModelData(combined);
 
         p.GlEnableDepthTest();
 
@@ -827,6 +824,18 @@
         ct.textureId = p.LoadTextureFromBitmap(bmp);
         p.BitmapDelete(bmp);
         return ct;
+    }
+
+    internal float FloorFloat(float a)
+    {
+        if (a >= 0)
+        {
+            return p.FloatToInt(a);
+        }
+        else
+        {
+            return p.FloatToInt(a) - 1;
+        }
     }
 }
 

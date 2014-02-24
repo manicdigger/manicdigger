@@ -155,4 +155,9 @@ public class StringTools
         int[] aChars = p.StringToCharArray(a, aLength);
         return aLength.value;
     }
+
+    public static bool StringStartsWith(GamePlatform p, string s, string b)
+    {
+        return StringSubstring(p, s, 0, StringLength(p, b)) == b;
+    }
 }

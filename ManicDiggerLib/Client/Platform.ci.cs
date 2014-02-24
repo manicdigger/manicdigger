@@ -61,6 +61,21 @@
     public abstract float BitmapGetWidth(BitmapCi bmp);
     public abstract float BitmapGetHeight(BitmapCi bmp);
     public abstract void BitmapDelete(BitmapCi bmp);
+    public abstract void DrawModelData(ModelData data);
+    public abstract bool FloatTryParse(string s, FloatRef ret);
+    public abstract float MathCos(float a);
+    public abstract float MathSin(float a);
+}
+
+public class FloatRef
+{
+    public static FloatRef Create(float value_)
+    {
+        FloatRef f = new FloatRef();
+        f.value = value_;
+        return f;
+    }
+    internal float value;
 }
 
 public class KeyEventArgs
@@ -210,4 +225,6 @@ public class IntRef
         return intref;
     }
     internal int value;
+    public int GetValue() { return value; }
+    public void SetValue(int value_) { value = value_; }
 }

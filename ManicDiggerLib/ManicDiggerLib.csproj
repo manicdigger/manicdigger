@@ -92,6 +92,7 @@
     </Compile>
     <Compile Include="ClientCs\Audio.cs" />
     <Compile Include="ClientCs\AviWriter.cs" />
+    <Compile Include="Client\CharacterRenderer.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\HudChat.ci.cs" />
     <Compile Include="Client\Language.ci.cs" />
@@ -182,7 +183,6 @@
     <Compile Include="Server\Mod.cs" />
     <Compile Include="ClientCs\Network\LoginClient.cs" />
     <Compile Include="ClientCs\OggDecoder.cs" />
-    <Compile Include="ClientCs\Renderers\CharacterRendererMonsterCode.cs" />
     <Compile Include="ClientCs\Renderers\MonospacedTextRenderer.cs" />
     <Compile Include="ClientCs\Renderers\MinecartRenderer.cs" />
     <Compile Include="ClientCs\Network\NetworkClient.cs" />

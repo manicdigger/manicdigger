@@ -16,7 +16,10 @@ namespace ManicDigger
         void RailOnNewFrame(float dt)
         {
             LocalPlayerAnimationHint.InVehicle = railriding;
-            LocalPlayerAnimationHint.DrawFix = railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
+            Vector3 fix= railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
+            LocalPlayerAnimationHint.DrawFixX = fix.X;
+            LocalPlayerAnimationHint.DrawFixY = fix.Y;
+            LocalPlayerAnimationHint.DrawFixZ = fix.Z;
 
             bool turnright = keyboardstate[GetKey(OpenTK.Input.Key.D)];
             bool turnleft = keyboardstate[GetKey(OpenTK.Input.Key.A)];

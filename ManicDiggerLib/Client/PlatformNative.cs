@@ -11,6 +11,7 @@ using OpenTK.Input;
 using OpenTK;
 using System.Diagnostics;
 using ManicDigger.Renderers;
+using System.Globalization;
 
 public class GamePlatformNative : GamePlatform
 {
@@ -444,6 +445,16 @@ public class GamePlatformNative : GamePlatform
 
         GL.NewList(id, ListMode.Compile);
 
+        DrawModelData(data);
+
+        GL.EndList();
+        DisplayListModel m = new DisplayListModel();
+        m.listId = id;
+        return m;
+    }
+
+    public override void DrawModelData(ModelData data)
+    {
         GL.EnableClientState(ArrayCap.VertexArray);
         GL.EnableClientState(ArrayCap.ColorArray);
         GL.EnableClientState(ArrayCap.TextureCoordArray);
@@ -506,11 +517,6 @@ public class GamePlatformNative : GamePlatform
         GL.DisableClientState(ArrayCap.ColorArray);
         GL.DisableClientState(ArrayCap.TextureCoordArray);
         GL.Disable(EnableCap.Texture2D);
-
-        GL.EndList();
-        DisplayListModel m = new DisplayListModel();
-        m.listId = id;
-        return m;
     }
 
     class DisplayListModel : Model
@@ -759,6 +765,30 @@ public class GamePlatformNative : GamePlatform
     {
         BitmapCiCs bmp_ = (BitmapCiCs)bmp;
         bmp_.bmp.Dispose();
+    }
+
+    public override bool FloatTryParse(string s, FloatRef ret)
+    {
+        float f;
+        if (float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out f))
+        {
+            ret.value = f;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public override float MathCos(float a)
+    {
+        return (float)Math.Cos(a);
+    }
+
+    public override float MathSin(float a)
+    {
+        return (float)Math.Sin(a);
     }
 }
 

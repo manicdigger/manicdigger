@@ -111,8 +111,9 @@ namespace ManicDigger
             var weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = this, d_Inventory = inventory, d_LocalPlayerPosition = w };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w, game = this };
             var playerrenderer = new CharacterRendererMonsterCode();
-            playerrenderer.game = this;
-            playerrenderer.Load(new List<string>(MyStream.ReadAllLines(getfile.GetFile("player.txt"))));
+            playerrenderer.game = this.game;
+            string[] playerTxtLines = MyStream.ReadAllLines(getfile.GetFile("player.txt"));
+            playerrenderer.Load(playerTxtLines, playerTxtLines.Length);
             w.d_CharacterRenderer = playerrenderer;
             var particle = new ParticleEffectBlockBreak() { d_Data = gamedata, d_Map = clientgame, d_Terrain = terrainTextures };
             w.particleEffectBlockBreak = particle;
@@ -219,6 +220,8 @@ namespace ManicDigger
             AddMod(new ModAutoCamera());
             AddMod(new ModFpsHistoryGraph());
             applicationname = language.GameName();
+            s = new BlockOctreeSearcher();
+            s.platform = game.p;
         }
         void AddMod(ClientMod mod)
         {
@@ -2279,7 +2282,6 @@ namespace ManicDigger
             }
 
             //pick terrain
-            BlockOctreeSearcher s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             
@@ -3000,7 +3002,10 @@ namespace ManicDigger
                 }
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
-                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn, 0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId), new AnimationHint(), new float());
+                    d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn.X,
+                        PlayerPositionSpawn.Y, PlayerPositionSpawn.Z,
+                        0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId),
+                        new AnimationHint(), new float());
                 }
                 foreach (IModelToDraw m in Models)
                 {
@@ -3567,13 +3572,14 @@ namespace ManicDigger
                 }
                 float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
+                info.anim.light = shadow;
                 Vector3 FeetPos = curpos;
                 var animHint = d_Clients.Players[k.Key].AnimationHint;
                 if (k.Value.Type == PlayerType.Player)
                 {
                     var r = GetCharacterRenderer(k.Value.Model);
                     r.SetAnimation("walk");
-                    r.DrawCharacter(info.anim, FeetPos, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint, playerspeed);
+                    r.DrawCharacter(info.anim, FeetPos.X, FeetPos.Y, FeetPos.Z, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint, playerspeed);
                     //DrawCharacter(info.anim, FeetPos,
                     //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
@@ -3584,7 +3590,7 @@ namespace ManicDigger
                     //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
                     r.SetAnimation("walk");
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                    r.DrawCharacter(info.anim, curpos,
+                    r.DrawCharacter(info.anim, curpos.X, curpos.Y, curpos.Z,
                         (byte)(-curstate.heading - 256 / 4), curstate.pitch,
                         moves, dt, GetPlayerTexture(k.Key), animHint, playerspeed);
                 }
@@ -3600,12 +3606,14 @@ namespace ManicDigger
                     (int)LocalPlayerPosition.Y)
                     / d_Shadows.maxlight;
                 GL.Color3(shadow, shadow, shadow);
+                localplayeranim.light = shadow;
                 var r = GetCharacterRenderer(d_Clients.Players[LocalPlayerId].Model);
                 r.SetAnimation("walk");
                 Vector3 playerspeed = playervelocity / 60;
                 float playerspeedf = playerspeed.Length * 1.5f;
                 r.DrawCharacter
-                    (localplayeranim, LocalPlayerPosition,
+                    (localplayeranim, LocalPlayerPosition.X, LocalPlayerPosition.Y,
+                    LocalPlayerPosition.Z,
                     (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
                     moves, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint, playerspeedf);
@@ -3621,8 +3629,8 @@ namespace ManicDigger
                 {
                     string[] lines = MyStream.ReadAllLines(d_GetFile.GetFile(modelfilename));
                     var renderer = new CharacterRendererMonsterCode();
-                    renderer.game = this;
-                    renderer.Load(new List<string>(lines));
+                    renderer.game = this.game;
+                    renderer.Load(lines, lines.Length);
                     MonsterRenderers[modelfilename] = renderer;
                 }
                 catch
@@ -3665,6 +3673,7 @@ namespace ManicDigger
             LimitThirdPersonCameraToWalls(ref cameraEye, cameraTarget, ref currentOverheadcameradistance);
             return Matrix4.LookAt(cameraEye, cameraTarget, up);
         }
+        BlockOctreeSearcher s;
         //Don't allow to look through walls.
         private void LimitThirdPersonCameraToWalls(ref Vector3 eye, Vector3 target, ref float curtppcameradistance)
         {
@@ -3679,7 +3688,6 @@ namespace ManicDigger
             pick.End = Vector3ToFloatArray(ray_start_point + raydir);
 
             //pick terrain
-            var s = new BlockOctreeSearcher() { platform = game.p };
             s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });

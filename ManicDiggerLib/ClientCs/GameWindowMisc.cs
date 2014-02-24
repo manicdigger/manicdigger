@@ -229,13 +229,6 @@ namespace ManicDigger
         int Width { get; }
         int Height { get; }
     }
-    public class AnimationHint
-    {
-        public bool InVehicle;
-        public Vector3 DrawFix;
-        public bool leanleft;
-        public bool leanright;
-    }
     public interface IModelToDraw
     {
         void Draw(float dt);
@@ -248,18 +241,6 @@ namespace ManicDigger
         Vector3 Dir3d { get; }
         bool Moves { get; }
         */
-    }
-    public class AnimationState
-    {
-        public float interp;
-        public int frame;
-        public object data;
-        public float slowdownTimer;
-        public double headbodydelta;
-        public bool fullbodyrotate;
-        public double lastheading;
-        public double bodyrotation = 270;
-        public double speed;
     }
     public interface ICurrentShadows
     {
