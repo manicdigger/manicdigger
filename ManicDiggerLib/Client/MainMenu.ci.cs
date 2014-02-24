@@ -193,7 +193,17 @@
         }
         LoadedTexture t = new LoadedTexture();
         t.name = name;
-        t.texture = p.LoadTextureFromFile(p.GetFullFilePath(name));
+        BoolRef found = new BoolRef();
+        string path = p.GetFullFilePath(name, found);
+        if (found.value)
+        {
+            t.texture = p.LoadTextureFromFile(path);
+        }
+        else
+        {
+            p.ConsoleWriteLine(p.StringFormat("File not found: {0}", name));
+            t.texture = 0;
+        }
         textures[texturesCount++] = t;
         return t.texture;
     }

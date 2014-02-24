@@ -4,7 +4,7 @@
     // 2) find files no matter if game is in debugger, or installed
     // 3) find files no matter if they end in .png or .jpg
     // Returns URL in JavaScript
-    public abstract string GetFullFilePath(string filename);
+    public abstract string GetFullFilePath(string filename, BoolRef found);
     public abstract int FloatToInt(float value);
     public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
     public abstract int IntParse(string value);
@@ -65,6 +65,10 @@
     public abstract bool FloatTryParse(string s, FloatRef ret);
     public abstract float MathCos(float a);
     public abstract float MathSin(float a);
+    public abstract void AudioPlay(string path, float x, float y, float z);
+    public abstract void AudioPlayLoop(string path, bool play, bool restart);
+    public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
+    public abstract void ConsoleWriteLine(string p);
 }
 
 public class FloatRef

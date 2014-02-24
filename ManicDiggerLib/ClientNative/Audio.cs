@@ -11,7 +11,6 @@ namespace ManicDigger
 {
     public interface IAudio
     {
-        bool Enabled { get; set; }
         void Play(string filename);
         void PlayAudioLoop(string filename, bool play);
         void PlayAudioLoop(string filename, bool play, bool restart);
@@ -27,15 +26,11 @@ namespace ManicDigger
         public void PlayAudioLoop(string filename, bool play, bool restart)
         {
         }
-        bool enabled = true;
-        public bool Enabled { get { return enabled; } set { enabled = value; } }
     }
     public class AudioOpenAl : IAudio
     {
         [Inject]
         public IGameExit d_GameExit;
-        [Inject]
-        public IGetFileStream d_GetFile;
         public AudioOpenAl()
         {
             try
@@ -144,7 +139,7 @@ namespace ManicDigger
                     return;
                 }
                 started = true;
-                new Thread(play).Start();
+                ThreadPool.QueueUserWorkItem(delegate { play(); });
             }
             //bool resume = true;
             bool started = false;
@@ -163,7 +158,7 @@ namespace ManicDigger
             {
                 if (!audio.cache.ContainsKey(filename))
                 {
-                    Stream stream = audio.d_GetFile.GetFile(filename);
+                    Stream stream = new FileStream(filename, FileMode.Open, FileAccess.Read);
                     if (stream.ReadByte() == 'R'
                         && stream.ReadByte() == 'I'
                         && stream.ReadByte() == 'F'
@@ -289,10 +284,6 @@ namespace ManicDigger
             {
                 return;
             }
-            if (!enabled)
-            {
-                return;
-            }
             if (context == null)
             {
                 return;
@@ -306,10 +297,6 @@ namespace ManicDigger
         }
         public void PlayAudioLoop(string filename, bool play, bool restart)
         {
-            if (!enabled)
-            {
-                return;
-            }
             if (context == null)
             {
                 return;
@@ -338,8 +325,6 @@ namespace ManicDigger
                 }
             }
         }
-        bool enabled = true;
-        public bool Enabled { get { return enabled; } set { enabled = value; } }
         public void UpdateListener(Vector3 position, Vector3 orientation)
         {
             lastlistener = position;

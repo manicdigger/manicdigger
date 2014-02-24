@@ -35,13 +35,14 @@ namespace ManicDigger
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
             performanceinfo = new DictionaryStringString();
+            AudioEnabled = true;
         }
+        bool AudioEnabled;
         float one;
         public byte localstance = 0;
         public void Start()
         {
             game.p = new GamePlatformNative() { window = d_GlWindow };
-            d_Audio = new AudioOpenAl();
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
             var w = this;
@@ -145,8 +146,6 @@ namespace ManicDigger
             w.playerskindownloader = playerskindownloader;
             w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
             w.d_FrustumCulling = frustumculling;
-            d_Audio.d_GetFile = getfile;
-            d_Audio.d_GameExit = d_Exit;
             the3d.d_Terrain = terrainTextures;
             the3d.d_TextRenderer = textrenderer;
             //w.d_CurrentShadows = this;
@@ -206,7 +205,7 @@ namespace ManicDigger
             if (Debugger.IsAttached)
             {
                 new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
-                    w, d_Audio, gamedata, clientgame, network, mapstorage, getfile,
+                    w, gamedata, clientgame, network, mapstorage, getfile,
                     config3d, mapManipulator, w, the3d, d_Exit,
                     localplayerposition, physics,
                     internetgamefactory, blockrenderertorch, playerrenderer,
@@ -263,8 +262,6 @@ namespace ManicDigger
         [Inject]
         public CharacterPhysicsCi d_Physics;
 
-        [Inject]
-        public AudioOpenAl d_Audio;
         [Inject]
         public GetFileStream d_GetFile;
         [Inject]
@@ -1103,7 +1100,7 @@ namespace ManicDigger
                         && reloadstartMilliseconds == 0)
                     {
                         int sound = rnd.Next(game.blocktypes[item.BlockId].Sounds.Reload.Length);
-                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
+                        AudioPlay(game.blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
                         reloadstartMilliseconds = game.p.TimeMillisecondsFromStart();
                         reloadblock = item.BlockId;
                         SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Reload, Reload = new Packet_ClientReload() });
@@ -1202,6 +1199,47 @@ namespace ManicDigger
                 d_HudTextEditor.HandleKeyDown(sender, e);
             }
             else throw new Exception();
+        }
+
+        public void AudioPlay(string file)
+        {
+            if (!AudioEnabled)
+            {
+                return;
+            }
+            AudioPlayAt(file, EyesPos().X, EyesPos().Y, EyesPos().Z);
+        }
+
+        public void AudioPlayAt(string file, float x, float y, float z)
+        {
+            if (!AudioEnabled)
+            {
+                return;
+            }
+            BoolRef found = new BoolRef();
+            string fullpath = game.p.GetFullFilePath(file, found);
+            if (!found.value)
+            {
+                game.p.ConsoleWriteLine(game.p.StringFormat("File not found: {0}", file));
+                return;
+            }
+            game.p.AudioPlay(fullpath, EyesPos().X, EyesPos().Y, EyesPos().Z);
+        }
+
+        public void AudioPlayLoop(string file, bool play, bool restart)
+        {
+            if ((!AudioEnabled) && play)
+            {
+                return;
+            }
+            BoolRef found = new BoolRef();
+            string fullpath = game.p.GetFullFilePath(file, found);
+            if (!found.value)
+            {
+                game.p.ConsoleWriteLine(game.p.StringFormat("File not found: {0}", file));
+                return;
+            }
+            game.p.AudioPlayLoop(fullpath, play, restart);
         }
 
         public Vector3 ToVector3(Vector3Ref vector3Ref)
@@ -1509,7 +1547,7 @@ namespace ManicDigger
                 {
                     lastwalksound = rnd.Next(soundwalk.Length);
                 }
-                d_Audio.Play(soundwalk[lastwalksound]);
+                AudioPlay(soundwalk[lastwalksound]);
             }
         }
         string[] soundwalkcurrent()
@@ -1788,7 +1826,8 @@ namespace ManicDigger
             keyeventup = null;
 
             Vector3 orientation = new Vector3((float)Math.Sin(LocalPlayerOrientation.Y), 0, -(float)Math.Cos(LocalPlayerOrientation.Y));
-            d_Audio.UpdateListener(LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0), orientation);
+            Vector3 listenerPos = EyesPos();
+            game.p.AudioUpdateListener(listenerPos.X, listenerPos.Y, listenerPos.Z, orientation.X, orientation.Y, orientation.Z);
             Item activeitem = d_Inventory.RightHand[ActiveMaterial];
             int activeblock = 0;
             if (activeitem != null) { activeblock = activeitem.BlockId; }
@@ -1822,6 +1861,12 @@ namespace ManicDigger
                 UpdateGrenade(p, (float)e.Time);
             }
         }
+
+        public Vector3 EyesPos()
+        {
+            return LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0);
+        }
+
         public class Projectile
         {
             public Vector3 position;
@@ -1852,11 +1897,11 @@ namespace ManicDigger
             if ((d_Map.blockheight(pos.x, pos.y) < pos.z - 8)
                 || fallspeed > 3)
             {
-                d_Audio.PlayAudioLoop("fallloop.wav", fallspeed > 2, true);
+                AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
             }
             else
             {
-                d_Audio.PlayAudioLoop("fallloop.wav", false, true);
+                AudioPlayLoop("fallloop.wav", false, true);
             }
 
             //fall damage
@@ -1947,12 +1992,12 @@ namespace ManicDigger
             PlayerStats.CurrentHealth -= damage;
             if (PlayerStats.CurrentHealth <= 0)
             {
-                d_Audio.Play("death.wav");
+                AudioPlay("death.wav");
                 Respawn();
             }
             else
             {
-                d_Audio.Play(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
+                AudioPlay(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
             }
             SendPacketClient(new Packet_Client()
             {
@@ -2163,7 +2208,7 @@ namespace ManicDigger
                 {
                     if (game.blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
                     {
-                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.Shoot[0] + ".ogg");
+                        AudioPlay(game.blocktypes[item.BlockId].Sounds.Shoot[0] + ".ogg");
                     }
                 }
             }
@@ -2359,7 +2404,7 @@ namespace ManicDigger
                     if ((!(LoadedAmmo.ContainsKey(item.BlockId) && LoadedAmmo[item.BlockId] > 0))
                         || (!(TotalAmmo.ContainsKey(item.BlockId) && TotalAmmo[item.BlockId] > 0)))
                     {
-                        d_Audio.Play("Dry Fire Gun-SoundBible.com-2053652037.ogg");
+                        AudioPlay("Dry Fire Gun-SoundBible.com-2053652037.ogg");
                         goto end;
                     }
                 }
@@ -2465,7 +2510,7 @@ namespace ManicDigger
                     if (game.blocktypes[item.BlockId].Sounds.ShootEnd.Length > 0)
                     {
                         pistolcycle = rnd.Next(game.blocktypes[item.BlockId].Sounds.ShootEnd.Length);
-                        d_Audio.Play(game.blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle] + ".ogg");
+                        AudioPlay(game.blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle] + ".ogg");
                     }
 
                     bulletsshot++;
@@ -2536,7 +2581,7 @@ namespace ManicDigger
                             string[] sound = d_Data.CloneSound[clonesource];
                             if (sound != null && sound.Length > 0)
                             {
-                                d_Audio.Play(sound[0]); //todo sound cycle
+                                AudioPlay(sound[0]); //todo sound cycle
                             }
                         }
                     }
@@ -2556,7 +2601,7 @@ namespace ManicDigger
                                 string[] sound = left ? d_Data.BreakSound[blocktype] : d_Data.BuildSound[blocktype];
                                 if (sound != null && sound.Length > 0)
                                 {
-                                    d_Audio.Play(sound[0]); //todo sound cycle
+                                    AudioPlay(sound[0]); //todo sound cycle
                                 }
                             }
                             //normal attack
@@ -3166,7 +3211,7 @@ namespace ManicDigger
             if ((one * (game.p.TimeMillisecondsFromStart() - b.startMilliseconds) / 1000) > b.explodesafter)
             {
                 projectiles.Remove(b);
-                d_Audio.Play("grenadeexplosion.ogg", b.position);
+                AudioPlayAt("grenadeexplosion.ogg", b.position.X, b.position.Y, b.position.Z);
 
                 sprites.Add(new Sprite() { timeMilliseconds = game.p.TimeMillisecondsFromStart(), image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespanSeconds = 1, size = 200, animationcount = 4 });
 
@@ -3212,7 +3257,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.Z = oldposition.Z - newposition.Z;
                     }
@@ -3231,7 +3276,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.X = oldposition.X - newposition.X;
                     }
@@ -3257,7 +3302,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.Y = oldposition.Y - newposition.Y;
                     }
@@ -3276,7 +3321,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.Z = oldposition.Z - newposition.Z;
                     }
@@ -3295,7 +3340,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.X = oldposition.X - newposition.X;
                     }
@@ -3313,7 +3358,7 @@ namespace ManicDigger
                         velocity *= bouncespeedmultiply;
                         if (ismoving)
                         {
-                            d_Audio.Play("grenadebounce.ogg", newposition);
+                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
                         }
                         //playerposition.Y = oldposition.Y - newposition.Y;
                     }
@@ -5716,12 +5761,12 @@ namespace ManicDigger
         {
             if (x == 0 && y == 0 && z == 0)
             {
-                d_Audio.Play(name);
+                AudioPlay(name);
             }
             else
             {
                 Vector3 player = LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0);
-                d_Audio.Play(name, new Vector3(x, z, y));
+                AudioPlayAt(name, x, z, y);
             }
         }
 

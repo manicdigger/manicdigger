@@ -12,11 +12,15 @@ using OpenTK;
 using System.Diagnostics;
 using ManicDigger.Renderers;
 using System.Globalization;
+using OpenTK.Audio;
 
-public class GamePlatformNative : GamePlatform
+public class GamePlatformNative : GamePlatform, IGameExit
 {
     public GamePlatformNative()
     {
+        System.Threading.ThreadPool.SetMinThreads(32, 32);
+        System.Threading.ThreadPool.SetMaxThreads(128, 128);
+        audio.d_GameExit = this;
         datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
         start.Start();
     }
@@ -26,7 +30,7 @@ public class GamePlatformNative : GamePlatform
     string[] datapaths;
     Dictionary<string, string> cache = new Dictionary<string, string>();
     Dictionary<string, string> remap = new Dictionary<string, string>();
-    public override string GetFullFilePath(string filename)
+    public override string GetFullFilePath(string filename, BoolRef found)
     {
     retry:
         if (remap.ContainsKey(filename))
@@ -63,7 +67,7 @@ public class GamePlatformNative : GamePlatform
         string origfilename = filename;
         for (int i = 0; i < 2; i++)
         {
-            if (cache.ContainsKey(filename)) { return cache[filename]; }
+            if (cache.ContainsKey(filename)) { found.value = true; return cache[filename]; }
 
             string f1 = filename.Replace(".png", ".jpg");
             if (cache.ContainsKey(f1)) { remap[origfilename] = f1; goto retry; }
@@ -80,7 +84,8 @@ public class GamePlatformNative : GamePlatform
             filename = new FileInfo(filename).Name; //handles GetFile(GetFile(file)) use.
         }
 
-        throw new FileNotFoundException(filename);
+        found.value = false;
+        return null;
     }
 
     public override int FloatToInt(float value)
@@ -789,6 +794,30 @@ public class GamePlatformNative : GamePlatform
     public override float MathSin(float a)
     {
         return (float)Math.Sin(a);
+    }
+
+    AudioOpenAl audio = new AudioOpenAl();
+
+    public override void AudioPlay(string path, float x, float y, float z)
+    {
+        audio.Play(path, new Vector3(x, y, z));
+    }
+    
+    public override void AudioPlayLoop(string path, bool play, bool restart)
+    {
+        audio.PlayAudioLoop(path, play, restart);
+    }
+
+    public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
+    {
+        audio.UpdateListener(new Vector3(posX,posY,posZ), new Vector3(orientX, orientY, orientZ));
+    }
+
+    public bool exit { get; set; }
+
+    public override void ConsoleWriteLine(string s)
+    {
+        Console.WriteLine(s);
     }
 }
 

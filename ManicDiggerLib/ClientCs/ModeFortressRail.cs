@@ -158,14 +158,14 @@ namespace ManicDigger
             {
                 railsoundpersecond = 10;
             }
-            d_Audio.PlayAudioLoop("railnoise.wav", railriding && railsoundpersecond > 0.1f);
+            AudioPlayLoop("railnoise.wav", railriding && railsoundpersecond > 0.1f, false);
             if (!railriding)
             {
                 return;
             }
             if ((DateTime.Now - lastrailsoundtime).TotalSeconds > 1 / railsoundpersecond)
             {
-                d_Audio.Play("rail" + (lastrailsound + 1) + ".wav");
+                AudioPlay("rail" + (lastrailsound + 1) + ".wav");
                 lastrailsoundtime = DateTime.Now;
                 lastrailsound++;
                 if (lastrailsound >= 4)
@@ -174,6 +174,7 @@ namespace ManicDigger
                 }
             }
         }
+
         private float WalkCharacterHeight = 1.5f;
         float currentvehiclespeed;
         Vector3 currentrailblock;

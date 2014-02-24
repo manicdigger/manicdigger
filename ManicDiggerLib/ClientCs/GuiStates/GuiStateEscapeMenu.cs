@@ -139,10 +139,10 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Other)
             {
-                AddButton(string.Format(language.SoundOption(), (d_Audio.Enabled ? language.On() : language.Off())),
+                AddButton(string.Format(language.SoundOption(), (AudioEnabled ? language.On() : language.Off())),
                     (a, b) =>
                     {
-                        d_Audio.Enabled = !d_Audio.Enabled;
+                        AudioEnabled = !AudioEnabled;
                     });
                 AddButton(language.ReturnToOptionsMenu(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -430,7 +430,7 @@ namespace ManicDigger
             //d_Shadows.ResetShadows();
             //d_Terrain.UpdateAllTiles();
             d_Config3d.viewdistance = options.DrawDistance;
-            d_Audio.Enabled = options.EnableSound;
+            AudioEnabled = options.EnableSound;
             d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
             d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
             ENABLE_LAG = options.Framerate;
@@ -443,7 +443,7 @@ namespace ManicDigger
             options.Font = (int)d_TextRenderer.Font;
             options.Shadows = d_CurrentShadows.ShadowsFull;
             options.DrawDistance = (int)d_Config3d.viewdistance;
-            options.EnableSound = d_Audio.Enabled;
+            options.EnableSound = AudioEnabled;
             options.Framerate = ENABLE_LAG;
             options.Fullscreen = d_GlWindow.WindowState == WindowState.Fullscreen;
             options.Smoothshadows = d_TerrainChunkTesselator.EnableSmoothLight;
