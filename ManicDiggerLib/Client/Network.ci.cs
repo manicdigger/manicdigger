@@ -26,6 +26,7 @@ public abstract class INetConnection
     public abstract IPEndPointCi RemoteEndPoint();
     public abstract void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel);
     public abstract void Update();
+    public abstract bool EqualsConnection(INetConnection connection);
 }
 public abstract class INetIncomingMessage
 {

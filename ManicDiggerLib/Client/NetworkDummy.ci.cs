@@ -71,6 +71,11 @@ public class DummyNetConnection : INetConnection
     public override void Update()
     {
     }
+
+    public override bool EqualsConnection(INetConnection connection)
+    {
+        return true;
+    }
 }
 public class DummyIpEndPoint : IPEndPointCi
 {

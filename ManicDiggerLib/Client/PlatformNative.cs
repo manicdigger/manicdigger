@@ -856,34 +856,109 @@ public class GamePlatformNative : GamePlatform, IGameExit
         host_.host.InitializeServer(port, peerLimit);
     }
 
-    public override bool EnetHostService(EnetHost host, int timeout, EnetEvent enetEvent)
+    public override bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent)
     {
         EnetHostNative host_ = (EnetHostNative)host;
         ENet.Event e;
         bool ret = host_.host.Service(timeout, out e);
+        EnetEventNative ee = new EnetEventNative();
+        ee.e = e;
+        enetEvent.e = ee;
         return ret;
     }
 
-    public override bool EnetHostCheckEvents(EnetHost host, EnetEvent event_)
+    public override bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_)
     {
         EnetHostNative host_ = (EnetHostNative)host;
         ENet.Event e;
         bool ret = host_.host.CheckEvents(out e);
+        EnetEventNative ee = new EnetEventNative();
+        ee.e = e;
+        event_.e = ee;
         return ret;
     }
 
-    public override EnetPeer EnetHostConnect(string hostName, int port, int data, int channelLimit)
+    public override EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit)
     {
-        return null;
+        EnetHostNative host_ = (EnetHostNative)host;
+        ENet.Peer peer = host_.host.Connect(hostName, port, data, channelLimit);
+        EnetPeerNative peer_ = new EnetPeerNative();
+        peer_.peer = peer;
+        return peer_;
     }
 
     public override void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags)
     {
+        EnetPeerNative peer_ = (EnetPeerNative)peer;
+        peer_.peer.Send(channelID, data, (ENet.PacketFlags)flags);
+    }
+
+    public override EnetNetConnection CastToEnetNetConnection(INetConnection connection)
+    {
+        return (EnetNetConnection)connection;
+    }
+
+    public override EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg)
+    {
+        return (EnetNetOutgoingMessage)msg;
+    }
+
+    public override void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth)
+    {
+        if(address!=null)
+        {
+            throw new Exception();
+        }
+        EnetHostNative host_ = (EnetHostNative)host;
+        host_.host.Initialize(null, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth);
     }
 }
+
 public class EnetHostNative : EnetHost
 {
     public ENet.Host host;
+}
+
+public class EnetEventNative : EnetEvent
+{
+    public ENet.Event e;
+    public override EnetEventType Type()
+    {
+        return (EnetEventType)e.Type;
+    }
+
+    public override EnetPeer Peer()
+    {
+        EnetPeerNative peer = new EnetPeerNative();
+        peer.peer = e.Peer;
+        return peer;
+    }
+
+    public override EnetPacket Packet()
+    {
+        EnetPacketNative packet = new EnetPacketNative();
+        packet.packet = e.Packet;
+        return packet;
+    }
+}
+
+public class EnetPacketNative : EnetPacket
+{
+    internal ENet.Packet packet;
+    public override int GetBytesCount()
+    {
+        return packet.GetBytes().Length;
+    }
+
+    public override byte[] GetBytes()
+    {
+        return packet.GetBytes();
+    }
+
+    public override void Dispose()
+    {
+        packet.Dispose();
+    }
 }
 
 public class EnetPeerNative : EnetPeer
@@ -892,6 +967,16 @@ public class EnetPeerNative : EnetPeer
     public override int UserData()
     {
         return peer.UserData.ToInt32();
+    }
+
+    public override void SetUserData(int value)
+    {
+        peer.UserData = new IntPtr(value);
+    }
+
+    public override IPEndPointCi GetRemoteAddress()
+    {
+        return IPEndPointCiDefault.Create(peer.GetRemoteAddress().Address.ToString());
     }
 }
 

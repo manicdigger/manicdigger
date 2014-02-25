@@ -198,7 +198,7 @@ namespace ManicDiggerServer
                 //NetPeerConfiguration serverConfig = new NetPeerConfiguration("ManicDigger");
                 //server.d_MainSocket = new MyNetServer() { server = new NetServer(serverConfig) };
                 //server.d_MainSocket = new TcpNetServer() { };
-                server.d_MainSocket = new EnetNetServer() { };
+                server.d_MainSocket = new EnetNetServer() { platform = new GamePlatformNative() };
             }
             server.d_Heartbeat = new ServerHeartbeat();
             if ((Public) && (server.config.Public))
@@ -995,7 +995,7 @@ namespace ManicDiggerServer
                 int clientid = -1;
                 foreach (var k in clients)
                 {
-                    if (k.Value.socket.Equals(msg.SenderConnection()))
+                    if (k.Value.socket.EqualsConnection(msg.SenderConnection()))
                     {
                         clientid = k.Key;
                     }

@@ -76,38 +76,60 @@
     public abstract bool EnetAvailable();
     public abstract EnetHost EnetCreateHost();
     public abstract void EnetHostInitializeServer(EnetHost host, int port, int peerLimit);
-    public abstract bool EnetHostService(EnetHost host, int timeout, EnetEvent enetEvent);
-    public abstract bool EnetHostCheckEvents(EnetHost host, EnetEvent event_);
-    public abstract EnetPeer EnetHostConnect(string hostName, int port, int data, int channelLimit);
+    public abstract bool EnetHostService(EnetHost host, int timeout, EnetEventRef enetEvent);
+    public abstract bool EnetHostCheckEvents(EnetHost host, EnetEventRef event_);
+    public abstract EnetPeer EnetHostConnect(EnetHost host, string hostName, int port, int data, int channelLimit);
     public abstract void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags);
+    public abstract EnetNetConnection CastToEnetNetConnection(INetConnection connection);
+    public abstract EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg);
+    public abstract void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth);
 }
 
 public class EnetHost
 {
 }
 
-public class EnetEvent
+public abstract class EnetEvent
 {
-    internal EnetEventType type;
-    internal EnetPeer peer;
+    public abstract EnetEventType Type();
+    public abstract EnetPeer Peer();
+    public abstract EnetPacket Packet();
+}
+
+public class EnetEventRef
+{
+    internal EnetEvent e;
 }
 
 public enum EnetEventType
 {
+    None,
     Connect,
-    Receive,
-    Disconnect
+    Disconnect,
+    Receive
+}
+
+public class EnetPacketFlags
+{
+    public const int None = 0;
+    public const int Reliable = 1;
+    public const int Unsequenced = 2;
+    public const int NoAllocate = 4;
+    public const int UnreliableFragment = 8;
 }
 
 public abstract class EnetPeer
 {
     public abstract int UserData();
+    public abstract void SetUserData(int value);
+    public abstract IPEndPointCi GetRemoteAddress();
 }
 
 public abstract class EnetPacket
 {
     public abstract int GetBytesCount();
     public abstract byte[] GetBytes();
+    public abstract void Dispose();
 }
 
 public class MonitorObject

@@ -159,7 +159,9 @@ namespace GameModeFortress
                 var config = new NetPeerConfiguration("ManicDigger");
                 //w.main = new MyNetClient() { client = new NetClient(config) };
                 //w.main = new TcpNetClient() { };
-                w.main = new EnetNetClient();
+                EnetNetClient client = new EnetNetClient();
+                client.SetPlatform(new GamePlatformNative());
+                w.main = client;
             }
             var glwindow = new GlWindow(w);
             w.d_GlWindow = glwindow;
