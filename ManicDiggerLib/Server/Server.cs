@@ -2352,7 +2352,8 @@ if (sent >= unknown.Count) { break; }
                     }
                     break;
                 case Packet_ClientIdEnum.Shot:
-                    PlaySoundAtExceptPlayer((int)DeserializeFloat(packet.Shot.FromX), (int)DeserializeFloat(packet.Shot.FromZ), (int)DeserializeFloat(packet.Shot.FromY), (pistolcycle++ % 2 == 0) ? "M1GarandGun-SoundBible.com-1519788442.wav" : "M1GarandGun-SoundBible.com-15197884422.wav", clientid);
+                    int shootSoundIndex = pistolcycle++ % BlockTypes[packet.Shot.WeaponBlock].Sounds.ShootEnd.Length;	//Cycle all given ShootEnd sounds
+                    PlaySoundAtExceptPlayer((int)DeserializeFloat(packet.Shot.FromX), (int)DeserializeFloat(packet.Shot.FromZ), (int)DeserializeFloat(packet.Shot.FromY), BlockTypes[packet.Shot.WeaponBlock].Sounds.ShootEnd[shootSoundIndex] + ".ogg", clientid);
                     if (BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed == 0)
                     {
                         SendBullet(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
