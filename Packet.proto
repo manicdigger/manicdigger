@@ -314,6 +314,7 @@ package Packet;
         optional int32 damageHeadFloat = 41;
         optional PistolType pistolType = 42 [ default = Normal ];
         optional int32 damageToPlayer = 43;
+        optional int32 whenPlacedGetsConvertedTo = 44;
     }
     
     enum DrawType

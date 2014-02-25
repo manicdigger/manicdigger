@@ -542,45 +542,63 @@ namespace ManicDiggerServer
             }
             catch //This if for the original format
             {
-                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
+            	try
+            	{
+                    using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, filename))))
+                    {
+                	    config = new ServerConfig();
+                        StreamReader sr = new StreamReader(s);
+                        XmlDocument d = new XmlDocument();
+                        d.Load(sr);
+                        config.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Format"));
+                        config.Name = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
+                        config.Motd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
+                        config.Port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
+                        string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
+                        if (maxclients != null)
+                        {
+                            config.MaxClients = int.Parse(maxclients);
+                        }
+                        string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
+                        if (key != null)
+                        {
+                            config.Key = key;
+                        }
+                        config.IsCreative = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
+                        config.Public = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
+                        config.AllowGuests = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
+                        if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
+                        {
+                            config.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
+                            config.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
+                            config.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
+                        }
+                        config.BuildLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildLogging"));
+                        config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
+                        config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
+                        config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
+                        config.ServerMonitor = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerMonitor"));
+                        config.ClientConnectionTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientConnectionTimeout"));
+                        config.ClientPlayingTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientPlayingTimeout"));
+                    }
+                    //Save with new version.
+                    SaveConfig();
+            	}
+            	catch
                 {
-                    config = new ServerConfig();
-                    StreamReader sr = new StreamReader(s);
-                    XmlDocument d = new XmlDocument();
-                    d.Load(sr);
-                    config.Format = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Format"));
-                    config.Name = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Name");
-                    config.Motd = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Motd");
-                    config.Port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Port"));
-                    string maxclients = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MaxClients");
-                    if (maxclients != null)
-                    {
-                        config.MaxClients = int.Parse(maxclients);
-                    }
-                    string key = XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Key");
-                    if (key != null)
-                    {
-                        config.Key = key;
-                    }
-                    config.IsCreative = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Creative"));
-                    config.Public = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/Public"));
-                    config.AllowGuests = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowGuests"));
-                    if (XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX") != null)
-                    {
-                        config.MapSizeX = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeX"));
-                        config.MapSizeY = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeY"));
-                        config.MapSizeZ = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/MapSizeZ"));
-                    }
-                    config.BuildLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/BuildLogging"));
-                    config.ServerEventLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerEventLogging"));
-                    config.ChatLogging = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ChatLogging"));
-                    config.AllowScripting = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AllowScripting"));
-                    config.ServerMonitor = bool.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ServerMonitor"));
-                    config.ClientConnectionTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientConnectionTimeout"));
-                    config.ClientPlayingTimeout = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/ClientPlayingTimeout"));
+                    //ServerConfig is really messed up. Backup a copy, then create a new one.
+                    try
+            	    {
+            	        File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
+            	        Console.WriteLine("ServerConfig corrupt! Created new. Backup saved as ServerConfig.txt.old");
+            	    }
+            	    catch
+            	    {
+            	        Console.WriteLine("ServerConfig corrupt! Created new. COULD NOT BACKUP OLD!");
+            	    }
+            	    config = null;
+            	    SaveConfig();
                 }
-                //Save with new version.
-                SaveConfig();
             }
             Console.WriteLine("Server configuration loaded.");
         }
@@ -4323,6 +4341,7 @@ if (sent >= unknown.Count) { break; }
             p.WalkableType = (int)block.WalkableType;
             p.WalkSpeedFloat = Server.SerializeFloat(block.WalkSpeed);
             p.WalkSpeedWhenUsedFloat = Server.SerializeFloat(block.WalkSpeedWhenUsed);
+            p.WhenPlacedGetsConvertedTo = block.WhenPlayerPlacesGetsConvertedTo;
             return p;
         }
 
