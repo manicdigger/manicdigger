@@ -219,6 +219,13 @@ public class GamePlatformNative : GamePlatform, IGameExit
         length.value = files.Length;
         return files;
     }
+    
+    public override string[] FileReadAllLines(string path, IntRef length)
+    {
+    	string[] lines = File.ReadAllLines(path);
+    	length.value = lines.Length;
+        return lines;
+    }
 
     public override void WebClientDownloadStringAsync(string url, HttpResponseCi response)
     {
@@ -659,7 +666,7 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
     public override string GetLanguageIso6391()
     {
-        return "en";
+        return CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     }
 
     Stopwatch start = new Stopwatch();

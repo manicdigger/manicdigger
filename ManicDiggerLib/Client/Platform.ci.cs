@@ -23,6 +23,7 @@
     public abstract string CharArrayToString(int[] charArray, int length);
     public abstract string PathSavegames();
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
+    public abstract string[] FileReadAllLines(string path, IntRef length);
     public abstract void WebClientDownloadStringAsync(string url, HttpResponseCi response);
     public abstract string FileName(string fullpath);
     public abstract void AddOnNewFrame(NewFrameHandler handler);
