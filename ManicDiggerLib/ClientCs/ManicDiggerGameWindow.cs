@@ -32,6 +32,8 @@ namespace ManicDigger
         {
             one = 1;
             game = new Game();
+            game.language.platform = new GamePlatformNative();
+            game.language.LoadTranslations();
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
             performanceinfo = new DictionaryStringString();

@@ -5,7 +5,6 @@
         stringsMax = 1024;
         stringsCount = 0;
         strings = new TranslatedString[stringsMax];
-        AddEnglish();
     }
 
     internal GamePlatform platform;
@@ -73,7 +72,30 @@
     public string UseServerTexturesOption() { return Get("UseServerTexturesOption"); }
     public string ViewDistanceOption() { return Get("ViewDistanceOption"); }
 
-    //Todo: load from text file.
+    public void LoadTranslations()
+    {
+    	IntRef fileCount = IntRef.Create(0);
+    	string[] fileList = platform.DirectoryGetFiles("Translations", fileCount);
+    	//Iterate over all files in the directory
+    	for (int i = 0; i < fileCount.value; i++)
+    	{
+    		IntRef lineCount = IntRef.Create(0);
+    		string[] lineList = platform.FileReadAllLines(fileList[i], lineCount);
+    		//Iterate over each line in these files
+    		for (int j = 1; j < lineCount.value; j++)
+    		{
+    			IntRef splitCount = IntRef.Create(0);
+    			string[] splitList = platform.StringSplit(lineList[j], "=", splitCount);
+    			if (splitCount.value >= 2)
+    			{
+    				Add(lineList[0], splitList[0], splitList[1]);
+    			}
+    		}
+    	}
+    	//Add english default strings if not defined.
+    	AddEnglish();
+    }
+    
     void AddEnglish()
     {
         Add("en", "CannotWriteChatLog", "Cannot write to chat log file {0}.");
@@ -146,6 +168,10 @@
         {
             return;
         }
+        if (ContainsTranslation(language, id))
+        {
+        	return;
+        }
         TranslatedString s = new TranslatedString();
         s.language = language;
         s.id = id;
@@ -157,6 +183,24 @@
     int stringsMax;
     int stringsCount;
 
+    bool ContainsTranslation(string language, string id)
+    {
+    	for (int i = 0; i < stringsCount; i++)
+    	{
+    		if (strings[i] == null)
+    		{
+    			continue;
+    		}
+    		if (strings[i].language == language)
+    		{
+    			if (strings[i].id == id)
+    			{
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    }
 
     public string Get(string id)
     {
