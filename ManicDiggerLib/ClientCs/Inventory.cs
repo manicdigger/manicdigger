@@ -463,7 +463,10 @@ namespace ManicDigger
         public IGameData d_Data;
         public string ItemInfo(Item item)
         {
-            if (item.ItemClass == ItemClass.Block) { return game.game.blocktypes[item.BlockId].Name; }
+            if (item.ItemClass == ItemClass.Block)
+            {
+            	return game.game.language.Get("Block_" + game.game.blocktypes[item.BlockId].Name);
+            }
             throw new NotImplementedException();
         }
 

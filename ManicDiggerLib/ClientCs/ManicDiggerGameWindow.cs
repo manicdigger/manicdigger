@@ -2779,9 +2779,9 @@ namespace ManicDigger
                 float progress = health / d_Data.Strength[blocktype];
                 if (IsUsableBlock(blocktype))
                 {
-                    DrawEnemyHealthUseInfo(game.blocktypes[blocktype].Name, progress, true);
+                	DrawEnemyHealthUseInfo(game.language.Get("Block_" + game.blocktypes[blocktype].Name), progress, true);
                 }
-                DrawEnemyHealthCommon(game.blocktypes[blocktype].Name, progress);
+                DrawEnemyHealthCommon(game.language.Get("Block_" + game.blocktypes[blocktype].Name), progress);
             }
         }
 
