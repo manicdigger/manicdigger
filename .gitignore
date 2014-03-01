@@ -8,7 +8,7 @@ _ReSharper.*
 
 /Packet.Serializer.cs
 
-/ManicDiggerLib/Mods/current.txt
+/ManicDiggerLib/Server/Mods/current.txt
 
 /Packet.Serializer.ci.cs
 
