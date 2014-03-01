@@ -1715,7 +1715,7 @@ namespace ManicDigger
             }
             float jumpstartacceleration = 13.333f * d_Physics.gravity;
             if (blockunderplayer != null && blockunderplayer == d_Data.BlockIdTrampoline
-                && (!player.isplayeronground))
+                && (!player.isplayeronground) && !shiftkeydown)
             {
                 wantsjump = true;
                 jumpstartacceleration = 20.666f * d_Physics.gravity;
