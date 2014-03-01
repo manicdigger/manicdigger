@@ -75,7 +75,7 @@
     public void LoadTranslations()
     {
     	IntRef fileCount = IntRef.Create(0);
-    	string[] fileList = platform.DirectoryGetFiles("Translations", fileCount);
+    	string[] fileList = platform.DirectoryGetFiles(platform.PathCombine("data", "localization"), fileCount);
     	//Iterate over all files in the directory
     	for (int i = 0; i < fileCount.value; i++)
     	{

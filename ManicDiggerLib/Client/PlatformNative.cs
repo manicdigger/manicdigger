@@ -213,6 +213,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return ".";
     }
 
+    public override string PathCombine(string part1, string part2)
+    {
+    	return Path.Combine(part1, part2);
+    }
+
     public override string[] DirectoryGetFiles(string path, IntRef length)
     {
         if (!Directory.Exists(path))

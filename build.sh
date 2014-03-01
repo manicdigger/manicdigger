@@ -25,9 +25,6 @@ cp MdMonsterEditor/bin/Release/*.exe output
 # Mods
 cp -R ManicDiggerLib/Server/Mods output
 
-# Translations
-cp -R Translations output
-
 cp Lib/* output
 rm -f output/*vshost.exe
 cp COPYING.md output/credits.txt

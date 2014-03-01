@@ -22,6 +22,7 @@
     public abstract int[] StringToCharArray(string s, IntRef length);
     public abstract string CharArrayToString(int[] charArray, int length);
     public abstract string PathSavegames();
+    public abstract string PathCombine(string part1, string part2);
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
     public abstract string[] FileReadAllLines(string path, IntRef length);
     public abstract void WebClientDownloadStringAsync(string url, HttpResponseCi response);

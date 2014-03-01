@@ -22,10 +22,6 @@ REM Mods
 mkdir output\Mods
 xcopy /s ManicDiggerLib\Server\Mods output\Mods\
 
-REM Translations
-mkdir output\Translations
-xcopy /s Translations output\Translations\
-
 xcopy /y /s Lib\*.* output\
 del output\*vshost.exe
 copy COPYING.md output\credits.txt
