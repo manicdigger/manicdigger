@@ -215,6 +215,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
     public override string[] DirectoryGetFiles(string path, IntRef length)
     {
+        if (!Directory.Exists(path))
+        {
+            length.value = 0;
+            return new string[0];
+        }
         string[] files = Directory.GetFiles(path);
         length.value = files.Length;
         return files;
