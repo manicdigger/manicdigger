@@ -306,8 +306,14 @@ namespace ManicDigger
 
             IsTransparentFully[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Plant)
                  && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
-
-            WhenPlayerPlacesGetsConvertedTo[id] = id; // todo
+            if (b.WhenPlacedGetsConvertedTo != 0)
+            {
+            	mWhenPlayerPlacesGetsConvertedTo[id] = b.WhenPlacedGetsConvertedTo;
+            }
+            else
+            {
+            	mWhenPlayerPlacesGetsConvertedTo[id] = id;
+            }
             IsFlower[id] = b.DrawType == Packet_DrawTypeEnum.Plant;
             Rail[id] = (RailDirectionFlags)b.Rail;
             WalkSpeed[id] = DeserializeFloat(b.WalkSpeedFloat);

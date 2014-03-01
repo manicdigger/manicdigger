@@ -505,9 +505,7 @@ namespace ManicDigger
     [ProtoContract]
     public class BlockType
     {
-        public BlockType()
-        {
-        }
+        public BlockType() {}
         [ProtoMember(1)]
         public string TextureIdTop = "Unknown";
         [ProtoMember(2)]
@@ -522,10 +520,6 @@ namespace ManicDigger
         public string TextureIdRight = "Unknown";
         [ProtoMember(7)]
         public string TextureIdForInventory = "Unknown";
-
-        //public bool IsBuildable = true;
-        //public string WhenPlayerPlacesGetsConvertedTo;
-        //public bool IsFlower;
         [ProtoMember(8)]
         public DrawType DrawType;
         [ProtoMember(9)]
@@ -534,16 +528,10 @@ namespace ManicDigger
         public int Rail;
         [ProtoMember(11)]
         public float WalkSpeed = 1;
-        //public bool IsTransparentForLight;
         [ProtoMember(12)]
         public bool IsSlipperyWalk;
         [ProtoMember(13)]
         public SoundSet Sounds;
-        //public bool IsFluid;
-        //public bool IsTransparent;
-        //public bool IsTransparentFully;
-        //public bool IsEmptyForPhysics;
-        //public int Season;
         [ProtoMember(14)]
         public int LightRadius;
         [ProtoMember(15)]
@@ -604,6 +592,9 @@ namespace ManicDigger
         public PistolType PistolType;
         [ProtoMember(43)]
         public int DamageToPlayer = 0;
+        [ProtoMember(44)]
+        public int WhenPlayerPlacesGetsConvertedTo;
+        
         public string AllTextures
         {
             set
@@ -616,6 +607,26 @@ namespace ManicDigger
                 TextureIdRight = value;
                 TextureIdForInventory = value;
             }
+        }
+        
+        public string SideTextures
+        {
+        	set
+        	{
+        		TextureIdFront = value;
+                TextureIdBack = value;
+                TextureIdLeft = value;
+                TextureIdRight = value;
+        	}
+        }
+        
+        public string TopBottomTextures
+        {
+        	set
+        	{
+        		TextureIdTop = value;
+                TextureIdBottom = value;
+        	}
         }
 
         public bool IsFluid()
