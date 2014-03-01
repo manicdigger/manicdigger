@@ -177,9 +177,9 @@ public class CharacterPhysicsCi
         diff1.Z += push.Z * dt;
 
         bool loaded = false;
-        int cx = game.p.FloatToInt(game.player.playerposition.X / game.chunksize);
-        int cy = game.p.FloatToInt(game.player.playerposition.Z / game.chunksize);
-        int cz = game.p.FloatToInt(game.player.playerposition.Y / game.chunksize);
+        int cx = game.platform.FloatToInt(game.player.playerposition.X / game.chunksize);
+        int cy = game.platform.FloatToInt(game.player.playerposition.Z / game.chunksize);
+        int cz = game.platform.FloatToInt(game.player.playerposition.Y / game.chunksize);
         if (game.IsValidChunkPos(cx, cy, cz, game.chunksize))
         {
             if (game.chunks[MapUtilCi.Index3d(cx, cy, cz,
@@ -727,7 +727,7 @@ public class CharacterPhysicsCi
 
     int FloatToInt(float qnewposition0)
     {
-        return game.p.FloatToInt(qnewposition0);
+        return game.platform.FloatToInt(qnewposition0);
     }
 }
 

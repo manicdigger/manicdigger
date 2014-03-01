@@ -25,7 +25,7 @@
 
     public void StartTerrain()
     {
-        sqrt3half = game.p.MathSqrt(3) / 2;
+        sqrt3half = game.platform.MathSqrt(3) / 2;
         game.d_TerrainChunkTesselator.Start();
         if (shadowssimple)
         {
@@ -42,8 +42,8 @@
 
     int chunksize;
 
-    int mapAreaSize() { return game.p.FloatToInt(game.d_Config3d.viewdistance) * 2; }
-    int centerAreaSize() { return game.p.FloatToInt(game.d_Config3d.viewdistance) / 2; }
+    int mapAreaSize() { return game.platform.FloatToInt(game.d_Config3d.viewdistance) * 2; }
+    int centerAreaSize() { return game.platform.FloatToInt(game.d_Config3d.viewdistance) / 2; }
     int mapAreaSizeZ() { return mapAreaSize(); }
 
     int chunksizebits;
@@ -134,9 +134,9 @@
     int[] unloadxyztemp;
     void UnloadRendererChunks()
     {
-        int px = game.p.FloatToInt(game.player.playerposition.X) / chunksize;
-        int py = game.p.FloatToInt(game.player.playerposition.Z) / chunksize;
-        int pz = game.p.FloatToInt(game.player.playerposition.Y) / chunksize;
+        int px = game.platform.FloatToInt(game.player.playerposition.X) / chunksize;
+        int py = game.platform.FloatToInt(game.player.playerposition.Z) / chunksize;
+        int pz = game.platform.FloatToInt(game.player.playerposition.Y) / chunksize;
 
         int chunksxy = this.mapAreaSize() / chunksize / 2;
         int chunksz = this.mapAreaSizeZ() / chunksize / 2;
@@ -206,9 +206,9 @@
         nearestpos[0] = -1;
         nearestpos[1] = -1;
         nearestpos[2] = -1;
-        int px = game.p.FloatToInt(game.player.playerposition.X) / chunksize;
-        int py = game.p.FloatToInt(game.player.playerposition.Z) / chunksize;
-        int pz = game.p.FloatToInt(game.player.playerposition.Y) / chunksize;
+        int px = game.platform.FloatToInt(game.player.playerposition.X) / chunksize;
+        int py = game.platform.FloatToInt(game.player.playerposition.Z) / chunksize;
+        int pz = game.platform.FloatToInt(game.player.playerposition.Y) / chunksize;
 
         int chunksxy = this.mapAreaSize() / chunksize / 2;
         int chunksz = this.mapAreaSizeZ() / chunksize / 2;

@@ -38,24 +38,24 @@
     }
     public void AddChatline(string s)
     {
-        int now = game.p.TimeMillisecondsFromStart();
+        int now = game.platform.TimeMillisecondsFromStart();
         if (s.Length > 192)
         {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 64, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 128, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.p, s, 192), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 64, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 128, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 192), now));
         }
         else if (s.Length > 128)
         {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 64, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.p, s, 128), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 64, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 128), now));
         }
         else if (s.Length > 64)
         {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.p, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.p, s, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
+            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 64), now));
         }
         else
         {
@@ -87,7 +87,7 @@
             for (int i = 0; i < ChatLinesCount; i++)
             {
                 Chatline c = ChatLines[i];
-                if ((one * (game.p.TimeMillisecondsFromStart() - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds)
+                if ((one * (game.platform.TimeMillisecondsFromStart() - c.timeMilliseconds) / 1000) < ChatScreenExpireTimeSeconds)
                 {
                     chatlines2[chatlines2Count++] = c;
                 }
@@ -116,7 +116,7 @@
         }
         if (ChatPageScroll != 0)
         {
-            game.Draw2dText(game.p.StringFormat("&7Page: {0}", game.p.IntToString(ChatPageScroll)), font, 20, 90 + (-1) * 25, null, false);
+            game.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, 20, 90 + (-1) * 25, null, false);
         }
     }
     FontCi font;
@@ -125,9 +125,9 @@
         string s = GuiTypingBuffer;
         if (IsTeamchat)
         {
-            s = game.p.StringFormat("To team: {0}", s);
+            s = game.platform.StringFormat("To team: {0}", s);
         }
-        game.Draw2dText(game.p.StringFormat("{0}_", s), font, 50, game.p.GetCanvasHeight() - 100, null, true);
+        game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50, game.platform.GetCanvasHeight() - 100, null, true);
     }
 }
 

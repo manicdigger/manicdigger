@@ -36,7 +36,7 @@ namespace ManicDigger
             game.language.LoadTranslations();
             mvMatrix.Push(Mat4.Create());
             pMatrix.Push(Mat4.Create());
-            performanceinfo = new DictionaryStringString();
+            PerformanceInfo = new DictionaryStringString();
             AudioEnabled = true;
         }
         bool AudioEnabled;
@@ -44,7 +44,7 @@ namespace ManicDigger
         public byte localstance = 0;
         public void Start()
         {
-            game.p = new GamePlatformNative() { window = d_GlWindow };
+            game.platform = new GamePlatformNative() { window = d_GlWindow };
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             var getfile = new GetFileStream(datapaths);
             var w = this;
@@ -89,7 +89,7 @@ namespace ManicDigger
             var map = w;
             var terrainchunktesselator = new TerrainChunkTesselatorCi();
             w.d_TerrainChunkTesselator = terrainchunktesselator;
-            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d, platform = game.p };
+            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = the3d, platform = game.platform };
             w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling, game = game };
             w.d_FrustumCulling = frustumculling;
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
@@ -146,7 +146,6 @@ namespace ManicDigger
                 playerskindownloader.skinserver = "";
             }
             w.playerskindownloader = playerskindownloader;
-            w.d_Screenshot = new Screenshot() { d_GameWindow = d_GlWindow };
             w.d_FrustumCulling = frustumculling;
             the3d.d_Terrain = terrainTextures;
             the3d.d_TextRenderer = textrenderer;
@@ -213,16 +212,15 @@ namespace ManicDigger
                     internetgamefactory, blockrenderertorch, playerrenderer,
                     map, terrainchunktesselator);
             }
-            enableCameraControl = true;
 
             clientmods = new ClientMod[128];
             clientmodsCount = 0;
-            modmanager.w = this;
+            modmanager.game = game;
             AddMod(new ModAutoCamera());
             AddMod(new ModFpsHistoryGraph());
             applicationname = language.GameName();
             s = new BlockOctreeSearcher();
-            s.platform = game.p;
+            s.platform = game.platform;
         }
         void AddMod(ClientMod mod)
         {
@@ -248,7 +246,8 @@ namespace ManicDigger
 
         void SendLeave(int reason)
         {
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Leave, Leave = new Packet_ClientLeave() { Reason = reason } }));
+            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Leave, Leave = new Packet_ClientLeave() { Reason = reason } }, packetLen);
+            SendPacket(packet, packetLen.value);
         }
 
         [Inject]
@@ -283,7 +282,7 @@ namespace ManicDigger
         [Inject]
         public IGameExit d_Exit;
         [Inject]
-        public HudChat d_HudChat;
+        public HudChat d_HudChat { get { return game.d_HudChat; } set { game.d_HudChat = value; } }
         [Inject]
         public HudTextEditor d_HudTextEditor;
         [Inject]
@@ -295,11 +294,9 @@ namespace ManicDigger
         [Inject]
         public InventoryUtil d_InventoryUtil;
         [Inject]
-        public Screenshot d_Screenshot;
-        [Inject]
         public CraftingTableTool d_CraftingTableTool;
         [Inject]
-        public INetClient main;
+        public INetClient main { get { return game.main; } set { game.main = value; } }
         [Inject]
         public InfiniteMapChunked2d d_Heightmap { get { return game.d_Heightmap; } set { game.d_Heightmap = value; } }
         [Inject]
@@ -323,7 +320,7 @@ namespace ManicDigger
         //float angle;
 
         public ServerInformation ServerInfo = new ServerInformation();
-        public bool AllowFreemove = true;
+        public bool AllowFreemove { get { return game.AllowFreemove; } set { game.AllowFreemove = value; } }
 
         public ClientModManager1 modmanager = new ClientModManager1();
         public ClientMod[] clientmods;
@@ -806,7 +803,7 @@ namespace ManicDigger
             }
             if (e.Key == GetKey(OpenTK.Input.Key.F6))
             {
-                float lagSeconds = one * (game.p.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
+                float lagSeconds = one * (game.platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
                 if ((lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS) || guistate == GuiState.MapLoading)
                 {
                     Reconnect();
@@ -990,7 +987,7 @@ namespace ManicDigger
                 {
                     drawblockinfo = !drawblockinfo;
                 }
-                performanceinfo.Set("height", "height:" + d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z));
+                PerformanceInfo.Set("height", "height:" + d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z));
                 if (e.Key == GetKey(OpenTK.Input.Key.F5))
                 {
                     if (cameratype == CameraType.Fpp)
@@ -1061,7 +1058,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
-                    d_Screenshot.SaveScreenshot();
+                    game.platform.SaveScreenshot();
                     screenshotflash = 5;
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.Tab))
@@ -1103,7 +1100,7 @@ namespace ManicDigger
                     {
                         int sound = rnd.Next(game.blocktypes[item.BlockId].Sounds.Reload.Length);
                         AudioPlay(game.blocktypes[item.BlockId].Sounds.Reload[sound] + ".ogg");
-                        reloadstartMilliseconds = game.p.TimeMillisecondsFromStart();
+                        reloadstartMilliseconds = game.platform.TimeMillisecondsFromStart();
                         reloadblock = item.BlockId;
                         SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Reload, Reload = new Packet_ClientReload() });
                     }
@@ -1164,7 +1161,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
-                    d_Screenshot.SaveScreenshot();
+                    game.platform.SaveScreenshot();
                     screenshotflash = 5;
                 }
                 return;
@@ -1178,7 +1175,7 @@ namespace ManicDigger
                 }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
-                    d_Screenshot.SaveScreenshot();
+                    game.platform.SaveScreenshot();
                     screenshotflash = 5;
                 }
             }
@@ -1219,13 +1216,13 @@ namespace ManicDigger
                 return;
             }
             BoolRef found = new BoolRef();
-            string fullpath = game.p.GetFullFilePath(file, found);
+            string fullpath = game.platform.GetFullFilePath(file, found);
             if (!found.value)
             {
-                game.p.ConsoleWriteLine(game.p.StringFormat("File not found: {0}", file));
+                game.platform.ConsoleWriteLine(game.platform.StringFormat("File not found: {0}", file));
                 return;
             }
-            game.p.AudioPlay(fullpath, EyesPos().X, EyesPos().Y, EyesPos().Z);
+            game.platform.AudioPlay(fullpath, EyesPos().X, EyesPos().Y, EyesPos().Z);
         }
 
         public void AudioPlayLoop(string file, bool play, bool restart)
@@ -1235,13 +1232,13 @@ namespace ManicDigger
                 return;
             }
             BoolRef found = new BoolRef();
-            string fullpath = game.p.GetFullFilePath(file, found);
+            string fullpath = game.platform.GetFullFilePath(file, found);
             if (!found.value)
             {
-                game.p.ConsoleWriteLine(game.p.StringFormat("File not found: {0}", file));
+                game.platform.ConsoleWriteLine(game.platform.StringFormat("File not found: {0}", file));
                 return;
             }
-            game.p.AudioPlayLoop(fullpath, play, restart);
+            game.platform.AudioPlayLoop(fullpath, play, restart);
         }
 
         public Vector3 ToVector3(Vector3Ref vector3Ref)
@@ -1565,15 +1562,10 @@ namespace ManicDigger
         {
             return (int)player_yy.X == (int)tile_yy.X && (int)player_yy.Z == (int)tile_yy.Z;
         }
-        bool enable_freemove = false;
-        public bool ENABLE_FREEMOVE
-        {
-            get { return enable_freemove; }
-            set { enable_freemove = value; }
-        }
+        public bool ENABLE_FREEMOVE { get { return game.ENABLE_FREEMOVE; } set { game.ENABLE_FREEMOVE = value; } }
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
-        public bool ENABLE_NOCLIP = false;
+        public bool ENABLE_NOCLIP { get { return game.ENABLE_NOCLIP; } set { game.ENABLE_NOCLIP = value; } }
         public void OnUpdateFrame(FrameEventArgs e)
         {
             //..base.OnUpdateFrame(e);
@@ -1599,7 +1591,7 @@ namespace ManicDigger
             //UpdateTerrain();
             OnNewFrame(e.Time);
             UpdateMousePosition();
-            if (guistate == GuiState.Normal && enableCameraControl)
+            if (guistate == GuiState.Normal && game.enableCameraControl)
             {
                 UpdateMouseViewportControl(e);
             }
@@ -1766,7 +1758,7 @@ namespace ManicDigger
                     Vector3 diff = LocalPlayerPosition - kpos;
                     push += diff;
                 }
-                if ((one * (game.p.TimeMillisecondsFromStart() - k.dateMilliseconds) / 1000) > DeserializeFloat(k.explosion.TimeFloat))
+                if ((one * (game.platform.TimeMillisecondsFromStart() - k.dateMilliseconds) / 1000) > DeserializeFloat(k.explosion.TimeFloat))
                 {
                     explosions.Remove(k);
                 }
@@ -1829,7 +1821,7 @@ namespace ManicDigger
 
             Vector3 orientation = new Vector3((float)Math.Sin(LocalPlayerOrientation.Y), 0, -(float)Math.Cos(LocalPlayerOrientation.Y));
             Vector3 listenerPos = EyesPos();
-            game.p.AudioUpdateListener(listenerPos.X, listenerPos.Y, listenerPos.Z, orientation.X, orientation.Y, orientation.Z);
+            game.platform.AudioUpdateListener(listenerPos.X, listenerPos.Y, listenerPos.Z, orientation.X, orientation.Y, orientation.Z);
             Item activeitem = d_Inventory.RightHand[ActiveMaterial];
             int activeblock = 0;
             if (activeitem != null) { activeblock = activeitem.BlockId; }
@@ -1846,7 +1838,7 @@ namespace ManicDigger
             playervelocity *= 75;
             lastplayerposition = LocalPlayerPosition;
             if (reloadstartMilliseconds != 0
-                && (one * (game.p.TimeMillisecondsFromStart() - reloadstartMilliseconds) / 1000)
+                && (one * (game.platform.TimeMillisecondsFromStart() - reloadstartMilliseconds) / 1000)
                 > DeserializeFloat(game.blocktypes[reloadblock].ReloadDelayFloat))
             {
                 if (TotalAmmo.ContainsKey(reloadblock))
@@ -1921,11 +1913,11 @@ namespace ManicDigger
                     else if (fallspeed < 5.5) { severity = 0.6f; }
                     else if (fallspeed < 6.0) { severity = 0.8f; }
                     else { severity = 1f; }
-                    if ((one * (game.p.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
+                    if ((one * (game.platform.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
                     {
                         return;
                     }
-                    lastfalldamagetimeMilliseconds = game.p.TimeMillisecondsFromStart();
+                    lastfalldamagetimeMilliseconds = game.platform.TimeMillisecondsFromStart();
                     ApplyDamageToPlayer((int)(severity * PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
                 }
             }
@@ -1965,7 +1957,7 @@ namespace ManicDigger
             }
 
             //Player drowning
-            int deltaTime = (int)(one * (game.p.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
+            int deltaTime = (int)(one * (game.platform.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
             if (deltaTime >= 1000)
             {
             	if (WaterSwimming)
@@ -1986,7 +1978,7 @@ namespace ManicDigger
             	    Id = Packet_ClientIdEnum.Oxygen,
             	    Oxygen = new Packet_ClientOxygen() { CurrentOxygen = PlayerStats.CurrentOxygen },
             	});
-                lastOxygenTickMilliseconds = game.p.TimeMillisecondsFromStart();
+                lastOxygenTickMilliseconds = game.platform.TimeMillisecondsFromStart();
             }
         }
 
@@ -2217,7 +2209,7 @@ namespace ManicDigger
             //grenade cooking
             if (mouseleftclick)
             {
-                grenadecookingstartMilliseconds = game.p.TimeMillisecondsFromStart();
+                grenadecookingstartMilliseconds = game.platform.TimeMillisecondsFromStart();
                 if (ispistol && isgrenade)
                 {
                     if (game.blocktypes[item.BlockId].Sounds.Shoot.Length > 0)
@@ -2226,7 +2218,7 @@ namespace ManicDigger
                     }
                 }
             }
-            float wait = ((float)(game.p.TimeMillisecondsFromStart() - grenadecookingstartMilliseconds) / 1000);
+            float wait = ((float)(game.platform.TimeMillisecondsFromStart() - grenadecookingstartMilliseconds) / 1000);
             if (isgrenade && left)
             {
                 if (wait >= grenadetime && isgrenade && grenadecookingstartMilliseconds != 0)
@@ -2244,10 +2236,10 @@ namespace ManicDigger
                 grenadecookingstartMilliseconds = 0;
             }
 
-            if (ispistol && mouserightclick && (game.p.TimeMillisecondsFromStart() - lastironsightschangeMilliseconds) >= 500)
+            if (ispistol && mouserightclick && (game.platform.TimeMillisecondsFromStart() - lastironsightschangeMilliseconds) >= 500)
             {
                 IronSights = !IronSights;
-                lastironsightschangeMilliseconds = game.p.TimeMillisecondsFromStart();
+                lastironsightschangeMilliseconds = game.platform.TimeMillisecondsFromStart();
             }
 
             float unit_x = 0;
@@ -2388,13 +2380,14 @@ namespace ManicDigger
             {
                 currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
             }
-            if ((one * (game.p.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay
+            if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay
                 || IsNextShot)
             {
                 if (left && d_Inventory.RightHand[ActiveMaterial] == null)
                 {
                     Packet_ClientHealth p = new Packet_ClientHealth { CurrentHealth = (int)(2 + rnd.NextDouble() * 4) };
-                    SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.MonsterHit, Health = p }));
+                    byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.MonsterHit, Health = p }, packetLen);
+                    SendPacket(packet, packetLen.value);
                 }
                 if (left && !fastclicking)
                 {
@@ -2403,11 +2396,11 @@ namespace ManicDigger
                 }
                 if ((left || right || middle) && (!isgrenade))
                 {
-                    lastbuildMilliseconds = game.p.TimeMillisecondsFromStart();
+                    lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
                 }
                 if (isgrenade && mouseleftdeclick)
                 {
-                    lastbuildMilliseconds = game.p.TimeMillisecondsFromStart();
+                    lastbuildMilliseconds = game.platform.TimeMillisecondsFromStart();
                 }
                 if (reloadstartMilliseconds != 0)
                 {
@@ -2483,7 +2476,7 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.platform.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 1;
@@ -2496,7 +2489,7 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.p.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.platform.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
                                 }
                                 shot.HitPlayer = k.Key;
                                 shot.IsHitHead = 0;
@@ -2517,7 +2510,7 @@ namespace ManicDigger
                         v.Normalize();
                         v *= projectilespeed;
                         shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
-                        projectiles.Add(new Projectile() { position = FloatArrayToVector3(pick.Start), velocity = v, startMilliseconds = game.p.TimeMillisecondsFromStart(), block = item.BlockId, explodesafter = grenadetime - wait });
+                        projectiles.Add(new Projectile() { position = FloatArrayToVector3(pick.Start), velocity = v, startMilliseconds = game.platform.TimeMillisecondsFromStart(), block = item.BlockId, explodesafter = grenadetime - wait });
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
@@ -3013,12 +3006,12 @@ namespace ManicDigger
                     int? n = null;
                     if (b.animationcount > 0)
                     {
-                        n = (int)((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
+                        n = (int)((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
                             * (b.animationcount * b.animationcount - 1));
                     }
                     Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
                     GLPopMatrix();
-                    if ((one * (game.p.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
+                    if ((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
                 }
                 foreach (Bullet b in new List<Bullet>(bullets))
                 {
@@ -3222,12 +3215,12 @@ namespace ManicDigger
             Vector3 newpos = b.position + b.velocity * (float)dt;
             b.velocity.Y += -projectilegravity * (float)dt;
             b.position = GrenadeBounce(oldpos, newpos, ref b.velocity, dt);
-            if ((one * (game.p.TimeMillisecondsFromStart() - b.startMilliseconds) / 1000) > b.explodesafter)
+            if ((one * (game.platform.TimeMillisecondsFromStart() - b.startMilliseconds) / 1000) > b.explodesafter)
             {
                 projectiles.Remove(b);
                 AudioPlayAt("grenadeexplosion.ogg", b.position.X, b.position.Y, b.position.Z);
 
-                sprites.Add(new Sprite() { timeMilliseconds = game.p.TimeMillisecondsFromStart(), image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespanSeconds = 1, size = 200, animationcount = 4 });
+                sprites.Add(new Sprite() { timeMilliseconds = game.platform.TimeMillisecondsFromStart(), image = "ani5.jpg", position = b.position + new Vector3(0, 1, 0), timespanSeconds = 1, size = 200, animationcount = 4 });
 
                 Packet_ServerExplosion explosion = new Packet_ServerExplosion();
                 explosion.XFloat = SerializeFloat(b.position.X);
@@ -3236,7 +3229,7 @@ namespace ManicDigger
                 explosion.RangeFloat = game.blocktypes[b.block].ExplosionRangeFloat;
                 explosion.IsRelativeToPlayerPosition = 0;
                 explosion.TimeFloat = game.blocktypes[b.block].ExplosionTimeFloat;
-                explosions.Add(new Explosion() { dateMilliseconds = game.p.TimeMillisecondsFromStart(), explosion = explosion });
+                explosions.Add(new Explosion() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = explosion });
                 float dist = (LocalPlayerPosition - b.position).Length;
                 float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
                 if ((int)dmg > 0)
@@ -3422,7 +3415,7 @@ namespace ManicDigger
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);*/
         }
         public event EventHandler BeforeRenderFrame;
-        public bool ENABLE_DRAW2D = true;
+        public bool ENABLE_DRAW2D { get { return game.ENABLE_DRAW2D; } set { game.ENABLE_DRAW2D = value; } }
         int screenshotflash;
         int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
@@ -3891,7 +3884,7 @@ namespace ManicDigger
                 DrawScreenshotFlash();
                 screenshotflash--;
             }
-            double lagSeconds = one * (game.p.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
+            double lagSeconds = one * (game.platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
             if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
             {
                 Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
@@ -4213,25 +4206,24 @@ namespace ManicDigger
         }
         public ParticleEffectBlockBreak particleEffectBlockBreak = new ParticleEffectBlockBreak();
         Random rnd = new Random();
-        public int ActiveMaterial { get; set; }
+        public int ActiveMaterial { get { return game.ActiveMaterial; } set { game.ActiveMaterial = value; } }
 
         void Mouse_Move(object sender, OpenTK.Input.MouseMoveEventArgs e)
         {
         }
-        DictionaryStringString performanceinfo;
-        public DictionaryStringString PerformanceInfo { get { return performanceinfo; } }
+        public DictionaryStringString PerformanceInfo { get { return game.performanceinfo; } set { game.performanceinfo = value; } }
         int lastchunkupdates;
         int lasttitleupdateMilliseconds;
         void UpdateTitleFps(FrameEventArgs e)
         {
-            float elapsed = one * (game.p.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
+            float elapsed = one * (game.platform.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
             if (elapsed >= 1)
             {
-                lasttitleupdateMilliseconds = game.p.TimeMillisecondsFromStart();
+                lasttitleupdateMilliseconds = game.platform.TimeMillisecondsFromStart();
                 int chunkupdates = terrainRenderer.ChunkUpdates();
-                performanceinfo.Set("chunk updates", string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates)));
+                PerformanceInfo.Set("chunk updates", string.Format(language.ChunkUpdates(), (chunkupdates - lastchunkupdates)));
                 lastchunkupdates = terrainRenderer.ChunkUpdates();
-                performanceinfo.Set("triangles", string.Format(language.Triangles(), terrainRenderer.TrianglesCount()));
+                PerformanceInfo.Set("triangles", string.Format(language.Triangles(), terrainRenderer.TrianglesCount()));
             }
             if (!titleset)
             {
@@ -4299,7 +4291,7 @@ namespace ManicDigger
         #endregion
         public void AddChatline(string s)
         {
-            d_HudChat.AddChatline(s);
+            game.AddChatline(s);
         }
         #region ILocalPlayerPosition Members
         public bool Swimming
@@ -4592,7 +4584,7 @@ namespace ManicDigger
                 {
                     blockid = SpecialBlockId.Empty;
                 }
-                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), timeMilliseconds = game.p.TimeMillisecondsFromStart() };
+                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), timeMilliseconds = game.platform.TimeMillisecondsFromStart() };
                 SetBlock(x, y, z, blockid);
                 RedrawBlock(x, y, z);
             }
@@ -4723,7 +4715,7 @@ namespace ManicDigger
         {
             foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
             {
-                if ((one * (game.p.TimeMillisecondsFromStart() - k.Value.timeMilliseconds) / 1000) > 2)
+                if ((one * (game.platform.TimeMillisecondsFromStart() - k.Value.timeMilliseconds) / 1000) > 2)
                 {
                     speculative.Remove(k.Key);
                     RedrawBlock(k.Key.x, k.Key.y, k.Key.z);
@@ -4859,27 +4851,17 @@ namespace ManicDigger
 
         public void InventoryClick(Packet_InventoryPosition pos)
         {
-            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-            p.A = pos;
-            p.Action = Packet_InventoryActionTypeEnum.Click;
-            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
+            game.InventoryClick(pos);
         }
 
         public void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
         {
-            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-            p.A = from;
-            p.B = to;
-            p.Action = Packet_InventoryActionTypeEnum.WearItem;
-            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
+            game.WearItem(from, to);
         }
 
         public void MoveToInventory(Packet_InventoryPosition from)
         {
-            Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
-            p.A = from;
-            p.Action = Packet_InventoryActionTypeEnum.MoveToInventory;
-            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.InventoryAction, InventoryAction = p });
+            game.MoveToInventory(from);
         }
 
         public event EventHandler<MapLoadedEventArgs> MapLoaded;
@@ -4918,7 +4900,8 @@ namespace ManicDigger
                 MdProtocolVersion = GameVersion.Version,
                 VerificationKey = verificationKey
             };
-            return Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p });
+            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p }, packetLen);
+            return packet;
         }
         private byte[] CreateLoginPacket(string username, string verificationKey, string serverPassword)
         {
@@ -4929,21 +4912,13 @@ namespace ManicDigger
                 VerificationKey = verificationKey,
                 ServerPassword = serverPassword
             };
-            return Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p });
+            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PlayerIdentification, Identification = p }, packetLen);
+            return packet;
         }
         IPEndPoint iep;
-        public void SendPacket(byte[] packet)
+        public void SendPacket(byte[] packet, int packetLength)
         {
-            try
-            {
-                var msg = main.CreateMessage();
-                msg.Write(packet, packet.Length);
-                main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
-            }
-            catch
-            {
-                Console.WriteLine("SendPacket error");
-            }
+            game.SendPacket(packet, packetLength);
         }
         void EmptyCallback(IAsyncResult result)
         {
@@ -4951,52 +4926,28 @@ namespace ManicDigger
         int lastpositionsentMilliseconds;
         public void SendSetBlock(Vector3 position, int mode, int type, int materialslot)
         {
-            Packet_ClientSetBlock p = new Packet_ClientSetBlock()
-            {
-                X = (int)position.X,
-                Y = (int)position.Y,
-                Z = (int)position.Z,
-                Mode = mode,
-                BlockType = type,
-                MaterialSlot = materialslot,
-            };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.SetBlock, SetBlock = p }));
+            game.SendSetBlock((int)position.X, (int)position.Y, (int)position.Z, mode, type, materialslot);
         }
         public void SendFillArea(Vector3i start, Vector3i end, int blockType)
         {
-            Packet_ClientFillArea p = new Packet_ClientFillArea()
-            {
-                X1 = start.x,
-                Y1 = start.y,
-                Z1 = start.z,
-                X2 = end.x,
-                Y2 = end.y,
-                Z2 = end.z,
-                BlockType = blockType,
-                MaterialSlot = ActiveMaterial
-            };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.FillArea, FillArea = p }));
+            game.SendFillArea(start.x, start.y, start.z, end.x, end.y, end.z, blockType);
         }
-        public void SendPacketClient(Packet_Client packet)
+        public void SendPacketClient(Packet_Client p)
         {
-            SendPacket(Serialize(packet));
+            game.SendPacketClient(p);
         }
         public void SendChat(string s)
         {
-            Packet_ClientMessage p = new Packet_ClientMessage() { Message = s, IsTeamchat = d_HudChat.IsTeamchat ? 1 : 0 };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Message, Message = p }));
+            game.SendChat(s);
         }
         private void SendPingReply()
         {
-            Packet_ClientPingReply p = new Packet_ClientPingReply()
-            {
-            };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PingReply, PingReply = p }));
+            game.SendPingReply();
         }
-        private byte[] Serialize(Packet_Client p)
+        IntRef packetLen = new IntRef();
+        public byte[] Serialize(Packet_Client p, IntRef retLength)
         {
-            byte[] data = Packet_ClientSerializer.SerializeToBytes(p);
-            return data;
+            return game.Serialize(p, retLength);
         }
         /// <summary>
         /// This function should be called in program main loop.
@@ -5004,7 +4955,7 @@ namespace ManicDigger
         /// </summary>
         public void NetworkProcess()
         {
-            currentTimeMilliseconds = game.p.TimeMillisecondsFromStart();
+            currentTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
             stopwatch.Reset();
             stopwatch.Start();
             if (main == null)
@@ -5016,12 +4967,12 @@ namespace ManicDigger
             {
                 TryReadPacket(msg.ReadBytes(msg.LengthBytes()));
             }
-            if (spawned && ((game.p.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
+            if (spawned && ((game.platform.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
             {
-                lastpositionsentMilliseconds = game.p.TimeMillisecondsFromStart();
+                lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
                 SendPosition(LocalPlayerPosition, LocalPlayerOrientation);
             }
-            int now = game.p.TimeMillisecondsFromStart();
+            int now = game.platform.TimeMillisecondsFromStart();
             foreach (var k in players)
             {
                 if ((one * (now - k.Value.LastUpdateMilliseconds) / 1000) > 2)
@@ -5047,7 +4998,8 @@ namespace ManicDigger
                 Pitch = PitchByte(orientation),
                 Stance = localstance,
             };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PositionandOrientation, PositionAndOrientation = p }));
+            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.PositionandOrientation, PositionAndOrientation = p }, packetLen);
+            SendPacket(packet, packetLen.value);
             lastsentposition = position;
         }
         public static Vector3 HeadingPitchToOrientation(byte heading, byte pitch)
@@ -5677,13 +5629,13 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Explosion:
-                    explosions.Add(new Explosion() { dateMilliseconds = game.p.TimeMillisecondsFromStart(), explosion = packet.Explosion });
+                    explosions.Add(new Explosion() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = packet.Explosion });
                     break;
                 case Packet_ServerIdEnum.Projectile:
                     Projectile projectile = new Projectile();
                     projectile.position = new Vector3(DeserializeFloat(packet.Projectile.FromXFloat), DeserializeFloat(packet.Projectile.FromYFloat), DeserializeFloat(packet.Projectile.FromZFloat));
                     projectile.velocity = new Vector3(DeserializeFloat(packet.Projectile.VelocityXFloat), DeserializeFloat(packet.Projectile.VelocityYFloat), DeserializeFloat(packet.Projectile.VelocityZFloat));
-                    projectile.startMilliseconds = game.p.TimeMillisecondsFromStart();
+                    projectile.startMilliseconds = game.platform.TimeMillisecondsFromStart();
                     projectile.block = packet.Projectile.BlockId;
                     projectile.explodesafter = DeserializeFloat(packet.Projectile.ExplodesAfterFloat);
                     projectile.sourcePlayer = packet.Projectile.SourcePlayerID;
@@ -5792,7 +5744,8 @@ namespace ManicDigger
         private void SendRequestBlob(List<byte[]> needed)
         {
             Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
-            SendPacket(Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.RequestBlob, RequestBlob = p }));
+            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.RequestBlob, RequestBlob = p }, packetLen);
+            SendPacket(packet, packetLen.value);
         }
         bool IsBlob(byte[] hash)
         {
@@ -5918,7 +5871,7 @@ namespace ManicDigger
                 d_Clients.Players[playerid].Pitch = pitch;
                 d_Clients.Players[playerid].AnimationHint.leanleft = leanleft;
                 d_Clients.Players[playerid].AnimationHint.leanright = leanright;
-                d_Clients.Players[playerid].LastUpdateMilliseconds = game.p.TimeMillisecondsFromStart();
+                d_Clients.Players[playerid].LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
             }
         }
         List<byte> received = new List<byte>();
@@ -6355,8 +6308,6 @@ namespace ManicDigger
 
         public int sunlight { get { return game.sunlight_; } set { game.sunlight_ = value; } }
 
-        internal bool enableCameraControl;
-
         public bool ShadowsFull { get { return false; } set { } }
         internal int? MaybeGetLight(int x, int y, int z)
         {
@@ -6430,235 +6381,5 @@ namespace ManicDigger
     public interface IResetMap
     {
         void Reset(int sizex, int sizey, int sizez);
-    }
-
-    public class ClientModManager1 : ClientModManager
-    {
-        internal ManicDiggerGameWindow w;
-
-        public override void MakeScreenshot()
-        {
-            w.d_Screenshot.SaveScreenshot();
-        }
-
-        public override void SetLocalPosition(float glx, float gly, float glz)
-        {
-            w.LocalPlayerPosition = new Vector3(glx, gly, glz);
-        }
-
-        public override float GetLocalPositionX()
-        {
-            return w.LocalPlayerPosition.X;
-        }
-
-        public override float GetLocalPositionY()
-        {
-            return w.LocalPlayerPosition.Y;
-        }
-
-        public override float GetLocalPositionZ()
-        {
-            return w.LocalPlayerPosition.Z;
-        }
-
-        public override void SetLocalOrientation(float glx, float gly, float glz)
-        {
-            w.LocalPlayerOrientation = new Vector3(glx, gly, glz);
-        }
-
-        public override float GetLocalOrientationX()
-        {
-            return w.LocalPlayerOrientation.X;
-        }
-
-        public override float GetLocalOrientationY()
-        {
-            return w.LocalPlayerOrientation.Y;
-        }
-
-        public override float GetLocalOrientationZ()
-        {
-            return w.LocalPlayerOrientation.Z;
-        }
-
-        public override void DisplayNotification(string message)
-        {
-            w.AddChatline(message);
-        }
-
-        public override void SendChatMessage(string message)
-        {
-            w.SendChat(message);
-        }
-
-        public override GamePlatform GetPlatform()
-        {
-            return w.game.p;
-        }
-
-        public override void ShowGui(int level)
-        {
-            if (level == 0)
-            {
-                w.ENABLE_DRAW2D = false;
-            }
-            else
-            {
-                w.ENABLE_DRAW2D = true;
-            }
-        }
-
-        public override void SetFreemove(int level)
-        {
-            if (level == FreemoveLevelEnum.None)
-            {
-                w.ENABLE_FREEMOVE = false;
-                w.ENABLE_NOCLIP = false;
-            }
-
-            if (level == FreemoveLevelEnum.Freemove)
-            {
-                w.ENABLE_FREEMOVE = true;
-                w.ENABLE_NOCLIP = false;
-            }
-
-            if (level == FreemoveLevelEnum.Noclip)
-            {
-                w.ENABLE_FREEMOVE = true;
-                w.ENABLE_NOCLIP = true;
-            }
-        }
-
-        public override int GetFreemove()
-        {
-            if (!w.ENABLE_FREEMOVE)
-            {
-                return FreemoveLevelEnum.None;
-            }
-            if (w.ENABLE_NOCLIP)
-            {
-                return FreemoveLevelEnum.Noclip;
-            }
-            else
-            {
-                return FreemoveLevelEnum.Freemove;
-            }
-        }
-
-        public override BitmapCi GrabScreenshot()
-        {
-            BitmapCiCs bmp = new BitmapCiCs();
-            bmp.bmp = w.d_Screenshot.GrabScreenshot();
-            return bmp;
-        }
-
-        public class BitmapCiCs : BitmapCi
-        {
-            public Bitmap bmp;
-        }
-
-        public override AviWriterCi AviWriterCreate()
-        {
-            AviWriterCiCs avi = new AviWriterCiCs();
-            return avi;
-        }
-
-        public class AviWriterCiCs : AviWriterCi
-        {
-            public AviWriterCiCs()
-            {
-                avi = new AviWriter();
-            }
-
-            public AviWriter avi;
-            public Bitmap openbmp;
-
-            public override void Open(string filename, int framerate, int width, int height)
-            {
-                openbmp = avi.Open(filename, (uint)framerate, width, height);
-            }
-
-            public override void AddFrame(BitmapCi bitmap)
-            {
-                var bmp_ = (BitmapCiCs)bitmap;
-
-                using (Graphics g = Graphics.FromImage(openbmp))
-                {
-                    g.DrawImage(bmp_.bmp, 0, 0);
-                }
-                openbmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
-
-                avi.AddFrame();
-            }
-
-            public override void Close()
-            {
-                avi.Close();
-            }
-        }
-
-        public override int GetWindowWidth()
-        {
-            return w.Width;
-        }
-
-        public override int GetWindowHeight()
-        {
-            return w.Height;
-        }
-
-        public override bool IsFreemoveAllowed()
-        {
-            return w.AllowFreemove;
-        }
-
-        public override void EnableCameraControl(bool enable)
-        {
-            w.enableCameraControl = enable;
-        }
-
-        public override int WhiteTexture()
-        {
-            return w.WhiteTexture();
-        }
-
-        public override void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color)
-        {
-            int? inAtlasId_ = null;
-            if (inAtlasId != null)
-            {
-                inAtlasId_ = inAtlasId.value;
-            }
-            int a = Game.ColorA(color);
-            int r = Game.ColorR(color);
-            int g = Game.ColorG(color);
-            int b = Game.ColorB(color);
-            w.Draw2dTexture(textureid, (int)x1, (int)y1, (int)width, (int)height, inAtlasId_, Color.FromArgb(a, r, g, b));
-        }
-
-        public override void Draw2dTextures(Draw2dData[] todraw, int textureId)
-        {
-            w.Draw2dTextures(todraw, textureId);
-        }
-
-        public override void Draw2dText(string text, float x, float y, float fontsize)
-        {
-            w.Draw2dText(text, x, y, fontsize, null);
-        }
-
-        public override void OrthoMode()
-        {
-            w.OrthoMode(GetWindowWidth(), GetWindowHeight());
-        }
-
-        public override void PerspectiveMode()
-        {
-            w.PerspectiveMode();
-        }
-
-        public override DictionaryStringString GetPerformanceInfo()
-        {
-            return w.PerformanceInfo;
-        }
     }
 }

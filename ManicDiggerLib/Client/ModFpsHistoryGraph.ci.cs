@@ -189,7 +189,7 @@
             todraw[i].inAtlasId = null;
             todraw[i].color = c;
         }
-        m.Draw2dTextures(todraw, m.WhiteTexture());
+        m.Draw2dTextures(todraw, MaxCount, m.WhiteTexture());
 
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight, MaxCount, 1, null, linecolor);
         m.Draw2dTexture(m.WhiteTexture(), posx, posy - historyheight * (one * 60 / 75), MaxCount, 1, null, linecolor);

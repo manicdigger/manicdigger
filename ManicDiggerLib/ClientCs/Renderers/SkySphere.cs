@@ -32,7 +32,7 @@ namespace ManicDigger.Renderers
             int size = 1000;
             if (skymodel == null)
             {
-                skymodel = game.game.p.CreateModel(SphereModelData.GetSphereModelData(size, size, 20, 20));
+                skymodel = game.game.platform.CreateModel(SphereModelData.GetSphereModelData(size, size, 20, 20));
             }
             game.Set3dProjection(size * 2);
             game.GLMatrixModeModelView();
@@ -43,7 +43,7 @@ namespace ManicDigger.Renderers
                 d_LocalPlayerPosition.LocalPlayerPosition.Z);
             GL.Color3(Color.White);
             GL.BindTexture(TextureTarget.Texture2D, SkyTexture);
-            game.game.p.DrawModel(skymodel);
+            game.game.platform.DrawModel(skymodel);
             game.GLPopMatrix();
             game.Set3dProjection();
         }

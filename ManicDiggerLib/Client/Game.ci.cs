@@ -23,12 +23,16 @@
         whitetexture = -1;
         cachedTextTexturesMax = 1024;
         cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
+        packetLen = new IntRef();
+        ENABLE_DRAW2D = true;
+        AllowFreemove = true;
+        enableCameraControl = true;
     }
     float one;
 
     const int MaxBlockTypes = 1024;
 
-    internal GamePlatform p;
+    internal GamePlatform platform;
     internal Packet_BlockType[] blocktypes;
     internal Language language;
     internal TerrainChunkTesselatorCi d_TerrainChunkTesselator;
@@ -273,7 +277,7 @@
         //int chunksizebits = p.FloatToInt(p.MathLog(chunksize, 2));
         if (chunksize != 16)
         {
-            p.ThrowException("GetMapPortion");
+            platform.ThrowException("GetMapPortion");
         }
         int chunksizebits = 4;
         int mapchunksx = MapSizeX / chunksize;
@@ -346,23 +350,23 @@
         {
             TextureAtlasCi.TextureCoords2d(inAtlasId.value, atlastextures, rect);
         }
-        p.GlDisableCullFace();
-        p.GlEnableTexture2d();
-        p.BindTexture2d(textureid);
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
+        platform.BindTexture2d(textureid);
 
         if (!enabledepthtest)
         {
-            p.GlDisableDepthTest();
+            platform.GlDisableDepthTest();
         }
         ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
             x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color));
-        p.DrawModelData(data);
+        platform.DrawModelData(data);
         if (!enabledepthtest)
         {
-            p.GlEnableDepthTest();
+            platform.GlEnableDepthTest();
         }
-        p.GlDisableCullFace();
-        p.GlEnableTexture2d();
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
     }
 
     public ModelData CombineModelData(ModelData[] modelDatas, int count)
@@ -436,18 +440,18 @@
 
         ModelData combined = CombineModelData(modelDatas, modelDatasCount);
 
-        p.GlDisableCullFace();
-        p.GlEnableTexture2d();
-        p.BindTexture2d(textureid);
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
+        platform.BindTexture2d(textureid);
 
-        p.GlDisableDepthTest();
+        platform.GlDisableDepthTest();
 
-        p.DrawModelData(combined);
+        platform.DrawModelData(combined);
 
-        p.GlEnableDepthTest();
+        platform.GlEnableDepthTest();
 
-        p.GlDisableCullFace();
-        p.GlEnableTexture2d();
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
     }
 
     internal bool currentMatrixModeProjection;
@@ -466,7 +470,7 @@
 
     public void SetMatrixUniforms()
     {
-        p.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+        platform.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
     }
 
     public void GLLoadMatrix(float[] m)
@@ -637,14 +641,14 @@
     {
         if (this.whitetexture == -1)
         {
-            BitmapCi bmp = p.BitmapCreate(1, 1);
+            BitmapCi bmp = platform.BitmapCreate(1, 1);
             byte[] pixels = new byte[4];
             pixels[0] = 255;
             pixels[1] = 255;
             pixels[2] = 255;
             pixels[3] = 255;
-            p.BitmapSetPixelsRgba(bmp, pixels);
-            this.whitetexture = p.LoadTextureFromBitmap(bmp);
+            platform.BitmapSetPixelsRgba(bmp, pixels);
+            this.whitetexture = platform.LoadTextureFromBitmap(bmp);
         }
         return this.whitetexture;
     }
@@ -694,25 +698,25 @@
             return;
         }
 
-        float pickcubeheight = getblockheight(p.FloatToInt(x),p.FloatToInt(z),p.FloatToInt(y));
+        float pickcubeheight = getblockheight(platform.FloatToInt(x),platform.FloatToInt(z),platform.FloatToInt(y));
 
         float posx = x + one/2;
         float posy = y + pickcubeheight * one/2;
         float posz = z + one / 2;
 
-        p.GLLineWidth(2);
+        platform.GLLineWidth(2);
         float size = one * 51 / 100;
-        p.BindTexture2d(0);
+        platform.BindTexture2d(0);
 
         if (wireframeCube == null)
         {
             ModelData data = WireframeCube.Get();
-            wireframeCube = p.CreateModel(data);
+            wireframeCube = platform.CreateModel(data);
         }
         GLPushMatrix();
         GLTranslate(posx, posy, posz);
         GLScale(size, pickcubeheight * size, size);
-        p.DrawModel(wireframeCube);
+        platform.DrawModel(wireframeCube);
         GLPopMatrix();
     }
 
@@ -739,7 +743,7 @@
 
     public void DeleteUnusedCachedTextTextures()
     {
-        int now = p.TimeMillisecondsFromStart();
+        int now = platform.TimeMillisecondsFromStart();
         for (int i = 0; i < cachedTextTexturesMax; i++)
         {
             CachedTextTexture t = cachedTextTextures[i];
@@ -749,7 +753,7 @@
             }
             if ((one * (now - t.texture.lastuseMilliseconds) / 1000) > 1)
             {
-                p.GLDeleteTexture(t.texture.textureId);
+                platform.GLDeleteTexture(t.texture.textureId);
                 cachedTextTextures[i] = null;
             }
         }
@@ -774,7 +778,7 @@
 
     public void Draw2dText(string text, FontCi font, float x, float y, IntRef color, bool enabledepthtest)
     {
-        if (text == null || p.StringTrim(text) == "")
+        if (text == null || platform.StringTrim(text) == "")
         {
             return;
         }
@@ -808,21 +812,21 @@
         }
 
         ct = GetCachedTextTexture(t);
-        ct.lastuseMilliseconds = p.TimeMillisecondsFromStart();
-        p.GLDisableAlphaTest();
+        ct.lastuseMilliseconds = platform.TimeMillisecondsFromStart();
+        platform.GLDisableAlphaTest();
         Draw2dTexture(ct.textureId, x, y, ct.sizeX, ct.sizeY, null, 0, Game.ColorFromArgb(255, 255, 255, 255), enabledepthtest);
-        p.GLEnableAlphaTest();
+        platform.GLEnableAlphaTest();
         DeleteUnusedCachedTextTextures();
     }
 
     CachedTexture MakeTextTexture(Text_ t)
     {
         CachedTexture ct = new CachedTexture();
-        BitmapCi bmp = p.CreateTextTexture2(t);
-        ct.sizeX = p.BitmapGetWidth(bmp);
-        ct.sizeY = p.BitmapGetHeight(bmp);
-        ct.textureId = p.LoadTextureFromBitmap(bmp);
-        p.BitmapDelete(bmp);
+        BitmapCi bmp = platform.CreateTextTexture2(t);
+        ct.sizeX = platform.BitmapGetWidth(bmp);
+        ct.sizeY = platform.BitmapGetHeight(bmp);
+        ct.textureId = platform.LoadTextureFromBitmap(bmp);
+        platform.BitmapDelete(bmp);
         return ct;
     }
 
@@ -830,13 +834,151 @@
     {
         if (a >= 0)
         {
-            return p.FloatToInt(a);
+            return platform.FloatToInt(a);
         }
         else
         {
-            return p.FloatToInt(a) - 1;
+            return platform.FloatToInt(a) - 1;
         }
     }
+
+    public byte[] Serialize(Packet_Client packet, IntRef retLength)
+    {
+        CitoMemoryStream ms = new CitoMemoryStream();
+        Packet_ClientSerializer.Serialize(ms, packet);
+        byte[] data = ms.ToArray();
+        retLength.value = ms.Length();
+        return data;
+    }
+
+    public void SendPacket(byte[] packet, int packetLength)
+    {
+        //try
+        //{
+        INetOutgoingMessage msg = main.CreateMessage();
+        msg.Write(packet, packetLength);
+        main.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
+        //}
+        //catch
+        //{
+        //    game.p.ConsoleWriteLine("SendPacket error");
+        //}
+    }
+
+    internal INetClient main;
+
+    IntRef packetLen;
+    public void SendPacketClient(Packet_Client packetClient)
+    {
+        byte[] packet = Serialize(packetClient, packetLen);
+        SendPacket(packet, packetLen.value);
+    }
+
+    internal void SendChat(string s)
+    {
+        Packet_ClientMessage p = new Packet_ClientMessage();
+        p.Message = s;
+        p.IsTeamchat = d_HudChat.IsTeamchat ? 1 : 0;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.Message;
+        pp.Message = p;
+        SendPacketClient(pp);
+    }
+
+    internal HudChat d_HudChat;
+
+    internal void SendPingReply()
+    {
+        Packet_ClientPingReply p = new Packet_ClientPingReply();
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PingReply;
+        pp.PingReply = p;
+        SendPacketClient(pp);
+    }
+
+    internal void SendSetBlock(int x, int y, int z, int mode, int type, int materialslot)
+    {
+        Packet_ClientSetBlock p = new Packet_ClientSetBlock();
+        {
+            p.X = x;
+            p.Y = y;
+            p.Z = z;
+            p.Mode = mode;
+            p.BlockType = type;
+            p.MaterialSlot = materialslot;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.SetBlock;
+        pp.SetBlock = p;
+        SendPacketClient(pp);
+    }
+    internal int ActiveMaterial;
+
+    internal void SendFillArea(int startx, int starty, int startz, int endx, int endy, int endz, int blockType)
+    {
+        Packet_ClientFillArea p = new Packet_ClientFillArea();
+        {
+            p.X1 = startx;
+            p.Y1 = starty;
+            p.Z1 = startz;
+            p.X2 = endx;
+            p.Y2 = endy;
+            p.Z2 = endz;
+            p.BlockType = blockType;
+            p.MaterialSlot = ActiveMaterial;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.FillArea;
+        pp.FillArea = p;
+        SendPacketClient(pp);
+    }
+
+    internal void InventoryClick(Packet_InventoryPosition pos)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = pos;
+        p.Action = Packet_InventoryActionTypeEnum.Click;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        SendPacketClient(pp);
+    }
+
+    internal void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = from;
+        p.B = to;
+        p.Action = Packet_InventoryActionTypeEnum.WearItem;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        SendPacketClient(pp);
+    }
+
+    internal void MoveToInventory(Packet_InventoryPosition from)
+    {
+        Packet_ClientInventoryAction p = new Packet_ClientInventoryAction();
+        p.A = from;
+        p.Action = Packet_InventoryActionTypeEnum.MoveToInventory;
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.InventoryAction;
+        pp.InventoryAction = p;
+        SendPacketClient(pp);
+    }
+
+    internal DictionaryStringString performanceinfo;
+
+    internal void AddChatline(string message)
+    {
+        d_HudChat.AddChatline(message);
+    }
+
+    internal bool ENABLE_DRAW2D;
+    internal bool ENABLE_FREEMOVE;
+    internal bool ENABLE_NOCLIP;
+    internal bool AllowFreemove;
+    internal bool enableCameraControl;
 }
 
 public class Draw2dData
@@ -1011,11 +1153,204 @@ public abstract class ClientModManager
     public abstract void EnableCameraControl(bool enable);
     public abstract int WhiteTexture();
     public abstract void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color);
-    public abstract void Draw2dTextures(Draw2dData[] todraw, int textureId);
+    public abstract void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId);
     public abstract void Draw2dText(string text, float x, float y, float fontsize);
     public abstract void OrthoMode();
     public abstract void PerspectiveMode();
     public abstract DictionaryStringString GetPerformanceInfo();
+}
+
+public class ClientModManager1 : ClientModManager
+{
+    internal Game game;
+
+    public override void MakeScreenshot()
+    {
+        game.platform.SaveScreenshot();
+    }
+
+    public override void SetLocalPosition(float glx, float gly, float glz)
+    {
+        game.player.playerposition.X = glx;
+        game.player.playerposition.Y = gly;
+        game.player.playerposition.Z = glz;
+    }
+
+    public override float GetLocalPositionX()
+    {
+        return game.player.playerposition.X;
+    }
+
+    public override float GetLocalPositionY()
+    {
+        return game.player.playerposition.Y;
+    }
+
+    public override float GetLocalPositionZ()
+    {
+        return game.player.playerposition.Z;
+    }
+
+    public override void SetLocalOrientation(float glx, float gly, float glz)
+    {
+        game.player.playerorientation.X = glx;
+        game.player.playerorientation.Y = gly;
+        game.player.playerorientation.Z = glz;
+    }
+
+    public override float GetLocalOrientationX()
+    {
+        return game.player.playerorientation.X;
+    }
+
+    public override float GetLocalOrientationY()
+    {
+        return game.player.playerorientation.Y;
+    }
+
+    public override float GetLocalOrientationZ()
+    {
+        return game.player.playerorientation.Z;
+    }
+
+    public override void DisplayNotification(string message)
+    {
+        game.AddChatline(message);
+    }
+
+    public override void SendChatMessage(string message)
+    {
+        game.SendChat(message);
+    }
+
+    public override GamePlatform GetPlatform()
+    {
+        return game.platform;
+    }
+
+    public override void ShowGui(int level)
+    {
+        if (level == 0)
+        {
+            game.ENABLE_DRAW2D = false;
+        }
+        else
+        {
+            game.ENABLE_DRAW2D = true;
+        }
+    }
+
+    public override void SetFreemove(int level)
+    {
+        if (level == FreemoveLevelEnum.None)
+        {
+            game.ENABLE_FREEMOVE = false;
+            game.ENABLE_NOCLIP = false;
+        }
+
+        if (level == FreemoveLevelEnum.Freemove)
+        {
+            game.ENABLE_FREEMOVE = true;
+            game.ENABLE_NOCLIP = false;
+        }
+
+        if (level == FreemoveLevelEnum.Noclip)
+        {
+            game.ENABLE_FREEMOVE = true;
+            game.ENABLE_NOCLIP = true;
+        }
+    }
+
+    public override int GetFreemove()
+    {
+        if (!game.ENABLE_FREEMOVE)
+        {
+            return FreemoveLevelEnum.None;
+        }
+        if (game.ENABLE_NOCLIP)
+        {
+            return FreemoveLevelEnum.Noclip;
+        }
+        else
+        {
+            return FreemoveLevelEnum.Freemove;
+        }
+    }
+
+    public override BitmapCi GrabScreenshot()
+    {
+        return game.platform.GrabScreenshot();
+    }
+
+    public override AviWriterCi AviWriterCreate()
+    {
+        return game.platform.AviWriterCreate();
+    }
+
+    public override int GetWindowWidth()
+    {
+        return game.platform.GetCanvasWidth();
+    }
+
+    public override int GetWindowHeight()
+    {
+        return game.platform.GetCanvasHeight();
+    }
+
+    public override bool IsFreemoveAllowed()
+    {
+        return game.AllowFreemove;
+    }
+
+    public override void EnableCameraControl(bool enable)
+    {
+        game.enableCameraControl = enable;
+    }
+
+    public override int WhiteTexture()
+    {
+        return game.WhiteTexture();
+    }
+
+    public override void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int color)
+    {
+        int a = Game.ColorA(color);
+        int r = Game.ColorR(color);
+        int g = Game.ColorG(color);
+        int b = Game.ColorB(color);
+        game.Draw2dTexture(textureid, game.platform.FloatToInt(x1), game.platform.FloatToInt(y1),
+            game.platform.FloatToInt(width), game.platform.FloatToInt(height),
+            inAtlasId, 0, Game.ColorFromArgb(a, r, g, b), false);
+    }
+
+    public override void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId)
+    {
+        game.Draw2dTextures(todraw, todrawLength, textureId, 0);
+    }
+
+
+    public override void Draw2dText(string text, float x, float y, float fontsize)
+    {
+        FontCi font = new FontCi();
+        font.family = "Arial";
+        font.size = fontsize;
+        game.Draw2dText(text, font, x, y, null, false);
+    }
+
+    public override void OrthoMode()
+    {
+        game.OrthoMode(GetWindowWidth(), GetWindowHeight());
+    }
+
+    public override void PerspectiveMode()
+    {
+        game.PerspectiveMode();
+    }
+
+    public override DictionaryStringString GetPerformanceInfo()
+    {
+        return game.performanceinfo;
+    }
 }
 
 public abstract class AviWriterCi

@@ -40,7 +40,7 @@
             modelsCount++;
         }
 
-        Model model = game.p.CreateModel(modelData);
+        Model model = game.platform.CreateModel(modelData);
 
         ListInfo li = models[id];
         li.indicescount = modelData.GetIndicesCount();
@@ -58,7 +58,7 @@
 
     public void Remove(int id)
     {
-        game.p.DeleteModel(models[id].model);
+        game.platform.DeleteModel(models[id].model);
         models[id].empty = true;
         empty[emptyCount++] = id;
     }
@@ -74,21 +74,21 @@
             if (tocallSolid[i].Count == 0) { continue; }
             if (BindTexture)
             {
-                game.p.BindTexture2d(glTextures[i]);
+                game.platform.BindTexture2d(glTextures[i]);
             }
-            game.p.DrawModels(tocallSolid[i].Lists, tocallSolid[i].Count);
+            game.platform.DrawModels(tocallSolid[i].Lists, tocallSolid[i].Count);
         }
-        game.p.GlDisableCullFace(); // for water.
+        game.platform.GlDisableCullFace(); // for water.
         for (int i = 0; i < texturesCount; i++)
         {
             if (tocallTransparent[i].Count == 0) { continue; }
             if (BindTexture)
             {
-                game.p.BindTexture2d(glTextures[i]);
+                game.platform.BindTexture2d(glTextures[i]);
             }
-            game.p.DrawModels(tocallTransparent[i].Lists, tocallTransparent[i].Count);
+            game.platform.DrawModels(tocallTransparent[i].Lists, tocallTransparent[i].Count);
         }
-        game.p.GlEnableCullFace();
+        game.platform.GlEnableCullFace();
     }
 
     // Finds an index in glTextures array.

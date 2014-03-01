@@ -924,6 +924,63 @@ public class GamePlatformNative : GamePlatform, IGameExit
         EnetHostNative host_ = (EnetHostNative)host;
         host_.host.Initialize(null, peerLimit, channelLimit, incomingBandwidth, outgoingBandwidth);
     }
+
+    Screenshot screenshot = new Screenshot();
+
+    public override void SaveScreenshot()
+    {
+        screenshot.d_GameWindow = window;
+        screenshot.SaveScreenshot();
+    }
+
+    public override BitmapCi GrabScreenshot()
+    {
+        screenshot.d_GameWindow = window;
+        Bitmap bmp = screenshot.GrabScreenshot();
+        BitmapCiCs bmp_ = new BitmapCiCs();
+        bmp_.bmp = bmp;
+        return bmp_;
+    }
+
+    public override AviWriterCi AviWriterCreate()
+    {
+        AviWriterCiCs avi = new AviWriterCiCs();
+        return avi;
+    }
+}
+
+public class AviWriterCiCs : AviWriterCi
+{
+    public AviWriterCiCs()
+    {
+        avi = new AviWriter();
+    }
+
+    public AviWriter avi;
+    public Bitmap openbmp;
+
+    public override void Open(string filename, int framerate, int width, int height)
+    {
+        openbmp = avi.Open(filename, (uint)framerate, width, height);
+    }
+
+    public override void AddFrame(BitmapCi bitmap)
+    {
+        var bmp_ = (BitmapCiCs)bitmap;
+
+        using (Graphics g = Graphics.FromImage(openbmp))
+        {
+            g.DrawImage(bmp_.bmp, 0, 0);
+        }
+        openbmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+        avi.AddFrame();
+    }
+
+    public override void Close()
+    {
+        avi.Close();
+    }
 }
 
 public class EnetHostNative : EnetHost

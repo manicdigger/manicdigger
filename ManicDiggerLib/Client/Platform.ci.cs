@@ -84,6 +84,9 @@
     public abstract EnetNetConnection CastToEnetNetConnection(INetConnection connection);
     public abstract EnetNetOutgoingMessage CastToEnetNetOutgoingMessage(INetOutgoingMessage msg);
     public abstract void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth);
+    public abstract void SaveScreenshot();
+    public abstract BitmapCi GrabScreenshot();
+    public abstract AviWriterCi AviWriterCreate();
 }
 
 public class EnetHost

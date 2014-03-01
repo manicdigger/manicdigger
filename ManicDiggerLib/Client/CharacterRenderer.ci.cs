@@ -56,22 +56,22 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         for (int i = 0; i < origcodeCount; i++)
         {
             string s = origcode[i];
-            if (StringTools.StringLength(game.p, game.p.StringTrim(s)) == 0
-                || StringTools.StringStartsWith(game.p, s, "//"))
+            if (StringTools.StringLength(game.platform, game.platform.StringTrim(s)) == 0
+                || StringTools.StringStartsWith(game.platform, s, "//"))
             {
                 continue;
             }
             IntRef ssLength = new IntRef();
-            string[] ss = game.p.StringSplit(s, ",", ssLength);
+            string[] ss = game.platform.StringSplit(s, ",", ssLength);
 
             Value__[] ss2 = new Value__[ssLength.value];
 
             for (int ii = 0; ii < ssLength.value; ii++)
             {
-                ss[ii] = game.p.StringTrim(ss[ii]);
+                ss[ii] = game.platform.StringTrim(ss[ii]);
                 FloatRef d = new FloatRef();
                 ss2[ii] = new Value__();
-                if (game.p.FloatTryParse(ss[ii], d))
+                if (game.platform.FloatTryParse(ss[ii], d))
                 {
                     ss2[ii].valueFloat = d.value;
                     ss2[ii].type_ = Value__.TypeFloat;
@@ -287,7 +287,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                                GetFloat(ss[4], variables),
                                 GetFloat(ss[5], variables),
                                 GetFloat(ss[6], variables),
-                               game.p.FloatToInt(GetFloat(ss[7], variables)),
+                               game.platform.FloatToInt(GetFloat(ss[7], variables)),
                                GetVariableCoords(ss[8].valueString, variables),
                                animstate.light
                                 );
@@ -295,8 +295,8 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                         break;
                     case "skinsize":
                         {
-                            skinsizex = game.p.FloatToInt(GetFloat(ss[1], variables));
-                            skinsizey = game.p.FloatToInt(GetFloat(ss[2], variables));
+                            skinsizex = game.platform.FloatToInt(GetFloat(ss[1], variables));
+                            skinsizey = game.platform.FloatToInt(GetFloat(ss[2], variables));
                         }
                         break;
                     case "dim":
@@ -315,7 +315,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                             }
                             if (ss[2].valueString == "sin")
                             {
-                                variables.SetFloat(ss[1].valueString, game.p.MathSin(GetFloat(ss[3], variables)));
+                                variables.SetFloat(ss[1].valueString, game.platform.MathSin(GetFloat(ss[3], variables)));
                             }
                             if (ss[2].valueString == "abs")
                             {
@@ -380,18 +380,18 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         //float jumpheight = 0.10f;
         //return (float)TriWave(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
 
-        return game.p.MathSin(2 * Game.GetPi() * time / (period / 2)) * jumpheight + jumpheight / 2;
+        return game.platform.MathSin(2 * Game.GetPi() * time / (period / 2)) * jumpheight + jumpheight / 2;
     }
     float LeftLegRotation(float time, float period)
     {
         //return (float)TriWave(2 * Math.PI * time / period) * 90;
         outofphase = Game.GetPi();
-        return (((game.p.MathCos(2 * Game.GetPi() * time / (one / 2) + outofphase) * speed) * 30));// *speed
+        return (((game.platform.MathCos(2 * Game.GetPi() * time / (one / 2) + outofphase) * speed) * 30));// *speed
     }
     float RightLegRotation(float time, float period)
     {
         //return (float)TriWave(2 * Math.PI * time / period + Math.PI) * 90;
-        return ((game.p.MathCos(2 * Game.GetPi() * time / (one / 2)) * speed) * 30);
+        return ((game.platform.MathCos(2 * Game.GetPi() * time / (one / 2)) * speed) * 30);
     }
     float GetLeanLeft(bool leaning)
     {
@@ -453,7 +453,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         data.xyz = new float[4 * 6 * 3];
         data.uv = new float[4 * 6 * 2];
         data.rgba = new byte[4 * 6 * 4];
-        int light255 = game.p.FloatToInt(light * 255);
+        int light255 = game.platform.FloatToInt(light * 255);
         int color = Game.ColorFromArgb(255, light255, light255, light255);
 
         RectangleFloat rect;
@@ -513,10 +513,10 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         data.indicesCount = 36;
 
 
-        game.p.BindTexture2d(textureid);
-        game.p.GlDisableCullFace();
-        game.p.DrawModelData(data);
-        game.p.GlEnableCullFace();
+        game.platform.BindTexture2d(textureid);
+        game.platform.GlDisableCullFace();
+        game.platform.DrawModelData(data);
+        game.platform.GlEnableCullFace();
     }
     public void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)
     {
