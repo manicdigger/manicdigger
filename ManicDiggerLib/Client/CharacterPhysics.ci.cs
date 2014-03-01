@@ -379,6 +379,7 @@ public class CharacterPhysicsCi
     public float[] WallSlide(CharacterPhysicsState state, float[] oldposition, float[] newposition, float modelheight)
     {
         bool high = false;
+        float stairjumpacceleration = one * 110 / 40;
         if (modelheight >= 2) { high = true; }	//Set high to true if player model is bigger than standard height
         oldposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
         newposition[1] += walldistance;		//Add walldistance temporarily for ground collisions
@@ -421,11 +422,11 @@ public class CharacterPhysicsCi
                 		bool newstairs = isHalfHeight(x, y, z);
                 		if (newstairs)
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos < half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                	            state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -446,11 +447,11 @@ public class CharacterPhysicsCi
                 		}
                 		else	//Block is empty
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos >= half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -482,11 +483,11 @@ public class CharacterPhysicsCi
                 		bool newstairs = isHalfHeight(x, y, z);
                 		if (newstairs)
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos < half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -507,11 +508,11 @@ public class CharacterPhysicsCi
                 		}
                 		else	//Block is empty
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos >= half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -580,11 +581,11 @@ public class CharacterPhysicsCi
                 		bool newstairs = isHalfHeight(x, y, z);
                 		if (newstairs)
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos < half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -605,11 +606,11 @@ public class CharacterPhysicsCi
                 		}
                 		else	//Block is empty
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos >= half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -641,11 +642,11 @@ public class CharacterPhysicsCi
                 		bool newstairs = isHalfHeight(x, y, z);
                 		if (newstairs)
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos < half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
@@ -666,11 +667,11 @@ public class CharacterPhysicsCi
                 		}
                 		else	//Block is empty
                 		{
-                			//Boost player up - TODO: smooth
                 			float relPos = p1 - z;	//relative position inside block (between 0 and 1)
                 			if (relPos >= half && !steppedonstair)
                 			{
-                				playerposition[1] += half;
+                				state.jumpacceleration = stairjumpacceleration;
+                	            standingontheground = false;
                 				steppedonstair = true;
                 			}
                 		}
