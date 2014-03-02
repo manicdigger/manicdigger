@@ -637,6 +637,17 @@ namespace ManicDiggerServer
                 //Only ask these questions if user wants to
                 if (wantsconfig)
                 {
+                	Console.WriteLine("Do you want the server to be public (visible on the server list)? (Y/N)");
+                	line = Console.ReadLine();
+                	if (!string.IsNullOrEmpty(line))
+                	{
+                		bool choice;
+                		if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                			choice = true;
+                		else
+                			choice = false;
+                		config.Public = choice;
+                	}
                 	Console.WriteLine("Please enter the server's name");
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
