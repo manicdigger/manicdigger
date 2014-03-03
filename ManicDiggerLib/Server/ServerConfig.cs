@@ -40,6 +40,7 @@ namespace GameModeFortress
         public bool EnableHTTPServer { get; set; }
         public bool AllowSpectatorUse { get; set; }
         public bool AllowSpectatorBuild { get; set; }
+        public string ServerLanguage { get; set; }
 
         public bool IsPasswordProtected()
         {
@@ -94,6 +95,7 @@ namespace GameModeFortress
             this.EnableHTTPServer = true;
             this.AllowSpectatorUse = false;
             this.AllowSpectatorBuild = false;
+            this.ServerLanguage = "en";
         }
     }
 

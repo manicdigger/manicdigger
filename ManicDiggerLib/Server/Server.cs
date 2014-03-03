@@ -103,7 +103,7 @@ namespace ManicDiggerServer
             }
             catch
             {
-                Console.WriteLine("Cannot write to server log file {0}.", filename);
+                Console.WriteLine(language.ServerCannotWriteLog(), filename);
             }
         }
         public void ServerEventLog(string p)
@@ -123,7 +123,7 @@ namespace ManicDiggerServer
             }
             catch
             {
-                Console.WriteLine("Cannot write to server log file {0}.", filename);
+                Console.WriteLine(language.ServerCannotWriteLog(), filename);
             }
         }
         public void ChatLog(string p)
@@ -143,17 +143,19 @@ namespace ManicDiggerServer
             }
             catch
             {
-                Console.WriteLine("Cannot write to server log file {0}.", filename);
+            	Console.WriteLine(language.ServerCannotWriteLog(), filename);
             }
         }
 
         public bool Public;
-
         public bool enableshadows = true;
+        public Language language = new Language();
 
         public void Start()
         {
             Server server = this;
+            language.platform = new GamePlatformNative();
+            language.LoadTranslations();
             server.LoadConfig();
             server.LoadBanlist();
             var map = new ManicDiggerServer.ServerMap();
@@ -174,12 +176,6 @@ namespace ManicDiggerServer
             var getfile = new GetFileStream(datapaths);
             var data = new GameData();
             data.Start();
-            //data.Load(MyStream.ReadAllLines(getfile.GetFile("blocks.csv")),
-            //    MyStream.ReadAllLines(getfile.GetFile("defaultmaterialslots.csv")),
-            //    MyStream.ReadAllLines(getfile.GetFile("lightlevels.csv")));
-            //var craftingrecipes = new CraftingRecipes();
-            //craftingrecipes.data = data;
-            //craftingrecipes.Load(MyStream.ReadAllLines(getfile.GetFile("craftingrecipes.csv")));
             server.d_Data = data;
             server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map, d_Data = data };
             server.LocalConnectionsOnly = !Public;
@@ -195,9 +191,6 @@ namespace ManicDiggerServer
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
             if (d_MainSocket == null)
             {
-                //NetPeerConfiguration serverConfig = new NetPeerConfiguration("ManicDigger");
-                //server.d_MainSocket = new MyNetServer() { server = new NetServer(serverConfig) };
-                //server.d_MainSocket = new TcpNetServer() { };
                 server.d_MainSocket = new EnetNetServer() { platform = new GamePlatformNative() };
             }
             server.d_Heartbeat = new ServerHeartbeat();
@@ -214,13 +207,13 @@ namespace ManicDiggerServer
                 {
                     Directory.CreateDirectory(GameStorePath.gamepathsaves);
                 }
-                Console.WriteLine("Loading savegame...");
+                Console.WriteLine(language.ServerLoadingSavegame());
                 if (!File.Exists(GetSaveFilename()))
                 {
-                    Console.WriteLine("Creating new savegame file.");
+                    Console.WriteLine(language.ServerCreatingSavegame());
                 }
                 LoadGame(GetSaveFilename());
-                Console.WriteLine("Savegame loaded: " + GetSaveFilename());
+                Console.WriteLine(language.ServerLoadedSavegame() + GetSaveFilename());
             }
             if (LocalConnectionsOnly)
             {
@@ -527,7 +520,7 @@ namespace ManicDiggerServer
             string filename = "ServerConfig.txt";
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
-                Console.WriteLine("Server configuration file not found, creating new.");
+                Console.WriteLine(language.ServerConfigNotFound());
                 SaveConfig();
                 return;
             }
@@ -583,6 +576,7 @@ namespace ManicDiggerServer
                     }
                     //Save with new version.
                     SaveConfig();
+                    language.ServerLanguage = config.ServerLanguage;  //Switch to user-defined language.
             	}
             	catch
                 {
@@ -590,17 +584,17 @@ namespace ManicDiggerServer
                     try
             	    {
             	        File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
-            	        Console.WriteLine("ServerConfig corrupt! Created new. Backup saved as ServerConfig.txt.old");
+            	        Console.WriteLine(language.ServerConfigCorruptBackup());
             	    }
             	    catch
             	    {
-            	        Console.WriteLine("ServerConfig corrupt! Created new. COULD NOT BACKUP OLD!");
+            	        Console.WriteLine(language.ServerConfigCorruptNoBackup());
             	    }
             	    config = null;
             	    SaveConfig();
                 }
             }
-            Console.WriteLine("Server configuration loaded.");
+            Console.WriteLine(language.ServerConfigLoaded());
         }
 
         public ServerConfig config;
@@ -621,6 +615,8 @@ namespace ManicDiggerServer
             if (config == null)
             {
                 config = new ServerConfig();
+                //Set default language to user's locale
+                config.ServerLanguage = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
                 //Ask for config parameters the first time the server is started
                 string line;
                 bool wantsconfig = false;

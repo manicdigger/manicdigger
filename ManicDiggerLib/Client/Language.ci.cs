@@ -8,6 +8,7 @@
     }
 
     internal GamePlatform platform;
+    internal string ServerLanguage;
 
     public string CannotWriteChatLog() { return Get("CannotWriteChatLog"); }
     public string ChunkUpdates() { return Get("ChunkUpdates"); }
@@ -71,6 +72,15 @@
     public string Triangles() { return Get("Triangles"); }
     public string UseServerTexturesOption() { return Get("UseServerTexturesOption"); }
     public string ViewDistanceOption() { return Get("ViewDistanceOption"); }
+    
+    public string ServerCannotWriteLog() { return Get("Server_CannotWriteLogFile"); }
+    public string ServerLoadingSavegame() { return Get("Server_LoadingSavegame"); }
+    public string ServerCreatingSavegame() { return Get("Server_CreatingSavegame"); }
+    public string ServerLoadedSavegame() { return Get("Server_LoadedSavegame"); }
+    public string ServerConfigNotFound() { return Get("Server_ConfigNotFound"); }
+    public string ServerConfigCorruptBackup() { return Get("Server_ConfigCorruptBackup"); }
+    public string ServerConfigCorruptNoBackup() { return Get("Server_ConfigCorruptNoBackup"); }
+    public string ServerConfigLoaded() { return Get("Server_ConfigLoaded"); }
 
     public void LoadTranslations()
     {
@@ -160,6 +170,23 @@
         Add("en", "Triangles", "Triangles: {0}");
         Add("en", "UseServerTexturesOption", "Use server textures (restart): {0}");
         Add("en", "ViewDistanceOption", "View distance: {0}");
+        
+        Add("en", "Server_CannotWriteLogFile", "Cannot write to server log file {0}.");
+        Add("en", "Server_LoadingSavegame", "Loading savegame...");
+        Add("en", "Server_CreatingSavegame", "Creating new savegame file.");
+        Add("en", "Server_LoadedSavegame", "Savegame loaded: ");
+        Add("en", "Server_ConfigNotFound", "Server configuration file not found, creating new.");
+        Add("en", "Server_ConfigCorruptBackup", "ServerConfig corrupt! Created new. Backup saved as ServerConfig.txt.old");
+        Add("en", "Server_ConfigCorruptNoBackup", "ServerConfig corrupt! Created new. COULD NOT BACKUP OLD!");
+        Add("en", "Server_ConfigLoaded", "Server configuration loaded.");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
+//        Add("en", "Server_", "");
     }
 
     void Add(string language, string id, string translated)
@@ -205,9 +232,13 @@
     public string Get(string id)
     {
         string currentLanguage = "en";
-        if (platform != null)
+        if (ServerLanguage != null)
         {
-            currentLanguage = platform.GetLanguageIso6391();
+        	currentLanguage = ServerLanguage;  //Use server language if defined
+        }
+        else if (platform != null)
+        {
+            currentLanguage = platform.GetLanguageIso6391();  //Else use local language if defined
         }
         for (int i = 0; i < stringsMax; i++)
         {
