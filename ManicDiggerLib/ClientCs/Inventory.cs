@@ -13,7 +13,7 @@ namespace ManicDigger
         public Inventory d_Inventory;
         public IGameDataItems d_Items;
 
-        public Point CellCount = new Point(12, 7 * 3);
+        public Point CellCount = new Point(12, 7 * 6);
 
         //returns null if area is invalid.
         public Point[] ItemsAtArea(Point p, Point size)

@@ -83,7 +83,7 @@ namespace ManicDigger.Hud
             }
         }
         Point CellCountInPage = new Point(12, 7);
-        Point CellCountTotal = new Point(12, 7 * 3);
+        Point CellCountTotal = new Point(12, 7 * 6);
         public int ActiveMaterialCellSize = 48;
 
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
