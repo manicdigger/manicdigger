@@ -246,7 +246,7 @@ namespace ManicDiggerServer
             this.serverConsole = new ServerConsole(this, exit);
         }
 
-        List<string> all_privileges = new List<string>();
+        public List<string> all_privileges = new List<string>();
 
         ModLoader modloader = new ModLoader();
         public List<string> ModPaths = new List<string>();

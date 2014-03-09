@@ -260,6 +260,7 @@ namespace ManicDigger
 
         public void RegisterPrivilege(string p)
         {
+            server.all_privileges.Add(p);
         }
 
         public void RegisterOnBlockUpdate(ModDelegates.BlockUpdate f)
