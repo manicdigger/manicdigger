@@ -205,6 +205,43 @@
         s.translated = translated;
         strings[stringsCount++] = s;
     }
+    
+    public void Override(string language, string id, string translated)
+    {
+        //Just add the new string if it doesn't exist
+        if (!ContainsTranslation(language, id))
+        {
+            Add(language, id, translated);
+        }
+        //Otherwise overwrite the existing string
+        else
+        {
+            int replaceIndex = -1;
+            for (int i = 0; i < stringsCount; i++)
+            {
+                if (strings[i] == null)
+                {
+                    continue;
+                }
+                if (strings[i].language == language)
+                {
+                    if (strings[i].id == id)
+                    {
+                        replaceIndex = i;
+                        break;
+                    }
+                }
+            }
+            if (replaceIndex != -1)
+            {
+                TranslatedString s = new TranslatedString();
+                s.language = language;
+                s.id = id;
+                s.translated = translated;
+                strings[replaceIndex] = s;
+            }
+        }
+    }
 
     TranslatedString[] strings;
     int stringsMax;
@@ -265,6 +302,11 @@
         }
         // not found
         return id;
+    }
+    
+    public TranslatedString[] AllStrings()
+    {
+        return strings;
     }
 }
 

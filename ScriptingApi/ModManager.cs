@@ -29,7 +29,8 @@ namespace ManicDigger
         void AddCraftingRecipe(string output, int outputAmount, string Input0, int Input0Amount);
         void AddCraftingRecipe2(string output, int outputAmount, string Input0, int Input0Amount, string Input1, int Input1Amount);
         void AddCraftingRecipe3(string output, int outputAmount, string Input0, int Input0Amount, string Input1, int Input1Amount, string Input2, int Input2Amount);
-        void SetString(string language, string text, string translation);
+        void SetString(string language, string id, string translation);
+        string GetString(string id);
         bool IsValidPos(int x, int y, int z);
         void RegisterTimer(ManicDigger.Action a, double interval);
         void PlaySoundAt(int x, int y, int z, string sound);

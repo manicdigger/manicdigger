@@ -2166,6 +2166,7 @@ if (sent >= unknown.Count) { break; }
                         SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                         SendBlobs(clientid);
                         SendBlockTypes(clientid);
+                        SendTranslations(clientid);
                         SendSunLevels(clientid);
                         SendLightLevels(clientid);
                         SendCraftingRecipes(clientid);
@@ -3514,6 +3515,26 @@ if (sent >= unknown.Count) { break; }
             }
             Packet_ServerBlockTypes p = new Packet_ServerBlockTypes() { };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlockTypes, BlockTypes = p }));
+        }
+        
+        public void SendTranslations(int clientid)
+        {
+            //Read all lines from server translation and send them to the client
+            TranslatedString[] strings = language.AllStrings();
+            foreach (TranslatedString transString in strings)
+            {
+                if (transString == null)
+                {
+                    continue;
+                }
+                Packet_ServerTranslatedString p = new Packet_ServerTranslatedString()
+                {
+                    Lang = transString.language,
+                    Id = transString.id,
+                    Translation = transString.translated
+                };
+                SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Translation, Translation = p }));
+            }
         }
 
         public static int SerializeFloat(float p)

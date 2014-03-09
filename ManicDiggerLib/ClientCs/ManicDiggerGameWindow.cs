@@ -5503,6 +5503,9 @@ namespace ManicDigger
                         }
                     }
                     break;
+                case Packet_ServerIdEnum.Translation:
+                    language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
+                    break;
                 case Packet_ServerIdEnum.BlockType:
                     NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
                     break;

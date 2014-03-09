@@ -394,6 +394,7 @@ package Packet;
         ChunkPart = 57;
         Explosion = 58;
         Projectile = 59;
+        Translation = 60;
         ExtendedPacketCommand = 100;
         ExtendedPacketTick = 101;
 	}
@@ -658,6 +659,7 @@ package Packet;
         optional ServerChunkPart chunkPart = 32;
         optional ServerExplosion explosion = 33;
         optional ServerProjectile projectile = 34;
+        optional ServerTranslatedString translation = 35;
     }
     
     message IntInt
@@ -745,6 +747,13 @@ package Packet;
     {
         optional int32 clientId = 1;
         optional int32 ping = 2;
+    }
+    
+    message ServerTranslatedString
+    {
+        optional string lang = 1;
+        optional string id = 2;
+        optional string translation = 3;
     }
 
     message Inventory

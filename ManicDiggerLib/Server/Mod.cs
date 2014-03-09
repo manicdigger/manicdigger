@@ -164,8 +164,15 @@ namespace ManicDigger
             server.craftingrecipes.Add(r);
         }
 
-        public void SetString(string language, string text, string translation)
+        public void SetString(string language, string id, string translation)
         {
+        	server.language.Override(language, id, translation);
+        }
+        
+        public string GetString(string id)
+        {
+            //Returns string depending on server language
+            return server.language.Get(id);
         }
 
         public bool IsValidPos(int x, int y, int z)
