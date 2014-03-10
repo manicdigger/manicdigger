@@ -19,8 +19,8 @@ namespace GameModeFortress
 
         public ServerMonitor(Server server, IGameExit exit)
         {
-            this.LoadConfig();
             this.server = server;
+            this.LoadConfig();
             this.Exit = exit;
             this.monitorClients = new Dictionary<int, MonitorClient>();
         }
