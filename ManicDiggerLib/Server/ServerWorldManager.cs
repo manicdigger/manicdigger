@@ -15,7 +15,7 @@ namespace ManicDiggerServer
 {
     public partial class Server
     {
-        //The main function for loading, unloadnig and sending chunks to players.
+        //The main function for loading, unloading and sending chunks to players.
         private void NotifyMap()
         {
             Stopwatch s = new Stopwatch();
@@ -50,7 +50,7 @@ namespace ManicDiggerServer
                                 if (i >= k.Value.generatingworldprogress)
                                 {
                                     k.Value.generatingworldprogress = i;
-                                    SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), "Generating world...");
+                                    SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), language.ServerProgressGenerating());
                                 }
                             }
                         }
@@ -71,7 +71,7 @@ namespace ManicDiggerServer
                         if (!ClientSeenChunk(k.Key, v.x, v.y, v.z))
                         {
                             SendChunk(k.Key, v);
-                            SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), "Downloading map...");
+                            SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), language.ServerProgressDownloadingMap());
                             if (s.ElapsedMilliseconds > 10)
                             {
                                 return;

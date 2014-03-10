@@ -3456,7 +3456,7 @@ if (sent >= unknown.Count) { break; }
                 {
                     SendLevelProgress(clientid,
                         (int)(((float)i / files.Count
-                	                         + ((float)totalsent / blob.Length) / files.Count) * 100), language.ServerProgressDownloading());
+                	                         + ((float)totalsent / blob.Length) / files.Count) * 100), language.ServerProgressDownloadingData());
                     SendBlobPart(clientid, part);
                     totalsent += part.Length;
                 }

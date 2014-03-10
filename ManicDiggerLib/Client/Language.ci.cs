@@ -86,7 +86,8 @@
     public string ServerClientConfigRegisteredGroupNotFound() { return Get("Server_ClientConfigRegisteredGroupNotFound"); }
     public string ServerClientConfigLoaded() { return Get("Server_ClientConfigLoaded"); }
     public string ServerInvalidSpawnCoordinates() { return Get("Server_InvalidSpawnCoordinates"); }
-    public string ServerProgressDownloading() { return Get("Server_ProgressDownloading"); }
+    public string ServerProgressDownloadingData() { return Get("Server_ProgressDownloadingData"); }
+    public string ServerProgressDownloadingMap() { return Get("Server_ProgressDownloadingMap"); }
     public string ServerProgressGenerating() { return Get("Server_ProgressGenerating"); }
     public string ServerNoChatPrivilege() { return Get("Server_NoChatPrivilege"); }
     public string ServerFillAreaInvalid() { return Get("Server_FillAreaInvalid"); }
@@ -129,6 +130,11 @@
     public string ServerSetupFirstStart() { return Get("Server_SetupFirstStart"); }
     public string ServerGameSaved() { return Get("Server_GameSaved"); }
     public string ServerInvalidBackupName() { return Get("Server_InvalidBackupName"); }
+    public string ServerMonitorConfigLoaded() { return Get("Server_MonitorConfigLoaded"); }
+    public string ServerMonitorConfigNotFound() { return Get("Server_MonitorConfigNotFound"); }
+    public string ServerMonitorChatMuted() { return Get("Server_MonitorChatMuted"); }
+    public string ServerMonitorChatNotSent() { return Get("Server_MonitorChatNotSent"); }
+    public string ServerMonitorBuildingDisabled() { return Get("Server_MonitorBuildingDisabled"); }
 
     public void LoadTranslations()
     {
@@ -237,8 +243,9 @@
         Add("en", "Server_ClientConfigRegisteredGroupNotFound", "Default registered group not found!");
         Add("en", "Server_ClientConfigLoaded", "Server client configuration loaded.");
         Add("en", "Server_InvalidSpawnCoordinates", "Invalid default spawn coordinates!");
-        Add("en", "Server_ProgressDownloading", "Downloading data...");
+        Add("en", "Server_ProgressDownloadingData", "Downloading data...");
         Add("en", "Server_ProgressGenerating", "Generating world...");
+        Add("en", "Server_ProgressDownloadingMap", "Downloading map...");
         Add("en", "Server_NoChatPrivilege", "{0}Insufficient privileges to chat.");
         Add("en", "Server_FillAreaInvalid", "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
         Add("en", "Server_FillAreaTooLarge", "Fill area is too large.");
@@ -280,6 +287,11 @@
         Add("en", "Server_SetupFirstStart", "It seems this is the first time you started this server.");
         Add("en", "Server_GameSaved", "Game saved. ({0} seconds)");
         Add("en", "Server_InvalidBackupName", "Invalid backup filename: ");
+        Add("en", "Server_MonitorConfigLoaded", "Server monitor configuration loaded.");
+        Add("en", "Server_MonitorConfigNotFound", "Server monitor configuration file not found, creating new.");
+        Add("en", "Server_MonitorChatMuted", "Spam protection: {0} has been muted for {1} seconds.");
+        Add("en", "Server_MonitorChatNotSent", "Spam protection: Your message has not been sent.");
+        Add("en", "Server_MonitorBuildingDisabled", "{0} exceeds set block limit.");
     }
 
     void Add(string language, string id, string translated)

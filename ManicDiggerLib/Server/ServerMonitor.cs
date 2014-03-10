@@ -83,7 +83,7 @@ namespace GameModeFortress
                 case Packet_ClientIdEnum.Message:
                     if (monitorClients[clientId].MessagePunished())
                     {
-                        server.SendMessage(clientId, "Spam protection: Your message has not been sent.", Server.MessageType.Error);
+                        server.SendMessage(clientId, server.language.ServerMonitorChatNotSent(), Server.MessageType.Error);
                         return false;
                     }
                     if (monitorClients[clientId].MessagesSent < config.MaxMessages)
@@ -104,13 +104,13 @@ namespace GameModeFortress
         private bool ActionSetBlock(int clientId)
         {
             this.monitorClients[clientId].SetBlockPunishment = new Punishment();//infinte duration
-            this.server.ServerMessageToAll(string.Format("{0} exceeds set block limit.", server.GetClient(clientId).playername), Server.MessageType.Important);
+            this.server.ServerMessageToAll(string.Format(server.language.ServerMonitorBuildingDisabled(), server.GetClient(clientId).playername), Server.MessageType.Important);
             return false;
         }
         private bool ActionMessage(int clientId)
         {
             this.monitorClients[clientId].MessagePunishment = new Punishment(new TimeSpan(0, 0, config.MessageBanTime));
-            this.server.ServerMessageToAll(string.Format("Spam protection: {0} has been muted for {1} seconds.", server.GetClient(clientId).playername, config.MessageBanTime), Server.MessageType.Important);
+            this.server.ServerMessageToAll(string.Format(server.language.ServerMonitorChatMuted(), server.GetClient(clientId).playername, config.MessageBanTime), Server.MessageType.Important);
             return false;
         }
 
@@ -198,7 +198,7 @@ namespace GameModeFortress
         {
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
-                Console.WriteLine("Server monitor configuration file not found, creating new.");
+                Console.WriteLine(server.language.ServerMonitorConfigNotFound());
                 SaveConfig();
             }
             else
@@ -226,7 +226,7 @@ namespace GameModeFortress
                     SaveConfig();
                 }
             }
-            Console.WriteLine("Server monitor configuration loaded.");
+            Console.WriteLine(server.language.ServerMonitorConfigLoaded());
         }
         public void SaveConfig()
         {
