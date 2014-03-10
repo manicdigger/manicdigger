@@ -61,6 +61,8 @@ SpawnPositionSetTo=Spawnposition auf {0} festgelegt.
 Triangles=Dreiecke: {0}
 UseServerTexturesOption=Servertexturen verwenden (benötigt Neustart): {0}
 ViewDistanceOption=Sichtweite: {0}
+
+
 Block_Empty=Nichts
 Block_Stone=Stein
 Block_Grass=Gras
@@ -214,6 +216,8 @@ Block_Rail60=Schiene
 Block_Rail61=Schiene
 Block_Rail62=Schiene
 Block_Rail63=Schiene
+
+
 Server_CannotWriteLogFile=Kann die Server-Logdatei {0} nicht beschreiben.
 Server_LoadingSavegame=Lade Spielstand...
 Server_CreatingSavegame=Erstelle neuen Spielstand.
