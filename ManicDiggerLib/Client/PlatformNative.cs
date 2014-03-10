@@ -100,6 +100,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return ret;
     }
 
+    public override bool StringEmpty(string data)
+    {
+        return string.IsNullOrEmpty(data);
+    }
+
     public override int IntParse(string value)
     {
         return System.Int32.Parse(value);

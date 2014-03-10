@@ -132,26 +132,31 @@
 
     public void LoadTranslations()
     {
-    	IntRef fileCount = IntRef.Create(0);
-    	string[] fileList = platform.DirectoryGetFiles(platform.PathCombine("data", "localization"), fileCount);
-    	//Iterate over all files in the directory
-    	for (int i = 0; i < fileCount.value; i++)
-    	{
-    		IntRef lineCount = IntRef.Create(0);
-    		string[] lineList = platform.FileReadAllLines(fileList[i], lineCount);
-    		//Iterate over each line in these files
-    		for (int j = 1; j < lineCount.value; j++)
-    		{
-    			IntRef splitCount = IntRef.Create(0);
-    			string[] splitList = platform.StringSplit(lineList[j], "=", splitCount);
-    			if (splitCount.value >= 2)
-    			{
-    				Add(lineList[0], splitList[0], splitList[1]);
-    			}
-    		}
-    	}
-    	//Add english default strings if not defined.
-    	AddEnglish();
+        IntRef fileCount = IntRef.Create(0);
+        string[] fileList = platform.DirectoryGetFiles(platform.PathCombine("data", "localization"), fileCount);
+        //Iterate over all files in the directory
+        for (int i = 0; i < fileCount.value; i++)
+        {
+            IntRef lineCount = IntRef.Create(0);
+            string[] lineList = platform.FileReadAllLines(fileList[i], lineCount);
+            //Iterate over each line in these files
+            for (int j = 1; j < lineCount.value; j++)
+            {
+                if (platform.StringEmpty(lineList[j]))
+                {
+                    //Skip line if empty
+                    continue;
+                }
+                IntRef splitCount = IntRef.Create(0);
+                string[] splitList = platform.StringSplit(lineList[j], "=", splitCount);
+                if (splitCount.value >= 2)
+                {
+                    Add(lineList[0], splitList[0], splitList[1]);
+                }
+            }
+        }
+        //Add english default strings if not defined.
+        AddEnglish();
     }
     
     void AddEnglish()

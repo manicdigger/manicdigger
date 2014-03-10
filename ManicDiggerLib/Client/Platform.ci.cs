@@ -88,6 +88,7 @@
     public abstract void SaveScreenshot();
     public abstract BitmapCi GrabScreenshot();
     public abstract AviWriterCi AviWriterCreate();
+    public abstract bool StringEmpty(string data);
 }
 
 public class EnetHost
