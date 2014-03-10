@@ -35,7 +35,7 @@ namespace MdMonsterEditor
             glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
             loaded = true;
             GL.ClearColor(Color.SkyBlue);
-            overheadcameraK.Distance = 3;
+            overheadcameraK.SetDistance(3);
             SetupViewport();
             Application.Idle += new EventHandler(Application_Idle);
             sw.Start();
@@ -96,7 +96,7 @@ namespace MdMonsterEditor
         {
             if (e.Delta != 0)
             {
-                overheadcameraK.Distance -= 0.002f * e.Delta;
+                overheadcameraK.SetDistance(overheadcameraK.GetDistance() - 0.002f * e.Delta);
                 glControl1.Invalidate();
             }
         }
@@ -256,10 +256,20 @@ namespace MdMonsterEditor
             GL.LoadMatrix(ref perpective);
             OverheadCamera();
         }
+        GamePlatformNative platform = new GamePlatformNative();
         private void OverheadCamera()
         {
             GL.MatrixMode(MatrixMode.Modelview);
-            var camera = Matrix4.LookAt(overheadcameraK.Position, overheadcameraK.Center, up);
+
+            Vector3Ref position = new Vector3Ref();
+            overheadcameraK.GetPosition(platform, position);
+            Vector3 position_ = new Vector3(position.GetX(), position.GetY(), position.GetZ());
+
+            Vector3Ref center = new Vector3Ref();
+            overheadcameraK.GetCenter(center);
+            Vector3 center_ = new Vector3(center.GetX(), center.GetY(), center.GetZ());
+
+            Matrix4 camera = Matrix4.LookAt(position_, center_, up);
             GL.LoadMatrix(ref camera);
         }
         float znear = 0.1f;
@@ -283,10 +293,10 @@ namespace MdMonsterEditor
                 int deltay = e.Y - oldmousey;
                 oldmousex = e.X;
                 oldmousey = e.Y;
-                overheadcameraK.tt += (float)deltax * 0.05f;
-                overheadcameraK.Angle += (float)deltay * 1f;
-                if (overheadcameraK.Angle > 89) { overheadcameraK.Angle = 89; }
-                if (overheadcameraK.Angle < -89) { overheadcameraK.Angle = -89; }
+                overheadcameraK.SetT(overheadcameraK.GetT() + (float)deltax * 0.05f);
+                overheadcameraK.SetAngle(overheadcameraK.GetAngle() + (float)deltay * 1f);
+                if (overheadcameraK.GetAngle() > 89) { overheadcameraK.SetAngle(89); }
+                if (overheadcameraK.GetAngle() < -89) { overheadcameraK.SetAngle(-89); }
                 glControl1.Invalidate();
             }
         }

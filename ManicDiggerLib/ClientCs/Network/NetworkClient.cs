@@ -9,29 +9,6 @@ using System.Text.RegularExpressions;
 
 namespace ManicDigger
 {
-    public interface INetworkClient
-    {
-        void Dispose();
-        void Connect(string serverAddress, int port, string username, string auth);
-        void Process();
-        void SendSetBlock(Vector3 position, BlockSetMode mode, int type, int materialslot);
-        event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
-        event EventHandler<MapLoadedEventArgs> MapLoaded;
-        void SendChat(string s);
-        IEnumerable<string> ConnectedPlayers();
-        void SendPosition(Vector3 position, Vector3 orientation);
-        Dictionary<int, bool> EnablePlayerUpdatePosition { get; set; }
-        string ServerName { get; }
-        string ServerMotd { get; }
-        bool AllowFreemove { get; }
-        DateTime LastReceived { get; }
-    }
-    public class MapLoadingProgressEventArgs : EventArgs
-    {
-        public int ProgressPercent { get; set; }
-        public int ProgressBytes { get; set; }
-        public string ProgressStatus { get; set; }
-    }
     public class MapLoadedEventArgs : EventArgs
     {
         public byte[, ,] map;

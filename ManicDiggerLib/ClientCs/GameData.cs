@@ -14,83 +14,21 @@ namespace ManicDigger
     {
         bool[] IsWater { get; }
     }
-    public interface IGameData : IGameDataLight, IGameDataPhysics
-    {
-        void Update();
-
-        bool[] IsTransparent { get; }
-        bool[] IsValid { get; }
-        bool[] IsTransparentFully { get; }
-        int[] WhenPlayerPlacesGetsConvertedTo { get; }//PlayerBuildableMaterialType
-        bool[] IsFlower { get; }
-        RailDirectionFlags[] Rail { get; }
-        float[] WalkSpeed { get; }
-        bool[] IsSlipperyWalk { get; }
-        string[][] WalkSound { get; }
-        string[][] BreakSound { get; }
-        string[][] BuildSound { get; }
-        string[][] CloneSound { get; }
-        int[] StartInventoryAmount { get; }
-        float[] Strength { get; }
-        int[] DamageToPlayer { get; }
-
-        int[] DefaultMaterialSlots { get; }
-
-        //Special blocks
-        //Block 0 is empty block.
-        int BlockIdEmpty { get; }
-        int BlockIdDirt { get; }
-        int BlockIdSponge { get; }
-        int BlockIdTrampoline { get; }
-        int BlockIdAdminium { get; }
-        int BlockIdCompass { get; }
-        int BlockIdLadder { get; }
-        int BlockIdEmptyHand { get; }
-        int BlockIdCraftingTable { get; }
-        int BlockIdLava { get; }
-        int BlockIdStationaryLava { get; }
-        int BlockIdFillStart { get; }
-        int BlockIdCuboid { get; }
-        int BlockIdFillArea { get; }
-        int BlockIdMinecart { get; }
-        int BlockIdRailstart { get ; }
-
-
-    }
     public class SpecialBlockId
     {
         public const int Empty = 0;
     }
-    public interface ICurrentSeason
-    {
-        int CurrentSeason { get; }
-    }
-    public class CurrentSeasonDummy : ICurrentSeason
-    {
-        #region ICurrentSeason Members
-        public int CurrentSeason { get { return 0; } }
-        #endregion
-    }
-    public class GameData : IGameData
+    public class GameData
     {
         public void Start()
         {
             Initialize(GlobalVar.MAX_BLOCKTYPES);
         }
-        public ICurrentSeason CurrentSeason = new CurrentSeasonDummy();
         public void Update()
         {
         }
         private void Initialize(int count)
         {
-            mIsWater = new bool[count];
-            mIsLava = new bool[count];
-            mIsTransparent = new bool[count];
-            mIsValid = new bool[count];
-            mIsTransparentForLight = new bool[count];
-            mIsTransparentFully = new bool[count];
-            mTextureIdForInventory = new int[count];
-            mIsBuildable = new bool[count];
             mWhenPlayerPlacesGetsConvertedTo = new int[count];
             mIsFlower = new bool[count];
             mRail = new RailDirectionFlags[count];
@@ -127,15 +65,8 @@ namespace ManicDigger
             mWalkableType = new WalkableType[count];
 
             mDefaultMaterialSlots = new int[10];
-            mIsValid[0] = true;
         }
 
-        public bool[] IsWater { get { return mIsWater; } }
-        public bool[] IsLava { get { return mIsLava; } }
-        public bool[] IsTransparent { get { return mIsTransparent; } }
-        public bool[] IsValid { get { return mIsValid; } }
-        public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
-        public bool[] IsTransparentFully { get { return mIsTransparentFully; } }
         public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
         public bool[] IsFlower { get { return mIsFlower; } }
         public RailDirectionFlags[] Rail { get { return mRail; } }
@@ -153,14 +84,6 @@ namespace ManicDigger
 
         public int[] DefaultMaterialSlots { get { return mDefaultMaterialSlots; } }
 
-        private bool[] mIsWater;
-        private bool[] mIsLava;
-        private bool[] mIsTransparent;
-        private bool[] mIsValid;
-        private bool[] mIsTransparentForLight;
-        private bool[] mIsTransparentFully;
-        private int[] mTextureIdForInventory;
-        private bool[] mIsBuildable;
         private int[] mWhenPlayerPlacesGetsConvertedTo;
         private bool[] mIsFlower;
         private RailDirectionFlags[] mRail;
@@ -174,7 +97,6 @@ namespace ManicDigger
         private int[] mStartInventoryAmount;
         private float[] mStrength;
          private int[] mDamageToPlayer;
-        private DrawType[] mDrawType;
         private WalkableType[] mWalkableType;
 
         private int[] mDefaultMaterialSlots;
@@ -291,21 +213,14 @@ namespace ManicDigger
         
         public void UseBlockType(int id, Packet_BlockType b, Dictionary<string,int> textureIds)
         {
-            IsValid[id] = b.Name != null;//b.IsValid;
             if (b.Name == null)//!b.IsValid)
             {
                 return;
             }
             //public bool[] IsWater { get { return mIsWater; } }
-            IsWater[id] = b.Name.Contains("Water"); //todo
-            IsLava[id] = b.Name.Contains("Lava"); //todo
-            IsTransparent[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
             //            public bool[] IsTransparentForLight { get { return mIsTransparentForLight; } }
-            IsTransparentForLight[id] = b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
             //public bool[] IsEmptyForPhysics { get { return mIsEmptyForPhysics; } }
 
-            IsTransparentFully[id] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Plant)
-                 && (b.DrawType != Packet_DrawTypeEnum.OpenDoorLeft) && (b.DrawType != Packet_DrawTypeEnum.OpenDoorRight) && (b.DrawType != Packet_DrawTypeEnum.ClosedDoor);
             if (b.WhenPlacedGetsConvertedTo != 0)
             {
             	mWhenPlayerPlacesGetsConvertedTo[id] = b.WhenPlacedGetsConvertedTo;
@@ -350,34 +265,5 @@ namespace ManicDigger
         {
             return ((float)p) / 32;
         }
-    }
-
-    public class GameDataMonsters
-    {
-        public GameDataMonsters(IGetFileStream getfile)
-        {
-            int n = 5;
-            MonsterCode = new string[n];
-            MonsterName = new string[n];
-            MonsterSkin = new string[n];
-            MonsterCode[0] = "imp.txt";
-            MonsterName[0] = "Imp";
-            MonsterSkin[0] = "imp.png";
-            MonsterCode[1] = "imp.txt";
-            MonsterName[1] = "Fire Imp";
-            MonsterSkin[1] = "impfire.png";
-            MonsterCode[2] = "dragon.txt";
-            MonsterName[2] = "Dragon";
-            MonsterSkin[2] = "dragon.png";
-            MonsterCode[3] = "zombie.txt";
-            MonsterName[3] = "Zombie";
-            MonsterSkin[3] = "zombie.png";
-            MonsterCode[4] = "cyclops.txt";
-            MonsterName[4] = "Cyclops";
-            MonsterSkin[4] = "cyclops.png";
-        }
-        public string[] MonsterName;
-        public string[] MonsterCode;
-        public string[] MonsterSkin;
     }
 }

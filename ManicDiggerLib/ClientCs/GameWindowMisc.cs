@@ -48,16 +48,6 @@ namespace ManicDigger
             b = c.B;
             a = c.A;
         }
-        public VertexPositionTexture(float x, float y, float z, float u, float v, FastColor c)
-        {
-            Position = new Vector3(x, y, z);
-            this.u = u;
-            this.v = v;
-            r = c.R;
-            g = c.G;
-            b = c.B;
-            a = c.A;
-        }
         static uint ToRgba(Color color)
         {
             return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
@@ -103,113 +93,6 @@ namespace ManicDigger
         public void Set3dProjection()
         {
         }
-    }
-    public class CameraMove
-    {
-        public bool TurnLeft;
-        public bool TurnRight;
-        public bool DistanceUp;
-        public bool DistanceDown;
-        public bool AngleUp;
-        public bool AngleDown;
-        public int MoveX;
-        public int MoveY;
-        public float Distance;
-    }
-    public interface IKamera
-    {
-        void Move(CameraMove move, float p);
-        Vector3 Position { get; }
-    }
-    public class KameraDummy : IKamera
-    {
-        #region IKamera Members
-        public void Move(CameraMove move, float p)
-        {
-        }
-        public Vector3 Position { get; set; }
-        #endregion
-    }
-    public class Kamera : IKamera
-    {
-        public Vector3 Position
-        {
-            get
-            {
-                float cx = (float)(Math.Cos(tt * .5) * FlatDistance + Center.X);
-                float cy = (float)(Math.Sin(tt * .5) * FlatDistance + Center.Z);
-                return new Vector3(cx, Center.Y + CameraHeightFromCenter, cy);
-            }
-        }
-        float distance = 5;
-        public float Distance
-        {
-            get { return distance; }
-            set
-            {
-                distance = value;
-                if (distance < MinimumDistance)
-                {
-                    distance = MinimumDistance;
-                }
-            }
-        }
-        public float Angle = 45;
-        public float MinimumDistance = 2f;
-        float CameraHeightFromCenter
-        {
-            //get { return (float)Math.Tan(Angle * Math.PI/180) * Distance; }
-            get { return (float)Math.Sin(Angle * Math.PI / 180) * Distance; }
-        }
-        float FlatDistance
-        {
-            get { return (float)Math.Cos(Angle * Math.PI / 180) * Distance; }
-        }
-        public Vector3 Center { get; set; }
-        public float tt = 0;
-        public void TurnLeft(float p)
-        {
-            tt += p;
-        }
-        public void TurnRight(float p)
-        {
-            tt -= p;
-        }
-        public void Move(CameraMove camera_move, float p)
-        {
-            p *= 2;
-            p *= 2;
-            if (camera_move.TurnLeft)
-            {
-                TurnLeft(p);
-            }
-            if (camera_move.TurnRight)
-            {
-                TurnRight(p);
-            }
-            if (camera_move.DistanceUp)
-            {
-                Distance += p;
-            }
-            if (camera_move.DistanceDown)
-            {
-                Distance -= p;
-            }
-            if (camera_move.AngleUp)
-            {
-                Angle += p * 10;
-            }
-            if (camera_move.AngleDown)
-            {
-                Angle -= p * 10;
-            }
-            Distance = camera_move.Distance;
-            if (MaximumAngle < MinimumAngle) { throw new Exception(); }
-            if (Angle > MaximumAngle) { Angle = MaximumAngle; }
-            if (Angle < MinimumAngle) { Angle = MinimumAngle; }
-        }
-        public int MaximumAngle = 89;
-        public int MinimumAngle = 0;
     }
     public enum Direction4
     {
@@ -297,63 +180,6 @@ namespace ManicDigger
         {
             base.OnClosing(e);
             mywindow.OnClosing(e);
-        }
-    }
-    public class ConnectData
-    {
-        public string Username;
-        public string Ip;
-        public int Port;
-        public string Auth;
-        public string ServerPassword;
-        public bool IsServePasswordProtected;
-        public static ConnectData FromUri(MyUri uri)
-        {
-            ConnectData c = new ConnectData();
-            c = new ConnectData();
-            c.Ip = uri.Ip;
-            c.Port = 25565;
-            c.Username = "gamer";
-            if (uri.Port != -1)
-            {
-                c.Port = uri.Port;
-            }
-            if (uri.Get.ContainsKey("user"))
-            {
-                c.Username = uri.Get["user"];
-            }
-            if (uri.Get.ContainsKey("auth"))
-            {
-                c.Auth = uri.Get["auth"];
-            }
-            if (uri.Get.ContainsKey("serverPassword"))
-            {
-                c.IsServePasswordProtected = Misc.ReadBool(uri.Get["serverPassword"]);
-            }
-            return c;
-        }
-    }
-    public class ConnectedPlayer
-    {
-        public int id;
-        public string name;
-        public int ping; // in ms
-    }
-    public class ServerInformation
-    {
-        public string ServerName;
-        public string ServerMotd;
-        public ConnectData connectdata;
-        public List<ConnectedPlayer> Players;
-        public ManicDiggerServer.Ping ServerPing;
-
-        public ServerInformation()
-        {
-            this.ServerName = "";
-            this.ServerMotd = "";
-            this.connectdata = new ConnectData();
-            this.Players = new List<ConnectedPlayer>();
-            this.ServerPing = new ManicDiggerServer.Ping();
         }
     }
 }

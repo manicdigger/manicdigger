@@ -53,7 +53,7 @@ namespace ManicDiggerServer
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
         [Inject]
-        public IGameData d_Data;
+        public GameData d_Data;
         public bool wasChunkGenerated;
         #region IMapStorage Members
         public int MapSizeX { get; set; }
@@ -79,7 +79,7 @@ namespace ManicDiggerServer
             for (int i = MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (MapUtil.IsValidPos(this, x, y, i) && !d_Data.IsTransparentForLight[GetBlock(x, y, i)])
+                if (MapUtil.IsValidPos(this, x, y, i) && !Server.IsTransparentForLight(server.BlockTypes[GetBlock(x, y, i)]))
                 {
                     break;
                 }
@@ -160,7 +160,7 @@ namespace ManicDiggerServer
             for (int i = chunksize - 1; i >= 0; i--)
             {
                 height = i;
-                if (!d_Data.IsTransparentForLight[chunk[MapUtil.Index3d(xx, yy, i, chunksize, chunksize)]])
+                if (!Server.IsTransparentForLight(server.BlockTypes[chunk[MapUtil.Index3d(xx, yy, i, chunksize, chunksize)]]))
                 {
                     break;
                 }

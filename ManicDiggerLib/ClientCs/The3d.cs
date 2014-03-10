@@ -36,10 +36,10 @@ namespace ManicDigger
             Bitmap bmp = bmpArg;
             bool convertedbitmap = false;
             if ((!ALLOW_NON_POWER_OF_TWO) &&
-                (!(BitTools.IsPowerOfTwo((uint)bmp.Width) && BitTools.IsPowerOfTwo((uint)bmp.Height))))
+                (!(BitTools.IsPowerOfTwo(bmp.Width) && BitTools.IsPowerOfTwo(bmp.Height))))
             {
-                Bitmap bmp2 = new Bitmap((int)BitTools.NextPowerOfTwo((uint)bmp.Width),
-                    (int)BitTools.NextPowerOfTwo((uint)bmp.Height));
+                Bitmap bmp2 = new Bitmap(BitTools.NextPowerOfTwo(bmp.Width),
+                    BitTools.NextPowerOfTwo(bmp.Height));
                 using (Graphics g = Graphics.FromImage(bmp2))
                 {
                     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;

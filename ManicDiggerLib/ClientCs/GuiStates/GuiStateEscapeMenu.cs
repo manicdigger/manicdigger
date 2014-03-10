@@ -32,15 +32,7 @@ namespace ManicDigger
             FreeMouse = true;
             SetEscapeMenuState(EscapeMenuState.Main);
         }
-        enum EscapeMenuState
-        {
-            Main,
-            Options,
-            Graphics,
-            Keys,
-            Other,
-        }
-        EscapeMenuState escapemenustate;
+        EscapeMenuState escapemenustate { get { return game.escapemenustate; } set { game.escapemenustate = value; } }
         private void EscapeMenuMouse1()
         {
             foreach (var w in new List<Button>(widgets))

@@ -23,7 +23,7 @@ namespace ManicDigger
 {
     //This is the main game class.
     public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition,
-        IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial, ICurrentSeason,
+        IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
         IMapStoragePortion, ICurrentShadows, IResetMap
@@ -38,6 +38,7 @@ namespace ManicDigger
             pMatrix.Push(Mat4.Create());
             PerformanceInfo = new DictionaryStringString();
             AudioEnabled = true;
+            OverheadCamera_cameraEye = new Vector3Ref();
         }
         bool AudioEnabled;
         float one;
@@ -51,8 +52,6 @@ namespace ManicDigger
             var gamedata = new GameData();
             gamedata.Start();
             var clientgame = w;
-            ICurrentSeason currentseason = clientgame;
-            gamedata.CurrentSeason = currentseason;
             var network = w;
             var mapstorage = clientgame;
             var config3d = new Config3d();
@@ -97,7 +96,7 @@ namespace ManicDigger
             w.d_Physics = physics;
             w.d_Clients = clientgame;
             w.d_Data = gamedata;
-            w.d_DataMonsters = new GameDataMonsters(getfile);
+            w.d_DataMonsters = new GameDataMonsters();
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
             w.d_MapManipulator = mapManipulator;
@@ -319,7 +318,7 @@ namespace ManicDigger
         const float rotation_speed = 180.0f * 0.05f;
         //float angle;
 
-        public ServerInformation ServerInfo = new ServerInformation();
+        public ServerInformation ServerInfo { get { return game.ServerInfo; } set { game.ServerInfo = value; } }
         public bool AllowFreemove { get { return game.AllowFreemove; } set { game.AllowFreemove = value; } }
 
         public ClientModManager1 modmanager = new ClientModManager1();
@@ -1346,7 +1345,6 @@ namespace ManicDigger
         {
             LoadOptions();
             MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
-            MapLoadingProgress += new EventHandler<MapLoadingProgressEventArgs>(newnetwork_MapLoadingProgress);
 
             while (issingleplayer && !StartedSinglePlayerServer)
             {
@@ -1362,10 +1360,6 @@ namespace ManicDigger
                 Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth, connectdata.ServerPassword);
             }
             MapLoadingStart();
-        }
-        void newnetwork_MapLoadingProgress(object sender, MapLoadingProgressEventArgs e)
-        {
-            this.maploadingprogress = e;
         }
         void network_MapLoaded(object sender, MapLoadedEventArgs e)
         {
@@ -1410,25 +1404,15 @@ namespace ManicDigger
         Vector3 up = new Vector3(0f, 1f, 0f);
         Point mouse_current, mouse_previous;
         PointF mouse_delta;
-        bool freemouse;
         bool FreeMouse
         {
             get
             {
-                if (overheadcamera)
-                {
-                    return true;
-                }
-                return freemouse;
+                return game.GetFreeMouse();
             }
             set
             {
-                if (IsMac)
-                {
-                    d_GlWindow.CursorVisible = value;
-                    System.Windows.Forms.Cursor.Hide();
-                }
-                freemouse = value;
+                game.SetFreeMouse(value);
             }
         }
         void UpdateMouseButtons()
@@ -1638,7 +1622,9 @@ namespace ManicDigger
                         if (Keyboard[GetKey(OpenTK.Input.Key.D)]) { overheadcameraK.TurnLeft((float)e.Time * overheadcameraspeed); }
                         if (Keyboard[GetKey(OpenTK.Input.Key.W)]) { angleup = true; }
                         if (Keyboard[GetKey(OpenTK.Input.Key.S)]) { angledown = true; }
-                        overheadcameraK.Center = ToVector3(player.playerposition);
+                        overheadcameraK.Center.X = player.playerposition.X;
+                        overheadcameraK.Center.Y = player.playerposition.Y;
+                        overheadcameraK.Center.Z = player.playerposition.Z;
                         m.Distance = overheadcameradistance;
                         m.AngleUp = angleup;
                         m.AngleDown = angledown;
@@ -1904,7 +1890,7 @@ namespace ManicDigger
             if (d_Map.IsValidPos(pos.x, pos.y, pos.z - 3))
             {
                 int blockBelow = d_Map.GetBlock(pos.x, pos.y, pos.z - 3);
-                if ((blockBelow != 0) && (!d_Data.IsWater[blockBelow]))
+                if ((blockBelow != 0) && (!IsWater(blockBelow)))
                 {
                     float severity = 0;
                     if (fallspeed < 4) { return; }
@@ -1922,6 +1908,12 @@ namespace ManicDigger
                 }
             }
         }
+
+        bool IsWater(int blockType)
+        {
+            return game.blocktypes[blockType].Name.Contains("Water"); // todo
+        }
+
         int lastfalldamagetimeMilliseconds;
 
         Vector3i GetPlayerEyesBlock()
@@ -2014,12 +2006,7 @@ namespace ManicDigger
 
         private void Respawn()
         {
-            SendPacketClient(new Packet_Client()
-            {
-                Id = Packet_ClientIdEnum.SpecialKey,
-                SpecialKey_ = new Packet_ClientSpecialKey() { Key_ = Packet_SpecialKeyEnum.Respawn },
-            });
-            player.movedz = 0;
+            game.Respawn();
         }
 
         Timer BlockDamageToPlayerTimer = new Timer() { INTERVAL = BlockDamageToPlayerEvery, MaxDeltaTime = BlockDamageToPlayerEvery * 2 };
@@ -2121,7 +2108,7 @@ namespace ManicDigger
             }
             return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
                 || d_Map.GetBlock(x, y, z) == d_Data.BlockIdFillArea
-                || d_Data.IsWater[d_Map.GetBlock(x, y, z)];
+                || IsWater(d_Map.GetBlock(x, y, z));
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
         {
@@ -2333,7 +2320,7 @@ namespace ManicDigger
             }
 
             //pick terrain
-            s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             
             pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
@@ -3565,7 +3552,7 @@ namespace ManicDigger
                     n.EXTRAPOLATION_TIME = 0.3f;
                     playerdrawinfo[k.Key].interpolation = n;
                 }
-                playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.05, ServerInfo.ServerPing.RoundtripTime.TotalSeconds);
+                playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.05, ((float)ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds() / 1000));
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
                 Vector3 realpos = k.Value.Position.Value;
                 bool redraw = false;
@@ -3695,7 +3682,7 @@ namespace ManicDigger
         }
         Vector3 lastlocalplayerpos;
         AnimationState localplayeranim = new AnimationState();
-        bool overheadcamera = false;
+        bool overheadcamera { get { return game.overheadcamera; } set { game.overheadcamera = value; } }
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
@@ -3718,10 +3705,12 @@ namespace ManicDigger
             }
             return Matrix4.LookAt(cameraEye, cameraTarget, up);
         }
+        Vector3Ref OverheadCamera_cameraEye;
         Matrix4 OverheadCamera()
         {
-            Vector3 cameraEye = overheadcameraK.Position;
-            Vector3 cameraTarget = overheadcameraK.Center + new Vector3(0, CharacterEyesHeight, 0);
+            overheadcameraK.GetPosition(game.platform, OverheadCamera_cameraEye);
+            Vector3 cameraEye = ToVector3(OverheadCamera_cameraEye);
+            Vector3 cameraTarget = ToVector3(overheadcameraK.Center) + new Vector3(0, CharacterEyesHeight, 0);
             float currentOverheadcameradistance = overheadcameradistance;
             LimitThirdPersonCameraToWalls(ref cameraEye, cameraTarget, ref currentOverheadcameradistance);
             return Matrix4.LookAt(cameraEye, cameraTarget, up);
@@ -3741,7 +3730,7 @@ namespace ManicDigger
             pick.End = Vector3ToFloatArray(ray_start_point + raydir);
 
             //pick terrain
-            s.StartBox = Box3D.Create(0, 0, 0, (int)BitTools.NextPowerOfTwo((uint)Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
+            s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(Math.Max(d_Map.MapSizeX, Math.Max(d_Map.MapSizeY, d_Map.MapSizeZ))));
             List<BlockPosSide> pick2 = new List<BlockPosSide>(s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick));
             pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
             if (pick2.Count > 0)
@@ -3764,17 +3753,7 @@ namespace ManicDigger
             }
         }
         Dictionary<string, ICharacterRenderer> MonsterRenderers = new Dictionary<string, ICharacterRenderer>();
-        GuiState guistate;
-        enum GuiState
-        {
-            Normal,
-            EscapeMenu,
-            Inventory,
-            MapLoading,
-            CraftingRecipes,
-            EditText,
-            ModalDialog,
-        }
+        GuiState guistate { get { return game.guistate; } set { game.guistate = value; } }
         private void DrawMouseCursor()
         {
             Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
@@ -4000,7 +3979,7 @@ namespace ManicDigger
                 return;
             }
             int blocktype = d_Map.GetBlock(x, y, z);
-            if (!d_Data.IsValid[blocktype])
+            if (!IsValid(blocktype))
             {
                 return;
             }
@@ -4015,6 +3994,12 @@ namespace ManicDigger
             d_The3d.Draw2dText(info, Width * 0.5f - d_The3d.TextSize(info, 18f).Width / 2, 30f, 18f, Color.White);
             */
         }
+
+        public bool IsValid(int blocktype)
+        {
+            return game.blocktypes[blocktype].Name != null;
+        }
+
         private void DrawAim()
         {
             if (aimsize == null)
@@ -4183,11 +4168,11 @@ namespace ManicDigger
         }
         private int xcenter(float width)
         {
-            return (int)(Width / 2 - width / 2);
+            return game.xcenter(width);
         }
         private int ycenter(float height)
         {
-            return (int)(Height / 2 - height / 2);
+            return game.ycenter(height);
         }
         int ENABLE_LAG = 0;
         bool ENABLE_DRAWPOSITION = false;
@@ -4318,7 +4303,7 @@ namespace ManicDigger
                 {
                     return p.Y < WaterLevel;
                 }
-                return d_Data.IsWater[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+                return IsWater(d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
             }
         }
         public bool LavaSwimming
@@ -4331,9 +4316,15 @@ namespace ManicDigger
                 {
                     return false;
                 }
-                return d_Data.IsLava[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)];
+                return IsLava(d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
             }
         }
+
+        bool IsLava(int blockType)
+        {
+            return game.blocktypes[blockType].Name.Contains("Lava"); // todo
+        }
+
         #endregion
         public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
         Color terraincolor
@@ -4812,11 +4803,6 @@ namespace ManicDigger
             //d_Shadows.OnGetTerrainBlock(x, y, z);
             return GetBlock(x, y, z);
         }
-        FastColor white = new FastColor(Color.White);
-        public FastColor GetTerrainBlockColor(int x, int y, int z)
-        {
-            return white;
-        }
         public int GetLight(int x, int y, int z)
         {
             //return d_Shadows.GetLight(x, y, z);
@@ -5100,18 +5086,23 @@ namespace ManicDigger
                 case Packet_ServerIdEnum.Ping:
                     {
                         this.SendPingReply();
-                        this.ServerInfo.ServerPing.Send();
+                        this.ServerInfo.ServerPing.Send(game.platform);
                     }
                     break;
                 case Packet_ServerIdEnum.PlayerPing:
                     {
-                        foreach (var k in this.ServerInfo.Players)
+                        for (int i = 0; i < this.ServerInfo.Players.count;i++)
                         {
+                            ConnectedPlayer k = ServerInfo.Players.items[i];
+                            if (k == null)
+                            {
+                                continue;
+                            }
                             if (k.id == packet.PlayerPing.ClientId)
                             {
                                 if (k.id == this.LocalPlayerId)
                                 {
-                                    this.ServerInfo.ServerPing.Receive();
+                                    this.ServerInfo.ServerPing.Receive(game.platform);
                                 }
                                 k.ping = packet.PlayerPing.Ping;
                                 break;
@@ -5233,8 +5224,13 @@ namespace ManicDigger
                         int playerid = packet.SpawnPlayer.PlayerId;
                         string playername = packet.SpawnPlayer.PlayerName;
                         bool isnewplayer = true;
-                        foreach (ConnectedPlayer p in ServerInfo.Players)
+                        for (int i = 0; i < ServerInfo.Players.count; i++)
                         {
+                            ConnectedPlayer p = ServerInfo.Players.items[i];
+                            if (p == null)
+                            {
+                                continue;
+                            }
                             if (p.id == playerid)
                             {
                                 isnewplayer = false;
@@ -5306,9 +5302,14 @@ namespace ManicDigger
                 case Packet_ServerIdEnum.DespawnPlayer:
                     {
                         int playerid = packet.DespawnPlayer.PlayerId;
-                        for (int i = 0; i < this.ServerInfo.Players.Count; i++)
+                        for (int i = 0; i < this.ServerInfo.Players.count; i++)
                         {
-                            if (this.ServerInfo.Players[i].id == playerid)
+                            ConnectedPlayer p = ServerInfo.Players.items[i];
+                            if (p == null)
+                            {
+                                continue;
+                            }
+                            if (p.id == playerid)
                             {
                                 this.ServerInfo.Players.RemoveAt(i);
                             }
@@ -5773,15 +5774,12 @@ namespace ManicDigger
 
         private void InvokeMapLoadingProgress(int progressPercent, int progressBytes, string status)
         {
-            if (MapLoadingProgress != null)
-            {
-                MapLoadingProgress(this, new MapLoadingProgressEventArgs()
+            maploadingprogress = new MapLoadingProgressEventArgs()
                 {
                     ProgressPercent = progressPercent,
                     ProgressBytes = progressBytes,
-                    ProgressStatus = status,
-                });
-            }
+                    ProgressStatus = status
+                };
         }
         public bool ENABLE_CHATLOG = true;
         public string gamepathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
@@ -5889,10 +5887,6 @@ namespace ManicDigger
         }
         int MapLoadingPercentComplete;
         string MapLoadingStatus;
-
-        #region IClientNetwork Members
-        public event EventHandler<MapLoadingProgressEventArgs> MapLoadingProgress;
-        #endregion
         Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
         #region INetworkClient Members
         public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
@@ -5964,7 +5958,7 @@ namespace ManicDigger
             for (int i = d_Map.MapSizeZ - 1; i >= 0; i--)
             {
                 height = i;
-                if (!d_Data.IsTransparentForLight[d_Map.GetBlock(x, y, i)])
+                if (!Game.IsTransparentForLight(game.blocktypes[d_Map.GetBlock(x, y, i)]))
                 {
                     break;
                 }
@@ -6327,6 +6321,16 @@ namespace ManicDigger
         public TerrainRenderer terrainRenderer;
         void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
         void RedrawBlock(int x, int y, int z) { terrainRenderer.RedrawBlock(x, y, z); }
+
+        MapLoadingProgressEventArgs maploadingprogress { get { return game.maploadingprogress; } set { game.maploadingprogress = value; } }
+        public void MapLoadingStart()
+        {
+            game.MapLoadingStart();
+        }
+        private void MapLoadingDraw()
+        {
+            game.MapLoadingDraw();
+        }
     }
 
     public class GetBlockHeight_ : DelegateGetBlockHeight

@@ -65,6 +65,21 @@ public class Vector3Ref
         v.Z = z;
         return v;
     }
+
+    public float GetX()
+    {
+        return X;
+    }
+
+    public float GetY()
+    {
+        return Y;
+    }
+
+    public float GetZ()
+    {
+        return Z;
+    }
 }
 
 public class Vector3IntRef

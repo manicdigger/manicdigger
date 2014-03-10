@@ -970,6 +970,8 @@ namespace ManicDiggerServer
             return i;
         }
 
+        public GamePlatformNative platform = new GamePlatformNative();
+
         public void Process1()
         {
             if (d_MainSocket == null)
@@ -1035,7 +1037,7 @@ namespace ManicDiggerServer
 
                         Client c = new Client();
                         c.socket = client1;
-                        c.Ping.TimeoutValue = config.ClientConnectionTimeout;
+                        c.Ping.SetTimeoutValue(config.ClientConnectionTimeout);
                         c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
                         lock (clients)
                         {
@@ -1123,9 +1125,9 @@ namespace ManicDiggerServer
                 foreach (var k in clients)
                 {
                     // Check if client is alive. Detect half-dropped connections.
-                    if (!k.Value.Ping.Send()/*&& k.Value.state == ClientStateOnServer.Playing*/)
+                    if (!k.Value.Ping.Send(platform)/*&& k.Value.state == ClientStateOnServer.Playing*/)
                     {
-                        if (k.Value.Ping.Timeout())
+                        if (k.Value.Ping.Timeout(platform))
                         {
                             Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
                             keysToDelete.Add(k.Key);
@@ -2022,9 +2024,9 @@ if (sent >= unknown.Count) { break; }
             switch (packet.Id)
             {
                 case Packet_ClientIdEnum.PingReply:
-                    clients[clientid].Ping.Receive();
-                    clients[clientid].LastPing = (float)clients[clientid].Ping.RoundtripTime.TotalSeconds;
-                    this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTime.TotalMilliseconds);
+                    clients[clientid].Ping.Receive(platform);
+                    clients[clientid].LastPing = (float)(clients[clientid].Ping.RoundtripTimeTotalMilliseconds() / 1000);
+                    this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTimeTotalMilliseconds());
                     break;
                 case Packet_ClientIdEnum.PlayerIdentification:
                     {
@@ -3109,7 +3111,7 @@ if (sent >= unknown.Count) { break; }
             //add to inventory
             int blockid = d_Map.GetBlock(cmd.X, cmd.Y, cmd.Z);
             int blocktype = d_Data.WhenPlayerPlacesGetsConvertedTo[blockid];
-            if ((!d_Data.IsValid[blocktype])
+            if ((!IsValid(blocktype))
                 || blocktype == SpecialBlockId.Empty)
             {
                 return false;
@@ -3140,6 +3142,12 @@ if (sent >= unknown.Count) { break; }
             NotifyInventory(player_id);
             return true;
         }
+
+        private bool IsValid(int blocktype)
+        {
+            return BlockTypes[blocktype].Name != null;
+        }
+
         public void SetBlockAndNotify(int x, int y, int z, int blocktype)
         {
             d_Map.SetBlockNotMakingDirty(x, y, z, blocktype);
@@ -3681,7 +3689,7 @@ if (sent >= unknown.Count) { break; }
             public int maploadingsentchunks = 0;
             public INetConnection socket;
             public List<byte> received = new List<byte>();
-            public Ping Ping = new Ping();
+            public Ping_ Ping = new Ping_();
             public float LastPing;
             public string playername = invalidplayername;
             public int PositionMul32GlX;
@@ -4214,6 +4222,11 @@ if (sent >= unknown.Count) { break; }
         }
 
         public ModEventHandlers modEventHandlers = new ModEventHandlers();
+
+        internal static bool IsTransparentForLight(BlockType b)
+        {
+            return b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
+        }
     }
 
     public class ModEventHandlers
@@ -4236,59 +4249,6 @@ if (sent >= unknown.Count) { break; }
         public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
         public List<ModDelegates.PlayerDeath> onplayerdeath = new List<ModDelegates.PlayerDeath>();
         public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
-    }
-
-    public class Ping
-    {
-        public TimeSpan RoundtripTime { get; set; }
-
-        private bool ready;
-        private DateTime timeSend;
-        private int timeout = 10; //in seconds
-        public int TimeoutValue
-        {
-            get { return timeout; }
-            set { timeout = value; }
-        }
-
-        public Ping()
-        {
-            this.RoundtripTime = TimeSpan.MinValue;
-            this.ready = true;
-            this.timeSend = DateTime.MinValue;
-        }
-
-        public bool Send()
-        {
-            if (!ready)
-            {
-                return false;
-            }
-            ready = false;
-            this.timeSend = DateTime.UtcNow;
-            return true;
-        }
-
-        public bool Receive()
-        {
-            if (ready)
-            {
-                return false;
-            }
-            this.RoundtripTime = DateTime.UtcNow.Subtract(this.timeSend);
-            ready = true;
-            return true;
-        }
-
-        public bool Timeout()
-        {
-            if (DateTime.UtcNow.Subtract(this.timeSend).TotalSeconds > this.timeout)
-            {
-                this.ready = true;
-                return true;
-            }
-            return false;
-        }
     }
     public class GameTime
     {

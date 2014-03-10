@@ -15,13 +15,13 @@ namespace ManicDigger.Renderers
     public class ParticleEffectBlockBreak
     {
         [Inject]
-        public IMapStorage d_Map;
+        public ManicDiggerGameWindow d_Map;
         [Inject]
         public ManicDiggerGameWindow d_Shadows;
         [Inject]
         public ITerrainTextures d_Terrain;
         [Inject]
-        public IGameData d_Data;
+        public GameData d_Data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {
             GL.BindTexture(TextureTarget.Texture2D, d_Terrain.terrainTexture());
@@ -83,7 +83,7 @@ namespace ManicDigger.Renderers
                 return;
             }
             int tiletype = d_Map.GetBlock((int)v.X, (int)v.Z, (int)v.Y);
-            if (!d_Data.IsValid[tiletype])
+            if (!d_Map.IsValid(tiletype))
             {
                 return;
             }

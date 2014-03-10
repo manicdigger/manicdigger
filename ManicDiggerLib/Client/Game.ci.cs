@@ -27,6 +27,8 @@
         ENABLE_DRAW2D = true;
         AllowFreemove = true;
         enableCameraControl = true;
+        textures = new DictionaryStringInt1024();
+        ServerInfo = new ServerInformation();
     }
     float one;
 
@@ -979,6 +981,149 @@
     internal bool ENABLE_NOCLIP;
     internal bool AllowFreemove;
     internal bool enableCameraControl;
+
+    internal void Respawn()
+    {
+        Packet_Client p = new Packet_Client();
+        {
+            p.Id = Packet_ClientIdEnum.SpecialKey;
+            p.SpecialKey_ = new Packet_ClientSpecialKey();
+            p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.Respawn;
+        }
+        SendPacketClient(p);
+        player.movedz = 0;
+    }
+
+    public static bool IsTransparentForLight(Packet_BlockType b)
+    {
+        return b.DrawType != Packet_DrawTypeEnum.Solid && b.DrawType != Packet_DrawTypeEnum.ClosedDoor;
+    }
+
+    internal GuiState guistate;
+    internal bool freemouse;
+    internal bool overheadcamera;
+    public bool GetFreeMouse()
+    {
+        if (overheadcamera)
+        {
+            return true;
+        }
+        return freemouse;
+    }
+    public void SetFreeMouse(bool value)
+    {
+        platform.SetFreeMouse(value);
+        freemouse = value;
+    }
+    internal MapLoadingProgressEventArgs maploadingprogress;
+
+    public void MapLoadingStart()
+    {
+        guistate = GuiState.MapLoading;
+        SetFreeMouse(true);
+        maploadingprogress = new MapLoadingProgressEventArgs();
+        fontMapLoading = FontCi.Create("Arial", 14, 0);
+    }
+
+    FontCi fontMapLoading;
+
+    public void MapLoadingDraw()
+    {
+        int Width = platform.GetCanvasWidth();
+        int Height = platform.GetCanvasHeight();
+
+        Draw2dTexture(GetTexture(platform.PathCombine("gui", "background.png")), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        string connecting = language.Connecting();
+        if (maploadingprogress.ProgressStatus != null)
+        {
+            connecting = maploadingprogress.ProgressStatus;
+        }
+
+        IntRef serverNameWidth = new IntRef();
+        IntRef serverNameHeight = new IntRef();
+        platform.TextSize(this.ServerInfo.ServerName, 14, serverNameWidth, serverNameHeight);
+        Draw2dText(this.ServerInfo.ServerName, fontMapLoading, xcenter(serverNameWidth.value), Height / 2 - 150, null, false);
+
+        IntRef serverMotdWidth = new IntRef();
+        IntRef serverMotdHeight = new IntRef();
+        platform.TextSize(this.ServerInfo.ServerMotd, 14, serverMotdWidth, serverMotdHeight);
+        Draw2dText(this.ServerInfo.ServerMotd, fontMapLoading, xcenter(serverMotdWidth.value), Height / 2 - 100, null, false);
+
+        IntRef connectingWidth = new IntRef();
+        IntRef connectingHeight = new IntRef();
+        platform.TextSize(connecting, 14, connectingWidth, connectingHeight);
+        Draw2dText(connecting, fontMapLoading, xcenter(connectingWidth.value), Height / 2 - 50, null, false);
+
+        string progress = platform.StringFormat(language.ConnectingProgressPercent(), platform.IntToString(maploadingprogress.ProgressPercent));
+        string progress1 = platform.StringFormat(language.ConnectingProgressKilobytes(), platform.IntToString(maploadingprogress.ProgressBytes / 1024));
+
+        if (maploadingprogress.ProgressPercent > 0)
+        {
+            IntRef progressWidth = new IntRef();
+            IntRef progressHeight = new IntRef();
+            platform.TextSize(progress, 14, progressWidth, progressHeight);
+            Draw2dText(progress, fontMapLoading, xcenter(progressWidth.value), Height / 2 - 20, null, false);
+
+            IntRef progress1Width = new IntRef();
+            IntRef progress1Height = new IntRef();
+            platform.TextSize(progress1, 14, progress1Width, progress1Height);
+            Draw2dText(progress1, fontMapLoading, xcenter(progress1Width.value), Height / 2 + 10, null, false);
+
+            float progressratio = one * maploadingprogress.ProgressPercent / 100;
+            int sizex = 400;
+            int sizey = 40;
+            Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, sizex, sizey, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+            int red = Game.ColorFromArgb(255, 255, 0, 0);
+            int yellow = Game.ColorFromArgb(255, 255, 255, 0);
+            int green = Game.ColorFromArgb(255, 0, 255, 0);
+            int[] colors = new int[3];
+            colors[0] = red;
+            colors[1] = yellow;
+            colors[2] = green;
+            int c = InterpolationCi.InterpolateColor(platform, progressratio, colors, 3);
+            Draw2dTexture(WhiteTexture(), xcenter(sizex), Height / 2 + 70, progressratio * sizex, sizey, null, 0, c, false);
+        }
+    }
+
+    DictionaryStringInt1024 textures;
+    internal int GetTexture(string p)
+    {
+        if (!textures.Contains(p))
+        {
+            BoolRef found = new BoolRef();
+            textures.Set(p, platform.LoadTextureFromFile(platform.GetFullFilePath(p, found)));
+        }
+        return textures.Get(p);
+    }
+
+    internal int xcenter(float width)
+    {
+        return platform.FloatToInt((platform.GetCanvasWidth() / 2 - width / 2));
+    }
+
+    internal int ycenter(float height)
+    {
+        return platform.FloatToInt((platform.GetCanvasHeight() / 2 - height / 2));
+    }
+
+    internal ServerInformation ServerInfo;
+    internal EscapeMenuState escapemenustate;
+}
+
+public enum EscapeMenuState
+{
+    Main,
+    Options,
+    Graphics,
+    Keys,
+    Other
+}
+
+public class MapLoadingProgressEventArgs
+{
+    internal int ProgressPercent;
+    internal int ProgressBytes;
+    internal string ProgressStatus;
 }
 
 public class Draw2dData
@@ -1478,4 +1623,171 @@ public class FontCi
         f.style = style_;
         return f;
     }
+}
+
+public class CameraMove
+{
+    internal bool TurnLeft;
+    internal bool TurnRight;
+    internal bool DistanceUp;
+    internal bool DistanceDown;
+    internal bool AngleUp;
+    internal bool AngleDown;
+    internal int MoveX;
+    internal int MoveY;
+    internal float Distance;
+}
+
+public class Kamera
+{
+    public Kamera()
+    {
+        one = 1;
+        distance = 5;
+        Angle = 45;
+        MinimumDistance = 2;
+        tt = 0;
+        MaximumAngle = 89;
+        MinimumAngle = 0;
+        Center = new Vector3Ref();
+    }
+    float one;
+    public void GetPosition(GamePlatform platform, Vector3Ref ret)
+    {
+        float cx = platform.MathCos(tt * one / 2) * GetFlatDistance(platform) + Center.X;
+        float cy = platform.MathSin(tt * one / 2) * GetFlatDistance(platform) + Center.Z;
+        ret.X = cx;
+        ret.Y = Center.Y + GetCameraHeightFromCenter(platform);
+        ret.Z = cy;
+    }
+    float distance;
+    public float GetDistance() { return distance; }
+    public void SetDistance(float value)
+    {
+        distance = value;
+        if (distance < MinimumDistance)
+        {
+            distance = MinimumDistance;
+        }
+    }
+    internal float Angle;
+    internal float MinimumDistance;
+    float GetCameraHeightFromCenter(GamePlatform platform)
+    {
+        return platform.MathSin(Angle * Game.GetPi() / 180) * distance;
+    }
+    float GetFlatDistance(GamePlatform platform)
+    {
+        return platform.MathCos(Angle * Game.GetPi() / 180) * distance;
+    }
+    internal Vector3Ref Center;
+    internal float tt;
+    public float GetT()
+    {
+        return tt;
+    }
+    public void SetT(float value)
+    {
+        tt = value;
+    }
+    public void TurnLeft(float p)
+    {
+        tt += p;
+    }
+    public void TurnRight(float p)
+    {
+        tt -= p;
+    }
+    public void Move(CameraMove camera_move, float p)
+    {
+        p *= 2;
+        p *= 2;
+        if (camera_move.TurnLeft)
+        {
+            TurnLeft(p);
+        }
+        if (camera_move.TurnRight)
+        {
+            TurnRight(p);
+        }
+        if (camera_move.DistanceUp)
+        {
+            SetDistance(GetDistance() + p);
+        }
+        if (camera_move.DistanceDown)
+        {
+            SetDistance(GetDistance() - p);
+        }
+        if (camera_move.AngleUp)
+        {
+            Angle += p * 10;
+        }
+        if (camera_move.AngleDown)
+        {
+            Angle -= p * 10;
+        }
+        SetDistance(camera_move.Distance);
+        //if (MaximumAngle < MinimumAngle) { throw new Exception(); }
+        if (Angle > MaximumAngle) { Angle = MaximumAngle; }
+        if (Angle < MinimumAngle) { Angle = MinimumAngle; }
+    }
+    internal int MaximumAngle;
+    internal int MinimumAngle;
+
+    public float GetAngle()
+    {
+        return Angle;
+    }
+
+    public void SetAngle(float value)
+    {
+        Angle = value;
+    }
+
+    public void GetCenter(Vector3Ref ret)
+    {
+        ret.X = Center.X;
+        ret.Y = Center.Y;
+        ret.Z = Center.Z;
+    }
+}
+
+public class GameDataMonsters
+{
+    public GameDataMonsters()
+    {
+        int n = 5;
+        MonsterCode = new string[n];
+        MonsterName = new string[n];
+        MonsterSkin = new string[n];
+        MonsterCode[0] = "imp.txt";
+        MonsterName[0] = "Imp";
+        MonsterSkin[0] = "imp.png";
+        MonsterCode[1] = "imp.txt";
+        MonsterName[1] = "Fire Imp";
+        MonsterSkin[1] = "impfire.png";
+        MonsterCode[2] = "dragon.txt";
+        MonsterName[2] = "Dragon";
+        MonsterSkin[2] = "dragon.png";
+        MonsterCode[3] = "zombie.txt";
+        MonsterName[3] = "Zombie";
+        MonsterSkin[3] = "zombie.png";
+        MonsterCode[4] = "cyclops.txt";
+        MonsterName[4] = "Cyclops";
+        MonsterSkin[4] = "cyclops.png";
+    }
+    internal string[] MonsterName;
+    internal string[] MonsterCode;
+    internal string[] MonsterSkin;
+}
+
+public enum GuiState
+{
+    Normal,
+    EscapeMenu,
+    Inventory,
+    MapLoading,
+    CraftingRecipes,
+    EditText,
+    ModalDialog
 }

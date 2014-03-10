@@ -137,7 +137,7 @@ namespace ManicDigger.Hud
 
       private void DrawEditorBackground()
       {
-          game.Draw2dTexture(game.WhiteTexture(), m_left, m_top, m_width, m_height, null, new FastColor(200, 250, 250, 250).ToColor());
+          game.game.Draw2dTexture(game.game.WhiteTexture(), m_left, m_top, m_width, m_height, null, 0, Game.ColorFromArgb(200, 250, 250, 250), false);
       }
 
       private void DrawVisibleLines()

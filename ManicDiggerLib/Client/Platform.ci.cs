@@ -90,6 +90,20 @@
     public abstract AviWriterCi AviWriterCreate();
     public abstract bool StringEmpty(string data);
     public abstract float FloatModulo(float a, int b);
+    public abstract void SetFreeMouse(bool value);
+    public abstract UriCi ParseUri(string uri);
+}
+
+public class UriCi
+{
+    internal string url;
+    internal string ip;
+    internal int port;
+    internal DictionaryStringString get;
+    public string GetUrl() { return url; }
+    public string GetIp() { return ip; }
+    public int GetPort() { return port; }
+    public DictionaryStringString GetGet() { return get; }
 }
 
 public class EnetHost

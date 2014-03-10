@@ -270,7 +270,7 @@ namespace ManicDigger
 
         public bool IsTransparentForLight(int p)
         {
-            return server.d_Data.IsTransparentForLight[p];
+            return Server.IsTransparentForLight(server.BlockTypes[p]);
         }
 
         public void RegisterWorldGenerator(ModDelegates.WorldGenerator f)
@@ -764,7 +764,7 @@ namespace ManicDigger
             c.state = Server.ClientStateOnServer.Playing;
             DummyNetwork network = new DummyNetwork() { ClientReceiveBufferLock = new MonitorObject(), ServerReceiveBufferLock = new MonitorObject() };
             c.socket = new DummyNetConnection() { network = network , platform = new GamePlatformNative() };
-            c.Ping.TimeoutValue = int.MaxValue;
+            c.Ping.SetTimeoutValue(int.MaxValue);
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
             c.clientGroup = server.defaultGroupRegistered;

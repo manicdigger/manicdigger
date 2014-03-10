@@ -60,7 +60,7 @@ namespace ManicDigger.Renderers
     public class BlockRendererTorch : IBlockRendererTorch
     {
         [Inject]
-        public IGameData d_Data;
+        public GameData d_Data;
         [Inject]
         public ITerrainTextures d_TerainRenderer;
         public int TopTexture;

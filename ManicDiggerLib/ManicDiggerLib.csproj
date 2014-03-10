@@ -92,6 +92,7 @@
     </Compile>
     <Compile Include="ClientNative\Audio.cs" />
     <Compile Include="ClientNative\AviWriter.cs" />
+    <Compile Include="ClientNative\Screenshot.cs" />
     <Compile Include="Client\CharacterRenderer.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\HudChat.ci.cs" />
@@ -120,7 +121,6 @@
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="ClientCs\GuiStates\GuiStateCraftingRecipes.cs" />
     <Compile Include="ClientCs\GuiStates\GuiStateEscapeMenu.cs" />
-    <Compile Include="ClientCs\GuiStates\GuiStateMapLoading.cs" />
     <Compile Include="ClientCs\ManicDiggerGameWindow.cs" />
     <Compile Include="ClientCs\Menu.cs">
       <SubType>Form</SubType>

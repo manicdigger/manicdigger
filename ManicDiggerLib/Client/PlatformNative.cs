@@ -13,6 +13,7 @@ using System.Diagnostics;
 using ManicDigger.Renderers;
 using System.Globalization;
 using OpenTK.Audio;
+using ManicDigger.ClientNative;
 
 public class GamePlatformNative : GamePlatform, IGameExit
 {
@@ -181,10 +182,24 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
         bmp2.UnlockBits(bmp_data);
     }
-
+    Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
+    public SizeF TextSize(string text, float fontsize)
+    {
+        SizeF size;
+        if (textsizes.TryGetValue(new TextAndSize() { text = text, size = fontsize }, out size))
+        {
+            return size;
+        }
+        size = textrenderer.MeasureTextSize(text, fontsize);
+        textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
+        return size;
+    }
 
     public override void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight)
     {
+        SizeF size = TextSize(text, fontSize);
+        outWidth.value = (int)size.Width;
+        outHeight.value = (int)size.Height;
     }
 
     public override void Exit()
@@ -611,10 +626,10 @@ public class GamePlatformNative : GamePlatform, IGameExit
         Bitmap bmp = bmpArg;
         bool convertedbitmap = false;
         if ((!ALLOW_NON_POWER_OF_TWO) &&
-            (!(BitTools.IsPowerOfTwo((uint)bmp.Width) && BitTools.IsPowerOfTwo((uint)bmp.Height))))
+            (!(BitTools.IsPowerOfTwo(bmp.Width) && BitTools.IsPowerOfTwo(bmp.Height))))
         {
-            Bitmap bmp2 = new Bitmap((int)BitTools.NextPowerOfTwo((uint)bmp.Width),
-                (int)BitTools.NextPowerOfTwo((uint)bmp.Height));
+            Bitmap bmp2 = new Bitmap(BitTools.NextPowerOfTwo(bmp.Width),
+                BitTools.NextPowerOfTwo(bmp.Height));
             using (Graphics g = Graphics.FromImage(bmp2))
             {
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -961,6 +976,73 @@ public class GamePlatformNative : GamePlatform, IGameExit
     public override float FloatModulo(float a, int b)
     {
         return a % b;
+    }
+
+    public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
+
+    public override void SetFreeMouse(bool value)
+    {
+        if (IsMac)
+        {
+            window.CursorVisible = value;
+            System.Windows.Forms.Cursor.Hide();
+        }
+    }
+
+    public override UriCi ParseUri(string uri)
+    {
+        MyUri myuri = new MyUri(uri);
+
+        UriCi ret = new UriCi();
+        ret.url = myuri.Url;
+        ret.ip = myuri.Ip;
+        ret.port = myuri.Port;
+        ret.get = new DictionaryStringString();
+        foreach (var k in myuri.Get)
+        {
+            ret.get.Set(k.Key, k.Value);
+        }
+        return ret;
+    }
+}
+
+public class MyUri
+{
+    public MyUri(string uri)
+    {
+        //string url = "md://publichash:123/?user=a&auth=123";
+        var a = new Uri(uri);
+        Ip = a.Host;
+        Port = a.Port;
+        Get = ParseGet(uri);
+    }
+    internal string Url { get; private set; }
+    internal string Ip { get; private set; }
+    internal int Port { get; private set; }
+    internal Dictionary<string, string> Get { get; private set; }
+    private static Dictionary<string, string> ParseGet(string url)
+    {
+        try
+        {
+            Dictionary<string, string> d;
+            d = new Dictionary<string, string>();
+            if (url.Contains("?"))
+            {
+                string url2 = url.Substring(url.IndexOf("?") + 1);
+                var ss = url2.Split(new char[] { '&' });
+                for (int i = 0; i < ss.Length; i++)
+                {
+                    var ss2 = ss[i].Split(new char[] { '=' });
+                    d[ss2[0]] = ss2[1];
+                }
+            }
+            return d;
+        }
+        catch
+        {
+            //throw new FormatException("Invalid address: " + url);
+            return null;
+        }
     }
 }
 

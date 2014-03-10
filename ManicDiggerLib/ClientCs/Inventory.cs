@@ -460,7 +460,7 @@ namespace ManicDigger
     public class GameDataItemsBlocks : IGameDataItems
     {
         public ManicDiggerGameWindow game;
-        public IGameData d_Data;
+        public GameData d_Data;
         public string ItemInfo(Item item)
         {
             if (item.ItemClass == ItemClass.Block)

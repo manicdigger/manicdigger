@@ -14,7 +14,7 @@ namespace ManicDigger
         [Inject]
         public IMapStorage d_MapStorage;
         [Inject]
-        public IGameData d_Data;
+        public GameData d_Data;
         public RailSlope GetRailSlope(int x, int y, int z)
         {
             int tiletype = d_MapStorage.GetBlock(x, y, z);

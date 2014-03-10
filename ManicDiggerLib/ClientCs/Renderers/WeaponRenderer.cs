@@ -17,7 +17,7 @@ namespace ManicDigger.Renderers
         [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition;
         [Inject]
-        public IGameData d_Data;
+        public GameData d_Data;
         [Inject]
         public IMapStorage d_Map;
         [Inject]

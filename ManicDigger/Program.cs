@@ -55,17 +55,17 @@ namespace GameModeFortress
                     {
                         throw new Exception("Invalid game mode: " + mode);
                     }
-                    connectdata.Ip = XmlTool.XmlVal(d, "/ManicDiggerLink/Ip");
+                    connectdata.SetIp(XmlTool.XmlVal(d, "/ManicDiggerLink/Ip"));
                     int port = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerLink/Port"));
-                    connectdata.Port = port;
-                    connectdata.Username = XmlTool.XmlVal(d, "/ManicDiggerLink/User");
-                    connectdata.IsServePasswordProtected = Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerLink/PasswordProtected"));
+                    connectdata.SetPort(port);
+                    connectdata.SetUsername(XmlTool.XmlVal(d, "/ManicDiggerLink/User"));
+                    connectdata.SetIsServePasswordProtected(Misc.ReadBool(XmlTool.XmlVal(d, "/ManicDiggerLink/PasswordProtected")));
                     IsSinglePlayer = false;
                     singleplayerpath = null;
                 }
                 else
                 {
-                    connectdata = ConnectData.FromUri(new MyUri(args[0]));
+                    connectdata = ConnectData.FromUri(new GamePlatformNative().ParseUri(args[0]));
                     IsSinglePlayer = false;
                     singleplayerpath = null;
                 }
@@ -106,7 +106,7 @@ namespace GameModeFortress
                 if (IsSinglePlayer)
                 {
                     singleplayerpath = form.SinglePlayerSaveGamePath;
-                    connectdata.IsServePasswordProtected = false;
+                    connectdata.SetIsServePasswordProtected(false);
                 }
                 else
                 {
@@ -117,7 +117,7 @@ namespace GameModeFortress
             savefilename = singleplayerpath;
 
             string serverPassword = "";
-            if(connectdata.IsServePasswordProtected)
+            if (connectdata.GetIsServePasswordProtected())
             {
                 PasswordForm passwordForm = new PasswordForm();
                 DialogResult dialogResult = passwordForm.ShowDialog();
@@ -132,7 +132,7 @@ namespace GameModeFortress
                     throw new Exception();
                 }
             }
-            connectdata.ServerPassword = serverPassword;
+            connectdata.SetServerPassword(serverPassword);
             StartGameWindowAndConnect(IsSinglePlayer, connectdata, singleplayerpath);
         }
 
@@ -141,7 +141,7 @@ namespace GameModeFortress
             if (issingleplayer)
             {
                 new Thread(ServerThreadStart).Start();
-                connectdata.Username = "Local";
+                connectdata.SetUsername("Local");
             }
         restart:
             ManicDiggerGameWindow w = new ManicDiggerGameWindow();
