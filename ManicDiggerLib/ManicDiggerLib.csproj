@@ -95,6 +95,7 @@
     <Compile Include="Client\CharacterRenderer.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\HudChat.ci.cs" />
+    <Compile Include="Client\Interpolation.ci.cs" />
     <Compile Include="Client\Language.ci.cs" />
     <Compile Include="Client\MeshBatcher.ci.cs" />
     <Compile Include="Client\ModAutoCamera.ci.cs" />

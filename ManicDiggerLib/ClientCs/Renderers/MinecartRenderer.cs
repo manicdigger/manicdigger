@@ -11,7 +11,7 @@ namespace ManicDigger.Renderers
         public Vector3 position;
         public VehicleDirection12 direction;
         public VehicleDirection12 lastdirection;
-        public double progress;
+        public float progress;
         public MinecartRenderer renderer;
         #region IModelToDraw Members
         public void Draw(float dt)
@@ -33,7 +33,7 @@ namespace ManicDigger.Renderers
         public IThe3d d_The3d { get; set; }
         int minecarttexture = -1;
         #region IModelToDraw Members
-        public void Draw(Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, double progress)
+        public void Draw(Vector3 position, VehicleDirection12 dir, VehicleDirection12 lastdir, float progress)
         {
             if (minecarttexture == -1)
             {
@@ -42,10 +42,10 @@ namespace ManicDigger.Renderers
             game.GLPushMatrix();
             Vector3 p = position + new Vector3(0, -0.7f, 0);
             game.GLTranslate(p.X, p.Y, p.Z);
-            double currot = vehiclerotation(dir);
-            double lastrot = vehiclerotation(lastdir);
+            float currot = vehiclerotation(dir);
+            float lastrot = vehiclerotation(lastdir);
             //double rot = lastrot + (currot - lastrot) * progress;
-            float rot = (float)AngleInterpolation.InterpolateAngle360(lastrot, currot, progress);
+            float rot = (float)AngleInterpolation.InterpolateAngle360(game.game.platform, lastrot, currot, progress);
             game.GLRotate(-rot - 90, 0, 1, 0);
             var c = new CharacterRendererMonsterCode();
             c.game = game.game;
@@ -55,7 +55,7 @@ namespace ManicDigger.Renderers
             game.GLPopMatrix();
         }
         #endregion
-        double vehiclerotation(VehicleDirection12 dir)
+        float vehiclerotation(VehicleDirection12 dir)
         {
             switch (dir)
             {

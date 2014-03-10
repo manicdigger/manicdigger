@@ -957,6 +957,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
         AviWriterCiCs avi = new AviWriterCiCs();
         return avi;
     }
+
+    public override float FloatModulo(float a, int b)
+    {
+        return a % b;
+    }
 }
 
 public class AviWriterCiCs : AviWriterCi

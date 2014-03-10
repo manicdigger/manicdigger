@@ -89,6 +89,7 @@
     public abstract BitmapCi GrabScreenshot();
     public abstract AviWriterCi AviWriterCreate();
     public abstract bool StringEmpty(string data);
+    public abstract float FloatModulo(float a, int b);
 }
 
 public class EnetHost

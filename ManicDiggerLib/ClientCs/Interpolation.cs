@@ -89,45 +89,4 @@ namespace ManicDigger
             return result;
         }
     }
-    public class AngleInterpolation
-    {
-        public static int InterpolateAngle256(int a, int b, float progress)
-        {
-            if (progress != 0 && b != a)
-            {
-                int diff = NormalizeAngle256(b - a);
-                if (diff >= CircleHalf256)
-                {
-                    diff -= CircleFull256;
-                }
-                a += (int)(progress * diff);
-            }
-            return NormalizeAngle256(a);
-        }
-        static int CircleHalf256 = 256 / 2;
-        static int CircleFull256 = 256;
-        static private int NormalizeAngle256(int v)
-        {
-            return (v + int.MaxValue / 2) % 256;
-        }
-        public static double InterpolateAngle360(double a, double b, double progress)
-        {
-            if (progress != 0 && b != a)
-            {
-                double diff = NormalizeAngle360(b - a);
-                if (diff >= CircleHalf360)
-                {
-                    diff -= CircleFull360;
-                }
-                a += (progress * diff);
-            }
-            return NormalizeAngle360(a);
-        }
-        static int CircleHalf360 = 360 / 2;
-        static int CircleFull360 = 360;
-        static private double NormalizeAngle360(double v)
-        {
-            return (v + ((int.MaxValue / 2) / 360) * 360) % 360;
-        }
-    }
 }

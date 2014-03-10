@@ -3528,14 +3528,15 @@ namespace ManicDigger
         }
         class PlayerInterpolate : IInterpolation
         {
+            internal GamePlatform platform;
             public object Interpolate(object a, object b, float progress)
             {
                 PlayerInterpolationState aa = a as PlayerInterpolationState;
                 PlayerInterpolationState bb = b as PlayerInterpolationState;
                 PlayerInterpolationState cc = new PlayerInterpolationState();
                 cc.position = aa.position + (bb.position - aa.position) * progress;
-                cc.heading = (byte)AngleInterpolation.InterpolateAngle256(aa.heading, bb.heading, progress);
-                cc.pitch = (byte)AngleInterpolation.InterpolateAngle256(aa.pitch, bb.pitch, progress);
+                cc.heading = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress);
+                cc.pitch = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress);
                 return cc;
             }
         }
