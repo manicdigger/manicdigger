@@ -3528,7 +3528,7 @@ namespace ManicDigger
         }
         class PlayerInterpolate : IInterpolation
         {
-            internal GamePlatform platform;
+            internal GamePlatform platform = new GamePlatformNative();
             public object Interpolate(object a, object b, float progress)
             {
                 PlayerInterpolationState aa = a as PlayerInterpolationState;
@@ -3600,15 +3600,6 @@ namespace ManicDigger
                 }
                 Vector3 curpos = curstate.position;
                 info.velocity = curpos - info.lastcurpos;
-                float playeraccel = (info.velocity.Length / dt) - (info.lastvelocity.Length / dt);
-                if (playeraccel > 3.5)
-                {
-                    info.velocity = info.lastvelocity;
-                }
-                else
-                {
-                    info.lastvelocity = info.velocity;
-                }
                 float playerspeed = (info.velocity.Length / dt) * 0.04f;
                 bool moves = curpos != info.lastcurpos;
                 info.lastcurpos = curpos;
