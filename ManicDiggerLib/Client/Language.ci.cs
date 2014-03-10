@@ -81,6 +81,54 @@
     public string ServerConfigCorruptBackup() { return Get("Server_ConfigCorruptBackup"); }
     public string ServerConfigCorruptNoBackup() { return Get("Server_ConfigCorruptNoBackup"); }
     public string ServerConfigLoaded() { return Get("Server_ConfigLoaded"); }
+    public string ServerClientConfigNotFound() { return Get("Server_ClientConfigNotFound"); }
+    public string ServerClientConfigGuestGroupNotFound() { return Get("Server_ClientConfigGuestGroupNotFound"); }
+    public string ServerClientConfigRegisteredGroupNotFound() { return Get("Server_ClientConfigRegisteredGroupNotFound"); }
+    public string ServerClientConfigLoaded() { return Get("Server_ClientConfigLoaded"); }
+    public string ServerInvalidSpawnCoordinates() { return Get("Server_InvalidSpawnCoordinates"); }
+    public string ServerProgressDownloading() { return Get("Server_ProgressDownloading"); }
+    public string ServerProgressGenerating() { return Get("Server_ProgressGenerating"); }
+    public string ServerNoChatPrivilege() { return Get("Server_NoChatPrivilege"); }
+    public string ServerFillAreaInvalid() { return Get("Server_FillAreaInvalid"); }
+    public string ServerFillAreaTooLarge() { return Get("Server_FillAreaTooLarge"); }
+    public string ServerNoSpectatorBuild() { return Get("Server_NoSpectatorBuild"); }
+    public string ServerNoBuildPrivilege() { return Get("Server_NoBuildPrivilege"); }
+    public string ServerNoBuildPermissionHere() { return Get("Server_NoBuildPermissionHere"); }
+    public string ServerNoSpectatorUse() { return Get("Server_NoSpectatorUse"); }
+    public string ServerNoUsePrivilege() { return Get("Server_NoUsePrivilege"); }
+    public string ServerPlayerJoin() { return Get("Server_PlayerJoin"); }
+    public string ServerPlayerDisconnect() { return Get("Server_PlayerDisconnect"); }
+    public string ServerUsernameBanned() { return Get("Server_UsernameBanned"); }
+    public string ServerNoGuests() { return Get("Server_NoGuests"); }
+    public string ServerUsernameInvalid() { return Get("Server_UsernameInvalid"); }
+    public string ServerPasswordInvalid() { return Get("Server_PasswordInvalid"); }
+    public string ServerClientException() { return Get("Server_ClientException"); }
+    public string ServerIPBanned() { return Get("Server_IPBanned"); }
+    public string ServerTooManyPlayers() { return Get("Server_TooManyPlayers"); }
+    public string ServerHTTPServerError() { return Get("Server_HTTPServerError"); }
+    public string ServerHTTPServerStarted() { return Get("Server_HTTPServerStarted"); }
+    public string ServerHeartbeatSent() { return Get("Server_HeartbeatSent"); }
+    public string ServerHeartbeatError() { return Get("Server_HeartbeatError"); }
+    public string ServerBanlistLoaded() { return Get("Server_BanlistLoaded"); }
+    public string ServerBanlistCorruptNoBackup() { return Get("Server_BanlistCorruptNoBackup"); }
+    public string ServerBanlistCorrupt() { return Get("Server_BanlistCorrupt"); }
+    public string ServerBanlistNotFound() { return Get("Server_BanlistNotFound"); }
+    public string ServerSetupAccept() { return Get("Server_SetupAccept"); }
+    public string ServerSetupEnableHTTP() { return Get("Server_SetupEnableHTTP"); }
+    public string ServerSetupMaxClients() { return Get("Server_SetupMaxClients"); }
+    public string ServerSetupMaxClientsInvalidValue() { return Get("Server_SetupMaxClientsInvalidValue"); }
+    public string ServerSetupMaxClientsInvalidInput() { return Get("Server_SetupMaxClientsInvalidInput"); }
+    public string ServerSetupPort() { return Get("Server_SetupPort"); }
+    public string ServerSetupPortInvalidValue() { return Get("Server_SetupPortInvalidValue"); }
+    public string ServerSetupPortInvalidInput() { return Get("Server_SetupPortInvalidInput"); }
+    public string ServerSetupWelcomeMessage() { return Get("Server_SetupWelcomeMessage"); }
+    public string ServerSetupMOTD() { return Get("Server_SetupMOTD"); }
+    public string ServerSetupName() { return Get("Server_SetupName"); }
+    public string ServerSetupPublic() { return Get("Server_SetupPublic"); }
+    public string ServerSetupQuestion() { return Get("Server_SetupQuestion"); }
+    public string ServerSetupFirstStart() { return Get("Server_SetupFirstStart"); }
+    public string ServerGameSaved() { return Get("Server_GameSaved"); }
+    public string ServerInvalidBackupName() { return Get("Server_InvalidBackupName"); }
 
     public void LoadTranslations()
     {
@@ -179,14 +227,54 @@
         Add("en", "Server_ConfigCorruptBackup", "ServerConfig corrupt! Created new. Backup saved as ServerConfig.txt.old");
         Add("en", "Server_ConfigCorruptNoBackup", "ServerConfig corrupt! Created new. COULD NOT BACKUP OLD!");
         Add("en", "Server_ConfigLoaded", "Server configuration loaded.");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
-//        Add("en", "Server_", "");
+        Add("en", "Server_ClientConfigNotFound", "Server client configuration file not found, creating new.");
+        Add("en", "Server_ClientConfigGuestGroupNotFound", "Default guest group not found!");
+        Add("en", "Server_ClientConfigRegisteredGroupNotFound", "Default registered group not found!");
+        Add("en", "Server_ClientConfigLoaded", "Server client configuration loaded.");
+        Add("en", "Server_InvalidSpawnCoordinates", "Invalid default spawn coordinates!");
+        Add("en", "Server_ProgressDownloading", "Downloading data...");
+        Add("en", "Server_ProgressGenerating", "Generating world...");
+        Add("en", "Server_NoChatPrivilege", "{0}Insufficient privileges to chat.");
+        Add("en", "Server_FillAreaInvalid", "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
+        Add("en", "Server_FillAreaTooLarge", "Fill area is too large.");
+        Add("en", "Server_NoSpectatorBuild", "Spectators are not allowed to build.");
+        Add("en", "Server_NoBuildPrivilege", "Insufficient privileges to build.");
+        Add("en", "Server_NoBuildPermissionHere", "You need permission to build in this section of the world.");
+        Add("en", "Server_NoSpectatorUse", "Spectators are not allowed to use blocks.");
+        Add("en", "Server_NoUsePrivilege", "Insufficient privileges to use blocks.");
+        Add("en", "Server_PlayerJoin", "Player {0} joins.");
+        Add("en", "Server_PlayerDisconnect", "Player {0} disconnected.");
+        Add("en", "Server_UsernameBanned", "Your username has been banned from this server.\n{0}");
+        Add("en", "Server_NoGuests", "Guests are not allowed on this server. Login or register an account.");
+        Add("en", "Server_UsernameInvalid", "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
+        Add("en", "Server_PasswordInvalid", "Invalid server password.");
+        Add("en", "Server_ClientException", "Your client threw an exception at server.");
+        Add("en", "Server_IPBanned", "Your IP has been banned from this server.\n{0}");
+        Add("en", "Server_TooManyPlayers", "Too many players! Try to connect later.");
+        Add("en", "Server_HTTPServerError", "Cannot start HTTP server on TCP port {0}.");
+        Add("en", "Server_HTTPServerStarted", "HTTP server listening on TCP port {0}.");
+        Add("en", "Server_HeartbeatSent", "Heartbeat sent.");
+        Add("en", "Server_HeartbeatError", "Unable to send heartbeat.");
+        Add("en", "Server_BanlistLoaded", "Server banlist loaded.");
+        Add("en", "Server_BanlistCorruptNoBackup", "Banlist corrupt! Created new. COULD NOT BACKUP OLD!");
+        Add("en", "Server_BanlistCorrupt", "Banlist corrupt! Created new. Backup saved as ServerBanlist.txt.old");
+        Add("en", "Server_BanlistNotFound", "Server banlist not found, creating new.");
+        Add("en", "Server_SetupAccept", "y");
+        Add("en", "Server_SetupEnableHTTP", "Dou you want to enable the builtin HTTP server? (Y/N)");
+        Add("en", "Server_SetupMaxClients", "Enter the maximum number of clients (Default: 16)");
+        Add("en", "Server_SetupMaxClientsInvalidValue", "Number may not be negative. Using default (16)");
+        Add("en", "Server_SetupMaxClientsInvalidInput", "Invalid input. Using default (16)");
+        Add("en", "Server_SetupPort", "Enter the port the server shall run on (Default: 25565)");
+        Add("en", "Server_SetupPortInvalidValue", "Out of port range. Using default (25565)");
+        Add("en", "Server_SetupPortInvalidInput", "Invalid input. Using default (25565)");
+        Add("en", "Server_SetupWelcomeMessage", "Enter the welcome message (displayed when joining your server)");
+        Add("en", "Server_SetupMOTD", "Enter the MOTD (displayed on server list)");
+        Add("en", "Server_SetupName", "Please enter the server's name");
+        Add("en", "Server_SetupPublic", "Do you want the server to be public (visible on the server list)? (Y/N)");
+        Add("en", "Server_SetupQuestion", "Would you like to set up some basic parameters? (Y/N)");
+        Add("en", "Server_SetupFirstStart", "It seems this is the first time you started this server.");
+        Add("en", "Server_GameSaved", "Game saved. ({0} seconds)");
+        Add("en", "Server_InvalidBackupName", "Invalid backup filename: ");
     }
 
     void Add(string language, string id, string translated)

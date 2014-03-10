@@ -421,7 +421,7 @@ namespace ManicDiggerServer
         {
             if (!GameStorePath.IsValidName(backupFilename))
             {
-                Console.WriteLine("Invalid backup filename: " + backupFilename);
+            	Console.WriteLine(language.ServerInvalidBackupName() + backupFilename);
                 return false;
             }
             if (!Directory.Exists(GameStorePath.gamepathbackup))
@@ -502,7 +502,7 @@ namespace ManicDiggerServer
             {
                 DateTime start = DateTime.UtcNow;
                 SaveGlobalData();
-                Console.WriteLine("Game saved. ({0} seconds)", (DateTime.UtcNow - start));
+                Console.WriteLine(language.ServerGameSaved(), (DateTime.UtcNow - start));
                 lastsave = DateTime.Now;
             }
         }
@@ -620,12 +620,12 @@ namespace ManicDiggerServer
                 //Ask for config parameters the first time the server is started
                 string line;
                 bool wantsconfig = false;
-                Console.WriteLine("It seems this is the first time you started this server.");
-                Console.WriteLine("Would you like to set up some basic parameters? (Y/N)");
+                Console.WriteLine(language.ServerSetupFirstStart());
+                Console.WriteLine(language.ServerSetupQuestion());
                 line = Console.ReadLine();
                 if (!string.IsNullOrEmpty(line))
                 {
-                	if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                	if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
                 		wantsconfig = true;
                 	else
                 		wantsconfig = false;
@@ -633,36 +633,36 @@ namespace ManicDiggerServer
                 //Only ask these questions if user wants to
                 if (wantsconfig)
                 {
-                	Console.WriteLine("Do you want the server to be public (visible on the server list)? (Y/N)");
+                	Console.WriteLine(language.ServerSetupPublic());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
                 		bool choice;
-                		if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                		if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
                 			choice = true;
                 		else
                 			choice = false;
                 		config.Public = choice;
                 	}
-                	Console.WriteLine("Please enter the server's name");
+                	Console.WriteLine(language.ServerSetupName());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
                 		config.Name = line;
                 	}
-                	Console.WriteLine("Enter the MOTD (displayed on server list)");
+                	Console.WriteLine(language.ServerSetupMOTD());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
                 		config.Motd = line;
                 	}
-                	Console.WriteLine("Enter the welcome message (displayed when joining your server)");
+                	Console.WriteLine(language.ServerSetupWelcomeMessage());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
                 		config.WelcomeMessage = line;
                 	}
-                	Console.WriteLine("Enter the port the server shall run on (Default: 25565)");
+                	Console.WriteLine(language.ServerSetupPort());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
@@ -676,15 +676,15 @@ namespace ManicDiggerServer
                 			}
                 			else
                 			{
-                				Console.WriteLine("Out of port range. Using default (25565)");
+                				Console.WriteLine(language.ServerSetupPortInvalidValue());
                 			}
                 		}
                 		catch
                 		{
-                			Console.WriteLine("Invalid input. Using default (25565)");
+                			Console.WriteLine(language.ServerSetupPortInvalidInput());
                 		}
                 	}
-                	Console.WriteLine("Enter the maximum number of clients (Default: 16)");
+                	Console.WriteLine(language.ServerSetupMaxClients());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
@@ -698,20 +698,20 @@ namespace ManicDiggerServer
                 			}
                 			else
                 			{
-                				Console.WriteLine("Number may not be negative. Using default (16)");
+                				Console.WriteLine(language.ServerSetupMaxClientsInvalidValue());
                 			}
                 		}
                 		catch
                 		{
-                			Console.WriteLine("Invalid input. Using default (16)");
+                			Console.WriteLine(language.ServerSetupMaxClientsInvalidInput());
                 		}
                 	}
-                	Console.WriteLine("Dou you want to enable the builtin HTTP server? (Y/N)");
+                	Console.WriteLine(language.ServerSetupEnableHTTP());
                 	line = Console.ReadLine();
                 	if (!string.IsNullOrEmpty(line))
                 	{
                 		bool choice;
-                		if (line.Equals("y", StringComparison.InvariantCultureIgnoreCase))
+                		if (line.Equals(language.ServerSetupAccept(), StringComparison.InvariantCultureIgnoreCase))
                 			choice = true;
                 		else
                 			choice = false;
@@ -733,7 +733,7 @@ namespace ManicDiggerServer
         	string filename = "ServerBanlist.txt";
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
-                Console.WriteLine("Server banlist not found, creating new.");
+            	Console.WriteLine(language.ServerBanlistNotFound());
                 SaveBanlist();
                 return;
             }
@@ -752,16 +752,16 @@ namespace ManicDiggerServer
             	try
             	{
             	    File.Copy(Path.Combine(GameStorePath.gamepathconfig, filename), Path.Combine(GameStorePath.gamepathconfig, filename + ".old"));
-            	    Console.WriteLine("Banlist corrupt! Created new. Backup saved as ServerBanlist.txt.old");
+            	    Console.WriteLine(language.ServerBanlistCorrupt());
             	}
             	catch
             	{
-            		Console.WriteLine("Banlist corrupt! Created new. COULD NOT BACKUP OLD!");
+            		Console.WriteLine(language.ServerBanlistCorruptNoBackup());
             	}
             	banlist = null;
                 SaveBanlist();
             }
-            Console.WriteLine("Server banlist loaded.");
+            Console.WriteLine(language.ServerBanlistLoaded());
         }
         
         public void SaveBanlist()
@@ -818,12 +818,12 @@ namespace ManicDiggerServer
                     Console.WriteLine("hash: " + GetHash(d_Heartbeat.ReceivedKey));
                     writtenServerKey = true;
                 }
-                Console.WriteLine("Heartbeat sent.");
+                Console.WriteLine(language.ServerHeartbeatSent());
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
-                Console.WriteLine("Unable to send heartbeat.");
+                Console.WriteLine(language.ServerHeartbeatError());
             }
         }
 
@@ -872,11 +872,11 @@ namespace ManicDiggerServer
                     	httpServer.Install(module.module);
                 	}
                 	httpServer.Start();
-                	Console.WriteLine("HTTP server listening on TCP port {0}.", port);
+                	Console.WriteLine(language.ServerHTTPServerStarted(), port);
             	}
             	catch
             	{
-                	Console.WriteLine("Cannot start HTTP server on TCP port {0}.", port);
+            		Console.WriteLine(language.ServerHTTPServerError(), port);
             	}
             }
         }
@@ -1054,7 +1054,7 @@ namespace ManicDiggerServer
                         };
                         if (clients.Count > config.MaxClients)
                         {
-                            SendDisconnectPlayer(this.lastClientId, "Too many players! Try to connect later.");
+                        	SendDisconnectPlayer(this.lastClientId, language.ServerTooManyPlayers());
                             KillPlayer(this.lastClientId);
                         }
                         else if (banlist.IsIPBanned(iep1.AddressToString()))
@@ -1063,7 +1063,7 @@ namespace ManicDiggerServer
                             string reason = entry.Reason;
                             if (string.IsNullOrEmpty(reason))
                                 reason = "";
-                            SendDisconnectPlayer(this.lastClientId, string.Format("Your IP has been banned from this server.\n{0}", reason));
+                            SendDisconnectPlayer(this.lastClientId, string.Format(language.ServerIPBanned(), reason));
                             Console.WriteLine(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             KillPlayer(this.lastClientId);
@@ -1086,7 +1086,7 @@ namespace ManicDiggerServer
                         {
                             //client problem. disconnect client.
                             Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
-                            SendDisconnectPlayer(clientid, "Your client threw an exception at server.");
+                            SendDisconnectPlayer(clientid, language.ServerClientException());
                             KillPlayer(clientid);
                             Console.WriteLine(e.ToString());
                         }
@@ -1922,15 +1922,7 @@ if (sent >= unknown.Count) { break; }
             return PlayerStats[playername];
         }
         public int FiniteInventoryMax = 200;
-        /*
-        Dictionary<int, int> StartInventory()
-        {
-            Dictionary<int, int> d = new Dictionary<int, int>();
-            d[(int)TileTypeManicDigger.CraftingTable] = 6;
-            d[(int)TileTypeManicDigger.Crops1] = 1;
-            return d;
-        }
-        */
+        
         Inventory StartInventory()
         {
             Inventory inv = ManicDigger.Inventory.Create();
@@ -2012,7 +2004,7 @@ if (sent >= unknown.Count) { break; }
             }
             if (name != "invalid")
             {
-                SendMessageToAll(string.Format("Player {0} disconnected.", coloredName));
+            	SendMessageToAll(string.Format(language.ServerPlayerDisconnect(), coloredName));
                 ServerEventLog(string.Format("{0} disconnects.", name));
             }
         }
@@ -2040,7 +2032,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             Console.WriteLine(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
                             ServerEventLog(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
-                            SendDisconnectPlayer(clientid, "Invalid server password.");
+                            SendDisconnectPlayer(clientid, language.ServerPasswordInvalid());
                             KillPlayer(clientid);
                             break;
                         }
@@ -2052,7 +2044,7 @@ if (sent >= unknown.Count) { break; }
 
                         if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
                         {
-                            SendDisconnectPlayer(clientid, "Invalid username (allowed characters: a-z,A-Z,0-9,-,_; max. length: 16).");
+                        	SendDisconnectPlayer(clientid, language.ServerUsernameInvalid());
                             ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
                             break;
@@ -2071,7 +2063,7 @@ if (sent >= unknown.Count) { break; }
 
                         if (!config.AllowGuests && verificationFailed)
                         {
-                            SendDisconnectPlayer(clientid, "Guests are not allowed on this server. Login or register an account.");
+                        	SendDisconnectPlayer(clientid, language.ServerNoGuests());
                             KillPlayer(clientid);
                             break;
                         }
@@ -2082,7 +2074,7 @@ if (sent >= unknown.Count) { break; }
                             string reason = entry.Reason;
                             if (string.IsNullOrEmpty(reason))
                                 reason = "";
-                            SendDisconnectPlayer(clientid, string.Format("Your username has been banned from this server.\n{0}", reason));
+                            SendDisconnectPlayer(clientid, string.Format(language.ServerUsernameBanned(), reason));
                             Console.WriteLine(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
@@ -2161,7 +2153,7 @@ if (sent >= unknown.Count) { break; }
                         clients[clientid].PositionMul32GlZ = position.z;
 
                         string ip = (clients[clientid].socket.RemoteEndPoint()).AddressToString();
-                        SendMessageToAll(string.Format("Player {0} joins.", clients[clientid].ColoredPlayername(colorNormal)));
+                        SendMessageToAll(string.Format(language.ServerPlayerJoin(), clients[clientid].ColoredPlayername(colorNormal)));
                         ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
                         SendMessage(clientid, colorSuccess + config.WelcomeMessage);
                         SendBlobs(clientid);
@@ -2195,12 +2187,12 @@ if (sent >= unknown.Count) { break; }
                         {
                         	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.use))
                         	{
-                        		SendMessage(clientid, colorError + "Insufficient privileges to use blocks.");
+                        		SendMessage(clientid, colorError + language.ServerNoUsePrivilege());
                         		break;
                         	}
                         	if (clients[clientid].IsSpectator && !config.AllowSpectatorUse)
                         	{
-                        		SendMessage(clientid, colorError + "Spectators are not allowed to use blocks.");
+                        		SendMessage(clientid, colorError + language.ServerNoSpectatorUse());
                         		break;
                         	}
                         	DoCommandBuild(clientid, true, packet.SetBlock);
@@ -2209,20 +2201,20 @@ if (sent >= unknown.Count) { break; }
                         {
                         	if (!PlayerHasPrivilege(clientid, ServerClientMisc.Privilege.build))
                         	{
-                            	SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                        		SendMessage(clientid, colorError + language.ServerNoBuildPrivilege());
                             	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             	break;
                         	}
                         	if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
                         	{
-                            	SendMessage(clientid, colorError + "Spectators are not allowed to build.");
+                        		SendMessage(clientid, colorError + language.ServerNoSpectatorBuild());
                             	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             	break;
                         	}
                         	if (!config.CanUserBuild(clients[clientid], x, y, z) && (packet.SetBlock.Mode == Packet_BlockSetModeEnum.Create || packet.SetBlock.Mode == Packet_BlockSetModeEnum.Destroy)
                             	&& !extraPrivileges.ContainsKey(ServerClientMisc.Privilege.build))
                         	{
-                            	SendMessage(clientid, colorError + "You need permission to build in this section of the world.");
+                        		SendMessage(clientid, colorError + language.ServerNoBuildPermissionHere());
                             	SendSetBlock(clientid, x, y, z, d_Map.GetBlock(x, y, z)); //revert
                             	break;
                         	}
@@ -2240,12 +2232,12 @@ if (sent >= unknown.Count) { break; }
                     {
                         if (!clients[clientid].privileges.Contains(ServerClientMisc.Privilege.build))
                         {
-                            SendMessage(clientid, colorError + "Insufficient privileges to build.");
+                        	SendMessage(clientid, colorError + language.ServerNoBuildPrivilege());
                             break;
                         }
                         if (clients[clientid].IsSpectator && !config.AllowSpectatorBuild)
                         {
-                            SendMessage(clientid, colorError + "Spectators are not allowed to build.");
+                        	SendMessage(clientid, colorError + language.ServerNoSpectatorBuild());
                             break;
                         }
                         Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
@@ -2255,12 +2247,12 @@ if (sent >= unknown.Count) { break; }
 
                         if (blockCount > clients[clientid].FillLimit)
                         {
-                            SendMessage(clientid, colorError + "Fill area is too large.");
+                        	SendMessage(clientid, colorError + language.ServerFillAreaTooLarge());
                             break;
                         }
                         if (!this.IsFillAreaValid(clients[clientid], a, b))
                         {
-                            SendMessage(clientid, colorError + "Fillarea is invalid or contains blocks in an area you are not allowed to build in.");
+                        	SendMessage(clientid, colorError + language.ServerFillAreaInvalid());
                             break;
                         }
                         this.DoFillArea(clientid, packet.FillArea, blockCount);
@@ -2326,7 +2318,7 @@ if (sent >= unknown.Count) { break; }
                             }
                             else
                             {
-                                SendMessage(clientid, string.Format("{0}Insufficient privileges to chat.", colorError));
+                            	SendMessage(clientid, string.Format(language.ServerNoChatPrivilege(), colorError));
                             }
                         }
                     }
@@ -2344,8 +2336,7 @@ if (sent >= unknown.Count) { break; }
                         stats.CurrentHealth = packet.Health.CurrentHealth;
                         if (stats.CurrentHealth < 1)
                         {
-                            //death
-                            //todo respawn
+                            //death - reset health. More stuff done in Death packet handling
                             stats.CurrentHealth = stats.MaxHealth;
                         }
                         clients[clientid].IsPlayerStatsDirty = true;
@@ -3465,13 +3456,13 @@ if (sent >= unknown.Count) { break; }
                 {
                     SendLevelProgress(clientid,
                         (int)(((float)i / files.Count
-                        + ((float)totalsent / blob.Length) / files.Count) * 100), "Downloading data...");
+                	                         + ((float)totalsent / blob.Length) / files.Count) * 100), language.ServerProgressDownloading());
                     SendBlobPart(clientid, part);
                     totalsent += part.Length;
                 }
                 SendBlobFinalize(clientid);
             }
-            SendLevelProgress(clientid, 0, "Generating world...");
+            SendLevelProgress(clientid, 0, language.ServerProgressGenerating());
         }
         static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
         {
@@ -3787,7 +3778,7 @@ if (sent >= unknown.Count) { break; }
             int z;
             if (!MapUtil.IsValidPos(d_Map, x, y))
             {
-                throw new Exception("Invalid default spawn coordinates!");
+            	throw new Exception(language.ServerInvalidSpawnCoordinates());
             }
 
             if (spawn.z == null)
@@ -3799,7 +3790,7 @@ if (sent >= unknown.Count) { break; }
                 z = spawn.z.Value;
                 if (!MapUtil.IsValidPos(d_Map, x, y, z))
                 {
-                    throw new Exception("Invalid default spawn coordinates!");
+                	throw new Exception(language.ServerInvalidSpawnCoordinates());
                 }
             }
             return new Vector3i(x * 32, z * 32, y * 32);
@@ -3810,7 +3801,7 @@ if (sent >= unknown.Count) { break; }
             string filename = "ServerClient.txt";
             if (!File.Exists(Path.Combine(GameStorePath.gamepathconfig, filename)))
             {
-                Console.WriteLine("Server client configuration file not found, creating new.");
+            	Console.WriteLine(language.ServerClientConfigNotFound());
                 SaveServerClient();
             }
             else
@@ -3871,7 +3862,7 @@ if (sent >= unknown.Count) { break; }
             );
             if (this.defaultGroupGuest == null)
             {
-                throw new Exception("Default guest group not found!");
+            	throw new Exception(language.ServerClientConfigGuestGroupNotFound());
             }
             this.defaultGroupRegistered = serverClient.Groups.Find(
                 delegate(ManicDigger.Group grp)
@@ -3881,9 +3872,9 @@ if (sent >= unknown.Count) { break; }
             );
             if (this.defaultGroupRegistered == null)
             {
-                throw new Exception("Default registered group not found!");
+            	throw new Exception(language.ServerClientConfigRegisteredGroupNotFound());
             }
-            Console.WriteLine("Server client configuration loaded.");
+            Console.WriteLine(language.ServerClientConfigLoaded());
         }
 
         public void SaveServerClient()
