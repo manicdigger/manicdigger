@@ -1063,7 +1063,7 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
         string path = Path.Combine(gamepathconfig, filename);
         MemoryStream ms = new MemoryStream();
-        x.Serialize(ms, options);
+        x.Serialize(ms, save);
         string xml = Encoding.UTF8.GetString(ms.ToArray());
         File.WriteAllText(path, xml);
     }
