@@ -15,15 +15,10 @@ namespace ManicDigger
     public class The3d : IGetCameraMatrix, IThe3d
     {
         public ManicDiggerGameWindow game;
-        [Inject]
         public ITerrainTextures d_Terrain;
-        [Inject]
         public Config3d d_Config3d;
-        [Inject]
         public TextRenderer d_TextRenderer;
-        [Inject]
         public IGetFileStream d_GetFile;
-        [Inject]
         public IViewportSize d_ViewportSize;
         public bool ALLOW_NON_POWER_OF_TWO = false;
 

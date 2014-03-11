@@ -7,7 +7,6 @@ namespace GameModeFortress
 {
     public class CraftingTableTool
     {
-        [Inject]
         public IMapStorage d_Map;
         public GameData d_Data;
         public List<int> GetOnTable(List<Vector3i> table)

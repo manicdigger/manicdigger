@@ -14,6 +14,7 @@ using ManicDigger.Renderers;
 using System.Globalization;
 using OpenTK.Audio;
 using ManicDigger.ClientNative;
+using System.Xml.Serialization;
 
 public class GamePlatformNative : GamePlatform, IGameExit
 {
@@ -1004,6 +1005,83 @@ public class GamePlatformNative : GamePlatform, IGameExit
         }
         return ret;
     }
+
+    public override OptionsCi LoadOptions()
+    {
+        Options loaded = new Options();
+        string path = Path.Combine(gamepathconfig, filename);
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+        string s = File.ReadAllText(path);
+        loaded = (Options)x.Deserialize(new System.IO.StringReader(s));
+
+        OptionsCi ret = new OptionsCi();
+        ret.Shadows = loaded.Shadows;
+        ret.Font = loaded.Font;
+        ret.DrawDistance = loaded.DrawDistance;
+        ret.UseServerTextures = loaded.UseServerTextures;
+        ret.EnableSound = loaded.EnableSound;
+        ret.Framerate = loaded.Framerate;
+        ret.Resolution = loaded.Resolution;
+        ret.Fullscreen = loaded.Fullscreen;
+        ret.Smoothshadows = loaded.Smoothshadows;
+        ret.BlockShadowSave = loaded.BlockShadowSave;
+        foreach (KeyValuePair<int, int> k in loaded.Keys)
+        {
+            ret.Keys[k.Key] = k.Value;
+        }
+        return ret;
+    }
+
+    XmlSerializer x = new XmlSerializer(typeof(Options));
+    public string gamepathconfig = GameStorePath.GetStorePath();
+    string filename = "ClientConfig.txt";
+
+    public override void SaveOptions(OptionsCi options)
+    {
+        Options save = new Options();
+        save.Shadows = options.Shadows;
+        save.Font = options.Font;
+        save.DrawDistance = options.DrawDistance;
+        save.UseServerTextures = options.UseServerTextures;
+        save.EnableSound = options.EnableSound;
+        save.Framerate = options.Framerate;
+        save.Resolution = options.Resolution;
+        save.Fullscreen = options.Fullscreen;
+        save.Smoothshadows = options.Smoothshadows;
+        save.BlockShadowSave = options.BlockShadowSave;
+        save.Keys = new SerializableDictionary<int, int>();
+        for (int i = 0; i < options.Keys.Length; i++)
+        {
+            if (options.Keys[i] != 0)
+            {
+                save.Keys[i] = options.Keys[i];
+            }
+        }
+
+        string path = Path.Combine(gamepathconfig, filename);
+        MemoryStream ms = new MemoryStream();
+        x.Serialize(ms, options);
+        string xml = Encoding.UTF8.GetString(ms.ToArray());
+        File.WriteAllText(path, xml);
+    }
+}
+
+public class Options
+{
+    public bool Shadows;
+    public int Font;
+    public int DrawDistance = 256;
+    public bool UseServerTextures = true;
+    public bool EnableSound = true;
+    public int Framerate = 0;
+    public int Resolution = 0;
+    public bool Fullscreen = false;
+    public bool Smoothshadows = true;
+    public float BlockShadowSave = 0.6f;
+    public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
 }
 
 public class MyUri

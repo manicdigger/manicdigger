@@ -47,12 +47,9 @@ namespace ManicDiggerServer
     public class ServerMap : IMapStorage
     {
         public Server server;
-        [Inject]
         public IChunkDb d_ChunkDb;
-        [Inject]
         public ICurrentTime d_CurrentTime;
         public Chunk[, ,] chunks;
-        [Inject]
         public GameData d_Data;
         public bool wasChunkGenerated;
         #region IMapStorage Members
@@ -244,7 +241,6 @@ namespace ManicDiggerServer
             }
         }
         #endregion
-        [Inject]
         public InfiniteMapChunked2dServer d_Heightmap;
         public unsafe ushort[] GetHeightmapChunk(int x, int y)
         {

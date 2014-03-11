@@ -10,19 +10,12 @@ namespace ManicDigger.Renderers
 {
     public class WeaponBlockInfo
     {
-        [Inject]
         public ITerrainTextures d_Terrain;
-        [Inject]
         public IActiveMaterial d_Viewport;
-        [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition;
-        [Inject]
         public GameData d_Data;
-        [Inject]
         public IMapStorage d_Map;
-        [Inject]
         public ManicDiggerGameWindow d_Shadows;
-        [Inject]
         public Inventory d_Inventory;
         public int terrainTexture { get { return d_Terrain.terrainTexture(); } }
         public int texturesPacked { get { return d_Terrain.texturesPacked(); } }
@@ -89,11 +82,8 @@ namespace ManicDigger.Renderers
     public class WeaponRenderer
     {
         public ManicDiggerGameWindow game;
-        [Inject]
         public WeaponBlockInfo d_Info;
-        [Inject]
         public BlockRendererTorch d_BlockRendererTorch;
-        [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition;
         public void SetAttack(bool isattack, bool build)
         {

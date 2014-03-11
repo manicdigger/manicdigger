@@ -27,9 +27,7 @@ namespace ManicDigger.Renderers
     public class MinecartRenderer
     {
         public ManicDiggerGameWindow game;
-        [Inject]
         public IGetFileStream d_GetFile { get; set; }
-        [Inject]
         public IThe3d d_The3d { get; set; }
         int minecarttexture = -1;
         #region IModelToDraw Members

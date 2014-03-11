@@ -14,13 +14,9 @@ namespace ManicDigger.Renderers
     }
     public class ParticleEffectBlockBreak
     {
-        [Inject]
         public ManicDiggerGameWindow d_Map;
-        [Inject]
         public ManicDiggerGameWindow d_Shadows;
-        [Inject]
         public ITerrainTextures d_Terrain;
-        [Inject]
         public GameData d_Data;
         public void DrawImmediateParticleEffects(double deltaTime)
         {

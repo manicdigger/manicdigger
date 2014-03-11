@@ -387,63 +387,6 @@ namespace ManicDigger
             return string.Format("[{0}, {1}, {2}]", x, y, z);
         }
     }
-    public class DependencyChecker
-    {
-        [Inject]
-        public Type[] d_InjectAttributes;
-        public DependencyChecker()
-        {
-        }
-        public DependencyChecker(params Type[] injectAttributes)
-        {
-            this.d_InjectAttributes = injectAttributes;
-        }
-        public void CheckDependencies(params object[] components)
-        {
-            if (d_InjectAttributes == null || d_InjectAttributes.Length == 0)
-            {
-                throw new Exception("Inject attributes list is null.");
-            }
-            foreach (object o in components)
-            {
-                CheckDependencies1(o);
-            }
-        }
-        private void CheckDependencies1(object o)
-        {
-            Type type = o.GetType();
-            var properties = type.GetProperties();
-            var fields = type.GetFields();
-            foreach (var property in properties)
-            {
-                var attributes = property.GetCustomAttributes(true);
-                foreach (var a in attributes)
-                {
-                    if (a is InjectAttribute)
-                    {
-                        if (property.GetValue(o, null) == null)
-                        {
-                            throw new Exception(string.Format("Dependency {0} of object of type {1} is null.", property.Name, type.Name));
-                        }
-                    }
-                }
-            }
-            foreach (var field in fields)
-            {
-                var attributes = field.GetCustomAttributes(true);
-                foreach (var a in attributes)
-                {
-                    if (a is InjectAttribute)
-                    {
-                        if (field.GetValue(o) == null)
-                        {
-                            throw new Exception(string.Format("Dependency {0} of object of type {1} is null.", field.Name, type.Name));
-                        }
-                    }
-                }
-            }
-        }
-    }
     public class Timer
     {
         public double INTERVAL { get { return interval; } set { interval = value; } }

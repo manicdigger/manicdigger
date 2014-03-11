@@ -21,7 +21,7 @@ namespace ManicDigger.Hud
          d_The3d = new The3d
          {
             d_Config3d = new Config3d(),
-            d_TextRenderer = new MonospacedTextRenderer()
+            d_TextRenderer = new TextRenderer()
          };
          CHARACTER_WIDTH = d_The3d.d_TextRenderer.MeasureTextSize(new string('M', 100), FONTSIZE).Width / 100f; // <--- measuring 100 gives a better result than measuring a single char
          UpdateEditorViewport();
@@ -36,7 +36,6 @@ namespace ManicDigger.Hud
       public float CURSOR_OFFSET_X = 1.0f;
 
       public ManicDiggerGameWindow game;
-      [Inject]
       public IViewportSize d_ViewportSize;
 
       private TextEditor m_editor = new TextEditor();

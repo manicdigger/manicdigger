@@ -92,6 +92,38 @@
     public abstract float FloatModulo(float a, int b);
     public abstract void SetFreeMouse(bool value);
     public abstract UriCi ParseUri(string uri);
+    public abstract OptionsCi LoadOptions();
+    public abstract void SaveOptions(OptionsCi options);
+}
+
+public class OptionsCi
+{
+    public OptionsCi()
+    {
+        float one = 1;
+        Shadows = false;
+        Font = 0;
+        DrawDistance = 256;
+        UseServerTextures = true;
+        EnableSound = true;
+        Framerate = 0;
+        Resolution = 0;
+        Fullscreen = false;
+        Smoothshadows = true;
+        BlockShadowSave = one * 6 / 10;
+        Keys = new int[256];
+    }
+    internal bool Shadows;
+    internal int Font;
+    internal int DrawDistance;
+    internal bool UseServerTextures;
+    internal bool EnableSound;
+    internal int Framerate;
+    internal int Resolution;
+    internal bool Fullscreen;
+    internal bool Smoothshadows;
+    internal float BlockShadowSave;
+    internal int[] Keys;
 }
 
 public class UriCi

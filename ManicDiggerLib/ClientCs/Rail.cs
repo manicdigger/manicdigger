@@ -11,9 +11,7 @@ namespace ManicDigger
     }
     public class RailMapUtil
     {
-        [Inject]
         public IMapStorage d_MapStorage;
-        [Inject]
         public GameData d_Data;
         public RailSlope GetRailSlope(int x, int y, int z)
         {

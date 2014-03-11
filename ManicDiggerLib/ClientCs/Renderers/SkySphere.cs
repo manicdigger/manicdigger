@@ -14,11 +14,8 @@ namespace ManicDigger.Renderers
     public class SkySphere
     {
         public ManicDiggerGameWindow game;
-        [Inject]
         public MeshBatcher d_MeshBatcher;
-        [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition;
-        [Inject]
         public IThe3d d_The3d;
         public int SkyTexture = -1;
         //int SkyMeshId = -1;

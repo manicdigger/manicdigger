@@ -39,18 +39,6 @@ namespace ManicDigger
         public bool exit { get; set; }
         #endregion
     }
-    public interface IAddChatLine
-    {
-        void AddChatline(string s);
-    }
-    public class AddChatLineDummy : ManicDigger.IAddChatLine
-    {
-        #region IGui Members
-        public void AddChatline(string s)
-        {
-        }
-        #endregion
-    }
     public interface IMapStorage
     {
         int MapSizeX { get; set; }
@@ -68,10 +56,6 @@ namespace ManicDigger
     public interface IMapStorageLight
     {
         int GetLight(int x, int y, int z);
-    }
-    public interface IWaterLevel
-    {
-        float WaterLevel { get; set; }
     }
     public enum PlayerType
     {
@@ -180,25 +164,6 @@ namespace ManicDigger
             return v;
         }
 
-        public static byte[] ToFlatMap(byte[, ,] map)
-        {
-            int sizex = map.GetUpperBound(0) + 1;
-            int sizey = map.GetUpperBound(1) + 1;
-            int sizez = map.GetUpperBound(2) + 1;
-            byte[] flatmap = new byte[sizex * sizey * sizez];
-            for (int x = 0; x < sizex; x++)
-            {
-                for (int y = 0; y < sizey; y++)
-                {
-                    for (int z = 0; z < sizez; z++)
-                    {
-                        flatmap[Index3d(x, y, z, sizex, sizey)] = map[x, y, z];
-                    }
-                }
-            }
-            return flatmap;
-        }
-
         public static int SearchColumn(IMapStorage map, int x, int y, int id, int startH)
         {
             for (int h = startH; h > 0; h--)
@@ -228,24 +193,6 @@ namespace ManicDigger
             return true;
         }
 
-        public static bool IsSolidChunk(ushort[, ,] chunk)
-        {
-            for (int x = 0; x <= chunk.GetUpperBound(0); x++)
-            {
-                for (int y = 0; y <= chunk.GetUpperBound(1); y++)
-                {
-                    for (int z = 0; z <= chunk.GetUpperBound(2); z++)
-                    {
-                        if (chunk[x, y, z] != chunk[0, 0, 0])
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
         public static Point PlayerArea(int playerAreaSize, int centerAreaSize, Vector3i blockPosition)
         {
             Point p = PlayerCenterArea(playerAreaSize, centerAreaSize, blockPosition);
@@ -263,17 +210,6 @@ namespace ManicDigger
             int gridposx = (px / centerAreaSize) * centerAreaSize;
             int gridposy = (py / centerAreaSize) * centerAreaSize;
             return new Point(gridposx, gridposy);
-        }
-
-        public static IEnumerable<Vector3> BlocksAround(Vector3 pos)
-        {
-            yield return new Vector3(pos + new Vector3(0, 0, 0));
-            yield return new Vector3(pos + new Vector3(+1, 0, 0));
-            yield return new Vector3(pos + new Vector3(-1, 0, 0));
-            yield return new Vector3(pos + new Vector3(0, +1, 0));
-            yield return new Vector3(pos + new Vector3(0, -1, 0));
-            yield return new Vector3(pos + new Vector3(0, 0, +1));
-            yield return new Vector3(pos + new Vector3(0, 0, -1));
         }
     }
     public class XmlTool
@@ -304,96 +240,7 @@ namespace ManicDigger
     }
     public class MapManipulator
     {
-        public const string XmlSaveExtension = ".mdxs.gz";
         public const string BinSaveExtension = ".mddbs";
-        public const string MinecraftMapSaveExtension = ".dat";
-    }
-    public interface IInternetGameFactory
-    {
-        void NewInternetGame();
-    }
-    public class InternetGameFactoryDummy : IInternetGameFactory
-    {
-        #region IInternetGameFactory Members
-        public void NewInternetGame()
-        {
-        }
-        #endregion
-    }
-    public class PlayMp3 : IDisposable
-    {
-        private string _command;
-        private bool isOpen;
-        [DllImport("winmm.dll")]
-        private static extern long mciSendString(string strCommand, StringBuilder strReturn, int iReturnLength, IntPtr hwndCallback);
-        bool closed = false;
-        public void Close()
-        {
-            try
-            {
-                _command = "close MediaFile";
-                mciSendString(_command, null, 0, IntPtr.Zero);
-                isOpen = false;
-            }
-            catch
-            {
-                Console.WriteLine("winmm.dll problem");
-            }
-        }
-        public void Open(string sFileName)
-        {
-            if (!File.Exists(sFileName))
-            {
-                Console.WriteLine("Music file not found: " + sFileName);
-            }
-            try
-            {
-                _command = "open \"" + sFileName + "\" type mpegvideo alias MediaFile";
-                mciSendString(_command, null, 0, IntPtr.Zero);
-                isOpen = true;
-            }
-            catch
-            {
-                Console.WriteLine("winmm.dll problem");
-            }
-        }
-        public void Play(bool loop)
-        {
-            try
-            {
-                if (isOpen)
-                {
-                    _command = "play MediaFile";
-                    if (loop)
-                        _command += " REPEAT";
-                    mciSendString(_command, null, 0, IntPtr.Zero);
-                }
-            }
-            catch
-            {
-                Console.WriteLine("winmm.dll problem");
-            }
-        }
-        #region IDisposable Members
-        public void Dispose()
-        {
-            if (!closed)
-            {
-                Close();
-                closed = true;
-            }
-        }
-        #endregion
-    }
-    public class Viewport
-    {
-    }
-    public interface IMap
-    {
-        //void LoadMap(byte[, ,] map);
-        IMapStorage Map { get; }
-        void SetTileAndUpdate(Vector3 pos, int type);
-        void RedrawAllBlocks();
     }
     public interface ILocalPlayerPosition
     {
@@ -402,37 +249,8 @@ namespace ManicDigger
         bool Swimming { get; }
         float CharacterEyesHeight { get; set; }
     }
-    public class LocalPlayerPositionDummy : ILocalPlayerPosition
-    {
-        #region ILocalPlayerPosition Members
-        public OpenTK.Vector3 LocalPlayerOrientation { get; set; }
-        public OpenTK.Vector3 LocalPlayerPosition { get; set; }
-        public bool Swimming { get { return false; } }
-        #endregion
-        #region ILocalPlayerPosition Members
-        public float CharacterEyesHeight { get; set; }
-        #endregion
-    }
     public interface IClients
     {
         IDictionary<int, Player> Players { get; set; }
-    }
-    public class PlayersDummy : IClients
-    {
-        IDictionary<int, Player> players = new Dictionary<int, Player>();
-        #region IPlayers Members
-        public IDictionary<int, Player> Players { get { return players; } set { players = value; } }
-        #endregion
-    }
-    public enum BlockSetMode
-    {
-        Destroy,
-        Create,
-        Use, //open doors, use crafting table, etc.
-        UseWithTool,
-    }
-    public interface ILogger
-    {
-        void LogPerformance(string key, string value);
     }
 }

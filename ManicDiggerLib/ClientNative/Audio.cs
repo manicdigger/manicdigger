@@ -29,7 +29,6 @@ namespace ManicDigger
     }
     public class AudioOpenAl : IAudio
     {
-        [Inject]
         public IGameExit d_GameExit;
         public AudioOpenAl()
         {

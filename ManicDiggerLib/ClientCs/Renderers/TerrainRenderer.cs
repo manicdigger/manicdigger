@@ -30,38 +30,13 @@ namespace ManicDigger.Renderers
             return r;
         }
     }
-
-    public class TerrainRenderer
-    {
-        public static int DistanceSquared(int x1, int y1, int z1, int x2, int y2, int z2)
-        {
-            int dx = x1 - x2;
-            int dy = y1 - y2;
-            int dz = z1 - z2;
-            return dx * dx + dy * dy + dz * dz;
-        }
-    }
     public enum TorchType
     {
         Normal, Left, Right, Front, Back
     }
-    public interface IBlockRendererTorch
+    public class BlockRendererTorch
     {
-        void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type);
-    }
-    public class BlockRendererTorchDummy : IBlockRendererTorch
-    {
-        #region IBlockRendererTorch Members
-        public void AddTorch(List<ushort> myelements, List<VertexPositionTexture> myvertices, int x, int y, int z, TorchType type)
-        {
-        }
-        #endregion
-    }
-    public class BlockRendererTorch : IBlockRendererTorch
-    {
-        [Inject]
         public GameData d_Data;
-        [Inject]
         public ITerrainTextures d_TerainRenderer;
         public int TopTexture;
         public int SideTexture;

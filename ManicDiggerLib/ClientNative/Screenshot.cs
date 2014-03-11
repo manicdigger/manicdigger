@@ -15,7 +15,6 @@ namespace ManicDigger.ClientNative
     }
     public class Screenshot : IScreenshot
     {
-        [Inject]
         public GameWindow d_GameWindow;
         public string SavePath = System.Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         public void SaveScreenshot()

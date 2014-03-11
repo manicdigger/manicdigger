@@ -9,36 +9,37 @@ using GameModeFortress;
 
 namespace ManicDigger
 {
-    public class Options
+    public class GuiStateEscapeMenu
     {
-        public bool Shadows;
-        public int Font;
-        public int DrawDistance = 256;
-        public bool UseServerTextures = true;
-        public bool EnableSound = true;
-        public int Framerate = 0;
-        public int Resolution = 0;
-        public bool Fullscreen = false;
-        public bool Smoothshadows = true;
-        public float BlockShadowSave = 0.6f;
-        public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
-    }
-    partial class ManicDiggerGameWindow
-    {
-        private void EscapeMenuStart()
+        public GuiStateEscapeMenu()
         {
-            guistate = GuiState.EscapeMenu;
-            menustate = new MenuState();
-            FreeMouse = true;
+            options = new OptionsCi();
+            fonts = new string[4];
+            fonts[0] = "Nice";
+            fonts[1] = "Simple";
+            fonts[2] = "BlackBackground";
+            fonts[3] = "Default";
+            fontValues = new int[4];
+            fontValues[0] = 0;
+            fontValues[1] = 1;
+            fontValues[2] = 2;
+            fontValues[3] = 3;
+        }
+        public ManicDiggerGameWindow game;
+        public void EscapeMenuStart()
+        {
+            game.guistate = GuiState.EscapeMenu;
+            game.menustate = new MenuState();
+            game.FreeMouse = true;
             SetEscapeMenuState(EscapeMenuState.Main);
         }
-        EscapeMenuState escapemenustate { get { return game.escapemenustate; } set { game.escapemenustate = value; } }
+        EscapeMenuState escapemenustate;
         private void EscapeMenuMouse1()
         {
             foreach (var w in new List<Button>(widgets))
             {
-                w.selected = w.Rect.Contains(mouse_current);
-                if (w.selected && mouseleftclick)
+                w.selected = w.Rect.Contains(game.mouse_current);
+                if (w.selected && game.mouseleftclick)
                 {
                     w.InvokeOnClick();
                 }
@@ -46,18 +47,19 @@ namespace ManicDigger
         }
         void SetEscapeMenuState(EscapeMenuState state)
         {
+            Language language = game.game.language;
             escapemenustate = state;
             widgets.Clear();
             if (state == EscapeMenuState.Main)
             {
-                AddButton(language.ReturnToGame(),(a, b) => { GuiStateBackToGame(); });
+                AddButton(language.ReturnToGame(), (a, b) => { game.GuiStateBackToGame(); });
                 AddButton(language.Options(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 AddButton(language.Exit(), (a, b) =>
                 {
                     RestoreResolution();
-                    SendLeave(Packet_LeaveReasonEnum.Leave);
-                    d_Exit.exit = true;
-                    this.d_GlWindow.Exit();
+                    game.SendLeave(Packet_LeaveReasonEnum.Leave);
+                    game.d_Exit.exit = true;
+                    game.d_GlWindow.Exit();
                 });
                 MakeSimpleOptions(20, 50);
             }
@@ -83,28 +85,28 @@ namespace ManicDigger
                     (a, b) =>
                     {
                         options.Smoothshadows = !options.Smoothshadows;
-                        d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+                        game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
                         if (options.Smoothshadows)
                         {
                             options.BlockShadowSave = 0.7f;
-                            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+                            game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
                         }
                         else
                         {
                             options.BlockShadowSave = 0.6f;
-                            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+                            game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
                         }
-                        RedrawAllBlocks();
+                        game.RedrawAllBlocks();
                     });
-                AddButton(string.Format(language.ViewDistanceOption(), (d_Config3d.viewdistance)),
+                AddButton(string.Format(language.ViewDistanceOption(), (game.d_Config3d.viewdistance)),
                     (a, b) =>
                     {
-                        ToggleFog();
+                        game.ToggleFog();
                     });
                 AddButton(string.Format("Framerate: {0}", (VsyncString())),
                     (a, b) =>
                     {
-                        ToggleVsync();
+                        game.ToggleVsync();
                     });
                 AddButton(string.Format("Resolution: {0}", (ResolutionString())),
                     (a, b) =>
@@ -131,10 +133,10 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Other)
             {
-                AddButton(string.Format(language.SoundOption(), (AudioEnabled ? language.On() : language.Off())),
+                AddButton(string.Format(language.SoundOption(), (game.AudioEnabled ? language.On() : language.Off())),
                     (a, b) =>
                     {
-                        AudioEnabled = !AudioEnabled;
+                        game.AudioEnabled = !game.AudioEnabled;
                     });
                 AddButton(language.ReturnToOptionsMenu(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(20, 50);
@@ -153,13 +155,13 @@ namespace ManicDigger
                     int ii = i; //a copy for closure
                     int defaultkey = helps[i].DefaultKey;
                     int key = defaultkey;
-                    if (options.Keys.ContainsKey(defaultkey))
+                    if (options.Keys[defaultkey] != 0)
                     {
                         key = options.Keys[defaultkey];
                     }
                     AddButton(string.Format(language.KeyChange(), helps[i].Text, KeyName(key)), (a, b) => { keyselectid = ii; });
                 }
-                AddButton(language.DefaultKeys(), (a, b) => { options.Keys.Clear(); });
+                AddButton(language.DefaultKeys(), (a, b) => { options.Keys = new int[256]; });
                 AddButton(language.ReturnToOptionsMenu(), (a, b) => { SetEscapeMenuState(EscapeMenuState.Options); });
                 MakeSimpleOptions(fontsize, textheight);
             }
@@ -169,65 +171,64 @@ namespace ManicDigger
         {
             if (options.Fullscreen)
             {
-                d_GlWindow.WindowState = WindowState.Fullscreen;
+                game.d_GlWindow.WindowState = WindowState.Fullscreen;
                 UseResolution();
             }
             else
             {
-                d_GlWindow.WindowState = WindowState.Normal;
+                game.d_GlWindow.WindowState = WindowState.Normal;
                 RestoreResolution();
             }
         }
 
         private string VsyncString()
         {
-            if (ENABLE_LAG == 0) { return "Vsync"; }
-            else if (ENABLE_LAG == 1) { return "Unlimited"; }
-            else if (ENABLE_LAG == 2) { return "Lag"; }
-            else throw new Exception();
+            if (game.ENABLE_LAG == 0) { return "Vsync"; }
+            else if (game.ENABLE_LAG == 1) { return "Unlimited"; }
+            else if (game.ENABLE_LAG == 2) { return "Lag"; }
+            else return null; //throw new Exception();
         }
 
         private string ResolutionString()
         {
-            DisplayResolution res = resolutions[options.Resolution];
+            DisplayResolution res = game.resolutions[options.Resolution];
             return string.Format("{0}x{1}, {2}, {3} Hz", res.Width, res.Height, res.BitsPerPixel, res.RefreshRate);
         }
 
-        List<DisplayResolution> resolutions;
         private void ToggleResolution()
         {
             options.Resolution++;
-            if (options.Resolution >= resolutions.Count)
+            if (options.Resolution >= game.resolutions.Count)
             {
                 options.Resolution = 0;
             }
         }
         Size originalResolution;
         bool changedResolution = false;
-        void RestoreResolution()
+        public void RestoreResolution()
         {
             if (changedResolution)
             {
                 DisplayDevice.Default.ChangeResolution(originalResolution.Width, originalResolution.Height, 32, -1);
             }
         }
-        private void UseResolution()
+        public void UseResolution()
         {
             if (!changedResolution)
             {
                 originalResolution = new Size(DisplayDevice.Default.Width, DisplayDevice.Default.Height);
                 changedResolution = true;
             }
-            if (options.Resolution >= resolutions.Count)
+            if (options.Resolution >= game.resolutions.Count)
             {
                 options.Resolution = 0;
             }
-            DisplayResolution res = resolutions[options.Resolution];
-            if (d_GlWindow.WindowState == WindowState.Fullscreen)
+            DisplayResolution res = game.resolutions[options.Resolution];
+            if (game.d_GlWindow.WindowState == WindowState.Fullscreen)
             {
                 DisplayDevice.Default.ChangeResolution(res.Width, res.Height, res.BitsPerPixel, res.RefreshRate);
-                d_GlWindow.WindowState = WindowState.Normal;
-                d_GlWindow.WindowState = WindowState.Fullscreen;
+                game.d_GlWindow.WindowState = WindowState.Normal;
+                game.d_GlWindow.WindowState = WindowState.Fullscreen;
             }
             else
             {
@@ -236,8 +237,8 @@ namespace ManicDigger
             }
         }
 
-        string[] fonts = Enum.GetNames(typeof(ManicDigger.Renderers.FontType));
-        ManicDigger.Renderers.FontType[] fontValues = (ManicDigger.Renderers.FontType[])Enum.GetValues(typeof(ManicDigger.Renderers.FontType));
+        string[] fonts;
+        int[] fontValues;
 
         private string FontString()
         {
@@ -250,10 +251,10 @@ namespace ManicDigger
             {
                 options.Font = 0;
             }
-            d_TextRenderer.Font = fontValues[options.Font];
-            for (int i = 0; i < game.cachedTextTexturesMax; i++)
+            game.d_TextRenderer.Font = (ManicDigger.Renderers.FontType)fontValues[options.Font];
+            for (int i = 0; i < game.game.cachedTextTexturesMax; i++)
             {
-                game.cachedTextTextures[i] = null;
+                game.game.cachedTextTextures[i] = null;
             }
         }
 
@@ -280,15 +281,15 @@ namespace ManicDigger
         }
         void MakeSimpleOptions(int fontsize, int textheight)
         {
-            int starty = ycenter(widgets.Count * textheight);
+            int starty = game.ycenter(widgets.Count * textheight);
             for (int i = 0; i < widgets.Count; i++)
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = TextSize(s, fontsize);
+                SizeF size = game.TextSize(s, fontsize);
                 rect.Width = (int)size.Width + 10;
                 rect.Height = (int)size.Height;
-                rect.X = xcenter(size.Width);
+                rect.X = game.xcenter(size.Width);
                 rect.Y = starty + textheight * i;
                 widgets[i].Rect = rect;
                 widgets[i].fontsize = fontsize;
@@ -299,13 +300,13 @@ namespace ManicDigger
                 }
             }
         }
-        void EscapeMenuDraw()
+        public void EscapeMenuDraw()
         {
             SetEscapeMenuState(escapemenustate);
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                game.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
         List<Button> widgets = new List<Button>();
@@ -341,6 +342,7 @@ namespace ManicDigger
             {
                 helps[i] = null;
             }
+            Language language = game.game.language;
             int count = 0;
             helps[count++] = new KeyHelp() { Text = language.KeyMoveFoward(), DefaultKey = (int)OpenTK.Input.Key.W };
             helps[count++] = new KeyHelp() { Text = language.KeyMoveBack(), DefaultKey = (int)OpenTK.Input.Key.S };
@@ -374,9 +376,9 @@ namespace ManicDigger
             return helps;
         }
         int keyselectid = -1;
-        private void EscapeMenuKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
+        public void EscapeMenuKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
         {
-            if (e.Key == GetKey(OpenTK.Input.Key.Escape))
+            if (e.Key == game.GetKey(OpenTK.Input.Key.Escape))
             {
                 if (escapemenustate == EscapeMenuState.Graphics
                     || escapemenustate == EscapeMenuState.Keys
@@ -391,7 +393,7 @@ namespace ManicDigger
                 else
                 {
                     SetEscapeMenuState(EscapeMenuState.Main);
-                    GuiStateBackToGame();
+                    game.GuiStateBackToGame();
                 }
             }
             if (escapemenustate == EscapeMenuState.Keys)
@@ -403,48 +405,40 @@ namespace ManicDigger
                 }
             }
         }
-        Options options = new Options();
-        XmlSerializer x = new XmlSerializer(typeof(Options));
-        public string gamepathconfig = GameStorePath.GetStorePath();
-        string filename = "ClientConfig.txt";
-        void LoadOptions()
+        internal OptionsCi options;
+        public void LoadOptions()
         {
-            string path = Path.Combine(gamepathconfig, filename);
-            if (!File.Exists(path))
+            OptionsCi o = game.game.platform.LoadOptions();
+            if (o == null)
             {
                 return;
             }
-            string s = File.ReadAllText(path);
-            this.options = (Options)x.Deserialize(new System.IO.StringReader(s));
+            this.options = o;
 
-            d_TextRenderer.Font = fontValues[options.Font];
-            d_CurrentShadows.ShadowsFull = options.Shadows;
+            game.d_TextRenderer.Font = (ManicDigger.Renderers.FontType)fontValues[options.Font];
+            game.d_CurrentShadows.ShadowsFull = options.Shadows;
             //d_Shadows.ResetShadows();
             //d_Terrain.UpdateAllTiles();
-            d_Config3d.viewdistance = options.DrawDistance;
-            AudioEnabled = options.EnableSound;
-            d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
-            d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
-            ENABLE_LAG = options.Framerate;
+            game.d_Config3d.viewdistance = options.DrawDistance;
+            game.AudioEnabled = options.EnableSound;
+            game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
+            game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
+            game.ENABLE_LAG = options.Framerate;
             UseFullscreen();
-            UseVsync();
+            game.UseVsync();
             UseResolution();
         }
-        void SaveOptions()
+        public void SaveOptions()
         {
-            options.Font = (int)d_TextRenderer.Font;
-            options.Shadows = d_CurrentShadows.ShadowsFull;
-            options.DrawDistance = (int)d_Config3d.viewdistance;
-            options.EnableSound = AudioEnabled;
-            options.Framerate = ENABLE_LAG;
-            options.Fullscreen = d_GlWindow.WindowState == WindowState.Fullscreen;
-            options.Smoothshadows = d_TerrainChunkTesselator.EnableSmoothLight;
-            
-            string path = Path.Combine(gamepathconfig, filename);
-            MemoryStream ms = new MemoryStream();
-            x.Serialize(ms, options);
-            string xml = Encoding.UTF8.GetString(ms.ToArray());
-            File.WriteAllText(path, xml);
+            options.Font = (int)game.d_TextRenderer.Font;
+            options.Shadows = game.d_CurrentShadows.ShadowsFull;
+            options.DrawDistance = (int)game.d_Config3d.viewdistance;
+            options.EnableSound = game.AudioEnabled;
+            options.Framerate = game.ENABLE_LAG;
+            options.Fullscreen = game.d_GlWindow.WindowState == WindowState.Fullscreen;
+            options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
+
+            game.game.platform.SaveOptions(options);
         }
     }
 }

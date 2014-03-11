@@ -55,21 +55,13 @@ namespace ManicDiggerServer
     public partial class Server : ICurrentTime, IDropItem
     {
         public IGameExit exit;
-        [Inject]
         public ServerMap d_Map;
-        [Inject]
         public GameData d_Data;
-        [Inject]
         public CraftingTableTool d_CraftingTableTool;
-        [Inject]
         public IGetFileStream d_GetFile;
-        [Inject]
         public IChunkDb d_ChunkDb;
-        [Inject]
         public ICompression d_NetworkCompression;
-        [Inject]
         public INetServer d_MainSocket;
-        [Inject]
         public IServerHeartbeat d_Heartbeat;
 
         public bool LocalConnectionsOnly { get; set; }

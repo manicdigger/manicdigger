@@ -9,9 +9,7 @@ namespace ManicDigger
 {
     public partial class ManicDiggerGameWindow
     {
-        [Inject]
         public RailMapUtil d_RailMapUtil { get; set; }
-        [Inject]
         public MinecartRenderer d_MinecartRenderer { get; set; }
         void RailOnNewFrame(float dt)
         {

@@ -8,7 +8,6 @@ namespace ManicDigger
     public class TextureAtlasConverter
     {
         public delegate T Factory<T>();
-        [Inject]
         public Factory<IFastBitmap> d_FastBitmapFactory { get; set; }
         //tiles = 16 means 16 x 16 atlas
         public List<Bitmap> Atlas2dInto1d(Bitmap atlas2d, int tiles, int atlassizezlimit)

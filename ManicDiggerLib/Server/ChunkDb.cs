@@ -100,9 +100,7 @@ namespace GameModeFortress
     }
     public class ChunkDbCompressed : IChunkDb
     {
-        [Inject]
         public IChunkDb d_ChunkDb;
-        [Inject]
         public ICompression d_Compression;
         #region IChunkDb Members
         public void Open(string filename)

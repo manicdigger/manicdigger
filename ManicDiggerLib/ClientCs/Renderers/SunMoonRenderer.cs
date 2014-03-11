@@ -10,11 +10,8 @@ namespace ManicDigger.Renderers
     public class SunMoonRenderer
     {
         public ManicDiggerGameWindow game;
-        [Inject]
         public ILocalPlayerPosition d_LocalPlayerPosition { get; set; }
-        [Inject]
         public IThe3d d_The3d { get; set; }
-        [Inject]
         public IGetFileStream d_GetFile { get; set; }
         int hour = 6;
         public int Hour

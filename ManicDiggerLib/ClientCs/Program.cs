@@ -7,9 +7,6 @@ using System.Windows.Forms;
 
 namespace ManicDigger
 {
-    public class InjectAttribute : Attribute
-    {
-    }
     public interface IGetFileStream
     {
         Stream GetFile(string p);

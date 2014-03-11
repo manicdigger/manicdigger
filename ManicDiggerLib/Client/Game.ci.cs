@@ -29,6 +29,14 @@
         enableCameraControl = true;
         textures = new DictionaryStringInt1024();
         ServerInfo = new ServerInformation();
+        menustate = new MenuState();
+        mouseleftclick = false;
+        mouseleftdeclick = false;
+        wasmouseleft = false;
+        mouserightclick = false;
+        mouserightdeclick = false;
+        wasmouseright = false;
+        ENABLE_LAG = 0;
     }
     float one;
 
@@ -1108,6 +1116,20 @@
 
     internal ServerInformation ServerInfo;
     internal EscapeMenuState escapemenustate;
+    internal bool AudioEnabled;
+    internal MenuState menustate;
+    internal bool mouseleftclick;
+    internal bool mouseleftdeclick;
+    internal bool wasmouseleft;
+    internal bool mouserightclick;
+    internal bool mouserightdeclick;
+    internal bool wasmouseright;
+    internal int ENABLE_LAG;
+}
+
+public class MenuState
+{
+    internal int selected;
 }
 
 public enum EscapeMenuState
@@ -1790,4 +1812,12 @@ public enum GuiState
     CraftingRecipes,
     EditText,
     ModalDialog
+}
+
+public enum BlockSetMode
+{
+    Destroy,
+    Create,
+    Use, //open doors, use crafting table, etc.
+    UseWithTool
 }

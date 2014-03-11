@@ -183,7 +183,6 @@
     <Compile Include="Server\Mod.cs" />
     <Compile Include="ClientCs\Network\LoginClient.cs" />
     <Compile Include="ClientNative\OggDecoder.cs" />
-    <Compile Include="ClientCs\Renderers\MonospacedTextRenderer.cs" />
     <Compile Include="ClientCs\Renderers\MinecartRenderer.cs" />
     <Compile Include="ClientCs\Network\NetworkClient.cs" />
     <Compile Include="ClientCs\GameWindowMisc.cs" />
@@ -193,7 +192,7 @@
     <Compile Include="ClientCs\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ClientCs\Rail.cs" />
-    <Compile Include="ClientCs\Shadows.cs" />
+    <Compile Include="Server\Shadows.cs" />
     <Compile Include="ClientCs\Renderers\ParticleEffectBlockBreak.cs" />
     <Compile Include="ClientCs\Renderers\SkySphere.cs" />
     <Compile Include="ClientCs\Renderers\SunMoonRenderer.cs" />

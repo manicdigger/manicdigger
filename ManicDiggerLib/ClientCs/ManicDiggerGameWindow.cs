@@ -23,7 +23,7 @@ namespace ManicDigger
 {
     //This is the main game class.
     public partial class ManicDiggerGameWindow : IMyGameWindow, ILocalPlayerPosition,
-        IAddChatLine, IWaterLevel, IMouseCurrent, IActiveMaterial,
+        IMouseCurrent, IActiveMaterial,
         IClients, IViewportSize, IViewport3dSelectedBlock,
         IMapStorage, IInventoryController, IMapStorageLight,
         IMapStoragePortion, ICurrentShadows, IResetMap
@@ -40,7 +40,7 @@ namespace ManicDigger
             AudioEnabled = true;
             OverheadCamera_cameraEye = new Vector3Ref();
         }
-        bool AudioEnabled;
+        public bool AudioEnabled { get { return game.AudioEnabled; } set { game.AudioEnabled = value; } }
         float one;
         public byte localstance = 0;
         public void Start()
@@ -202,15 +202,6 @@ namespace ManicDigger
             w.d_ResetMap = this;
             currentfov = GetCurrentFov;
             crashreporter.OnCrash += new EventHandler(crashreporter_OnCrash);
-            if (Debugger.IsAttached)
-            {
-                new DependencyChecker(typeof(InjectAttribute)).CheckDependencies(
-                    w, gamedata, clientgame, network, mapstorage, getfile,
-                    config3d, mapManipulator, w, the3d, d_Exit,
-                    localplayerposition, physics,
-                    internetgamefactory, blockrenderertorch, playerrenderer,
-                    map, terrainchunktesselator);
-            }
 
             clientmods = new ClientMod[128];
             clientmodsCount = 0;
@@ -220,6 +211,7 @@ namespace ManicDigger
             applicationname = language.GameName();
             s = new BlockOctreeSearcher();
             s.platform = game.platform;
+            escapeMenu.game = this;
         }
         void AddMod(ClientMod mod)
         {
@@ -243,68 +235,40 @@ namespace ManicDigger
             }
         }
 
-        void SendLeave(int reason)
+        public void SendLeave(int reason)
         {
             byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Leave, Leave = new Packet_ClientLeave() { Reason = reason } }, packetLen);
             SendPacket(packet, packetLen.value);
         }
 
-        [Inject]
         public GlWindow d_GlWindow;
-        [Inject]
         public The3d d_The3d;
-        [Inject]
         public ManicDigger.Renderers.TextRenderer d_TextRenderer;
-        [Inject]
         public Game d_Map;
-        [Inject]
         public IClients d_Clients;
-        [Inject]
         public CharacterPhysicsCi d_Physics;
 
-        [Inject]
         public GetFileStream d_GetFile;
-        [Inject]
         public GameData d_Data;
-        [Inject]
         public Config3d d_Config3d { get { return game.d_Config3d; } set { game.d_Config3d = value; } }
-        [Inject]
         public WeaponRenderer d_Weapon;
-        [Inject]
         public ICharacterRenderer d_CharacterRenderer;
-        [Inject]
         public ICurrentShadows d_CurrentShadows;
-        [Inject]
         public MapManipulator d_MapManipulator;
-        [Inject]
         public SunMoonRenderer d_SunMoonRenderer;
-        [Inject]
         public IGameExit d_Exit;
-        [Inject]
         public HudChat d_HudChat { get { return game.d_HudChat; } set { game.d_HudChat = value; } }
-        [Inject]
         public HudTextEditor d_HudTextEditor;
-        [Inject]
         public HudInventory d_HudInventory;
-        [Inject]
         public Inventory d_Inventory;
-        [Inject]
         public IInventoryController d_InventoryController;
-        [Inject]
         public InventoryUtil d_InventoryUtil;
-        [Inject]
         public CraftingTableTool d_CraftingTableTool;
-        [Inject]
         public INetClient main { get { return game.main; } set { game.main = value; } }
-        [Inject]
         public InfiniteMapChunked2d d_Heightmap { get { return game.d_Heightmap; } set { game.d_Heightmap = value; } }
-        [Inject]
         public IResetMap d_ResetMap;
-        [Inject]
         public ICompression d_Compression;
-        [Inject]
         public IFrustumCulling d_FrustumCulling;
-        [Inject]
         public MeshBatcher d_Batcher { get { return game.d_Batcher; } set { game.d_Batcher = value; } }
         public TerrainChunkTesselatorCi d_TerrainChunkTesselator { get { return game.d_TerrainChunkTesselator; } set { game.d_TerrainChunkTesselator = value; } }
         public ManicDiggerGameWindow d_Shadows;
@@ -346,10 +310,11 @@ namespace ManicDigger
             d_The3d.d_Config3d = d_Config3d;
             return d_The3d.LoadTexture(bmp);
         }
+        public GuiStateEscapeMenu escapeMenu = new GuiStateEscapeMenu();
         public void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
-            { EscapeMenuStart(); }
+            { escapeMenu.EscapeMenuStart(); }
             else if (guistate == GuiState.EscapeMenu)
             { }
             else if (guistate == GuiState.Inventory)
@@ -361,7 +326,7 @@ namespace ManicDigger
             else { throw new Exception(); }
             //..base.OnFocusedChanged(e);
         }
-
+        public List<DisplayResolution> resolutions;
         public void OnLoad(EventArgs e)
         {
             if (resolutions == null)
@@ -815,14 +780,14 @@ namespace ManicDigger
                 if (d_GlWindow.WindowState == WindowState.Fullscreen)
                 {
                     d_GlWindow.WindowState = WindowState.Normal;
-                    RestoreResolution();
-                    SaveOptions();
+                    escapeMenu.RestoreResolution();
+                    escapeMenu.SaveOptions();
                 }
                 else
                 {
                     d_GlWindow.WindowState = WindowState.Fullscreen;
-                    UseResolution();
-                    SaveOptions();
+                    escapeMenu.UseResolution();
+                    escapeMenu.SaveOptions();
                 }
             }
             if (GuiTyping == TypingState.None)
@@ -1143,12 +1108,12 @@ namespace ManicDigger
                 HandleMaterialKeys(e);
                 if (e.Key == GetKey(OpenTK.Input.Key.Escape))
                 {
-                    EscapeMenuStart();
+                    escapeMenu.EscapeMenuStart();
                 }
             }
             else if (guistate == GuiState.EscapeMenu)
             {
-                EscapeMenuKeyDown(e);
+                escapeMenu.EscapeMenuKeyDown(e);
                 return;
             }
             else if (guistate == GuiState.Inventory)
@@ -1269,19 +1234,19 @@ namespace ManicDigger
             }
         }
 
-        private void ToggleVsync()
+        public void ToggleVsync()
         {
             ENABLE_LAG++;
             ENABLE_LAG = ENABLE_LAG % 3;
             UseVsync();
         }
 
-        private void UseVsync()
+        public void UseVsync()
         {
             d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
         }
         int maxdrawdistance;
-        private void ToggleFog()
+        public void ToggleFog()
         {
             List<int> drawDistances = new List<int>();
             drawDistances.Add(32);
@@ -1343,8 +1308,8 @@ namespace ManicDigger
         public bool StartedSinglePlayerServer;
         private void Connect()
         {
-            LoadOptions();
-            MapLoaded += new EventHandler<MapLoadedEventArgs>(network_MapLoaded);
+            escapeMenu.LoadOptions();
+            MapLoaded += new EventHandler<EventArgs>(network_MapLoaded);
 
             while (issingleplayer && !StartedSinglePlayerServer)
             {
@@ -1361,7 +1326,7 @@ namespace ManicDigger
             }
             MapLoadingStart();
         }
-        void network_MapLoaded(object sender, MapLoadedEventArgs e)
+        void network_MapLoaded(object sender, EventArgs e)
         {
             terrainRenderer.StartTerrain();
             RedrawAllBlocks();
@@ -1402,9 +1367,10 @@ namespace ManicDigger
             this.Set3dProjection();
         }
         Vector3 up = new Vector3(0f, 1f, 0f);
-        Point mouse_current, mouse_previous;
+        public Point mouse_current;
+        Point mouse_previous;
         PointF mouse_delta;
-        bool FreeMouse
+        public bool FreeMouse
         {
             get
             {
@@ -1562,12 +1528,12 @@ namespace ManicDigger
         }
         CharacterPhysicsState player { get { return game.player; } }
         //DateTime lasttodo;
-        bool mouseleftclick = false;
-        bool mouseleftdeclick = false;
-        bool wasmouseleft = false;
-        bool mouserightclick = false;
-        bool mouserightdeclick = false;
-        bool wasmouseright = false;
+        public bool mouseleftclick { get { return game.mouseleftclick; } set { game.mouseleftclick = value; } }
+        public bool mouseleftdeclick { get { return game.mouseleftdeclick; } set { game.mouseleftdeclick = value; } }
+        public bool wasmouseleft { get { return game.wasmouseleft; } set { game.wasmouseleft = value; } }
+        public bool mouserightclick { get { return game.mouserightclick; } set { game.mouserightclick = value; } }
+        public bool mouserightdeclick { get { return game.mouserightdeclick; } set { game.mouserightdeclick = value; } }
+        public bool wasmouseright { get { return game.wasmouseright; } set { game.wasmouseright = value; } }
         public float PlayerPushDistance = 2f;
         void FrameTick(FrameEventArgs e)
         {
@@ -2013,18 +1979,18 @@ namespace ManicDigger
 
         public OpenTK.Input.Key GetKey(OpenTK.Input.Key key)
         {
-            if (options.Keys.ContainsKey((int)key))
+            if (escapeMenu.options.Keys[(int)key] != 0)
             {
-                return (OpenTK.Input.Key)options.Keys[(int)key];
+                return (OpenTK.Input.Key)escapeMenu.options.Keys[(int)key];
             }
             return key;
         }
         public bool KeyIsEqualChar(OpenTK.Input.Key key1, char key2)
         {
             // TODO: Any better solution? http://www.opentk.com/node/1202
-            if (options.Keys.ContainsKey((int)key1))
+            if (escapeMenu.options.Keys[(int)key1] != 0)
             {
-                return ((OpenTK.Input.Key)options.Keys[(int)key1]).ToString().Equals(key2.ToString(), StringComparison.InvariantCultureIgnoreCase);
+                return ((OpenTK.Input.Key)escapeMenu.options.Keys[(int)key1]).ToString().Equals(key2.ToString(), StringComparison.InvariantCultureIgnoreCase);
             }
             return key1.ToString().Equals(key2.ToString(), StringComparison.InvariantCultureIgnoreCase);
         }
@@ -2078,11 +2044,7 @@ namespace ManicDigger
             return blockunderplayer;
         }
         Vector3 playerdestination;
-        class MenuState
-        {
-            public int selected = 0;
-        }
-        MenuState menustate = new MenuState();
+        public MenuState menustate { get { return game.menustate; } set { game.menustate = value; } }
         private void UpdateMouseViewportControl(FrameEventArgs e)
         {
             if (!overheadcamera)
@@ -3744,7 +3706,7 @@ namespace ManicDigger
             }
         }
         Dictionary<string, ICharacterRenderer> MonsterRenderers = new Dictionary<string, ICharacterRenderer>();
-        GuiState guistate { get { return game.guistate; } set { game.guistate = value; } }
+        public GuiState guistate { get { return game.guistate; } set { game.guistate = value; } }
         private void DrawMouseCursor()
         {
             Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
@@ -3794,7 +3756,7 @@ namespace ManicDigger
                         }
                         d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                         DrawDialogs();
-                        EscapeMenuDraw();
+                        escapeMenu.EscapeMenuDraw();
                     }
                     break;
                 case GuiState.Inventory:
@@ -4157,15 +4119,15 @@ namespace ManicDigger
                 GuiStateBackToGame();
             }
         }
-        private int xcenter(float width)
+        public int xcenter(float width)
         {
             return game.xcenter(width);
         }
-        private int ycenter(float height)
+        public int ycenter(float height)
         {
             return game.ycenter(height);
         }
-        int ENABLE_LAG = 0;
+        public int ENABLE_LAG { get { return game.ENABLE_LAG; } set { game.ENABLE_LAG = value; } }
         bool ENABLE_DRAWPOSITION = false;
 
         //int targettexture = -1;
@@ -4366,7 +4328,6 @@ namespace ManicDigger
         #region IViewport3d Members
         public string LocalPlayerName { get { return connectdata.Username; } }
         #endregion
-        public Options Options { get { return options; } set { options = value; } }
         public int Height { get { return d_GlWindow.Height; } }
         public int Width { get { return d_GlWindow.Width; } }
         public OpenTK.Input.KeyboardDevice Keyboard { get { return d_GlWindow.Keyboard; } }
@@ -4842,7 +4803,7 @@ namespace ManicDigger
             game.MoveToInventory(from);
         }
 
-        public event EventHandler<MapLoadedEventArgs> MapLoaded;
+        public event EventHandler<EventArgs> MapLoaded;
         public bool ENABLE_FORTRESS = true;
         public void Connect(string serverAddress, int port, string username, string auth)
         {
@@ -5123,7 +5084,7 @@ namespace ManicDigger
 
                         if (MapLoaded != null)
                         {
-                            MapLoaded.Invoke(this, new MapLoadedEventArgs() { });
+                            MapLoaded.Invoke(this, new EventArgs() { });
                         }
                     }
                     break;
@@ -6067,7 +6028,6 @@ namespace ManicDigger
             game.GetMapPortion(outPortion, x, y, z, portionsizex, portionsizey, portionsizez);
         }
 
-        [Inject]
         public TextureAtlasConverter d_TextureAtlasConverter;
 
 
@@ -6310,7 +6270,7 @@ namespace ManicDigger
 
         internal int maxlight { get { return terrainRenderer.maxlight(); } }
         public TerrainRenderer terrainRenderer;
-        void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
+        public void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
         void RedrawBlock(int x, int y, int z) { terrainRenderer.RedrawBlock(x, y, z); }
 
         MapLoadingProgressEventArgs maploadingprogress { get { return game.maploadingprogress; } set { game.maploadingprogress = value; } }
