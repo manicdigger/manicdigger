@@ -12,13 +12,6 @@ namespace ManicDigger.Renderers
         public string text;
     }
 
-    public enum FontType
-    {
-        Nice,
-        Simple,
-        BlackBackground,
-        Default,
-    }
     public class TextRenderer
     {
         public FontType Font = FontType.Nice;

@@ -107,8 +107,6 @@ namespace ManicDigger
             skysphere.d_LocalPlayerPosition = localplayerposition;
             skysphere.d_The3d = the3d;
             w.skysphere = skysphere;
-            var textrenderer = new ManicDigger.Renderers.TextRenderer();
-            w.d_TextRenderer = textrenderer;
             Inventory inventory = Inventory.Create();
             var weapon = new WeaponBlockInfo() { d_Data = gamedata, d_Terrain = terrainTextures, d_Viewport = w, d_Map = clientgame, d_Shadows = this, d_Inventory = inventory, d_LocalPlayerPosition = w };
             w.d_Weapon = new WeaponRenderer() { d_Info = weapon, d_BlockRendererTorch = blockrenderertorch, d_LocalPlayerPosition = w, game = this };
@@ -147,7 +145,6 @@ namespace ManicDigger
             w.playerskindownloader = playerskindownloader;
             w.d_FrustumCulling = frustumculling;
             the3d.d_Terrain = terrainTextures;
-            the3d.d_TextRenderer = textrenderer;
             //w.d_CurrentShadows = this;
             var sunmoonrenderer = new SunMoonRenderer() { d_LocalPlayerPosition = w, d_GetFile = getfile, d_The3d = the3d, game = this };
             w.d_SunMoonRenderer = sunmoonrenderer;
@@ -172,7 +169,6 @@ namespace ManicDigger
             terrainRenderer = new TerrainRenderer();
             terrainRenderer.game = game;
             w.d_HudChat = new HudChat() { game = this.game };
-            w.d_HudTextEditor = new HudTextEditor() { d_ViewportSize = w, game = this };
             var dataItems = new GameDataItemsBlocks() { d_Data = gamedata, game = this };
             var inventoryController = clientgame;
             var inventoryUtil = new InventoryUtil();
@@ -182,13 +178,6 @@ namespace ManicDigger
             hudInventory.inventory = inventory;
             hudInventory.inventoryUtil = inventoryUtil;
             hudInventory.controller = inventoryController;
-            hudInventory.viewport_size = w;
-            hudInventory.mouse_current = w;
-            hudInventory.the3d = the3d;
-            hudInventory.getfile = getfile;
-            hudInventory.ActiveMaterial = w;
-            hudInventory.viewport3d = w;
-            hudInventory.terraintextures = game.d_TerrainTextures;
             w.d_Inventory = inventory;
             w.d_InventoryController = inventoryController;
             w.d_InventoryUtil = inventoryUtil;
@@ -243,7 +232,6 @@ namespace ManicDigger
 
         public GlWindow d_GlWindow;
         public The3d d_The3d;
-        public ManicDigger.Renderers.TextRenderer d_TextRenderer;
         public Game d_Map;
         public IClients d_Clients;
         public CharacterPhysicsCi d_Physics;
@@ -258,7 +246,6 @@ namespace ManicDigger
         public SunMoonRenderer d_SunMoonRenderer;
         public IGameExit d_Exit;
         public HudChat d_HudChat { get { return game.d_HudChat; } set { game.d_HudChat = value; } }
-        public HudTextEditor d_HudTextEditor;
         public HudInventory d_HudInventory;
         public Inventory d_Inventory;
         public IInventoryController d_InventoryController;
@@ -509,10 +496,6 @@ namespace ManicDigger
                     }
                 }
             }
-            if (guistate == GuiState.EditText)
-            {
-                d_HudTextEditor.HandleKeyPress(sender, e);
-            }
         }
         float overheadcameradistance = 10;
         float tppcameradistance = 3;
@@ -750,10 +733,6 @@ namespace ManicDigger
             if (GuiTyping == TypingState.None)
             {
                 keyeventup = e;
-            }
-            if (guistate == GuiState.EditText)
-            {
-                d_HudTextEditor.HandleKeyUp(sender, e);
             }
         }
         bool IsShiftPressed = false;
@@ -1015,11 +994,6 @@ namespace ManicDigger
                     if (ENABLE_LAG == 1) { Log(language.FrameRateUnlimited()); }
                     if (ENABLE_LAG == 2) { Log(language.FrameRateLagSimulation()); }
                 }
-                if (e.Key == OpenTK.Input.Key.F9)
-                {
-                    guistate = GuiState.EditText;
-                    FreeMouse = true;
-                }
                 if (e.Key == GetKey(OpenTK.Input.Key.F12))
                 {
                     game.platform.SaveScreenshot();
@@ -1152,14 +1126,6 @@ namespace ManicDigger
                 {
                     GuiStateBackToGame();
                 }
-            }
-            else if (guistate == GuiState.EditText)
-            {
-                if (e.Key == GetKey(OpenTK.Input.Key.Escape))
-                {
-                    GuiStateBackToGame();
-                }
-                d_HudTextEditor.HandleKeyDown(sender, e);
             }
             else throw new Exception();
         }
@@ -1645,7 +1611,6 @@ namespace ManicDigger
             else if (guistate == GuiState.CraftingRecipes)
             {
             }
-            else if (guistate == GuiState.EditText) { }
             else if (guistate == GuiState.ModalDialog)
             {
             }
@@ -3776,12 +3741,6 @@ namespace ManicDigger
                 case GuiState.CraftingRecipes:
                     {
                         DrawCraftingRecipes();
-                    }
-                    break;
-                case GuiState.EditText:
-                    {
-                        DrawDialogs();
-                        d_HudTextEditor.Render();
                     }
                     break;
                 case GuiState.ModalDialog:
@@ -6101,23 +6060,22 @@ namespace ManicDigger
             }
         }
 
-        Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
+        Dictionary<TextAndSize, int[]> textsizes = new Dictionary<TextAndSize, int[]>();
         public SizeF TextSize(string text, float fontsize)
         {
-            SizeF size;
+            int[] size;
             if (textsizes.TryGetValue(new TextAndSize() { text = text, size = fontsize }, out size))
             {
-                return size;
+                return new SizeF(size[0], size[1]);
             }
-            size = d_TextRenderer.MeasureTextSize(text, fontsize);
+            IntRef width = new IntRef();
+            IntRef height = new IntRef();
+            game.platform.TextSize(text, fontsize, width, height);
+            size = new int[2];
+            size[0] = width.value;
+            size[1] = height.value;
             textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
-            return size;
-        }
-        CachedTexture MakeTextTexture(Text_ t, FontCi font)
-        {
-            Bitmap bmp = d_TextRenderer.MakeTextTexture(t, font);
-            int texture = LoadTexture(bmp);
-            return new CachedTexture() { textureId = texture, sizeX = bmp.Size.Width, sizeY = bmp.Size.Height };
+            return new SizeF(width.value, height.value);
         }
         public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
         {
@@ -6282,6 +6240,8 @@ namespace ManicDigger
         {
             game.MapLoadingDraw();
         }
+
+        public FontType Font;
     }
 
     public class GetBlockHeight_ : DelegateGetBlockHeight

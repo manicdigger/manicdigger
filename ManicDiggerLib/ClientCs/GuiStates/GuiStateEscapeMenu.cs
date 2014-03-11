@@ -251,7 +251,7 @@ namespace ManicDigger
             {
                 options.Font = 0;
             }
-            game.d_TextRenderer.Font = (ManicDigger.Renderers.FontType)fontValues[options.Font];
+            game.Font = (FontType)fontValues[options.Font];
             for (int i = 0; i < game.game.cachedTextTexturesMax; i++)
             {
                 game.game.cachedTextTextures[i] = null;
@@ -415,7 +415,7 @@ namespace ManicDigger
             }
             this.options = o;
 
-            game.d_TextRenderer.Font = (ManicDigger.Renderers.FontType)fontValues[options.Font];
+            game.Font = (FontType)fontValues[options.Font];
             game.d_CurrentShadows.ShadowsFull = options.Shadows;
             //d_Shadows.ResetShadows();
             //d_Terrain.UpdateAllTiles();
@@ -430,7 +430,7 @@ namespace ManicDigger
         }
         public void SaveOptions()
         {
-            options.Font = (int)game.d_TextRenderer.Font;
+            options.Font = (int)game.Font;
             options.Shadows = game.d_CurrentShadows.ShadowsFull;
             options.DrawDistance = (int)game.d_Config3d.viewdistance;
             options.EnableSound = game.AudioEnabled;

@@ -17,7 +17,6 @@ namespace ManicDigger
         public ManicDiggerGameWindow game;
         public ITerrainTextures d_Terrain;
         public Config3d d_Config3d;
-        public TextRenderer d_TextRenderer;
         public IGetFileStream d_GetFile;
         public IViewportSize d_ViewportSize;
         public bool ALLOW_NON_POWER_OF_TWO = false;

@@ -1810,7 +1810,6 @@ public enum GuiState
     Inventory,
     MapLoading,
     CraftingRecipes,
-    EditText,
     ModalDialog
 }
 
@@ -1820,4 +1819,12 @@ public enum BlockSetMode
     Create,
     Use, //open doors, use crafting table, etc.
     UseWithTool
+}
+
+public enum FontType
+{
+    Nice,
+    Simple,
+    BlackBackground,
+    Default
 }

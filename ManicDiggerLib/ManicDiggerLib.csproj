@@ -115,7 +115,6 @@
     <Compile Include="ClientCs\GameData.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
     <Compile Include="ClientCs\Hud\HudInventory.cs" />
-    <Compile Include="ClientCs\Hud\HudTextEditor.cs" />
     <Compile Include="ClientCs\Interpolation.cs" />
     <Compile Include="ClientCs\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
@@ -198,7 +197,7 @@
     <Compile Include="ClientCs\Renderers\SkySphere.cs" />
     <Compile Include="ClientCs\Renderers\SunMoonRenderer.cs" />
     <Compile Include="ClientCs\Renderers\TerrainRenderer.cs" />
-    <Compile Include="ClientCs\Renderers\TextRenderer.cs" />
+    <Compile Include="ClientNative\TextRenderer.cs" />
     <Compile Include="ClientCs\TextureAtlasConverter.cs" />
     <Compile Include="ClientCs\The3d.cs" />
     <Compile Include="ClientCs\Renderers\WeaponRenderer.cs" />
