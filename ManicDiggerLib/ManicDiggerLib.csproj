@@ -143,6 +143,7 @@
     <Compile Include="Server\Mods\Fortress\Default.cs" />
     <Compile Include="Server\Mods\Fortress\DefaultWorldGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\Doors.cs" />
+    <Compile Include="Server\Mods\Fortress\Ghost.cs" />
     <Compile Include="Server\Mods\Fortress\Monsters.cs" />
     <Compile Include="Server\Mods\Fortress\OreGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\HttpStats.cs" />

@@ -491,7 +491,9 @@ namespace ManicDigger
         
         public void SetPlayerOrientation(int player, int heading, int pitch, int stance)
         {
+            server.clients[player].positionheading = heading;
         	server.clients[player].positionpitch = pitch;
+            server.clients[player].stance = (byte)stance;
         	foreach (var k in server.clients)
             {
                 server.SendPlayerTeleport(k.Key, player, server.clients[player].PositionMul32GlX, server.clients[player].PositionMul32GlY, server.clients[player].PositionMul32GlZ,

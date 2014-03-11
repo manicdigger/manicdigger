@@ -3510,17 +3510,17 @@ namespace ManicDigger
                     NetworkInterpolation n = new NetworkInterpolation();
                     n.req = new PlayerInterpolate();
                     n.DELAY = 0.5f;
-                    n.EXTRAPOLATE = true;
+                    n.EXTRAPOLATE = false;
                     n.EXTRAPOLATION_TIME = 0.3f;
                     playerdrawinfo[k.Key].interpolation = n;
                 }
-                playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.05, ((float)ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds() / 1000));
+                playerdrawinfo[k.Key].interpolation.DELAY = (float)Math.Max(0.1, ((float)ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds() / 1000));
                 PlayerDrawInfo info = playerdrawinfo[k.Key];
                 Vector3 realpos = k.Value.Position.Value;
                 bool redraw = false;
                 if (totaltime - lastdrawplayers >= 0.1)
                 {
-                    redraw = true;
+                    //redraw = true;
                     lastdrawplayers = totaltime;
                 }
                 if (realpos != info.lastrealpos
