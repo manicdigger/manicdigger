@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using GameModeFortress;
 using ManicDigger;
+using System.Xml;
 using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
@@ -19,6 +20,22 @@ namespace ManicDiggerServer
         
         public Program(string[] args)
         {
+            try
+            {
+                using (Stream s = new MemoryStream(File.ReadAllBytes(Path.Combine(GameStorePath.gamepathconfig, "ServerConfig.txt"))))
+                {
+                    StreamReader sr = new StreamReader(s);
+                    XmlDocument d = new XmlDocument();
+                    d.Load(sr);
+                    autoRestartCycle = int.Parse(XmlTool.XmlVal(d, "/ManicDiggerServerConfig/AutoRestartCycle"));
+                }
+            }
+            catch
+            {
+                //ServerConfig cannot be read. Use default value of 6 hours
+                autoRestartCycle = 6;
+            }
+            
             ENABLE_REDIRECT_STANDARD_INPUT = IsMono;
             if (args.Length > 0)
             {
