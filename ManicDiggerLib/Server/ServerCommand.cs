@@ -768,7 +768,10 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
                 lastSender[targetClient.playername] = sourceClient.playername;
                 // TODO: move message sound to client
-                //SendSound(k.Key, "message.wav");
+                if (targetClient.Id != serverConsoleId)
+                {
+                    SendSound(targetClient.Id, "message.wav", 0, 0, 0);
+                }
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, recipient));
@@ -796,6 +799,11 @@ namespace ManicDiggerServer
                 SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
                 SendMessage(sourceClientId, string.Format("PM -> {0}: {1}", targetClient.ColoredPlayername(colorNormal), message));
                 lastSender[targetClient.playername] = sourceClient.playername;
+                // TODO: move message sound to client
+                if (targetClient.Id != serverConsoleId)
+                {
+                    SendSound(targetClient.Id, "message.wav", 0, 0, 0);
+                }
                 return true;
             }
             SendMessage(sourceClientId, string.Format("{0}Player {1} not found.", colorError, lastSender[sourceClient.playername]));
