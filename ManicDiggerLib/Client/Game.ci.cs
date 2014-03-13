@@ -375,7 +375,7 @@
         {
             platform.GlEnableDepthTest();
         }
-        platform.GlDisableCullFace();
+        platform.GlEnableCullFace();
         platform.GlEnableTexture2d();
     }
 
