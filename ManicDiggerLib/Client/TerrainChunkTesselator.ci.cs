@@ -925,8 +925,13 @@ public class TerrainChunkTesselatorCi
         float flowerfix = 0;
         if (IsFlower(tiletype))
         {
+            //Draw nothing but 2 faces. Prevents flickering.
             drawtop = 0;
             drawbottom = 0;
+            drawback = 0;
+            drawright = 0;
+            drawfront = 1;
+            drawleft = 1;
             flowerfix = one / 2; // 0.5f;
         }
         if (game.blocktypes[tiletype].DrawType == Packet_DrawTypeEnum.OpenDoorLeft)
