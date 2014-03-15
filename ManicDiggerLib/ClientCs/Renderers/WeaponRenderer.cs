@@ -11,24 +11,24 @@ namespace ManicDigger.Renderers
     public class WeaponBlockInfo
     {
         public ITerrainTextures d_Terrain;
-        public IActiveMaterial d_Viewport;
+        public ManicDiggerGameWindow d_Viewport;
         public ILocalPlayerPosition d_LocalPlayerPosition;
         public GameData d_Data;
         public IMapStorage d_Map;
         public ManicDiggerGameWindow d_Shadows;
-        public Inventory d_Inventory;
+        public Packet_Inventory d_Inventory;
         public int terrainTexture { get { return d_Terrain.terrainTexture(); } }
         public int texturesPacked { get { return d_Terrain.texturesPacked(); } }
         public int GetWeaponTextureId(TileSide side)
         {
-            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
-            if (item == null || IsCompass())
+            Packet_Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            if (item == null || IsCompass() || (item != null && item.BlockId == 0))
             {
                 //empty hand
                 if (side == TileSide.Top) { return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Top]; }
                 return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Front];
             }
-            if (item.ItemClass == ItemClass.Block)
+            if (item.ItemClass == Packet_ItemClassEnum.Block)
             {
                 return d_Shadows.game.TextureId[item.BlockId][(int)side];
             }
@@ -61,22 +61,22 @@ namespace ManicDigger.Renderers
         }
         public bool IsTorch()
         {
-            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            Packet_Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
             return item != null
-                && item.ItemClass == ItemClass.Block
+                && item.ItemClass == Packet_ItemClassEnum.Block
                 && d_Shadows.game.blocktypes[item.BlockId].DrawType == Packet_DrawTypeEnum.Torch;
         }
         public bool IsCompass()
         {
-            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            Packet_Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
             return item != null
-                && item.ItemClass == ItemClass.Block
+                && item.ItemClass == Packet_ItemClassEnum.Block
                 && item.BlockId == d_Data.BlockIdCompass;
         }
         public bool IsEmptyHand()
         {
-            Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
-            return item == null;
+            Packet_Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
+            return item == null || item.BlockId == 0;
         }
     }
     public class WeaponRenderer
@@ -124,7 +124,7 @@ namespace ManicDigger.Renderers
             GL.Color3(Color.FromArgb(light, light, light));
             GL.BindTexture(TextureTarget.Texture2D, d_Info.terrainTexture);
 
-            Item item = d_Info.d_Inventory.RightHand[d_Info.d_Viewport.ActiveMaterial];
+            Packet_Item item = d_Info.d_Inventory.RightHand[d_Info.d_Viewport.ActiveMaterial];
             int curmaterial;
             if (item == null)
             {

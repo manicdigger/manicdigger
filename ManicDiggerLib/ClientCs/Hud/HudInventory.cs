@@ -8,193 +8,172 @@ using ManicDigger.Renderers;
 
 namespace ManicDigger.Hud
 {
-    public interface IMouseCurrent
-    {
-        Point MouseCurrent { get; }
-    }
-
-    public interface IActiveMaterial
-    {
-        int ActiveMaterial { get; set; }
-    }
-
-    public class ActiveMaterialDummy : IActiveMaterial
-    {
-        public int ActiveMaterial { get; set; }
-    }
-
-    public interface IViewport3dSelectedBlock
-    {
-        Vector3i SelectedBlock();
-    }
-    public class Viewport3dSelectedBlockDummy : IViewport3dSelectedBlock
-    {
-        public Vector3i SelectedBlock()
-        {
-            return new Vector3i(-1, -1, -1);
-        }
-    }
-
     public class HudInventory
     {
+        public HudInventory()
+        {
+            //indexed by enum WearPlace
+            wearPlaceStart = new PointRef[5];
+            {
+                //new Point(282,85), //LeftHand,
+                wearPlaceStart[0] = PointRef.Create(34, 100); //RightHand,
+                wearPlaceStart[1] = PointRef.Create(74, 100); //MainArmor,
+                wearPlaceStart[2] = PointRef.Create(194, 100); //Boots,
+                wearPlaceStart[3] = PointRef.Create(114, 100); //Helmet,
+                wearPlaceStart[4] = PointRef.Create(154, 100); //Gauntlet,
+            };
+
+            //indexed by enum WearPlace
+            wearPlaceCells = new PointRef[5];
+            {
+                //new Point(2,4), //LeftHand,
+                wearPlaceCells[0] = PointRef.Create(1, 1); //RightHand,
+                wearPlaceCells[1] = PointRef.Create(1, 1); //MainArmor,
+                wearPlaceCells[2] = PointRef.Create(1, 1); //Boots,
+                wearPlaceCells[3] = PointRef.Create(1, 1); //Helmet,
+                wearPlaceCells[4] = PointRef.Create(1, 1); //Gauntlet,
+            }
+            CellCountInPageX = 12;
+            CellCountInPageY = 7;
+            CellCountTotalX = 12;
+            CellCountTotalY = 7 * 6;
+            CellDrawSize = 40;
+        }
+
         public ManicDiggerGameWindow game;
-        public IGameDataItems dataItems;
-        public Inventory inventory;
-        public InventoryUtil inventoryUtil;
+        public Game game1;
+        public GameDataItemsClient dataItems;
+        public InventoryUtilClient inventoryUtil;
         public IInventoryController controller;
 
-        public int CellDrawSize = 40;
+        public int CellDrawSize;
 
-        public Point InventoryStart
-        {
-            get
-            {
-                return new Point(game.Width / 2 - 560 / 2, game.Height / 2 - 600 / 2);
-            }
-        }
-        public Point CellsStart
-        {
-            get
-            {
-                Point p = new Point(33, 180); p.Offset(InventoryStart); return p;
-            }
-        }
-        Point MaterialSelectorStart
-        {
-            get
-            {
-                Point p = MaterialSelectorBackgroundStart;
-                p.Offset(17, 17);
-                return p;
-            }
-        }
-        Point MaterialSelectorBackgroundStart
-        {
-            get
-            {
-                return new Point(game.Width / 2 - 512 / 2, game.Height - 90);
-            }
-        }
-        Point CellCountInPage = new Point(12, 7);
-        Point CellCountTotal = new Point(12, 7 * 6);
+        public int InventoryStartX() { return game1.Width() / 2 - 560 / 2; }
+        public int InventoryStartY() { return game1.Height() / 2 - 600 / 2; }
+        public int CellsStartX() { return 33 + InventoryStartX(); }
+        public int CellsStartY() { return 180 + InventoryStartY(); }
+        int MaterialSelectorStartX() { return MaterialSelectorBackgroundStartX() + 17; }
+        int MaterialSelectorStartY() { return MaterialSelectorBackgroundStartY() + 17; }
+        int MaterialSelectorBackgroundStartX() { return game1.Width() / 2 - 512 / 2; }
+        int MaterialSelectorBackgroundStartY() { return game1.Height() - 90; }
+        int CellCountInPageX;
+        int CellCountInPageY;
+        int CellCountTotalX;
+        int CellCountTotalY;
+
         public int ActiveMaterialCellSize = 48;
 
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (char.IsDigit(e.KeyChar))
             {
-                game.ActiveMaterial = int.Parse("" + e.KeyChar) - 1;
-                if (game.ActiveMaterial == -1) { game.ActiveMaterial = 9; }
+                game1.ActiveMaterial = int.Parse("" + e.KeyChar) - 1;
+                if (game1.ActiveMaterial == -1) { game1.ActiveMaterial = 9; }
             }
         }
         int ScrollButtonSize { get { return CellDrawSize; } }
-        Point ScrollUpButton
-        {
-            get
-            {
-                Point p = CellsStart; p.Offset(CellCountInPage.X * CellDrawSize, 0); return p;
-            }
-        }
-        Point ScrollDownButton
-        {
-            get
-            {
-                Point p = CellsStart; p.Offset(CellCountInPage.X * CellDrawSize, (CellCountInPage.Y - 1) * CellDrawSize); return p;
-            }
-        }
+
+        int ScrollUpButtonX() { return CellsStartX() + CellCountInPageX * CellDrawSize; }
+        int ScrollUpButtonY() { return CellsStartY(); }
+
+        int ScrollDownButtonX() { return CellsStartX() + CellCountInPageX * CellDrawSize; }
+        int ScrollDownButtonY() { return CellsStartY() + (CellCountInPageY - 1) * CellDrawSize; }
 
         public void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Point scaledMouse = game.MouseCurrent;
+            PointRef scaledMouse = PointRef.Create(game1.mouseCurrentX, game1.mouseCurrentY);
 
             //main inventory
-            Point? cellInPage = SelectedCell(scaledMouse);
+            PointRef cellInPage = SelectedCell(scaledMouse);
             //grab from inventory
             if (cellInPage != null)
             {
                 if (e.Button == MouseButton.Left)
                 {
-                    controller.InventoryClick(new Packet_InventoryPosition()
-                    {
-                        Type = Packet_InventoryPositionTypeEnum.MainArea,
-                        AreaX = cellInPage.Value.X,
-                        AreaY = cellInPage.Value.Y + ScrollLine,
-                    });
+                    Packet_InventoryPosition p = new Packet_InventoryPosition();
+                    p.Type = Packet_InventoryPositionTypeEnum.MainArea;
+                    p.AreaX = cellInPage.X;
+                    p.AreaY = cellInPage.Y + ScrollLine;
+                    controller.InventoryClick(p);
                 }
                 else
                 {
-                    controller.InventoryClick(new Packet_InventoryPosition()
                     {
-                        Type = Packet_InventoryPositionTypeEnum.MainArea,
-                        AreaX = cellInPage.Value.X,
-                        AreaY = cellInPage.Value.Y + ScrollLine,
-                    });
-                    controller.InventoryClick(new Packet_InventoryPosition()
+                        Packet_InventoryPosition p = new Packet_InventoryPosition();
+                        p.Type = Packet_InventoryPositionTypeEnum.MainArea;
+                        p.AreaX = cellInPage.X;
+                        p.AreaY = cellInPage.Y + ScrollLine;
+                        controller.InventoryClick(p);
+                    }
                     {
-                        Type = Packet_InventoryPositionTypeEnum.WearPlace,
-                        WearPlace = (int)WearPlace.RightHand,
-                        ActiveMaterial = game.ActiveMaterial,
-                    });
-                    controller.InventoryClick(new Packet_InventoryPosition()
+                        Packet_InventoryPosition p = new Packet_InventoryPosition();
+                        p.Type = Packet_InventoryPositionTypeEnum.WearPlace;
+                        p.WearPlace = (int)WearPlace_.RightHand;
+                        p.ActiveMaterial = game1.ActiveMaterial;
+                        controller.InventoryClick(p);
+                    }
                     {
-                        Type = Packet_InventoryPositionTypeEnum.MainArea,
-                        AreaX = cellInPage.Value.X,
-                        AreaY = cellInPage.Value.Y + ScrollLine,
-                    });
+                        Packet_InventoryPosition p = new Packet_InventoryPosition();
+                        p.Type = Packet_InventoryPositionTypeEnum.MainArea;
+                        p.AreaX = cellInPage.X;
+                        p.AreaY = cellInPage.Y + ScrollLine;
+                        controller.InventoryClick(p);
+                    }
                 }
             }
             //drop items on ground
-            if (scaledMouse.X < CellsStart.X && scaledMouse.Y < MaterialSelectorStart.Y)
+            if (scaledMouse.X < CellsStartX() && scaledMouse.Y < MaterialSelectorStartY())
             {
-                Vector3i pos = game.SelectedBlock();
-                controller.InventoryClick(new Packet_InventoryPosition()
+                int posx = game1.SelectedBlockPositionX;
+                int posy = game1.SelectedBlockPositionY;
+                int posz = game1.SelectedBlockPositionZ;
+                Packet_InventoryPosition p = new Packet_InventoryPosition();
                 {
-                    Type = Packet_InventoryPositionTypeEnum.Ground,
-                    GroundPositionX = pos.x,
-                    GroundPositionY = pos.y,
-                    GroundPositionZ = pos.z,
-                });
+                    p.Type = Packet_InventoryPositionTypeEnum.Ground;
+                    p.GroundPositionX = posx;
+                    p.GroundPositionY = posy;
+                    p.GroundPositionZ = posz;
+                }
+                controller.InventoryClick(p);
             }
             //material selector
             if (SelectedMaterialSelectorSlot(scaledMouse) != null)
             {
                 //int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
-                game.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).Value;
+                game1.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).value;
                 //if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
                 {
-                    controller.InventoryClick(new Packet_InventoryPosition()
-                    {
-                        Type = Packet_InventoryPositionTypeEnum.MaterialSelector,
-                        MaterialId = game.ActiveMaterial,
-                    });
+                    Packet_InventoryPosition p = new Packet_InventoryPosition();
+                    p.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
+                    p.MaterialId = game1.ActiveMaterial;
+                    controller.InventoryClick(p);
                 }
             }
             if (SelectedWearPlace(scaledMouse) != null)
             {
-                controller.InventoryClick(new Packet_InventoryPosition()
-                {
-                    Type = Packet_InventoryPositionTypeEnum.WearPlace,
-                    WearPlace = (int)(SelectedWearPlace(scaledMouse).Value),
-                    ActiveMaterial = game.ActiveMaterial,
-                });
+                Packet_InventoryPosition p = new Packet_InventoryPosition();
+                p.Type = Packet_InventoryPositionTypeEnum.WearPlace;
+                p.WearPlace = (int)(SelectedWearPlace(scaledMouse).value);
+                p.ActiveMaterial = game1.ActiveMaterial;
+                controller.InventoryClick(p);
             }
-            if (scaledMouse.X >= ScrollUpButton.X && scaledMouse.X < ScrollUpButton.X + ScrollButtonSize
-                && scaledMouse.Y >= ScrollUpButton.Y && scaledMouse.Y < ScrollUpButton.Y + ScrollButtonSize)
+            if (scaledMouse.X >= ScrollUpButtonX() && scaledMouse.X < ScrollUpButtonX() + ScrollButtonSize
+                && scaledMouse.Y >= ScrollUpButtonY() && scaledMouse.Y < ScrollUpButtonY() + ScrollButtonSize)
             {
                 ScrollUp();
-                ScrollingUpTime = DateTime.UtcNow;
+                ScrollingUpTimeMilliseconds = game1.platform.TimeMillisecondsFromStart();
             }
-            if (scaledMouse.X >= ScrollDownButton.X && scaledMouse.X < ScrollDownButton.X + ScrollButtonSize
-                && scaledMouse.Y >= ScrollDownButton.Y && scaledMouse.Y < ScrollDownButton.Y + ScrollButtonSize)
+            if (scaledMouse.X >= ScrollDownButtonX() && scaledMouse.X < ScrollDownButtonX() + ScrollButtonSize
+                && scaledMouse.Y >= ScrollDownButtonY() && scaledMouse.Y < ScrollDownButtonY() + ScrollButtonSize)
             {
                 ScrollDown();
-                ScrollingDownTime = DateTime.UtcNow;
+                ScrollingDownTimeMilliseconds = game1.platform.TimeMillisecondsFromStart();
             }
         }
 
         public bool IsMouseOverCells()
         {
-            return SelectedCellOrScrollbar(game.MouseCurrent);
+            return SelectedCellOrScrollbar(game1.mouseCurrentX, game1.mouseCurrentY);
         }
 
         public void ScrollUp()
@@ -206,48 +185,48 @@ namespace ManicDigger.Hud
         public void ScrollDown()
         {
             ScrollLine++;
-            int max = CellCountTotal.Y - CellCountInPage.Y;
+            int max = CellCountTotalY - CellCountInPageY;
             if (ScrollLine >= max) { ScrollLine = max; }
         }
 
-        DateTime ScrollingUpTime;
-        DateTime ScrollingDownTime;
+        int ScrollingUpTimeMilliseconds;
+        int ScrollingDownTimeMilliseconds;
 
         public void Mouse_ButtonUp(object sender, MouseButtonEventArgs e)
         {
-            ScrollingUpTime = new DateTime();
-            ScrollingDownTime = new DateTime();
+            ScrollingUpTimeMilliseconds = 0;
+            ScrollingDownTimeMilliseconds = 0;
         }
 
-        private int? SelectedMaterialSelectorSlot(Point scaledMouse)
+        IntRef SelectedMaterialSelectorSlot(PointRef scaledMouse)
         {
-            if (scaledMouse.X >= MaterialSelectorStart.X && scaledMouse.Y >= MaterialSelectorStart.Y
-                && scaledMouse.X < MaterialSelectorStart.X + 10 * ActiveMaterialCellSize
-                && scaledMouse.Y < MaterialSelectorStart.Y + 10 * ActiveMaterialCellSize)
+            if (scaledMouse.X >= MaterialSelectorStartX() && scaledMouse.Y >= MaterialSelectorStartY()
+                && scaledMouse.X < MaterialSelectorStartX() + 10 * ActiveMaterialCellSize
+                && scaledMouse.Y < MaterialSelectorStartY() + 10 * ActiveMaterialCellSize)
             {
-                return (scaledMouse.X - MaterialSelectorStart.X) / ActiveMaterialCellSize;
+                return IntRef.Create((scaledMouse.X - MaterialSelectorStartX()) / ActiveMaterialCellSize);
             }
             return null;
         }
 
-        private Point? SelectedCell(Point scaledMouse)
+        PointRef SelectedCell(PointRef scaledMouse)
         {
-            if (scaledMouse.X < CellsStart.X || scaledMouse.Y < CellsStart.Y
-                || scaledMouse.X > CellsStart.X + CellCountInPage.X * CellDrawSize
-                || scaledMouse.Y > CellsStart.Y + CellCountInPage.Y * CellDrawSize)
+            if (scaledMouse.X < CellsStartX() || scaledMouse.Y < CellsStartY()
+                || scaledMouse.X > CellsStartX() + CellCountInPageX * CellDrawSize
+                || scaledMouse.Y > CellsStartY() + CellCountInPageY * CellDrawSize)
             {
                 return null;
             }
-            Point cell = new Point((scaledMouse.X - CellsStart.X) / CellDrawSize,
-                (scaledMouse.Y - CellsStart.Y) / CellDrawSize);
+            PointRef cell = PointRef.Create((scaledMouse.X - CellsStartX()) / CellDrawSize,
+                (scaledMouse.Y - CellsStartY()) / CellDrawSize);
             return cell;
         }
 
-        private bool SelectedCellOrScrollbar(Point scaledMouse)
+        bool SelectedCellOrScrollbar(int scaledMouseX, int scaledMouseY)
         {
-            if (scaledMouse.X < CellsStart.X || scaledMouse.Y < CellsStart.Y
-                || scaledMouse.X > CellsStart.X + (CellCountInPage.X + 1) * CellDrawSize
-                || scaledMouse.Y > CellsStart.Y + CellCountInPage.Y * CellDrawSize)
+            if (scaledMouseX < CellsStartX() || scaledMouseY < CellsStartY()
+                || scaledMouseX > CellsStartX() + (CellCountInPageX + 1) * CellDrawSize
+                || scaledMouseY > CellsStartY() + CellCountInPageY * CellDrawSize)
             {
                 return false;
             }
@@ -258,80 +237,87 @@ namespace ManicDigger.Hud
 
         public void Draw()
         {
-            if (ScrollingUpTime.Ticks != 0 && (DateTime.UtcNow - ScrollingUpTime).TotalSeconds > 0.25)
+            if (ScrollingUpTimeMilliseconds != 0 && (game1.platform.TimeMillisecondsFromStart() - ScrollingUpTimeMilliseconds) > 250)
             {
-                ScrollingUpTime = DateTime.UtcNow;
+                ScrollingUpTimeMilliseconds = game1.platform.TimeMillisecondsFromStart();
                 ScrollUp();
             }
-            if (ScrollingDownTime.Ticks != 0 && (DateTime.UtcNow - ScrollingDownTime).TotalSeconds > 0.25)
+            if (ScrollingDownTimeMilliseconds != 0 && (game1.platform.TimeMillisecondsFromStart() - ScrollingDownTimeMilliseconds) > 250)
             {
-                ScrollingDownTime = DateTime.UtcNow;
+                ScrollingDownTimeMilliseconds = game1.platform.TimeMillisecondsFromStart();
                 ScrollDown();
             }
 
-            Point scaledMouse = game.MouseCurrent;
+            PointRef scaledMouse = PointRef.Create(game1.mouseCurrentX, game1.mouseCurrentY);
 
-            game.Draw2dBitmapFile("inventory.png", InventoryStart.X, InventoryStart.Y, 1024, 1024);
+            game.Draw2dBitmapFile("inventory.png", InventoryStartX(), InventoryStartY(), 1024, 1024);
 
             //the3d.Draw2dTexture(terrain, 50, 50, 50, 50, 0);
             //the3d.Draw2dBitmapFile("inventory_weapon_shovel.png", 100, 100, 60 * 2, 60 * 4);
             //the3d.Draw2dBitmapFile("inventory_gauntlet_gloves.png", 200, 200, 60 * 2, 60 * 2);
             //main inventory
-            foreach (var k in inventory.Items)
+            for (int i = 0; i < game1.d_Inventory.ItemsCount; i++)
             {
-                int screeny = k.Key.Y - ScrollLine;
-                if (screeny >= 0 && screeny < CellCountInPage.Y)
+                Packet_PositionItem k = game1.d_Inventory.Items[i];
+                if (k == null)
                 {
-                    DrawItem(new Point(CellsStart.X + k.Key.X * CellDrawSize, CellsStart.Y + screeny * CellDrawSize), k.Value, null);
+                    continue;
+                }
+                int screeny = k.Y - ScrollLine;
+                if (screeny >= 0 && screeny < CellCountInPageY)
+                {
+                    DrawItem(CellsStartX() + k.X * CellDrawSize, CellsStartY() + screeny * CellDrawSize, k.Value_, 0, 0);
                 }
             }
 
             //draw area selection
-            if (inventory.DragDropItem != null)
+            if (game1.d_Inventory.DragDropItem != null)
             {
-                Point? selectedInPage = SelectedCell(scaledMouse);
+                PointRef selectedInPage = SelectedCell(scaledMouse);
                 if (selectedInPage != null)
                 {
-                    int x = (selectedInPage.Value.X) * CellDrawSize + CellsStart.X;
-                    int y = (selectedInPage.Value.Y) * CellDrawSize + CellsStart.Y;
-                    Point size = dataItems.ItemSize(inventory.DragDropItem);
-                    if (selectedInPage.Value.X + size.X <= CellCountInPage.X
-                        && selectedInPage.Value.Y + size.Y <= CellCountInPage.Y)
+                    int x = (selectedInPage.X) * CellDrawSize + CellsStartX();
+                    int y = (selectedInPage.Y) * CellDrawSize + CellsStartY();
+                    int sizex = dataItems.ItemSizeX(game1.d_Inventory.DragDropItem);
+                    int sizey = dataItems.ItemSizeY(game1.d_Inventory.DragDropItem);
+                    if (selectedInPage.X + sizex <= CellCountInPageX
+                        && selectedInPage.Y + sizey <= CellCountInPageY)
                     {
-                        Color c;
-                        Point[] itemsAtArea = inventoryUtil.ItemsAtArea(new Point(selectedInPage.Value.X, selectedInPage.Value.Y + ScrollLine), size);
-                        if (itemsAtArea == null || itemsAtArea.Length > 1)
+                        int c;
+                        IntRef itemsAtAreaCount = new IntRef();
+                        PointRef[] itemsAtArea = inventoryUtil.ItemsAtArea(selectedInPage.X, selectedInPage.Y + ScrollLine, sizex, sizey, itemsAtAreaCount);
+                        if (itemsAtArea == null || itemsAtAreaCount.value > 1)
                         {
-                            c = Color.Red;
+                            c = Game.ColorFromArgb(100, 255, 0, 0); // red
                         }
                         else //0 or 1
                         {
-                            c = Color.Green;
+                            c = Game.ColorFromArgb(100, 0, 255, 0); // green
                         }
-                        game.Draw2dTexture(game.WhiteTexture(), x, y,
-                            CellDrawSize * size.X, CellDrawSize * size.Y,
-                            null, Color.FromArgb(100, c));
+                        game1.Draw2dTexture(game1.WhiteTexture(), x, y,
+                            CellDrawSize * sizex, CellDrawSize * sizey,
+                            null, 0, c, false);
                     }
                 }
-                WearPlace? selectedWear = SelectedWearPlace(scaledMouse);
+                IntRef selectedWear = SelectedWearPlace(scaledMouse);
                 if (selectedWear != null)
                 {
-                    Point p = Offset(wearPlaceStart[(int)selectedWear], InventoryStart);
-                    Point size = wearPlaceCells[(int)selectedWear];
+                    Point p = new Point(wearPlaceStart[selectedWear.value].X + InventoryStartX(), wearPlaceStart[selectedWear.value].Y + InventoryStartY());
+                    PointRef size = wearPlaceCells[selectedWear.value];
 
-                    Color c;
-                    Item itemsAtArea = inventoryUtil.ItemAtWearPlace(selectedWear.Value, game.ActiveMaterial);
-                    if (!dataItems.CanWear(selectedWear.Value, inventory.DragDropItem))
+                    int c;
+                    Packet_Item itemsAtArea = inventoryUtil.ItemAtWearPlace(selectedWear.value, game1.ActiveMaterial);
+                    if (!dataItems.CanWear(selectedWear.value, game1.d_Inventory.DragDropItem))
                     {
-                        c = Color.Red;
+                        c = Game.ColorFromArgb(100, 255, 0, 0); // red
                     }
                     else //0 or 1
                     {
-                        c = Color.Green;
+                        c = Game.ColorFromArgb(100, 0, 255, 0); // green
                     }
-                    game.Draw2dTexture(game.WhiteTexture(), p.X, p.Y,
+                    game1.Draw2dTexture(game1.WhiteTexture(), p.X, p.Y,
                         CellDrawSize * size.X, CellDrawSize * size.Y,
-                        null, Color.FromArgb(100, c));
+                        null, 0, c, false);
                 }
             }
 
@@ -340,178 +326,166 @@ namespace ManicDigger.Hud
 
             //wear
             //DrawItem(Offset(wearPlaceStart[(int)WearPlace.LeftHand], InventoryStart), inventory.LeftHand[ActiveMaterial.ActiveMaterial], null);
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.RightHand], InventoryStart), inventory.RightHand[game.ActiveMaterial], null);
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.MainArmor], InventoryStart), inventory.MainArmor, null);
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.Boots], InventoryStart), inventory.Boots, null);
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.Helmet], InventoryStart), inventory.Helmet, null);
-            DrawItem(Offset(wearPlaceStart[(int)WearPlace.Gauntlet], InventoryStart), inventory.Gauntlet, null);
+            DrawItem(wearPlaceStart[(int)WearPlace_.RightHand].X + InventoryStartX(), wearPlaceStart[(int)WearPlace_.RightHand].Y + InventoryStartY(), game1.d_Inventory.RightHand[game1.ActiveMaterial], 0, 0);
+            DrawItem(wearPlaceStart[(int)WearPlace_.MainArmor].X + InventoryStartX(), wearPlaceStart[(int)WearPlace_.MainArmor].Y + InventoryStartY(), game1.d_Inventory.MainArmor, 0, 0);
+            DrawItem(wearPlaceStart[(int)WearPlace_.Boots].X + InventoryStartX(), wearPlaceStart[(int)WearPlace_.Boots].Y + InventoryStartY(), game1.d_Inventory.Boots, 0, 0);
+            DrawItem(wearPlaceStart[(int)WearPlace_.Helmet].X + InventoryStartX(), wearPlaceStart[(int)WearPlace_.Helmet].Y + InventoryStartY(), game1.d_Inventory.Helmet, 0, 0);
+            DrawItem(wearPlaceStart[(int)WearPlace_.Gauntlet].X + InventoryStartX(), wearPlaceStart[(int)WearPlace_.Gauntlet].Y + InventoryStartY(), game1.d_Inventory.Gauntlet, 0, 0);
 
             //info
             if (SelectedCell(scaledMouse) != null)
             {
-                Point selected = SelectedCell(scaledMouse).Value;
-                selected.Offset(0, ScrollLine);
-                Point? itemAtCell = inventoryUtil.ItemAtCell(selected);
+                PointRef selected = SelectedCell(scaledMouse);
+                selected.Y += ScrollLine;
+                PointRef itemAtCell = inventoryUtil.ItemAtCell(selected);
                 if (itemAtCell != null)
                 {
-                    Item item = inventory.Items[new ProtoPoint(itemAtCell.Value.X, itemAtCell.Value.Y)];
+                    Packet_Item item = GetItem(game1.d_Inventory, itemAtCell.X, itemAtCell.Y);
                     if (item != null)
                     {
-                        int x = (selected.X) * CellDrawSize + CellsStart.X;
-                        int y = (selected.Y) * CellDrawSize + CellsStart.Y;
-                        DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), item);
+                        int x = (selected.X) * CellDrawSize + CellsStartX();
+                        int y = (selected.Y) * CellDrawSize + CellsStartY();
+                        DrawItemInfo(scaledMouse.X, scaledMouse.Y, item);
                     }
                 }
             }
             if (SelectedWearPlace(scaledMouse) != null)
             {
-                WearPlace selected = SelectedWearPlace(scaledMouse).Value;
-                Item itemAtWearPlace = inventoryUtil.ItemAtWearPlace(selected, game.ActiveMaterial);
+                int selected = SelectedWearPlace(scaledMouse).value;
+                Packet_Item itemAtWearPlace = inventoryUtil.ItemAtWearPlace(selected, game1.ActiveMaterial);
                 if (itemAtWearPlace != null)
                 {
-                    DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), itemAtWearPlace);
+                    DrawItemInfo(scaledMouse.X, scaledMouse.Y, itemAtWearPlace);
                 }
             }
             if (SelectedMaterialSelectorSlot(scaledMouse) != null)
             {
-                int selected = SelectedMaterialSelectorSlot(scaledMouse).Value;
-                Item item = inventory.RightHand[selected];
+                int selected = SelectedMaterialSelectorSlot(scaledMouse).value;
+                Packet_Item item = game1.d_Inventory.RightHand[selected];
                 if (item != null)
                 {
-                    DrawItemInfo(new Point(scaledMouse.X, scaledMouse.Y), item);
+                    DrawItemInfo(scaledMouse.X, scaledMouse.Y, item);
                 }
             }
 
-            if (inventory.DragDropItem != null)
+            if (game1.d_Inventory.DragDropItem != null)
             {
-                DrawItem(new Point(scaledMouse.X, scaledMouse.Y), inventory.DragDropItem, null);
+                DrawItem(scaledMouse.X, scaledMouse.Y, game1.d_Inventory.DragDropItem, 0, 0);
             }
+        }
+
+        Packet_Item GetItem(Packet_Inventory inventory, int x, int y)
+        {
+            for (int i = 0; i < inventory.ItemsCount; i++)
+            {
+                if (inventory.Items[i].X == x && inventory.Items[i].Y == y)
+                {
+                    return inventory.Items[i].Value_;
+                }
+            }
+            return null;
         }
 
         public void DrawMaterialSelector()
         {
-            game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStart.X, MaterialSelectorBackgroundStart.Y, 1024, 128);
+            game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStartX(), MaterialSelectorBackgroundStartY(), 1024, 128);
             for (int i = 0; i < 10; i++)
             {
-                /*
-                if (inventory.LeftHand[i] != null)
+                if (game1.d_Inventory.RightHand[i] != null)
                 {
-                    DrawItem(new Point(MaterialSelectorStart.X + i * ActiveMaterialCellSize, MaterialSelectorStart.Y),
-                        inventory.LeftHand[i], new Point(ActiveMaterialCellSize, ActiveMaterialCellSize));
-                }
-                */
-                if (inventory.RightHand[i] != null)
-                {
-                    DrawItem(new Point(MaterialSelectorStart.X + i * ActiveMaterialCellSize, MaterialSelectorStart.Y),
-                        inventory.RightHand[i], new Point(ActiveMaterialCellSize, ActiveMaterialCellSize));
+                    DrawItem(MaterialSelectorStartX() + i * ActiveMaterialCellSize, MaterialSelectorStartY(),
+                        game1.d_Inventory.RightHand[i], ActiveMaterialCellSize, ActiveMaterialCellSize);
                 }
             }
             game.Draw2dBitmapFile("activematerial2.png",
-                MaterialSelectorStart.X + ActiveMaterialCellSize * game.ActiveMaterial,
-                MaterialSelectorStart.Y, ActiveMaterialCellSize, ActiveMaterialCellSize);
+                MaterialSelectorStartX() + ActiveMaterialCellSize * game1.ActiveMaterial,
+                MaterialSelectorStartY(), ActiveMaterialCellSize, ActiveMaterialCellSize);
         }
 
-        private WearPlace? SelectedWearPlace(Point scaledMouse)
+        IntRef SelectedWearPlace(PointRef scaledMouse)
         {
             for (int i = 0; i < wearPlaceStart.Length; i++)
             {
-                Point p = wearPlaceStart[i];
-                p.Offset(InventoryStart);
-                Point cells = wearPlaceCells[i];
+                PointRef p = wearPlaceStart[i];
+                p.X += InventoryStartX();
+                p.Y += InventoryStartY();
+                PointRef cells = wearPlaceCells[i];
                 if (scaledMouse.X >= p.X && scaledMouse.Y >= p.Y
                     && scaledMouse.X < p.X + cells.X * CellDrawSize
                     && scaledMouse.Y < p.Y + cells.Y * CellDrawSize)
                 {
-                    return (WearPlace)i;
+                    return IntRef.Create(i);
                 }
             }
             return null;
         }
 
         //indexed by enum WearPlace
-        Point[] wearPlaceStart = new Point[]
-        {
-            //new Point(282,85), //LeftHand,
-            new Point(34,100), //RightHand,
-            new Point(74,100), //MainArmor,
-            new Point(194,100), //Boots,
-            new Point(114,100), //Helmet,
-            new Point(154,100), //Gauntlet,
-        };
-
+        PointRef[] wearPlaceStart;
         //indexed by enum WearPlace
-        Point[] wearPlaceCells = new Point[]
-        {
-            //new Point(2,4), //LeftHand,
-            new Point(1,1), //RightHand,
-            new Point(1,1), //MainArmor,
-            new Point(1,1), //Boots,
-            new Point(1,1), //Helmet,
-            new Point(1,1), //Gauntlet,
-        };
+        PointRef[] wearPlaceCells;
 
-        private void DrawItem(Point screenpos, Item item, Point? drawsize)
+        void DrawItem(int screenposX, int screenposY, Packet_Item item, int drawsizeX, int drawsizeY)
         {
             if (item == null)
             {
                 return;
             }
-            Point size = dataItems.ItemSize(item);
-            if (drawsize == null)
+            int sizex = dataItems.ItemSizeX(item);
+            int sizey = dataItems.ItemSizeY(item);
+            if (drawsizeX == 0 || drawsizeX == -1)
             {
-                drawsize = new Point(CellDrawSize * size.X, CellDrawSize * size.Y);
+                drawsizeX = CellDrawSize * sizex;
+                drawsizeY = CellDrawSize * sizey;
             }
-            if (item.ItemClass == ItemClass.Block)
+            if (item.ItemClass == Packet_ItemClassEnum.Block)
             {
-                game.Draw2dTexture(game.game.terrainTexture, screenpos.X, screenpos.Y,
-                    drawsize.Value.X, drawsize.Value.Y, dataItems.TextureIdForInventory[item.BlockId]);
+                if (item.BlockId == 0)
+                {
+                    return;
+                }
+                game1.Draw2dTexture(game1.terrainTexture, screenposX, screenposY,
+                    drawsizeX, drawsizeY, IntRef.Create(dataItems.TextureIdForInventory()[item.BlockId]), game1.texturesPacked(), Game.ColorFromArgb(255,255,255,255), false);
                 if (item.BlockCount > 1)
                 {
-                    game.Draw2dText(item.BlockCount.ToString(), screenpos.X, screenpos.Y, 8, Color.White);
+                    FontCi font = new FontCi();
+                    font.size = 8;
+                    font.family = "Arial";
+                    game1.Draw2dText(item.BlockCount.ToString(), font, screenposX, screenposY, null, false);
                 }
             }
             else
             {
-                game.Draw2dBitmapFile(dataItems.ItemGraphics(item), screenpos.X, screenpos.Y,
-                    drawsize.Value.X, drawsize.Value.Y);
+                game.Draw2dBitmapFile(dataItems.ItemGraphics(item), screenposX, screenposY,
+                    drawsizeX, drawsizeY);
             }
         }
 
-        public void DrawItemInfo(Point screenpos, Item item)
+        public void DrawItemInfo(int screenposX, int screenposY, Packet_Item item)
         {
-        	Point size = dataItems.ItemSize(item);
-        	float tw = game.TextSize(dataItems.ItemInfo(item), 11.5f).Width + 6;
-            float th = game.TextSize(dataItems.ItemInfo(item), 11.5f).Height + 4;
-        	float w = tw + CellDrawSize * size.X;
-        	float h = th < CellDrawSize * size.Y ? CellDrawSize * size.Y + 4 : th;
-        	if (screenpos.X < w + 20) { screenpos.X = (int)w + 20; }
-            if (screenpos.Y < h + 20) { screenpos.Y = (int)h + 20; }
-            if (screenpos.X > game.Width - (w + 20)) { screenpos.X = game.Width - ((int)w + 20); }
-            if (screenpos.Y > game.Height - (h + 20)) { screenpos.Y = game.Height - ((int)h + 20); }
-            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w, screenpos.Y - h, w, h, null, Color.FromArgb(255, Color.Black));
-            game.Draw2dTexture(game.WhiteTexture(), screenpos.X - w + 2, screenpos.Y - h + 2, w - 4, h - 4, null, Color.FromArgb(255, Color.DimGray));
-            game.Draw2dText(dataItems.ItemInfo(item), screenpos.X - tw + 4, screenpos.Y - h + 2, 10, null);
-            DrawItem(new Point(screenpos.X - (int)w + 2, screenpos.Y - (int)h + 2), new Item { BlockId = item.BlockId }, null);
+            int sizex = dataItems.ItemSizeX(item);
+            int sizey = dataItems.ItemSizeY(item);
+            IntRef tw = new IntRef();
+            IntRef th = new IntRef();
+            float one = 1;
+            game1.platform.TextSize(dataItems.ItemInfo(item), 11 + one / 2, tw, th);
+            tw.value += 6;
+            th.value += 4;
+            int w = game1.platform.FloatToInt(tw.value + CellDrawSize * sizex);
+            int h = game1.platform.FloatToInt(th.value < CellDrawSize * sizey ? CellDrawSize * sizey + 4 : th.value);
+            if (screenposX < w + 20) { screenposX = w + 20; }
+            if (screenposY < h + 20) { screenposY = h + 20; }
+            if (screenposX > game1.Width() - (w + 20)) { screenposX = game1.Width() - (w + 20); }
+            if (screenposY > game1.Height() - (h + 20)) { screenposY = game1.Height() - (h + 20); }
+            game1.Draw2dTexture(game1.WhiteTexture(), screenposX - w, screenposY - h, w, h, null,0, Game.ColorFromArgb(255, 0,0,0), false);
+            game1.Draw2dTexture(game1.WhiteTexture(), screenposX - w + 2, screenposY - h + 2, w - 4, h - 4, null, 0, Game.ColorFromArgb(255, 105, 105, 105), false);
+            FontCi font = new FontCi();
+            font.family = "Arial";
+            font.size = 10;
+            game1.Draw2dText(dataItems.ItemInfo(item), font, screenposX - tw.value + 4, screenposY - h + 2, null, false);
+            Packet_Item item2 = new Packet_Item();
+            item2.BlockId = item.BlockId;
+            DrawItem(screenposX - w + 2, screenposY - h + 2, item2, 0, 0);
         }
-        static Point Offset(Point a, Point b)
-        {
-            Point p = a;
-            p.Offset(b);
-            return p;
-        }
-    }
-}
-
-
-public class PointRef
-{
-    internal int x;
-    internal int y;
-    public static PointRef Create(int x_, int y_)
-    {
-        PointRef p = new PointRef();
-        p.x = x_;
-        p.y = y_;
-        return p;
     }
 }

@@ -1556,9 +1556,9 @@ namespace ManicDiggerServer
                     Inventory inventory = GetPlayerInventory(targetName).Inventory;
                     InventoryUtil util = GetInventoryUtil(inventory);
 
-                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
-                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        for (int yy = 0; yy < util.CellCountY; yy++)
                         {
                             if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
                             {
@@ -1574,16 +1574,16 @@ namespace ManicDiggerServer
                             }
                         }
                     }
-                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
-                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        for (int yy = 0; yy < util.CellCountY; yy++)
                         {
                             Item newItem = new Item();
                             newItem.ItemClass = ItemClass.Block;
                             newItem.BlockId = i;
                             newItem.BlockCount = 999;
 
-                            if (util.ItemAtCell(new Point(xx, yy)) == null)
+                            if (util.ItemAtCell(PointRef.Create(xx, yy)) == null)
                             {
                                 inventory.Items[new ProtoPoint(xx, yy)] = newItem;
                                 goto nextblock;
@@ -1635,9 +1635,9 @@ namespace ManicDiggerServer
                     Inventory inventory = GetPlayerInventory(targetName).Inventory;
                     InventoryUtil util = GetInventoryUtil(inventory);
 
-                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
-                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        for (int yy = 0; yy < util.CellCountY; yy++)
                         {
                             if (!inventory.Items.ContainsKey(new ProtoPoint(xx, yy)))
                             {
@@ -1660,16 +1660,16 @@ namespace ManicDiggerServer
                             }
                         }
                     }
-                    for (int xx = 0; xx < util.CellCount.X; xx++)
+                    for (int xx = 0; xx < util.CellCountX; xx++)
                     {
-                        for (int yy = 0; yy < util.CellCount.Y; yy++)
+                        for (int yy = 0; yy < util.CellCountY; yy++)
                         {
                             Item newItem = new Item();
                             newItem.ItemClass = ItemClass.Block;
                             newItem.BlockId = i;
                             newItem.BlockCount = amount;
 
-                            if (util.ItemAtCell(new Point(xx, yy)) == null)
+                            if (util.ItemAtCell(PointRef.Create(xx, yy)) == null)
                             {
                                 inventory.Items[new ProtoPoint(xx, yy)] = newItem;
                                 goto nextblock;

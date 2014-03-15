@@ -4,6 +4,7 @@ using System.Text;
 using System.Drawing;
 using ManicDigger.Renderers;
 using System.Runtime.InteropServices;
+using ManicDiggerServer;
 
 namespace ManicDigger
 {

@@ -326,13 +326,13 @@ namespace ManicDigger.Mods
                 if (!spawnedBot)
                 {
                     spawnedBot = true;
-                    if (System.Diagnostics.Debugger.IsAttached)
-                    {
-                        int bot = m.AddBot("bot");
-                        PlayerJoin(bot);
-                        DialogClickSelectTeam(bot, "Team2");
-                        Respawn(bot);
-                    }
+                    //if (System.Diagnostics.Debugger.IsAttached)
+                    //{
+                    //    int bot = m.AddBot("bot");
+                    //    PlayerJoin(bot);
+                    //    DialogClickSelectTeam(bot, "Team2");
+                    //    Respawn(bot);
+                    //}
                 }
             }
         }

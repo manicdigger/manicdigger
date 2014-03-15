@@ -762,7 +762,7 @@ package Packet;
         optional Item boots = 4;
         optional Item helmet = 5;
         optional Item Gauntlet = 6;
-        repeated StringItem items = 7;
+        repeated PositionItem items = 7;
         optional Item dragDropItem = 8;
         repeated Item rightHand = 9;
     }
@@ -787,10 +787,12 @@ package Packet;
         Other = 7;
     }
     
-    message StringItem
+    message PositionItem
     {
 		optional string Key_ = 1;
 		optional Item Value_ = 2;
+		optional int32 x = 3;
+		optional int32 y = 4;
     }
     
     message Dialog

@@ -82,38 +82,38 @@ namespace ManicDigger
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z, (int)LocalPlayerPosition.Y - 1);
-                if (!MapUtil.IsValidPos(this, (int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
+                if (!game.IsValidPos((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z))
                 {
                     ExitVehicle();
                 }
                 else
                 {
-                    var railunderplayer = d_Data.Rail[this.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
+                    int railunderplayer = d_Data.Rail[this.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
                     originalmodelheight = CharacterEyesHeight;
                     CharacterEyesHeight = minecartheight;
                     currentvehiclespeed = 0;
-                    if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
+                    if ((railunderplayer & (int)RailDirectionFlags.Horizontal) != 0)
                     {
                         currentdirection = VehicleDirection12.HorizontalRight;
                     }
-                    else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
+                    else if ((railunderplayer & (int)RailDirectionFlags.Vertical) != 0)
                     {
                         currentdirection = VehicleDirection12.VerticalUp;
                     }
-                    else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                    else if ((railunderplayer & (int)RailDirectionFlags.UpLeft) != 0)
                     {
                         currentdirection = VehicleDirection12.UpLeftUp;
                     }
-                    else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                    else if ((railunderplayer & (int)RailDirectionFlags.UpRight) != 0)
                     {
                         currentdirection = VehicleDirection12.UpRightUp;
                     }
-                    else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                    else if ((railunderplayer & (int)RailDirectionFlags.DownLeft) != 0)
                     {
                         currentdirection = VehicleDirection12.DownLeftLeft;
                     }
-                    else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                    else if ((railunderplayer & (int)RailDirectionFlags.DownRight) != 0)
                     {
                         currentdirection = VehicleDirection12.DownRightRight;
                     }
@@ -270,13 +270,13 @@ namespace ManicDigger
             VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
             if (d_Map.IsValidPos((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
-                RailDirectionFlags newpositionrail = d_Data.Rail[
+                int newpositionrail = d_Data.Rail[
                     d_Map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
                 List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
                 foreach (var z in DirectionUtils.PossibleNewRails(enter.EnterDirection))
                 {
-                    if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
-                        != RailDirectionFlags.None)
+                    if ((newpositionrail & (int)DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
+                        != 0)
                     {
                         all_possible_rails.Add(z);
                     }

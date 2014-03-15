@@ -5,122 +5,6 @@ using ManicDigger.Renderers;
 
 namespace ManicDigger
 {
-    public enum RailSlope
-    {
-        Flat, TwoLeftRaised, TwoRightRaised, TwoUpRaised, TwoDownRaised
-    }
-    public class RailMapUtil
-    {
-        public IMapStorage d_MapStorage;
-        public GameData d_Data;
-        public RailSlope GetRailSlope(int x, int y, int z)
-        {
-            int tiletype = d_MapStorage.GetBlock(x, y, z);
-            RailDirectionFlags rail = d_Data.Rail[tiletype];
-            int blocknear;
-            if (x < d_MapStorage.MapSizeX - 1)
-            {
-                blocknear = d_MapStorage.GetBlock(x + 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != 0 && d_Data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoRightRaised;
-                }
-            }
-            if (x > 0)
-            {
-                blocknear = d_MapStorage.GetBlock(x - 1, y, z);
-                if (rail == RailDirectionFlags.Horizontal &&
-                     blocknear != 0 && d_Data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoLeftRaised;
-
-                }
-            }
-            if (y > 0)
-            {
-                blocknear = d_MapStorage.GetBlock(x, y - 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != 0 && d_Data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoUpRaised;
-                }
-            }
-            if (y < d_MapStorage.MapSizeY - 1)
-            {
-                blocknear = d_MapStorage.GetBlock(x, y + 1, z);
-                if (rail == RailDirectionFlags.Vertical &&
-                      blocknear != 0 && d_Data.Rail[blocknear] == RailDirectionFlags.None)
-                {
-                    return RailSlope.TwoDownRaised;
-                }
-            }
-            return RailSlope.Flat;
-        }
-    }
-    [Flags]
-    public enum RailDirectionFlags : byte
-    {
-        None = 0,
-        Horizontal = 1,
-        Vertical = 2,
-        UpLeft = 4,
-        UpRight = 8,
-        DownLeft = 16,
-        DownRight = 32,
-
-        Full = Horizontal | Vertical | UpLeft | UpRight | DownLeft | DownRight,
-
-
-        TwoHorizontalVertical = Horizontal | Vertical,
-        TwoHorizontalUpLeft = Horizontal | UpLeft,
-        TwoHorizontalUpRight = Horizontal | UpRight,
-        TwoHorizontalDownLeft = Horizontal | DownLeft,
-        TwoHorizontalDownRight = Horizontal | DownRight,
-
-        TwoVerticalUpLeft = Vertical | UpLeft,
-        TwoVerticalUpRight = Vertical | UpRight,
-        TwoVerticalDownLeft = Vertical | DownLeft,
-        TwoVerticalDownRight = Vertical | DownRight,
-
-        TwoUpLeftUpRight = UpLeft | UpRight,
-        TwoUpLeftDownLeft = UpLeft | DownLeft,
-
-        TwoDisjointUpLeftDownRight = UpLeft | DownRight,
-
-        TwoDownLeftDownRight = DownLeft | DownRight,
-
-        TwoDisjointDownLeftUpRight = DownLeft | UpRight,
-
-
-        ThreeHorizontalVerticalUpLeft = Horizontal | Vertical | UpLeft,
-        ThreeHorizontalVerticalUpRight = Horizontal | Vertical | UpRight,
-        ThreeHorizontalVerticalDownLeft = Horizontal | Vertical | DownLeft,
-        ThreeHorizontalVerticalDownRight = Horizontal | Vertical | DownRight,
-
-        ThreeHorizontalUpLeftUpRight = Horizontal | UpLeft | UpRight,
-        ThreeHorizontalUpLeftDownLeft = Horizontal | UpLeft | DownLeft,
-        ThreeHorizontalUpLeftDownRight = Horizontal | UpLeft | DownRight,
-
-        ThreeVerticalUpLeftUpRight = Vertical | UpLeft | UpRight,
-        ThreeVerticalUpLeftDownLeft = Vertical | UpLeft | DownLeft,
-        ThreeVerticalUpLeftDownRight = Vertical | UpLeft | DownRight,
-
-        ThreeUpLeftUpRightDownLeft = UpLeft | UpRight | DownLeft,
-        ThreeUpLeftUpRightDownRight = UpLeft | UpRight | DownRight,
-        ThreeUpRightDownLeftDownRight = UpRight | DownLeft | DownRight,
-
-        Corners = UpLeft | UpRight | DownLeft | DownRight,
-    }
-    public enum RailDirection
-    {
-        Horizontal = 0,
-        Vertical = 1,
-        UpLeft = 2,
-        UpRight = 3,
-        DownLeft = 4,
-        DownRight = 5,
-    }
     public static class DirectionUtils
     {
         /// <summary>
@@ -196,27 +80,27 @@ namespace ManicDigger
                     throw new ArgumentOutOfRangeException("direction");
             }
         }
-        public static RailDirectionFlags ToRailDirectionFlags(RailDirection direction)
+        public static int ToRailDirectionFlags(RailDirection direction)
         {
             switch (direction)
             {
                 case RailDirection.DownLeft:
-                    return RailDirectionFlags.DownLeft;
+                    return (int)RailDirectionFlags.DownLeft;
                 case RailDirection.DownRight:
-                    return RailDirectionFlags.DownRight;
+                    return (int)RailDirectionFlags.DownRight;
                 case RailDirection.Horizontal:
-                    return RailDirectionFlags.Horizontal;
+                    return (int)RailDirectionFlags.Horizontal;
                 case RailDirection.UpLeft:
-                    return RailDirectionFlags.UpLeft;
+                    return (int)RailDirectionFlags.UpLeft;
                 case RailDirection.UpRight:
-                    return RailDirectionFlags.UpRight;
+                    return (int)RailDirectionFlags.UpRight;
                 case RailDirection.Vertical:
-                    return RailDirectionFlags.Vertical;
+                    return (int)RailDirectionFlags.Vertical;
                 default:
                     throw new ArgumentOutOfRangeException("direction");
             }
         }
-        public static IEnumerable<RailDirection> ToRailDirections(RailDirectionFlags rail)
+        public static IEnumerable<RailDirection> ToRailDirections(int rail) // RailDirectionFlags
         {
             foreach (RailDirection d in AllRailDirections)
             {
@@ -325,9 +209,9 @@ namespace ManicDigger
                 yield return RailDirection.Vertical;
             }
         }
-        public static RailDirectionFlags ToRailDirectionFlags(IEnumerable<RailDirection> directions)
+        public static int ToRailDirectionFlags(IEnumerable<RailDirection> directions)
         {
-            RailDirectionFlags rail = RailDirectionFlags.None;
+            int rail = 0;
             foreach (RailDirection dir in directions)
             {
                 rail |= ToRailDirectionFlags(dir);

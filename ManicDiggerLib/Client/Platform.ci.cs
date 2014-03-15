@@ -94,6 +94,13 @@
     public abstract UriCi ParseUri(string uri);
     public abstract OptionsCi LoadOptions();
     public abstract void SaveOptions(OptionsCi options);
+    public abstract bool StringContains(string a, string b);
+    public abstract RandomCi RandomCreate();
+}
+
+public abstract class RandomCi
+{
+    public abstract float NextFloat();
 }
 
 public class OptionsCi

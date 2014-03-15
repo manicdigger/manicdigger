@@ -12,13 +12,12 @@ namespace ManicDigger
 {
     //Eventually all calls to OpenGL should be here.
     //This class should become replaceable with DirectX.
-    public class The3d : IGetCameraMatrix, IThe3d
+    public class The3d : IThe3d
     {
         public ManicDiggerGameWindow game;
         public ITerrainTextures d_Terrain;
         public Config3d d_Config3d;
         public IGetFileStream d_GetFile;
-        public IViewportSize d_ViewportSize;
         public bool ALLOW_NON_POWER_OF_TWO = false;
 
 
@@ -96,26 +95,6 @@ namespace ManicDigger
                 bmp.Dispose();
             }
             return id;
-        }
-        #region IThe3d Members
-        public Matrix4 ModelViewMatrix { get; set; }
-        public Matrix4 ProjectionMatrix { get; set; }
-        #endregion
-
-
-
-
-
-        internal float[] lastmvmatrix;
-        internal float[] lastpmatrix;
-        public override float[] GetModelViewMatrix()
-        {
-            return lastmvmatrix;
-        }
-
-        public override float[] GetProjectionMatrix()
-        {
-            return lastpmatrix;
         }
     }
 }

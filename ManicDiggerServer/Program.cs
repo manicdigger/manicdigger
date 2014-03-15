@@ -8,6 +8,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Net;
+using ManicDigger.ClientNative;
 
 namespace ManicDiggerServer
 {

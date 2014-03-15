@@ -61,14 +61,4 @@ namespace GameModeFortress
             return l;
         }
     }
-    public interface ICurrentTime
-    {
-        int SimulationCurrentFrame { get; }
-    }
-    public class CurrentTimeDummy : ICurrentTime
-    {
-        #region ICurrentTime Members
-        public int SimulationCurrentFrame { get { return 0; } }
-        #endregion
-    }
 }

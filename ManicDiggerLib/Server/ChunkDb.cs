@@ -6,6 +6,7 @@ using System.Data.Common;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
+using ManicDiggerServer;
 
 namespace GameModeFortress
 {
@@ -394,7 +395,7 @@ namespace GameModeFortress
             {
                 foreach (var xyz in chunkpositions)
                 {
-                    ulong pos = ManicDigger.MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z);
+                    ulong pos = MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z);
                     yield return GetChunk(pos);
                 }
                 transaction.Commit();
@@ -430,7 +431,7 @@ namespace GameModeFortress
             {
                 foreach (var xyz in chunkpositions)
                 {
-                    DeleteChunk(ManicDigger.MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z));
+                    DeleteChunk(MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z));
                 }
                 transaction.Commit();
             }
@@ -453,7 +454,7 @@ namespace GameModeFortress
             {
                 foreach (DbChunk c in chunks)
                 {
-                    ulong pos = ManicDigger.MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
+                    ulong pos = MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
                     temporaryChunks[pos] = (byte[])c.Chunk.Clone();
                 }
                 return;
@@ -462,7 +463,7 @@ namespace GameModeFortress
             {
                 foreach (DbChunk c in chunks)
                 {
-                    ulong pos = ManicDigger.MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
+                    ulong pos = MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
                     InsertChunk(pos, c.Chunk);
                 }
                 transaction.Commit();
@@ -490,7 +491,7 @@ namespace GameModeFortress
             {
                 foreach (var xyz in chunkpositions)
                 {
-                    ulong pos = ManicDigger.MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z);
+                    ulong pos = MapUtil.ToMapPos(xyz.X, xyz.Y, xyz.Z);
                     chunks.Add(xyz, GetChunkFromFile(pos, conn));
                 }
                 transaction.Commit();
@@ -545,7 +546,7 @@ namespace GameModeFortress
             {
                 foreach (DbChunk c in chunks)
                 {
-                    ulong pos = ManicDigger.MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
+                    ulong pos = MapUtil.ToMapPos(c.Position.X, c.Position.Y, c.Position.Z);
                     DbCommand cmd = sqliteConn.CreateCommand();
                     cmd.CommandText = "INSERT OR REPLACE INTO chunks (position, data) VALUES (?,?)";
                     cmd.Parameters.Add(CreateParameter("position", DbType.UInt64, pos, cmd));

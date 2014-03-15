@@ -1596,16 +1596,18 @@ if (sent >= unknown.Count) { break; }
                 p.Inventory.Helmet = ConvertItem(inv.Inventory.Helmet);
                 // todo
                 //p.Inventory.Items = inv.Inventory.Items;
-                p.Inventory.Items = new Packet_StringItem[inv.Inventory.Items.Count];
+                p.Inventory.Items = new Packet_PositionItem[inv.Inventory.Items.Count];
                 p.Inventory.ItemsCount = inv.Inventory.Items.Count;
                 p.Inventory.ItemsLength = inv.Inventory.Items.Count;
                 {
                     int i = 0;
                     foreach (var k in inv.Inventory.Items)
                     {
-                        Packet_StringItem item = new Packet_StringItem();
+                        Packet_PositionItem item = new Packet_PositionItem();
                         item.Key_ = SerializePoint(k.Key.X, k.Key.Y);
                         item.Value_ = ConvertItem(k.Value);
+                        item.X = k.Key.X;
+                        item.Y = k.Key.Y;
                         p.Inventory.Items[i++] = item;
                     }
                 }
@@ -1931,7 +1933,7 @@ if (sent >= unknown.Count) { break; }
                     {
                         inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = 0 });
                         x++;
-                        if (x >= GetInventoryUtil(inv).CellCount.X)
+                        if (x >= GetInventoryUtil(inv).CellCountX)
                         {
                             x = 0;
                             y++;
@@ -1942,7 +1944,7 @@ if (sent >= unknown.Count) { break; }
                 {
                     inv.Items.Add(new ProtoPoint(x, y), new Item() { ItemClass = ItemClass.Block, BlockId = i, BlockCount = amount });
                     x++;
-                    if (x >= GetInventoryUtil(inv).CellCount.X)
+                    if (x >= GetInventoryUtil(inv).CellCountX)
                     {
                         x = 0;
                         y++;
@@ -3069,11 +3071,11 @@ if (sent >= unknown.Count) { break; }
             {
                 oldrailcount = MyLinq.Count(
                     DirectionUtils.ToRailDirections(
-                    (RailDirectionFlags)(oldblock - d_Data.BlockIdRailstart)));
+                    (oldblock - d_Data.BlockIdRailstart)));
             }
             int newrailcount = MyLinq.Count(
                 DirectionUtils.ToRailDirections(
-                (RailDirectionFlags)(cmd.BlockType - d_Data.BlockIdRailstart)));
+                (cmd.BlockType - d_Data.BlockIdRailstart)));
             int blockstoput = newrailcount - oldrailcount;
 
             Item item = inventory.RightHand[cmd.MaterialSlot];
@@ -3113,7 +3115,7 @@ if (sent >= unknown.Count) { break; }
             {
                 blockstopick = MyLinq.Count(
                     DirectionUtils.ToRailDirections(
-                    (RailDirectionFlags)(blocktype - d_Data.BlockIdRailstart)));
+                    (blocktype - d_Data.BlockIdRailstart)));
             }
 
             var item = new Item();
@@ -4331,6 +4333,197 @@ if (sent >= unknown.Count) { break; }
             p.SetShootEnd(soundSet.ShootEnd, soundSet.ShootEnd.Length, soundSet.ShootEnd.Length);
             p.SetWalk(soundSet.Walk, soundSet.Walk.Length, soundSet.Walk.Length);
             return p;
+        }
+    }
+
+    public class MyLinq
+    {
+        public static bool Any<T>(IEnumerable<T> l)
+        {
+            return l.GetEnumerator().MoveNext();
+        }
+        public static T First<T>(IEnumerable<T> l)
+        {
+            var e = l.GetEnumerator();
+            e.MoveNext();
+            return e.Current;
+        }
+        public static int Count<T>(IEnumerable<T> l)
+        {
+            int count = 0;
+            foreach (T v in l)
+            {
+                count++;
+            }
+            return count;
+        }
+        public static IEnumerable<T> Take<T>(IEnumerable<T> l, int n)
+        {
+            int i = 0;
+            foreach (var v in l)
+            {
+                if (i >= n)
+                {
+                    yield break;
+                }
+                yield return v;
+                i++;
+            }
+        }
+        public static IEnumerable<T> Skip<T>(IEnumerable<T> l, int n)
+        {
+            var iterator = l.GetEnumerator();
+            for (int i = 0; i < n; i++)
+            {
+                if (iterator.MoveNext() == false)
+                    yield break;
+            }
+            while (iterator.MoveNext())
+                yield return iterator.Current;
+        }
+    }
+    public interface ICurrentTime
+    {
+        int SimulationCurrentFrame { get; }
+    }
+    public class CurrentTimeDummy : ICurrentTime
+    {
+        #region ICurrentTime Members
+        public int SimulationCurrentFrame { get { return 0; } }
+        #endregion
+    }
+    public static class MapUtil
+    {
+        public static int Index2d(int x, int y, int sizex)
+        {
+            return x + y * sizex;
+        }
+
+        public static int Index3d(int x, int y, int h, int sizex, int sizey)
+        {
+            return (h * sizey + y) * sizex + x;
+        }
+
+        public static Vector3i Pos(int index, int sizex, int sizey)
+        {
+            int x = index % sizex;
+            int y = (index / sizex) % sizey;
+            int h = index / (sizex * sizey);
+            return new Vector3i(x, y, h);
+        }
+
+        public static bool IsValidPos(IMapStorage map, int x, int y, int z)
+        {
+            if (x < 0 || y < 0 || z < 0)
+            {
+                return false;
+            }
+            if (x >= map.MapSizeX || y >= map.MapSizeY || z >= map.MapSizeZ)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public static bool IsValidPos(IMapStorage map, int x, int y)
+        {
+            if (x < 0 || y < 0)
+            {
+                return false;
+            }
+            if (x >= map.MapSizeX || y >= map.MapSizeY)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public static bool IsValidChunkPos(IMapStorage map, int cx, int cy, int cz, int chunksize)
+        {
+            return cx >= 0 && cy >= 0 && cz >= 0
+                && cx < map.MapSizeX / chunksize
+                && cy < map.MapSizeY / chunksize
+                && cz < map.MapSizeZ / chunksize;
+        }
+
+        public static int blockheight(IMapStorage map, int tileidempty, int x, int y)
+        {
+            for (int z = map.MapSizeZ - 1; z >= 0; z--)
+            {
+                if (map.GetBlock(x, y, z) != tileidempty)
+                {
+                    return z + 1;
+                }
+            }
+            return map.MapSizeZ / 2;
+        }
+
+        static ulong pow20minus1 = 1048576 - 1;
+        public static Vector3i FromMapPos(ulong v)
+        {
+            uint z = (uint)(v & pow20minus1);
+            v = v >> 20;
+            uint y = (uint)(v & pow20minus1);
+            v = v >> 20;
+            uint x = (uint)(v & pow20minus1);
+            return new Vector3i((int)x, (int)y, (int)z);
+        }
+
+        public static ulong ToMapPos(int x, int y, int z)
+        {
+            ulong v = 0;
+            v = (ulong)x << 40;
+            v |= (ulong)y << 20;
+            v |= (ulong)z;
+            return v;
+        }
+
+        public static int SearchColumn(IMapStorage map, int x, int y, int id, int startH)
+        {
+            for (int h = startH; h > 0; h--)
+            {
+                if (map.GetBlock(x, y, h) == (byte)id)
+                {
+                    return h;
+                }
+            }
+            return -1; // -1 means 'not found'
+        }
+
+        public static int SearchColumn(IMapStorage map, int x, int y, int id)
+        {
+            return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
+        }
+
+        public static bool IsSolidChunk(ushort[] chunk)
+        {
+            for (int i = 0; i <= chunk.GetUpperBound(0); i++)
+            {
+                if (chunk[i] != chunk[0])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static Point PlayerArea(int playerAreaSize, int centerAreaSize, Vector3i blockPosition)
+        {
+            Point p = PlayerCenterArea(playerAreaSize, centerAreaSize, blockPosition);
+            int x = p.X + centerAreaSize / 2;
+            int y = p.Y + centerAreaSize / 2;
+            x -= playerAreaSize / 2;
+            y -= playerAreaSize / 2;
+            return new Point(x, y);
+        }
+
+        public static Point PlayerCenterArea(int playerAreaSize, int centerAreaSize, Vector3i blockPosition)
+        {
+            int px = blockPosition.x;
+            int py = blockPosition.y;
+            int gridposx = (px / centerAreaSize) * centerAreaSize;
+            int gridposy = (py / centerAreaSize) * centerAreaSize;
+            return new Point(gridposx, gridposy);
         }
     }
 }

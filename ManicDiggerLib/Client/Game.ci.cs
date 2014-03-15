@@ -37,6 +37,21 @@
         mouserightdeclick = false;
         wasmouseright = false;
         ENABLE_LAG = 0;
+        znear = one / 10;
+        CameraMatrix = new GetCameraMatrix();
+        ENABLE_ZFAR = true;
+        TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
+        LoadedAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
+        AllowedFontsCount = 1;
+        AllowedFonts = new string[AllowedFontsCount];
+        AllowedFonts[0] = "Verdana";
+        fov = Game.GetPi() / 3;
+        cameratype = CameraType.Fpp;
+        ENABLE_TPP_VIEW = false;
+        basemovespeed = 5;
+        movespeed = 5;
+        RadiusWhenMoving = one * 3 / 10;
+        playervelocity = new Vector3Ref();
     }
     float one;
 
@@ -1125,6 +1140,554 @@
     internal bool mouserightdeclick;
     internal bool wasmouseright;
     internal int ENABLE_LAG;
+
+    internal void DrawScreenshotFlash()
+    {
+        Draw2dTexture(WhiteTexture(), 0, 0, platform.GetCanvasWidth(), platform.GetCanvasHeight(), null, 0, ColorFromArgb(255,255,255,255), false);
+        string screenshottext = "&0Screenshot";
+        IntRef textWidth = new IntRef();
+        IntRef textHeight = new IntRef();
+        platform.TextSize(screenshottext, 50, textWidth, textHeight);
+        FontCi font = new FontCi();
+        font.family = "Arial";
+        font.size = 50;
+        Draw2dText(screenshottext, font, xcenter(textWidth.value), ycenter(textHeight.value), null, false);
+    }
+
+    internal int Width()
+    {
+        return platform.GetCanvasWidth();
+    }
+
+    internal int Height()
+    {
+        return platform.GetCanvasHeight();
+    }
+
+    internal float znear;
+
+    internal GetCameraMatrix CameraMatrix;
+
+    public void Set3dProjection(float zfar, float fov)
+    {
+        float aspect_ratio = one * Width() / Height();
+        float[] perspective = Mat4.Create();
+        Mat4.Perspective(perspective, fov, aspect_ratio, znear, zfar);
+        CameraMatrix.lastpmatrix = perspective;
+        GLMatrixModeProjection();
+        GLLoadMatrix(perspective);
+    }
+    internal bool ENABLE_ZFAR;
+
+    internal float zfar()
+    {
+        if (d_Config3d.viewdistance >= 256)
+        {
+            return d_Config3d.viewdistance * 2;
+        }
+        return ENABLE_ZFAR ? d_Config3d.viewdistance : 99999;
+    }
+
+    internal Packet_ServerPlayerStats PlayerStats;
+
+    //Size of Health/Oxygen bar
+    const int barSizeX = 20;
+    const int barSizeY = 120;
+    const int barOffset = 30;
+    const int barDistanceToMargin = 40;
+
+    public void DrawPlayerHealth()
+    {
+        if (PlayerStats != null)
+        {
+            float progress = one * PlayerStats.CurrentHealth / PlayerStats.MaxHealth;
+            int posX = barDistanceToMargin;
+            int posY = Height() - barDistanceToMargin;
+            Draw2dTexture(WhiteTexture(), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+            Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY), barSizeX, (progress) * barSizeY, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+        }
+        //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
+    }
+
+    public void DrawPlayerOxygen()
+    {
+        if (PlayerStats != null)
+        {
+            if (PlayerStats.CurrentOxygen < PlayerStats.MaxOxygen)
+            {
+                float progress = one * PlayerStats.CurrentOxygen / PlayerStats.MaxOxygen;
+                int posX = barDistanceToMargin + barOffset;
+                int posY = Height() - barDistanceToMargin;
+                Draw2dTexture(WhiteTexture(), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+                Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY), barSizeX, (progress) * barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 255), false);
+            }
+        }
+    }
+
+    internal int[] TotalAmmo;
+    internal int[] LoadedAmmo;
+
+    string[] AllowedFonts;
+    int AllowedFontsCount;
+
+    internal string ValidFont(string family)
+    {
+        for (int i = 0; i < AllowedFontsCount; i++)
+        {
+            if (AllowedFonts[i] == family)
+            {
+                return family;
+            }
+        }
+        return AllowedFonts[0];
+    }
+
+    internal int SelectedBlockPositionX;
+    internal int SelectedBlockPositionY;
+    internal int SelectedBlockPositionZ;
+
+    internal bool IsWater(int blockType)
+    {
+        return platform.StringContains(blocktypes[blockType].Name, "Water"); // todo
+    }
+
+    internal int mouseCurrentX;
+    internal int mouseCurrentY;
+    internal Packet_Inventory d_Inventory;
+
+    internal float fov;
+
+    internal float currentfov()
+    {
+        if (IronSights)
+        {
+            Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+            {
+                if (DeserializeFloat(blocktypes[item.BlockId].IronSightsFovFloat) != 0)
+                {
+                    return this.fov * DeserializeFloat(blocktypes[item.BlockId].IronSightsFovFloat);
+                }
+            }
+        }
+        return this.fov;
+    }
+
+    internal bool IronSights;
+
+    internal float DeserializeFloat(int value)
+    {
+        return (one * value) / 32;
+    }
+
+    internal IntRef BlockUnderPlayer()
+    {
+        if (!IsValidPos(platform.FloatToInt(player.playerposition.X),
+            platform.FloatToInt(player.playerposition.Z),
+            platform.FloatToInt(player.playerposition.Y) - 1))
+        {
+            return null;
+        }
+        int blockunderplayer = GetBlock(platform.FloatToInt(player.playerposition.X),
+            platform.FloatToInt(player.playerposition.Z),
+            platform.FloatToInt(player.playerposition.Y) - 1);
+        return IntRef.Create(blockunderplayer);
+    }
+
+    internal void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
+    {
+        int y = useInfo ? 55 : 35;
+        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300, y, null, 0, Game.ColorFromArgb(255,0,0,0), false);
+        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+        FontCi font = new FontCi();
+        font.family = "Arial";
+        font.size = 14;
+        IntRef w = new IntRef();
+        IntRef h = new IntRef();
+        platform.TextSize(name, 14, w, h);
+        Draw2dText(name, font, xcenter(w.value), 40, null, false);
+        if (useInfo)
+        {
+            name = platform.StringFormat(language.PressToUse(), "E");
+            platform.TextSize(name, 10, w, h);
+            FontCi font2 = new FontCi();
+            font2.family = "Arial";
+            font2.size = 10;
+            Draw2dText(name, font2, xcenter(w.value), 70, null, false);
+        }
+    }
+
+    internal CameraType cameratype;
+    internal bool ENABLE_TPP_VIEW;
+
+    internal Vector3Ref playerdestination;
+    internal void SetCamera(CameraType type)
+    {
+        if (type == CameraType.Fpp)
+        {
+            cameratype = CameraType.Fpp;
+            SetFreeMouse(false);
+            ENABLE_TPP_VIEW = false;
+            overheadcamera = false;
+        }
+        else if (type == CameraType.Tpp)
+        {
+            cameratype = CameraType.Tpp;
+            ENABLE_TPP_VIEW = true;
+        }
+        else
+        {
+            cameratype = CameraType.Overhead;
+            overheadcamera = true;
+            SetFreeMouse(true);
+            ENABLE_TPP_VIEW = true;
+            playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
+        }
+    }
+    internal float basemovespeed;
+    internal float movespeed;
+    internal float BuildDelay()
+    {
+        float default_ = (one * 95 / 100) * (1 / basemovespeed);
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
+        {
+            return default_;
+        }
+        float delay = DeserializeFloat(blocktypes[item.BlockId].DelayFloat);
+        if (delay == 0)
+        {
+            return default_;
+        }
+        return delay;
+    }
+
+    internal Packet_InventoryPosition InventoryPositionMaterialSelector(int materialId)
+    {
+        Packet_InventoryPosition pos = new Packet_InventoryPosition();
+        pos.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
+        pos.MaterialId = materialId;
+        return pos;
+    }
+
+    internal Packet_InventoryPosition InventoryPositionMainArea(int x, int y)
+    {
+        Packet_InventoryPosition pos = new Packet_InventoryPosition();
+        pos.Type = Packet_InventoryPositionTypeEnum.MainArea;
+        pos.AreaX = x;
+        pos.AreaY = y;
+        return pos;
+    }
+
+    internal RailDirection PickHorizontalVertical(float xfract, float yfract)
+    {
+        float x = xfract;
+        float y = yfract;
+        if (y >= x && y >= (1 - x))
+        {
+            return RailDirection.Vertical;
+        }
+        if (y < x && y < (1 - x))
+        {
+            return RailDirection.Vertical;
+        }
+        return RailDirection.Horizontal;
+    }
+
+    internal RailDirection PickCorners(float xfract, float zfract)
+    {
+        float half = one / 2;
+        if (xfract < half && zfract < half)
+        {
+            return RailDirection.UpLeft;
+        }
+        if (xfract >= half && zfract < half)
+        {
+            return RailDirection.UpRight;
+        }
+        if (xfract < half && zfract >= half)
+        {
+            return RailDirection.DownLeft;
+        }
+        return RailDirection.DownRight;
+    }
+
+    internal IntRef BlockInHand()
+    {
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+        {
+            return IntRef.Create(item.BlockId);
+        }
+        return null;
+    }
+
+    internal float RadiusWhenMoving;
+
+    internal float CurrentRecoil()
+    {
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
+        {
+            return 0;
+        }
+        return DeserializeFloat(blocktypes[item.BlockId].RecoilFloat);
+    }
+    internal Vector3Ref playervelocity;
+
+    internal float CurrentAimRadius()
+    {
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item == null || item.ItemClass != Packet_ItemClassEnum.Block)
+        {
+            return 0;
+        }
+        float radius = (DeserializeFloat(blocktypes[item.BlockId].AimRadiusFloat) / 800) * Width();
+        if (IronSights)
+        {
+            radius = (DeserializeFloat(blocktypes[item.BlockId].IronSightsAimRadiusFloat) / 800) * Width();
+        }
+        return radius + RadiusWhenMoving * radius * (Game.MinFloat(playervelocity.Length() / movespeed, 1));
+    }
+
+    RandomCi rnd;
+
+    internal PointFloatRef GetAim()
+    {
+        if (rnd == null)
+        {
+            rnd = platform.RandomCreate();
+        }
+        if (CurrentAimRadius() <= 1)
+        {
+            return PointFloatRef.Create(0, 0);
+        }
+        float half = one / 2;
+        float x;
+        float y;
+        for (; ; )
+        {
+            x = (rnd.NextFloat() - half) * CurrentAimRadius() * 2;
+            y = (rnd.NextFloat() - half) * CurrentAimRadius() * 2;
+            float dist1 = platform.MathSqrt(x * x + y * y);
+            if (dist1 <= CurrentAimRadius())
+            {
+                break;
+            }
+        }
+        return PointFloatRef.Create(x, y);
+    }
+
+    public static float ClampFloat(float value, float min, float max)
+    {
+        float result = value;
+        if (value > max)
+        {
+            result = max;
+        }
+        if (value < min)
+        {
+            result = min;
+        }
+        return result;
+    }
+
+    public static int ClampInt(int value, int min, int max)
+    {
+        int result = value;
+        if (value > max)
+        {
+            result = max;
+        }
+        if (value < min)
+        {
+            result = min;
+        }
+        return result;
+    }
+}
+
+public class RailMapUtil
+{
+    internal Game game;
+    public RailSlope GetRailSlope(int x, int y, int z)
+    {
+        int tiletype = game.GetBlock(x, y, z);
+        int railDirectionFlags = game.blocktypes[tiletype].Rail;
+        int blocknear;
+        if (x < game.MapSizeX - 1)
+        {
+            blocknear = game.GetBlock(x + 1, y, z);
+            if (railDirectionFlags == RailDirectionFlags.Horizontal &&
+                 blocknear != 0 && game.blocktypes[blocknear].Rail == 0)
+            {
+                return RailSlope.TwoRightRaised;
+            }
+        }
+        if (x > 0)
+        {
+            blocknear = game.GetBlock(x - 1, y, z);
+            if (railDirectionFlags == RailDirectionFlags.Horizontal &&
+                 blocknear != 0 && game.blocktypes[blocknear].Rail == 0)
+            {
+                return RailSlope.TwoLeftRaised;
+
+            }
+        }
+        if (y > 0)
+        {
+            blocknear = game.GetBlock(x, y - 1, z);
+            if (railDirectionFlags == RailDirectionFlags.Vertical &&
+                  blocknear != 0 && game.blocktypes[blocknear].Rail == 0)
+            {
+                return RailSlope.TwoUpRaised;
+            }
+        }
+        if (y < game.MapSizeY - 1)
+        {
+            blocknear = game.GetBlock(x, y + 1, z);
+            if (railDirectionFlags == RailDirectionFlags.Vertical &&
+                  blocknear != 0 && game.blocktypes[blocknear].Rail == 0)
+            {
+                return RailSlope.TwoDownRaised;
+            }
+        }
+        return RailSlope.Flat;
+    }
+}
+
+public class RailDirectionFlags
+{
+    public const int None = 0;
+    public const int Horizontal = 1;
+    public const int Vertical = 2;
+    public const int UpLeft = 4;
+    public const int UpRight = 8;
+    public const int DownLeft = 16;
+    public const int DownRight = 32;
+
+    public const int Full = Horizontal | Vertical | UpLeft | UpRight | DownLeft | DownRight;
+    public const int TwoHorizontalVertical = Horizontal | Vertical;
+    public const int Corners = UpLeft | UpRight | DownLeft | DownRight;
+}
+
+public enum RailSlope
+{
+    Flat, TwoLeftRaised, TwoRightRaised, TwoUpRaised, TwoDownRaised
+}
+
+public enum RailDirection
+{
+    Horizontal,
+    Vertical,
+    UpLeft,
+    UpRight,
+    DownLeft,
+    DownRight
+}
+
+public class ClientInventoryController : IInventoryController
+{
+    public static ClientInventoryController Create(Game game)
+    {
+        ClientInventoryController c = new ClientInventoryController();
+        c.g = game;
+        return c;
+    }
+
+    Game g;
+
+    public override void InventoryClick(Packet_InventoryPosition pos)
+    {
+        g.InventoryClick(pos);
+    }
+
+    public override void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
+    {
+        g.WearItem(from, to);
+    }
+
+    public override void MoveToInventory(Packet_InventoryPosition from)
+    {
+        g.MoveToInventory(from);
+    }
+}
+
+public enum CameraType
+{
+    Fpp,
+    Tpp,
+    Overhead
+}
+
+public enum TypingState
+{
+    None,
+    Typing,
+    Ready
+}
+
+public class Player
+{
+    public Player()
+    {
+        float one = 1;
+        AnimationHint_ = new AnimationHint();
+        Model = "player.txt";
+        EyeHeight = one * 15 / 10;
+        ModelHeight = one * 17 / 10;
+    }
+    internal bool PositionLoaded;
+    internal float PositionX;
+    internal float PositionY;
+    internal float PositionZ;
+    internal byte Heading;
+    internal byte Pitch;
+    internal string Name;
+    internal AnimationHint AnimationHint_;
+    internal PlayerType Type;
+    internal int MonsterType;
+    internal int Health;
+    internal int LastUpdateMilliseconds;
+    internal string Model;
+    internal string Texture;
+    internal float EyeHeight;
+    internal float ModelHeight;
+}
+
+public enum PlayerType
+{
+    Player,
+    Monster
+}
+
+public class Projectile_
+{
+    internal float positionX;
+    internal float positionY;
+    internal float positionZ;
+    internal float velocityX;
+    internal float velocityY;
+    internal float velocityZ;
+    internal int startMilliseconds;
+    internal int block;
+    internal float explodesafter;
+    internal int sourcePlayer;
+}
+
+public class GetCameraMatrix : IGetCameraMatrix
+{
+    internal float[] lastmvmatrix;
+    internal float[] lastpmatrix;
+    public override float[] GetModelViewMatrix()
+    {
+        return lastmvmatrix;
+    }
+
+    public override float[] GetProjectionMatrix()
+    {
+        return lastpmatrix;
+    }
 }
 
 public class MenuState

@@ -1067,6 +1067,25 @@ public class GamePlatformNative : GamePlatform, IGameExit
         string xml = Encoding.UTF8.GetString(ms.ToArray());
         File.WriteAllText(path, xml);
     }
+
+    public override bool StringContains(string a, string b)
+    {
+        return a.Contains(b);
+    }
+
+    public override RandomCi RandomCreate()
+    {
+        return new RandomNative();
+    }
+}
+
+public class RandomNative : RandomCi
+{
+    public Random rnd = new Random();
+    public override float NextFloat()
+    {
+        return (float)rnd.NextDouble();
+    }
 }
 
 public class Options

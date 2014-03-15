@@ -4,95 +4,117 @@ using System.Text;
 using System.Drawing;
 using ProtoBuf;
 using System.Runtime.Serialization;
+using ManicDiggerServer;
 
 namespace ManicDigger
 {
     //separate class because it's used by server and client.
     public class InventoryUtil
     {
+        public InventoryUtil()
+        {
+            CellCountX = 12;
+            CellCountY = 7 * 6;
+        }
         public Inventory d_Inventory;
         public IGameDataItems d_Items;
 
-        public Point CellCount = new Point(12, 7 * 6);
+        internal int CellCountX;
+        internal int CellCountY;
 
         //returns null if area is invalid.
-        public Point[] ItemsAtArea(Point p, Point size)
+        public PointRef[] ItemsAtArea(int pX, int pY, int sizeX, int sizeY, IntRef retCount)
         {
-            List<Point> itemsAtArea = new List<Point>();
-            for (int xx = 0; xx < size.X; xx++)
+            PointRef[] itemsAtArea = new PointRef[256];
+            int itemsAtAreaCount = 0;
+            for (int xx = 0; xx < sizeX; xx++)
             {
-                for (int yy = 0; yy < size.Y; yy++)
+                for (int yy = 0; yy < sizeY; yy++)
                 {
-                    var cell = new Point(p.X + xx, p.Y + yy);
+                    PointRef cell = PointRef.Create(pX + xx, pY + yy);
                     if (!IsValidCell(cell))
                     {
                         return null;
                     }
                     if (ItemAtCell(cell) != null)
                     {
-                        if (!itemsAtArea.Contains(ItemAtCell(cell).Value))
+                        bool contains = false;
+                        for (int i = 0; i < itemsAtAreaCount; i++)
                         {
-                            itemsAtArea.Add(ItemAtCell(cell).Value);
+                            if (itemsAtArea[i] == null)
+                            {
+                                continue;
+                            }
+                            if (itemsAtArea[i].X == ItemAtCell(cell).X
+                                && itemsAtArea[i].Y == ItemAtCell(cell).Y)
+                            {
+                                contains = true;
+                            }
+                        }
+                        if (!contains)
+                        {
+                            itemsAtArea[itemsAtAreaCount++] = ItemAtCell(cell);
                         }
                     }
                 }
             }
-            return itemsAtArea.ToArray();
+            retCount.value = itemsAtAreaCount;
+            return itemsAtArea;
         }
 
-        public bool IsValidCell(Point p)
+        public bool IsValidCell(PointRef p)
         {
-            return !(p.X < 0 || p.Y < 0 || p.X >= CellCount.X || p.Y >= CellCount.Y);
+            return !(p.X < 0 || p.Y < 0 || p.X >= CellCountX || p.Y >= CellCountY);
         }
 
-        public IEnumerable<Point> ItemCells(Point p)
+        public IEnumerable<PointRef> ItemCells(PointRef p)
         {
             Item item = d_Inventory.Items[new ProtoPoint(p.X, p.Y)];
-            for (int x = 0; x < d_Items.ItemSize(item).X; x++)
+            for (int x = 0; x < d_Items.ItemSizeX(item); x++)
             {
-                for (int y = 0; y < d_Items.ItemSize(item).Y; y++)
+                for (int y = 0; y < d_Items.ItemSizeY(item); y++)
                 {
-                    yield return new Point(p.X + x, p.Y + y);
+                    yield return PointRef.Create(p.X + x, p.Y + y);
                 }
             }
         }
 
-        public Point? ItemAtCell(Point p)
+        public PointRef ItemAtCell(PointRef p)
         {
             foreach (var k in d_Inventory.Items)
             {
-                foreach (var pp in ItemCells(new Point(k.Key.X, k.Key.Y)))
+                foreach (var pp in ItemCells(PointRef.Create(k.Key.X, k.Key.Y)))
                 {
-                    if (p == pp) { return new Point(k.Key.X, k.Key.Y); }
+                    if (p.X == pp.X && p.Y == pp.Y) { return PointRef.Create(k.Key.X, k.Key.Y); }
                 }
             }
             return null;
         }
 
-        public Item ItemAtWearPlace(WearPlace wearPlace, int activeMaterial)
+        public Item ItemAtWearPlace(int wearPlace, int activeMaterial)
         {
             switch (wearPlace)
             {
                 //case WearPlace.LeftHand: return d_Inventory.LeftHand[activeMaterial];
-                case WearPlace.RightHand: return d_Inventory.RightHand[activeMaterial];
-                case WearPlace.MainArmor: return d_Inventory.MainArmor;
-                case WearPlace.Boots: return d_Inventory.Boots;
-                case WearPlace.Helmet: return d_Inventory.Helmet;
-                case WearPlace.Gauntlet: return d_Inventory.Gauntlet;
+                case WearPlace_.RightHand: return d_Inventory.RightHand[activeMaterial];
+                case WearPlace_.MainArmor: return d_Inventory.MainArmor;
+                case WearPlace_.Boots: return d_Inventory.Boots;
+                case WearPlace_.Helmet: return d_Inventory.Helmet;
+                case WearPlace_.Gauntlet: return d_Inventory.Gauntlet;
                 default: throw new Exception();
             }
         }
 
-        public void SetItemAtWearPlace(WearPlace wearPlace, int activeMaterial, Item item)
+        public void SetItemAtWearPlace(int wearPlace, int activeMaterial, Item item)
         {
             switch (wearPlace)
             {
                 //case WearPlace.LeftHand: d_Inventory.LeftHand[activeMaterial] = item; break;
-                case WearPlace.RightHand: d_Inventory.RightHand[activeMaterial] = item; break;
-                case WearPlace.MainArmor: d_Inventory.MainArmor = item; break;
-                case WearPlace.Boots: d_Inventory.Boots = item; break;
-                case WearPlace.Helmet: d_Inventory.Helmet = item; break;
-                case WearPlace.Gauntlet: d_Inventory.Gauntlet = item; break;
+                case WearPlace_.RightHand: d_Inventory.RightHand[activeMaterial] = item; break;
+                case WearPlace_.MainArmor: d_Inventory.MainArmor = item; break;
+                case WearPlace_.Boots: d_Inventory.Boots = item; break;
+                case WearPlace_.Helmet: d_Inventory.Helmet = item; break;
+                case WearPlace_.Gauntlet: d_Inventory.Gauntlet = item; break;
                 default: throw new Exception();
             }
         }
@@ -142,12 +164,13 @@ namespace ManicDigger
                         }
                     }
                     //grab to main area - stacking
-                    for (int y = 0; y < CellCount.Y; y++)
+                    for (int y = 0; y < CellCountY; y++)
                     {
-                        for (int x = 0; x < CellCount.X; x++)
+                        for (int x = 0; x < CellCountX; x++)
                         {
-                            var p = ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
-                            if (p != null && p.Length == 1)
+                            IntRef pCount = new IntRef();
+                            PointRef[] p = ItemsAtArea(x, y, d_Items.ItemSizeX(item), d_Items.ItemSizeY(item), pCount);
+                            if (p != null && pCount.value == 1)
                             {
                                 var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0].X, p[0].Y)], item);
                                 if (stacked != null)
@@ -159,12 +182,13 @@ namespace ManicDigger
                         }
                     }
                     //grab to main area - adding
-                    for (int y = 0; y < CellCount.Y; y++)
+                    for (int y = 0; y < CellCountY; y++)
                     {
-                        for (int x = 0; x < CellCount.X; x++)
+                        for (int x = 0; x < CellCountX; x++)
                         {
-                            var p = ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
-                            if (p != null && p.Length == 0)
+                            IntRef pCount = new IntRef();
+                            PointRef[] p = ItemsAtArea(x, y, d_Items.ItemSizeX(item), d_Items.ItemSizeY(item), pCount);
+                            if (p != null && pCount.value == 0)
                             {
                                 d_Inventory.Items[new ProtoPoint(x, y)] = item;
                                 return true;
@@ -190,16 +214,6 @@ namespace ManicDigger
             }
             return null;
         }
-    }
-
-    public enum WearPlace
-    {
-        //LeftHand,
-        RightHand,
-        MainArmor,
-        Boots,
-        Helmet,
-        Gauntlet,
     }
 
     public enum InventoryPositionType
@@ -255,21 +269,15 @@ namespace ManicDigger
     public interface IGameDataItems
     {
         string ItemInfo(Item item);
-        Point ItemSize(Item item);
+        int ItemSizeX(Item item);
+        int ItemSizeY(Item item);
         /// <summary>
         /// returns null if can't stack.
         /// </summary>
         Item Stack(Item itemA, Item itemB);
-        bool CanWear(WearPlace selectedWear, Item item);
+        bool CanWear(int selectedWear, Item item);
         string ItemGraphics(Item item);
         int[] TextureIdForInventory { get; }
-    }
-
-    public interface IInventoryController
-    {
-        void InventoryClick(Packet_InventoryPosition pos);
-        void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to);
-        void MoveToInventory(Packet_InventoryPosition from);
     }
 
     public interface IDropItem
@@ -284,7 +292,7 @@ namespace ManicDigger
         public InventoryUtil d_InventoryUtil;
         public IDropItem d_DropItem;
 
-        public void InventoryClick(Packet_InventoryPosition pos)
+        public override void InventoryClick(Packet_InventoryPosition pos)
         {
             if (pos.Type == Packet_InventoryPositionTypeEnum.MainArea)
             {
@@ -292,8 +300,8 @@ namespace ManicDigger
                 foreach (var k in d_Inventory.Items)
                 {
                     if (pos.AreaX >= k.Key.X && pos.AreaY >= k.Key.Y
-                        && pos.AreaX < k.Key.X + d_Items.ItemSize(k.Value).X
-                        && pos.AreaY < k.Key.Y + d_Items.ItemSize(k.Value).Y)
+                        && pos.AreaX < k.Key.X + d_Items.ItemSizeX(k.Value)
+                        && pos.AreaY < k.Key.Y + d_Items.ItemSizeY(k.Value))
                     {
                         selected = new Point(k.Key.X, k.Key.Y);
                     }
@@ -309,14 +317,15 @@ namespace ManicDigger
                 else if (d_Inventory.DragDropItem != null)
                 {
                     //make sure there is nothing blocking drop.
-                    Point[] itemsAtArea = d_InventoryUtil.ItemsAtArea(new Point(pos.AreaX, pos.AreaY),
-                        d_Items.ItemSize(d_Inventory.DragDropItem));
-                    if (itemsAtArea == null || itemsAtArea.Length > 1)
+                    IntRef itemsAtAreaCount = new IntRef();
+                    PointRef[] itemsAtArea = d_InventoryUtil.ItemsAtArea(pos.AreaX, pos.AreaY,
+                        d_Items.ItemSizeX(d_Inventory.DragDropItem), d_Items.ItemSizeY(d_Inventory.DragDropItem), itemsAtAreaCount);
+                    if (itemsAtArea == null || itemsAtAreaCount.value > 1)
                     {
                         //invalid area
                         return;
                     }
-                    if (itemsAtArea.Length == 0)
+                    if (itemsAtAreaCount.value == 0)
                     {
                         d_Inventory.Items.Add(new ProtoPoint(pos.AreaX, pos.AreaY), d_Inventory.DragDropItem);
                         d_Inventory.DragDropItem = null;
@@ -364,7 +373,7 @@ namespace ManicDigger
                 }
                 else if (d_Inventory.DragDropItem != null && d_Inventory.RightHand[pos.MaterialId] == null)
                 {
-                    if(d_Items.CanWear(WearPlace.RightHand, d_Inventory.DragDropItem))
+                    if(d_Items.CanWear(WearPlace_.RightHand, d_Inventory.DragDropItem))
                     {
                         d_Inventory.RightHand[pos.MaterialId] = d_Inventory.DragDropItem;
                         d_Inventory.DragDropItem = null;
@@ -372,7 +381,7 @@ namespace ManicDigger
                 }
                 else if (d_Inventory.DragDropItem != null && d_Inventory.RightHand[pos.MaterialId] != null)
                 {
-                    if (d_Items.CanWear(WearPlace.RightHand, d_Inventory.DragDropItem))
+                    if (d_Items.CanWear(WearPlace_.RightHand, d_Inventory.DragDropItem))
                     {
                         Item oldHand = d_Inventory.RightHand[pos.MaterialId];
                         d_Inventory.RightHand[pos.MaterialId] = d_Inventory.DragDropItem;
@@ -384,10 +393,10 @@ namespace ManicDigger
             else if (pos.Type == Packet_InventoryPositionTypeEnum.WearPlace)
             {
                 //just swap.
-                Item wear = d_InventoryUtil.ItemAtWearPlace((WearPlace)pos.WearPlace, pos.ActiveMaterial);
-                if (d_Items.CanWear((WearPlace)pos.WearPlace, d_Inventory.DragDropItem))
+                Item wear = d_InventoryUtil.ItemAtWearPlace(pos.WearPlace, pos.ActiveMaterial);
+                if (d_Items.CanWear(pos.WearPlace, d_Inventory.DragDropItem))
                 {
-                    d_InventoryUtil.SetItemAtWearPlace((WearPlace)pos.WearPlace, pos.ActiveMaterial, d_Inventory.DragDropItem);
+                    d_InventoryUtil.SetItemAtWearPlace(pos.WearPlace, pos.ActiveMaterial, d_Inventory.DragDropItem);
                     d_Inventory.DragDropItem = wear;
                 }
                 SendInventory();
@@ -401,20 +410,20 @@ namespace ManicDigger
         {
         }
 
-        public void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
+        public override void WearItem(Packet_InventoryPosition from, Packet_InventoryPosition to)
         {
             //todo
             if (from.Type == Packet_InventoryPositionTypeEnum.MainArea
                 && to.Type == Packet_InventoryPositionTypeEnum.MaterialSelector
                 && d_Inventory.RightHand[to.MaterialId] == null
-                && d_Items.CanWear(WearPlace.RightHand, d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)]))
+                && d_Items.CanWear(WearPlace_.RightHand, d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)]))
             {
                 d_Inventory.RightHand[to.MaterialId] = d_Inventory.Items[new ProtoPoint(from.AreaX, from.AreaY)];
                 d_Inventory.Items.Remove(new ProtoPoint(from.AreaX, from.AreaY));
             }
         }
 
-        public void MoveToInventory(Packet_InventoryPosition from)
+        public override void MoveToInventory(Packet_InventoryPosition from)
         {
             //todo
             if (from.Type == Packet_InventoryPositionTypeEnum.MaterialSelector)
@@ -422,13 +431,18 @@ namespace ManicDigger
                 //duplicate code with GrabItem().
 
                 Item item = d_Inventory.RightHand[from.MaterialId];
-                //grab to main area - stacking
-                for (int x = 0; x < d_InventoryUtil.CellCount.X; x++)
+                if (item == null)
                 {
-                    for (int y = 0; y < d_InventoryUtil.CellCount.Y; y++)
+                    return;
+                }
+                //grab to main area - stacking
+                for (int x = 0; x < d_InventoryUtil.CellCountX; x++)
+                {
+                    for (int y = 0; y < d_InventoryUtil.CellCountY; y++)
                     {
-                        var p = d_InventoryUtil.ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
-                        if (p != null && p.Length == 1)
+                        IntRef pCount = new IntRef();
+                        PointRef[] p = d_InventoryUtil.ItemsAtArea(x, y, d_Items.ItemSizeX(item), d_Items.ItemSizeY(item), pCount);
+                        if (p != null && pCount.value == 1)
                         {
                             var stacked = d_Items.Stack(d_Inventory.Items[new ProtoPoint(p[0].X, p[0].Y)], item);
                             if (stacked != null)
@@ -441,12 +455,13 @@ namespace ManicDigger
                     }
                 }
                 //grab to main area - adding
-                for (int x = 0; x < d_InventoryUtil.CellCount.X; x++)
+                for (int x = 0; x < d_InventoryUtil.CellCountX; x++)
                 {
-                    for (int y = 0; y < d_InventoryUtil.CellCount.Y; y++)
+                    for (int y = 0; y < d_InventoryUtil.CellCountY; y++)
                     {
-                        var p = d_InventoryUtil.ItemsAtArea(new Point(x, y), d_Items.ItemSize(item));
-                        if (p != null && p.Length == 0)
+                        IntRef pCount = new IntRef();
+                        PointRef[] p = d_InventoryUtil.ItemsAtArea(x, y, d_Items.ItemSizeX(item), d_Items.ItemSizeY(item), pCount);
+                        if (p != null && pCount.value == 0)
                         {
                             d_Inventory.Items[new ProtoPoint(x, y)] = item;
                             d_Inventory.RightHand[from.MaterialId] = null;
@@ -470,9 +485,15 @@ namespace ManicDigger
             throw new NotImplementedException();
         }
 
-        public Point ItemSize(Item item)
+        public int ItemSizeX(Item item)
         {
-            if (item.ItemClass == ItemClass.Block) { return new Point(1, 1); }
+            if (item.ItemClass == ItemClass.Block) { return 1; }
+            throw new NotImplementedException();
+        }
+
+        public int ItemSizeY(Item item)
+        {
+            if (item.ItemClass == ItemClass.Block) { return 1; }
             throw new NotImplementedException();
         }
 
@@ -500,18 +521,18 @@ namespace ManicDigger
             }
         }
 
-        public bool CanWear(WearPlace selectedWear, Item item)
+        public bool CanWear(int selectedWear, Item item)
         {
             if (item == null) { return true; }
             if (item == null) { return true; }
             switch (selectedWear)
             {
                 //case WearPlace.LeftHand: return false;
-                case WearPlace.RightHand: return item.ItemClass == ItemClass.Block;
-                case WearPlace.MainArmor: return false;
-                case WearPlace.Boots: return false;
-                case WearPlace.Helmet: return false;
-                case WearPlace.Gauntlet: return false;
+                case WearPlace_.RightHand: return item.ItemClass == ItemClass.Block;
+                case WearPlace_.MainArmor: return false;
+                case WearPlace_.Boots: return false;
+                case WearPlace_.Helmet: return false;
+                case WearPlace_.Gauntlet: return false;
                 default: throw new Exception();
             }
         }

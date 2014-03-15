@@ -58,72 +58,10 @@ namespace ManicDigger
     {
         int LoadTexture(Bitmap bmp);
     }
-    public class The3dDummy : IThe3d
-    {
-        public int TextureId;
-        #region IThe3d Members
-        public int LoadTexture(Stream file)
-        {
-            return TextureId;
-        }
-        public int LoadTerrainTexture(string filename)
-        {
-            return TextureId;
-        }
-        #endregion
-        #region IThe3d Members
-        public int LoadTexture(Bitmap bmp)
-        {
-            return TextureId;
-        }
-        #endregion
-        #region IThe3d Members
-        public Matrix4 ModelViewMatrix
-        {
-            get { return new Matrix4(); }
-        }
-        public Matrix4 ProjectionMatrix
-        {
-            get { return new Matrix4(); }
-        }
-        #endregion
-        public void Set3dProjection(float zfar)
-        {
-        }
-        public void Set3dProjection()
-        {
-        }
-    }
-    public enum Direction4
-    {
-        Left,
-        Right,
-        Up,
-        Down,
-    }
-    public interface IKeyboard
-    {
-        OpenTK.Input.KeyboardDevice keyboardstate { get; }
-        OpenTK.Input.KeyboardKeyEventArgs keypressed { get; }
-        OpenTK.Input.KeyboardKeyEventArgs keydepressed { get; }
-    }
-    public interface IViewportSize
-    {
-        int Width { get; }
-        int Height { get; }
-    }
     public interface IModelToDraw
     {
         void Draw(float dt);
         int Id { get; }
-    }
-    public interface ICharacterToDraw : IModelToDraw
-    {
-        /*
-        Vector3 Pos3d { get; }
-        Vector3 Dir3d { get; }
-        bool Moves { get; }
-        */
     }
     public interface ICurrentShadows
     {

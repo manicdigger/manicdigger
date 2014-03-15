@@ -31,7 +31,7 @@ namespace ManicDigger
         {
             mWhenPlayerPlacesGetsConvertedTo = new int[count];
             mIsFlower = new bool[count];
-            mRail = new RailDirectionFlags[count];
+            mRail = new int[count];
             mWalkSpeed = new float[count];
             for (int i = 0; i < count; i++)
             {
@@ -69,7 +69,7 @@ namespace ManicDigger
 
         public int[] WhenPlayerPlacesGetsConvertedTo { get { return mWhenPlayerPlacesGetsConvertedTo; } }
         public bool[] IsFlower { get { return mIsFlower; } }
-        public RailDirectionFlags[] Rail { get { return mRail; } }
+        public int[] Rail { get { return mRail; } }
         public float[] WalkSpeed { get { return mWalkSpeed; } }
         public bool[] IsSlipperyWalk { get { return mIsSlipperyWalk; } }
         public string[][] WalkSound { get { return mWalkSound; } }
@@ -86,7 +86,7 @@ namespace ManicDigger
 
         private int[] mWhenPlayerPlacesGetsConvertedTo;
         private bool[] mIsFlower;
-        private RailDirectionFlags[] mRail;
+        private int[] mRail;
         private float[] mWalkSpeed;
         private bool[] mIsSlipperyWalk;
         private string[][] mWalkSound;
@@ -230,7 +230,7 @@ namespace ManicDigger
             	mWhenPlayerPlacesGetsConvertedTo[id] = id;
             }
             IsFlower[id] = b.DrawType == Packet_DrawTypeEnum.Plant;
-            Rail[id] = (RailDirectionFlags)b.Rail;
+            Rail[id] = b.Rail;
             WalkSpeed[id] = DeserializeFloat(b.WalkSpeedFloat);
             IsSlipperyWalk[id] = b.IsSlipperyWalk;
             WalkSound[id] = (string[])b.Sounds.Walk.Clone();

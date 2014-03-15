@@ -15,6 +15,7 @@ using System.Text;
 using ManicDigger.Hud;
 using System.Net.Sockets;
 using Lidgren.Network;
+using ManicDigger.ClientNative;
 #endregion
 
 namespace GameModeFortress
