@@ -38,22 +38,22 @@ namespace GameModeFortress
                 }
                 l.Add(p);
                 var a = new Vector3i(p.x + 1, p.y, p.z);
-                if (d_Map.GetBlock(a.x, a.y, a.z) == d_Data.BlockIdCraftingTable)
+                if (d_Map.GetBlock(a.x, a.y, a.z) == d_Data.BlockIdCraftingTable())
                 {
                     todo.Enqueue(a);
                 }
                 var b = new Vector3i(p.x - 1, p.y, p.z);
-                if (d_Map.GetBlock(b.x, b.y, b.z) == d_Data.BlockIdCraftingTable)
+                if (d_Map.GetBlock(b.x, b.y, b.z) == d_Data.BlockIdCraftingTable())
                 {
                     todo.Enqueue(b);
                 }
                 var c = new Vector3i(p.x, p.y + 1, p.z);
-                if (d_Map.GetBlock(c.x, c.y, c.z) == d_Data.BlockIdCraftingTable)
+                if (d_Map.GetBlock(c.x, c.y, c.z) == d_Data.BlockIdCraftingTable())
                 {
                     todo.Enqueue(c);
                 }
                 var d = new Vector3i(p.x, p.y - 1, p.z);
-                if (d_Map.GetBlock(d.x, d.y, d.z) == d_Data.BlockIdCraftingTable)
+                if (d_Map.GetBlock(d.x, d.y, d.z) == d_Data.BlockIdCraftingTable())
                 {
                     todo.Enqueue(d);
                 }

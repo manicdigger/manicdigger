@@ -1262,7 +1262,7 @@ namespace ManicDigger
         {
             terrainRenderer.StartTerrain();
             RedrawAllBlocks();
-            materialSlots = d_Data.DefaultMaterialSlots;
+            materialSlots = d_Data.DefaultMaterialSlots();
             GuiStateBackToGame();
             OnNewMap();
         }
@@ -1278,7 +1278,7 @@ namespace ManicDigger
                 for (int i = 0; i < 10; i++)
                 {
                     Packet_Item item = d_Inventory.RightHand[i];
-                    m[i] = d_Data.BlockIdDirt;
+                    m[i] = d_Data.BlockIdDirt();
                     if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
                     {
                         m[i] = d_Inventory.RightHand[i].BlockId;
@@ -1436,9 +1436,9 @@ namespace ManicDigger
             IntRef b = BlockUnderPlayer();
             if (b != null)
             {
-                return d_Data.WalkSound[b.value];
+                return d_Data.WalkSound()[b.value];
             }
-            return d_Data.WalkSound[0];
+            return d_Data.WalkSound()[0];
         }
         bool IsInLeft(Vector3 player_yy, Vector3 tile_yy)
         {
@@ -1579,7 +1579,7 @@ namespace ManicDigger
             IntRef blockunderplayer = BlockUnderPlayer();
             {
                 //slippery walk on ice and when swimming
-                if ((blockunderplayer != null && d_Data.IsSlipperyWalk[blockunderplayer.value]) || Swimming)
+                if ((blockunderplayer != null && d_Data.IsSlipperyWalk()[blockunderplayer.value]) || Swimming)
                 {
                     acceleration = new Acceleration();
                     {
@@ -1590,7 +1590,7 @@ namespace ManicDigger
                 }
             }
             float jumpstartacceleration = 13.333f * d_Physics.gravity;
-            if (blockunderplayer != null && blockunderplayer.value == d_Data.BlockIdTrampoline
+            if (blockunderplayer != null && blockunderplayer.value == d_Data.BlockIdTrampoline()
                 && (!player.isplayeronground) && !shiftkeydown)
             {
                 wantsjump = true;
@@ -1836,7 +1836,7 @@ namespace ManicDigger
                 block2 = d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y - 1);
             }
             
-            int damage = d_Data.DamageToPlayer[block1] + d_Data.DamageToPlayer[block2];
+            int damage = d_Data.DamageToPlayer()[block1] + d_Data.DamageToPlayer()[block2];
             if (damage > 0)
             {
             	int hurtingBlock = block1;	//Use block at eyeheight as source block
@@ -1944,7 +1944,7 @@ namespace ManicDigger
                 IntRef blockunderplayer = BlockUnderPlayer();
                 if (blockunderplayer != null)
                 {
-                    movespeednow *= d_Data.WalkSpeed[blockunderplayer.value];
+                    movespeednow *= d_Data.WalkSpeed()[blockunderplayer.value];
                 }
             }
             if (Keyboard[GetKey(OpenTK.Input.Key.ShiftLeft)])
@@ -2000,7 +2000,7 @@ namespace ManicDigger
                 return ENABLE_FREEMOVE;
             }
             return d_Map.GetBlock(x, y, z) == SpecialBlockId.Empty
-                || d_Map.GetBlock(x, y, z) == d_Data.BlockIdFillArea
+                || d_Map.GetBlock(x, y, z) == d_Data.BlockIdFillArea()
                 || IsWater(d_Map.GetBlock(x, y, z));
         }
         bool IsTileEmptyForPhysicsClose(int x, int y, int z)
@@ -2445,7 +2445,7 @@ namespace ManicDigger
                         if (d_Map.IsValidPos((int)newtile.X, (int)newtile.Z, (int)newtile.Y))
                         {
                             int clonesource = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                            int clonesource2 = (int)d_Data.WhenPlayerPlacesGetsConvertedTo[(int)clonesource];
+                            int clonesource2 = (int)d_Data.WhenPlayerPlacesGetsConvertedTo()[(int)clonesource];
                             //find this block in another right hand.
                             for (int i = 0; i < 10; i++)
                             {
@@ -2489,7 +2489,7 @@ namespace ManicDigger
                                 }
                             }
                         done:
-                            string[] sound = d_Data.CloneSound[clonesource];
+                            string[] sound = d_Data.CloneSound()[clonesource];
                             if (sound != null && sound.Length > 0)
                             {
                                 AudioPlay(sound[0]); //todo sound cycle
@@ -2508,8 +2508,8 @@ namespace ManicDigger
                                 int blocktype;
                                 if (left) { blocktype = d_Map.GetBlock((int)newtile.X, (int)newtile.Z, (int)newtile.Y); }
                                 else { blocktype = ((BlockInHand() == null) ? 1 : BlockInHand().value); }
-                                if (left && blocktype == d_Data.BlockIdAdminium) { goto end; }
-                                string[] sound = left ? d_Data.BreakSound[blocktype] : d_Data.BuildSound[blocktype];
+                                if (left && blocktype == d_Data.BlockIdAdminium()) { goto end; }
+                                string[] sound = left ? d_Data.BreakSound()[blocktype] : d_Data.BuildSound()[blocktype];
                                 if (sound != null && sound.Length > 0)
                                 {
                                     AudioPlay(sound[0]); //todo sound cycle
@@ -2627,7 +2627,7 @@ namespace ManicDigger
                 return blockhealth[new Vector3i(x, y, z)];
             }
             int blocktype = d_Map.GetBlock(x, y, z);
-            return d_Data.Strength[blocktype];
+            return d_Data.Strength()[blocktype];
         }
         Dictionary<Vector3i, float> blockhealth = new Dictionary<Vector3i, float>();
         Vector3i? currentAttackedBlock;
@@ -2653,7 +2653,7 @@ namespace ManicDigger
                 int z = currentAttackedBlock.Value.z;
                 int blocktype = d_Map.GetBlock(x, y, z);
                 float health = GetCurrentBlockHealth(x, y, z);
-                float progress = health / d_Data.Strength[blocktype];
+                float progress = health / d_Data.Strength()[blocktype];
                 if (IsUsableBlock(blocktype))
                 {
                 	DrawEnemyHealthUseInfo(game.language.Get("Block_" + game.blocktypes[blocktype].Name), progress, true);
@@ -2671,7 +2671,7 @@ namespace ManicDigger
         {
             for (int i = 0; i < 10; i++)
             {
-                if (MaterialSlots[i] == d_Data.BlockIdCompass)
+                if (MaterialSlots[i] == d_Data.BlockIdCompass())
                 {
                     return true;
                 }
@@ -4095,7 +4095,7 @@ namespace ManicDigger
                 {
                     return p.Y < WaterLevel;
                 }
-                return d_Data.WalkableType1[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)] == WalkableType.Fluid;
+                return d_Data.WalkableType1()[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)] == (int)WalkableType.Fluid;
             }
         }
         public bool WaterSwimming
@@ -4226,7 +4226,7 @@ namespace ManicDigger
             float xfract = collisionPos[0] - (float)Math.Floor(collisionPos[0]);
             float zfract = collisionPos[2] - (float)Math.Floor(collisionPos[2]);
             int activematerial = (ushort)MaterialSlots[ActiveMaterial];
-            int railstart = d_Data.BlockIdRailstart;
+            int railstart = d_Data.BlockIdRailstart();
             if (activematerial == railstart + (int)RailDirectionFlags.TwoHorizontalVertical
                 || activematerial == railstart + (int)RailDirectionFlags.Corners)
             {
@@ -4239,7 +4239,7 @@ namespace ManicDigger
                 {
                     dirnew = PickCorners(xfract, zfract);
                 }
-                int dir = d_Data.Rail[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
+                int dir = d_Data.Rail()[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
                 if (dir != 0)
                 {
                     blockpos = blockposold;
@@ -4273,7 +4273,7 @@ namespace ManicDigger
                         if (z + 1 == d_Map.MapSizeZ || z == 0) return;
                     }
                     */
-                    if (activematerial == d_Data.BlockIdCuboid)
+                    if (activematerial == d_Data.BlockIdCuboid())
                     {
                         ClearFillArea();
 
@@ -4284,7 +4284,7 @@ namespace ManicDigger
                             {
                                 fillarea[f] = d_Map.GetBlock(f.x, f.y, f.z);
                             }
-                            SetBlock(f.x, f.y, f.z, d_Data.BlockIdFillStart);
+                            SetBlock(f.x, f.y, f.z, d_Data.BlockIdFillStart());
 
 
                             FillFill(v, fillstart.Value);
@@ -4293,19 +4293,19 @@ namespace ManicDigger
                         {
                             fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdCuboid);
+                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdCuboid());
                         fillend = v;
                         RedrawBlock(v.x, v.y, v.z);
                         return;
                     }
-                    if (activematerial == d_Data.BlockIdFillStart)
+                    if (activematerial == d_Data.BlockIdFillStart())
                     {
                         ClearFillArea();
                         if (!IsFillBlock(d_Map.GetBlock(v.x, v.y, v.z)))
                         {
                             fillarea[v] = d_Map.GetBlock(v.x, v.y, v.z);
                         }
-                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdFillStart);
+                        SetBlock(v.x, v.y, v.z, d_Data.BlockIdFillStart());
                         fillstart = v;
                         fillend = null;
                         RedrawBlock(v.x, v.y, v.z);
@@ -4343,7 +4343,7 @@ namespace ManicDigger
                         return;
                     }
                 }
-                if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart)
+                if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart())
                 {
                     /*
                     CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
@@ -4422,7 +4422,7 @@ namespace ManicDigger
                         if (!IsFillBlock(d_Map.GetBlock(x, y, z)))
                         {
                             fillarea[new Vector3i(x, y, z)] = d_Map.GetBlock(x, y, z);
-                            SetBlock(x, y, z, d_Data.BlockIdFillArea);
+                            SetBlock(x, y, z, d_Data.BlockIdFillArea());
                             RedrawBlock(x, y, z);
                         }
                     }
@@ -4431,9 +4431,9 @@ namespace ManicDigger
         }
         bool IsFillBlock(int blocktype)
         {
-            return blocktype == d_Data.BlockIdFillArea
-                || blocktype == d_Data.BlockIdFillStart
-                || blocktype == d_Data.BlockIdCuboid;
+            return blocktype == d_Data.BlockIdFillArea()
+                || blocktype == d_Data.BlockIdFillStart()
+                || blocktype == d_Data.BlockIdCuboid();
         }
         RailDirection PickHorizontalVertical(float xfract, float yfract)
         {
@@ -4496,7 +4496,7 @@ namespace ManicDigger
                 {
                     Vector3i pos = new Vector3i((int)PickCubePos.X, (int)PickCubePos.Z, (int)PickCubePos.Y);
                     if (d_Map.GetBlock(pos.x, pos.y, pos.z)
-                        == d_Data.BlockIdCraftingTable)
+                        == d_Data.BlockIdCraftingTable())
                     {
                         //draw crafting recipes list.
                         CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
@@ -5273,7 +5273,7 @@ namespace ManicDigger
                             }
                         }
                     }
-                    d_Data.UseBlockTypes(game.blocktypes, textureInAtlasIds);
+                    d_Data.UseBlockTypes(game.platform, game.blocktypes, game.blocktypes.Length);
                     for (int i = 0; i < game.blocktypes.Length; i++)
                     {
                         Packet_BlockType b = game.blocktypes[i];

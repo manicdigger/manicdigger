@@ -88,7 +88,7 @@ namespace ManicDigger
                 }
                 else
                 {
-                    int railunderplayer = d_Data.Rail[this.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
+                    int railunderplayer = d_Data.Rail()[this.GetBlock((int)currentrailblock.X, (int)currentrailblock.Y, (int)currentrailblock.Z)];
                     railriding = true;
                     originalmodelheight = CharacterEyesHeight;
                     CharacterEyesHeight = minecartheight;
@@ -270,7 +270,7 @@ namespace ManicDigger
             int possible_railsVehicleDirection12Flags = 0;
             if (d_Map.IsValidPos((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
-                int newpositionrail = d_Data.Rail[
+                int newpositionrail = d_Data.Rail()[
                     d_Map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
                 List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
                 foreach (var z in DirectionUtils.PossibleNewRails3(enter.EnterDirection))

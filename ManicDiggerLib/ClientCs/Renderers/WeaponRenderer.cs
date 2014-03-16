@@ -25,8 +25,8 @@ namespace ManicDigger.Renderers
             if (item == null || IsCompass() || (item != null && item.BlockId == 0))
             {
                 //empty hand
-                if (side == TileSide.Top) { return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Top]; }
-                return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand][(int)TileSide.Front];
+                if (side == TileSide.Top) { return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand()][(int)TileSide.Top]; }
+                return d_Shadows.game.TextureId[d_Data.BlockIdEmptyHand()][(int)TileSide.Front];
             }
             if (item.ItemClass == Packet_ItemClassEnum.Block)
             {
@@ -71,7 +71,7 @@ namespace ManicDigger.Renderers
             Packet_Item item = d_Inventory.RightHand[d_Viewport.ActiveMaterial];
             return item != null
                 && item.ItemClass == Packet_ItemClassEnum.Block
-                && item.BlockId == d_Data.BlockIdCompass;
+                && item.BlockId == d_Data.BlockIdCompass();
         }
         public bool IsEmptyHand()
         {

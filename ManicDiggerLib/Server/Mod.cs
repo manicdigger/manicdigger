@@ -57,7 +57,7 @@ namespace ManicDigger
                 throw new Exception(blockType);
             }
             server.BlockTypes[id].IsBuildable = true;
-            server.d_Data.UseBlockType(id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]), null);
+            server.d_Data.UseBlockType(server.platform, id, BlockTypeConverter.GetBlockType(server.BlockTypes[id]));
         }
 
         public void RegisterOnBlockBuild(ModDelegates.BlockBuild f)
@@ -223,7 +223,7 @@ namespace ManicDigger
             var item = new Item();
             item.ItemClass = ItemClass.Block;
             item.BlockCount = amount;
-            item.BlockId = server.d_Data.WhenPlayerPlacesGetsConvertedTo[block];
+            item.BlockId = server.d_Data.WhenPlayerPlacesGetsConvertedTo()[block];
             server.GetInventoryUtil(inventory).GrabItem(item, 0);
         }
 
@@ -389,7 +389,7 @@ namespace ManicDigger
 
         public void AddToStartInventory(string blocktype, int amount)
         {
-            server.d_Data.StartInventoryAmount[GetBlockId(blocktype)] = amount;
+            server.d_Data.StartInventoryAmount()[GetBlockId(blocktype)] = amount;
         }
 
         public long GetCurrentTick()
