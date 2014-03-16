@@ -264,26 +264,26 @@ namespace ManicDigger
             public Vector3 BlockPosition;
             public TileEnterDirection EnterDirection;
         }
-        public VehicleDirection12Flags PossibleRails(TileEnterData enter)
+        public int PossibleRails(TileEnterData enter)
         {
             Vector3 new_position = enter.BlockPosition;
-            VehicleDirection12Flags possible_rails = VehicleDirection12Flags.None;
+            int possible_railsVehicleDirection12Flags = 0;
             if (d_Map.IsValidPos((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z))
             {
                 int newpositionrail = d_Data.Rail[
                     d_Map.GetBlock((int)enter.BlockPosition.X, (int)enter.BlockPosition.Y, (int)enter.BlockPosition.Z)];
                 List<VehicleDirection12> all_possible_rails = new List<VehicleDirection12>();
-                foreach (var z in DirectionUtils.PossibleNewRails(enter.EnterDirection))
+                foreach (var z in DirectionUtils.PossibleNewRails3(enter.EnterDirection))
                 {
-                    if ((newpositionrail & (int)DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
+                    if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
                         != 0)
                     {
                         all_possible_rails.Add(z);
                     }
                 }
-                possible_rails = DirectionUtils.ToVehicleDirection12Flags(all_possible_rails);
+                possible_railsVehicleDirection12Flags = (int)DirectionUtils.ToVehicleDirection12Flags_(all_possible_rails.ToArray(), all_possible_rails.Count);
             }
-            return possible_rails;
+            return possible_railsVehicleDirection12Flags;
         }
         public static Vector3 NextTile(VehicleDirection12 direction, Vector3 currentTile)
         {
@@ -308,50 +308,61 @@ namespace ManicDigger
         bool railriding = false;
         bool wasqpressed = false;
         bool wasepressed = false;
-        VehicleDirection12? BestNewDirection(VehicleDirection12Flags dir, bool turnleft, bool turnright)
+        VehicleDirection12? BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright)
         {
             if (turnright)
             {
-                if ((dir & VehicleDirection12Flags.DownRightRight) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0)
                 {
                     return VehicleDirection12.DownRightRight;
                 }
-                if ((dir & VehicleDirection12Flags.UpRightUp) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0)
                 {
                     return VehicleDirection12.UpRightUp;
                 }
-                if ((dir & VehicleDirection12Flags.UpLeftLeft) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0)
                 {
                     return VehicleDirection12.UpLeftLeft;
                 }
-                if ((dir & VehicleDirection12Flags.DownLeftDown) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0)
                 {
                     return VehicleDirection12.DownLeftDown;
                 }
             }
             if (turnleft)
             {
-                if ((dir & VehicleDirection12Flags.DownRightDown) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0)
                 {
                     return VehicleDirection12.DownRightDown;
                 }
-                if ((dir & VehicleDirection12Flags.UpRightRight) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0)
                 {
                     return VehicleDirection12.UpRightRight;
                 }
-                if ((dir & VehicleDirection12Flags.UpLeftUp) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0)
                 {
                     return VehicleDirection12.UpLeftUp;
                 }
-                if ((dir & VehicleDirection12Flags.DownLeftLeft) != 0)
+                if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0)
                 {
                     return VehicleDirection12.DownLeftLeft;
                 }
             }
-            foreach (var v in DirectionUtils.ToVehicleDirection12s(dir))
-            {
-                return v;
-            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0) { return VehicleDirection12.DownLeftDown; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0) { return VehicleDirection12.DownLeftLeft; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0) { return VehicleDirection12.DownRightDown; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0) { return VehicleDirection12.DownRightRight; }
+
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0) { return VehicleDirection12.UpLeftLeft; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0) { return VehicleDirection12.UpLeftUp; }
+
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0) { return VehicleDirection12.UpRightRight; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0) { return VehicleDirection12.UpRightUp; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
+
             return null;
         }
         enum UpDown

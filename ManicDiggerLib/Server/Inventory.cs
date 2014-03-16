@@ -502,8 +502,8 @@ namespace ManicDigger
             if (itemA.ItemClass == ItemClass.Block
                 && itemB.ItemClass == ItemClass.Block)
             {
-                int railcountA = MyLinq.Count(DirectionUtils.ToRailDirections(d_Data.Rail[itemA.BlockId]));
-                int railcountB = MyLinq.Count(DirectionUtils.ToRailDirections(d_Data.Rail[itemB.BlockId]));
+                int railcountA = DirectionUtils.RailDirectionFlagsCount(d_Data.Rail[itemA.BlockId]);
+                int railcountB = DirectionUtils.RailDirectionFlagsCount(d_Data.Rail[itemB.BlockId]);
                 if ((itemA.BlockId != itemB.BlockId) && (!(railcountA > 0 && railcountB > 0)))
                 {
                     return null;

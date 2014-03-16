@@ -3069,13 +3069,11 @@ if (sent >= unknown.Count) { break; }
             int oldrailcount = 0;
             if (d_Data.IsRailTile(oldblock))
             {
-                oldrailcount = MyLinq.Count(
-                    DirectionUtils.ToRailDirections(
-                    (oldblock - d_Data.BlockIdRailstart)));
+                oldrailcount = DirectionUtils.RailDirectionFlagsCount(
+                    (oldblock - d_Data.BlockIdRailstart));
             }
-            int newrailcount = MyLinq.Count(
-                DirectionUtils.ToRailDirections(
-                (cmd.BlockType - d_Data.BlockIdRailstart)));
+            int newrailcount = DirectionUtils.RailDirectionFlagsCount(
+                (cmd.BlockType - d_Data.BlockIdRailstart));
             int blockstoput = newrailcount - oldrailcount;
 
             Item item = inventory.RightHand[cmd.MaterialSlot];
@@ -3113,9 +3111,8 @@ if (sent >= unknown.Count) { break; }
             int blockstopick = 1;
             if (d_Data.IsRailTile(blocktype))
             {
-                blockstopick = MyLinq.Count(
-                    DirectionUtils.ToRailDirections(
-                    (blocktype - d_Data.BlockIdRailstart)));
+                blockstopick = DirectionUtils.RailDirectionFlagsCount(
+                    (blocktype - d_Data.BlockIdRailstart));
             }
 
             var item = new Item();

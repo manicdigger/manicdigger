@@ -1586,6 +1586,312 @@ public enum RailDirection
     DownRight
 }
 
+public enum TileExitDirection
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+public enum TileEnterDirection
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+/// <summary>
+/// Each RailDirection on tile can be traversed by train in two directions.
+/// </summary>
+/// <example>
+/// RailDirection.Horizontal -> VehicleDirection12.HorizontalLeft (vehicle goes left and decreases x position),
+/// and VehicleDirection12.HorizontalRight (vehicle goes right and increases x position).
+/// </example>
+public enum VehicleDirection12
+{
+    HorizontalLeft,
+    HorizontalRight,
+    VerticalUp,
+    VerticalDown,
+
+    UpLeftUp,
+    UpLeftLeft,
+    UpRightUp,
+    UpRightRight,
+
+    DownLeftDown,
+    DownLeftLeft,
+    DownRightDown,
+    DownRightRight
+}
+
+public class VehicleDirection12Flags
+{
+    public const int None = 0;
+    public const int HorizontalLeft = 1 << 0;
+    public const int HorizontalRight = 1 << 1;
+    public const int VerticalUp = 1 << 2;
+    public const int VerticalDown = 1 << 3;
+
+    public const int UpLeftUp = 1 << 4;
+    public const int UpLeftLeft = 1 << 5;
+    public const int UpRightUp = 1 << 6;
+    public const int UpRightRight = 1 << 7;
+
+    public const int DownLeftDown = 1 << 8;
+    public const int DownLeftLeft = 1 << 9;
+    public const int DownRightDown = 1 << 10;
+    public const int DownRightRight = 1 << 11;
+}
+
+public class DirectionUtils
+{
+    /// <summary>
+    /// VehicleDirection12.UpRightRight -> returns Direction4.Right
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    public static TileExitDirection ResultExit(VehicleDirection12 direction)
+    {
+        switch (direction)
+        {
+            case VehicleDirection12.HorizontalLeft:
+                return TileExitDirection.Left;
+            case VehicleDirection12.HorizontalRight:
+                return TileExitDirection.Right;
+            case VehicleDirection12.VerticalUp:
+                return TileExitDirection.Up;
+            case VehicleDirection12.VerticalDown:
+                return TileExitDirection.Down;
+
+            case VehicleDirection12.UpLeftUp:
+                return TileExitDirection.Up;
+            case VehicleDirection12.UpLeftLeft:
+                return TileExitDirection.Left;
+            case VehicleDirection12.UpRightUp:
+                return TileExitDirection.Up;
+            case VehicleDirection12.UpRightRight:
+                return TileExitDirection.Right;
+
+            case VehicleDirection12.DownLeftDown:
+                return TileExitDirection.Down;
+            case VehicleDirection12.DownLeftLeft:
+                return TileExitDirection.Left;
+            case VehicleDirection12.DownRightDown:
+                return TileExitDirection.Down;
+            case VehicleDirection12.DownRightRight:
+                return TileExitDirection.Right;
+            default:
+                return TileExitDirection.Down;
+        }
+    }
+
+    public static RailDirection ToRailDirection(VehicleDirection12 direction)
+    {
+        switch (direction)
+        {
+            case VehicleDirection12.HorizontalLeft:
+                return RailDirection.Horizontal;
+            case VehicleDirection12.HorizontalRight:
+                return RailDirection.Horizontal;
+            case VehicleDirection12.VerticalUp:
+                return RailDirection.Vertical;
+            case VehicleDirection12.VerticalDown:
+                return RailDirection.Vertical;
+
+            case VehicleDirection12.UpLeftUp:
+                return RailDirection.UpLeft;
+            case VehicleDirection12.UpLeftLeft:
+                return RailDirection.UpLeft;
+            case VehicleDirection12.UpRightUp:
+                return RailDirection.UpRight;
+            case VehicleDirection12.UpRightRight:
+                return RailDirection.UpRight;
+
+            case VehicleDirection12.DownLeftDown:
+                return RailDirection.DownLeft;
+            case VehicleDirection12.DownLeftLeft:
+                return RailDirection.DownLeft;
+            case VehicleDirection12.DownRightDown:
+                return RailDirection.DownRight;
+            case VehicleDirection12.DownRightRight:
+                return RailDirection.DownRight;
+            default:
+                return RailDirection.DownLeft;
+        }
+    }
+
+    public static int ToRailDirectionFlags(RailDirection direction)
+    {
+        switch (direction)
+        {
+            case RailDirection.DownLeft:
+                return RailDirectionFlags.DownLeft;
+            case RailDirection.DownRight:
+                return RailDirectionFlags.DownRight;
+            case RailDirection.Horizontal:
+                return RailDirectionFlags.Horizontal;
+            case RailDirection.UpLeft:
+                return RailDirectionFlags.UpLeft;
+            case RailDirection.UpRight:
+                return RailDirectionFlags.UpRight;
+            case RailDirection.Vertical:
+                return RailDirectionFlags.Vertical;
+            default:
+                return 0;
+        }
+    }
+
+    public static VehicleDirection12 Reverse(VehicleDirection12 direction)
+    {
+        switch (direction)
+        {
+            case VehicleDirection12.HorizontalLeft:
+                return VehicleDirection12.HorizontalRight;
+            case VehicleDirection12.HorizontalRight:
+                return VehicleDirection12.HorizontalLeft;
+            case VehicleDirection12.VerticalUp:
+                return VehicleDirection12.VerticalDown;
+            case VehicleDirection12.VerticalDown:
+                return VehicleDirection12.VerticalUp;
+
+            case VehicleDirection12.UpLeftUp:
+                return VehicleDirection12.UpLeftLeft;
+            case VehicleDirection12.UpLeftLeft:
+                return VehicleDirection12.UpLeftUp;
+            case VehicleDirection12.UpRightUp:
+                return VehicleDirection12.UpRightRight;
+            case VehicleDirection12.UpRightRight:
+                return VehicleDirection12.UpRightUp;
+
+            case VehicleDirection12.DownLeftDown:
+                return VehicleDirection12.DownLeftLeft;
+            case VehicleDirection12.DownLeftLeft:
+                return VehicleDirection12.DownLeftDown;
+            case VehicleDirection12.DownRightDown:
+                return VehicleDirection12.DownRightRight;
+            case VehicleDirection12.DownRightRight:
+                return VehicleDirection12.DownRightDown;
+            default:
+                return VehicleDirection12.DownLeftDown;
+        }
+    }
+
+    public static int ToVehicleDirection12Flags(VehicleDirection12 direction)
+    {
+        switch (direction)
+        {
+            case VehicleDirection12.HorizontalLeft:
+                return VehicleDirection12Flags.HorizontalLeft;
+            case VehicleDirection12.HorizontalRight:
+                return VehicleDirection12Flags.HorizontalRight;
+            case VehicleDirection12.VerticalUp:
+                return VehicleDirection12Flags.VerticalUp;
+            case VehicleDirection12.VerticalDown:
+                return VehicleDirection12Flags.VerticalDown;
+
+            case VehicleDirection12.UpLeftUp:
+                return VehicleDirection12Flags.UpLeftUp;
+            case VehicleDirection12.UpLeftLeft:
+                return VehicleDirection12Flags.UpLeftLeft;
+            case VehicleDirection12.UpRightUp:
+                return VehicleDirection12Flags.UpRightUp;
+            case VehicleDirection12.UpRightRight:
+                return VehicleDirection12Flags.UpRightRight;
+
+            case VehicleDirection12.DownLeftDown:
+                return VehicleDirection12Flags.DownLeftDown;
+            case VehicleDirection12.DownLeftLeft:
+                return VehicleDirection12Flags.DownLeftLeft;
+            case VehicleDirection12.DownRightDown:
+                return VehicleDirection12Flags.DownRightDown;
+            case VehicleDirection12.DownRightRight:
+                return VehicleDirection12Flags.DownRightRight;
+            default:
+                return 0;
+        }
+    }
+
+    public static TileEnterDirection ResultEnter(TileExitDirection direction)
+    {
+        switch (direction)
+        {
+            case TileExitDirection.Up:
+                return TileEnterDirection.Down;
+            case TileExitDirection.Down:
+                return TileEnterDirection.Up;
+            case TileExitDirection.Left:
+                return TileEnterDirection.Right;
+            case TileExitDirection.Right:
+                return TileEnterDirection.Left;
+            default:
+                return TileEnterDirection.Down;
+        }
+    }
+    public static int RailDirectionFlagsCount(int railDirectionFlags)
+    {
+        int count = 0;
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.DownLeft)) != 0) { count++; }
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.DownRight)) != 0) { count++; }
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.Horizontal)) != 0) { count++; }
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.UpLeft)) != 0) { count++; }
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.UpRight)) != 0) { count++; }
+        if ((railDirectionFlags & DirectionUtils.ToRailDirectionFlags(RailDirection.Vertical)) != 0) { count++; }
+        return count;
+    }
+
+    public static int ToVehicleDirection12Flags_(VehicleDirection12[] directions, int directionsCount)
+    {
+        int flags = VehicleDirection12Flags.None;
+        for (int i = 0; i < directionsCount; i++)
+        {
+            VehicleDirection12 d = directions[i];
+            flags = flags | DirectionUtils.ToVehicleDirection12Flags(d);
+        }
+        return flags;
+    }
+
+    /// <summary>
+    /// Enter at TileEnterDirection.Left -> yields VehicleDirection12.UpLeftUp,
+    /// VehicleDirection12.HorizontalRight,
+    /// VehicleDirection12.DownLeftDown
+    /// </summary>
+    /// <param name="enter_at"></param>
+    /// <returns></returns>
+    public static VehicleDirection12[] PossibleNewRails3(TileEnterDirection enter_at)
+    {
+        VehicleDirection12[] ret = new VehicleDirection12[3];
+        switch (enter_at)
+        {
+            case TileEnterDirection.Left:
+                ret[0] = VehicleDirection12.UpLeftUp;
+                ret[1] = VehicleDirection12.HorizontalRight;
+                ret[2] = VehicleDirection12.DownLeftDown;
+                break;
+            case TileEnterDirection.Down:
+                ret[0] = VehicleDirection12.DownLeftLeft;
+                ret[1] = VehicleDirection12.VerticalUp;
+                ret[2] = VehicleDirection12.DownRightRight;
+                break;
+            case TileEnterDirection.Up:
+                ret[0] = VehicleDirection12.UpLeftLeft;
+                ret[1] = VehicleDirection12.VerticalDown;
+                ret[2] = VehicleDirection12.UpRightRight;
+                break;
+            case TileEnterDirection.Right:
+                ret[0] = VehicleDirection12.UpRightUp;
+                ret[1] = VehicleDirection12.HorizontalLeft;
+                ret[2] = VehicleDirection12.DownRightDown;
+                break;
+            default:
+                return null;
+        }
+        return ret;
+    }
+}
+
 public class ClientInventoryController : IInventoryController
 {
     public static ClientInventoryController Create(Game game)
