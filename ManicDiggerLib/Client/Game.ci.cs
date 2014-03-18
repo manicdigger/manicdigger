@@ -57,6 +57,21 @@
         needleid = -1;
         compassangle = 0;
         compassvertex = 1;
+        dialogs = new VisibleDialog[512];
+        dialogsCount = 512;
+        blockHealth = new DictionaryVector3Float();
+        playertexturedefault = -1;
+        a = new AnimationState();
+        skyspheretexture = -1;
+        skyspherenighttexture = -1;
+        skysphere = new SkySphere();
+        rotation_speed = one * 180 / 20;
+        modmanager = new ClientModManager1();
+        particleEffectBlockBreak = new ParticleEffectBlockBreak();
+        PICK_DISTANCE = one * 35 / 10;
+        selectedmodelid = -1;
+        grenadetime = 3;
+        rotationspeed = one * 15 / 100;
     }
     float one;
 
@@ -1914,6 +1929,620 @@
         lastplacedblockY = y;
         lastplacedblockZ = z;
     }
+
+    internal VisibleDialog[] dialogs;
+    internal int dialogsCount;
+
+    internal int DialogsCount()
+    {
+        int count = 0;
+        for (int i = 0; i < dialogsCount; i++)
+        {
+            if (dialogs[i] != null)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    internal int GetDialogId(string name)
+    {
+        for (int i = 0; i < dialogsCount; i++)
+        {
+            if (dialogs[i] == null)
+            {
+                continue;
+            }
+            if (dialogs[i].key == name)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    internal DictionaryVector3Float blockHealth;
+
+    internal float GetCurrentBlockHealth(int x, int y, int z)
+    {
+        if (blockHealth.ContainsKey(x, y, z))
+        {
+            return blockHealth.Get(x, y, z);
+        }
+        int blocktype = GetBlock(x, y, z);
+        return d_Data.Strength()[blocktype];
+    }
+
+    internal void DrawDialogs()
+    {
+        for (int i = 0; i < dialogsCount; i++)
+        {
+            if (dialogs[i] == null)
+            {
+                continue;
+            }
+            VisibleDialog d = dialogs[i];
+            int x = Width() / 2 - d.value.Width / 2;
+            int y = Height() / 2 - d.value.Height_ / 2;
+            for (int k = 0; k < d.value.WidgetsCount; k++)
+            {
+                Packet_Widget w = d.value.Widgets[k];
+                if (w == null)
+                {
+                    continue;
+                }
+                if (w.Text != null)
+                {
+                    w.Text = platform.StringReplace(w.Text, "!SERVER_IP!", ServerInfo.connectdata.Ip);
+                    w.Text = platform.StringReplace(w.Text, "!SERVER_PORT!", platform.IntToString(ServerInfo.connectdata.Port));
+                    if (w.Font != null)
+                    {
+                        FontCi font = FontCi.Create(ValidFont(w.Font.FamilyName), DeserializeFloat(w.Font.SizeFloat), w.Font.FontStyle);
+                        Draw2dText(w.Text, font, w.X + x, w.Y + y, IntRef.Create(w.Color), false);
+                    }
+                    else
+                    {
+                        FontCi font = FontCi.Create("Arial", 12, 0);
+                        Draw2dText(w.Text, font, w.X + x, w.Y + y, IntRef.Create(w.Color), false);
+                    }
+                }
+                if (w.Image == "Solid")
+                {
+                    Draw2dTexture(WhiteTexture(), w.X + x, w.Y + y, w.Width, w.Height_, null, 0, w.Color, false);
+                }
+                else if (w.Image != null)
+                {
+                    Draw2dBitmapFile(StringTools.StringAppend(platform, w.Image, ".png"), w.X + x, w.Y + y, w.Width, w.Height_);
+                }
+            }
+        }
+    }
+
+    internal void DrawEnemyHealthCommon(string name, float progress)
+    {
+        DrawEnemyHealthUseInfo(name, 1, false);
+    }
+
+    internal Vector3IntRef currentAttackedBlock;
+
+    internal void DrawEnemyHealthBlock()
+    {
+        if (currentAttackedBlock != null)
+        {
+            int x = currentAttackedBlock.X;
+            int y = currentAttackedBlock.Y;
+            int z = currentAttackedBlock.Z;
+            int blocktype = GetBlock(x, y, z);
+            float health = GetCurrentBlockHealth(x, y, z);
+            float progress = health / d_Data.Strength()[blocktype];
+            if (IsUsableBlock(blocktype))
+            {
+                DrawEnemyHealthUseInfo(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress, true);
+            }
+            DrawEnemyHealthCommon(language.Get(StringTools.StringAppend(platform, "Block_", blocktypes[blocktype].Name)), progress);
+        }
+    }
+
+    internal void SendRequestBlob()
+    {
+        Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.RequestBlob;
+        pp.RequestBlob = p;
+        SendPacketClient(pp);
+    }
+
+    public const int MonsterIdFirst = 1000;
+    internal int currentTimeMilliseconds;
+    internal GameDataMonsters d_DataMonsters;
+    internal int ReceivedMapLength;
+
+    internal void ReadAndUpdatePlayerPosition(Packet_PositionAndOrientation positionAndOrientation, int playerid)
+    {
+        float x = (one * positionAndOrientation.X / 32);
+        float y = (one * positionAndOrientation.Y / 32);
+        float z = (one * positionAndOrientation.Z / 32);
+        byte heading = Game.IntToByte(positionAndOrientation.Heading);
+        byte pitch = Game.IntToByte(positionAndOrientation.Pitch);
+        bool leanleft = false;
+        bool leanright = false;
+        if (positionAndOrientation.Stance == 1)
+        {
+            leanleft = true;
+        }
+        if (positionAndOrientation.Stance == 2)
+        {
+            leanright = true;
+        }
+        float realposX = x;
+        float realposY = y;
+        float realposZ = z;
+        if (playerid == this.LocalPlayerId)
+        {
+            if (!EnablePlayerUpdatePositionContainsKey(playerid) || EnablePlayerUpdatePosition(playerid))
+            {
+                player.playerposition.X = realposX;
+                player.playerposition.Y = realposY;
+                player.playerposition.Z = realposZ;
+                // LocalPlayerOrientation = HeadingPitchToOrientation(heading, pitch);
+                localstance = Game.IntToByte(positionAndOrientation.Stance);
+            }
+            spawned = true;
+        }
+        else
+        {
+            if (players[playerid] == null)
+            {
+                players[playerid] = new Player();
+                players[playerid].Name = "invalid";
+                InvalidPlayerWarning(playerid);
+            }
+            if (!EnablePlayerUpdatePositionContainsKey(playerid) || EnablePlayerUpdatePosition(playerid))
+            {
+                players[playerid].PositionX = realposX;
+                players[playerid].PositionY = realposY;
+                players[playerid].PositionZ = realposZ;
+                players[playerid].PositionLoaded = true;
+            }
+            players[playerid].Heading = heading;
+            players[playerid].Pitch = pitch;
+            players[playerid].AnimationHint_.leanleft = leanleft;
+            players[playerid].AnimationHint_.leanright = leanright;
+            players[playerid].LastUpdateMilliseconds = platform.TimeMillisecondsFromStart();
+        }
+    }
+
+    void InvalidPlayerWarning(int playerid)
+    {
+        platform.ConsoleWriteLine(platform.StringFormat("Position update of nonexistent player {0}.", platform.IntToString(playerid)));
+    }
+
+    internal bool EnablePlayerUpdatePosition(int kKey)
+    {
+        return true;
+    }
+
+    internal bool EnablePlayerUpdatePositionContainsKey(int kKey)
+    {
+        return false;
+    }
+
+    internal byte localstance;
+    internal bool spawned;
+
+    internal int MapLoadingPercentComplete;
+    internal string MapLoadingStatus;
+    internal int LastReceivedMilliseconds;
+    internal int screenshotflash;
+    internal int playertexturedefault;
+    public const string playertexturedefaultfilename = "mineplayer.png";
+    internal bool ENABLE_DRAW_TEST_CHARACTER;
+    internal AnimationState a;
+    internal int skyspheretexture;
+    internal int skyspherenighttexture;
+    internal SkySphere skysphere;
+    internal int reloadblock;
+    internal int reloadstartMilliseconds;
+    internal int PreviousActiveMaterialBlock;
+    internal int lastOxygenTickMilliseconds;
+    internal bool freemousejustdisabled;
+    internal int typinglogpos;
+    internal TypingState GuiTyping;
+    internal ConnectData connectdata;
+    internal bool issingleplayer;
+    internal bool StartedSinglePlayerServer;
+    internal bool IsShiftPressed;
+    internal bool reconnect;
+    internal float rotation_speed;
+    internal void SendLeave(int reason)
+    {
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Leave;
+        p.Leave = new Packet_ClientLeave();
+        p.Leave.Reason = reason;
+        SendPacketClient(p);
+    }
+    internal HudInventory d_HudInventory;
+    internal WeaponRenderer d_Weapon;
+    internal IFrustumCulling d_FrustumCulling;
+    internal CharacterPhysicsCi d_Physics;
+    internal ClientModManager1 modmanager;
+    internal ClientMod[] clientmods;
+    internal int clientmodsCount;
+    internal bool SkySphereNight;
+    internal ParticleEffectBlockBreak particleEffectBlockBreak;
+    internal int lastchunkupdates;
+    internal int lasttitleupdateMilliseconds;
+    internal bool ENABLE_DRAWPOSITION;
+
+    public int SerializeFloat(float p)
+    {
+        return platform.FloatToInt(p * 32);
+    }
+
+    public float WeaponAttackStrength()
+    {
+        return NextFloat(2, 4);
+    }
+
+    public float NextFloat(float min, float max)
+    {
+        return rnd.NextFloat() * (max - min) + min;
+    }
+
+    internal void SendPosition(float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ)
+    {
+        Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
+        {
+            p.PlayerId = this.LocalPlayerId;//self
+            p.X = platform.FloatToInt(positionX * 32);
+            p.Y = platform.FloatToInt(positionY * 32);
+            p.Z = platform.FloatToInt(positionZ * 32);
+            p.Heading = HeadingByte(orientationX, orientationY, orientationZ);
+            p.Pitch = PitchByte(orientationX, orientationY, orientationZ);
+            p.Stance = localstance;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PositionandOrientation;
+        pp.PositionAndOrientation = p;
+        SendPacketClient(pp);
+    }
+
+    public byte HeadingByte(float orientationX, float orientationY, float orientationZ)
+    {
+        return Game.IntToByte(platform.FloatToInt((((orientationY) % (2 * Game.GetPi())) / (2 * Game.GetPi())) * 256));
+    }
+
+    public byte PitchByte(float orientationX, float orientationY, float orientationZ)
+    {
+        float xx = (orientationX + Game.GetPi()) % (2 * Game.GetPi());
+        xx = xx / (2 * Game.GetPi());
+        return Game.IntToByte(platform.FloatToInt(xx * 256));
+    }
+
+    public void PlaySoundAt(string name, float x, float y, float z)
+    {
+        if (x == 0 && y == 0 && z == 0)
+        {
+            AudioPlay(name);
+        }
+        else
+        {
+            AudioPlayAt(name, x, z, y);
+        }
+    }
+
+    internal void InvokeMapLoadingProgress(int progressPercent, int progressBytes, string status)
+    {
+        maploadingprogress = new MapLoadingProgressEventArgs();
+        maploadingprogress.ProgressPercent = progressPercent;
+        maploadingprogress.ProgressBytes = progressBytes;
+        maploadingprogress.ProgressStatus = status;
+    }
+
+    internal void Log(string p)
+    {
+        AddChatline(p);
+    }
+
+    internal void SetTileAndUpdate(int x, int y, int z, int type)
+    {
+        SetBlock(x, y, z, type);
+        RedrawBlock(x, y, z);
+    }
+
+    internal void RedrawBlock(int x, int y, int z)
+    {
+        terrainRenderer.RedrawBlock(x, y, z);
+    }
+
+    internal bool IsFillBlock(int blocktype)
+    {
+        return blocktype == d_Data.BlockIdFillArea()
+            || blocktype == d_Data.BlockIdFillStart()
+            || blocktype == d_Data.BlockIdCuboid();
+    }
+
+    internal bool IsAnyPlayerInPos(int blockposX, int blockposY, int blockposZ)
+    {
+        for (int i = 0; i < playersCount; i++)
+        {
+            if (players[i] == null)
+            {
+                continue;
+            }
+            Player p = players[i];
+            if (p.PositionLoaded)
+            {
+                if (IsPlayerInPos(p.PositionX, p.PositionY, p.PositionZ,
+                    blockposX, blockposY, blockposZ))
+                {
+                    return true;
+                }
+            }
+        }
+        return IsPlayerInPos(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
+            blockposX, blockposY, blockposZ);
+    }
+
+    bool IsPlayerInPos(float playerposX, float playerposY, float playerposZ,
+                       int blockposX, int blockposY, int blockposZ)
+    {
+        if (FloorFloat(playerposX) == blockposX
+            &&
+            (FloorFloat(playerposY + (one / 2)) == blockposZ
+             || FloorFloat(playerposY + 1 + (one / 2)) == blockposZ)
+            && FloorFloat(playerposZ) == blockposY)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    internal void CraftingRecipeSelected(int x, int y, int z, IntRef recipe)
+    {
+        if (recipe == null)
+        {
+            return;
+        }
+        Packet_ClientCraft cmd = new Packet_ClientCraft();
+        cmd.X = x;
+        cmd.Y = y;
+        cmd.Z = z;
+        cmd.RecipeId = recipe.value;
+        Packet_Client p = new Packet_Client();
+        p.Id = Packet_ClientIdEnum.Craft;
+        p.Craft = cmd;
+        SendPacketClient(p);
+    }
+    internal float PICK_DISTANCE;
+    internal bool leftpressedpicking;
+    internal int selectedmodelid;
+    internal int pistolcycle;
+    internal int lastironsightschangeMilliseconds;
+    internal int grenadecookingstartMilliseconds;
+    internal float grenadetime;
+    internal int lastpositionsentMilliseconds;
+
+    internal float mouseDeltaX;
+    internal float mouseDeltaY;
+    float rotationspeed;
+    internal void UpdateMouseViewportControl(float dt)
+    {
+        if (!overheadcamera)
+        {
+            player.playerorientation.Y += mouseDeltaX * rotationspeed * dt;
+            player.playerorientation.X += mouseDeltaY * rotationspeed * dt;
+            player.playerorientation.X = Game.ClampFloat(player.playerorientation.X,
+                Game.GetPi() / 2 + (one * 15 / 1000),
+                (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+        }
+    }
+
+    internal string Follow;
+    internal IntRef FollowId()
+    {
+        for (int i = 0; i < playersCount; i++)
+        {
+            if (players[i] == null)
+            {
+                continue;
+            }
+            Player p = players[i];
+            if (p.Name == Follow)
+            {
+                return IntRef.Create(i);
+            }
+        }
+        return null;
+    }
+
+    public float Dist(float x1, float y1, float z1, float x2, float y2, float z2)
+    {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float dz = z2 - z1;
+        return platform.MathSqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    public void DrawBlockInfo()
+    {
+        int x = SelectedBlockPositionX;
+        int y = SelectedBlockPositionZ;
+        int z = SelectedBlockPositionY;
+        //string info = "None";
+        if (!IsValidPos(x, y, z))
+        {
+            return;
+        }
+        int blocktype = GetBlock(x, y, z);
+        if (!IsValid(blocktype))
+        {
+            return;
+        }
+        currentAttackedBlock = Vector3IntRef.Create(x, y, z);
+        DrawEnemyHealthBlock();
+    }
+
+    internal bool IsValid(int blocktype)
+    {
+        return blocktypes[blocktype].Name != null;
+    }
+
+    internal int TextSizeWidth(string s, int size)
+    {
+        IntRef width = new IntRef();
+        IntRef height = new IntRef();
+        platform.TextSize(s, size, width, height);
+        return width.value;
+    }
+
+    internal int TextSizeHeight(string s, int size)
+    {
+        IntRef width = new IntRef();
+        IntRef height = new IntRef();
+        platform.TextSize(s, size, width, height);
+        return height.value;
+    }
+
+    internal void DrawAmmo()
+    {
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+        {
+            if (blocktypes[item.BlockId].IsPistol)
+            {
+                int loaded = LoadedAmmo[item.BlockId];
+                int total = TotalAmmo[item.BlockId];
+                string s = platform.StringFormat2("{0}/{1}", platform.IntToString(loaded), platform.IntToString(total - loaded));
+                FontCi font = new FontCi();
+                font.family = "Arial";
+                font.size = 18;
+                Draw2dText(s, font, Width() - TextSizeWidth(s, 18) - 50,
+                    Height() - TextSizeHeight(s, 18) - 50, loaded == 0 ? IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)) : IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), false);
+                if (loaded == 0)
+                {
+                    font.size = 14;
+                    string pressR = "Press R to reload";
+                    Draw2dText(pressR, font, Width() - TextSizeWidth(pressR, 14) - 50,
+                        Height() - TextSizeHeight(s, 14) - 80, IntRef.Create(Game.ColorFromArgb(255, 255, 0, 0)), false);
+                }
+            }
+        }
+    }
+}
+
+public class PlayerInterpolationState
+{
+    internal float positionX;
+    internal float positionY;
+    internal float positionZ;
+    internal byte heading;
+    internal byte pitch;
+}
+
+public class Bullet_
+{
+    internal float fromX;
+    internal float fromY;
+    internal float fromZ;
+    internal float toX;
+    internal float toY;
+    internal float toZ;
+    internal float speed;
+    internal float progress;
+}
+
+public class Explosion_
+{
+    internal int dateMilliseconds;
+    internal Packet_ServerExplosion explosion;
+}
+
+public class DictionaryVector3Float
+{
+    public DictionaryVector3Float()
+    {
+        itemsCount = 16 * 1024;
+        items = new Vector3Float[itemsCount];
+    }
+    Vector3Float[] items;
+    int itemsCount;
+    internal bool ContainsKey(int x, int y, int z)
+    {
+        return ItemIndex(x, y, z) != -1;
+    }
+
+    int ItemIndex(int x, int y, int z)
+    {
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] == null)
+            {
+                continue;
+            }
+            Vector3Float item = items[i];
+            if (item.x == x && item.y == y && item.z == z)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    internal float Get(int x, int y, int z)
+    {
+        return items[ItemIndex(x, y, z)].value;
+    }
+
+    internal void Remove(int x, int y, int z)
+    {
+        if (ItemIndex(x, y, z) == -1)
+        {
+            return;
+        }
+        items[ItemIndex(x, y, z)] = null;
+    }
+
+    internal void Set(int x, int y, int z, float value)
+    {
+        int index = ItemIndex(x, y, z);
+        if (index != -1)
+        {
+            items[index].value = value;
+        }
+        else
+        {
+            for (int i = 0; i < itemsCount; i++)
+            {
+                if (items[i] == null)
+                {
+                    Vector3Float item = new Vector3Float();
+                    item.x = x;
+                    item.y = y;
+                    item.z = z;
+                    item.value = value;
+                    items[i] = item;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+public class Vector3Float
+{
+    internal int x;
+    internal int y;
+    internal int z;
+    internal float value;
+}
+
+public class VisibleDialog
+{
+    internal string key;
+    internal Packet_Dialog value;
 }
 
 public class RailMapUtil

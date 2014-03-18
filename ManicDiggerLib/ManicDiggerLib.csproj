@@ -90,6 +90,7 @@
     <Compile Include="..\Packet.Serializer.ci.cs">
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
+    <Compile Include="Client\ManicDiggerGameWindow2.cs" />
     <Compile Include="ClientNative\Audio.cs" />
     <Compile Include="ClientNative\AviWriter.cs" />
     <Compile Include="ClientNative\Misc.cs" />

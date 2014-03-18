@@ -286,7 +286,7 @@ namespace ManicDigger
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = game.TextSize(s, fontsize);
+                SizeF size = game.TextSize_(s, fontsize);
                 rect.Width = (int)size.Width + 10;
                 rect.Height = (int)size.Height;
                 rect.X = game.xcenter(size.Width);
@@ -306,7 +306,7 @@ namespace ManicDigger
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                game.Draw2dText(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                game.Draw2dText_(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
             }
         }
         List<Button> widgets = new List<Button>();

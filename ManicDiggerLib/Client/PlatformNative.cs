@@ -1087,6 +1087,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         return GameStorePath.GetStorePath();
     }
+
+    public override string StringReplace(string s, string from, string to)
+    {
+        return s.Replace(from, to);
+    }
 }
 
 public class RandomNative : RandomCi

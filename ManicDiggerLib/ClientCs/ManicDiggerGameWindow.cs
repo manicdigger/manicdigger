@@ -41,9 +41,7 @@ namespace ManicDigger
             players = new Player[2048];
             playersCount = 2048;
         }
-        public bool AudioEnabled { get { return game.AudioEnabled; } set { game.AudioEnabled = value; } }
         float one;
-        public byte localstance = 0;
         public void Start()
         {
             game.platform = new GamePlatformNative() { window = d_GlWindow };
@@ -98,7 +96,7 @@ namespace ManicDigger
             w.d_DataMonsters = new GameDataMonsters();
             w.d_GetFile = getfile;
             w.d_Config3d = config3d;
-            w.PickDistance = 4.5f;
+            w.PICK_DISTANCE = 4.5f;
             var skysphere = new SkySphere();
             skysphere.game = game;
             skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy(), game = game };
@@ -200,9 +198,6 @@ namespace ManicDigger
             mod.Start(modmanager);
         }
 
-        internal StackFloatArray mvMatrix { get { return game.mvMatrix; } set { game.mvMatrix = value; } }
-        internal StackFloatArray pMatrix { get { return game.pMatrix; } set { game.pMatrix = value; } }
-
         internal Game game;
 
         void crashreporter_OnCrash(object sender, EventArgs e)
@@ -216,68 +211,27 @@ namespace ManicDigger
             }
         }
 
-        public void SendLeave(int reason)
-        {
-            byte[] packet = Serialize(new Packet_Client() { Id = Packet_ClientIdEnum.Leave, Leave = new Packet_ClientLeave() { Reason = reason } }, packetLen);
-            SendPacket(packet, packetLen.value);
-        }
-
         public GlWindow d_GlWindow;
         public The3d d_The3d;
         public Game d_Map;
         public IClients d_Clients;
-        public CharacterPhysicsCi d_Physics;
 
         public GetFileStream d_GetFile;
-        public GameData d_Data { get { return game.d_Data; } set { game.d_Data = value; } }
-        public Config3d d_Config3d { get { return game.d_Config3d; } set { game.d_Config3d = value; } }
-        public WeaponRenderer d_Weapon;
         public ICharacterRenderer d_CharacterRenderer;
         public ICurrentShadows d_CurrentShadows;
         public SunMoonRenderer d_SunMoonRenderer;
         public IGameExit d_Exit;
-        public HudChat d_HudChat { get { return game.d_HudChat; } set { game.d_HudChat = value; } }
-        public HudInventory d_HudInventory;
-        public Packet_Inventory d_Inventory { get { return game.d_Inventory; } set { game.d_Inventory = value; } }
         public IInventoryController d_InventoryController;
         public InventoryUtilClient d_InventoryUtil;
         public CraftingTableTool d_CraftingTableTool;
-        public INetClient main { get { return game.main; } set { game.main = value; } }
-        public InfiniteMapChunked2d d_Heightmap { get { return game.d_Heightmap; } set { game.d_Heightmap = value; } }
         public IResetMap d_ResetMap;
         public ICompression d_Compression;
-        public IFrustumCulling d_FrustumCulling;
-        public MeshBatcher d_Batcher { get { return game.d_Batcher; } set { game.d_Batcher = value; } }
-        public TerrainChunkTesselatorCi d_TerrainChunkTesselator { get { return game.d_TerrainChunkTesselator; } set { game.d_TerrainChunkTesselator = value; } }
         public ManicDiggerGameWindow d_Shadows;
         public Packet_CraftingRecipe[] d_CraftingRecipes;
-
-        public bool SkySphereNight { get; set; }
 
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
         public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
 
-        const float rotation_speed = 180.0f * 0.05f;
-        //float angle;
-
-        public ServerInformation ServerInfo { get { return game.ServerInfo; } set { game.ServerInfo = value; } }
-        public bool AllowFreemove { get { return game.AllowFreemove; } set { game.AllowFreemove = value; } }
-
-        public ClientModManager1 modmanager = new ClientModManager1();
-        public ClientMod[] clientmods;
-        public int clientmodsCount;
-
-        public void SetTileAndUpdate(Vector3 pos, int type)
-        {
-            //            frametickmainthreadtodo.Add(() =>
-            //        {
-            int x = (int)pos.X;
-            int y = (int)pos.Y;
-            int z = (int)pos.Z;
-            SetBlock(x, y, z, type);
-            RedrawBlock(x, y, z);
-            //          });
-        }
         public int LoadTexture(string filename)
         {
             d_The3d.d_Config3d = d_Config3d;
@@ -351,7 +305,6 @@ namespace ManicDigger
             GL.ClearColor(Color.Black);
             d_GlWindow.Mouse.ButtonDown += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonDown);
             d_GlWindow.Mouse.ButtonUp += new EventHandler<OpenTK.Input.MouseButtonEventArgs>(Mouse_ButtonUp);
-            d_GlWindow.Mouse.Move += new EventHandler<OpenTK.Input.MouseMoveEventArgs>(Mouse_Move);
             d_GlWindow.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
             if (d_Config3d.ENABLE_BACKFACECULLING)
             {
@@ -496,11 +449,16 @@ namespace ManicDigger
                     }
                 }
             }
-            foreach (var d in dialogs)
+            for (int k = 0; k < dialogsCount; k++)
             {
-                for (int i = 0; i < d.Value.WidgetsCount; i++)
+                if (dialogs[k] == null)
                 {
-                    Packet_Widget w = d.Value.Widgets[i];
+                    continue;
+                }
+                VisibleDialog d = dialogs[k];
+                for (int i = 0; i < d.value.WidgetsCount; i++)
+                {
+                    Packet_Widget w = d.value.Widgets[i];
                     if (w == null)
                     {
                         continue;
@@ -509,7 +467,11 @@ namespace ManicDigger
                     {
                         if (e.KeyChar == w.ClickKey)
                         {
-                            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.DialogClick, DialogClick_ = new Packet_ClientDialogClick() { WidgetId = w.Id } });
+                            Packet_Client p = new Packet_Client();
+                            p.Id = Packet_ClientIdEnum.DialogClick;
+                            p.DialogClick_ = new Packet_ClientDialogClick();
+                            p.DialogClick_.WidgetId = w.Id;
+                            SendPacketClient(p);
                             return;
                         }
                     }
@@ -677,10 +639,6 @@ namespace ManicDigger
                     {
                         ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
                     }
-                    else if (cmd == "simulationlag")
-                    {
-                        SIMULATIONLAG_SECONDS = double.Parse(arguments);
-                    }
                     else if (cmd == "gui")
                     {
                         ENABLE_DRAW2D = BoolCommandArgument(arguments);
@@ -717,17 +675,11 @@ namespace ManicDigger
             reconnect = true;
             d_GlWindow.Exit();
         }
-        public bool reconnect;
 
         private static bool BoolCommandArgument(string arguments)
         {
             arguments = arguments.Trim();
             return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
-        }
-
-        private float currentfov()
-        {
-            return game.currentfov();
         }
 
         OpenTK.Input.KeyboardKeyEventArgs keyevent;
@@ -747,7 +699,7 @@ namespace ManicDigger
                 keyeventup = e;
             }
         }
-        bool IsShiftPressed = false;
+        
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
             for (int i = 0; i < clientmodsCount; i++)
@@ -789,11 +741,16 @@ namespace ManicDigger
             {
                 if (Keyboard[GetKey(OpenTK.Input.Key.Escape)])
                 {
-                    foreach (var k in new Dictionary<string, Packet_Dialog>(dialogs))
+                    for (int i = 0; i < dialogsCount; i++)
                     {
-                        if (k.Value.IsModal != 0)
+                        if (dialogs[i] == null)
                         {
-                            dialogs.Remove(k.Key);
+                            continue;
+                        }
+                        VisibleDialog d = dialogs[i];
+                        if (d.value.IsModal != 0)
+                        {
+                            dialogs[i] = null;
                             return;
                         }
                     }
@@ -1023,8 +980,8 @@ namespace ManicDigger
                 {
                     if (currentAttackedBlock != null)
                     {
-                        Vector3 pos = new Vector3(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
-                        int blocktype = d_Map.GetBlock(currentAttackedBlock.Value.x, currentAttackedBlock.Value.y, currentAttackedBlock.Value.z);
+                        Vector3 pos = new Vector3(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
+                        int blocktype = d_Map.GetBlock(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
                         if (IsUsableBlock(blocktype))
                         {
                             if (d_Data.IsRailTile(blocktype))
@@ -1149,29 +1106,9 @@ namespace ManicDigger
             else throw new Exception();
         }
 
-        public void AudioPlay(string file)
-        {
-            game.AudioPlay(file);
-        }
-
-        public void AudioPlayAt(string file, float x, float y, float z)
-        {
-            game.AudioPlayAt(file, x, y, z);
-        }
-
-        public void AudioPlayLoop(string file, bool play, bool restart)
-        {
-            game.AudioPlayLoop(file, play, restart);
-        }
-
         public Vector3 ToVector3(Vector3Ref vector3Ref)
         {
             return new Vector3(vector3Ref.X, vector3Ref.Y, vector3Ref.Z);
-        }
-
-        public void SetCamera(CameraType type)
-        {
-            game.SetCamera(type);
         }
 
         public void ToggleVsync()
@@ -1185,16 +1122,7 @@ namespace ManicDigger
         {
             d_GlWindow.VSync = (ENABLE_LAG == 1) ? VSyncMode.Off : VSyncMode.On;
         }
-        int maxdrawdistance { get { return game.maxdrawdistance; } set { game.maxdrawdistance = value; } }
-        public void ToggleFog()
-        {
-            game.ToggleFog();
-        }
-        CameraType cameratype { get { return game.cameratype; } set { game.cameratype = value; } }
-        public void Log(string p)
-        {
-            AddChatline(p);
-        }
+
         public void HandleMaterialKeys(OpenTK.Input.KeyboardKeyEventArgs e)
         {
             if (e.Key == GetKey(OpenTK.Input.Key.Number1)) { ActiveMaterial = 0; }
@@ -1209,20 +1137,13 @@ namespace ManicDigger
             if (e.Key == GetKey(OpenTK.Input.Key.Number0)) { ActiveMaterial = 9; }
         }
         List<string> typinglog = new List<string>();
-        int typinglogpos = 0;
         public void GuiStateBackToGame()
         {
             guistate = GuiState.Normal;
             FreeMouse = false;
             freemousejustdisabled = true;
         }
-        bool freemousejustdisabled;
-        TypingState GuiTyping = TypingState.None;
-
-        public ConnectData connectdata;
         public CrashReporter crashreporter;
-        public bool issingleplayer;
-        public bool StartedSinglePlayerServer;
         private void Connect()
         {
             escapeMenu.LoadOptions();
@@ -1275,18 +1196,7 @@ namespace ManicDigger
         Vector3 up = new Vector3(0f, 1f, 0f);
         public Point mouse_current { get { return new Point(game.mouseCurrentX, game.mouseCurrentY); } set { game.mouseCurrentX = value.X; game.mouseCurrentY = value.Y; } }
         Point mouse_previous;
-        PointF mouse_delta;
-        public bool FreeMouse
-        {
-            get
-            {
-                return game.GetFreeMouse();
-            }
-            set
-            {
-                game.SetFreeMouse(value);
-            }
-        }
+
         void UpdateMouseButtons()
         {
             if (!d_GlWindow.Focused)
@@ -1344,8 +1254,8 @@ namespace ManicDigger
                     int centerx = d_GlWindow.Bounds.Left + (d_GlWindow.Bounds.Width / 2);
                     int centery = d_GlWindow.Bounds.Top + (d_GlWindow.Bounds.Height / 2);
 
-                    mouse_delta = new Point(mouse_current.X - mouse_previous.X,
-                        mouse_current.Y - mouse_previous.Y);
+                    mouseDeltaX = mouse_current.X - mouse_previous.X;
+                    mouseDeltaY = mouse_current.Y - mouse_previous.Y;
 
                     System.Windows.Forms.Cursor.Position =
                         new Point(centerx, centery);
@@ -1363,17 +1273,15 @@ namespace ManicDigger
                     float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
                     dx2 += dx * MouseAcceleration2;
                     dy2 += dy * MouseAcceleration2;
-                    mouse_delta = new PointF(dx2, dy2);
+                    mouseDeltaX = dx2;
+                    mouseDeltaY = dy2;
                 }
             }
         }
         public float MouseAcceleration1 = 0.12f;
         public float MouseAcceleration2 = 0.7f;
         OpenTK.Input.MouseState mouse_previous_state;
-        float rotationspeed = 0.15f;
-        float movespeed { get { return game.movespeed; } set { game.movespeed = value; } }
         float fallspeed { get { return movespeed / 10; } }
-        public float basemovespeed { get { return game.basemovespeed; } }
         int lastbuildMilliseconds;
         float walksoundtimer = 0;
         int lastwalksound = 0;
@@ -1418,21 +1326,13 @@ namespace ManicDigger
         {
             return (int)player_yy.X == (int)tile_yy.X && (int)player_yy.Z == (int)tile_yy.Z;
         }
-        public bool ENABLE_FREEMOVE { get { return game.ENABLE_FREEMOVE; } set { game.ENABLE_FREEMOVE = value; } }
+
         bool enable_move = true;
         public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
-        public bool ENABLE_NOCLIP { get { return game.ENABLE_NOCLIP; } set { game.ENABLE_NOCLIP = value; } }
         public void OnUpdateFrame(FrameEventArgs e)
         {
         }
-        CharacterPhysicsState player { get { return game.player; } }
         //DateTime lasttodo;
-        public bool mouseleftclick { get { return game.mouseleftclick; } set { game.mouseleftclick = value; } }
-        public bool mouseleftdeclick { get { return game.mouseleftdeclick; } set { game.mouseleftdeclick = value; } }
-        public bool wasmouseleft { get { return game.wasmouseleft; } set { game.wasmouseleft = value; } }
-        public bool mouserightclick { get { return game.mouserightclick; } set { game.mouserightclick = value; } }
-        public bool mouserightdeclick { get { return game.mouserightdeclick; } set { game.mouserightdeclick = value; } }
-        public bool wasmouseright { get { return game.wasmouseright; } set { game.wasmouseright = value; } }
         public float PlayerPushDistance = 2f;
         void FrameTick(FrameEventArgs e)
         {
@@ -1442,7 +1342,7 @@ namespace ManicDigger
             UpdateMousePosition();
             if (guistate == GuiState.Normal && game.enableCameraControl)
             {
-                UpdateMouseViewportControl(e);
+                UpdateMouseViewportControl((float)e.Time);
             }
             NetworkProcess();
             if (guistate == GuiState.MapLoading) { return; }
@@ -1609,7 +1509,7 @@ namespace ManicDigger
                     pushZ += diffZ;
                 }
             }
-            foreach (var k in new List<Explosion>(explosions))
+            foreach (var k in new List<Explosion_>(explosions))
             {
                 Vector3 kpos = new Vector3(DeserializeFloat(k.explosion.XFloat), DeserializeFloat(k.explosion.ZFloat), DeserializeFloat(k.explosion.YFloat));
                 if (k.explosion.IsRelativeToPlayerPosition != 0)
@@ -1644,7 +1544,7 @@ namespace ManicDigger
                 move.shiftkeydown = shiftkeydown;
             }
             BoolRef soundnow = new BoolRef();
-            if (FollowId == null)
+            if (FollowId() == null)
             {
                 d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), Players[LocalPlayerId].ModelHeight);
                 if (soundnow.value)
@@ -1660,7 +1560,7 @@ namespace ManicDigger
             }
             else
             {
-                if (FollowId == LocalPlayerId)
+                if (FollowId().value == LocalPlayerId)
                 {
                     move.movedx = 0;
                     move.movedy = 0;
@@ -1731,24 +1631,11 @@ namespace ManicDigger
             return new Vector3(game.EyesPosX(), game.EyesPosY(), game.EyesPosZ());
         }
 
-        int reloadblock;
-        int reloadstartMilliseconds;
         Vector3 lastplayerposition;
-        public Vector3Ref playervelocity { get { return game.playervelocity; } set { game.playervelocity = value; } }
-        int PreviousActiveMaterialBlock;
+        
         //bool test;
-        private void UpdateFallDamageToPlayer()
-        {
-            game.UpdateFallDamageToPlayer();
-        }
-
-        bool IsWater(int blockType)
-        {
-            return game.IsWater(blockType);
-        }
 
         //TODO server side?
-        int lastOxygenTickMilliseconds;
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
@@ -1802,16 +1689,6 @@ namespace ManicDigger
 
         public const int BlockDamageToPlayerEvery = 1;
 
-        void ApplyDamageToPlayer(int damage, int damageSource, int sourceId)
-        {
-            game.ApplyDamageToPlayer(damage, damageSource, sourceId);
-        }
-
-        private void Respawn()
-        {
-            game.Respawn();
-        }
-
         Timer BlockDamageToPlayerTimer = new Timer() { INTERVAL = BlockDamageToPlayerEvery, MaxDeltaTime = BlockDamageToPlayerEvery * 2 };
 
         public OpenTK.Input.Key GetKey(OpenTK.Input.Key key)
@@ -1863,49 +1740,10 @@ namespace ManicDigger
             return movespeednow;
         }
 
-        float DeserializeFloat(int value)
+        void UpdateMouseViewportControl(float dt)
         {
-            return game.DeserializeFloat(value);
+            game.UpdateMouseViewportControl(dt);
         }
-
-        bool IronSights { get { return game.IronSights; } set { game.IronSights = value; } }
-        IntRef BlockUnderPlayer()
-        {
-            return game.BlockUnderPlayer();
-        }
-        Vector3Ref playerdestination { get { return game.playerdestination; } set { game.playerdestination = value; } }
-        public MenuState menustate { get { return game.menustate; } set { game.menustate = value; } }
-        private void UpdateMouseViewportControl(FrameEventArgs e)
-        {
-            if (!overheadcamera)
-            {
-                player.playerorientation.Y += (float)mouse_delta.X * rotationspeed * (float)e.Time;
-                player.playerorientation.X += (float)mouse_delta.Y * rotationspeed * (float)e.Time;
-                player.playerorientation.X = Game.ClampFloat(player.playerorientation.X, (float)Math.PI / 2 + 0.015f, (float)(Math.PI / 2 + Math.PI - 0.015f));
-            }
-        }
-        public bool IsTileEmptyForPhysics(int x, int y, int z)
-        {
-            return game.IsTileEmptyForPhysics(x, y, z);
-        }
-        bool IsTileEmptyForPhysicsClose(int x, int y, int z)
-        {
-            return game.IsTileEmptyForPhysicsClose(x, y, z);
-        }
-        public float PICK_DISTANCE = 3.5f;
-        public float PickDistance { get { return PICK_DISTANCE; } set { PICK_DISTANCE = value; } }
-        bool leftpressedpicking = false;
-        public int SelectedModelId { get { return selectedmodelid; } set { selectedmodelid = value; } }
-        int selectedmodelid = -1;
-        bool IsUsableBlock(int blocktype)
-        {
-            return game.IsUsableBlock(blocktype);
-        }
-        bool IsWearingWeapon()
-        {
-            return game.IsWearingWeapon();
-        }
-        int pistolcycle;
         class Sprite
         {
             public Vector3 position;
@@ -1915,13 +1753,10 @@ namespace ManicDigger
             public int size = 40;
             public int animationcount;
         }
-        int lastironsightschangeMilliseconds;
         List<Sprite> sprites = new List<Sprite>();
-        int grenadecookingstartMilliseconds;
-        float grenadetime = 3;
         private void UpdatePicking()
         {
-            if (FollowId != null)
+            if (FollowId() != null)
             {
                 SelectedBlockPositionX = 0 - 1;
                 SelectedBlockPositionY = 0 - 1;
@@ -2151,7 +1986,7 @@ namespace ManicDigger
             var ntile = FloatArrayToVector3(pick0.Current());
             if (IsUsableBlock(d_Map.GetBlock((int)ntile.X, (int)ntile.Z, (int)ntile.Y)))
             {
-                currentAttackedBlock = new Vector3i((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
+                currentAttackedBlock = Vector3IntRef.Create((int)ntile.X, (int)ntile.Z, (int)ntile.Y);
             }
             if ((one * (game.platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay
                 || IsNextShot)
@@ -2280,7 +2115,15 @@ namespace ManicDigger
                     float projectilespeed = DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
                     if (projectilespeed == 0)
                     {
-                        bullets.Add(new Bullet() { from = FloatArrayToVector3(pick.Start), to = to, speed = 150 });
+                        Bullet_ b= new Bullet_();
+                        b.fromX = pick.Start[0];
+                        b.fromY = pick.Start[1];
+                        b.fromZ = pick.Start[2];
+                        b.toX = to.X;
+                        b.toY = to.Y;
+                        b.toZ = to.Z;
+                        b.speed = 150;
+                        bullets.Add(b);
                     }
                     else
                     {
@@ -2408,18 +2251,18 @@ namespace ManicDigger
                             {
                                 //attack
                                 var pos = new Vector3i((int)newtile.X, (int)newtile.Z, (int)newtile.Y);
-                                currentAttackedBlock = new Vector3i(pos.x, pos.y, pos.z);
-                                if (!blockhealth.ContainsKey(pos))
+                                currentAttackedBlock = Vector3IntRef.Create(pos.x, pos.y, pos.z);
+                                if (!blockHealth.ContainsKey(pos.x, pos.y, pos.z))
                                 {
-                                    blockhealth[pos] = GetCurrentBlockHealth(pos.x, pos.y, pos.z);
+                                    blockHealth.Set(pos.x, pos.y, pos.z, GetCurrentBlockHealth(pos.x, pos.y, pos.z));
                                 }
-                                blockhealth[pos] -= WeaponAttackStrength();
+                                blockHealth.Set(pos.x, pos.y, pos.z, blockHealth.Get(pos.x, pos.y, pos.z) - WeaponAttackStrength());
                                 float health = GetCurrentBlockHealth(pos.x, pos.y, pos.z);
                                 if (health <= 0)
                                 {
                                     if (currentAttackedBlock != null)
                                     {
-                                        blockhealth.Remove(currentAttackedBlock.Value);
+                                        blockHealth.Remove(pos.x, pos.y, pos.z);
                                     }
                                     currentAttackedBlock = null;
                                     goto broken;
@@ -2485,118 +2328,23 @@ namespace ManicDigger
                 mvMatrix[15]);
         }
 
-        private Packet_InventoryPosition InventoryPositionMaterialSelector(int materialId)
-        {
-            return game.InventoryPositionMaterialSelector(materialId);
-        }
-
-        private Packet_InventoryPosition InventoryPositionMainArea(int x, int y)
-        {
-            return game.InventoryPositionMainArea(x, y);
-        }
-
-        private int SerializeFloat(float p)
-        {
-            return (int)(p * 32);
-        }
-
-        float WeaponAttackStrength()
-        {
-            return (float)NextDouble(2, 4);
-        }
-        double NextDouble(double min, double max)
-        {
-            return rnd.NextDouble() * (max - min) + min;
-        }
-        float GetCurrentBlockHealth(int x, int y, int z)
-        {
-            if (blockhealth.ContainsKey(new Vector3i(x, y, z)))
-            {
-                return blockhealth[new Vector3i(x, y, z)];
-            }
-            int blocktype = d_Map.GetBlock(x, y, z);
-            return d_Data.Strength()[blocktype];
-        }
-        Dictionary<Vector3i, float> blockhealth = new Dictionary<Vector3i, float>();
-        Vector3i? currentAttackedBlock;
-
-        public Packet_ServerPlayerStats PlayerStats { get { return game.PlayerStats; } set { game.PlayerStats = value; } }
-
-        public void DrawPlayerHealth()
-        {
-            game.DrawPlayerHealth();
-        }
-
-        public void DrawPlayerOxygen()
-        {
-            game.DrawPlayerOxygen();
-        }
-
-        void DrawEnemyHealthBlock()
-        {
-            if (currentAttackedBlock != null)
-            {
-                int x = currentAttackedBlock.Value.x;
-                int y = currentAttackedBlock.Value.y;
-                int z = currentAttackedBlock.Value.z;
-                int blocktype = d_Map.GetBlock(x, y, z);
-                float health = GetCurrentBlockHealth(x, y, z);
-                float progress = health / d_Data.Strength()[blocktype];
-                if (IsUsableBlock(blocktype))
-                {
-                	DrawEnemyHealthUseInfo(game.language.Get("Block_" + game.blocktypes[blocktype].Name), progress, true);
-                }
-                DrawEnemyHealthCommon(game.language.Get("Block_" + game.blocktypes[blocktype].Name), progress);
-            }
-        }
-
-        void DrawCompass()
-        {
-            game.DrawCompass();
-        }
-
-        void DrawEnemyHealthCommon(string name, float progress)
-        {
-            DrawEnemyHealthUseInfo(name, 1, false);
-        }
-
-        void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
-        {
-            game.DrawEnemyHealthUseInfo(name, progress, useInfo);
-        }
-
-        Language language { get { return game.language; } }
-
         public const float RailHeight = 0.3f;
 
-        public float getblockheight(int x, int y, int z)
-        {
-            return game.getblockheight(x, y, z);
-        }
         private void OnPick(BlockPosSide pick0)
         {
             //playerdestination = pick0.pos;
-        }
-        float BuildDelay
-        {
-            get
-            {
-                return game.BuildDelay();
-            }
         }
         Vector3 ToMapPos(Vector3 a)
         {
             return new Vector3((int)a.X, (int)a.Z, (int)a.Y);
         }
         bool fastclicking = false;
-        public int SelectedBlockPositionX { get { return game.SelectedBlockPositionX; } set { game.SelectedBlockPositionX = value; } }
-        public int SelectedBlockPositionY { get { return game.SelectedBlockPositionY; } set { game.SelectedBlockPositionY = value; } }
-        public int SelectedBlockPositionZ { get { return game.SelectedBlockPositionZ; } set { game.SelectedBlockPositionZ = value; } }
+
         //double currentTime = 0;
         double accumulator = 0;
         double t = 0;
         //Vector3 oldplayerposition;
-        public float CharacterEyesHeight { get { return game.GetCharacterEyesHeight(); } set { game.SetCharacterEyesHeight(value); } }
+
         public float CharacterModelHeight { get { return Players[LocalPlayerId].ModelHeight; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
         public Stopwatch framestopwatch;
@@ -2714,32 +2462,42 @@ namespace ManicDigger
                         n = (int)((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
                             * (b.animationcount * b.animationcount - 1));
                     }
-                    Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
+                    Draw2dTexture_(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
                     GLPopMatrix();
                     if ((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
                 }
-                foreach (Bullet b in new List<Bullet>(bullets))
+                foreach (Bullet_ b in new List<Bullet_>(bullets))
                 {
                     if (b.progress < 1f)
                     {
                         b.progress = 1f;
                     }
-                    Vector3 pos = b.from;
-                    Vector3 dir = (b.to - b.from);
-                    float length = dir.Length;
-                    dir.Normalize();
-                    pos += dir * (b.progress + b.speed * (float)dt);
+
+                    float dirX = b.toX - b.fromX;
+                    float dirY = b.toY - b.fromY;
+                    float dirZ = b.toZ - b.fromZ;
+                    float length = Dist(0, 0, 0, dirX, dirY, dirZ);
+                    dirX /= length;
+                    dirY /= length;
+                    dirZ /= length;
+                    
+                    float posX = b.fromX;
+                    float posY = b.fromY;
+                    float posZ = b.fromZ;
+                    posX += dirX * (b.progress + b.speed * (float)dt);
+                    posY += dirY * (b.progress + b.speed * (float)dt);
+                    posZ += dirZ * (b.progress + b.speed * (float)dt);
                     b.progress += b.speed * (float)dt;
                     GLMatrixModeModelView();
                     GLPushMatrix();
-                    GLTranslate(pos.X, pos.Y, pos.Z);
+                    GLTranslate(posX, posY, posZ);
                     GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
                     GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
                     float scale = one * 2 / 100;
                     GLScale(scale, scale, scale);
                     int ImageSize = 4;
                     GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
-                    Draw2dTexture(GetTexture("Sponge.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    Draw2dTexture_(GetTexture("Sponge.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
                     GLPopMatrix();
                     if (b.progress > length) { bullets.Remove(b); }
                 }
@@ -2754,7 +2512,7 @@ namespace ManicDigger
                     GLScale(scale, scale, scale);
                     int ImageSize = 14;
                     GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
-                    Draw2dTexture(GetTexture("ChemicalGreen.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
+                    Draw2dTexture_(GetTexture("ChemicalGreen.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
                     GLPopMatrix();
                 }
                 if (ENABLE_DRAW_TEST_CHARACTER)
@@ -2802,7 +2560,7 @@ namespace ManicDigger
                     else
                     {
                         OrthoMode(Width, Height);
-                        Draw2dBitmapFile(img, Width / 2, Height - 512, 512, 512);
+                        Draw2dBitmapFile_(img, Width / 2, Height - 512, 512, 512);
                         PerspectiveMode();
                     }
                 }
@@ -2824,8 +2582,6 @@ namespace ManicDigger
             mouseleftdeclick = mouserightdeclick = false;
             if (!startedconnecting) { startedconnecting = true; Connect(); }
         }
-
-        bool currentMatrixModeProjection { get { return game.currentMatrixModeProjection; } set { game.currentMatrixModeProjection = value; } }
 
         float[] Matrix4ToFloat(Matrix4 m)
         {
@@ -2849,64 +2605,9 @@ namespace ManicDigger
             return m2;
         }
 
-        void SetMatrixUniforms()
-        {
-            game.SetMatrixUniforms();
-        }
-
         public void GLLoadMatrix(Matrix4 m)
         {
             game.GLLoadMatrix(Matrix4ToFloat(m));
-        }
-
-        public void GLLoadMatrix(float[] m)
-        {
-            game.GLLoadMatrix(m);
-        }
-
-        public void GLPopMatrix()
-        {
-            game.GLPopMatrix();
-        }
-
-        public void GLScale(float x, float y, float z)
-        {
-            game.GLScale(x, y, z);
-        }
-
-        public void GLRotate(float angle, float x, float y, float z)
-        {
-            game.GLRotate(angle, x, y, z);
-        }
-
-        public void GLTranslate(float x, float y, float z)
-        {
-            game.GLTranslate(x, y, z);
-        }
-
-        public void GLPushMatrix()
-        {
-            game.GLPushMatrix();
-        }
-
-        public void GLLoadIdentity()
-        {
-            game.GLLoadIdentity();
-        }
-
-        void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
-        {
-            game.GLOrtho(left, right, bottom, top, zNear, zFar);
-        }
-
-        public void GLMatrixModeModelView()
-        {
-            game.GLMatrixModeModelView();
-        }
-
-        void GLMatrixModeProjection()
-        {
-            game.GLMatrixModeProjection();
         }
 
         private int GetTexture(string s)
@@ -2951,7 +2652,7 @@ namespace ManicDigger
                 explosion.RangeFloat = game.blocktypes[b.block].ExplosionRangeFloat;
                 explosion.IsRelativeToPlayerPosition = 0;
                 explosion.TimeFloat = game.blocktypes[b.block].ExplosionTimeFloat;
-                explosions.Add(new Explosion() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = explosion });
+                explosions.Add(new Explosion_() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = explosion });
                 float dist = Dist(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z, b.positionX, b.positionY, b.positionZ);
                 float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
                 if ((int)dmg > 0)
@@ -2959,14 +2660,6 @@ namespace ManicDigger
                     ApplyDamageToPlayer((int)dmg, Packet_DeathReasonEnum.Explosion, b.sourcePlayer);
                 }
             }
-        }
-
-        float Dist(float x1, float y1, float z1, float x2, float y2, float z2)
-        {
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            float dz = z2 - z1;
-            return game.platform.MathSqrt(dx * dx + dy * dy + dz * dz);
         }
 
         float bouncespeedmultiply = 0.5f;
@@ -3146,18 +2839,14 @@ namespace ManicDigger
             GL.Fog(FogParameter.FogEnd, fogstart + fogsize);*/
         }
         public event EventHandler BeforeRenderFrame;
-        public bool ENABLE_DRAW2D { get { return game.ENABLE_DRAW2D; } set { game.ENABLE_DRAW2D = value; } }
-        int screenshotflash;
-        int playertexturedefault = -1;
         Dictionary<string, int> playertextures = new Dictionary<string, int>();
         Dictionary<int, int> monstertextures = new Dictionary<int, int>();
-        public string playertexturedefaultfilename = "mineplayer.png";
         Dictionary<string, int> diskplayertextures = new Dictionary<string, int>();
         private int GetPlayerTexture(int playerid)
         {
             if (playertexturedefault == -1)
             {
-                playertexturedefault = LoadTexture(playertexturedefaultfilename);
+                playertexturedefault = LoadTexture(Game.playertexturedefaultfilename);
             }
             Player player = this.players[playerid];
             if (player.Type == PlayerType.Monster)
@@ -3221,12 +2910,6 @@ namespace ManicDigger
             return playertexturedefault;
         }
         public PlayerSkinDownloader playerskindownloader { get; set; }
-        public bool ENABLE_TPP_VIEW { get { return game.ENABLE_TPP_VIEW; } set { game.ENABLE_TPP_VIEW = value; } }
-        AnimationState a = new AnimationState();
-        public bool ENABLE_DRAW_TEST_CHARACTER = false;
-        int skyspheretexture = -1;
-        int skyspherenighttexture = -1;
-        public SkySphere skysphere = new SkySphere();
         private void DrawSkySphere()
         {
             if (skyspheretexture == -1)
@@ -3254,13 +2937,6 @@ namespace ManicDigger
             public byte lastrealheading;
             public byte lastrealpitch;
             public Vector3 velocity;
-            public Vector3 lastvelocity;
-        }
-        class PlayerInterpolationState
-        {
-            public Vector3 position;
-            public byte heading;
-            public byte pitch;
         }
         class PlayerInterpolate : IInterpolation
         {
@@ -3270,7 +2946,9 @@ namespace ManicDigger
                 PlayerInterpolationState aa = a as PlayerInterpolationState;
                 PlayerInterpolationState bb = b as PlayerInterpolationState;
                 PlayerInterpolationState cc = new PlayerInterpolationState();
-                cc.position = aa.position + (bb.position - aa.position) * progress;
+                cc.positionX = aa.positionX + (bb.positionX - aa.positionX) * progress;
+                cc.positionY = aa.positionY + (bb.positionY - aa.positionY) * progress;
+                cc.positionZ = aa.positionZ + (bb.positionZ - aa.positionZ) * progress;
                 cc.heading = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress);
                 cc.pitch = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress);
                 return cc;
@@ -3320,14 +2998,13 @@ namespace ManicDigger
                     || p.Pitch != info.lastrealpitch
                     || redraw)
                 {
-                    info.interpolation.AddNetworkPacket(
-                        new PlayerInterpolationState()
-                        {
-                            position = realpos,
-                            heading = p.Heading,
-                            pitch = p.Pitch,
-                        },
-                        totaltime);
+                    PlayerInterpolationState state = new PlayerInterpolationState();
+                    state.positionX = realpos.X;
+                    state.positionY = realpos.Y;
+                    state.positionZ = realpos.Z;
+                    state.heading = p.Heading;
+                    state.pitch = p.Pitch;
+                    info.interpolation.AddNetworkPacket(state, totaltime);
                 }
                 var curstate = ((PlayerInterpolationState)info.interpolation.InterpolatedState(totaltime));
                 if (curstate == null)
@@ -3335,13 +3012,13 @@ namespace ManicDigger
                     curstate = new PlayerInterpolationState();
                 }
                 //do not interpolate player position if player is controlled by game world
-                if (EnablePlayerUpdatePosition.ContainsKey(i) && !EnablePlayerUpdatePosition[i])
+                if (EnablePlayerUpdatePositionContainsKey(i) && !EnablePlayerUpdatePosition(i))
                 {
-                    curstate.position.X = p.PositionX;
-                    curstate.position.Y = p.PositionY;
-                    curstate.position.Z = p.PositionZ;
+                    curstate.positionX = p.PositionX;
+                    curstate.positionY = p.PositionY;
+                    curstate.positionZ = p.PositionZ;
                 }
-                Vector3 curpos = curstate.position;
+                Vector3 curpos = new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
                 info.velocity = curpos - info.lastcurpos;
                 float playerspeed = (info.velocity.Length / dt) * 0.04f;
                 bool moves = curpos != info.lastcurpos;
@@ -3429,7 +3106,6 @@ namespace ManicDigger
         }
         Vector3 lastlocalplayerpos;
         AnimationState localplayeranim = new AnimationState();
-        bool overheadcamera { get { return game.overheadcamera; } set { game.overheadcamera = value; } }
         Kamera overheadcameraK = new Kamera();
         Matrix4 FppCamera()
         {
@@ -3492,10 +3168,9 @@ namespace ManicDigger
             eye = target + Vector3.Multiply(raydir, curtppcameradistance);
         }
         Dictionary<string, ICharacterRenderer> MonsterRenderers = new Dictionary<string, ICharacterRenderer>();
-        public GuiState guistate { get { return game.guistate; } set { game.guistate = value; } }
         private void DrawMouseCursor()
         {
-            Draw2dBitmapFile(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
+            Draw2dBitmapFile_(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
         Size? aimsize;
         private void Draw2d()
@@ -3519,7 +3194,7 @@ namespace ManicDigger
                         {
                             DrawAim();
                         }
-                        DrawMaterialSelector();
+                        d_HudInventory.DrawMaterialSelector();
                         DrawPlayerHealth();
                         DrawPlayerOxygen();
                         DrawEnemyHealthBlock();
@@ -3582,7 +3257,7 @@ namespace ManicDigger
                 	+ ",\tZ: " + Math.Floor(player.playerposition.Y)
                 	+ "\nHeading: " + Math.Floor(heading)
                 	+ "\nPitch: " + Math.Floor(pitch);
-                Draw2dText(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
+                Draw2dText_(postext, 100f, 460f, d_HudChat.ChatFontSize, Color.White);
             }
             if (drawblockinfo)
             {
@@ -3600,110 +3275,16 @@ namespace ManicDigger
             double lagSeconds = one * (game.platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
             if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
             {
-                Draw2dBitmapFile("disconnected.png", Width - 100, 50, 50, 50);
-                Draw2dText(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
-                Draw2dText("Press F6 to reconnect", Width / 2 - 200 / 2, 50, 12, Color.White);
+                Draw2dBitmapFile_("disconnected.png", Width - 100, 50, 50, 50);
+                Draw2dText_(((int)lagSeconds).ToString(), Width - 100, 50 + 50 + 10, 12, Color.White);
+                Draw2dText_("Press F6 to reconnect", Width / 2 - 200 / 2, 50, 12, Color.White);
             }
             PerspectiveMode();
         }
 
-        private void DrawAmmo()
-        {
-            Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
-            {
-                if (game.blocktypes[item.BlockId].IsPistol)
-                {
-                    int loaded = LoadedAmmo[item.BlockId];
-                    int total = TotalAmmo[item.BlockId];
-                    string s = string.Format("{0}/{1}", loaded, total - loaded);
-                    Draw2dText(s, Width - TextSize(s, 18).Width - 50,
-                        Height - TextSize(s, 18).Height - 50, 18, loaded == 0 ? Color.Red : Color.White);
-                    if (loaded == 0)
-                    {
-                        string pressR = "Press R to reload";
-                        Draw2dText(pressR, Width - TextSize(pressR, 14).Width - 50,
-                            Height - TextSize(s, 14).Height - 80, 14, Color.Red);
-                    }
-                }
-            }
-        }
-
         bool ammostarted;
-        public int[] TotalAmmo { get { return game.TotalAmmo; } set { game.TotalAmmo = value; } }
-        public int[] LoadedAmmo { get { return game.LoadedAmmo; } set { game.LoadedAmmo = value; } }
-
-        private void DrawDialogs()
-        {
-            foreach (var d in dialogs.Values)
-            {
-                int x = Width / 2 - d.Width / 2;
-                int y = Height / 2 - d.Height_ / 2;
-                foreach (var w in d.Widgets)
-                {
-                    if (w == null)
-                    {
-                        continue;
-                    }
-                    if (w.Text != null)
-                    {
-                        w.Text = w.Text.Replace("!SERVER_IP!", ServerInfo.connectdata.Ip);
-                        w.Text = w.Text.Replace("!SERVER_PORT!", ServerInfo.connectdata.Port.ToString());
-                        if (w.Font != null)
-                        {
-                            FontCi font = FontCi.Create(ValidFont(w.Font.FamilyName), DeserializeFloat(w.Font.SizeFloat), w.Font.FontStyle);
-                            Draw2dText(w.Text, font, w.X + x, w.Y + y, Color.FromArgb(w.Color));
-                        }
-                        else
-                        {
-                            Draw2dText(w.Text, w.X + x, w.Y + y, 12, Color.FromArgb(w.Color));
-                        }
-                    }
-                    if (w.Image == "Solid")
-                    {
-                        Draw2dTexture(WhiteTexture(), w.X + x, w.Y + y, w.Width, w.Height_, null, Color.FromArgb(w.Color));
-                    }
-                    else if (w.Image != null)
-                    {
-                        Draw2dBitmapFile(w.Image + ".png", w.X + x, w.Y + y, w.Width, w.Height_);
-                    }
-                }
-            }
-        }
-
-        private string ValidFont(string family)
-        {
-            return game.ValidFont(family);
-        }
 
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
-        private void DrawScreenshotFlash()
-        {
-            game.DrawScreenshotFlash();
-        }
-        private void DrawBlockInfo()
-        {
-            int x = SelectedBlockPositionX;
-            int y = SelectedBlockPositionZ;
-            int z = SelectedBlockPositionY;
-            //string info = "None";
-            if (!d_Map.IsValidPos(x, y, z))
-            {
-                return;
-            }
-            int blocktype = d_Map.GetBlock(x, y, z);
-            if (!IsValid(blocktype))
-            {
-                return;
-            }
-            currentAttackedBlock = new Vector3i(x, y, z);
-            DrawEnemyHealthBlock();
-        }
-
-        public bool IsValid(int blocktype)
-        {
-            return game.blocktypes[blocktype].Name != null;
-        }
 
         private void DrawAim()
         {
@@ -3723,12 +3304,8 @@ namespace ManicDigger
                 fov = this.currentfov();
                 Circle3i(Width / 2, Height / 2, CurrentAimRadius * this.fov / fov);
             }
-            Draw2dBitmapFile("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
+            Draw2dBitmapFile_("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
         }
-        PointFloatRef GetAim() { return game.GetAim(); }
-        float CurrentAimRadius { get { return game.CurrentAimRadius(); } }
-        float RadiusWhenMoving { get { return game.RadiusWhenMoving; } set { game.RadiusWhenMoving = value; } }
-        float CurrentRecoil { get { return game.CurrentRecoil(); } }
         void Circle3i(float x, float y, float radius)
         {
             float angle;
@@ -3774,10 +3351,11 @@ namespace ManicDigger
                     var ppos = playerdrawinfo[kKey].interpolation.InterpolatedState(totaltime);
                     if (ppos != null)
                     {
-                        Vector3 pos = ((PlayerInterpolationState)ppos).position;
+                        var state = ((PlayerInterpolationState)ppos);
+                        Vector3 pos = new Vector3(state.positionX, state.positionY, state.positionZ);
                         float shadow = (float)d_Shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y) / d_Shadows.maxlight;
                         //do not interpolate player position if player is controlled by game world
-                        if (EnablePlayerUpdatePosition.ContainsKey(kKey) && !EnablePlayerUpdatePosition[kKey])
+                        if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
                         {
                             pos.X = p.PositionX;
                             pos.Y = p.PositionY;
@@ -3797,16 +3375,17 @@ namespace ManicDigger
                         //Todo: Can't change text color because text has outline anyway.
                         if (p.Type == PlayerType.Monster)
                         {
-                            Draw2dTexture(WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
-                            Draw2dTexture(WhiteTexture(), -25, -10, 50 * (p.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
+                            Draw2dTexture_(WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
+                            Draw2dTexture_(WhiteTexture(), -25, -10, 50 * (p.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
                         }
-                        Draw2dText(name, -TextSize(name, 14).Width / 2, 0, 14, Game.ColorFromArgb(255, 255, 255, 255), true);
+                        Draw2dText_(name, -TextSize_(name, 14).Width / 2, 0, 14, Game.ColorFromArgb(255, 255, 255, 255), true);
                         //                        GL.Translate(0, 1, 0);
                         GLPopMatrix();
                     }
                 }
             }
         }
+
         bool drawblockinfo = false;
         void CraftingMouse()
         {
@@ -3828,34 +3407,14 @@ namespace ManicDigger
             {
                 if (okrecipes.Count != 0)
                 {
-                    craftingrecipeselected(okrecipes[craftingselectedrecipe]);
+                    craftingrecipeselected(IntRef.Create(okrecipes[craftingselectedrecipe]));
                 }
                 mouseleftclick = false;
                 GuiStateBackToGame();
             }
         }
-        public int xcenter(float width)
-        {
-            return game.xcenter(width);
-        }
-        public int ycenter(float height)
-        {
-            return game.ycenter(height);
-        }
-        public int ENABLE_LAG { get { return game.ENABLE_LAG; } set { game.ENABLE_LAG = value; } }
-        bool ENABLE_DRAWPOSITION = false;
-
-        //int targettexture = -1;
-        public ParticleEffectBlockBreak particleEffectBlockBreak = new ParticleEffectBlockBreak();
+        
         Random rnd = new Random();
-        public int ActiveMaterial { get { return game.ActiveMaterial; } set { game.ActiveMaterial = value; } }
-
-        void Mouse_Move(object sender, OpenTK.Input.MouseMoveEventArgs e)
-        {
-        }
-        public DictionaryStringString PerformanceInfo { get { return game.performanceinfo; } set { game.performanceinfo = value; } }
-        int lastchunkupdates;
-        int lasttitleupdateMilliseconds;
         void UpdateTitleFps(FrameEventArgs e)
         {
             float elapsed = one * (game.platform.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
@@ -3880,20 +3439,20 @@ namespace ManicDigger
         {
             get
             {
-                if (FollowId != null)
+                if (FollowId() != null)
                 {
-                    if (FollowId == LocalPlayerId)
+                    if (FollowId().value == LocalPlayerId)
                     {
                         return ToVector3(player.playerposition);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
-                    return curstate.position;
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltime));
+                    return new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
                 }
                 return ToVector3(player.playerposition);
             }
             set
             {
-                if (FollowId != null)
+                if (FollowId() != null)
                 {
                     return;
                 }
@@ -3906,16 +3465,16 @@ namespace ManicDigger
         {
             get
             {
-                if (FollowId != null)
+                if (FollowId() != null)
                 {
-                    if (FollowId == LocalPlayerId)
+                    if (FollowId().value == LocalPlayerId)
                     {
                         return new Vector3(
                             player.playerorientation.X,
                             player.playerorientation.Y,
                             player.playerorientation.Z);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId.Value].interpolation.InterpolatedState(totaltime));
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltime));
                     return HeadingPitchToOrientation(curstate.heading, curstate.pitch);
                 }
                 return new Vector3(
@@ -3931,10 +3490,6 @@ namespace ManicDigger
             }
         }
         #endregion
-        public void AddChatline(string s)
-        {
-            game.AddChatline(s);
-        }
         #region ILocalPlayerPosition Members
         public bool Swimming
         {
@@ -3974,11 +3529,6 @@ namespace ManicDigger
                 }
                 return IsLava(d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
             }
-        }
-
-        bool IsLava(int blockType)
-        {
-            return game.blocktypes[blockType].Name.Contains("Lava"); // todo
         }
 
         #endregion
@@ -4046,13 +3596,6 @@ namespace ManicDigger
                 d_HudInventory.OnKeyPress(e.KeyChar);
             }
         }
-        public void DrawMaterialSelector()
-        {
-            //d_The3d.ResizeGraphics(Width, Height);
-            //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
-            d_HudInventory.DrawMaterialSelector();
-            //d_The3d.PerspectiveMode();
-        }
 
         public Point MouseCurrent
         {
@@ -4090,7 +3633,7 @@ namespace ManicDigger
                 {
                     dirnew = PickCorners(xfract, zfract);
                 }
-                int dir = d_Data.Rail()[GetTerrainBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
+                int dir = d_Data.Rail()[GetBlock((int)blockposold.X, (int)blockposold.Y, (int)blockposold.Z)];
                 if (dir != 0)
                 {
                     blockpos = blockposold;
@@ -4104,7 +3647,7 @@ namespace ManicDigger
             int z = (short)blockpos.Z;
             var mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
             {
-                if (IsAnyPlayerInPos(blockpos) || activematerial == 151)
+                if (IsAnyPlayerInPos(x, y, z) || activematerial == 151)
                 {
                     return;
                 }
@@ -4209,10 +3752,6 @@ namespace ManicDigger
                 SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
             }
         }
-        IntRef BlockInHand()
-        {
-            return game.BlockInHand();
-        }
         private void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
         {
             SendSetBlock(new Vector3(x, y, z), mode, material, ActiveMaterial);
@@ -4280,20 +3819,6 @@ namespace ManicDigger
                 }
             }
         }
-        bool IsFillBlock(int blocktype)
-        {
-            return blocktype == d_Data.BlockIdFillArea()
-                || blocktype == d_Data.BlockIdFillStart()
-                || blocktype == d_Data.BlockIdCuboid();
-        }
-        RailDirection PickHorizontalVertical(float xfract, float yfract)
-        {
-            return game.PickHorizontalVertical(xfract, yfract);
-        }
-        private RailDirection PickCorners(float xfract, float zfract)
-        {
-            return game.PickCorners(xfract, zfract);
-        }
         struct Speculative
         {
             public int timeMilliseconds;
@@ -4303,38 +3828,6 @@ namespace ManicDigger
         public void SendSetBlock(Vector3 vector3, int blockSetMode, int p)
         {
             SendSetBlock(vector3, blockSetMode, p, ActiveMaterial);
-        }
-        private bool IsAnyPlayerInPos(Vector3 blockpos)
-        {
-            for (int i = 0; i < playersCount; i++)
-            {
-                if (players[i] == null)
-                {
-                    continue;
-                }
-                Player p = players[i];
-                if (p.PositionLoaded)
-                {
-                    Vector3 playerpos = new Vector3(p.PositionX, p.PositionY, p.PositionZ);
-                    if (IsPlayerInPos(playerpos, blockpos))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return IsPlayerInPos(LocalPlayerPosition, blockpos);
-        }
-        private bool IsPlayerInPos(Vector3 playerpos, Vector3 blockpos)
-        {
-            if (Math.Floor(playerpos.X) == blockpos.X
-                &&
-                (Math.Floor(playerpos.Y + 0.5f) == blockpos.Z
-                 || Math.Floor(playerpos.Y + 1 + 0.5f) == blockpos.Z)
-                && Math.Floor(playerpos.Z) == blockpos.Y)
-            {
-                return true;
-            }
-            return false;
         }
         public void OnNewFrame(double dt)
         {
@@ -4356,25 +3849,12 @@ namespace ManicDigger
                     {
                         //draw crafting recipes list.
                         CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
-                        (recipe) => { CraftingRecipeSelected(pos, recipe); });
+                        (recipe) => { CraftingRecipeSelected(pos.x, pos.y, pos.z, recipe); });
                     }
                 }
             }
             ENABLE_FINITEINVENTORY = this.ENABLE_FINITEINVENTORY;
             RailOnNewFrame((float)dt);
-        }
-        void CraftingRecipeSelected(Vector3i pos, int? recipe)
-        {
-            if (recipe == null)
-            {
-                return;
-            }
-            Packet_ClientCraft cmd = new Packet_ClientCraft();
-            cmd.X = (short)pos.x;
-            cmd.Y = (short)pos.y;
-            cmd.Z = (short)pos.z;
-            cmd.RecipeId = (short)recipe.Value;
-            SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Craft, Craft = cmd });
         }
         private bool KeyPressed(OpenTK.Input.Key key)
         {
@@ -4388,49 +3868,19 @@ namespace ManicDigger
         private Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
         public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
-        Player[] players { get { return game.players; } set { game.players = value; } }
-        int playersCount { get { return game.playersCount; } set { game.playersCount = value; } }
         public Player[] Players { get { return players; } set { players = value; } }
 
-        #region IMapStorage Members
         public void SetChunk(int x, int y, int z, int[, ,] chunk)
         {
             SetMapPortion(x, y, z, chunk);
         }
-        #endregion
-        #region IGameMode Members
         public void OnNewMap()
         {
             playerpositionspawn = LocalPlayerPosition;
         }
-        #endregion
-        #region IGameMode Members
-        public int FiniteInventoryMax { get; set; }
-        #endregion
-        #region IGameMode Members
-        public double SIMULATIONLAG_SECONDS { get; set; }
-        #endregion
-        #region ITerrainInfo Members
-        public int GetTerrainBlock(int x, int y, int z)
-        {
-            //d_Shadows.OnGetTerrainBlock(x, y, z);
-            return GetBlock(x, y, z);
-        }
-        public int GetLight(int x, int y, int z)
-        {
-            //return d_Shadows.GetLight(x, y, z);
-            return 15;
-        }
-        public float LightMaxValue()
-        {
-            return d_Shadows.maxlight;
-        }
-        #endregion
-        #region IGameMode Members
         public void ModelClick(int selectedmodelid)
         {
         }
-        #endregion
         public ManicDiggerGameWindow mapforphysics { get { return this; } }
         public bool ENABLE_FINITEINVENTORY { get; set; }
         public int HourDetail = 4;
@@ -4494,39 +3944,14 @@ namespace ManicDigger
             return packet;
         }
         IPEndPoint iep;
-        public void SendPacket(byte[] packet, int packetLength)
-        {
-            game.SendPacket(packet, packetLength);
-        }
         void EmptyCallback(IAsyncResult result)
         {
         }
-        int lastpositionsentMilliseconds;
         public void SendSetBlock(Vector3 position, int mode, int type, int materialslot)
         {
             game.SendSetBlock((int)position.X, (int)position.Y, (int)position.Z, mode, type, materialslot);
         }
-        public void SendFillArea(Vector3i start, Vector3i end, int blockType)
-        {
-            game.SendFillArea(start.x, start.y, start.z, end.x, end.y, end.z, blockType);
-        }
-        public void SendPacketClient(Packet_Client p)
-        {
-            game.SendPacketClient(p);
-        }
-        public void SendChat(string s)
-        {
-            game.SendChat(s);
-        }
-        private void SendPingReply()
-        {
-            game.SendPingReply();
-        }
         IntRef packetLen = new IntRef();
-        public byte[] Serialize(Packet_Client p, IntRef retLength)
-        {
-            return game.Serialize(p, retLength);
-        }
         /// <summary>
         /// This function should be called in program main loop.
         /// It exits immediately.
@@ -4548,7 +3973,8 @@ namespace ManicDigger
             if (spawned && ((game.platform.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
             {
                 lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
-                SendPosition(LocalPlayerPosition, LocalPlayerOrientation);
+                SendPosition(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z,
+                    LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z);
             }
             int now = game.platform.TimeMillisecondsFromStart();
             for (int i = 0; i < playersCount; i++)
@@ -4569,45 +3995,13 @@ namespace ManicDigger
         public int mapreceivedsizex;
         public int mapreceivedsizey;
         public int mapreceivedsizez;
-        Vector3 lastsentposition;
-        public void SendPosition(Vector3 position, Vector3 orientation)
-        {
-            Packet_ClientPositionAndOrientation p = new Packet_ClientPositionAndOrientation();
-            {
-                p.PlayerId = this.LocalPlayerId;//self
-                p.X = (int)((position.X) * 32);
-                p.Y = (int)((position.Y) * 32);
-                p.Z = (int)(position.Z * 32);
-                p.Heading = HeadingByte(orientation);
-                p.Pitch = PitchByte(orientation);
-                p.Stance = localstance;
-            };
-            Packet_Client pp = new Packet_Client();
-            pp.Id = Packet_ClientIdEnum.PositionandOrientation;
-            pp.PositionAndOrientation = p;
-            byte[] packet = Serialize(pp, packetLen);
-            SendPacket(packet, packetLen.value);
-            lastsentposition = position;
-        }
+
         public static Vector3 HeadingPitchToOrientation(byte heading, byte pitch)
         {
             float x = ((float)heading / 256) * 2 * (float)Math.PI;
             float y = (((float)pitch / 256) * 2 * (float)Math.PI) - (float)Math.PI;
             return new Vector3() { X = x, Y = y };
         }
-        public static byte HeadingByte(Vector3 orientation)
-        {
-            return (byte)((((orientation.Y) % (2 * Math.PI)) / (2 * Math.PI)) * 256);
-        }
-        public static byte PitchByte(Vector3 orientation)
-        {
-            double xx = (orientation.X + Math.PI) % (2 * Math.PI);
-            xx = xx / (2 * Math.PI);
-            return (byte)(xx * 256);
-        }
-        bool spawned = false;
-
-        private int LocalPlayerId { get { return game.LocalPlayerId; } set { game.LocalPlayerId = value; } }
 
         Stopwatch stopwatch = new Stopwatch();
         public int maxMiliseconds = 3;
@@ -4737,7 +4131,7 @@ namespace ManicDigger
                         int y = packet.SetBlock.Y;
                         int z = packet.SetBlock.Z;
                         int type = packet.SetBlock.BlockType;
-                        try { SetTileAndUpdate(new Vector3(x, y, z), type); }
+                        try { SetTileAndUpdate(x, y, z, type); }
                         catch { Console.WriteLine("Cannot update tile!"); }
                     }
                     break;
@@ -4770,7 +4164,7 @@ namespace ManicDigger
                                         }
                                         try
                                         {
-                                            SetTileAndUpdate(new Vector3(x, y, z), packet.FillArea.BlockType);
+                                            SetTileAndUpdate(x, y, z, packet.FillArea.BlockType);
                                         }
                                         catch
                                         {
@@ -5167,19 +4561,36 @@ namespace ManicDigger
                     var d = packet.Dialog;
                     if (d.Dialog == null)
                     {
-                        if (dialogs.ContainsKey(d.DialogId) && dialogs[d.DialogId].IsModal != 0)
+                        if (GetDialogId(d.DialogId) != -1 && dialogs[GetDialogId(d.DialogId)].value.IsModal != 0)
                         {
                             GuiStateBackToGame();
                         }
-                        dialogs.Remove(d.DialogId);
-                        if (dialogs.Count == 0)
+                        dialogs[GetDialogId(d.DialogId)] = null;
+                        if (DialogsCount() == 0)
                         {
                             FreeMouse = false;
                         }
                     }
                     else
                     {
-                        dialogs[d.DialogId] = d.Dialog;
+                        VisibleDialog d2 = new VisibleDialog();
+                        d2.key = d.DialogId;
+                        d2.value = d.Dialog;
+                        if (GetDialogId(d.DialogId) == -1)
+                        {
+                            for (int i = 0; i < dialogsCount; i++)
+                            {
+                                if (dialogs[i] == null)
+                                {
+                                    dialogs[i] = d2;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            dialogs[GetDialogId(d.DialogId)] = d2;
+                        }
                         if (d.Dialog.IsModal != 0)
                         {
                             guistate = GuiState.ModalDialog;
@@ -5188,7 +4599,7 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Follow:
-                    int? oldFollowId = FollowId;
+                    IntRef oldFollowId = FollowId();
                     Follow = packet.Follow.Client;
                     if (packet.Follow.Tpp != 0)
                     {
@@ -5202,9 +4613,13 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Bullet:
-                    Bullet bullet = new Bullet();
-                    bullet.from = new Vector3(DeserializeFloat(packet.Bullet.FromXFloat), DeserializeFloat(packet.Bullet.FromYFloat), DeserializeFloat(packet.Bullet.FromZFloat));
-                    bullet.to = new Vector3(DeserializeFloat(packet.Bullet.ToXFloat), DeserializeFloat(packet.Bullet.ToYFloat), DeserializeFloat(packet.Bullet.ToZFloat));
+                    Bullet_ bullet = new Bullet_();
+                    bullet.fromX = DeserializeFloat(packet.Bullet.FromXFloat);
+                    bullet.fromY = DeserializeFloat(packet.Bullet.FromYFloat);
+                    bullet.fromZ = DeserializeFloat(packet.Bullet.FromZFloat);
+                    bullet.toX = DeserializeFloat(packet.Bullet.ToXFloat);
+                    bullet.toY = DeserializeFloat(packet.Bullet.ToYFloat);
+                    bullet.toZ = DeserializeFloat(packet.Bullet.ToZFloat);
                     bullet.speed = DeserializeFloat(packet.Bullet.SpeedFloat);
                     bullets.Add(bullet);
                     break;
@@ -5225,7 +4640,7 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Explosion:
-                    explosions.Add(new Explosion() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = packet.Explosion });
+                    explosions.Add(new Explosion_() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = packet.Explosion });
                     break;
                 case Packet_ServerIdEnum.Projectile:
                     Projectile_ projectile = new Projectile_();
@@ -5298,80 +4713,14 @@ namespace ManicDigger
             item.ItemId = p.ItemId;
             return item;
         }
-
-        public class Explosion
-        {
-            public int dateMilliseconds;
-            public Packet_ServerExplosion explosion;
-        }
-        List<Explosion> explosions = new List<Explosion>();
+        List<Explosion_> explosions = new List<Explosion_>();
         MemoryStream CurrentChunk = new MemoryStream();
         Packet_BlockType[] NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
-        public class Bullet
-        {
-            public Vector3 from;
-            public Vector3 to;
-            public float speed;
-            public float progress;
-        }
-        List<Bullet> bullets = new List<Bullet>();
+        List<Bullet_> bullets = new List<Bullet_>();
         List<Projectile_> projectiles = new List<Projectile_>();
-        string Follow = null;
-        int? FollowId
+        IntRef FollowId()
         {
-            get
-            {
-                for (int i = 0; i < playersCount; i++)
-                {
-                    if (players[i] == null)
-                    {
-                        continue;
-                    }
-                    Player p = players[i];
-                    if (p.Name.Equals(Follow))
-                    {
-                        return i;
-                    }
-                }
-                return null;
-            }
-        }
-        private void PlaySoundAt(string name, float x, float y, float z)
-        {
-            if (x == 0 && y == 0 && z == 0)
-            {
-                AudioPlay(name);
-            }
-            else
-            {
-                Vector3 player = LocalPlayerPosition + new Vector3(0, CharacterEyesHeight, 0);
-                AudioPlayAt(name, x, z, y);
-            }
-        }
-
-        Dictionary<string, Packet_Dialog> dialogs = new Dictionary<string, Packet_Dialog>();
-        public GameDataMonsters d_DataMonsters;
-        public int MonsterIdFirst = 1000;
-        int currentTimeMilliseconds;
-        private void SendRequestBlob()
-        {
-            Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
-            Packet_Client pp = new Packet_Client();
-            pp.Id = Packet_ClientIdEnum.RequestBlob;
-            pp.RequestBlob = p;
-            byte[] packet = Serialize(pp, packetLen);
-            SendPacket(packet, packetLen.value);
-        }
-        public int ReceivedMapLength = 0;
-
-        private void InvokeMapLoadingProgress(int progressPercent, int progressBytes, string status)
-        {
-            maploadingprogress = new MapLoadingProgressEventArgs()
-                {
-                    ProgressPercent = progressPercent,
-                    ProgressBytes = progressBytes,
-                    ProgressStatus = status
-                };
+            return game.FollowId();
         }
         public bool ENABLE_CHATLOG = true;
         public string gamepathlogs() { return Path.Combine(game.platform.PathStorage(), "Logs"); }
@@ -5401,57 +4750,6 @@ namespace ManicDigger
             string invalidReStr = string.Format(@"[{0}]", invalidChars);
             return Regex.Replace(name, invalidReStr, "_");
         }
-        private static void InvalidPlayerWarning(int playerid)
-        {
-            Console.WriteLine(string.Format("Position update of nonexistent player {0}.", playerid));
-        }
-        private void ReadAndUpdatePlayerPosition(Packet_PositionAndOrientation positionAndOrientation, int playerid)
-        {
-            float x = (float)((double)positionAndOrientation.X / 32);
-            float y = (float)((double)positionAndOrientation.Y / 32);
-            float z = (float)((double)positionAndOrientation.Z / 32);
-            byte heading = (byte)positionAndOrientation.Heading;
-            byte pitch = (byte)positionAndOrientation.Pitch;
-            bool leanleft = false;
-            bool leanright = false;
-            if (positionAndOrientation.Stance == 1)
-            { leanleft = true; }
-            if (positionAndOrientation.Stance == 2)
-            { leanright = true; }
-            Vector3 realpos = new Vector3(x, y, z);
-            if (playerid == this.LocalPlayerId)
-            {
-                if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
-                {
-                    LocalPlayerPosition = realpos;
-                    // LocalPlayerOrientation = HeadingPitchToOrientation(heading, pitch);
-                    localstance = (byte)positionAndOrientation.Stance;
-                }
-                spawned = true;
-            }
-            else
-            {
-                if (players[playerid] == null)
-                {
-                    players[playerid] = new Player();
-                    players[playerid].Name = "invalid";
-                    InvalidPlayerWarning(playerid);
-                }
-                if (!enablePlayerUpdatePosition.ContainsKey(playerid) || enablePlayerUpdatePosition[playerid])
-                {
-                    players[playerid].PositionX = realpos.X;
-                    players[playerid].PositionY = realpos.Y;
-                    players[playerid].PositionZ = realpos.Z;
-                    players[playerid].PositionLoaded = true;
-                }
-                players[playerid].Heading = heading;
-                players[playerid].Pitch = pitch;
-                players[playerid].AnimationHint_.leanleft = leanleft;
-                players[playerid].AnimationHint_.leanright = leanright;
-                players[playerid].LastUpdateMilliseconds = game.platform.TimeMillisecondsFromStart();
-            }
-        }
-        List<byte> received = new List<byte>();
         public void Dispose()
         {
             if (main != null)
@@ -5460,49 +4758,7 @@ namespace ManicDigger
                 main = null;
             }
         }
-        int MapLoadingPercentComplete;
-        string MapLoadingStatus;
-        Dictionary<int, bool> enablePlayerUpdatePosition = new Dictionary<int, bool>();
-        #region INetworkClient Members
-        public Dictionary<int, bool> EnablePlayerUpdatePosition { get { return enablePlayerUpdatePosition; } set { enablePlayerUpdatePosition = value; } }
-        #endregion
-        public int LastReceivedMilliseconds;
-        //[Inject]
-        //public IIsChunkDirty d_IsChunkReady;
-        #region IMapStorage Members
-        public int MapSizeX { get { return game.MapSizeX; } set { game.MapSizeX = value; } }
-        public int MapSizeY { get { return game.MapSizeY; } set { game.MapSizeY = value; } }
-        public int MapSizeZ { get { return game.MapSizeZ; } set { game.MapSizeZ = value; } }
-        public unsafe int GetBlock(int x, int y, int z)
-        {
-            return game.GetBlock(x, y, z);
-        }
 
-        public void SetBlock(int x, int y, int z, int tileType)
-        {
-            game.SetBlock(x, y, z, tileType);
-        }
-
-        public void ShadowsOnSetBlock(int x, int y, int z)
-        {
-            game.ShadowsOnSetBlock(x, y, z);
-        }
-
-        private void UpdateColumnHeight(int x, int y)
-        {
-            game.UpdateColumnHeight(x, y);
-        }
-
-        #endregion
-        public Chunk GetChunk(int x, int y, int z)
-        {
-            return game.GetChunk(x, y, z);
-        }
-        public int chunksize { get { return game.chunksize; } set { game.chunksize = value; } }
-        public void Reset(int sizex, int sizey, int sizez)
-        {
-            game.Reset(sizex, sizey, sizez);
-        }
         #region IMapStorage Members
         public unsafe void SetMapPortion(int x, int y, int z, int[, ,] chunk)
         {
@@ -5536,14 +4792,6 @@ namespace ManicDigger
                 }
             }
         }
-        private void SetChunksAroundDirty(int cx, int cy, int cz)
-        {
-            game.SetChunksAroundDirty(cx, cy, cz);
-        }
-        bool IsValidChunkPosition(int xx, int yy, int zz)
-        {
-            return game.IsValidChunkPos(xx, yy, zz, chunksize);
-        }
         private unsafe void FillChunk(Chunk destination, int destinationchunksize,
             int sourcex, int sourcey, int sourcez, int[,,] source)
         {
@@ -5565,28 +4813,6 @@ namespace ManicDigger
             }
         }
         #endregion
-        #region IIsChunkReady Members
-        public bool IsChunkReady(int x, int y, int z)
-        {
-            return IsChunkDirty(x, y, z);
-        }
-        #endregion
-        #region IIsChunkReady Members
-        public bool IsChunkDirty(int x, int y, int z)
-        {
-            //return d_IsChunkReady.IsChunkDirty(x, y, z);
-            return true;
-        }
-        //public void SetChunkDirty(int x, int y, int z, bool dirty)
-        //{
-        //d_IsChunkReady.SetChunkDirty(x, y, z, dirty);
-        //}
-        #endregion
-
-        public void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez)
-        {
-            game.GetMapPortion(outPortion, x, y, z, portionsizex, portionsizey, portionsizez);
-        }
 
         public TextureAtlasConverter d_TextureAtlasConverter;
 
@@ -5643,10 +4869,6 @@ namespace ManicDigger
         int maxTextureSize; // detected at runtime
         public int atlas1dheight { get { return maxTextureSize; } }
         public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
-        public int terrainTexturesPerAtlas { get { return game.terrainTexturesPerAtlas; } set { game.terrainTexturesPerAtlas = value; } }
-
-
-
 
 
 
@@ -5662,7 +4884,7 @@ namespace ManicDigger
         }
 
         Dictionary<TextAndSize, int[]> textsizes = new Dictionary<TextAndSize, int[]>();
-        public SizeF TextSize(string text, float fontsize)
+        public SizeF TextSize_(string text, float fontsize)
         {
             int[] size;
             if (textsizes.TryGetValue(new TextAndSize() { text = text, size = fontsize }, out size))
@@ -5678,31 +4900,31 @@ namespace ManicDigger
             textsizes[new TextAndSize() { text = text, size = fontsize }] = size;
             return new SizeF(width.value, height.value);
         }
-        public void Draw2dText(string text, float x, float y, float fontsize, Color? color)
+        public void Draw2dText_(string text, float x, float y, float fontsize, Color? color)
         {
             int? c = null;
             if (color != null)
             {
                 c = Game.ColorFromArgb(color.Value.A, color.Value.R, color.Value.G, color.Value.B);
             }
-            Draw2dText(text, x, y, fontsize, c, false);
+            Draw2dText_(text, x, y, fontsize, c, false);
         }
-        public void Draw2dText(string text, float x, float y, float fontsize, int? color, bool enabledepthtest)
+        public void Draw2dText_(string text, float x, float y, float fontsize, int? color, bool enabledepthtest)
         {
             FontCi font = FontCi.Create("Arial", fontsize, 0);
-            Draw2dText(text, font, x, y, color, false);
+            Draw2dText_(text, font, x, y, color, false);
         }
 
-        public void Draw2dText(string text, FontCi font, float x, float y, Color? color)
+        public void Draw2dText_(string text, FontCi font, float x, float y, Color? color)
         {
             int? c = null;
             if (color != null)
             {
                 c = Game.ColorFromArgb(color.Value.A, color.Value.R, color.Value.G, color.Value.B);
             }
-            Draw2dText(text, font, x, y, c, false);
+            Draw2dText_(text, font, x, y, c, false);
         }
-        public void Draw2dText(string text, FontCi font, float x, float y, int? color, bool enabledepthtest)
+        public void Draw2dText_(string text, FontCi font, float x, float y, int? color, bool enabledepthtest)
         {
             IntRef c = null;
             if (color != null)
@@ -5713,28 +4935,28 @@ namespace ManicDigger
         }
 
 
-        public void Draw2dBitmapFile(string filename, float x1, float y1, float width, float height)
+        public void Draw2dBitmapFile_(string filename, float x1, float y1, float width, float height)
         {
             if (!textures.ContainsKey(filename))
             {
                 textures[filename] = LoadTexture(d_GetFile.GetFile(filename));
             }
-            Draw2dTexture(textures[filename], x1, y1, width, height, null);
+            Draw2dTexture_(textures[filename], x1, y1, width, height, null);
         }
 
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
+        public void Draw2dTexture_(int textureid, float x1, float y1, float width, float height, int? inAtlasId)
         {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, Color.White);
+            Draw2dTexture_(textureid, x1, y1, width, height, inAtlasId, Color.White);
         }
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
+        public void Draw2dTexture_(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color)
         {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, color, false);
+            Draw2dTexture_(textureid, x1, y1, width, height, inAtlasId, color, false);
         }
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
+        public void Draw2dTexture_(int textureid, float x1, float y1, float width, float height, int? inAtlasId, Color color, bool enabledepthtest)
         {
-            Draw2dTexture(textureid, x1, y1, width, height, inAtlasId, game.texturesPacked(), Game.ColorFromArgb(color.A,color.R, color.G, color.B), enabledepthtest);
+            Draw2dTexture_(textureid, x1, y1, width, height, inAtlasId, game.texturesPacked(), Game.ColorFromArgb(color.A,color.R, color.G, color.B), enabledepthtest);
         }
-        public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, int color, bool enabledepthtest)
+        public void Draw2dTexture_(int textureid, float x1, float y1, float width, float height, int? inAtlasId, int atlastextures, int color, bool enabledepthtest)
         {
             IntRef inatlasid = null;
             if (inAtlasId != null)
@@ -5744,21 +4966,12 @@ namespace ManicDigger
             game.Draw2dTexture(textureid, x1, y1, width, height, inatlasid, atlastextures, color, enabledepthtest);
         }
 
-        public void Draw2dTextures(Draw2dData[] todraw, int textureid)
+        public void Draw2dTextures_(Draw2dData[] todraw, int textureid)
         {
             Draw2dTextures(todraw, todraw.Length, textureid, 0);
         }
-        public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid, float angle)
-        {
-            game.Draw2dTextures(todraw, todrawLength, textureid, angle);
-        }
 
-        public int WhiteTexture()
-        {
-            return game.WhiteTexture();
-        }
         public Dictionary<string, int> textures = new Dictionary<string, int>();
-        public float fov { get { return game.fov; } set { game.fov = value; } }
         public void Set3dProjection()
         {
             Set3dProjection(zfar());
@@ -5768,43 +4981,13 @@ namespace ManicDigger
         {
             game.Set3dProjection(zfar, currentfov());
         }
-        public float znear { get { return game.znear; } set { game.znear = value; } }
-        public float zfar() { return game.zfar(); }
-        public bool ENABLE_ZFAR { get { return game.ENABLE_ZFAR; } set { game.ENABLE_ZFAR = value; } }
-
-        public void OrthoMode(int width, int height)
-        {
-            game.OrthoMode(width, height);
-        }
-
-        public void PerspectiveMode()
-        {
-            game.PerspectiveMode();
-        }
 
         public int sunlight { get { return game.sunlight_; } set { game.sunlight_ = value; } }
 
         public bool ShadowsFull { get { return false; } set { } }
-        internal int MaybeGetLight(int x, int y, int z)
-        {
-            return game.MaybeGetLight(x, y, z);
-        }
 
         internal int maxlight { get { return terrainRenderer.maxlight(); } }
-        public TerrainRenderer terrainRenderer { get { return game.terrainRenderer; } set { game.terrainRenderer = value; } }
         public void RedrawAllBlocks() { terrainRenderer.RedrawAllBlocks(); }
-        void RedrawBlock(int x, int y, int z) { terrainRenderer.RedrawBlock(x, y, z); }
-
-        MapLoadingProgressEventArgs maploadingprogress { get { return game.maploadingprogress; } set { game.maploadingprogress = value; } }
-        public void MapLoadingStart()
-        {
-            game.MapLoadingStart();
-        }
-        private void MapLoadingDraw()
-        {
-            game.MapLoadingDraw();
-        }
-
         public FontType Font;
     }
 
