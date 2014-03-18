@@ -61,6 +61,10 @@ SpawnPositionSetTo=Spawn position set to: {0}
 Triangles=Triangles: {0}
 UseServerTexturesOption=Use server textures (restart): {0}
 ViewDistanceOption=View distance: {0}
+OptionSmoothShadows=Smooth shadows: {0}
+OptionFramerate=Framerate: {0}
+OptionResolution=Resolution: {0}
+OptionFullscreen=Fullscreen: {0}
 
 
 Block_Empty=Empty

@@ -61,6 +61,10 @@ SpawnPositionSetTo=Spawnposition auf {0} festgelegt.
 Triangles=Dreiecke: {0}
 UseServerTexturesOption=Servertexturen verwenden (benötigt Neustart): {0}
 ViewDistanceOption=Sichtweite: {0}
+OptionSmoothShadows=Weiche Schatten: {0}
+OptionFramerate=Bildwiederholrate: {0}
+OptionResolution=Auflösung: {0}
+OptionFullscreen=Vollbild: {0}
 
 
 Block_Empty=Nichts
