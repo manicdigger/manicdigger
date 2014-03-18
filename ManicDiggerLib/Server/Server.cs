@@ -18,6 +18,7 @@ using System.Threading;
 using Jint.Delegates;
 using Lidgren.Network;
 using System.Diagnostics;
+using ManicDigger.ClientNative;
 
 namespace ManicDiggerServer
 {
@@ -4522,5 +4523,9 @@ if (sent >= unknown.Count) { break; }
             int gridposy = (py / centerAreaSize) * centerAreaSize;
             return new Point(gridposx, gridposy);
         }
+    }
+    public class MapManipulator
+    {
+        public const string BinSaveExtension = ".mddbs";
     }
 }

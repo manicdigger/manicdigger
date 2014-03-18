@@ -12,7 +12,6 @@ using ManicDigger.Network;
 using ManicDigger.Renderers;
 using ManicDiggerServer;
 using System.Text;
-using ManicDigger.Hud;
 using System.Net.Sockets;
 using Lidgren.Network;
 using ManicDigger.ClientNative;

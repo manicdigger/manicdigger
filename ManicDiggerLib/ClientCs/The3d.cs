@@ -15,7 +15,6 @@ namespace ManicDigger
     public class The3d : IThe3d
     {
         public ManicDiggerGameWindow game;
-        public ITerrainTextures d_Terrain;
         public Config3d d_Config3d;
         public IGetFileStream d_GetFile;
         public bool ALLOW_NON_POWER_OF_TWO = false;

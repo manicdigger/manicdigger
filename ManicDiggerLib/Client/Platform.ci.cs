@@ -96,11 +96,14 @@
     public abstract void SaveOptions(OptionsCi options);
     public abstract bool StringContains(string a, string b);
     public abstract RandomCi RandomCreate();
+    public abstract void GlClearDepthBuffer();
+    public abstract string PathStorage();
 }
 
 public abstract class RandomCi
 {
     public abstract float NextFloat();
+    public abstract int Next();
 }
 
 public class OptionsCi

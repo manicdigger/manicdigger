@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 using ManicDigger;
 using ManicDiggerServer;
 using System.Threading;
+using ManicDigger.ClientNative;
 
 namespace GameModeFortress
 {

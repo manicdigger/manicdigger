@@ -43,6 +43,26 @@ public class RectFRef
         r.h = h_;
         return r;
     }
+
+    internal float Left()
+    {
+        return x;
+    }
+
+    internal float Bottom()
+    {
+        return y + h;
+    }
+
+    internal float Top()
+    {
+        return y;
+    }
+
+    internal float Right()
+    {
+        return x + w;
+    }
 }
 
 public class InterpolationCi

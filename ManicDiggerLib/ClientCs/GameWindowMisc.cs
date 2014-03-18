@@ -14,55 +14,14 @@ using System.Net;
 using System.Drawing.Drawing2D;
 using ManicDigger.Network;
 using ManicDigger.Renderers;
-using ManicDigger.Hud;
 
 namespace ManicDigger
 {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct VertexPositionTexture
-    {
-        public Vector3 Position;
-        public float u;
-        public float v;
-        public byte r;
-        public byte g;
-        public byte b;
-        public byte a;
-        public VertexPositionTexture(float x, float y, float z, float u, float v)
-        {
-            Position = new Vector3(x, y, z);
-            this.u = u;
-            this.v = v;
-            r = byte.MaxValue;
-            g = byte.MaxValue;
-            b = byte.MaxValue;
-            a = byte.MaxValue;
-        }
-        public VertexPositionTexture(float x, float y, float z, float u, float v, Color c)
-        {
-            Position = new Vector3(x, y, z);
-            this.u = u;
-            this.v = v;
-            r = c.R;
-            g = c.G;
-            b = c.B;
-            a = c.A;
-        }
-        static uint ToRgba(Color color)
-        {
-            return (uint)color.A << 24 | (uint)color.B << 16 | (uint)color.G << 8 | (uint)color.R;
-        }
-    }
-
     public interface IThe3d
     {
         int LoadTexture(Bitmap bmp);
     }
-    public interface IModelToDraw
-    {
-        void Draw(float dt);
-        int Id { get; }
-    }
+
     public interface ICurrentShadows
     {
         bool ShadowsFull { get; set; }

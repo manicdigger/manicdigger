@@ -10,6 +10,7 @@ using PointG = System.Drawing.Point;
 using GameModeFortress;
 using System.Diagnostics;
 using ProtoBuf;
+using ManicDigger.ClientNative;
 
 namespace ManicDiggerServer
 {

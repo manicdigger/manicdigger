@@ -65,14 +65,14 @@ public class ListBox3d
     internal int count;
 }
 
-public enum TileSide
+public class TileSide
 {
-    Top,
-    Bottom,
-    Front,
-    Back,
-    Left,
-    Right
+    public const int Top = 0;
+    public const int Bottom = 1;
+    public const int Front = 2;
+    public const int Back = 3;
+    public const int Left = 4;
+    public const int Right = 5;
 }
 
 public class BlockPosSide

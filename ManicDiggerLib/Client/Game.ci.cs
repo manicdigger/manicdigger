@@ -52,6 +52,11 @@
         movespeed = 5;
         RadiusWhenMoving = one * 3 / 10;
         playervelocity = new Vector3Ref();
+        LocalPlayerId = -1;
+        compassid = -1;
+        needleid = -1;
+        compassangle = 0;
+        compassvertex = 1;
     }
     float one;
 
@@ -279,9 +284,21 @@
 
     internal int terrainTexturesPerAtlas;
 
-    internal static int MaxInt(int a, byte b)
+    internal static int MaxInt(int a, int b)
     {
         if (a >= b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    internal static int MinInt(int a, int b)
+    {
+        if (a <= b)
         {
             return a;
         }
@@ -1504,6 +1521,398 @@
             result = min;
         }
         return result;
+    }
+
+    internal GameData d_Data;
+    internal TerrainRenderer terrainRenderer;
+
+    const int maxlight = 15;
+
+    public int MaybeGetLight(int x, int y, int z)
+    {
+        IntRef ret = terrainRenderer.MaybeGetLight(x, y, z);
+        if (ret == null)
+        {
+            return maxlight;
+        }
+        return ret.value;
+    }
+
+    public void Draw2dBitmapFile(string filename, int x, int y, int w, int h)
+    {
+        Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorFromArgb(255, 255, 255, 255), false);
+    }
+    internal int maxdrawdistance;
+    public void ToggleFog()
+    {
+        int[] drawDistances = new int[10];
+        int drawDistancesCount = 0;
+        drawDistances[drawDistancesCount++] = 32;
+        if (maxdrawdistance >= 64) { drawDistances[drawDistancesCount++] = 64; }
+        if (maxdrawdistance >= 128) { drawDistances[drawDistancesCount++] = 128; }
+        if (maxdrawdistance >= 256) { drawDistances[drawDistancesCount++] = 256; }
+        if (maxdrawdistance >= 512) { drawDistances[drawDistancesCount++] = 512; }
+        for (int i = 0; i < drawDistancesCount; i++)
+        {
+            if (d_Config3d.viewdistance == drawDistances[i])
+            {
+                d_Config3d.viewdistance = drawDistances[(i + 1) % drawDistancesCount];
+                terrainRenderer.StartTerrain();
+                return;
+            }
+        }
+        d_Config3d.viewdistance = drawDistances[0];
+        terrainRenderer.StartTerrain();
+    }
+
+    internal Player[] players;
+    internal int playersCount;
+    internal int LocalPlayerId;
+
+    internal float GetCharacterEyesHeight()
+    {
+        return players[LocalPlayerId].EyeHeight;
+    }
+
+    internal void SetCharacterEyesHeight(float value)
+    {
+        players[LocalPlayerId].EyeHeight = value;
+    }
+
+    public float EyesPosX() { return player.playerposition.X; }
+    public float EyesPosY() { return player.playerposition.Y + GetCharacterEyesHeight(); }
+    public float EyesPosZ() { return player.playerposition.Z; }
+
+    public void AudioPlay(string file)
+    {
+        if (!AudioEnabled)
+        {
+            return;
+        }
+        AudioPlayAt(file, EyesPosX(), EyesPosY(), EyesPosZ());
+    }
+
+    public void AudioPlayAt(string file, float x, float y, float z)
+    {
+        if (!AudioEnabled)
+        {
+            return;
+        }
+        BoolRef found = new BoolRef();
+        string fullpath = platform.GetFullFilePath(file, found);
+        if (!found.value)
+        {
+            platform.ConsoleWriteLine(platform.StringFormat("File not found: {0}", file));
+            return;
+        }
+        platform.AudioPlay(fullpath, EyesPosX(), EyesPosY(), EyesPosZ());
+    }
+
+    public void AudioPlayLoop(string file, bool play, bool restart)
+    {
+        if ((!AudioEnabled) && play)
+        {
+            return;
+        }
+        BoolRef found = new BoolRef();
+        string fullpath = platform.GetFullFilePath(file, found);
+        if (!found.value)
+        {
+            platform.ConsoleWriteLine(platform.StringFormat("File not found: {0}", file));
+            return;
+        }
+        platform.AudioPlayLoop(fullpath, play, restart);
+    }
+
+    public int[] MaterialSlots()
+    {
+        int[] m = new int[10];
+        for (int i = 0; i < 10; i++)
+        {
+            Packet_Item item = d_Inventory.RightHand[i];
+            m[i] = d_Data.BlockIdDirt();
+            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+            {
+                m[i] = d_Inventory.RightHand[i].BlockId;
+            }
+        }
+        return m;
+    }
+
+    int compassid;
+    int needleid;
+    float compassangle;
+    float compassvertex;
+
+    bool CompassInActiveMaterials()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            if (MaterialSlots()[i] == d_Data.BlockIdCompass())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void DrawCompass()
+    {
+        if (!CompassInActiveMaterials()) return;
+        if (compassid == -1)
+        {
+            BoolRef found = new BoolRef();
+            compassid = platform.LoadTextureFromFile(platform.GetFullFilePath("compass.png", found));
+            needleid = platform.LoadTextureFromFile(platform.GetFullFilePath("compassneedle.png", found));
+        }
+        float size = 175;
+        float posX = Width() - 100;
+        float posY = 100;
+        float playerorientation = -((player.playerorientation.Y / (2 * Game.GetPi())) * 360);
+
+        compassvertex += (playerorientation - compassangle) / 50;
+        compassvertex *= (one * 9 / 10);
+        compassangle += compassvertex;
+
+        Draw2dData[] todraw = new Draw2dData[1];
+        todraw[0] = new Draw2dData();
+        todraw[0].x1 = posX - size / 2;
+        todraw[0].y1 = posY - size / 2;
+        todraw[0].width = size;
+        todraw[0].height = size;
+        todraw[0].inAtlasId = null;
+        todraw[0].color = Game.ColorFromArgb(255, 255, 255, 255);
+
+        Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        Draw2dTextures(todraw, 1, needleid, compassangle);
+    }
+
+    internal bool IsTileEmptyForPhysics(int x, int y, int z)
+    {
+        if (z >= MapSizeZ)
+        {
+            return true;
+        }
+        if (x < 0 || y < 0 || z < 0)// || z >= mapsizez)
+        {
+            return ENABLE_FREEMOVE;
+        }
+        if (x >= MapSizeX || y >= MapSizeY)// || z >= mapsizez)
+        {
+            return ENABLE_FREEMOVE;
+        }
+        return GetBlock(x, y, z) == SpecialBlockId.Empty
+            || GetBlock(x, y, z) == d_Data.BlockIdFillArea()
+            || IsWater(GetBlock(x, y, z));
+    }
+
+    internal bool IsTileEmptyForPhysicsClose(int x, int y, int z)
+    {
+        return IsTileEmptyForPhysics(x, y, z)
+            || (IsValidPos(x, y, z) && blocktypes[GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight)
+            || (IsValidPos(x, y, z) && IsEmptyForPhysics(blocktypes[GetBlock(x, y, z)]));
+    }
+
+    internal bool IsUsableBlock(int blocktype)
+    {
+        return d_Data.IsRailTile(blocktype) || blocktypes[blocktype].IsUsable;
+    }
+
+    internal bool IsWearingWeapon()
+    {
+        return d_Inventory.RightHand[ActiveMaterial] != null;
+    }
+
+    internal void ApplyDamageToPlayer(int damage, int damageSource, int sourceId)
+    {
+        PlayerStats.CurrentHealth -= damage;
+        if (PlayerStats.CurrentHealth <= 0)
+        {
+            AudioPlay("death.wav");
+            {
+                Packet_Client p = new Packet_Client();
+                p.Id = Packet_ClientIdEnum.Death;
+                p.Death = new Packet_ClientDeath();
+                {
+                    p.Death.Reason = damageSource;
+                    p.Death.SourcePlayer = sourceId;
+                }
+                SendPacketClient(p);
+            }
+
+            //Respawn(); //Death is not respawn ;)
+        }
+        else
+        {
+            AudioPlay(rnd.Next() % 2 == 0 ? "grunt1.wav" : "grunt2.wav");
+        }
+        {
+            Packet_Client p = new Packet_Client();
+            {
+                p.Id = Packet_ClientIdEnum.Health;
+                p.Health = new Packet_ClientHealth();
+                p.Health.CurrentHealth = PlayerStats.CurrentHealth;
+            }
+            SendPacketClient(p);
+        }
+    }
+
+    int GetPlayerEyesBlockX()
+    {
+        return platform.FloatToInt(MathFloor(player.playerposition.X));
+    }
+    int GetPlayerEyesBlockY()
+    {
+        return platform.FloatToInt(MathFloor(player.playerposition.Z));
+    }
+    int GetPlayerEyesBlockZ()
+    {
+        return platform.FloatToInt(MathFloor(player.playerposition.Y + players[LocalPlayerId].EyeHeight));
+    }
+
+    float MathFloor(float a)
+    {
+        if (a >= 0)
+        {
+            return platform.FloatToInt(a);
+        }
+        else
+        {
+            return platform.FloatToInt(a) - 1;
+        }
+    }
+
+    int lastfalldamagetimeMilliseconds;
+    internal void UpdateFallDamageToPlayer()
+    {
+        //fallspeed 4 is 10 blocks high
+        //fallspeed 5.5 is 20 blocks high
+        float fallspeed = player.movedz / (-basemovespeed);
+
+        //test = false;
+        //if (fallspeed > 5.5f)
+        //{
+        //    test = true;
+        //}
+
+        int posX = GetPlayerEyesBlockX();
+        int posY = GetPlayerEyesBlockY();
+        int posZ = GetPlayerEyesBlockZ();
+        if ((blockheight(posX, posY) < posZ - 8)
+            || fallspeed > 3)
+        {
+            AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
+        }
+        else
+        {
+            AudioPlayLoop("fallloop.wav", false, true);
+        }
+
+        //fall damage
+
+        if (IsValidPos(posX, posY, posZ - 3))
+        {
+            int blockBelow = GetBlock(posX, posY, posZ - 3);
+            if ((blockBelow != 0) && (!IsWater(blockBelow)))
+            {
+                float severity = 0;
+                if (fallspeed < 4) { return; }
+                else if (fallspeed < (one * 45 / 10)) { severity = (one * 3 / 10); }
+                else if (fallspeed < 5) { severity = (one * 5 / 10); }
+                else if (fallspeed < (one * 55 / 10)) { severity = (one * 6 / 10); }
+                else if (fallspeed < 6) { severity = (one * 8 / 10); }
+                else { severity = 1; }
+                if ((one * (platform.TimeMillisecondsFromStart() - lastfalldamagetimeMilliseconds) / 1000) < 1)
+                {
+                    return;
+                }
+                lastfalldamagetimeMilliseconds = platform.TimeMillisecondsFromStart();
+                ApplyDamageToPlayer(platform.FloatToInt(severity * PlayerStats.MaxHealth), Packet_DeathReasonEnum.FallDamage, 0);	//Maybe give ID of last player touched?
+            }
+        }
+    }
+
+    internal void SetChunksAroundDirty(int cx, int cy, int cz)
+    {
+        if (IsValidChunkPos(cx, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
+        if (IsValidChunkPos(cx - 1, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx - 1, cy, cz, true, false); }
+        if (IsValidChunkPos(cx + 1, cy, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx + 1, cy, cz, true, false); }
+        if (IsValidChunkPos(cx, cy - 1, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy - 1, cz, true, false); }
+        if (IsValidChunkPos(cx, cy + 1, cz, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy + 1, cz, true, false); }
+        if (IsValidChunkPos(cx, cy, cz - 1, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy, cz - 1, true, false); }
+        if (IsValidChunkPos(cx, cy, cz + 1, chunksize)) { terrainRenderer.SetChunkDirty(cx, cy, cz + 1, true, false); }
+    }
+
+    internal void Reset(int sizex, int sizey, int sizez)
+    {
+        MapSizeX = sizex;
+        MapSizeY = sizey;
+        MapSizeZ = sizez;
+        chunks = new Chunk[(sizex / chunksize) * (sizey / chunksize) * (sizez / chunksize)];
+        // SetAllChunksNotDirty();
+    }
+
+    internal void UpdateColumnHeight(int x, int y)
+    {
+        //todo faster
+        int height = MapSizeZ - 1;
+        for (int i = MapSizeZ - 1; i >= 0; i--)
+        {
+            height = i;
+            if (!Game.IsTransparentForLight(blocktypes[GetBlock(x, y, i)]))
+            {
+                break;
+            }
+        }
+        d_Heightmap.SetBlock(x, y, height);
+    }
+
+    internal void ShadowsOnSetBlock(int x, int y, int z)
+    {
+        int oldheight = d_Heightmap.GetBlock(x, y);
+        UpdateColumnHeight(x, y);
+        //update shadows in all chunks below
+        int newheight = d_Heightmap.GetBlock(x, y);
+        int min = Game.MinInt(oldheight, newheight);
+        int max = Game.MaxInt(oldheight, newheight);
+        for (int i = min; i < max; i++)
+        {
+            if (i / chunksize != z / chunksize)
+            {
+                terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, i / chunksize, true, false);
+            }
+        }
+        //Todo: too many redraws. Optimize.
+        //Now placing a single block updates 27 chunks,
+        //and each of those chunk updates calculates light from 27 chunks.
+        //So placing a block is often 729x slower than it should be.
+        for (int xx = 0; xx < 3; xx++)
+        {
+            for (int yy = 0; yy < 3; yy++)
+            {
+                for (int zz = 0; zz < 3; zz++)
+                {
+                    int cx = x / chunksize + xx - 1;
+                    int cy = y / chunksize + yy - 1;
+                    int cz = z / chunksize + zz - 1;
+                    if (IsValidChunkPos(cx, cy, cz, chunksize))
+                    {
+                        terrainRenderer.SetChunkDirty(cx, cy, cz, true, false);
+                    }
+                }
+            }
+        }
+    }
+
+    internal void SetBlock(int x, int y, int z, int tileType)
+    {
+        SetBlockRaw(x, y, z, tileType);
+        terrainRenderer.SetChunkDirty(x / chunksize, y / chunksize, z / chunksize, true, true);
+        //d_Shadows.OnSetBlock(x, y, z);
+        ShadowsOnSetBlock(x, y, z);
+        lastplacedblockX = x;
+        lastplacedblockY = y;
+        lastplacedblockZ = z;
     }
 }
 

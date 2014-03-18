@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using ManicDigger;
 using System.IO;
 using System.Diagnostics;
+using ManicDigger.ClientNative;
 
 namespace GameModeFortress
 {

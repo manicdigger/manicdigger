@@ -94,6 +94,10 @@
     <Compile Include="ClientNative\AviWriter.cs" />
     <Compile Include="ClientNative\Misc.cs" />
     <Compile Include="ClientNative\Screenshot.cs" />
+    <Compile Include="Client\HudInventory.ci.cs" />
+    <Compile Include="Client\MinecartRenderer.ci.cs" />
+    <Compile Include="Client\WeaponRenderer.ci.cs" />
+    <Compile Include="Client\BlockRendererTorch.ci.cs" />
     <Compile Include="Client\CharacterRenderer.ci.cs" />
     <Compile Include="Client\FrustumCulling.ci.cs" />
     <Compile Include="Client\HudChat.ci.cs" />
@@ -118,7 +122,6 @@
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\TerrainRenderer.ci.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
-    <Compile Include="ClientCs\Hud\HudInventory.cs" />
     <Compile Include="ClientCs\Interpolation.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
@@ -187,7 +190,6 @@
     <Compile Include="Server\Mod.cs" />
     <Compile Include="ClientCs\Network\LoginClient.cs" />
     <Compile Include="ClientNative\OggDecoder.cs" />
-    <Compile Include="ClientCs\Renderers\MinecartRenderer.cs" />
     <Compile Include="ClientCs\Network\NetworkClient.cs" />
     <Compile Include="ClientCs\GameWindowMisc.cs" />
     <Compile Include="ClientCs\ManicDigger.cs" />
@@ -196,11 +198,9 @@
     <Compile Include="ClientCs\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
-    <Compile Include="ClientCs\Renderers\TerrainRenderer.cs" />
     <Compile Include="ClientNative\TextRenderer.cs" />
     <Compile Include="ClientCs\TextureAtlasConverter.cs" />
     <Compile Include="ClientCs\The3d.cs" />
-    <Compile Include="ClientCs\Renderers\WeaponRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

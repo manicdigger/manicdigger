@@ -1077,6 +1077,16 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         return new RandomNative();
     }
+
+    public override void GlClearDepthBuffer()
+    {
+        GL.Clear(ClearBufferMask.DepthBufferBit);
+    }
+
+    public override string PathStorage()
+    {
+        return GameStorePath.GetStorePath();
+    }
 }
 
 public class RandomNative : RandomCi
@@ -1085,6 +1095,11 @@ public class RandomNative : RandomCi
     public override float NextFloat()
     {
         return (float)rnd.NextDouble();
+    }
+
+    public override int Next()
+    {
+        return rnd.Next();
     }
 }
 

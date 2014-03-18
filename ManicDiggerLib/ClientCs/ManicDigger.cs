@@ -47,15 +47,6 @@ namespace ManicDigger
         int GetBlock(int x, int y, int z);
         void SetBlock(int x, int y, int z, int tileType);
     }
-    public interface IMapStoragePortion
-    {
-        void GetMapPortion(int[] outPortion, int x, int y, int z, int portionsizex, int portionsizey, int portionsizez);
-        void SetMapPortion(int x, int y, int z, int[, ,] chunk);
-    }
-    public interface IMapStorageLight
-    {
-        int GetLight(int x, int y, int z);
-    }
     public class XmlTool
     {
         public static string XmlVal(XmlDocument d, string path)
@@ -82,19 +73,8 @@ namespace ManicDigger
             return string.Format("<{0}>{1}</{0}>", name, value);
         }
     }
-    public class MapManipulator
-    {
-        public const string BinSaveExtension = ".mddbs";
-    }
-    public interface ILocalPlayerPosition
-    {
-        Vector3 LocalPlayerPosition { get; set; }
-        Vector3 LocalPlayerOrientation { get; set; }
-        bool Swimming { get; }
-        float CharacterEyesHeight { get; set; }
-    }
     public interface IClients
     {
-        IDictionary<int, Player> Players { get; set; }
+        Player[] Players { get; set; }
     }
 }

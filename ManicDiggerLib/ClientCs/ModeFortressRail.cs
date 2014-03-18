@@ -422,7 +422,9 @@ namespace ManicDigger
                 {
                     var m = new Minecart();
                     m.renderer = d_MinecartRenderer;
-                    m.position = LocalPlayerPosition;
+                    m.positionX = LocalPlayerPosition.X;
+                    m.positionY = LocalPlayerPosition.Y;
+                    m.positionZ = LocalPlayerPosition.Z;
                     m.direction = currentdirection;
                     m.lastdirection = lastdirection;
                     m.progress = currentrailblockprogress;

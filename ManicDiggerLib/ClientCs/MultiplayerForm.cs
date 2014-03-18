@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Xml;
 using System.IO;
+using ManicDigger.ClientNative;
 
 namespace ManicDigger
 {
