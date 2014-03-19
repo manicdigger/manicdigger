@@ -72,6 +72,10 @@
     public string Triangles() { return Get("Triangles"); }
     public string UseServerTexturesOption() { return Get("UseServerTexturesOption"); }
     public string ViewDistanceOption() { return Get("ViewDistanceOption"); }
+    public string OptionSmoothShadows() { return Get("OptionSmoothShadows"); }
+    public string OptionFramerate() { return Get("OptionFramerate"); }
+    public string OptionResolution() { return Get("OptionResolution"); }
+    public string OptionFullscreen() { return Get("OptionFullscreen"); }
     
     public string ServerCannotWriteLog() { return Get("Server_CannotWriteLogFile"); }
     public string ServerLoadingSavegame() { return Get("Server_LoadingSavegame"); }
@@ -229,6 +233,10 @@
         Add("en", "Triangles", "Triangles: {0}");
         Add("en", "UseServerTexturesOption", "Use server textures (restart): {0}");
         Add("en", "ViewDistanceOption", "View distance: {0}");
+        Add("en", "OptionSmoothShadows", "Smooth shadows: {0}");
+        Add("en", "OptionFramerate", "Framerate: {0}");
+        Add("en", "OptionResolution", "Resolution: {0}");
+        Add("en", "OptionFullscreen", "Fullscreen: {0}");
         
         Add("en", "Server_CannotWriteLogFile", "Cannot write to server log file {0}.");
         Add("en", "Server_LoadingSavegame", "Loading savegame...");

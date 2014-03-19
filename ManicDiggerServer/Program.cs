@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
-using GameModeFortress;
 using ManicDigger;
 using System.Xml;
 using System.IO;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Net;
 using ManicDigger.ClientNative;
 
 namespace ManicDiggerServer
@@ -63,6 +59,7 @@ namespace ManicDiggerServer
                     {
                         new Thread(ConsoleInput).Start();
                     }
+                    Console.WriteLine("AutoRestartCycle: {0}", autoRestartCycle);
                     ParentAutoRestarter();
                 }
                 else
@@ -76,7 +73,7 @@ namespace ManicDiggerServer
             }
         }
 
-        private void ChildServer()
+        void ChildServer()
         {
             Server server = new Server();
             server.exit = new GameExitDummy();
@@ -178,7 +175,7 @@ namespace ManicDiggerServer
 
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
 
-        private void Restart()
+        void Restart()
         {
             if (ServerProcess != null && (!ServerProcess.HasExited))
             {

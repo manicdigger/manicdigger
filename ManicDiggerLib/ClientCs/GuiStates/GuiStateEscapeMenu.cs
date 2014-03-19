@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
-using System.Xml.Serialization;
-using System.IO;
 using OpenTK;
-using GameModeFortress;
 
 namespace ManicDigger
 {
@@ -73,15 +69,7 @@ namespace ManicDigger
             }
             else if (state == EscapeMenuState.Graphics)
             {
-                /*
-                AddButton(string.Format(Language.ShadowsOption, (d_CurrentShadows.ShadowsFull ? Language.On : Language.Off)),
-                    (a, b) =>
-                    {
-                        d_CurrentShadows.ShadowsFull = !d_CurrentShadows.ShadowsFull;
-                        RedrawAllBlocks();
-                    });
-                */
-                    AddButton(string.Format("Smooth shadows: {0}", options.Smoothshadows ? language.On() : language.Off()),
+                AddButton(string.Format(language.OptionSmoothShadows(), options.Smoothshadows ? language.On() : language.Off()),
                     (a, b) =>
                     {
                         options.Smoothshadows = !options.Smoothshadows;
@@ -103,17 +91,17 @@ namespace ManicDigger
                     {
                         game.ToggleFog();
                     });
-                AddButton(string.Format("Framerate: {0}", (VsyncString())),
+                AddButton(string.Format(language.OptionFramerate(), (VsyncString())),
                     (a, b) =>
                     {
                         game.ToggleVsync();
                     });
-                AddButton(string.Format("Resolution: {0}", (ResolutionString())),
+                AddButton(string.Format(language.OptionResolution(), (ResolutionString())),
                     (a, b) =>
                     {
                         ToggleResolution();
                     });
-                AddButton(string.Format("Fullscreen: {0}", options.Fullscreen ? language.On() : language.Off()),
+                AddButton(string.Format(language.OptionFullscreen(), options.Fullscreen ? language.On() : language.Off()),
                     (a, b) =>
                     {
                         options.Fullscreen = !options.Fullscreen;
@@ -349,8 +337,6 @@ namespace ManicDigger
             helps[count++] = new KeyHelp() { Text = language.KeyMoveLeft(), DefaultKey = (int)OpenTK.Input.Key.A };
             helps[count++] = new KeyHelp() { Text = language.KeyMoveRight(), DefaultKey = (int)OpenTK.Input.Key.D };
             helps[count++] = new KeyHelp() { Text = language.KeyJump(), DefaultKey = (int)OpenTK.Input.Key.Space };
-            //new KeyHelp(){Text="Remove block", DefaultKey=(int)SpecialKey.MouseLeftClick},
-            //new KeyHelp(){Text="Place block", DefaultKey=(int)SpecialKey.MouseRightClick},
             helps[count++] = new KeyHelp() { Text = language.KeyShowMaterialSelector(), DefaultKey = (int)OpenTK.Input.Key.B };
             helps[count++] = new KeyHelp() { Text = language.KeySetSpawnPosition(), DefaultKey = (int)OpenTK.Input.Key.P };
             helps[count++] = new KeyHelp() { Text = language.KeyRespawn(), DefaultKey = (int)OpenTK.Input.Key.O };
@@ -366,13 +352,10 @@ namespace ManicDigger
             helps[count++] = new KeyHelp() { Text = language.KeyPlayersList(), DefaultKey = (int)OpenTK.Input.Key.Tab };
             helps[count++] = new KeyHelp() { Text = language.KeyChat(), DefaultKey = (int)OpenTK.Input.Key.T };
             helps[count++] = new KeyHelp() { Text = language.KeyTeamChat(), DefaultKey = (int)OpenTK.Input.Key.Y };
-            //new KeyHelp(){Text="Unload blocks", DefaultKey=(int)OpenTK.Input.Key.U},
             helps[count++] = new KeyHelp() { Text = language.KeyCraft(), DefaultKey = (int)OpenTK.Input.Key.C };
-            //new KeyHelp(){Text="Load blocks", DefaultKey=(int)OpenTK.Input.Key.L},
             helps[count++] = new KeyHelp() { Text = language.KeyBlockInfo(), DefaultKey = (int)OpenTK.Input.Key.I };
             helps[count++] = new KeyHelp() { Text = language.KeyUse(), DefaultKey = (int)OpenTK.Input.Key.E };
             helps[count++] = new KeyHelp() { Text = language.KeyReverseMinecart(), DefaultKey = (int)OpenTK.Input.Key.Q };
-            //new KeyHelp(){Text="Swap mouse up-down", BoolId="SwapMouseUpDown"},
             return helps;
         }
         int keyselectid = -1;
@@ -388,6 +371,7 @@ namespace ManicDigger
                 }
                 else if (escapemenustate == EscapeMenuState.Options)
                 {
+                    SaveOptions();
                     SetEscapeMenuState(EscapeMenuState.Main);
                 }
                 else
@@ -417,8 +401,6 @@ namespace ManicDigger
 
             game.Font = (FontType)fontValues[options.Font];
             game.d_CurrentShadows.ShadowsFull = options.Shadows;
-            //d_Shadows.ResetShadows();
-            //d_Terrain.UpdateAllTiles();
             game.d_Config3d.viewdistance = options.DrawDistance;
             game.AudioEnabled = options.EnableSound;
             game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
