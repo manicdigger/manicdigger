@@ -411,7 +411,6 @@ package Packet;
         optional int32 disableShadows = 11;
         optional int32 playerAreaSize = 12;
         optional int32 renderHint_ = 13;
-        repeated IntString origTextureById = 14;
     }
     
     message IntString

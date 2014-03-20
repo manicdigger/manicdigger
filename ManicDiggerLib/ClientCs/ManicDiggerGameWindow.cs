@@ -3728,6 +3728,7 @@ namespace ManicDigger
                             d_ResetMap.Reset(packet.Identification.MapSizeX,
                                 packet.Identification.MapSizeY,
                                 packet.Identification.MapSizeZ);
+                            d_Heightmap.Restart();
                         }
                         //serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
                         terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
