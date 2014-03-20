@@ -72,6 +72,12 @@
         selectedmodelid = -1;
         grenadetime = 3;
         rotationspeed = one * 15 / 100;
+        bouncespeedmultiply = one * 5 / 10;
+        walldistance = one * 3 / 10;
+        entities = new Entity[1024];
+        entitiesCount = 1024;
+        PlayerPushDistance = 2;
+        projectilegravity = 20;
     }
     float one;
 
@@ -1785,7 +1791,7 @@
         return platform.FloatToInt(MathFloor(player.playerposition.Y + players[LocalPlayerId].EyeHeight));
     }
 
-    float MathFloor(float a)
+    public int MathFloor(float a)
     {
         if (a >= 0)
         {
@@ -2431,9 +2437,579 @@
             }
         }
     }
+
+    ModelData circleModelData;
+    public void Circle3i(float x, float y, float radius)
+    {
+        float angle;
+        GLPushMatrix();
+        GLLoadIdentity();
+
+        int n = 32;
+        if (circleModelData == null)
+        {
+            circleModelData = new ModelData();
+            circleModelData.setMode(DrawModeEnum.Lines);
+            circleModelData.indices = new int[n * 2];
+            circleModelData.xyz = new float[3 * n];
+            circleModelData.rgba = new byte[4 * n];
+            circleModelData.uv = new float[2 * n];
+            circleModelData.indicesCount = n * 2;
+            circleModelData.verticesCount = n;
+        }
+
+        for (int i = 0; i < n; i++)
+        {
+            circleModelData.indices[i * 2] = i;
+            circleModelData.indices[i * 2 + 1] = (i + 1) % (n);
+        }
+        for (int i = 0; i < n; i++)
+        {
+            angle = (i * 2 * Game.GetPi() / n);
+            circleModelData.xyz[i * 3 + 0] = x + (platform.MathCos(angle) * radius);
+            circleModelData.xyz[i * 3 + 1] = y + (platform.MathSin(angle) * radius);
+            circleModelData.xyz[i * 3 + 2] = 0;
+        }
+        for (int i = 0; i < 4 * n; i++)
+        {
+            circleModelData.rgba[i] = 255;
+        }
+        for (int i = 0; i < 2 * n; i++)
+        {
+            circleModelData.uv[i] = 0;
+        }
+
+        platform.DrawModelData(circleModelData);
+
+        GLPopMatrix();
+    }
+
+    internal void DrawAim()
+    {
+        int aimwidth = 32;
+        int aimheight = 32;
+
+        if (CurrentAimRadius() > 1)
+        {
+            float fov_ = this.currentfov();
+            Circle3i(Width() / 2, Height() / 2, CurrentAimRadius() * this.fov / fov_);
+        }
+        Draw2dBitmapFile("target.png", Width() / 2 - aimwidth / 2, Height() / 2 - aimheight / 2, aimwidth, aimheight);
+    }
+
+    internal void DrawSkySphere()
+    {
+        if (skyspheretexture == -1)
+        {
+            BoolRef found = new BoolRef();
+            skyspheretexture = platform.LoadTextureFromFile(platform.GetFullFilePath("skysphere.png", found));
+            skyspherenighttexture = platform.LoadTextureFromFile(platform.GetFullFilePath("skyspherenight.png", found));
+        }
+        int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
+        if (terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
+        {
+            texture = skyspheretexture;
+        }
+        skysphere.SkyTexture = texture;
+        skysphere.Draw(currentfov());
+    }
+    internal int totaltimeMilliseconds;
+    internal int lastdrawplayersMilliseconds;
+
+    float bouncespeedmultiply;
+    float walldistance;
+    internal Vector3Ref GrenadeBounce(Vector3Ref oldposition, Vector3Ref newposition, Vector3Ref velocity, float dt)
+    {
+        bool ismoving = velocity.Length() > 100 * dt;
+        float modelheight = walldistance;
+        oldposition.Y += walldistance;
+        newposition.Y += walldistance;
+
+        //Math.Floor() is needed because casting negative values to integer is not floor.
+        Vector3IntRef oldpositioni = Vector3IntRef.Create(MathFloor(oldposition.X),
+            MathFloor(oldposition.Z),
+            MathFloor(oldposition.Y));
+        float playerpositionX = newposition.X;
+        float playerpositionY = newposition.Y;
+        float playerpositionZ = newposition.Z;
+        //left
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z + walldistance;
+            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
+            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
+            if (newposition.Z - oldposition.Z > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Z = -velocity.Z;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Z = oldposition.Z - newposition.Z;
+                }
+            }
+        }
+        //front
+        {
+            float qnewpositionX = newposition.X + walldistance;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
+            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
+            if (newposition.X - oldposition.X > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.X = -velocity.X;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.X = oldposition.X - newposition.X;
+                }
+            }
+        }
+        //top
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y - walldistance;
+            float qnewpositionZ = newposition.Z;
+            int x = MathFloor(qnewpositionX);
+            int y = MathFloor(qnewpositionZ);
+            int z = MathFloor(qnewpositionY);
+            float a_ = walldistance;
+            bool newfull = (!IsTileEmptyForPhysics(x, y, z))
+                || (qnewpositionX - MathFloor(qnewpositionX) <= a_ && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
+                || (qnewpositionX - MathFloor(qnewpositionX) >= (1 - a_) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
+                || (qnewpositionZ - MathFloor(qnewpositionZ) <= a_ && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
+                || (qnewpositionZ - MathFloor(qnewpositionZ) >= (1 - a_) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
+            if (newposition.Y - oldposition.Y < 0)
+            {
+                if (newfull)
+                {
+                    velocity.Y = -velocity.Y;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Y = oldposition.Y - newposition.Y;
+                }
+            }
+        }
+        //right
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z - walldistance;
+            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
+            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
+            if (newposition.Z - oldposition.Z < 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Z = -velocity.Z;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Z = oldposition.Z - newposition.Z;
+                }
+            }
+        }
+        //back
+        {
+            float qnewpositionX = newposition.X - walldistance;
+            float qnewpositionY = newposition.Y;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY))
+            && IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY) + 1);
+            if (newposition.X - oldposition.X < 0)
+            {
+                if (!newempty)
+                {
+                    velocity.X = -velocity.X;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.X = oldposition.X - newposition.X;
+                }
+            }
+        }
+        //bottom
+        {
+            float qnewpositionX = newposition.X;
+            float qnewpositionY = newposition.Y + modelheight;
+            float qnewpositionZ = newposition.Z;
+            bool newempty = IsTileEmptyForPhysics(MathFloor(qnewpositionX), MathFloor(qnewpositionZ), MathFloor(qnewpositionY));
+            if (newposition.Y - oldposition.Y > 0)
+            {
+                if (!newempty)
+                {
+                    velocity.Y = -velocity.Y;
+                    velocity.X *= bouncespeedmultiply;
+                    velocity.Y *= bouncespeedmultiply;
+                    velocity.Z *= bouncespeedmultiply;
+                    if (ismoving)
+                    {
+                        AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
+                    }
+                    //playerposition.Y = oldposition.Y - newposition.Y;
+                }
+            }
+        }
+        //ok:
+        playerpositionY -= walldistance;
+        return Vector3Ref.Create(playerpositionX, playerpositionY, playerpositionZ);
+    }
+
+    internal Entity[] entities;
+    internal int entitiesCount;
+
+    internal void EntityExpire(float dt)
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity entity = entities[i];
+            if (entity == null) { continue; }
+            if (entity.expires == null) { continue; }
+            entity.expires.timeLeft -= dt;
+            if (entity.expires.timeLeft <= 0)
+            {
+                if (entity.grenade != null)
+                {
+                    GrenadeExplosion(i);
+                }
+                entities[i] = null;
+            }
+        }
+    }
+
+    internal void EntityAdd(Entity entity)
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            if (entities[i] == null)
+            {
+                entities[i] = entity;
+                break;
+            }
+        }
+    }
+
+    internal void GetEntitiesPush(Vector3Ref push)
+    {
+        float LocalPlayerPositionX = player.playerposition.X;
+        float LocalPlayerPositionY = player.playerposition.Y;
+        float LocalPlayerPositionZ = player.playerposition.Z;
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity entity = entities[i];
+            if (entity == null) { continue; }
+            if (entity.push == null) { continue; }
+            float kposX = DeserializeFloat(entity.push.XFloat);
+            float kposY = DeserializeFloat(entity.push.ZFloat);
+            float kposZ = DeserializeFloat(entity.push.YFloat);
+            if (entity.push.IsRelativeToPlayerPosition != 0)
+            {
+                kposX += LocalPlayerPositionX;
+                kposY += LocalPlayerPositionY;
+                kposZ += LocalPlayerPositionZ;
+            }
+            float dist = Dist(kposX, kposY, kposZ, LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ);
+            if (dist < DeserializeFloat(entity.push.RangeFloat))
+            {
+                float diffX = LocalPlayerPositionX - kposX;
+                float diffY = LocalPlayerPositionY - kposY;
+                float diffZ = LocalPlayerPositionZ - kposZ;
+                push.X += diffX;
+                push.Y += diffY;
+                push.Z += diffZ;
+            }
+        }
+    }
+
+    float PlayerPushDistance;
+    internal void GetPlayerPush(Vector3Ref push)
+    {
+        float LocalPlayerPositionX = player.playerposition.X;
+        float LocalPlayerPositionY = player.playerposition.Y;
+        float LocalPlayerPositionZ = player.playerposition.Z;
+        for (int i = 0; i < playersCount; i++)
+        {
+            if (players[i] == null)
+            {
+                continue;
+            }
+            float zero = 0;
+            float nan = zero / zero;
+            Player p = players[i];
+            if ((!p.PositionLoaded) ||
+                (i == this.LocalPlayerId) ||
+                (p.PositionX == LocalPlayerPositionX
+                  && p.PositionY == LocalPlayerPositionY
+                  && p.PositionZ == LocalPlayerPositionZ)
+                 || (LocalPlayerPositionX == nan))
+            {
+                continue;
+            }
+            if (Dist(p.PositionX, p.PositionY, p.PositionZ, LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ) < PlayerPushDistance)
+            {
+                float diffX = LocalPlayerPositionX - p.PositionX;
+                float diffY = LocalPlayerPositionY - p.PositionY;
+                float diffZ = LocalPlayerPositionZ - p.PositionZ;
+                push.X += diffX;
+                push.Y += diffY;
+                push.Z += diffZ;
+            }
+        }
+    }
+
+    internal void DrawSprites()
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity entity = entities[i];
+            if (entity == null) { continue; }
+            if (entity.sprite == null) { continue; }
+            Sprite b = entity.sprite;
+            GLMatrixModeModelView();
+            GLPushMatrix();
+            GLTranslate(b.positionX, b.positionY, b.positionZ);
+            GLRotate(0 - player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+            GLRotate(0 - player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+            GLScale((one * 2 / 100), (one * 2 / 100), (one * 2 / 100));
+            GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
+            //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
+            IntRef n = null;
+            if (b.animationcount > 0)
+            {
+                float progress = one - (entity.expires.timeLeft / entity.expires.totalTime);
+                n = IntRef.Create(platform.FloatToInt(progress * (b.animationcount * b.animationcount - 1)));
+            }
+            Draw2dTexture(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
+            GLPopMatrix();
+        }
+    }
+
+    float projectilegravity;
+
+    internal void UpdateGrenade(int grenadeEntityId, float dt)
+    {
+        float LocalPlayerPositionX = player.playerposition.X;
+        float LocalPlayerPositionY = player.playerposition.Y;
+        float LocalPlayerPositionZ = player.playerposition.Z;
+
+        Entity grenadeEntity = entities[grenadeEntityId];
+        Sprite grenadeSprite = grenadeEntity.sprite;
+        Grenade_ grenade = grenadeEntity.grenade;
+
+        float oldposX = grenadeEntity.sprite.positionX;
+        float oldposY = grenadeSprite.positionY;
+        float oldposZ = grenadeSprite.positionZ;
+        float newposX = grenadeSprite.positionX + grenade.velocityX * dt;
+        float newposY = grenadeSprite.positionY + grenade.velocityY * dt;
+        float newposZ = grenadeSprite.positionZ + grenade.velocityZ * dt;
+        grenade.velocityY += -projectilegravity * dt;
+
+        Vector3Ref velocity = Vector3Ref.Create(grenade.velocityX, grenade.velocityY, grenade.velocityZ);
+        Vector3Ref bouncePosition = GrenadeBounce(Vector3Ref.Create(oldposX, oldposY, oldposZ), Vector3Ref.Create(newposX, newposY, newposZ), velocity, dt);
+        grenade.velocityX = velocity.X;
+        grenade.velocityY = velocity.Y;
+        grenade.velocityZ = velocity.Z;
+        grenadeSprite.positionX = bouncePosition.X;
+        grenadeSprite.positionY = bouncePosition.Y;
+        grenadeSprite.positionZ = bouncePosition.Z;
+    }
+
+    void GrenadeExplosion(int grenadeEntityId)
+    {
+        float LocalPlayerPositionX = player.playerposition.X;
+        float LocalPlayerPositionY = player.playerposition.Y;
+        float LocalPlayerPositionZ = player.playerposition.Z;
+
+        Entity grenadeEntity = entities[grenadeEntityId];
+        Sprite grenadeSprite = grenadeEntity.sprite;
+        Grenade_ grenade = grenadeEntity.grenade;
+
+        AudioPlayAt("grenadeexplosion.ogg", grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
+
+        {
+            Entity entity = new Entity();
+
+            Sprite spritenew = new Sprite();
+            spritenew.image = "ani5.jpg";
+            spritenew.positionX = grenadeSprite.positionX;
+            spritenew.positionY = grenadeSprite.positionY + 1;
+            spritenew.positionZ = grenadeSprite.positionZ;
+            spritenew.size = 200;
+            spritenew.animationcount = 4;
+
+            entity.sprite = spritenew;
+            entity.expires = Expires.Create(1);
+            EntityAdd(entity);
+        }
+
+        {
+            Packet_ServerExplosion explosion = new Packet_ServerExplosion();
+            explosion.XFloat = SerializeFloat(grenadeSprite.positionX);
+            explosion.YFloat = SerializeFloat(grenadeSprite.positionZ);
+            explosion.ZFloat = SerializeFloat(grenadeSprite.positionY);
+            explosion.RangeFloat = blocktypes[grenade.block].ExplosionRangeFloat;
+            explosion.IsRelativeToPlayerPosition = 0;
+            explosion.TimeFloat = blocktypes[grenade.block].ExplosionTimeFloat;
+
+            Entity entity = new Entity();
+            entity.push = explosion;
+            entity.expires = new Expires();
+            entity.expires.timeLeft = DeserializeFloat(blocktypes[grenade.block].ExplosionTimeFloat);
+            EntityAdd(entity);
+        }
+
+        float dist = Dist(LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ, grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
+        float dmg = (1 - dist / DeserializeFloat(blocktypes[grenade.block].ExplosionRangeFloat)) * DeserializeFloat(blocktypes[grenade.block].DamageBodyFloat);
+        if (dmg > 0)
+        {
+            ApplyDamageToPlayer(platform.FloatToInt(dmg), Packet_DeathReasonEnum.Explosion, grenade.sourcePlayer);
+        }
+    }
+
+    internal void UpdateBullets(float dt)
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity entity = entities[i];
+            if (entity == null) { continue; }
+            if (entity.bullet == null) { continue; }
+
+            Bullet_ b = entity.bullet;
+            if (b.progress < 1)
+            {
+                b.progress = 1;
+            }
+
+            float dirX = b.toX - b.fromX;
+            float dirY = b.toY - b.fromY;
+            float dirZ = b.toZ - b.fromZ;
+            float length = Dist(0, 0, 0, dirX, dirY, dirZ);
+            dirX /= length;
+            dirY /= length;
+            dirZ /= length;
+
+            float posX = b.fromX;
+            float posY = b.fromY;
+            float posZ = b.fromZ;
+            posX += dirX * (b.progress + b.speed * dt);
+            posY += dirY * (b.progress + b.speed * dt);
+            posZ += dirZ * (b.progress + b.speed * dt);
+            b.progress += b.speed * dt;
+
+            entity.sprite.positionX = posX;
+            entity.sprite.positionY = posY;
+            entity.sprite.positionZ = posZ;
+
+            if (b.progress > length)
+            {
+                entities[i] = null;
+            }
+        }
+    }
+
+    internal Entity CreateBulletEntity(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, float speed)
+    {
+        Entity entity = new Entity();
+
+        Bullet_ bullet = new Bullet_();
+        bullet.fromX = fromX;
+        bullet.fromY = fromY;
+        bullet.fromZ = fromZ;
+        bullet.toX = toX;
+        bullet.toY = toY;
+        bullet.toZ = toZ;
+        bullet.speed = speed;
+        entity.bullet = bullet;
+
+        entity.sprite = new Sprite();
+        entity.sprite.image = "Sponge.png";
+        entity.sprite.size = 4;
+        entity.sprite.animationcount = 0;
+
+        return entity;
+    }
 }
 
-public class PlayerInterpolationState
+public class Sprite
+{
+    public Sprite()
+    {
+        size = 40;
+    }
+    internal float positionX;
+    internal float positionY;
+    internal float positionZ;
+    internal string image;
+    internal int size;
+    internal int animationcount;
+}
+
+public class PlayerDrawInfo
+{
+    public PlayerDrawInfo()
+    {
+        anim = new AnimationState();
+        interpolation = new NetworkInterpolation();
+    }
+    internal AnimationState anim;
+    internal NetworkInterpolation interpolation;
+    internal float lastrealposX;
+    internal float lastrealposY;
+    internal float lastrealposZ;
+    internal float lastcurposX;
+    internal float lastcurposY;
+    internal float lastcurposZ;
+    internal byte lastrealheading;
+    internal byte lastrealpitch;
+    internal float velocityX;
+    internal float velocityY;
+    internal float velocityZ;
+}
+
+public class PlayerInterpolate : IInterpolation
+{
+    internal GamePlatform platform;
+    public override InterpolatedObject Interpolate(InterpolatedObject a, InterpolatedObject b, float progress)
+    {
+        PlayerInterpolationState aa = platform.CastToPlayerInterpolationState(a);
+        PlayerInterpolationState bb = platform.CastToPlayerInterpolationState(b);
+        PlayerInterpolationState cc = new PlayerInterpolationState();
+        cc.positionX = aa.positionX + (bb.positionX - aa.positionX) * progress;
+        cc.positionY = aa.positionY + (bb.positionY - aa.positionY) * progress;
+        cc.positionZ = aa.positionZ + (bb.positionZ - aa.positionZ) * progress;
+        cc.heading = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress));
+        cc.pitch = Game.IntToByte(AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress));
+        return cc;
+    }
+}
+
+public class PlayerInterpolationState : InterpolatedObject
 {
     internal float positionX;
     internal float positionY;
@@ -2454,10 +3030,27 @@ public class Bullet_
     internal float progress;
 }
 
-public class Explosion_
+public class Expires
 {
-    internal int dateMilliseconds;
-    internal Packet_ServerExplosion explosion;
+    internal static Expires Create(float p)
+    {
+        Expires expires = new Expires();
+        expires.totalTime = p;
+        expires.timeLeft = p;
+        return expires;
+    }
+
+    internal float totalTime;
+    internal float timeLeft;
+}
+
+public class Entity
+{
+    internal Expires expires;
+    internal Packet_ServerExplosion push;
+    internal Sprite sprite;
+    internal Grenade_ grenade;
+    internal Bullet_ bullet;
 }
 
 public class DictionaryVector3Float
@@ -3005,17 +3598,12 @@ public enum PlayerType
     Monster
 }
 
-public class Projectile_
+public class Grenade_
 {
-    internal float positionX;
-    internal float positionY;
-    internal float positionZ;
     internal float velocityX;
     internal float velocityY;
     internal float velocityZ;
-    internal int startMilliseconds;
     internal int block;
-    internal float explodesafter;
     internal int sourcePlayer;
 }
 

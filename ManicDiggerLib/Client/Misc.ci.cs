@@ -454,7 +454,7 @@ public class Ping_
         return false;
     }
 
-    internal float RoundtripTimeTotalMilliseconds()
+    internal int RoundtripTimeTotalMilliseconds()
     {
         return RoundtripTimeMilliseconds;
     }

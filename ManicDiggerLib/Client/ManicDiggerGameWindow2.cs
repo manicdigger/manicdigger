@@ -560,5 +560,61 @@ namespace ManicDigger
         {
             game.DrawAmmo();
         }
+        void Circle3i(float x, float y, float radius)
+        {
+            game.Circle3i(x, y, radius);
+        }
+        private void DrawAim()
+        {
+            game.DrawAim();
+        }
+        private void DrawSkySphere()
+        {
+            game.DrawSkySphere();
+        }
+        int totaltimeMilliseconds { get { return game.totaltimeMilliseconds; } set { game.totaltimeMilliseconds = value; } }
+        int lastdrawplayersMilliseconds { get { return game.lastdrawplayersMilliseconds; } set { game.lastdrawplayersMilliseconds = value; } }
+        int MathFloor(float p)
+        {
+            return game.MathFloor(p);
+        }
+        public Vector3Ref GrenadeBounce(Vector3Ref oldposition, Vector3Ref newposition, Vector3Ref velocity, float dt)
+        {
+            return game.GrenadeBounce(oldposition, newposition, velocity, dt);
+        }
+        void EntityExpire(float dt)
+        {
+            game.EntityExpire(dt);
+        }
+        Entity[] entities { get { return game.entities; } set { game.entities = value; } }
+        int entitiesCount { get { return game.entitiesCount; } set { game.entitiesCount = value; } }
+        void EntityAdd(Entity entity)
+        {
+            game.EntityAdd(entity);
+        }
+        void GetEntitiesPush(Vector3Ref push)
+        {
+            game.GetEntitiesPush(push);
+        }
+        void GetPlayersPush(Vector3Ref push)
+        {
+            game.GetPlayerPush(push);
+        }
+        void DrawSprites()
+        {
+            game.DrawSprites();
+        }
+        void UpdateGrenade(int grenadeEntityId, float dt)
+        {
+            game.UpdateGrenade(grenadeEntityId, dt);
+        }
+        void UpdateBullets(float dt)
+        {
+            game.UpdateBullets(dt);
+        }
+        Entity CreateBulletEntity(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, float speed)
+        {
+            return game.CreateBulletEntity(fromX, fromY, fromZ, toX, toY, toZ, speed);
+        }
     }
 }

@@ -1333,7 +1333,6 @@ namespace ManicDigger
         {
         }
         //DateTime lasttodo;
-        public float PlayerPushDistance = 2f;
         void FrameTick(FrameEventArgs e)
         {
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
@@ -1483,51 +1482,13 @@ namespace ManicDigger
             float pushX = 0;
             float pushY = 0;
             float pushZ = 0;
-            for (int i = 0; i < playersCount; i++)
-            {
-                if (players[i] == null)
-                {
-                    continue;
-                }
-                Player p = players[i];
-                if ((!p.PositionLoaded) ||
-                    (i == this.LocalPlayerId) ||
-                    (p.PositionX == LocalPlayerPosition.X
-                      && p.PositionY == LocalPlayerPosition.Y
-                      && p.PositionZ == LocalPlayerPosition.Z)
-                     || (float.IsNaN(LocalPlayerPosition.X)))
-                {
-                    continue;
-                }
-                if (Dist(p.PositionX, p.PositionY, p.PositionZ, LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z) < PlayerPushDistance)
-                {
-                    float diffX = LocalPlayerPosition.X - p.PositionX;
-                    float diffY = LocalPlayerPosition.Y - p.PositionY;
-                    float diffZ = LocalPlayerPosition.Z - p.PositionZ;
-                    pushX += diffX;
-                    pushY += diffY;
-                    pushZ += diffZ;
-                }
-            }
-            foreach (var k in new List<Explosion_>(explosions))
-            {
-                Vector3 kpos = new Vector3(DeserializeFloat(k.explosion.XFloat), DeserializeFloat(k.explosion.ZFloat), DeserializeFloat(k.explosion.YFloat));
-                if (k.explosion.IsRelativeToPlayerPosition != 0)
-                {
-                    kpos += LocalPlayerPosition;
-                }
-                if ((kpos - LocalPlayerPosition).Length < DeserializeFloat(k.explosion.RangeFloat))
-                {
-                    Vector3 diff = LocalPlayerPosition - kpos;
-                    pushX += diff.X;
-                    pushY += diff.Y;
-                    pushZ += diff.Z;
-                }
-                if ((one * (game.platform.TimeMillisecondsFromStart() - k.dateMilliseconds) / 1000) > DeserializeFloat(k.explosion.TimeFloat))
-                {
-                    explosions.Remove(k);
-                }
-            }
+            Vector3Ref push = new Vector3Ref();
+            GetPlayersPush(push);
+            GetEntitiesPush(push);
+            pushX += push.X;
+            pushY += push.Y;
+            pushZ += push.Z;
+            EntityExpire((float)e.Time);
             MoveInfo move = new MoveInfo();
             {
                 move.movedx = movedx;
@@ -1620,9 +1581,12 @@ namespace ManicDigger
                     reloadblock = -1;
                 }
             }
-            foreach (Projectile_ p in new List<Projectile_>(projectiles))
+            for (int i = 0; i < entitiesCount; i++)
             {
-                UpdateGrenade(p, (float)e.Time);
+                Entity entity = entities[i];
+                if (entity == null) { continue; }
+                if (entity.grenade == null) { continue; }
+                UpdateGrenade(i, (float)e.Time);
             }
         }
 
@@ -1744,16 +1708,7 @@ namespace ManicDigger
         {
             game.UpdateMouseViewportControl(dt);
         }
-        class Sprite
-        {
-            public Vector3 position;
-            public int timeMilliseconds;
-            public float timespanSeconds;
-            public string image;
-            public int size = 40;
-            public int animationcount;
-        }
-        List<Sprite> sprites = new List<Sprite>();
+
         private void UpdatePicking()
         {
             if (FollowId() != null)
@@ -2089,7 +2044,15 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.platform.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    Entity entity = new Entity();
+                                    Sprite sprite = new Sprite();
+                                    sprite.positionX = p[0];
+                                    sprite.positionY = p[1];
+                                    sprite.positionZ = p[2];
+                                    sprite.image = "blood.png";
+                                    entity.sprite = sprite;
+                                    entity.expires = Expires.Create(one * 2 / 10);
+                                    EntityAdd(entity);
                                 }
                                 shot.HitPlayer = i;
                                 shot.IsHitHead = 1;
@@ -2102,7 +2065,15 @@ namespace ManicDigger
                             {
                                 if (!isgrenade)
                                 {
-                                    sprites.Add(new Sprite() { position = FloatArrayToVector3(p), timeMilliseconds = game.platform.TimeMillisecondsFromStart(), timespanSeconds = one * 2 / 10, image = "blood.png" });
+                                    Entity entity = new Entity();
+                                    Sprite sprite = new Sprite();
+                                    sprite.positionX = p[0];
+                                    sprite.positionY = p[1];
+                                    sprite.positionZ = p[2];
+                                    sprite.image = "blood.png";
+                                    entity.sprite = sprite;
+                                    entity.expires = Expires.Create(one * 2 / 10);
+                                    EntityAdd(entity);
                                 }
                                 shot.HitPlayer = i;
                                 shot.IsHitHead = 0;
@@ -2115,15 +2086,12 @@ namespace ManicDigger
                     float projectilespeed = DeserializeFloat(game.blocktypes[item.BlockId].ProjectileSpeedFloat);
                     if (projectilespeed == 0)
                     {
-                        Bullet_ b= new Bullet_();
-                        b.fromX = pick.Start[0];
-                        b.fromY = pick.Start[1];
-                        b.fromZ = pick.Start[2];
-                        b.toX = to.X;
-                        b.toY = to.Y;
-                        b.toZ = to.Z;
-                        b.speed = 150;
-                        bullets.Add(b);
+                        {
+                            Entity entity = CreateBulletEntity(
+                              pick.Start[0], pick.Start[1], pick.Start[2],
+                              to.X, to.Y, to.Z, 150);
+                            EntityAdd(entity);
+                        }
                     }
                     else
                     {
@@ -2131,17 +2099,30 @@ namespace ManicDigger
                         v.Normalize();
                         v *= projectilespeed;
                         shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
-                        Projectile_ projectile = new Projectile_();
-                        projectile.positionX = pick.Start[0];
-                        projectile.positionY = pick.Start[1];
-                        projectile.positionZ = pick.Start[2];
-                        projectile.velocityX = v.X;
-                        projectile.velocityY = v.Y;
-                        projectile.velocityZ = v.Z;
-                        projectile.startMilliseconds = game.platform.TimeMillisecondsFromStart();
-                        projectile.block = item.BlockId;
-                        projectile.explodesafter = grenadetime - wait;
-                        projectiles.Add(projectile);
+
+                        {
+                            Entity grenadeEntity = new Entity();
+
+                            Sprite sprite = new Sprite();
+                            sprite.image = "ChemicalGreen.png";
+                            sprite.size = 14;
+                            sprite.animationcount = 0;
+                            sprite.positionX = pick.Start[0];
+                            sprite.positionY = pick.Start[1];
+                            sprite.positionZ = pick.Start[2];
+                            grenadeEntity.sprite = sprite;
+                            
+                            Grenade_ projectile = new Grenade_();
+                            projectile.velocityX = v.X;
+                            projectile.velocityY = v.Y;
+                            projectile.velocityZ = v.Z;
+                            projectile.block = item.BlockId;
+
+                            grenadeEntity.expires = Expires.Create(grenadetime - wait);
+                            
+                            grenadeEntity.grenade = projectile;
+                            EntityAdd(grenadeEntity);
+                        }
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
 
@@ -2445,76 +2426,8 @@ namespace ManicDigger
                     game.DrawLinesAroundSelectedBlock(SelectedBlockPositionX,
                         SelectedBlockPositionY, SelectedBlockPositionZ);
                 }
-                foreach (Sprite b in new List<Sprite>(sprites))
-                {
-                    GLMatrixModeModelView();
-                    Vector3 pos = b.position;
-                    GLPushMatrix();
-                    GLTranslate(pos.X, pos.Y, pos.Z);
-                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
-                    GLScale(0.02f, 0.02f, 0.02f);
-                    GLTranslate(0 - b.size / 2, 0 - b.size / 2, 0);
-                    //d_Draw2d.Draw2dTexture(night ? moontexture : suntexture, 0, 0, ImageSize, ImageSize, null, Color.White);
-                    int? n = null;
-                    if (b.animationcount > 0)
-                    {
-                        n = (int)((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) / b.timespanSeconds
-                            * (b.animationcount * b.animationcount - 1));
-                    }
-                    Draw2dTexture_(GetTexture(b.image), 0, 0, b.size, b.size, n, b.animationcount, Game.ColorFromArgb(255, 255, 255, 255), true);
-                    GLPopMatrix();
-                    if ((one * (game.platform.TimeMillisecondsFromStart() - b.timeMilliseconds) / 1000) > b.timespanSeconds) { sprites.Remove(b); }
-                }
-                foreach (Bullet_ b in new List<Bullet_>(bullets))
-                {
-                    if (b.progress < 1f)
-                    {
-                        b.progress = 1f;
-                    }
-
-                    float dirX = b.toX - b.fromX;
-                    float dirY = b.toY - b.fromY;
-                    float dirZ = b.toZ - b.fromZ;
-                    float length = Dist(0, 0, 0, dirX, dirY, dirZ);
-                    dirX /= length;
-                    dirY /= length;
-                    dirZ /= length;
-                    
-                    float posX = b.fromX;
-                    float posY = b.fromY;
-                    float posZ = b.fromZ;
-                    posX += dirX * (b.progress + b.speed * (float)dt);
-                    posY += dirY * (b.progress + b.speed * (float)dt);
-                    posZ += dirZ * (b.progress + b.speed * (float)dt);
-                    b.progress += b.speed * (float)dt;
-                    GLMatrixModeModelView();
-                    GLPushMatrix();
-                    GLTranslate(posX, posY, posZ);
-                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
-                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
-                    float scale = one * 2 / 100;
-                    GLScale(scale, scale, scale);
-                    int ImageSize = 4;
-                    GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
-                    Draw2dTexture_(GetTexture("Sponge.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
-                    GLPopMatrix();
-                    if (b.progress > length) { bullets.Remove(b); }
-                }
-                foreach (Projectile_ b in new List<Projectile_>(projectiles))
-                {
-                    GLMatrixModeModelView();
-                    GLPushMatrix();
-                    GLTranslate(b.positionX, b.positionY, b.positionZ);
-                    GLRotate(0 - LocalPlayerOrientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
-                    GLRotate(0 - LocalPlayerOrientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
-                    float scale = one * 2 / 100;
-                    GLScale(scale, scale, scale);
-                    int ImageSize = 14;
-                    GLTranslate(0 - ImageSize / 2, 0 - ImageSize / 2, 0);
-                    Draw2dTexture_(GetTexture("ChemicalGreen.png"), 0, 0, ImageSize, ImageSize, null, Color.White, true);
-                    GLPopMatrix();
-                }
+                DrawSprites();
+                UpdateBullets((float)e.Time);
                 if (ENABLE_DRAW_TEST_CHARACTER)
                 {
                     d_CharacterRenderer.DrawCharacter(a, PlayerPositionSpawn.X,
@@ -2618,188 +2531,6 @@ namespace ManicDigger
             }
             return textures1[s];
         }
-
-        float projectilegravity = 20f;
-        private void UpdateGrenade(Projectile_ b, float dt)
-        {
-            float oldposX = b.positionX;
-            float oldposY = b.positionY;
-            float oldposZ = b.positionZ;
-            float newposX = b.positionX + b.velocityX * dt;
-            float newposY = b.positionY + b.velocityY * dt;
-            float newposZ = b.positionZ + b.velocityZ * dt;
-            b.velocityY += -projectilegravity * (float)dt;
-
-            Vector3 velocity = new Vector3(b.velocityX, b.velocityY, b.velocityZ);
-            Vector3 bouncePosition = GrenadeBounce(new Vector3(oldposX, oldposY, oldposZ), new Vector3(newposX, newposY, newposZ), ref velocity, dt);
-            b.velocityX = velocity.X;
-            b.velocityY = velocity.Y;
-            b.velocityZ = velocity.Z;
-            b.positionX = bouncePosition.X;
-            b.positionY = bouncePosition.Y;
-            b.positionZ = bouncePosition.Z;
-            if ((one * (game.platform.TimeMillisecondsFromStart() - b.startMilliseconds) / 1000) > b.explodesafter)
-            {
-                projectiles.Remove(b);
-                AudioPlayAt("grenadeexplosion.ogg", b.positionX, b.positionY, b.positionZ);
-
-                sprites.Add(new Sprite() { timeMilliseconds = game.platform.TimeMillisecondsFromStart(), image = "ani5.jpg", position = new Vector3(b.positionX, b.positionY + 1, b.positionZ), timespanSeconds = 1, size = 200, animationcount = 4 });
-
-                Packet_ServerExplosion explosion = new Packet_ServerExplosion();
-                explosion.XFloat = SerializeFloat(b.positionX);
-                explosion.YFloat = SerializeFloat(b.positionZ);
-                explosion.ZFloat = SerializeFloat(b.positionY);
-                explosion.RangeFloat = game.blocktypes[b.block].ExplosionRangeFloat;
-                explosion.IsRelativeToPlayerPosition = 0;
-                explosion.TimeFloat = game.blocktypes[b.block].ExplosionTimeFloat;
-                explosions.Add(new Explosion_() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = explosion });
-                float dist = Dist(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z, b.positionX, b.positionY, b.positionZ);
-                float dmg = (1 - dist / DeserializeFloat(game.blocktypes[b.block].ExplosionRangeFloat)) * DeserializeFloat(game.blocktypes[b.block].DamageBodyFloat);
-                if ((int)dmg > 0)
-                {
-                    ApplyDamageToPlayer((int)dmg, Packet_DeathReasonEnum.Explosion, b.sourcePlayer);
-                }
-            }
-        }
-
-        float bouncespeedmultiply = 0.5f;
-        public Vector3 GrenadeBounce(Vector3 oldposition, Vector3 newposition, ref Vector3 velocity, float dt)
-        {
-            bool ismoving = velocity.Length > 100f * dt;
-            float modelheight = walldistance;
-            oldposition.Y += walldistance;
-            newposition.Y += walldistance;
-
-            //Math.Floor() is needed because casting negative values to integer is not floor.
-            Vector3i oldpositioni = new Vector3i((int)Math.Floor(oldposition.X),
-                (int)Math.Floor(oldposition.Z),
-                (int)Math.Floor(oldposition.Y));
-            Vector3 playerposition = newposition;
-            //left
-            {
-                var qnewposition = newposition + new Vector3(0, 0, walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
-                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
-                if (newposition.Z - oldposition.Z > 0)
-                {
-                    if (!newempty)
-                    {
-                        velocity.Z = -velocity.Z;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.Z = oldposition.Z - newposition.Z;
-                    }
-                }
-            }
-            //front
-            {
-                var qnewposition = newposition + new Vector3(walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
-                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
-                if (newposition.X - oldposition.X > 0)
-                {
-                    if (!newempty)
-                    {
-                        velocity.X = -velocity.X;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.X = oldposition.X - newposition.X;
-                    }
-                }
-            }
-            //top
-            {
-                var qnewposition = newposition + new Vector3(0, -walldistance, 0);
-                int x = (int)Math.Floor(qnewposition.X);
-                int y = (int)Math.Floor(qnewposition.Z);
-                int z = (int)Math.Floor(qnewposition.Y);
-                float a = walldistance;
-                bool newfull = (!IsTileEmptyForPhysics(x, y, z))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) <= a && (!IsTileEmptyForPhysics(x - 1, y, z)) && (IsTileEmptyForPhysics(x - 1, y, z + 1)))
-                    || (qnewposition.X - Math.Floor(qnewposition.X) >= (1 - a) && (!IsTileEmptyForPhysics(x + 1, y, z)) && (IsTileEmptyForPhysics(x + 1, y, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) <= a && (!IsTileEmptyForPhysics(x, y - 1, z)) && (IsTileEmptyForPhysics(x, y - 1, z + 1)))
-                    || (qnewposition.Z - Math.Floor(qnewposition.Z) >= (1 - a) && (!IsTileEmptyForPhysics(x, y + 1, z)) && (IsTileEmptyForPhysics(x, y + 1, z + 1)));
-                if (newposition.Y - oldposition.Y < 0)
-                {
-                    if (newfull)
-                    {
-                        velocity.Y = -velocity.Y;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.Y = oldposition.Y - newposition.Y;
-                    }
-                }
-            }
-            //right
-            {
-                var qnewposition = newposition + new Vector3(0, 0, -walldistance);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
-                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
-                if (newposition.Z - oldposition.Z < 0)
-                {
-                    if (!newempty)
-                    {
-                        velocity.Z = -velocity.Z;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.Z = oldposition.Z - newposition.Z;
-                    }
-                }
-            }
-            //back
-            {
-                var qnewposition = newposition + new Vector3(-walldistance, 0, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y))
-                && IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y) + 1);
-                if (newposition.X - oldposition.X < 0)
-                {
-                    if (!newempty)
-                    {
-                        velocity.X = -velocity.X;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.X = oldposition.X - newposition.X;
-                    }
-                }
-            }
-            //bottom
-            {
-                var qnewposition = newposition + new Vector3(0, modelheight, 0);
-                bool newempty = IsTileEmptyForPhysics((int)Math.Floor(qnewposition.X), (int)Math.Floor(qnewposition.Z), (int)Math.Floor(qnewposition.Y));
-                if (newposition.Y - oldposition.Y > 0)
-                {
-                    if (!newempty)
-                    {
-                        velocity.Y = -velocity.Y;
-                        velocity *= bouncespeedmultiply;
-                        if (ismoving)
-                        {
-                            AudioPlayAt("grenadebounce.ogg", newposition.X, newposition.Y, newposition.Z);
-                        }
-                        //playerposition.Y = oldposition.Y - newposition.Y;
-                    }
-                }
-            }
-            //ok:
-            playerposition.Y -= walldistance;
-            return playerposition;
-        }
-        float walldistance = 0.3f;
 
         Dictionary<string, int> textures1 = new Dictionary<string, int>();
         bool startedconnecting;
@@ -2910,55 +2641,11 @@ namespace ManicDigger
             return playertexturedefault;
         }
         public PlayerSkinDownloader playerskindownloader { get; set; }
-        private void DrawSkySphere()
-        {
-            if (skyspheretexture == -1)
-            {
-                skyspheretexture = LoadTexture("skysphere.png");
-                skyspherenighttexture = LoadTexture("skyspherenight.png");
-            }
-            int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
-            if (terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
-            {
-                texture = skyspheretexture;
-            }
-            skysphere.SkyTexture = texture;
-            skysphere.Draw(currentfov());
-            return;
-        }
         NetworkInterpolation interpolation = new NetworkInterpolation();
         Dictionary<int, PlayerDrawInfo> playerdrawinfo = new Dictionary<int, PlayerDrawInfo>();
-        class PlayerDrawInfo
-        {
-            public AnimationState anim = new AnimationState();
-            public NetworkInterpolation interpolation = new NetworkInterpolation();
-            public Vector3 lastrealpos;
-            public Vector3 lastcurpos;
-            public byte lastrealheading;
-            public byte lastrealpitch;
-            public Vector3 velocity;
-        }
-        class PlayerInterpolate : IInterpolation
-        {
-            internal GamePlatform platform = new GamePlatformNative();
-            public object Interpolate(object a, object b, float progress)
-            {
-                PlayerInterpolationState aa = a as PlayerInterpolationState;
-                PlayerInterpolationState bb = b as PlayerInterpolationState;
-                PlayerInterpolationState cc = new PlayerInterpolationState();
-                cc.positionX = aa.positionX + (bb.positionX - aa.positionX) * progress;
-                cc.positionY = aa.positionY + (bb.positionY - aa.positionY) * progress;
-                cc.positionZ = aa.positionZ + (bb.positionZ - aa.positionZ) * progress;
-                cc.heading = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.heading, bb.heading, progress);
-                cc.pitch = (byte)AngleInterpolation.InterpolateAngle256(platform, aa.pitch, bb.pitch, progress);
-                return cc;
-            }
-        }
-        double totaltime;
-        double lastdrawplayers;
         private void DrawPlayers(float dt)
         {
-            totaltime += dt;
+            totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
             for (int i = 0; i < playersCount; i++)
             {
                 if (players[i] == null)
@@ -2978,22 +2665,25 @@ namespace ManicDigger
                 {
                     playerdrawinfo[i] = new PlayerDrawInfo();
                     NetworkInterpolation n = new NetworkInterpolation();
-                    n.req = new PlayerInterpolate();
-                    n.DELAY = 0.5f;
+                    PlayerInterpolate playerInterpolate = new PlayerInterpolate();
+                    playerInterpolate.platform = platform;
+                    n.req = playerInterpolate;
+                    n.DELAYMILLISECONDS = 500;
                     n.EXTRAPOLATE = false;
-                    n.EXTRAPOLATION_TIME = 0.3f;
+                    n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
                     playerdrawinfo[i].interpolation = n;
                 }
-                playerdrawinfo[i].interpolation.DELAY = (float)Math.Max(0.1, ((float)ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds() / 1000));
+                playerdrawinfo[i].interpolation.DELAYMILLISECONDS = Game.MaxInt(100, ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
                 PlayerDrawInfo info = playerdrawinfo[i];
                 Vector3 realpos = new Vector3(p.PositionX, p.PositionY, p.PositionZ);
                 bool redraw = false;
-                if (totaltime - lastdrawplayers >= 0.1)
+                if (totaltimeMilliseconds - lastdrawplayersMilliseconds >= 100)
                 {
                     //redraw = true;
-                    lastdrawplayers = totaltime;
+                    lastdrawplayersMilliseconds = totaltimeMilliseconds;
                 }
-                if (realpos != info.lastrealpos
+                if ((!Vec3Equal(realpos.X, realpos.Y, realpos.Z,
+                                info.lastrealposX, info.lastrealposY, info.lastrealposZ))
                     || p.Heading != info.lastrealheading
                     || p.Pitch != info.lastrealpitch
                     || redraw)
@@ -3004,9 +2694,9 @@ namespace ManicDigger
                     state.positionZ = realpos.Z;
                     state.heading = p.Heading;
                     state.pitch = p.Pitch;
-                    info.interpolation.AddNetworkPacket(state, totaltime);
+                    info.interpolation.AddNetworkPacket(state, totaltimeMilliseconds);
                 }
-                var curstate = ((PlayerInterpolationState)info.interpolation.InterpolatedState(totaltime));
+                var curstate = ((PlayerInterpolationState)info.interpolation.InterpolatedState(totaltimeMilliseconds));
                 if (curstate == null)
                 {
                     curstate = new PlayerInterpolationState();
@@ -3019,11 +2709,17 @@ namespace ManicDigger
                     curstate.positionZ = p.PositionZ;
                 }
                 Vector3 curpos = new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
-                info.velocity = curpos - info.lastcurpos;
-                float playerspeed = (info.velocity.Length / dt) * 0.04f;
-                bool moves = curpos != info.lastcurpos;
-                info.lastcurpos = curpos;
-                info.lastrealpos = realpos;
+                info.velocityX = curpos.X - info.lastcurposX;
+                info.velocityY = curpos.Y - info.lastcurposY;
+                info.velocityZ = curpos.Z - info.lastcurposZ;
+                float playerspeed = (Length(info.velocityX, info.velocityY, info.velocityZ) / dt) * 0.04f;
+                bool moves = (!Vec3Equal(curpos.X, curpos.Y, curpos.Z, info.lastcurposX, info.lastcurposY, info.lastcurposZ));
+                info.lastcurposX = curpos.X;
+                info.lastcurposY = curpos.Y;
+                info.lastcurposZ = curpos.Z;
+                info.lastrealposX = realpos.X;
+                info.lastrealposY = realpos.Y;
+                info.lastrealposZ = realpos.Z;
                 info.lastrealheading = p.Heading;
                 info.lastrealpitch = p.Pitch;
                 if (!d_FrustumCulling.SphereInFrustum(curpos.X, curpos.Y, curpos.Z, 3))
@@ -3085,6 +2781,17 @@ namespace ManicDigger
                 GL.Color3(1f, 1f, 1f);
             }
         }
+
+        bool Vec3Equal(float ax, float ay, float az, float bx, float by, float bz)
+        {
+            return ax == bx && ay == by && az == bz;
+        }
+
+        float Length(float x, float y, float z)
+        {
+            return platform.MathSqrt(x * x + y * y + z * z);
+        }
+
         ICharacterRenderer GetCharacterRenderer(string modelfilename)
         {
             if (!MonsterRenderers.ContainsKey(modelfilename))
@@ -3172,7 +2879,6 @@ namespace ManicDigger
         {
             Draw2dBitmapFile_(Path.Combine("gui", "mousecursor.png"), mouse_current.X, mouse_current.Y, 32, 32);
         }
-        Size? aimsize;
         private void Draw2d()
         {
             OrthoMode(Width, Height);
@@ -3286,46 +2992,6 @@ namespace ManicDigger
 
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
 
-        private void DrawAim()
-        {
-            if (aimsize == null)
-            {
-                using (var targetbmp = new Bitmap(d_GetFile.GetFile("target.png")))
-                {
-                    aimsize = targetbmp.Size;
-                }
-            }
-            float aimwidth = aimsize.Value.Width;
-            float aimheight = aimsize.Value.Height;
-
-            if (CurrentAimRadius > 1)
-            {
-                float fov = this.fov;
-                fov = this.currentfov();
-                Circle3i(Width / 2, Height / 2, CurrentAimRadius * this.fov / fov);
-            }
-            Draw2dBitmapFile_("target.png", Width / 2 - aimwidth / 2, Height / 2 - aimheight / 2, aimwidth, aimheight);
-        }
-        void Circle3i(float x, float y, float radius)
-        {
-            float angle;
-            GLPushMatrix();
-            GLLoadIdentity();
-            GL.Disable(EnableCap.Texture2D);
-            GL.Color3(1.0f, 1.0f, 1.0f);
-            GL.LineWidth(1.0f);
-            GL.Begin(BeginMode.LineLoop);
-            int n = 32;
-            for (int i = 0; i < n; i++)
-            {
-                angle = (float)(i * 2 * Math.PI / n);
-                GL.Vertex2(x + (Math.Cos(angle) * radius), y + (Math.Sin(angle) * radius));
-            }
-            GL.End();
-            GL.Enable(EnableCap.Texture2D);
-            GLPopMatrix();
-        }
-
         private void DrawPlayerNames()
         {
             for (int i = 0; i < playersCount; i++)
@@ -3348,7 +3014,7 @@ namespace ManicDigger
                     || Keyboard[GetKey(OpenTK.Input.Key.AltLeft)] || Keyboard[GetKey(OpenTK.Input.Key.AltRight)])
                 {
                     string name = p.Name;
-                    var ppos = playerdrawinfo[kKey].interpolation.InterpolatedState(totaltime);
+                    var ppos = playerdrawinfo[kKey].interpolation.InterpolatedState(totaltimeMilliseconds);
                     if (ppos != null)
                     {
                         var state = ((PlayerInterpolationState)ppos);
@@ -3445,7 +3111,7 @@ namespace ManicDigger
                     {
                         return ToVector3(player.playerposition);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltime));
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltimeMilliseconds));
                     return new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
                 }
                 return ToVector3(player.playerposition);
@@ -3474,7 +3140,7 @@ namespace ManicDigger
                             player.playerorientation.Y,
                             player.playerorientation.Z);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltime));
+                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltimeMilliseconds));
                     return HeadingPitchToOrientation(curstate.heading, curstate.pitch);
                 }
                 return new Vector3(
@@ -4613,15 +4279,14 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Bullet:
-                    Bullet_ bullet = new Bullet_();
-                    bullet.fromX = DeserializeFloat(packet.Bullet.FromXFloat);
-                    bullet.fromY = DeserializeFloat(packet.Bullet.FromYFloat);
-                    bullet.fromZ = DeserializeFloat(packet.Bullet.FromZFloat);
-                    bullet.toX = DeserializeFloat(packet.Bullet.ToXFloat);
-                    bullet.toY = DeserializeFloat(packet.Bullet.ToYFloat);
-                    bullet.toZ = DeserializeFloat(packet.Bullet.ToZFloat);
-                    bullet.speed = DeserializeFloat(packet.Bullet.SpeedFloat);
-                    bullets.Add(bullet);
+                    EntityAdd(CreateBulletEntity(
+                        DeserializeFloat(packet.Bullet.FromXFloat),
+                        DeserializeFloat(packet.Bullet.FromYFloat),
+                        DeserializeFloat(packet.Bullet.FromZFloat),
+                        DeserializeFloat(packet.Bullet.ToXFloat),
+                        DeserializeFloat(packet.Bullet.ToYFloat),
+                        DeserializeFloat(packet.Bullet.ToZFloat),
+                        DeserializeFloat(packet.Bullet.SpeedFloat)));
                     break;
                 case Packet_ServerIdEnum.Ammo:
                     if (!ammostarted)
@@ -4640,21 +4305,39 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Explosion:
-                    explosions.Add(new Explosion_() { dateMilliseconds = game.platform.TimeMillisecondsFromStart(), explosion = packet.Explosion });
+                    {
+                        Entity entity = new Entity();
+                        entity.expires = new Expires();
+                        entity.expires.timeLeft = DeserializeFloat(packet.Explosion.TimeFloat);
+                        entity.push = packet.Explosion;
+                        EntityAdd(entity);
+                    }
                     break;
                 case Packet_ServerIdEnum.Projectile:
-                    Projectile_ projectile = new Projectile_();
-                    projectile.positionX = DeserializeFloat(packet.Projectile.FromXFloat);
-                    projectile.positionY = DeserializeFloat(packet.Projectile.FromYFloat);
-                    projectile.positionZ = DeserializeFloat(packet.Projectile.FromZFloat);
-                    projectile.velocityX = DeserializeFloat(packet.Projectile.VelocityXFloat);
-                    projectile.velocityY = DeserializeFloat(packet.Projectile.VelocityYFloat);
-                    projectile.velocityZ = DeserializeFloat(packet.Projectile.VelocityZFloat);
-                    projectile.startMilliseconds = game.platform.TimeMillisecondsFromStart();
-                    projectile.block = packet.Projectile.BlockId;
-                    projectile.explodesafter = DeserializeFloat(packet.Projectile.ExplodesAfterFloat);
-                    projectile.sourcePlayer = packet.Projectile.SourcePlayerID;
-                    projectiles.Add(projectile);
+                    {
+                        Entity entity = new Entity();
+                        
+                        Sprite sprite = new Sprite();
+                        sprite.image = "ChemicalGreen.png";
+                        sprite.size = 14;
+                        sprite.animationcount = 0;
+                        sprite.positionX = DeserializeFloat(packet.Projectile.FromXFloat);
+                        sprite.positionY = DeserializeFloat(packet.Projectile.FromYFloat);
+                        sprite.positionZ = DeserializeFloat(packet.Projectile.FromZFloat);
+                        entity.sprite = sprite;
+
+                        Grenade_ grenade = new Grenade_();
+                        grenade.velocityX = DeserializeFloat(packet.Projectile.VelocityXFloat);
+                        grenade.velocityY = DeserializeFloat(packet.Projectile.VelocityYFloat);
+                        grenade.velocityZ = DeserializeFloat(packet.Projectile.VelocityZFloat);
+                        grenade.block = packet.Projectile.BlockId;
+                        grenade.sourcePlayer = packet.Projectile.SourcePlayerID;
+                        entity.grenade = grenade;
+
+                        entity.expires = Expires.Create(DeserializeFloat(packet.Projectile.ExplodesAfterFloat));
+
+                        EntityAdd(entity);
+                    }
                     break;
                 default:
                     break;
@@ -4713,11 +4396,8 @@ namespace ManicDigger
             item.ItemId = p.ItemId;
             return item;
         }
-        List<Explosion_> explosions = new List<Explosion_>();
         MemoryStream CurrentChunk = new MemoryStream();
         Packet_BlockType[] NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
-        List<Bullet_> bullets = new List<Bullet_>();
-        List<Projectile_> projectiles = new List<Projectile_>();
         IntRef FollowId()
         {
             return game.FollowId();

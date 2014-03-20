@@ -123,7 +123,6 @@
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\TerrainRenderer.ci.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
-    <Compile Include="ClientCs\Interpolation.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
     <Compile Include="ClientCs\GuiStates\GuiStateCraftingRecipes.cs" />

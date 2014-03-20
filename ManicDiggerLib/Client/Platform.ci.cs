@@ -99,6 +99,7 @@
     public abstract void GlClearDepthBuffer();
     public abstract string PathStorage();
     public abstract string StringReplace(string s, string from, string to);
+    public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
 }
 
 public abstract class RandomCi

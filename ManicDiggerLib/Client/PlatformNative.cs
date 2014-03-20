@@ -1092,6 +1092,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         return s.Replace(from, to);
     }
+
+    public override PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a)
+    {
+        return (PlayerInterpolationState)a;
+    }
 }
 
 public class RandomNative : RandomCi
