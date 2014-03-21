@@ -266,7 +266,7 @@ namespace ManicDigger
         }
         bool IsLava(int blockType)
         {
-            return game.blocktypes[blockType].Name.Contains("Lava"); // todo
+            return game.IsLava(blockType);
         }
         IntRef BlockInHand()
         {
@@ -280,8 +280,6 @@ namespace ManicDigger
         {
             return game.PickCorners(xfract, zfract);
         }
-        Player[] players { get { return game.players; } set { game.players = value; } }
-        int playersCount { get { return game.playersCount; } set { game.playersCount = value; } }
         public void SendPacket(byte[] packet, int packetLength)
         {
             game.SendPacket(packet, packetLength);
@@ -573,7 +571,6 @@ namespace ManicDigger
             game.DrawSkySphere();
         }
         int totaltimeMilliseconds { get { return game.totaltimeMilliseconds; } set { game.totaltimeMilliseconds = value; } }
-        int lastdrawplayersMilliseconds { get { return game.lastdrawplayersMilliseconds; } set { game.lastdrawplayersMilliseconds = value; } }
         int MathFloor(float p)
         {
             return game.MathFloor(p);
@@ -588,17 +585,13 @@ namespace ManicDigger
         }
         Entity[] entities { get { return game.entities; } set { game.entities = value; } }
         int entitiesCount { get { return game.entitiesCount; } set { game.entitiesCount = value; } }
-        void EntityAdd(Entity entity)
+        void EntityAddLocal(Entity entity)
         {
-            game.EntityAdd(entity);
+            game.EntityAddLocal(entity);
         }
         void GetEntitiesPush(Vector3Ref push)
         {
             game.GetEntitiesPush(push);
-        }
-        void GetPlayersPush(Vector3Ref push)
-        {
-            game.GetPlayerPush(push);
         }
         void DrawSprites()
         {
@@ -615,6 +608,39 @@ namespace ManicDigger
         Entity CreateBulletEntity(float fromX, float fromY, float fromZ, float toX, float toY, float toZ, float speed)
         {
             return game.CreateBulletEntity(fromX, fromY, fromZ, toX, toY, toZ, speed);
+        }
+        void InterpolatePositions(float dt)
+        {
+            game.InterpolatePositions(dt);
+        }
+        void SetPlayers()
+        {
+            game.SetPlayers();
+        }
+        bool[] keyboardState { get { return game.keyboardState; } set { game.keyboardState = value; } }
+        void DrawPlayerNames()
+        {
+            game.DrawPlayerNames();
+        }
+        public bool Swimming()
+        {
+            return game.Swimming();
+        }
+        public bool WaterSwimming()
+        {
+            return game.WaterSwimming();
+        }
+        public bool LavaSwimming()
+        {
+            return game.LavaSwimming();
+        }
+        int terraincolor()
+        {
+            return game.terraincolor();
+        }
+        void SetAmbientLight(int color)
+        {
+            game.SetAmbientLight(color);
         }
     }
 }

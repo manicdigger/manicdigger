@@ -357,7 +357,7 @@
         int cx = x / chunksize;
         int cy = y / chunksize;
         int cz = z / chunksize;
-        if (game.IsValidChunkPos(cx, cy, cz, chunksize))
+        if (game.IsValidPos(x, y, z) && game.IsValidChunkPos(cx, cy, cz, chunksize))
         {
             Chunk c = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
             if (c == null

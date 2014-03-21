@@ -74,10 +74,11 @@
         rotationspeed = one * 15 / 100;
         bouncespeedmultiply = one * 5 / 10;
         walldistance = one * 3 / 10;
-        entities = new Entity[1024];
-        entitiesCount = 1024;
+        entities = new Entity[4096];
+        entitiesCount = 4096;
         PlayerPushDistance = 2;
         projectilegravity = 20;
+        keyboardState = new bool[256];
     }
     float one;
 
@@ -1586,18 +1587,16 @@
         terrainRenderer.StartTerrain();
     }
 
-    internal Player[] players;
-    internal int playersCount;
     internal int LocalPlayerId;
 
     internal float GetCharacterEyesHeight()
     {
-        return players[LocalPlayerId].EyeHeight;
+        return entities[LocalPlayerId].player.EyeHeight;
     }
 
     internal void SetCharacterEyesHeight(float value)
     {
-        players[LocalPlayerId].EyeHeight = value;
+        entities[LocalPlayerId].player.EyeHeight = value;
     }
 
     public float EyesPosX() { return player.playerposition.X; }
@@ -1788,7 +1787,7 @@
     }
     int GetPlayerEyesBlockZ()
     {
-        return platform.FloatToInt(MathFloor(player.playerposition.Y + players[LocalPlayerId].EyeHeight));
+        return platform.FloatToInt(MathFloor(player.playerposition.Y + entities[LocalPlayerId].player.EyeHeight));
     }
 
     public int MathFloor(float a)
@@ -2098,24 +2097,25 @@
         }
         else
         {
-            if (players[playerid] == null)
+            if (entities[playerid] == null)
             {
-                players[playerid] = new Player();
-                players[playerid].Name = "invalid";
+                entities[playerid] = new Entity();
+                entities[playerid].player = new Player();
+                entities[playerid].player.Name = "invalid";
                 InvalidPlayerWarning(playerid);
             }
             if (!EnablePlayerUpdatePositionContainsKey(playerid) || EnablePlayerUpdatePosition(playerid))
             {
-                players[playerid].PositionX = realposX;
-                players[playerid].PositionY = realposY;
-                players[playerid].PositionZ = realposZ;
-                players[playerid].PositionLoaded = true;
+                entities[playerid].player.NetworkX = realposX;
+                entities[playerid].player.NetworkY = realposY;
+                entities[playerid].player.NetworkZ = realposZ;
+                entities[playerid].player.PositionLoaded = true;
             }
-            players[playerid].Heading = heading;
-            players[playerid].Pitch = pitch;
-            players[playerid].AnimationHint_.leanleft = leanleft;
-            players[playerid].AnimationHint_.leanright = leanright;
-            players[playerid].LastUpdateMilliseconds = platform.TimeMillisecondsFromStart();
+            entities[playerid].player.NetworkHeading = heading;
+            entities[playerid].player.NetworkPitch = pitch;
+            entities[playerid].player.AnimationHint_.leanleft = leanleft;
+            entities[playerid].player.AnimationHint_.leanright = leanright;
+            entities[playerid].player.LastUpdateMilliseconds = platform.TimeMillisecondsFromStart();
         }
     }
 
@@ -2272,13 +2272,17 @@
 
     internal bool IsAnyPlayerInPos(int blockposX, int blockposY, int blockposZ)
     {
-        for (int i = 0; i < playersCount; i++)
+        for (int i = 0; i < entitiesCount; i++)
         {
-            if (players[i] == null)
+            if (entities[i] == null)
             {
                 continue;
             }
-            Player p = players[i];
+            if (entities[i].player == null)
+            {
+                continue;
+            }
+            Player p = entities[i].player;
             if (p.PositionLoaded)
             {
                 if (IsPlayerInPos(p.PositionX, p.PositionY, p.PositionZ,
@@ -2349,13 +2353,17 @@
     internal string Follow;
     internal IntRef FollowId()
     {
-        for (int i = 0; i < playersCount; i++)
+        for (int i = 0; i < entitiesCount; i++)
         {
-            if (players[i] == null)
+            if (entities[i] == null)
             {
                 continue;
             }
-            Player p = players[i];
+            if (entities[i].player == null)
+            {
+                continue;
+            }
+            Player p = entities[i].player;
             if (p.Name == Follow)
             {
                 return IntRef.Create(i);
@@ -2514,7 +2522,6 @@
         skysphere.Draw(currentfov());
     }
     internal int totaltimeMilliseconds;
-    internal int lastdrawplayersMilliseconds;
 
     float bouncespeedmultiply;
     float walldistance;
@@ -2703,9 +2710,11 @@
         }
     }
 
-    internal void EntityAdd(Entity entity)
+    const int localEntityId = 3000;
+
+    internal void EntityAddLocal(Entity entity)
     {
-        for (int i = 0; i < entitiesCount; i++)
+        for (int i = localEntityId; i < entitiesCount; i++)
         {
             if (entities[i] == null)
             {
@@ -2747,41 +2756,7 @@
         }
     }
 
-    float PlayerPushDistance;
-    internal void GetPlayerPush(Vector3Ref push)
-    {
-        float LocalPlayerPositionX = player.playerposition.X;
-        float LocalPlayerPositionY = player.playerposition.Y;
-        float LocalPlayerPositionZ = player.playerposition.Z;
-        for (int i = 0; i < playersCount; i++)
-        {
-            if (players[i] == null)
-            {
-                continue;
-            }
-            float zero = 0;
-            float nan = zero / zero;
-            Player p = players[i];
-            if ((!p.PositionLoaded) ||
-                (i == this.LocalPlayerId) ||
-                (p.PositionX == LocalPlayerPositionX
-                  && p.PositionY == LocalPlayerPositionY
-                  && p.PositionZ == LocalPlayerPositionZ)
-                 || (LocalPlayerPositionX == nan))
-            {
-                continue;
-            }
-            if (Dist(p.PositionX, p.PositionY, p.PositionZ, LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ) < PlayerPushDistance)
-            {
-                float diffX = LocalPlayerPositionX - p.PositionX;
-                float diffY = LocalPlayerPositionY - p.PositionY;
-                float diffZ = LocalPlayerPositionZ - p.PositionZ;
-                push.X += diffX;
-                push.Y += diffY;
-                push.Z += diffZ;
-            }
-        }
-    }
+    internal float PlayerPushDistance;
 
     internal void DrawSprites()
     {
@@ -2865,7 +2840,7 @@
 
             entity.sprite = spritenew;
             entity.expires = Expires.Create(1);
-            EntityAdd(entity);
+            EntityAddLocal(entity);
         }
 
         {
@@ -2881,7 +2856,7 @@
             entity.push = explosion;
             entity.expires = new Expires();
             entity.expires.timeLeft = DeserializeFloat(blocktypes[grenade.block].ExplosionTimeFloat);
-            EntityAdd(entity);
+            EntityAddLocal(entity);
         }
 
         float dist = Dist(LocalPlayerPositionX, LocalPlayerPositionY, LocalPlayerPositionZ, grenadeSprite.positionX, grenadeSprite.positionY, grenadeSprite.positionZ);
@@ -2953,6 +2928,258 @@
         entity.sprite.animationcount = 0;
 
         return entity;
+    }
+
+    internal void InterpolatePositions(float dt)
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity e = entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+
+            if (e.player.playerDrawInfo == null)
+            {
+                e.player.playerDrawInfo = new PlayerDrawInfo();
+                NetworkInterpolation n = new NetworkInterpolation();
+                PlayerInterpolate playerInterpolate = new PlayerInterpolate();
+                playerInterpolate.platform = platform;
+                n.req = playerInterpolate;
+                n.DELAYMILLISECONDS = 500;
+                n.EXTRAPOLATE = false;
+                n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
+                e.player.playerDrawInfo.interpolation = n;
+            }
+            e.player.playerDrawInfo.interpolation.DELAYMILLISECONDS = Game.MaxInt(100, ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
+            Player p = e.player;
+
+            PlayerDrawInfo info = p.playerDrawInfo;
+            float realposX = p.NetworkX;
+            float realposY = p.NetworkY;
+            float realposZ = p.NetworkZ;
+            if ((!Vec3Equal(realposX, realposY, realposZ,
+                            info.lastrealposX, info.lastrealposY, info.lastrealposZ))
+                || p.Heading != info.lastrealheading
+                || p.Pitch != info.lastrealpitch)
+            {
+                PlayerInterpolationState state = new PlayerInterpolationState();
+                state.positionX = realposX;
+                state.positionY = realposY;
+                state.positionZ = realposZ;
+                state.heading = p.NetworkHeading;
+                state.pitch = p.NetworkPitch;
+                info.interpolation.AddNetworkPacket(state, totaltimeMilliseconds);
+            }
+            PlayerInterpolationState curstate = platform.CastToPlayerInterpolationState(info.interpolation.InterpolatedState(totaltimeMilliseconds));
+            if (curstate == null)
+            {
+                curstate = new PlayerInterpolationState();
+            }
+            //do not interpolate player position if player is controlled by game world
+            if (EnablePlayerUpdatePositionContainsKey(i) && !EnablePlayerUpdatePosition(i))
+            {
+                curstate.positionX = p.NetworkX;
+                curstate.positionY = p.NetworkY;
+                curstate.positionZ = p.NetworkZ;
+            }
+            float curposX = curstate.positionX;
+            float curposY = curstate.positionY;
+            float curposZ = curstate.positionZ;
+            info.velocityX = curposX - info.lastcurposX;
+            info.velocityY = curposY - info.lastcurposY;
+            info.velocityZ = curposZ - info.lastcurposZ;
+            p.moves = (!Vec3Equal(curposX, curposY, curposZ, info.lastcurposX, info.lastcurposY, info.lastcurposZ));
+            info.lastcurposX = curposX;
+            info.lastcurposY = curposY;
+            info.lastcurposZ = curposZ;
+            info.lastrealposX = realposX;
+            info.lastrealposY = realposY;
+            info.lastrealposZ = realposZ;
+            info.lastrealheading = p.Heading;
+            info.lastrealpitch = p.Pitch;
+
+            p.PositionX = curposX;
+            p.PositionY = curposY;
+            p.PositionZ = curposZ;
+            p.Heading = curstate.heading;
+            p.Pitch = curstate.pitch;
+        }
+    }
+
+    bool Vec3Equal(float ax, float ay, float az, float bx, float by, float bz)
+    {
+        return ax == bx && ay == by && az == bz;
+    }
+
+    internal void SetPlayers()
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity e = entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+            if (e.push == null)
+            {
+                e.push = new Packet_ServerExplosion();
+            }
+            e.push.RangeFloat = SerializeFloat(PlayerPushDistance);
+            e.push.XFloat = SerializeFloat(e.player.PositionX);
+            e.push.YFloat = SerializeFloat(e.player.PositionZ);
+            e.push.ZFloat = SerializeFloat(e.player.PositionY);
+
+            if ((!e.player.PositionLoaded) ||
+                (i == this.LocalPlayerId) || (e.player.Name == "")
+                || (e.player.playerDrawInfo == null)
+                || (e.player.playerDrawInfo.interpolation == null))
+            {
+                e.drawName = null;
+            }
+            else
+            {
+                if (e.drawName == null)
+                {
+                    e.drawName = new DrawName();
+                }
+                e.drawName.TextX = e.player.PositionX;
+                e.drawName.TextY = e.player.PositionY + e.player.ModelHeight + one * 8 / 10;
+                e.drawName.TextZ = e.player.PositionZ;
+                e.drawName.Name = e.player.Name;
+                if (e.player.Type == PlayerType.Monster)
+                {
+                    e.drawName.DrawHealth = true;
+                    e.drawName.Health = one * e.player.Health / 20;
+                }
+            }
+        }
+    }
+
+    internal bool[] keyboardState;
+
+    const int KeyAltLeft = 5;
+    const int KeyAltRight = 6;
+    internal void DrawPlayerNames()
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            if (entities[i] == null)
+            {
+                continue;
+            }
+            if (entities[i].drawName == null)
+            {
+                continue;
+            }
+            int kKey = i;
+            DrawName p = entities[i].drawName;
+            //todo if picking
+            if ((Dist(player.playerposition.X, player.playerposition.Y, player.playerposition.Z, p.TextX, p.TextY, p.TextZ) < 20)
+                || keyboardState[KeyAltLeft] || keyboardState[KeyAltRight])
+            {
+                string name = p.Name;
+                {
+                    float posX = p.TextX;
+                    float posY = p.TextY;
+                    float posZ = p.TextZ;
+                    float shadow = (one * MaybeGetLight(platform.FloatToInt(posX), platform.FloatToInt(posZ), platform.FloatToInt(posY))) / maxlight;
+                    //do not interpolate player position if player is controlled by game world
+                    //if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
+                    //{
+                    //    posX = p.NetworkX;
+                    //    posY = p.NetworkY;
+                    //    posZ = p.NetworkZ;
+                    //}
+                    GLPushMatrix();
+                    GLTranslate(posX, posY, posZ);
+                    //if (p.Type == PlayerType.Monster)
+                    //{
+                    //    GLTranslate(0, 1, 0);
+                    //}
+                    GLRotate(-player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0, 1, 0);
+                    GLRotate(-player.playerorientation.X * 360 / (2 * Game.GetPi()), 1, 0, 0);
+                    float scale = one * 2 / 100;
+                    GLScale(scale, scale, scale);
+
+                    //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
+                    //Todo: Can't change text color because text has outline anyway.
+                    if (p.DrawHealth)
+                    {
+                        Draw2dTexture(WhiteTexture(), -26, -11, 52, 12, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+                        Draw2dTexture(WhiteTexture(), -25, -10, 50 * (one * p.Health), 10, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+                    }
+                    FontCi font = new FontCi();
+                    font.family = "Arial";
+                    font.size = 14;
+                    Draw2dText(name, font, -TextSizeWidth(name, 14) / 2, 0, IntRef.Create(Game.ColorFromArgb(255, 255, 255, 255)), true);
+                    //                        GL.Translate(0, 1, 0);
+                    GLPopMatrix();
+                }
+            }
+        }
+    }
+
+    internal bool Swimming()
+    {
+        if (GetPlayerEyesBlock() == -1) { return true; }
+        return d_Data.WalkableType1()[GetPlayerEyesBlock()] == Packet_WalkableTypeEnum.Fluid;
+    }
+
+    internal bool WaterSwimming()
+    {
+        if (GetPlayerEyesBlock() == -1) { return true; }
+        return IsWater(GetPlayerEyesBlock());
+    }
+
+    internal bool LavaSwimming()
+    {
+        return IsLava(GetPlayerEyesBlock());
+    }
+
+    internal int GetPlayerEyesBlock()
+    {
+        float pX = player.playerposition.X;
+        float pY = player.playerposition.Y;
+        float pZ = player.playerposition.Z;
+        pY += entities[LocalPlayerId].player.EyeHeight;
+        if (!IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY)))
+        {
+            if (pY < WaterLevel())
+            {
+                return -1;
+            }
+            return 0;
+        }
+        return GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY));
+    }
+
+    public float WaterLevel() { return MapSizeZ / 2; }
+
+    internal bool IsLava(int blockType)
+    {
+        return platform.StringContains(blocktypes[blockType].Name, "Lava"); // todo
+    }
+
+    internal int terraincolor()
+    {
+        if (WaterSwimming())
+        {
+            return Game.ColorFromArgb(255, 78, 95, 140);
+        }
+        else if (LavaSwimming())
+        {
+            return Game.ColorFromArgb(255, 222, 101, 46);
+        }
+        else
+        {
+            return Game.ColorFromArgb(255, 255, 255, 255);
+        }
+    }
+
+    internal void SetAmbientLight(int color)
+    {
+        int r = Game.ColorR(color);
+        int g = Game.ColorG(color);
+        int b = Game.ColorB(color);
+        platform.GlLightModelAmbient(r, g, b);
     }
 }
 
@@ -3044,6 +3271,16 @@ public class Expires
     internal float timeLeft;
 }
 
+public class DrawName
+{
+    internal float TextX;
+    internal float TextY;
+    internal float TextZ;
+    internal string Name;
+    internal bool DrawHealth;
+    internal float Health;
+}
+
 public class Entity
 {
     internal Expires expires;
@@ -3051,6 +3288,8 @@ public class Entity
     internal Sprite sprite;
     internal Grenade_ grenade;
     internal Bullet_ bullet;
+    internal Player player;
+    internal DrawName drawName;
 }
 
 public class DictionaryVector3Float
@@ -3590,6 +3829,13 @@ public class Player
     internal string Texture;
     internal float EyeHeight;
     internal float ModelHeight;
+    internal float NetworkX;
+    internal float NetworkY;
+    internal float NetworkZ;
+    internal byte NetworkHeading;
+    internal byte NetworkPitch;
+    internal PlayerDrawInfo playerDrawInfo;
+    internal bool moves;
 }
 
 public enum PlayerType

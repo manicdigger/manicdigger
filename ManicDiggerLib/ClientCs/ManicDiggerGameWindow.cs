@@ -23,7 +23,6 @@ namespace ManicDigger
 {
     //This is the main game class.
     public partial class ManicDiggerGameWindow : IMyGameWindow,
-        IClients,
         IMapStorage,
         ICurrentShadows, IResetMap
     {
@@ -38,8 +37,6 @@ namespace ManicDigger
             PerformanceInfo = new DictionaryStringString();
             AudioEnabled = true;
             OverheadCamera_cameraEye = new Vector3Ref();
-            players = new Player[2048];
-            playersCount = 2048;
         }
         float one;
         public void Start()
@@ -91,7 +88,6 @@ namespace ManicDigger
             w.BeforeRenderFrame += (a, b) => { frustumculling.CalcFrustumEquations(); };
             //w.d_Map = clientgame.mapforphysics;
             w.d_Physics = physics;
-            w.d_Clients = clientgame;
             w.d_Data = gamedata;
             w.d_DataMonsters = new GameDataMonsters();
             w.d_GetFile = getfile;
@@ -214,7 +210,6 @@ namespace ManicDigger
         public GlWindow d_GlWindow;
         public The3d d_The3d;
         public Game d_Map;
-        public IClients d_Clients;
 
         public GetFileStream d_GetFile;
         public ICharacterRenderer d_CharacterRenderer;
@@ -429,13 +424,17 @@ namespace ManicDigger
                 //Handles player name autocomplete in chat
                 if (c == '\t' && d_HudChat.GuiTypingBuffer.Trim() != "")
                 {
-                    for (int i = 0; i < playersCount; i++)
+                    for (int i = 0; i < entitiesCount; i++)
                     {
-                        if (players[i] == null)
+                        if (entities[i] == null)
                         {
                             continue;
                         }
-                        Player p = players[i];
+                        if (entities[i].player == null)
+                        {
+                            continue;
+                        }
+                        Player p = entities[i].player;
                         if (p.Type != PlayerType.Player)
                         {
                             continue;
@@ -500,12 +499,6 @@ namespace ManicDigger
         }
         public int TPP_CAMERA_DISTANCE_MIN = 1;
         public int TPP_CAMERA_DISTANCE_MAX = 10;
-        private static void SetAmbientLight(Color c)
-        {
-            float mult = 1f;
-            float[] global_ambient = new float[] { (float)c.R / 255f * mult, (float)c.G / 255f * mult, (float)c.B / 255f * mult, 1f };
-            GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
-        }
         public void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             SendLeave(Packet_LeaveReasonEnum.Leave);
@@ -598,13 +591,17 @@ namespace ManicDigger
                     else if (cmd == "clients")
                     {
                         Log("Clients:");
-                        for (int i = 0; i < playersCount; i++)
+                        for (int i = 0; i < entitiesCount; i++)
                         {
-                            if (players[i] == null)
+                            if (entities[i] == null)
                             {
                                 continue;
                             }
-                            Log(string.Format("{0} {1}", i, players[i].Name));
+                            if (entities[i].player == null)
+                            {
+                                continue;
+                            }
+                            Log(string.Format("{0} {1}", i, entities[i].player.Name));
                         }
                     }
                     else if (cmd == "movespeed")
@@ -686,6 +683,7 @@ namespace ManicDigger
         OpenTK.Input.KeyboardKeyEventArgs keyeventup;
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            keyboardState[(int)e.Key] = false;
             for (int i = 0; i < clientmodsCount; i++)
             {
                 KeyEventArgs args_ = new KeyEventArgs();
@@ -702,6 +700,7 @@ namespace ManicDigger
         
         void Keyboard_KeyDown(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
+            keyboardState[(int)e.Key] = true;
             for (int i = 0; i < clientmodsCount; i++)
             {
                 KeyEventArgs args_ = new KeyEventArgs();
@@ -1345,7 +1344,7 @@ namespace ManicDigger
             }
             NetworkProcess();
             if (guistate == GuiState.MapLoading) { return; }
-
+            SetPlayers();
             bool angleup = false;
             bool angledown = false;
             float overheadcameraanglemovearea = 0.05f;
@@ -1418,7 +1417,7 @@ namespace ManicDigger
                         if (!localplayeranimationhint.leanleft && !localplayeranimationhint.leanright) { localstance = 0; }
                     }
                 }
-                if (ENABLE_FREEMOVE || Swimming)
+                if (ENABLE_FREEMOVE || Swimming())
                 {
                     if (GuiTyping == TypingState.None && Keyboard[GetKey(OpenTK.Input.Key.Space)])
                     {
@@ -1452,7 +1451,7 @@ namespace ManicDigger
             IntRef blockunderplayer = BlockUnderPlayer();
             {
                 //slippery walk on ice and when swimming
-                if ((blockunderplayer != null && d_Data.IsSlipperyWalk()[blockunderplayer.value]) || Swimming)
+                if ((blockunderplayer != null && d_Data.IsSlipperyWalk()[blockunderplayer.value]) || Swimming())
                 {
                     acceleration = new Acceleration();
                     {
@@ -1483,7 +1482,6 @@ namespace ManicDigger
             float pushY = 0;
             float pushZ = 0;
             Vector3Ref push = new Vector3Ref();
-            GetPlayersPush(push);
             GetEntitiesPush(push);
             pushX += push.X;
             pushY += push.Y;
@@ -1500,14 +1498,14 @@ namespace ManicDigger
                 move.movespeednow = movespeednow;
                 move.moveup = moveup;
                 move.movedown = movedown;
-                move.Swimming = Swimming;
+                move.Swimming = Swimming();
                 move.wantsjump = wantsjump;
                 move.shiftkeydown = shiftkeydown;
             }
             BoolRef soundnow = new BoolRef();
             if (FollowId() == null)
             {
-                d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), Players[LocalPlayerId].ModelHeight);
+                d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
                 if (soundnow.value)
                 {
                     UpdateWalkSound(-1);
@@ -1526,7 +1524,7 @@ namespace ManicDigger
                     move.movedx = 0;
                     move.movedy = 0;
                     move.wantsjump = false;
-                    d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), players[LocalPlayerId].ModelHeight);
+                    d_Physics.Move(player, move, (float)e.Time, soundnow, Vector3Ref.Create(pushX, pushY, pushZ),  entities[LocalPlayerId].player.ModelHeight);
                 }
             }
             if (guistate == GuiState.CraftingRecipes)
@@ -1603,7 +1601,7 @@ namespace ManicDigger
         private void UpdateBlockDamageToPlayer()
         {
             var p = LocalPlayerPosition;
-            p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
+            p += new Vector3(0, entities[LocalPlayerId].player.EyeHeight, 0);
             int block1 = 0;
             int block2 = 0;
             if (d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
@@ -1627,7 +1625,7 @@ namespace ManicDigger
             int deltaTime = (int)(one * (game.platform.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
             if (deltaTime >= 1000)
             {
-                if (WaterSwimming)
+                if (WaterSwimming())
                 {
                     PlayerStats.CurrentOxygen -= 1;
                     if (PlayerStats.CurrentOxygen <= 0)
@@ -1995,13 +1993,17 @@ namespace ManicDigger
                     shot.ToZ = SerializeFloat(to.Z);
                     shot.HitPlayer = -1;
 
-                    for(int i = 0; i < playersCount; i++)
+                    for(int i = 0; i < entitiesCount; i++)
                     {
-                        if (players[i] == null)
+                        if (entities[i] == null)
                         {
                             continue;
                         }
-                        Player p_ = players[i];
+                        if (entities[i].player == null)
+                        {
+                            continue;
+                        }
+                        Player p_ = entities[i].player;
                         if (!p_.PositionLoaded)
                         {
                             continue;
@@ -2036,7 +2038,7 @@ namespace ManicDigger
                         headbox.AddPoint(feetpos.X + r, feetpos.Y + h + headsize, feetpos.Z + r);
 
                         float[] p;
-                        Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, players[LocalPlayerId].ModelHeight, 0);
+                        Vector3 localeyepos = LocalPlayerPosition + new Vector3(0, entities[LocalPlayerId].player.ModelHeight, 0);
                         if ((p = Intersection.CheckLineBoxExact(pick, headbox)) != null)
                         {
                             //do not allow to shoot through terrain
@@ -2052,7 +2054,7 @@ namespace ManicDigger
                                     sprite.image = "blood.png";
                                     entity.sprite = sprite;
                                     entity.expires = Expires.Create(one * 2 / 10);
-                                    EntityAdd(entity);
+                                    EntityAddLocal(entity);
                                 }
                                 shot.HitPlayer = i;
                                 shot.IsHitHead = 1;
@@ -2073,7 +2075,7 @@ namespace ManicDigger
                                     sprite.image = "blood.png";
                                     entity.sprite = sprite;
                                     entity.expires = Expires.Create(one * 2 / 10);
-                                    EntityAdd(entity);
+                                    EntityAddLocal(entity);
                                 }
                                 shot.HitPlayer = i;
                                 shot.IsHitHead = 0;
@@ -2090,7 +2092,7 @@ namespace ManicDigger
                             Entity entity = CreateBulletEntity(
                               pick.Start[0], pick.Start[1], pick.Start[2],
                               to.X, to.Y, to.Z, 150);
-                            EntityAdd(entity);
+                            EntityAddLocal(entity);
                         }
                     }
                     else
@@ -2121,7 +2123,7 @@ namespace ManicDigger
                             grenadeEntity.expires = Expires.Create(grenadetime - wait);
                             
                             grenadeEntity.grenade = projectile;
-                            EntityAdd(grenadeEntity);
+                            EntityAddLocal(grenadeEntity);
                         }
                     }
                     SendPacketClient(new Packet_Client() { Id = Packet_ClientIdEnum.Shot, Shot = shot });
@@ -2326,7 +2328,7 @@ namespace ManicDigger
         double t = 0;
         //Vector3 oldplayerposition;
 
-        public float CharacterModelHeight { get { return Players[LocalPlayerId].ModelHeight; } }
+        public float CharacterModelHeight { get { return entities[LocalPlayerId].player.ModelHeight; } }
         public Color clearcolor = Color.FromArgb(171, 202, 228);
         public Stopwatch framestopwatch;
         public void OnRenderFrame(FrameEventArgs e)
@@ -2381,7 +2383,7 @@ namespace ManicDigger
                     ActiveMaterial += 10;
                 }
             }
-            SetAmbientLight(terraincolor);
+            SetAmbientLight(terraincolor());
             //const float alpha = accumulator / dt;
             //Vector3 currentPlayerPosition = currentState * alpha + previousState * (1.0f - alpha);
             UpdateTitleFps(e);
@@ -2416,7 +2418,8 @@ namespace ManicDigger
                     SetFog();
                 }
                 d_SunMoonRenderer.Draw((float)e.Time);
-                
+
+                InterpolatePositions((float)e.Time);
                 DrawPlayers((float)e.Time);
                 terrainRenderer.DrawTerrain();
                 DrawPlayerNames();
@@ -2479,7 +2482,7 @@ namespace ManicDigger
                 }
             }
         draw2d:
-            SetAmbientLight(Color.White);
+            SetAmbientLight(Game.ColorFromArgb(255, 255, 255, 255));
             Draw2d();
 
             for (int i = 0; i < clientmodsCount; i++)
@@ -2579,12 +2582,12 @@ namespace ManicDigger
             {
                 playertexturedefault = LoadTexture(Game.playertexturedefaultfilename);
             }
-            Player player = this.players[playerid];
+            Player player = this.entities[playerid].player;
             if (player.Type == PlayerType.Monster)
             {
                 if (!monstertextures.ContainsKey(player.MonsterType))
                 {
-                    string skinfile = d_DataMonsters.MonsterSkin[this.players[playerid].MonsterType];
+                    string skinfile = d_DataMonsters.MonsterSkin[this.entities[playerid].player.MonsterType];
                     using (Bitmap bmp = new Bitmap(d_GetFile.GetFile(skinfile)))
                     {
                         monstertextures[player.MonsterType] = d_The3d.LoadTexture(bmp);
@@ -2608,13 +2611,17 @@ namespace ManicDigger
                 return diskplayertextures[player.Texture];
             }
             List<string> players_ = new List<string>();
-            for (int i = 0; i < playersCount; i++)
+            for (int i = 0; i < entitiesCount; i++)
             {
-                if (players[i] == null)
+                if (entities[i] == null)
                 {
                     continue;
                 }
-                Player p = players[i];
+                if (entities[i].player == null)
+                {
+                    continue;
+                }
+                Player p = entities[i].player;
                 if (!p.Name.Equals("Local", StringComparison.InvariantCultureIgnoreCase))
                 {
                     players_.Add(p.Name);
@@ -2628,7 +2635,7 @@ namespace ManicDigger
             }
             else
             {
-                playername = d_Clients.Players[playerid].Name;
+                playername = entities[playerid].player.Name;
             }
             if (playername == null)
             {
@@ -2641,18 +2648,20 @@ namespace ManicDigger
             return playertexturedefault;
         }
         public PlayerSkinDownloader playerskindownloader { get; set; }
-        NetworkInterpolation interpolation = new NetworkInterpolation();
-        Dictionary<int, PlayerDrawInfo> playerdrawinfo = new Dictionary<int, PlayerDrawInfo>();
         private void DrawPlayers(float dt)
         {
             totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
-            for (int i = 0; i < playersCount; i++)
+            for (int i = 0; i < entitiesCount; i++)
             {
-                if (players[i] == null)
+                if (entities[i] == null)
                 {
                     continue;
                 }
-                Player p = players[i];
+                if (entities[i].player == null)
+                {
+                    continue;
+                }
+                Player p = entities[i].player;
                 if (i == this.LocalPlayerId)
                 {
                     continue;
@@ -2661,85 +2670,26 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                if (!playerdrawinfo.ContainsKey(i))
-                {
-                    playerdrawinfo[i] = new PlayerDrawInfo();
-                    NetworkInterpolation n = new NetworkInterpolation();
-                    PlayerInterpolate playerInterpolate = new PlayerInterpolate();
-                    playerInterpolate.platform = platform;
-                    n.req = playerInterpolate;
-                    n.DELAYMILLISECONDS = 500;
-                    n.EXTRAPOLATE = false;
-                    n.EXTRAPOLATION_TIMEMILLISECONDS = 300;
-                    playerdrawinfo[i].interpolation = n;
-                }
-                playerdrawinfo[i].interpolation.DELAYMILLISECONDS = Game.MaxInt(100, ServerInfo.ServerPing.RoundtripTimeTotalMilliseconds());
-                PlayerDrawInfo info = playerdrawinfo[i];
-                Vector3 realpos = new Vector3(p.PositionX, p.PositionY, p.PositionZ);
-                bool redraw = false;
-                if (totaltimeMilliseconds - lastdrawplayersMilliseconds >= 100)
-                {
-                    //redraw = true;
-                    lastdrawplayersMilliseconds = totaltimeMilliseconds;
-                }
-                if ((!Vec3Equal(realpos.X, realpos.Y, realpos.Z,
-                                info.lastrealposX, info.lastrealposY, info.lastrealposZ))
-                    || p.Heading != info.lastrealheading
-                    || p.Pitch != info.lastrealpitch
-                    || redraw)
-                {
-                    PlayerInterpolationState state = new PlayerInterpolationState();
-                    state.positionX = realpos.X;
-                    state.positionY = realpos.Y;
-                    state.positionZ = realpos.Z;
-                    state.heading = p.Heading;
-                    state.pitch = p.Pitch;
-                    info.interpolation.AddNetworkPacket(state, totaltimeMilliseconds);
-                }
-                var curstate = ((PlayerInterpolationState)info.interpolation.InterpolatedState(totaltimeMilliseconds));
-                if (curstate == null)
-                {
-                    curstate = new PlayerInterpolationState();
-                }
-                //do not interpolate player position if player is controlled by game world
-                if (EnablePlayerUpdatePositionContainsKey(i) && !EnablePlayerUpdatePosition(i))
-                {
-                    curstate.positionX = p.PositionX;
-                    curstate.positionY = p.PositionY;
-                    curstate.positionZ = p.PositionZ;
-                }
-                Vector3 curpos = new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
-                info.velocityX = curpos.X - info.lastcurposX;
-                info.velocityY = curpos.Y - info.lastcurposY;
-                info.velocityZ = curpos.Z - info.lastcurposZ;
-                float playerspeed = (Length(info.velocityX, info.velocityY, info.velocityZ) / dt) * 0.04f;
-                bool moves = (!Vec3Equal(curpos.X, curpos.Y, curpos.Z, info.lastcurposX, info.lastcurposY, info.lastcurposZ));
-                info.lastcurposX = curpos.X;
-                info.lastcurposY = curpos.Y;
-                info.lastcurposZ = curpos.Z;
-                info.lastrealposX = realpos.X;
-                info.lastrealposY = realpos.Y;
-                info.lastrealposZ = realpos.Z;
-                info.lastrealheading = p.Heading;
-                info.lastrealpitch = p.Pitch;
-                if (!d_FrustumCulling.SphereInFrustum(curpos.X, curpos.Y, curpos.Z, 3))
+                if (!d_FrustumCulling.SphereInFrustum(p.PositionX, p.PositionY, p.PositionZ, 3))
                 {
                     continue;
                 }
-                if (!terrainRenderer.IsChunkRendered((int)curpos.X / chunksize, (int)curpos.Z / chunksize, (int)curpos.Y / chunksize))
+                if (!terrainRenderer.IsChunkRendered(platform.FloatToInt(p.PositionX) / chunksize, platform.FloatToInt(p.PositionZ) / chunksize, platform.FloatToInt(p.PositionY) / chunksize))
                 {
                     continue;
                 }
-                float shadow = (float)d_Shadows.MaybeGetLight((int)curpos.X, (int)curpos.Z, (int)curpos.Y) / d_Shadows.maxlight;
-                GL.Color3(shadow, shadow, shadow);
-                info.anim.light = shadow;
-                Vector3 FeetPos = curpos;
-                var animHint = d_Clients.Players[i].AnimationHint_;
+                float shadow = (one * d_Shadows.MaybeGetLight(platform.FloatToInt(p.PositionX), platform.FloatToInt(p.PositionZ), platform.FloatToInt(p.PositionY))) / d_Shadows.maxlight;
+                p.playerDrawInfo.anim.light = shadow;
+                float FeetPosX = p.PositionX;
+                float FeetPosY = p.PositionY;
+                float FeetPosZ = p.PositionZ;
+                AnimationHint animHint = entities[i].player.AnimationHint_;
+                float playerspeed = (Length(p.playerDrawInfo.velocityX, p.playerDrawInfo.velocityY, p.playerDrawInfo.velocityZ) / dt) * 0.04f;
                 if (p.Type == PlayerType.Player)
                 {
                     ICharacterRenderer r = GetCharacterRenderer(p.Model);
                     r.SetAnimation("walk");
-                    r.DrawCharacter(info.anim, FeetPos.X, FeetPos.Y, FeetPos.Z, (byte)(-curstate.heading - 256 / 4), curstate.pitch, moves, dt, GetPlayerTexture(i), animHint, playerspeed);
+                    r.DrawCharacter(p.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p.Heading - 256 / 4), p.Pitch, p.moves, dt, GetPlayerTexture(i), animHint, playerspeed);
                     //DrawCharacter(info.anim, FeetPos,
                     //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
@@ -2750,41 +2700,33 @@ namespace ManicDigger
                     //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
                     r.SetAnimation("walk");
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                    r.DrawCharacter(info.anim, curpos.X, curpos.Y, curpos.Z,
-                        (byte)(-curstate.heading - 256 / 4), curstate.pitch,
-                        moves, dt, GetPlayerTexture(i), animHint, playerspeed);
+                    r.DrawCharacter(p.playerDrawInfo.anim, p.PositionX, p.PositionY, p.PositionZ,
+                        Game.IntToByte(-p.Heading - 256 / 4), p.Pitch,
+                        p.moves, dt, GetPlayerTexture(i), animHint, playerspeed);
                 }
-                GL.Color3(1f, 1f, 1f);
             }
             if (ENABLE_TPP_VIEW)
             {
                 Vector3 velocity = lastlocalplayerpos - LocalPlayerPosition;
                 bool moves = lastlocalplayerpos != LocalPlayerPosition; //bool moves = velocity.Length > 0.08;
-                float shadow = (float)d_Shadows.MaybeGetLight(
-                    (int)LocalPlayerPosition.X,
-                    (int)LocalPlayerPosition.Z,
-                    (int)LocalPlayerPosition.Y)
+                float shadow = (one * d_Shadows.MaybeGetLight(
+                    platform.FloatToInt(LocalPlayerPosition.X),
+                    platform.FloatToInt(LocalPlayerPosition.Z),
+                    platform.FloatToInt(LocalPlayerPosition.Y)))
                     / d_Shadows.maxlight;
-                GL.Color3(shadow, shadow, shadow);
                 localplayeranim.light = shadow;
-                var r = GetCharacterRenderer(d_Clients.Players[LocalPlayerId].Model);
+                ICharacterRenderer r = GetCharacterRenderer(entities[LocalPlayerId].player.Model);
                 r.SetAnimation("walk");
                 Vector3Ref playerspeed = Vector3Ref.Create(playervelocity.X / 60, playervelocity.Y / 60, playervelocity.Z / 60);
                 float playerspeedf = playerspeed.Length() * 1.5f;
                 r.DrawCharacter
                     (localplayeranim, LocalPlayerPosition.X, LocalPlayerPosition.Y,
                     LocalPlayerPosition.Z,
-                    (byte)(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
+                    Game.IntToByte(-NetworkHelper.HeadingByte(LocalPlayerOrientation) - 256 / 4),
                     NetworkHelper.PitchByte(LocalPlayerOrientation),
                     moves, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint, playerspeedf);
                 lastlocalplayerpos = LocalPlayerPosition;
-                GL.Color3(1f, 1f, 1f);
             }
-        }
-
-        bool Vec3Equal(float ax, float ay, float az, float bx, float by, float bz)
-        {
-            return ax == bx && ay == by && az == bz;
         }
 
         float Length(float x, float y, float z)
@@ -2992,66 +2934,6 @@ namespace ManicDigger
 
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
 
-        private void DrawPlayerNames()
-        {
-            for (int i = 0; i < playersCount; i++)
-            {
-                if (players[i] == null)
-                {
-                    continue;
-                }
-                int kKey = i;
-                Player p = players[i];
-                if ((!p.PositionLoaded) ||
-                    (kKey == this.LocalPlayerId) || (p.Name == "")
-                    || (!playerdrawinfo.ContainsKey(kKey))
-                    || (playerdrawinfo[kKey].interpolation == null))
-                {
-                    continue;
-                }
-                //todo if picking
-                if ((Dist(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z, p.PositionX, p.PositionY, p.PositionZ) < 20)
-                    || Keyboard[GetKey(OpenTK.Input.Key.AltLeft)] || Keyboard[GetKey(OpenTK.Input.Key.AltRight)])
-                {
-                    string name = p.Name;
-                    var ppos = playerdrawinfo[kKey].interpolation.InterpolatedState(totaltimeMilliseconds);
-                    if (ppos != null)
-                    {
-                        var state = ((PlayerInterpolationState)ppos);
-                        Vector3 pos = new Vector3(state.positionX, state.positionY, state.positionZ);
-                        float shadow = (float)d_Shadows.MaybeGetLight((int)pos.X, (int)pos.Z, (int)pos.Y) / d_Shadows.maxlight;
-                        //do not interpolate player position if player is controlled by game world
-                        if (EnablePlayerUpdatePositionContainsKey(kKey) && !EnablePlayerUpdatePosition(kKey))
-                        {
-                            pos.X = p.PositionX;
-                            pos.Y = p.PositionY;
-                            pos.Z = p.PositionZ;
-                        }
-                        GLPushMatrix();
-                        GLTranslate(pos.X, pos.Y + CharacterModelHeight + 0.8f, pos.Z);
-                        if (p.Type == PlayerType.Monster)
-                        {
-                            GLTranslate(0, 1f, 0);
-                        }
-                        GLRotate(-player.playerorientation.Y * 360 / (2 * Game.GetPi()), 0.0f, 1.0f, 0.0f);
-                        GLRotate(-player.playerorientation.X * 360 / (2 * Game.GetPi()), 1.0f, 0.0f, 0.0f);
-                        GLScale(0.02f, 0.02f, 0.02f);
-
-                        //Color c = Color.FromArgb((int)(shadow * 255), (int)(shadow * 255), (int)(shadow * 255));
-                        //Todo: Can't change text color because text has outline anyway.
-                        if (p.Type == PlayerType.Monster)
-                        {
-                            Draw2dTexture_(WhiteTexture(), -26, -11, 52, 12, null, Color.FromArgb(0, Color.Black));
-                            Draw2dTexture_(WhiteTexture(), -25, -10, 50 * (p.Health / 20f), 10, null, Color.FromArgb(0, Color.Red));
-                        }
-                        Draw2dText_(name, -TextSize_(name, 14).Width / 2, 0, 14, Game.ColorFromArgb(255, 255, 255, 255), true);
-                        //                        GL.Translate(0, 1, 0);
-                        GLPopMatrix();
-                    }
-                }
-            }
-        }
-
         bool drawblockinfo = false;
         void CraftingMouse()
         {
@@ -3111,8 +2993,8 @@ namespace ManicDigger
                     {
                         return ToVector3(player.playerposition);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltimeMilliseconds));
-                    return new Vector3(curstate.positionX, curstate.positionY, curstate.positionZ);
+                    Player p = entities[FollowId().value].player;
+                    return new Vector3(p.PositionX, p.PositionY, p.PositionZ);
                 }
                 return ToVector3(player.playerposition);
             }
@@ -3140,8 +3022,8 @@ namespace ManicDigger
                             player.playerorientation.Y,
                             player.playerorientation.Z);
                     }
-                    var curstate = ((PlayerInterpolationState)playerdrawinfo[FollowId().value].interpolation.InterpolatedState(totaltimeMilliseconds));
-                    return HeadingPitchToOrientation(curstate.heading, curstate.pitch);
+                    Player p = entities[FollowId().value].player;
+                    return HeadingPitchToOrientation(p.Heading, p.Pitch);
                 }
                 return new Vector3(
                     player.playerorientation.X,
@@ -3156,67 +3038,7 @@ namespace ManicDigger
             }
         }
         #endregion
-        #region ILocalPlayerPosition Members
-        public bool Swimming
-        {
-            get
-            {
-                var p = LocalPlayerPosition;
-                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
-                {
-                    return p.Y < WaterLevel;
-                }
-                return d_Data.WalkableType1()[d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y)] == (int)WalkableType.Fluid;
-            }
-        }
-        public bool WaterSwimming
-        {
-            get
-            {
-                var p = LocalPlayerPosition;
-                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
-                {
-                    return p.Y < WaterLevel;
-                }
-                return IsWater(d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
-            }
-        }
-        public bool LavaSwimming
-        {
-            get
-            {
-                var p = LocalPlayerPosition;
-                p += new Vector3(0, Players[LocalPlayerId].EyeHeight, 0);
-                if (!d_Map.IsValidPos((int)Math.Floor(p.X), (int)Math.Floor(p.Z), (int)Math.Floor(p.Y)))
-                {
-                    return false;
-                }
-                return IsLava(d_Map.GetBlock((int)p.X, (int)p.Z, (int)p.Y));
-            }
-        }
-
-        #endregion
-        public float WaterLevel { get { return d_Map.MapSizeZ / 2; } set { } }
-        Color terraincolor
-        {
-            get
-            {
-                if (WaterSwimming)
-                {
-                    return Color.FromArgb(255, 78, 95, 140);
-                }
-                else if (LavaSwimming)
-                {
-                    return Color.FromArgb(255, 222, 101, 46);
-                }
-                else
-                {
-                    return Color.White;
-                }
-            }
-        }
+        
         #region IKeyboard Members
         public OpenTK.Input.KeyboardDevice keyboardstate
         {
@@ -3243,9 +3065,6 @@ namespace ManicDigger
         #endregion
         #region IViewport3d Members
         public Vector3 PickCubePos { get { return new Vector3(SelectedBlockPositionX, SelectedBlockPositionY, SelectedBlockPositionZ); } }
-        #endregion
-        #region IViewport3d Members
-        public string LocalPlayerName { get { return connectdata.Username; } }
         #endregion
         public int Height { get { return d_GlWindow.Height; } }
         public int Width { get { return d_GlWindow.Width; } }
@@ -3534,7 +3353,6 @@ namespace ManicDigger
         private Vector3 playerpositionspawn = new Vector3(15.5f, 64, 15.5f);
         public Vector3 PlayerPositionSpawn { get { return playerpositionspawn; } set { playerpositionspawn = value; } }
         public Vector3 PlayerOrientationSpawn { get { return new Vector3((float)Math.PI, 0, 0); } }
-        public Player[] Players { get { return players; } set { players = value; } }
 
         public void SetChunk(int x, int y, int z, int[, ,] chunk)
         {
@@ -3643,17 +3461,21 @@ namespace ManicDigger
                     LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z);
             }
             int now = game.platform.TimeMillisecondsFromStart();
-            for (int i = 0; i < playersCount; i++)
+            for (int i = 0; i < entitiesCount; i++)
             {
-                if (players[i] == null)
+                if (entities[i] == null)
+                {
+                    continue;
+                }
+                if (entities[i].player == null)
                 {
                     continue;
                 }
                 int kKey = i;
-                Player p = players[i];
+                Player p = entities[i].player;
                 if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
                 {
-                    playerdrawinfo.Remove(kKey);
+                    p.playerDrawInfo = null;
                     p.PositionLoaded = false;
                 }
             }
@@ -3897,12 +3719,13 @@ namespace ManicDigger
                         {
                             this.ServerInfo.Players.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
                         }
-                        d_Clients.Players[playerid] = new Player();
-                        d_Clients.Players[playerid].Name = playername;
-                        d_Clients.Players[playerid].Model = packet.SpawnPlayer.Model_;
-                        d_Clients.Players[playerid].Texture = packet.SpawnPlayer.Texture_;
-                        d_Clients.Players[playerid].EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
-                        d_Clients.Players[playerid].ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
+                        entities[playerid] = new Entity();
+                        entities[playerid].player = new Player();
+                        entities[playerid].player.Name = playername;
+                        entities[playerid].player.Model = packet.SpawnPlayer.Model_;
+                        entities[playerid].player.Texture = packet.SpawnPlayer.Texture_;
+                        entities[playerid].player.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
+                        entities[playerid].player.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
                         ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                         if (playerid == this.LocalPlayerId)
                         {
@@ -3926,15 +3749,16 @@ namespace ManicDigger
                         foreach (var k in packet.Monster.Monsters)
                         {
                             int id = k.Id + MonsterIdFirst;
-                            if (players[id] == null)
+                            if (entities[id] == null)
                             {
-                                players[id] = new Player();
-                                players[id].Name = d_DataMonsters.MonsterName[k.MonsterType];
+                                entities[id] = new Entity();
+                                entities[id].player = new Player();
+                                entities[id].player.Name = d_DataMonsters.MonsterName[k.MonsterType];
                             }
                             ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
-                            players[id].Type = PlayerType.Monster;
-                            players[id].Health = k.Health;
-                            players[id].MonsterType = k.MonsterType;
+                            entities[id].player.Type = PlayerType.Monster;
+                            entities[id].player.Health = k.Health;
+                            entities[id].player.MonsterType = k.MonsterType;
                             updatedMonsters[id] = 1;
                         }
                         //remove all old monsters that were not sent by server now.
@@ -3968,7 +3792,7 @@ namespace ManicDigger
                                 this.ServerInfo.Players.RemoveAt(i);
                             }
                         }
-                        players[playerid] = null;
+                        entities[playerid] = null;
                     }
                     break;
                 case Packet_ServerIdEnum.Message:
@@ -4151,9 +3975,9 @@ namespace ManicDigger
                     break;
                 case Packet_ServerIdEnum.RemoveMonsters:
                     {
-                        for (int i = MonsterIdFirst; i < playersCount; i++)
+                        for (int i = MonsterIdFirst; i < MonsterIdFirst + 1000; i++)
                         {
-                            players[i] = null;
+                            entities[i] = null;
                         }
                     }
                     break;
@@ -4280,7 +4104,7 @@ namespace ManicDigger
                     }
                     break;
                 case Packet_ServerIdEnum.Bullet:
-                    EntityAdd(CreateBulletEntity(
+                    EntityAddLocal(CreateBulletEntity(
                         DeserializeFloat(packet.Bullet.FromXFloat),
                         DeserializeFloat(packet.Bullet.FromYFloat),
                         DeserializeFloat(packet.Bullet.FromZFloat),
@@ -4311,7 +4135,7 @@ namespace ManicDigger
                         entity.expires = new Expires();
                         entity.expires.timeLeft = DeserializeFloat(packet.Explosion.TimeFloat);
                         entity.push = packet.Explosion;
-                        EntityAdd(entity);
+                        EntityAddLocal(entity);
                     }
                     break;
                 case Packet_ServerIdEnum.Projectile:
@@ -4337,7 +4161,7 @@ namespace ManicDigger
 
                         entity.expires = Expires.Create(DeserializeFloat(packet.Projectile.ExplodesAfterFloat));
 
-                        EntityAdd(entity);
+                        EntityAddLocal(entity);
                     }
                     break;
                 default:

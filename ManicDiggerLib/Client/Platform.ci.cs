@@ -100,6 +100,7 @@
     public abstract string PathStorage();
     public abstract string StringReplace(string s, string from, string to);
     public abstract PlayerInterpolationState CastToPlayerInterpolationState(InterpolatedObject a);
+    public abstract void GlLightModelAmbient(int r, int g, int b);
 }
 
 public abstract class RandomCi

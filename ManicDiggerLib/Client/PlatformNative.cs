@@ -1097,6 +1097,13 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         return (PlayerInterpolationState)a;
     }
+
+    public override void GlLightModelAmbient(int r, int g, int b)
+    {
+        float mult = 1f;
+        float[] global_ambient = new float[] { (float)r / 255f * mult, (float)g / 255f * mult, (float)b / 255f * mult, 1f };
+        GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
+    }
 }
 
 public class RandomNative : RandomCi
