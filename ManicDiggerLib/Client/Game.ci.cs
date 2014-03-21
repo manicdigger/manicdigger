@@ -79,6 +79,18 @@
         PlayerPushDistance = 2;
         projectilegravity = 20;
         keyboardState = new bool[256];
+        overheadcameradistance = 10;
+        tppcameradistance = 3;
+        TPP_CAMERA_DISTANCE_MIN = 1;
+        TPP_CAMERA_DISTANCE_MAX = 10;
+        options = new OptionsCi();
+        BlockDamageToPlayerTimer = TimerCi.Create(BlockDamageToPlayerEvery, BlockDamageToPlayerEvery * 2);
+        overheadcameraK = new Kamera();
+        fillarea = new DictionaryVector3Float();
+        fillAreaLimit = 200;
+        walksoundtimer = 0;
+        lastwalksound = 0;
+        stepsoundduration = one * 4 / 10;
     }
     float one;
 
@@ -3181,6 +3193,819 @@
         int b = Game.ColorB(color);
         platform.GlLightModelAmbient(r, g, b);
     }
+
+    internal OptionsCi options;
+
+    internal int GetKey(int key)
+    {
+        if (options == null)
+        {
+            return key;
+        }
+        if (options.Keys[key] != 0)
+        {
+            return options.Keys[key];
+        }
+        return key;
+    }
+
+    internal float MoveSpeedNow()
+    {
+        float movespeednow = movespeed;
+        {
+            //walk faster on cobblestone
+            IntRef blockunderplayer = BlockUnderPlayer();
+            if (blockunderplayer != null)
+            {
+                movespeednow *= d_Data.WalkSpeed()[blockunderplayer.value];
+            }
+        }
+        if (keyboardState[GetKey(GlKeys.ShiftLeft)])
+        {
+            //enable_acceleration = false;
+            movespeednow *= one * 2 / 10;
+        }
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+        {
+            movespeednow *= DeserializeFloat(blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
+            if (IronSights)
+            {
+                movespeednow *= DeserializeFloat(blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
+            }
+        }
+        return movespeednow;
+    }
+
+    internal float VectorAngleGet(float qX, float qY, float qZ)
+    {
+        return (platform.MathAcos(qX / Length(qX, qY, qZ)) * MathSign(qZ));
+    }
+
+    int MathSign(float q)
+    {
+        if (q < 0)
+        {
+            return -1;
+        }
+        else if (q == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    internal float Length(float x, float y, float z)
+    {
+        return platform.MathSqrt(x * x + y * y + z * z);
+    }
+
+    internal void HandleMaterialKeys(int eKey)
+    {
+        if (eKey == GetKey(GlKeys.Number1)) { ActiveMaterial = 0; }
+        if (eKey == GetKey(GlKeys.Number2)) { ActiveMaterial = 1; }
+        if (eKey == GetKey(GlKeys.Number3)) { ActiveMaterial = 2; }
+        if (eKey == GetKey(GlKeys.Number4)) { ActiveMaterial = 3; }
+        if (eKey == GetKey(GlKeys.Number5)) { ActiveMaterial = 4; }
+        if (eKey == GetKey(GlKeys.Number6)) { ActiveMaterial = 5; }
+        if (eKey == GetKey(GlKeys.Number7)) { ActiveMaterial = 6; }
+        if (eKey == GetKey(GlKeys.Number8)) { ActiveMaterial = 7; }
+        if (eKey == GetKey(GlKeys.Number9)) { ActiveMaterial = 8; }
+        if (eKey == GetKey(GlKeys.Number0)) { ActiveMaterial = 9; }
+    }
+
+    internal void UseVsync()
+    {
+        platform.SetVSync((ENABLE_LAG == 1) ? false : true);
+    }
+
+    internal void ToggleVsync()
+    {
+        ENABLE_LAG++;
+        ENABLE_LAG = ENABLE_LAG % 3;
+        UseVsync();
+    }
+
+    internal void GuiStateBackToGame()
+    {
+        guistate = GuiState.Normal;
+        SetFreeMouse(false);
+        freemousejustdisabled = true;
+    }
+
+    internal float overheadcameradistance;
+    internal float tppcameradistance;
+    internal int TPP_CAMERA_DISTANCE_MIN;
+    internal int TPP_CAMERA_DISTANCE_MAX;
+    internal void MouseWheelChanged(float eDeltaPrecise)
+    {
+        if (keyboardState[GetKey(GlKeys.LControl)])
+        {
+            if (cameratype == CameraType.Overhead)
+            {
+                overheadcameradistance -= eDeltaPrecise;
+                if (overheadcameradistance < TPP_CAMERA_DISTANCE_MIN) { overheadcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                if (overheadcameradistance > TPP_CAMERA_DISTANCE_MAX) { overheadcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+            }
+            if (cameratype == CameraType.Tpp)
+            {
+                tppcameradistance -= eDeltaPrecise;
+                if (tppcameradistance < TPP_CAMERA_DISTANCE_MIN) { tppcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+                if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+            }
+        }
+    }
+
+    internal Packet_Client CreateLoginPacket(string username, string verificationKey)
+    {
+        Packet_ClientIdentification p = new Packet_ClientIdentification();
+        {
+            p.Username = username;
+            p.MdProtocolVersion = platform.GetGameVersion();
+            p.VerificationKey = verificationKey;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
+        pp.Identification = p;
+        return pp;
+    }
+
+    internal Packet_Client CreateLoginPacket_(string username, string verificationKey, string serverPassword)
+    {
+        Packet_ClientIdentification p = new Packet_ClientIdentification();
+        {
+            p.Username = username;
+            p.MdProtocolVersion = platform.GetGameVersion();
+            p.VerificationKey = verificationKey;
+            p.ServerPassword = serverPassword;
+        }
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.PlayerIdentification;
+        pp.Identification = p;
+        return pp;
+    }
+
+    internal void Connect(string serverAddress, int port, string username, string auth)
+    {
+        main.Start();
+        main.Connect(serverAddress, port);
+        Packet_Client n = CreateLoginPacket(username, auth);
+        SendPacketClient(n);
+    }
+
+    internal void Connect_(string serverAddress, int port, string username, string auth, string serverPassword)
+    {
+        main.Start();
+        main.Connect(serverAddress, port);
+        Packet_Client n = CreateLoginPacket_(username, auth, serverPassword);
+        SendPacketClient(n);
+    }
+
+    internal void RedrawAllBlocks()
+    {
+        terrainRenderer.RedrawAllBlocks();
+    }
+
+    public const int clearcolorR = 171;
+    public const int clearcolorG = 202;
+    public const int clearcolorB = 228;
+    public const int clearcolorA = 255;
+
+    internal void SetFog()
+    {            //Density for linear fog
+        //float density = 0.3f;
+        // use this density for exp2 fog (0.0045f was a bit too much at close ranges)
+        float density = one * 25 / 10000; // 0.0025f;
+
+        int fogR;
+        int fogG;
+        int fogB;
+        int fogA;
+
+        if (SkySphereNight && (!terrainRenderer.shadowssimple))
+        {
+            fogR = 0;
+            fogG = 0;
+            fogB = 0;
+            fogA = 255;
+        }
+        else
+        {
+            fogR = clearcolorR;
+            fogG = clearcolorG;
+            fogB = clearcolorB;
+            fogA = clearcolorA;
+        }
+        platform.GlEnableFog();
+        platform.GlHintFogHintNicest();
+        //old linear fog
+        //GL.Fog(FogParameter.FogMode, (int)FogMode.Linear);
+        // looks better
+        platform.GlFogFogModeExp2();
+        platform.GlFogFogColor(fogR, fogG, fogB, fogA);
+        platform.GlFogFogDensity(density);
+        //Unfortunately not used for exp/exp2 fog
+        //float fogsize = 10;
+        //if (d_Config3d.viewdistance <= 64)
+        //{
+        //    fogsize = 5;
+        //}
+        // //float fogstart = d_Config3d.viewdistance - fogsize + 200;
+        //float fogstart = d_Config3d.viewdistance - fogsize;
+        //GL.Fog(FogParameter.FogStart, fogstart);
+        //GL.Fog(FogParameter.FogEnd, fogstart + fogsize);
+    }
+
+    public const int BlockDamageToPlayerEvery = 1;
+    TimerCi BlockDamageToPlayerTimer;
+
+    //TODO server side?
+    internal void UpdateBlockDamageToPlayer(float dt)
+    {
+        float pX = player.playerposition.X;
+        float pY = player.playerposition.Y;
+        float pZ = player.playerposition.Z;
+        pY += entities[LocalPlayerId].player.EyeHeight;
+        int block1 = 0;
+        int block2 = 0;
+        if (IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY)))
+        {
+            block1 = GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY));
+        }
+        if (IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY) - 1))
+        {
+            block2 = GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY) - 1);
+        }
+
+        int damage = d_Data.DamageToPlayer()[block1] + d_Data.DamageToPlayer()[block2];
+        if (damage > 0)
+        {
+            int hurtingBlock = block1;	//Use block at eyeheight as source block
+            if (hurtingBlock == 0) { hurtingBlock = block2; }	//Fallback to block at feet if eyeheight block is air
+            int times = BlockDamageToPlayerTimer.Update(dt);
+            for (int i = 0; i < times; i++)
+            {
+                ApplyDamageToPlayer(damage, Packet_DeathReasonEnum.BlockDamage, hurtingBlock);
+            }
+        }
+
+        //Player drowning
+        int deltaTime = platform.FloatToInt(one * (platform.TimeMillisecondsFromStart() - lastOxygenTickMilliseconds)); //Time in milliseconds
+        if (deltaTime >= 1000)
+        {
+            if (WaterSwimming())
+            {
+                PlayerStats.CurrentOxygen -= 1;
+                if (PlayerStats.CurrentOxygen <= 0)
+                {
+                    PlayerStats.CurrentOxygen = 0;
+                    int dmg = platform.FloatToInt(one * PlayerStats.MaxHealth / 10);
+                    if (dmg < 1)
+                    {
+                        dmg = 1;
+                    }
+                    ApplyDamageToPlayer(dmg, Packet_DeathReasonEnum.Drowning, block1);
+                }
+            }
+            else
+            {
+                PlayerStats.CurrentOxygen = PlayerStats.MaxOxygen;
+            }
+            {
+                Packet_Client packet = new Packet_Client();
+                packet.Id = Packet_ClientIdEnum.Oxygen;
+                packet.Oxygen = new Packet_ClientOxygen();
+                packet.Oxygen.CurrentOxygen = PlayerStats.CurrentOxygen;
+                SendPacketClient(packet);
+            }
+            lastOxygenTickMilliseconds = platform.TimeMillisecondsFromStart();
+        }
+    }
+
+    internal BlockPosSide Nearest(BlockPosSide[] pick2, int pick2Count, float x, float y, float z)
+    {
+        float minDist = 1000 * 1000;
+        BlockPosSide nearest = null;
+        for (int i = 0; i < pick2Count; i++)
+        {
+            float dist = Dist(pick2[i].blockPos[0], pick2[i].blockPos[1], pick2[i].blockPos[2], x, y, z);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                nearest = pick2[i];
+            }
+        }
+        return nearest;
+    }
+
+    internal BlockOctreeSearcher s;
+    internal void LimitThirdPersonCameraToWalls(Vector3Ref eye, Vector3Ref target, FloatRef curtppcameradistance)
+    {
+        Vector3Ref ray_start_point = target;
+        Vector3Ref raytarget = eye;
+
+        Line3D pick = new Line3D();
+        float raydirX = (raytarget.X - ray_start_point.X);
+        float raydirY = (raytarget.Y - ray_start_point.Y);
+        float raydirZ = (raytarget.Z - ray_start_point.Z);
+
+        float raydirLength1 = Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength1;
+        raydirY /= raydirLength1;
+        raydirZ /= raydirLength1;
+        raydirX = raydirX * (tppcameradistance + 1);
+        raydirY = raydirY * (tppcameradistance + 1);
+        raydirZ = raydirZ * (tppcameradistance + 1);
+        pick.Start = Vec3.FromValues(ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
+        pick.End = new float[3];
+        pick.End[0] = ray_start_point.X + raydirX;
+        pick.End[1] = ray_start_point.Y + raydirY;
+        pick.End[2] = ray_start_point.Z + raydirZ;
+
+        //pick terrain
+        s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(Game.MaxInt(MapSizeX, Game.MaxInt(MapSizeY, MapSizeZ))));
+        IntRef pick2Count = new IntRef();
+        BlockPosSide[] pick2 = s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick, pick2Count);
+
+        if (pick2Count.value > 0)
+        {
+            BlockPosSide pick2nearest = Nearest(pick2, pick2Count.value, ray_start_point.X, ray_start_point.Y, ray_start_point.Z);
+            //pick2.Sort((a, b) => { return (FloatArrayToVector3(a.blockPos) - ray_start_point).Length.CompareTo((FloatArrayToVector3(b.blockPos) - ray_start_point).Length); });
+
+            float pickX = pick2nearest.blockPos[0] - target.X;
+            float pickY = pick2nearest.blockPos[1] - target.Y;
+            float pickZ = pick2nearest.blockPos[2] - target.Z;
+            float pickdistance = Length(pickX, pickY, pickZ);
+            curtppcameradistance.value = Game.MinFloat(pickdistance - 1, curtppcameradistance.value);
+            if (curtppcameradistance.value < one * 3 / 10) { curtppcameradistance.value = one * 3 / 10; }
+        }
+
+        float cameraDirectionX = target.X - eye.X;
+        float cameraDirectionY = target.Y - eye.Y;
+        float cameraDirectionZ = target.Z - eye.Z;
+        float raydirLength = Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength;
+        raydirY /= raydirLength;
+        raydirZ /= raydirLength;
+        eye.X = target.X + raydirX * curtppcameradistance.value;
+        eye.Y = target.Y + raydirY * curtppcameradistance.value;
+        eye.Z = target.Z + raydirZ * curtppcameradistance.value;
+    }
+
+    public const int upX = 0;
+    public const int upY = 1;
+    public const int upZ = 0;
+    internal Kamera overheadcameraK;
+    internal Vector3Ref OverheadCamera_cameraEye;
+    internal float[] OverheadCamera()
+    {
+        overheadcameraK.GetPosition(platform, OverheadCamera_cameraEye);
+        Vector3Ref cameraEye = OverheadCamera_cameraEye;
+        Vector3Ref cameraTarget = Vector3Ref.Create(overheadcameraK.Center.X, overheadcameraK.Center.Y + GetCharacterEyesHeight(), overheadcameraK.Center.Z);
+        FloatRef currentOverheadcameradistance = FloatRef.Create(overheadcameradistance);
+        LimitThirdPersonCameraToWalls(cameraEye, cameraTarget, currentOverheadcameradistance);
+        float[] ret = new float[16];
+        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
+            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
+            Vec3.FromValues(upX, upY, upZ));
+        return ret;
+    }
+
+    internal float[] FppCamera()
+    {
+        Vector3Ref forward = new Vector3Ref();
+        VectorTool.ToVectorInFixedSystem(0, 0, 1, player.playerorientation.X, player.playerorientation.Y, forward);
+        Vector3Ref cameraEye = new Vector3Ref();
+        Vector3Ref cameraTarget = new Vector3Ref();
+        float playerEyeX = player.playerposition.X;
+        float playerEyeY = player.playerposition.Y + GetCharacterEyesHeight();
+        float playerEyeZ = player.playerposition.Z;
+        if (!ENABLE_TPP_VIEW)
+        {
+            cameraEye.X = playerEyeX;
+            cameraEye.Y = playerEyeY;
+            cameraEye.Z = playerEyeZ;
+            cameraTarget.X = playerEyeX + forward.X;
+            cameraTarget.Y = playerEyeY + forward.Y;
+            cameraTarget.Z = playerEyeZ + forward.Z;
+        }
+        else
+        {
+            cameraEye.X = playerEyeX + forward.X * -tppcameradistance;
+            cameraEye.Y = playerEyeY + forward.Y * -tppcameradistance;
+            cameraEye.Z = playerEyeZ + forward.Z * -tppcameradistance;
+            cameraTarget.X = playerEyeX;
+            cameraTarget.Y = playerEyeY;
+            cameraTarget.Z = playerEyeZ;
+            FloatRef currentTppcameradistance = FloatRef.Create(tppcameradistance);
+            LimitThirdPersonCameraToWalls(cameraEye, cameraTarget, currentTppcameradistance);
+        }
+        float[] ret = new float[16];
+        Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
+            Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
+            Vec3.FromValues(upX, upY, upZ));
+        return ret;
+    }
+
+    internal void FillChunk(Chunk destination, int destinationchunksize, int sourcex, int sourcey, int sourcez, int[] source, int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
+    {
+        for (int x = 0; x < destinationchunksize; x++)
+        {
+            for (int y = 0; y < destinationchunksize; y++)
+            {
+                for (int z = 0; z < destinationchunksize; z++)
+                {
+                    //if (x + sourcex < source.GetUpperBound(0) + 1
+                    //    && y + sourcey < source.GetUpperBound(1) + 1
+                    //    && z + sourcez < source.GetUpperBound(2) + 1)
+                    {
+                        SetBlockInChunk(destination, MapUtilCi.Index3d(x, y, z, destinationchunksize, destinationchunksize)
+                            , source[MapUtilCi.Index3d(x + sourcex, y + sourcey, z + sourcez, sourcechunksizeX, sourcechunksizeY)]);
+                    }
+                }
+            }
+        }
+    }
+
+    internal void SetMapPortion(int x, int y, int z, int[] chunk, int sizeX, int sizeY, int sizeZ)
+    {
+        int chunksizex = sizeX;
+        int chunksizey = sizeY;
+        int chunksizez = sizeZ;
+        if (chunksizex % chunksize != 0) { platform.ThrowException(""); }
+        if (chunksizey % chunksize != 0) { platform.ThrowException(""); }
+        if (chunksizez % chunksize != 0) { platform.ThrowException(""); }
+        Chunk[] localchunks = new Chunk[(chunksizex / chunksize) * (chunksizey / chunksize) * (chunksizez / chunksize)];
+        for (int cx = 0; cx < chunksizex / chunksize; cx++)
+        {
+            for (int cy = 0; cy < chunksizey / chunksize; cy++)
+            {
+                for (int cz = 0; cz < chunksizex / chunksize; cz++)
+                {
+                    localchunks[MapUtilCi.Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))] = GetChunk(x + cx * chunksize, y + cy * chunksize, z + cz * chunksize);
+                    FillChunk(localchunks[MapUtilCi.Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk, sizeX, sizeY, sizeZ);
+                }
+            }
+        }
+        for (int xxx = 0; xxx < chunksizex; xxx += chunksize)
+        {
+            for (int yyy = 0; yyy < chunksizex; yyy += chunksize)
+            {
+                for (int zzz = 0; zzz < chunksizex; zzz += chunksize)
+                {
+                    terrainRenderer.SetChunkDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize, true, true);
+                    SetChunksAroundDirty((x + xxx) / chunksize, (y + yyy) / chunksize, (z + zzz) / chunksize);
+                }
+            }
+        }
+    }
+
+    internal void ChatLog(string p)
+    {
+        if (!platform.ChatLog(this.ServerInfo.ServerName, p))
+        {
+            platform.ConsoleWriteLine(platform.StringFormat(language.CannotWriteChatLog(), this.ServerInfo.ServerName));
+        }
+    }
+
+    //value is original block.
+    internal DictionaryVector3Float fillarea;
+    internal Vector3IntRef fillstart;
+    internal Vector3IntRef fillend;
+    internal int fillAreaLimit;
+
+    internal void ClearFillArea()
+    {
+        for (int i = 0; i < fillarea.itemsCount; i++)
+        {
+            Vector3Float k = fillarea.items[i];
+            if (k == null)
+            {
+                continue;
+            }
+            SetBlock(k.x, k.y, k.z, platform.FloatToInt(k.value));
+            RedrawBlock(k.x, k.y, k.z);
+        }
+        fillarea.Clear();
+    }
+
+    internal void FillFill(Vector3IntRef a_, Vector3IntRef b_)
+    {
+        int startx = Game.MinInt(a_.X, b_.X);
+        int endx = Game.MaxInt(a_.X, b_.X);
+        int starty = Game.MinInt(a_.Y, b_.Y);
+        int endy = Game.MaxInt(a_.Y, b_.Y);
+        int startz = Game.MinInt(a_.Z, b_.Z);
+        int endz = Game.MaxInt(a_.Z, b_.Z);
+        for (int x = startx; x <= endx; x++)
+        {
+            for (int y = starty; y <= endy; y++)
+            {
+                for (int z = startz; z <= endz; z++)
+                {
+                    if (fillarea.Count() > fillAreaLimit)
+                    {
+                        ClearFillArea();
+                        return;
+                    }
+                    if (!IsFillBlock(GetBlock(x, y, z)))
+                    {
+                        fillarea.Set(x, y, z, GetBlock(x, y, z));
+                        SetBlock(x, y, z, d_Data.BlockIdFillArea());
+                        RedrawBlock(x, y, z);
+                    }
+                }
+            }
+        }
+    }
+
+    internal float HeadingToOrientationX(byte heading)
+    {
+        float x = (one * heading / 256) * 2 * Game.GetPi();
+        return x;
+    }
+
+    internal float PitchToOrientationY(byte pitch)
+    {
+        float y = ((one * pitch / 256) * 2 * Game.GetPi()) - Game.GetPi();
+        return y;
+    }
+
+    internal void OnPickUseWithTool(int posX, int posY, int posZ)
+    {
+        SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.UseWithTool, d_Inventory.RightHand[ActiveMaterial].BlockId, ActiveMaterial);
+    }
+
+    internal void KeyUp(int eKey)
+    {
+        keyboardState[eKey] = false;
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            KeyEventArgs args_ = new KeyEventArgs();
+            args_.SetKeyCode(eKey);
+            clientmods[i].OnKeyUp(args_);
+        }
+        if (eKey == GetKey(GlKeys.ShiftLeft) || eKey == GetKey(GlKeys.ShiftRight))
+        {
+            IsShiftPressed = false;
+        }
+    }
+    internal float playerPositionSpawnX;
+    internal float playerPositionSpawnY;
+    internal float playerPositionSpawnZ;
+
+    internal void MapLoaded()
+    {
+        terrainRenderer.StartTerrain();
+        RedrawAllBlocks();
+        materialSlots = d_Data.DefaultMaterialSlots();
+        GuiStateBackToGame();
+
+        playerPositionSpawnX = player.playerposition.X;
+        playerPositionSpawnY = player.playerposition.Y;
+        playerPositionSpawnZ = player.playerposition.Z;
+    }
+    internal int[] materialSlots;
+
+    internal int GetSoundCount(string[] soundwalk)
+    {
+        int count = 0;
+        for (int i = 0; i < GameData.SoundCount; i++)
+        {
+            if (soundwalk[i] != null)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    internal string[] soundwalkcurrent()
+    {
+        IntRef b = BlockUnderPlayer();
+        if (b != null)
+        {
+            return d_Data.WalkSound()[b.value];
+        }
+        return d_Data.WalkSound()[0];
+    }
+
+    float walksoundtimer;
+    int lastwalksound;
+    float stepsoundduration;
+    internal void UpdateWalkSound(float dt)
+    {
+        if (dt == -1)
+        {
+            dt = stepsoundduration / 2;
+        }
+        walksoundtimer += dt;
+        string[] soundwalk = soundwalkcurrent();
+        if (GetSoundCount(soundwalk) == 0)
+        {
+            return;
+        }
+        if (walksoundtimer >= stepsoundduration)
+        {
+            walksoundtimer = 0;
+            lastwalksound++;
+            if (lastwalksound >= GetSoundCount(soundwalk))
+            {
+                lastwalksound = 0;
+            }
+            if ((rnd.Next() % 100) < 40)
+            {
+                lastwalksound = rnd.Next() % (GetSoundCount(soundwalk));
+            }
+            AudioPlay(soundwalk[lastwalksound]);
+        }
+    }
+
+    internal void Draw2dText1(string text, int x, int y, int fontsize, IntRef color, bool enabledepthtest)
+    {
+        FontCi font = new FontCi();
+        font.family = "Arial";
+        font.size = fontsize;
+        Draw2dText(text, font, x, y, color, enabledepthtest);
+    }
+
+    internal InventoryUtilClient d_InventoryUtil;
+    internal void UseInventory(Packet_Inventory packet_Inventory)
+    {
+        d_Inventory = packet_Inventory;
+        d_InventoryUtil.d_Inventory = packet_Inventory;
+    }
+
+    internal void KeyPress(int eKeyChar)
+    {
+        int chart = 116;
+        int charT = 84;
+        int chary = 121;
+        int charY = 89;
+        if ((eKeyChar == chart || eKeyChar == charT) && GuiTyping == TypingState.None)
+        {
+            GuiTyping = TypingState.Typing;
+            d_HudChat.GuiTypingBuffer = "";
+            d_HudChat.IsTeamchat = false;
+            return;
+        }
+        if ((eKeyChar == chary || eKeyChar == charY) && GuiTyping == TypingState.None)
+        {
+            GuiTyping = TypingState.Typing;
+            d_HudChat.GuiTypingBuffer = "";
+            d_HudChat.IsTeamchat = true;
+            return;
+        }
+        if (GuiTyping == TypingState.Typing)
+        {
+            int c = eKeyChar;
+            if (platform.IsValidTypingChar(c))
+            {
+                d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, d_HudChat.GuiTypingBuffer, CharToString(c));
+            }
+            int charTab = 9;
+            //Handles player name autocomplete in chat
+            if (c == charTab && platform.StringTrim(d_HudChat.GuiTypingBuffer) != "")
+            {
+                for (int i = 0; i < entitiesCount; i++)
+                {
+                    if (entities[i] == null)
+                    {
+                        continue;
+                    }
+                    if (entities[i].player == null)
+                    {
+                        continue;
+                    }
+                    Player p = entities[i].player;
+                    if (p.Type != PlayerType.Player)
+                    {
+                        continue;
+                    }
+                    //Use substring here because player names are internally in format &xNAME (so we need to cut first 2 characters)
+                    if (platform.StringStartsWithIgnoreCase(StringTools.StringSubstringToEnd(platform, p.Name, 2), d_HudChat.GuiTypingBuffer))
+                    {
+                        d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, StringTools.StringSubstringToEnd(platform, p.Name, 2), ": ");
+                        break;
+                    }
+                }
+            }
+        }
+        for (int k = 0; k < dialogsCount; k++)
+        {
+            if (dialogs[k] == null)
+            {
+                continue;
+            }
+            VisibleDialog d = dialogs[k];
+            for (int i = 0; i < d.value.WidgetsCount; i++)
+            {
+                Packet_Widget w = d.value.Widgets[i];
+                if (w == null)
+                {
+                    continue;
+                }
+                string valid = (StringTools.StringAppend(platform, "abcdefghijklmnopqrstuvwxyz1234567890\t ", CharToString(27)));
+                if (platform.StringContains(valid, CharToString(w.ClickKey)))
+                {
+                    if (eKeyChar == w.ClickKey)
+                    {
+                        Packet_Client p = new Packet_Client();
+                        p.Id = Packet_ClientIdEnum.DialogClick;
+                        p.DialogClick_ = new Packet_ClientDialogClick();
+                        p.DialogClick_.WidgetId = w.Id;
+                        SendPacketClient(p);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    string CharToString(int c)
+    {
+        int[] arr = new int[1];
+        arr[0] = c;
+        return platform.CharArrayToString(arr, 1);
+    }
+
+    internal void DrawMouseCursor()
+    {
+        Draw2dBitmapFile(platform.PathCombine("gui", "mousecursor.png"), mouseCurrentX, mouseCurrentY, 32, 32);
+    }
+}
+
+public class TimerCi
+{
+    public TimerCi()
+    {
+        interval = 1;
+        maxDeltaTime = -1;
+    }
+    internal float interval;
+    internal float maxDeltaTime;
+
+    internal float accumulator;
+    public void Reset()
+    {
+        accumulator = 0;
+    }
+    public int Update(float dt)
+    {
+        accumulator += dt;
+        float constDt = interval;
+        if (maxDeltaTime != -1 && accumulator > maxDeltaTime)
+        {
+            accumulator = maxDeltaTime;
+        }
+        int updates = 0;
+        while (accumulator >= constDt)
+        {
+            updates++;
+            accumulator -= constDt;
+        }
+        return updates;
+    }
+
+    internal static TimerCi Create(int interval_, int maxDeltaTime_)
+    {
+        TimerCi timer = new TimerCi();
+        timer.interval = interval_;
+        timer.maxDeltaTime = maxDeltaTime_;
+        return timer;
+    }
+}
+
+public class GetBlockHeight_ : DelegateGetBlockHeight
+{
+    public static GetBlockHeight_ Create(Game w_)
+    {
+        GetBlockHeight_ g = new GetBlockHeight_();
+        g.w = w_;
+        return g;
+    }
+    internal Game w;
+    public override float GetBlockHeight(int x, int y, int z)
+    {
+        return w.getblockheight(x, y, z);
+    }
+}
+
+public class IsBlockEmpty_ : DelegateIsBlockEmpty
+{
+    public static IsBlockEmpty_ Create(Game w_)
+    {
+        IsBlockEmpty_ g = new IsBlockEmpty_();
+        g.w = w_;
+        return g;
+    }
+    Game w;
+    public override bool IsBlockEmpty(int x, int y, int z)
+    {
+        return w.IsTileEmptyForPhysics(x, y, z);
+    }
 }
 
 public class Sprite
@@ -3299,8 +4124,8 @@ public class DictionaryVector3Float
         itemsCount = 16 * 1024;
         items = new Vector3Float[itemsCount];
     }
-    Vector3Float[] items;
-    int itemsCount;
+    internal Vector3Float[] items;
+    internal int itemsCount;
     internal bool ContainsKey(int x, int y, int z)
     {
         return ItemIndex(x, y, z) != -1;
@@ -3359,6 +4184,27 @@ public class DictionaryVector3Float
                     return;
                 }
             }
+        }
+    }
+
+    internal int Count()
+    {
+        int count = 0;
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] != null)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    internal void Clear()
+    {
+        for (int i = 0; i < itemsCount; i++)
+        {
+            items[i] = null;
         }
     }
 }
@@ -4617,22 +5463,22 @@ public class GameData
         mWalkSound = new string[count][];
         for (int i = 0; i < count; i++)
         {
-            mWalkSound[i] = new string[0];
+            mWalkSound[i] = new string[SoundCount];
         }
         mBreakSound = new string[count][];
         for (int i = 0; i < count; i++)
         {
-            mBreakSound[i] = new string[0];
+            mBreakSound[i] = new string[SoundCount];
         }
         mBuildSound = new string[count][];
         for (int i = 0; i < count; i++)
         {
-            mBuildSound[i] = new string[0];
+            mBuildSound[i] = new string[SoundCount];
         }
         mCloneSound = new string[count][];
         for (int i = 0; i < count; i++)
         {
-            mCloneSound[i] = new string[0];
+            mCloneSound[i] = new string[SoundCount];
         }
         mLightRadius = new int[count];
         mStartInventoryAmount = new int[count];
@@ -4809,22 +5655,22 @@ public class GameData
         Rail()[id] = b.Rail;
         WalkSpeed()[id] = DeserializeFloat(b.WalkSpeedFloat);
         IsSlipperyWalk()[id] = b.IsSlipperyWalk;
-        WalkSound()[id] = new string[b.Sounds.WalkCount];
+        WalkSound()[id] = new string[SoundCount];
         for (int i = 0; i < b.Sounds.WalkCount; i++)
         {
             WalkSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Walk[i], ".wav");
         }
-        BreakSound()[id] = new string[b.Sounds.Break1Count];
+        BreakSound()[id] = new string[SoundCount];
         for (int i = 0; i < b.Sounds.Break1Count; i++)
         {
             BreakSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Break1[i], ".wav");
         }
-        BuildSound()[id] = new string[b.Sounds.BuildCount];
+        BuildSound()[id] = new string[SoundCount];
         for (int i = 0; i < b.Sounds.BuildCount; i++)
         {
             BuildSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Build[i], ".wav");
         }
-        CloneSound()[id] = new string[b.Sounds.CloneCount];
+        CloneSound()[id] = new string[SoundCount];
         for (int i = 0; i < b.Sounds.CloneCount; i++)
         {
             CloneSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Clone[i], ".wav");
@@ -4836,6 +5682,8 @@ public class GameData
         WalkableType1()[id] = b.WalkableType;
         SetSpecialBlock(b, id);
     }
+
+    public const int SoundCount = 8;
 
     float DeserializeFloat(int p)
     {

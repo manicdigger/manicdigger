@@ -182,7 +182,7 @@ namespace ManicDigger
 
         public void RegisterTimer(ManicDigger.Action a, double interval)
         {
-            server.timers[new ManicDigger.Timer() { INTERVAL = interval }] = delegate { a(); };
+            server.timers[new Timer() { INTERVAL = interval }] = delegate { a(); };
         }
 
         public void PlaySoundAt(int posx, int posy, int posz, string sound)

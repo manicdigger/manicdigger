@@ -284,9 +284,9 @@ namespace ManicDigger
         {
             game.SendPacket(packet, packetLength);
         }
-        public void SendFillArea(Vector3i start, Vector3i end, int blockType)
+        public void SendFillArea(int startX, int startY, int startZ, int endX, int endY, int endZ, int blockType)
         {
-            game.SendFillArea(start.x, start.y, start.z, end.x, end.y, end.z, blockType);
+            game.SendFillArea(startX, startY, startZ, endX, endY, endZ, blockType);
         }
         public void SendPacketClient(Packet_Client p)
         {
@@ -641,6 +641,195 @@ namespace ManicDigger
         void SetAmbientLight(int color)
         {
             game.SetAmbientLight(color);
+        }
+        public OptionsCi options { get { return game.options; } set { game.options = value; } }
+        public int GetKey(int key)
+        {
+            return game.GetKey(key);
+        }
+        float MoveSpeedNow()
+        {
+            return game.MoveSpeedNow();
+        }
+        void UpdateMouseViewportControl(float dt)
+        {
+            game.UpdateMouseViewportControl(dt);
+        }
+        float VectorAngleGet(float qX, float qY, float qZ)
+        {
+            return game.VectorAngleGet(qX, qY, qZ);
+        }
+        float Length(float x, float y, float z)
+        {
+            return game.Length(x, y, z);
+        }
+        public void HandleMaterialKeys(int eKey)
+        {
+            game.HandleMaterialKeys(eKey);
+        }
+        public void UseVsync()
+        {
+            game.UseVsync();
+        }
+        public void ToggleVsync()
+        {
+            game.ToggleVsync();
+        }
+        public void GuiStateBackToGame()
+        {
+            game.GuiStateBackToGame();
+        }
+        internal float overheadcameradistance { get { return game.overheadcameradistance; } set { game.overheadcameradistance = value; } }
+        internal float tppcameradistance { get { return game.tppcameradistance; } set { game.tppcameradistance = value; } }
+        internal int TPP_CAMERA_DISTANCE_MIN { get { return game.TPP_CAMERA_DISTANCE_MIN; } set { game.TPP_CAMERA_DISTANCE_MIN = value; } }
+        internal int TPP_CAMERA_DISTANCE_MAX { get { return game.TPP_CAMERA_DISTANCE_MAX; } set { game.TPP_CAMERA_DISTANCE_MAX = value; } }
+        Packet_Client CreateLoginPacket(string username, string verificationKey)
+        {
+            return game.CreateLoginPacket(username, verificationKey);
+        }
+        Packet_Client CreateLoginPacket_(string username, string verificationKey, string serverPassword)
+        {
+            return game.CreateLoginPacket_(username, verificationKey, serverPassword);
+        }
+        public void Connect(string serverAddress, int port, string username, string auth)
+        {
+            game.Connect(serverAddress, port, username, auth);
+        }
+        public void Connect_(string serverAddress, int port, string username, string auth, string serverPassword)
+        {
+            game.Connect_(serverAddress, port, username, auth, serverPassword);
+        }
+        public int sunlight_ { get { return game.sunlight_; } set { game.sunlight_ = value; } }
+        public void RedrawAllBlocks() { game.RedrawAllBlocks(); }
+        private void SetFog()
+        {
+            game.SetFog();
+        }
+        public int Height() { return game.Height(); }
+        public int Width() { return game.Width(); }
+        private void UpdateBlockDamageToPlayer(float dt)
+        {
+            game.UpdateBlockDamageToPlayer(dt);
+        }
+        BlockPosSide Nearest(BlockPosSide[] pick2, int pick2Count, float x, float y, float z)
+        {
+            return game.Nearest(pick2, pick2Count, x, y, z);
+        }
+        BlockOctreeSearcher s { get { return game.s; } set { game.s = value; } }
+        //Don't allow to look through walls.
+        void LimitThirdPersonCameraToWalls(Vector3Ref eye, Vector3Ref target, FloatRef curtppcameradistance)
+        {
+            game.LimitThirdPersonCameraToWalls(eye, target, curtppcameradistance);
+        }
+        Kamera overheadcameraK { get { return game.overheadcameraK; } set { game.overheadcameraK = value; } }
+        Vector3Ref OverheadCamera_cameraEye { get { return game.OverheadCamera_cameraEye; } set { game.OverheadCamera_cameraEye = value; } }
+        float[] OverheadCamera()
+        {
+            return game.OverheadCamera();
+        }
+        float[] FppCamera()
+        {
+            return game.FppCamera();
+        }
+        void FillChunk(Chunk destination, int destinationchunksize,
+             int sourcex, int sourcey, int sourcez, int[] source,
+             int sourcechunksizeX, int sourcechunksizeY, int sourcechunksizeZ)
+        {
+            game.FillChunk(destination, destinationchunksize,
+                sourcex, sourcey, sourcez, source,
+                sourcechunksizeX, sourcechunksizeY, sourcechunksizeZ);
+        }
+        public void SetMapPortion(int x, int y, int z, int[] chunk, int sizeX, int sizeY, int sizeZ)
+        {
+            game.SetMapPortion(x, y, z, chunk, sizeX, sizeY, sizeZ);
+        }
+        void ChatLog(string p)
+        {
+            game.ChatLog(p);
+        }
+        IntRef FollowId()
+        {
+            return game.FollowId();
+        }
+        internal DictionaryVector3Float fillarea { get { return game.fillarea; } set { game.fillarea = value; } }
+        internal Vector3IntRef fillstart { get { return game.fillstart; } set { game.fillstart = value; } }
+        internal Vector3IntRef fillend { get { return game.fillend; } set { game.fillend = value; } }
+        internal int fillAreaLimit { get { return game.fillAreaLimit; } set { game.fillAreaLimit = value; } }
+        void ClearFillArea()
+        {
+            game.ClearFillArea();
+        }
+
+        void FillFill(Vector3IntRef a, Vector3IntRef b)
+        {
+            game.FillFill(a, b);
+        }
+        public void SendSetBlock(int positionX, int positionY, int positionZ, int mode, int type, int materialslot)
+        {
+            game.SendSetBlock(positionX, positionY, positionZ, mode, type, materialslot);
+        }
+        public float HeadingToOrientationX(byte heading)
+        {
+            return game.HeadingToOrientationX(heading);
+        }
+        public float PitchToOrientationY(byte pitch)
+        {
+            return game.PitchToOrientationY(pitch);
+        }
+        void OnPickUseWithTool(int posX, int posY, int posZ)
+        {
+            game.OnPickUseWithTool(posX, posY, posZ);
+        }
+        void KeyUp(int eKey)
+        {
+            game.KeyUp(eKey);
+        }
+        float playerPositionSpawnX { get { return game.playerPositionSpawnX; } set { game.playerPositionSpawnX = value; } }
+        float playerPositionSpawnY { get { return game.playerPositionSpawnY; } set { game.playerPositionSpawnY = value; } }
+        float playerPositionSpawnZ { get { return game.playerPositionSpawnZ; } set { game.playerPositionSpawnZ = value; } }
+        int[] materialSlots { get { return game.materialSlots; } set { game.materialSlots = value; } }
+        void MapLoaded()
+        {
+            game.MapLoaded();
+        }
+        void UpdateWalkSound(float dt)
+        {
+            game.UpdateWalkSound(dt);
+        }
+        int GetSoundCount(string[] soundwalk)
+        {
+            return game.GetSoundCount(soundwalk);
+        }
+        string[] soundwalkcurrent()
+        {
+            return game.soundwalkcurrent();
+        }
+        public byte HeadingByte(float orientationX, float orientationY, float orientationZ)
+        {
+            return game.HeadingByte(orientationX, orientationY, orientationZ);
+        }
+        public byte PitchByte(float orientationX, float orientationY, float orientationZ)
+        {
+            return game.PitchByte(orientationX, orientationY, orientationZ);
+        }
+
+        internal void Draw2dText1(string text, int x, int y, int fontsize, IntRef color, bool enabledepthtest)
+        {
+            game.Draw2dText1(text, x, y, fontsize, color, enabledepthtest);
+        }
+        public InventoryUtilClient d_InventoryUtil { get { return game.d_InventoryUtil; } set { game.d_InventoryUtil = value; } }
+        void UseInventory(Packet_Inventory packet_Inventory)
+        {
+            game.UseInventory(packet_Inventory);
+        }
+        float EyesPosX() { return game.EyesPosX(); }
+        float EyesPosY() { return game.EyesPosY(); }
+        float EyesPosZ() { return game.EyesPosZ(); }
+        internal int mouseCurrentX { get { return game.mouseCurrentX; } set { game.mouseCurrentX = value; } }
+        internal int mouseCurrentY { get { return game.mouseCurrentY; } set { game.mouseCurrentY = value; } }
+        void DrawMouseCursor()
+        {
+            game.DrawMouseCursor();
         }
     }
 }

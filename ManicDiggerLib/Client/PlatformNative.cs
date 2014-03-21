@@ -15,6 +15,7 @@ using System.Globalization;
 using OpenTK.Audio;
 using ManicDigger.ClientNative;
 using System.Xml.Serialization;
+using System.Text.RegularExpressions;
 
 public class GamePlatformNative : GamePlatform, IGameExit
 {
@@ -415,45 +416,6 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
     public static int ToGlKey(OpenTK.Input.Key key)
     {
-        switch (key)
-        {
-            case OpenTK.Input.Key.Left:
-                return GlKeys.Left;
-            case OpenTK.Input.Key.Up:
-                return GlKeys.Up;
-            case OpenTK.Input.Key.Right:
-                return GlKeys.Right;
-            case OpenTK.Input.Key.Down:
-                return GlKeys.Down;
-            case OpenTK.Input.Key.PageUp:
-                return GlKeys.PageUp;
-            case OpenTK.Input.Key.PageDown:
-                return GlKeys.PageDown;
-            case OpenTK.Input.Key.F1:
-                return GlKeys.F1;
-            case OpenTK.Input.Key.F2:
-                return GlKeys.F2;
-            case OpenTK.Input.Key.F3:
-                return GlKeys.F3;
-            case OpenTK.Input.Key.F4:
-                return GlKeys.F4;
-            case OpenTK.Input.Key.F5:
-                return GlKeys.F5;
-            case OpenTK.Input.Key.F6:
-                return GlKeys.F6;
-            case OpenTK.Input.Key.F7:
-                return GlKeys.F7;
-            case OpenTK.Input.Key.F8:
-                return GlKeys.F8;
-            case OpenTK.Input.Key.F9:
-                return GlKeys.F9;
-            case OpenTK.Input.Key.F10:
-                return GlKeys.F10;
-            case OpenTK.Input.Key.F11:
-                return GlKeys.F11;
-            case OpenTK.Input.Key.F12:
-                return GlKeys.F12;
-        }
         return (int)key;
     }
 
@@ -1103,6 +1065,99 @@ public class GamePlatformNative : GamePlatform, IGameExit
         float mult = 1f;
         float[] global_ambient = new float[] { (float)r / 255f * mult, (float)g / 255f * mult, (float)b / 255f * mult, 1f };
         GL.LightModel(LightModelParameter.LightModelAmbient, global_ambient);
+    }
+
+    public override float MathAcos(float p)
+    {
+        return (float)Math.Acos(p);
+    }
+
+    public override void SetVSync(bool enabled)
+    {
+        window.VSync = enabled ? VSyncMode.On : VSyncMode.Off;
+    }
+
+    public override string GetGameVersion()
+    {
+        return GameVersion.Version;
+    }
+
+    public override void GlEnableFog()
+    {
+        GL.Enable(EnableCap.Fog);
+    }
+
+    public override void GlHintFogHintNicest()
+    {
+        GL.Hint(HintTarget.FogHint, HintMode.Nicest);
+    }
+
+    public override void GlFogFogModeExp2()
+    {
+        GL.Fog(FogParameter.FogMode, (int)FogMode.Exp2);
+    }
+
+    public override void GlFogFogColor(int r, int g, int b, int a)
+    {
+        float[] fogColor = new[] { (float)r / 255, (float)g / 255, (float)b / 255, (float)a / 255 };
+        GL.Fog(FogParameter.FogColor, fogColor);
+    }
+
+    public override void GlFogFogDensity(float density)
+    {
+        GL.Fog(FogParameter.FogDensity, density);
+    }
+    ICompression compression = new CompressionGzip();
+    public override byte[] GzipDecompress(byte[] compressed, int compressedLength)
+    {
+        return compression.Decompress(compressed);
+    }
+    public bool ENABLE_CHATLOG = true;
+    public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }
+    private static string MakeValidFileName(string name)
+    {
+        string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()));
+        string invalidReStr = string.Format(@"[{0}]", invalidChars);
+        return Regex.Replace(name, invalidReStr, "_");
+    }
+    public override bool ChatLog(string servername, string p)
+    {
+        if (!ENABLE_CHATLOG)
+        {
+            return true;
+        }
+        if (!Directory.Exists(gamepathlogs()))
+        {
+            Directory.CreateDirectory(gamepathlogs());
+        }
+        string filename = Path.Combine(gamepathlogs(), MakeValidFileName(servername) + ".txt");
+        try
+        {
+            File.AppendAllText(filename, string.Format("{0} {1}\n", DateTime.Now, p));
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public override float MathTan(float p)
+    {
+        return (float)Math.Tan(p);
+    }
+
+    public override bool IsValidTypingChar(int c_)
+    {
+        char c = (char)c_;
+        return (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c)
+                    || char.IsPunctuation(c) || char.IsSeparator(c) || char.IsSymbol(c))
+                    && c != '\r' && c != '\t';
+    }
+
+    public override bool StringStartsWithIgnoreCase(string a, string b)
+    {
+        return a.StartsWith(b, StringComparison.InvariantCultureIgnoreCase);
     }
 }
 

@@ -39,25 +39,6 @@ namespace ManicDigger
             return new BinaryReader(stream).ReadBytes((int)stream.Length);
         }
     }
-    public static class GameVersion
-    {
-        static string gameversion;
-        public static string Version
-        {
-            get
-            {
-                if (gameversion == null)
-                {
-                    gameversion = "unknown";
-                    if (File.Exists("version.txt"))
-                    {
-                        gameversion = File.ReadAllText("version.txt").Trim();
-                    }
-                }
-                return gameversion;
-            }
-        }
-    }
     public interface ICompression
     {
         byte[] Compress(byte[] data);
@@ -81,73 +62,6 @@ namespace ManicDigger
             return copy;
         }
         #endregion
-    }
-    public class CompressionGzip : ICompression
-    {
-        public byte[] Compress(byte[] data)
-        {
-            MemoryStream input = new MemoryStream(data);
-            MemoryStream output = new MemoryStream();
-            using (GZipStream compress = new GZipStream(output, CompressionMode.Compress))
-            {
-                byte[] buffer = new byte[4096];
-                int numRead;
-                while ((numRead = input.Read(buffer, 0, buffer.Length)) != 0)
-                {
-                    compress.Write(buffer, 0, numRead);
-                }
-            }
-            return output.ToArray();
-        }
-        public byte[] Decompress(byte[] fi)
-        {
-            MemoryStream ms = new MemoryStream();
-            // Get the stream of the source file.
-            using (MemoryStream inFile = new MemoryStream(fi))
-            {
-                using (GZipStream Decompress = new GZipStream(inFile,
-                        CompressionMode.Decompress))
-                {
-                    //Copy the decompression stream into the output file.
-                    byte[] buffer = new byte[4096];
-                    int numRead;
-                    while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
-                    {
-                        ms.Write(buffer, 0, numRead);
-                    }
-                }
-            }
-            return ms.ToArray();
-        }
-        public static byte[] Decompress(FileInfo fi)
-        {
-            MemoryStream ms = new MemoryStream();
-            // Get the stream of the source file.
-            using (FileStream inFile = fi.OpenRead())
-            {
-                // Get original file extension, for example "doc" from report.doc.gz.
-                string curFile = fi.FullName;
-                string origName = curFile.Remove(curFile.Length - fi.Extension.Length);
-
-                //Create the decompressed file.
-                //using (FileStream outFile = File.Create(origName))
-                {
-                    using (GZipStream Decompress = new GZipStream(inFile,
-                            CompressionMode.Decompress))
-                    {
-                        //Copy the decompression stream into the output file.
-                        byte[] buffer = new byte[4096];
-                        int numRead;
-                        while ((numRead = Decompress.Read(buffer, 0, buffer.Length)) != 0)
-                        {
-                            ms.Write(buffer, 0, numRead);
-                        }
-                        //Console.WriteLine("Decompressed: {0}", fi.Name);
-                    }
-                }
-            }
-            return ms.ToArray();
-        }
     }
     public interface IFastBitmap
     {
@@ -229,47 +143,6 @@ namespace ManicDigger
             bmd = null;
         }
     }
-    public struct Vector2i
-    {
-        public Vector2i(int x, int y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-        public int x;
-        public int y;
-        public override bool Equals(object obj)
-        {
-            if (obj is Vector2i)
-            {
-                Vector2i other = (Vector2i)obj;
-                return this.x == other.x && this.y == other.y;
-            }
-            return base.Equals(obj);
-        }
-        public static bool operator ==(Vector2i a, Vector2i b)
-        {
-            return a.x == b.x && a.y == b.y;
-        }
-        public static bool operator !=(Vector2i a, Vector2i b)
-        {
-            return !(a.x == b.x && a.y == b.y);
-        }
-        public override int GetHashCode()
-        {
-            int hash = 23;
-            unchecked
-            {
-                hash = hash * 37 + x;
-                hash = hash * 37 + y;
-            }
-            return hash;
-        }
-        public override string ToString()
-        {
-            return string.Format("[{0}, {1}]", x, y);
-        }
-    }
     public struct Vector3i
     {
         public Vector3i(int x, int y, int z)
@@ -312,47 +185,6 @@ namespace ManicDigger
         public override string ToString()
         {
             return string.Format("[{0}, {1}, {2}]", x, y, z);
-        }
-    }
-    public class Timer
-    {
-        public double INTERVAL { get { return interval; } set { interval = value; } }
-        public double MaxDeltaTime { get { return maxDeltaTime; } set { maxDeltaTime = value; } }
-        double interval = 1;
-        double maxDeltaTime = double.PositiveInfinity;
-
-        double starttime;
-        double oldtime;
-        public double accumulator;
-        public Timer()
-        {
-            Reset();
-        }
-        public void Reset()
-        {
-            starttime = gettime();
-        }
-        public delegate void Tick();
-        public void Update(Tick tick)
-        {
-            double currenttime = gettime() - starttime;
-            double deltaTime = currenttime - oldtime;
-            accumulator += deltaTime;
-            double dt = INTERVAL;
-            if (MaxDeltaTime != double.PositiveInfinity && accumulator > MaxDeltaTime)
-            {
-                accumulator = MaxDeltaTime;
-            }
-            while (accumulator >= dt)
-            {
-                tick();
-                accumulator -= dt;
-            }
-            oldtime = currenttime;
-        }
-        static double gettime()
-        {
-            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
     }
 

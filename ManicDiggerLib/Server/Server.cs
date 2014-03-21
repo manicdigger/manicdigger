@@ -1039,11 +1039,11 @@ namespace ManicDiggerServer
                             clients[lastClientId] = c;
                         }
                         //clientid = c.Id;
-                        c.notifyMapTimer = new ManicDigger.Timer()
+                        c.notifyMapTimer = new Timer()
                         {
                             INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
                         };
-                        c.notifyMonstersTimer = new ManicDigger.Timer()
+                        c.notifyMonstersTimer = new Timer()
                         {
                             INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
                         };
@@ -1185,7 +1185,7 @@ namespace ManicDiggerServer
         DateTime statsupdate;
         DateTime botpositionupdate = DateTime.UtcNow;
 
-        public Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick> timers = new Dictionary<ManicDigger.Timer, ManicDigger.Timer.Tick>();
+        public Dictionary<Timer, Timer.Tick> timers = new Dictionary<Timer, Timer.Tick>();
 
         private void SendPing(int clientid)
         {
@@ -1211,7 +1211,7 @@ namespace ManicDiggerServer
             SendPacket(recipientClientId, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.PlayerPing, PlayerPing = p }));
         }
 
-        ManicDigger.Timer pingtimer = new ManicDigger.Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
+        Timer pingtimer = new Timer() { INTERVAL = 1, MaxDeltaTime = 5 };
         private void NotifySeason(int clientid)
         {
             if (clients[clientid].state == ClientStateOnServer.Connecting)
@@ -3695,7 +3695,7 @@ if (sent >= unknown.Count) { break; }
             public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();
             public bool[] chunksseen;
             public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
-            public ManicDigger.Timer notifyMapTimer;
+            public Timer notifyMapTimer;
             public bool IsInventoryDirty = true;
             public bool IsPlayerStatsDirty = true;
             public int FillLimit = 500;
@@ -3716,7 +3716,7 @@ if (sent >= unknown.Count) { break; }
             {
                 return this.color + this.playername + subsequentColor;
             }
-            public ManicDigger.Timer notifyMonstersTimer;
+            public Timer notifyMonstersTimer;
             public IScriptInterpreter Interpreter;
             public ScriptConsole Console;
 
@@ -4527,5 +4527,87 @@ if (sent >= unknown.Count) { break; }
     public class MapManipulator
     {
         public const string BinSaveExtension = ".mddbs";
+    }
+    public class Timer
+    {
+        public double INTERVAL { get { return interval; } set { interval = value; } }
+        public double MaxDeltaTime { get { return maxDeltaTime; } set { maxDeltaTime = value; } }
+        double interval = 1;
+        double maxDeltaTime = double.PositiveInfinity;
+
+        double starttime;
+        double oldtime;
+        public double accumulator;
+        public Timer()
+        {
+            Reset();
+        }
+        public void Reset()
+        {
+            starttime = gettime();
+        }
+        public delegate void Tick();
+        public void Update(Tick tick)
+        {
+            double currenttime = gettime() - starttime;
+            double deltaTime = currenttime - oldtime;
+            accumulator += deltaTime;
+            double dt = INTERVAL;
+            if (MaxDeltaTime != double.PositiveInfinity && accumulator > MaxDeltaTime)
+            {
+                accumulator = MaxDeltaTime;
+            }
+            while (accumulator >= dt)
+            {
+                tick();
+                accumulator -= dt;
+            }
+            oldtime = currenttime;
+        }
+        static double gettime()
+        {
+            return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
+        }
+    }
+    public struct Vector2i
+    {
+        public Vector2i(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+        public int x;
+        public int y;
+        public override bool Equals(object obj)
+        {
+            if (obj is Vector2i)
+            {
+                Vector2i other = (Vector2i)obj;
+                return this.x == other.x && this.y == other.y;
+            }
+            return base.Equals(obj);
+        }
+        public static bool operator ==(Vector2i a, Vector2i b)
+        {
+            return a.x == b.x && a.y == b.y;
+        }
+        public static bool operator !=(Vector2i a, Vector2i b)
+        {
+            return !(a.x == b.x && a.y == b.y);
+        }
+        public override int GetHashCode()
+        {
+            int hash = 23;
+            unchecked
+            {
+                hash = hash * 37 + x;
+                hash = hash * 37 + y;
+            }
+            return hash;
+        }
+        public override string ToString()
+        {
+            return string.Format("[{0}, {1}]", x, y);
+        }
     }
 }

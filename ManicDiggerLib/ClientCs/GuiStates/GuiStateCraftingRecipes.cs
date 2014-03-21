@@ -56,7 +56,7 @@ namespace ManicDigger
             int menustarty = ycenter(okrecipes.Count * 80);
             if (okrecipes.Count == 0)
             {
-                Draw2dText_(language.NoMaterialsForCrafting(), xcenter(200), ycenter(20), 12, Color.White);
+                Draw2dText1(language.NoMaterialsForCrafting(), xcenter(200), ycenter(20), 12, null, false);
                 return;
             }
             for (int i = 0; i < okrecipes.Count; i++)
@@ -66,16 +66,16 @@ namespace ManicDigger
                 {
                     int xx = menustartx + 20 + ii * 130;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture_(game.d_TerrainTextures.terrainTexture(), xx, yy, 30, 30, game.TextureIdForInventory[r.Ingredients[ii].Type]);
-                    Draw2dText_(string.Format("{0} {1}", r.Ingredients[ii].Amount, game.blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
-                        i == craftingselectedrecipe ? Color.Red : Color.White);
+                    Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 30, 30, IntRef.Create(game.TextureIdForInventory[r.Ingredients[ii].Type]), game.terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                    Draw2dText1(string.Format("{0} {1}", r.Ingredients[ii].Amount, game.blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
+                       IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
                 }
                 {
                     int xx = menustartx + 20 + 400;
                     int yy = menustarty + i * 80;
-                    Draw2dTexture_(game.d_TerrainTextures.terrainTexture(), xx, yy, 40, 40, game.TextureIdForInventory[r.Output.Type]);
-                    Draw2dText_(string.Format("{0} {1}", r.Output.Amount, game.blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
-                        i == craftingselectedrecipe ? Color.Red : Color.White);
+                    Draw2dTexture(game.d_TerrainTextures.terrainTexture(), xx, yy, 40, 40, IntRef.Create(game.TextureIdForInventory[r.Output.Type]), game.terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                    Draw2dText1(string.Format("{0} {1}", r.Output.Amount, game.blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
+                      IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
                 }
             }
         }

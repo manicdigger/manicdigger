@@ -9,7 +9,6 @@ namespace ManicDigger
     {
         public GuiStateEscapeMenu()
         {
-            options = new OptionsCi();
             fonts = new string[4];
             fonts[0] = "Nice";
             fonts[1] = "Simple";
@@ -34,7 +33,7 @@ namespace ManicDigger
         {
             foreach (var w in new List<Button>(widgets))
             {
-                w.selected = w.Rect.Contains(game.mouse_current);
+                w.selected = w.Rect.Contains(new Point(game.mouseCurrentX, game.mouseCurrentY));
                 if (w.selected && game.mouseleftclick)
                 {
                     w.InvokeOnClick();
@@ -274,17 +273,18 @@ namespace ManicDigger
             {
                 string s = widgets[i].Text;
                 Rectangle rect = new Rectangle();
-                SizeF size = game.TextSize_(s, fontsize);
-                rect.Width = (int)size.Width + 10;
-                rect.Height = (int)size.Height;
-                rect.X = game.xcenter(size.Width);
+                float sizeWidth = game.game.TextSizeWidth(s, fontsize);
+                float sizeHeight = game.game.TextSizeHeight(s, fontsize);
+                rect.Width = (int)sizeWidth + 10;
+                rect.Height = (int)sizeHeight;
+                rect.X = game.xcenter(sizeWidth);
                 rect.Y = starty + textheight * i;
                 widgets[i].Rect = rect;
                 widgets[i].fontsize = fontsize;
                 if (i == keyselectid)
                 {
-                    widgets[i].fontcolor = Color.Green;
-                    widgets[i].fontcolorselected = Color.Green;
+                    widgets[i].fontcolor = Game.ColorFromArgb(255, 0, 255, 0);
+                    widgets[i].fontcolorselected = Game.ColorFromArgb(255, 0, 255, 0);
                 }
             }
         }
@@ -294,7 +294,7 @@ namespace ManicDigger
             EscapeMenuMouse1();
             foreach (var w in widgets)
             {
-                game.Draw2dText_(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, w.selected ? w.fontcolorselected : w.fontcolor);
+                game.Draw2dText1(w.Text, w.Rect.X, w.Rect.Y, w.fontsize, IntRef.Create(w.selected ? w.fontcolorselected : w.fontcolor), false);
             }
         }
         List<Button> widgets = new List<Button>();
@@ -305,8 +305,8 @@ namespace ManicDigger
             public event EventHandler OnClick;
             public bool selected;
             public int fontsize = 20;
-            public Color fontcolor = Color.White;
-            public Color fontcolorselected = Color.Red;
+            public int fontcolor = Game.ColorFromArgb(255, 255, 255, 255);
+            public int fontcolorselected = Game.ColorFromArgb(255, 255, 0, 0);
             public void InvokeOnClick()
             {
                 OnClick(this, new EventArgs());
@@ -332,36 +332,36 @@ namespace ManicDigger
             }
             Language language = game.game.language;
             int count = 0;
-            helps[count++] = new KeyHelp() { Text = language.KeyMoveFoward(), DefaultKey = (int)OpenTK.Input.Key.W };
-            helps[count++] = new KeyHelp() { Text = language.KeyMoveBack(), DefaultKey = (int)OpenTK.Input.Key.S };
-            helps[count++] = new KeyHelp() { Text = language.KeyMoveLeft(), DefaultKey = (int)OpenTK.Input.Key.A };
-            helps[count++] = new KeyHelp() { Text = language.KeyMoveRight(), DefaultKey = (int)OpenTK.Input.Key.D };
-            helps[count++] = new KeyHelp() { Text = language.KeyJump(), DefaultKey = (int)OpenTK.Input.Key.Space };
-            helps[count++] = new KeyHelp() { Text = language.KeyShowMaterialSelector(), DefaultKey = (int)OpenTK.Input.Key.B };
-            helps[count++] = new KeyHelp() { Text = language.KeySetSpawnPosition(), DefaultKey = (int)OpenTK.Input.Key.P };
-            helps[count++] = new KeyHelp() { Text = language.KeyRespawn(), DefaultKey = (int)OpenTK.Input.Key.O };
-            helps[count++] = new KeyHelp() { Text = language.KeyReloadWeapon(), DefaultKey = (int)OpenTK.Input.Key.R };
-            helps[count++] = new KeyHelp() { Text = language.KeyToggleFogDistance(), DefaultKey = (int)OpenTK.Input.Key.F };
-            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "1"), DefaultKey = (int)OpenTK.Input.Key.F1 };
-            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "10"), DefaultKey = (int)OpenTK.Input.Key.F2 };
-            helps[count++] = new KeyHelp() { Text = language.KeyFreeMove(), DefaultKey = (int)OpenTK.Input.Key.F3 };
-            helps[count++] = new KeyHelp() { Text = language.KeyThirdPersonCamera(), DefaultKey = (int)OpenTK.Input.Key.F5 };
-            helps[count++] = new KeyHelp() { Text = language.KeyTextEditor(), DefaultKey = (int)OpenTK.Input.Key.F9 };
-            helps[count++] = new KeyHelp() { Text = language.KeyFullscreen(), DefaultKey = (int)OpenTK.Input.Key.F11 };
-            helps[count++] = new KeyHelp() { Text = language.KeyScreenshot(), DefaultKey = (int)OpenTK.Input.Key.F12 };
-            helps[count++] = new KeyHelp() { Text = language.KeyPlayersList(), DefaultKey = (int)OpenTK.Input.Key.Tab };
-            helps[count++] = new KeyHelp() { Text = language.KeyChat(), DefaultKey = (int)OpenTK.Input.Key.T };
-            helps[count++] = new KeyHelp() { Text = language.KeyTeamChat(), DefaultKey = (int)OpenTK.Input.Key.Y };
-            helps[count++] = new KeyHelp() { Text = language.KeyCraft(), DefaultKey = (int)OpenTK.Input.Key.C };
-            helps[count++] = new KeyHelp() { Text = language.KeyBlockInfo(), DefaultKey = (int)OpenTK.Input.Key.I };
-            helps[count++] = new KeyHelp() { Text = language.KeyUse(), DefaultKey = (int)OpenTK.Input.Key.E };
-            helps[count++] = new KeyHelp() { Text = language.KeyReverseMinecart(), DefaultKey = (int)OpenTK.Input.Key.Q };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveFoward(), DefaultKey = GlKeys.W };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveBack(), DefaultKey = GlKeys.S };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveLeft(), DefaultKey = GlKeys.A };
+            helps[count++] = new KeyHelp() { Text = language.KeyMoveRight(), DefaultKey = GlKeys.D };
+            helps[count++] = new KeyHelp() { Text = language.KeyJump(), DefaultKey = GlKeys.Space };
+            helps[count++] = new KeyHelp() { Text = language.KeyShowMaterialSelector(), DefaultKey = GlKeys.B };
+            helps[count++] = new KeyHelp() { Text = language.KeySetSpawnPosition(), DefaultKey = GlKeys.P };
+            helps[count++] = new KeyHelp() { Text = language.KeyRespawn(), DefaultKey = GlKeys.O };
+            helps[count++] = new KeyHelp() { Text = language.KeyReloadWeapon(), DefaultKey = GlKeys.R };
+            helps[count++] = new KeyHelp() { Text = language.KeyToggleFogDistance(), DefaultKey = GlKeys.F };
+            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "1"), DefaultKey = GlKeys.F1 };
+            helps[count++] = new KeyHelp() { Text = string.Format(language.KeyMoveSpeed(), "10"), DefaultKey = GlKeys.F2 };
+            helps[count++] = new KeyHelp() { Text = language.KeyFreeMove(), DefaultKey = GlKeys.F3 };
+            helps[count++] = new KeyHelp() { Text = language.KeyThirdPersonCamera(), DefaultKey = GlKeys.F5 };
+            helps[count++] = new KeyHelp() { Text = language.KeyTextEditor(), DefaultKey = GlKeys.F9 };
+            helps[count++] = new KeyHelp() { Text = language.KeyFullscreen(), DefaultKey = GlKeys.F11 };
+            helps[count++] = new KeyHelp() { Text = language.KeyScreenshot(), DefaultKey = GlKeys.F12 };
+            helps[count++] = new KeyHelp() { Text = language.KeyPlayersList(), DefaultKey = GlKeys.Tab };
+            helps[count++] = new KeyHelp() { Text = language.KeyChat(), DefaultKey = GlKeys.T };
+            helps[count++] = new KeyHelp() { Text = language.KeyTeamChat(), DefaultKey = GlKeys.Y };
+            helps[count++] = new KeyHelp() { Text = language.KeyCraft(), DefaultKey = GlKeys.C };
+            helps[count++] = new KeyHelp() { Text = language.KeyBlockInfo(), DefaultKey = GlKeys.I };
+            helps[count++] = new KeyHelp() { Text = language.KeyUse(), DefaultKey = GlKeys.E };
+            helps[count++] = new KeyHelp() { Text = language.KeyReverseMinecart(), DefaultKey = GlKeys.Q };
             return helps;
         }
         int keyselectid = -1;
-        public void EscapeMenuKeyDown(OpenTK.Input.KeyboardKeyEventArgs e)
+        public void EscapeMenuKeyDown(int eKey)
         {
-            if (e.Key == game.GetKey(OpenTK.Input.Key.Escape))
+            if (eKey == game.GetKey(GlKeys.Escape))
             {
                 if (escapemenustate == EscapeMenuState.Graphics
                     || escapemenustate == EscapeMenuState.Keys
@@ -384,12 +384,12 @@ namespace ManicDigger
             {
                 if (keyselectid != -1)
                 {
-                    options.Keys[keyhelps()[keyselectid].DefaultKey] = (int)e.Key;
+                    options.Keys[keyhelps()[keyselectid].DefaultKey] = eKey;
                     keyselectid = -1;
                 }
             }
         }
-        internal OptionsCi options;
+        internal OptionsCi options { get { return game.options; } set { game.options = value; } }
         public void LoadOptions()
         {
             OptionsCi o = game.game.platform.LoadOptions();

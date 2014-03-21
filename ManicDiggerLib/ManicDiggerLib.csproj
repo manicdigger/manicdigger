@@ -190,7 +190,6 @@
     <Compile Include="Server\Mod.cs" />
     <Compile Include="ClientCs\Network\LoginClient.cs" />
     <Compile Include="ClientNative\OggDecoder.cs" />
-    <Compile Include="ClientCs\Network\NetworkClient.cs" />
     <Compile Include="ClientCs\GameWindowMisc.cs" />
     <Compile Include="ClientCs\ManicDigger.cs" />
     <Compile Include="ClientCs\Misc.cs" />

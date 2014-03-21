@@ -13,14 +13,14 @@ namespace ManicDigger
         public MinecartRenderer d_MinecartRenderer { get; set; }
         void RailOnNewFrame(float dt)
         {
-            LocalPlayerAnimationHint.InVehicle = railriding;
+            localplayeranimationhint.InVehicle = railriding;
             Vector3 fix= railriding ? new Vector3(0, -0.7f, 0) : new Vector3();
-            LocalPlayerAnimationHint.DrawFixX = fix.X;
-            LocalPlayerAnimationHint.DrawFixY = fix.Y;
-            LocalPlayerAnimationHint.DrawFixZ = fix.Z;
+            localplayeranimationhint.DrawFixX = fix.X;
+            localplayeranimationhint.DrawFixY = fix.Y;
+            localplayeranimationhint.DrawFixZ = fix.Z;
 
-            bool turnright = keyboardstate[GetKey(OpenTK.Input.Key.D)];
-            bool turnleft = keyboardstate[GetKey(OpenTK.Input.Key.A)];
+            bool turnright = keyboardState[GetKey(GlKeys.D)];
+            bool turnleft = keyboardState[GetKey(GlKeys.A)];
             RailSound();
             if (railriding)
             {
@@ -60,11 +60,11 @@ namespace ManicDigger
                     }
                 }
             }
-            if (keyboardstate[GetKey(OpenTK.Input.Key.W)] && GuiTyping != TypingState.Typing)
+            if (keyboardState[GetKey(GlKeys.W)] && GuiTyping != TypingState.Typing)
             {
                 currentvehiclespeed += 1f * (float)dt;
             }
-            if (keyboardstate[GetKey(OpenTK.Input.Key.S)] && GuiTyping != TypingState.Typing)
+            if (keyboardState[GetKey(GlKeys.S)] && GuiTyping != TypingState.Typing)
             {
                 currentvehiclespeed -= 5f * (float)dt;
             }
@@ -73,12 +73,12 @@ namespace ManicDigger
                 currentvehiclespeed = 0;
             }
             //todo fix
-            //if (viewport.keypressed != null && viewport.keypressed.Key == OpenTK.Input.Key.Q)            
-            if (!wasqpressed && keyboardstate[GetKey(OpenTK.Input.Key.Q)] && GuiTyping != TypingState.Typing)
+            //if (viewport.keypressed != null && viewport.keypressed.Key == GlKeys.Q)            
+            if (!wasqpressed && keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing)
             {
                 Reverse();
             }
-            if (!wasepressed && keyboardstate[GetKey(OpenTK.Input.Key.E)] && !railriding && !ENABLE_FREEMOVE && GuiTyping != TypingState.Typing)
+            if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && !railriding && !ENABLE_FREEMOVE && GuiTyping != TypingState.Typing)
             {
                 currentrailblock = new Vector3((int)LocalPlayerPosition.X,
                     (int)LocalPlayerPosition.Z, (int)LocalPlayerPosition.Y - 1);
@@ -124,13 +124,13 @@ namespace ManicDigger
                     lastdirection = currentdirection;
                 }
             }
-            else if (!wasepressed && keyboardstate[GetKey(OpenTK.Input.Key.E)] && railriding && GuiTyping != TypingState.Typing)
+            else if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && railriding && GuiTyping != TypingState.Typing)
             {
                 ExitVehicle();
                 LocalPlayerPosition += new Vector3(0, 0.7f, 0);
             }
-            wasqpressed = keyboardstate[GetKey(OpenTK.Input.Key.Q)] && GuiTyping != TypingState.Typing;
-            wasepressed = keyboardstate[GetKey(OpenTK.Input.Key.E)] && GuiTyping != TypingState.Typing;
+            wasqpressed = keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing;
+            wasepressed = keyboardState[GetKey(GlKeys.E)] && GuiTyping != TypingState.Typing;
         }
         float originalmodelheight;
         private void ExitVehicle()
