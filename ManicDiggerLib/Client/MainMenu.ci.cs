@@ -1125,13 +1125,13 @@ public class ScreenMultiplayer : Screen
     {
         if (!loaded)
         {
-            menu.p.WebClientDownloadStringAsync("http://manicdigger.sourceforge.net/serverlistcsv.txt", serverListAddress);
+            menu.p.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/serverlistcsv.txt", serverListAddress);
             loaded = true;
         }
         if (serverListAddress.done)
         {
             serverListAddress.done = false;
-            menu.p.WebClientDownloadStringAsync(serverListAddress.value, serverListCsv);
+            menu.p.WebClientDownloadDataAsync(serverListAddress.GetString(menu.p), serverListCsv);
         }
         if (serverListCsv.done)
         {
@@ -1141,7 +1141,7 @@ public class ScreenMultiplayer : Screen
                 serversOnList[i] = null;
             }
             IntRef serversCount = new IntRef();
-            string[] servers = menu.p.StringSplit(serverListCsv.value, "\n", serversCount);
+            string[] servers = menu.p.StringSplit(serverListCsv.GetString(menu.p) , "\n", serversCount);
             for (int i = 0; i < serversCount.value; i++)
             {
                 IntRef ssCount = new IntRef();
@@ -1258,7 +1258,13 @@ public class ScreenMultiplayer : Screen
 public class HttpResponseCi
 {
     internal bool done;
-    internal string value;
+    internal byte[] value;
+    internal int valueLength;
+
+    internal string GetString(GamePlatform platform)
+    {
+        return platform.StringFromUtf8ByteArray(value, valueLength);
+    }
 }
 
 public class ServerOnList

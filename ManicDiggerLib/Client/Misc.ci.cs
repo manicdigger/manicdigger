@@ -509,3 +509,86 @@ public class ListConnectedPlayer
         count--;
     }
 }
+public class BitmapData_
+{
+    public static BitmapData_ Create(int width, int height)
+    {
+        BitmapData_ b = new BitmapData_();
+        b.width = width;
+        b.height = height;
+        b.argb = new int[width * height];
+        return b;
+    }
+    public static BitmapData_ CreateFromBitmap(GamePlatform p, BitmapCi atlas2d_)
+    {
+        BitmapData_ b = new BitmapData_();
+        b.width = p.FloatToInt(p.BitmapGetWidth(atlas2d_));
+        b.height = p.FloatToInt(p.BitmapGetHeight(atlas2d_));
+        b.argb = new int[b.width * b.height];
+        p.BitmapGetPixelsArgb(atlas2d_, b.argb);
+        return b;
+    }
+
+    internal int[] argb;
+    internal int width;
+    internal int height;
+
+    public void SetPixel(int x, int y, int color)
+    {
+        argb[x + y * width] = color;
+    }
+    public int GetPixel(int x, int y)
+    {
+        return argb[x + y * width];
+    }
+
+    public BitmapCi ToBitmap(GamePlatform p)
+    {
+        BitmapCi bmp = p.BitmapCreate(width, height);
+        p.BitmapSetPixelsArgb(bmp, argb);
+        return bmp;
+    }
+}
+
+public class TextureAtlasConverter
+{
+    //tiles = 16 means 16 x 16 atlas
+    public BitmapCi[] Atlas2dInto1d(GamePlatform p, BitmapCi atlas2d_, int tiles, int atlassizezlimit, IntRef retCount)
+    {
+        BitmapData_ orig = BitmapData_.CreateFromBitmap(p, atlas2d_);
+
+        int tilesize = orig.width / tiles;
+
+        int atlasescount = Game.MaxInt(1, (tiles * tiles * tilesize) / atlassizezlimit);
+        BitmapCi[] atlases = new BitmapCi[128];
+        int atlasesCount = 0;
+
+        BitmapData_ atlas1d = null;
+
+        for (int i = 0; i < tiles * tiles; i++)
+        {
+            int x = i % tiles;
+            int y = i / tiles;
+            int tilesinatlas = (tiles * tiles / atlasescount);
+            if (i % tilesinatlas == 0)
+            {
+                if (atlas1d != null)
+                {
+                    atlases[atlasesCount++] = atlas1d.ToBitmap(p);
+                }
+                atlas1d = BitmapData_.Create(tilesize, atlassizezlimit);
+            }
+            for (int xx = 0; xx < tilesize; xx++)
+            {
+                for (int yy = 0; yy < tilesize; yy++)
+                {
+                    int c = orig.GetPixel(x * tilesize + xx, y * tilesize + yy);
+                    atlas1d.SetPixel(xx, (i % tilesinatlas) * tilesize + yy, c);
+                }
+            }
+        }
+        atlases[atlasesCount++] = atlas1d.ToBitmap(p);
+        retCount.value = atlasescount;
+        return atlases;
+    }
+}

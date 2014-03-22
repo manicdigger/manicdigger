@@ -25,7 +25,7 @@ namespace ManicDigger
             if (railriding)
             {
                 ENABLE_FREEMOVE = true;
-                ENABLE_MOVE = false;
+                enable_move = false;
                 LocalPlayerPosition = CurrentRailPos();
                 currentrailblockprogress += currentvehiclespeed * (float)dt;
                 if (currentrailblockprogress >= 1)
@@ -138,7 +138,7 @@ namespace ManicDigger
             CharacterEyesHeight = originalmodelheight;
             railriding = false;
             ENABLE_FREEMOVE = false;
-            ENABLE_MOVE = true;
+            enable_move = true;
         }
         private void Reverse()
         {

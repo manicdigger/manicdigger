@@ -831,5 +831,86 @@ namespace ManicDigger
         {
             game.DrawMouseCursor();
         }
+        public void OnNewFrame(float dt)
+        {
+            game.OnNewFrame(dt);
+        }
+        void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
+        {
+            game.SendSetBlockAndUpdateSpeculative(material, x, y, z, mode);
+        }
+        public void OnPick(int blockposX, int blockposY, int blockposZ,
+            int blockposoldX, int blockposoldY, int blockposoldZ,
+            float[] collisionPos, bool right)
+        {
+            game.OnPick(blockposX, blockposY, blockposZ,
+                blockposoldX, blockposoldY, blockposoldZ,
+                collisionPos, right);
+        }
+        public void Set3dProjection1(float zfar)
+        {
+            game.Set3dProjection1(zfar);
+        }
+        public void Set3dProjection2()
+        {
+            game.Set3dProjection2();
+        }
+        public void OnResize()
+        {
+            game.OnResize();
+        }
+        void Reconnect()
+        {
+            game.Reconnect();
+        }
+        void ClientCommand(string s)
+        {
+            game.ClientCommand(s);
+        }
+        string[] typinglog { get { return game.typinglog; } set { game.typinglog = value; } }
+        int typinglogCount { get { return game.typinglogCount; } set { game.typinglogCount = value; } }
+        string invalidVersionDrawMessage { get { return game.invalidVersionDrawMessage; } set { game.invalidVersionDrawMessage = value; } }
+        Packet_Server invalidVersionPacketIdentification { get { return game.invalidVersionPacketIdentification; } set { game.invalidVersionPacketIdentification = value; } }
+        void ProcessServerIdentification(Packet_Server packet)
+        {
+            game.ProcessServerIdentification(packet);
+        }
+        byte[] CurrentChunk { get { return game.CurrentChunk; } set { game.CurrentChunk = value; } }
+        int CurrentChunkCount { get { return game.CurrentChunkCount; } set { game.CurrentChunkCount = value; } }
+        internal int[] NightLevels { get { return game.NightLevels; } set { game.NightLevels = value; } }
+        SunMoonRenderer d_SunMoonRenderer { get { return game.d_SunMoonRenderer; } set { game.d_SunMoonRenderer = value; } }
+        Packet_BlockType[] NewBlockTypes { get { return game.NewBlockTypes; } set { game.NewBlockTypes = value; } }
+        Packet_CraftingRecipe[] d_CraftingRecipes { get { return game.d_CraftingRecipes; } set { game.d_CraftingRecipes = value; } }
+        void InvalidVersionAllow()
+        {
+            game.InvalidVersionAllow();
+        }
+        TextureAtlasConverter d_TextureAtlasConverter { get { return game.d_TextureAtlasConverter; } set { game.d_TextureAtlasConverter = value; } }
+        int maxTextureSize { get { return game.maxTextureSize; } set { game.maxTextureSize = value; } }
+        public void UseTerrainTextures(string[] textureIds, int textureIdsCount)
+        {
+            game.UseTerrainTextures(textureIds, textureIdsCount);
+        }
+        int atlas2dtiles()
+        {
+            return game.atlas2dtiles();
+        }
+        public void UseTerrainTextureAtlas2d(BitmapCi atlas2d, int atlas2dWidth)
+        {
+            game.UseTerrainTextureAtlas2d(atlas2d, atlas2dWidth);
+        }
+        void TryReadPacket(byte[] data, int dataLength)
+        {
+            game.TryReadPacket(data, dataLength);
+        }
+        public void NetworkProcess()
+        {
+            game.NetworkProcess();
+        }
+        void LoadPlayerTextures()
+        {
+            game.LoadPlayerTextures();
+        }
+        string skinserver { get { return game.skinserver; } set { game.skinserver = value; } }
     }
 }

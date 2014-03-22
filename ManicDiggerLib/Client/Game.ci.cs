@@ -91,6 +91,14 @@
         walksoundtimer = 0;
         lastwalksound = 0;
         stepsoundduration = one * 4 / 10;
+        speculativeCount = 1024 * 8;
+        speculative = new Speculative[speculativeCount];
+        typinglog = new string[1024 * 16];
+        typinglogCount = 0;
+        CurrentChunk = new byte[1024 * 64];
+        CurrentChunkCount = 0;
+        NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
+        files = new DictionaryStringByteArray();
     }
     float one;
 
@@ -718,12 +726,9 @@
         if (this.whitetexture == -1)
         {
             BitmapCi bmp = platform.BitmapCreate(1, 1);
-            byte[] pixels = new byte[4];
-            pixels[0] = 255;
-            pixels[1] = 255;
-            pixels[2] = 255;
-            pixels[3] = 255;
-            platform.BitmapSetPixelsRgba(bmp, pixels);
+            int[] pixels = new int[1];
+            pixels[0] = ColorFromArgb(255, 255, 255, 255);
+            platform.BitmapSetPixelsArgb(bmp, pixels);
             this.whitetexture = platform.LoadTextureFromBitmap(bmp);
         }
         return this.whitetexture;
@@ -1101,6 +1106,9 @@
 
     FontCi fontMapLoading;
 
+    internal string invalidVersionDrawMessage;
+    internal Packet_Server invalidVersionPacketIdentification;
+
     public void MapLoadingDraw()
     {
         int Width = platform.GetCanvasWidth();
@@ -1111,6 +1119,14 @@
         if (maploadingprogress.ProgressStatus != null)
         {
             connecting = maploadingprogress.ProgressStatus;
+        }
+
+        if (invalidVersionDrawMessage != null)
+        {
+            Draw2dText(invalidVersionDrawMessage, fontMapLoading, xcenter(TextSizeWidth(invalidVersionDrawMessage, 14)), Height / 2 - 50, null, false);
+            string connect = "Click to connect";
+            Draw2dText(connect, fontMapLoading, xcenter(TextSizeWidth(connect, 14)), Height / 2 + 50, null, false);
+            return;
         }
 
         IntRef serverNameWidth = new IntRef();
@@ -1168,6 +1184,16 @@
             textures.Set(p, platform.LoadTextureFromFile(platform.GetFullFilePath(p, found)));
         }
         return textures.Get(p);
+    }
+
+    internal int GetTextureOrLoad(string name, BitmapCi bmp)
+    {
+        if (!textures.Contains(name))
+        {
+            BoolRef found = new BoolRef();
+            textures.Set(name, platform.LoadTextureFromBitmap(bmp));
+        }
+        return textures.Get(name);
     }
 
     internal int xcenter(float width)
@@ -1560,7 +1586,7 @@
     internal GameData d_Data;
     internal TerrainRenderer terrainRenderer;
 
-    const int maxlight = 15;
+    public const int maxlight = 15;
 
     public int MaybeGetLight(int x, int y, int z)
     {
@@ -3935,6 +3961,1353 @@
     {
         Draw2dBitmapFile(platform.PathCombine("gui", "mousecursor.png"), mouseCurrentX, mouseCurrentY, 32, 32);
     }
+
+    internal Speculative[] speculative;
+    internal int speculativeCount;
+
+    internal void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
+    {
+        SendSetBlock(x, y, z, mode, material, ActiveMaterial);
+
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
+        {
+            //int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
+            int blockid = material;
+            if (mode == Packet_BlockSetModeEnum.Destroy)
+            {
+                blockid = SpecialBlockId.Empty;
+            }
+            Speculative s_ = new Speculative();
+            s_.x = x;
+            s_.y = y;
+            s_.z = z;
+            s_.blocktype = GetBlock(x, y, z);
+            s_.timeMilliseconds = platform.TimeMillisecondsFromStart();
+            AddSpeculative(s_);
+            SetBlock(x, y, z, blockid);
+            RedrawBlock(x, y, z);
+        }
+        else
+        {
+            //TODO
+        }
+    }
+
+    void AddSpeculative(Speculative s_)
+    {
+        for (int i = 0; i < speculativeCount; i++)
+        {
+            if (speculative[i] == null)
+            {
+                speculative[i] = s_;
+                return;
+            }
+        }
+    }
+
+    internal void OnNewFrame(float dt)
+    {
+        for (int i = 0; i < speculativeCount; i++)
+        {
+            Speculative s_ = speculative[i];
+            if (s_ == null)
+            {
+                continue;
+            }
+            if ((one * (platform.TimeMillisecondsFromStart() - s_.timeMilliseconds) / 1000) > 2)
+            {
+                RedrawBlock(s_.x, s_.y, s_.z);
+                s_ = null;
+            }
+        }
+    }
+
+    internal void OnPick(int blockposX, int blockposY, int blockposZ, int blockposoldX, int blockposoldY, int blockposoldZ, float[] collisionPos, bool right)
+    {
+        float xfract = collisionPos[0] - MathFloor(collisionPos[0]);
+        float zfract = collisionPos[2] - MathFloor(collisionPos[2]);
+        int activematerial = MaterialSlots()[ActiveMaterial];
+        int railstart = d_Data.BlockIdRailstart();
+        if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
+            || activematerial == railstart + RailDirectionFlags.Corners)
+        {
+            RailDirection dirnew;
+            if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical)
+            {
+                dirnew = PickHorizontalVertical(xfract, zfract);
+            }
+            else
+            {
+                dirnew = PickCorners(xfract, zfract);
+            }
+            int dir = d_Data.Rail()[GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
+            if (dir != 0)
+            {
+                blockposX = blockposoldX;
+                blockposY = blockposoldY;
+                blockposZ = blockposoldZ;
+            }
+            activematerial = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
+            //Console.WriteLine(blockposold);
+            //Console.WriteLine(xfract + ":" + zfract + ":" + activematerial + ":" + dirnew);
+        }
+        int x = platform.FloatToInt(blockposX);
+        int y = platform.FloatToInt(blockposY);
+        int z = platform.FloatToInt(blockposZ);
+        int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
+        {
+            if (IsAnyPlayerInPos(x, y, z) || activematerial == 151)
+            {
+                return;
+            }
+            Vector3IntRef v = Vector3IntRef.Create(x, y, z);
+            Vector3IntRef oldfillstart = fillstart;
+            Vector3IntRef oldfillend = fillend;
+            if (mode == Packet_BlockSetModeEnum.Create)
+            {
+                if (blocktypes[activematerial].IsTool)
+                {
+                    OnPickUseWithTool(blockposX, blockposY, blockposZ);
+                    return;
+                }
+
+                //if (GameDataManicDigger.IsDoorTile(activematerial))
+                //{
+                //    if (z + 1 == d_Map.MapSizeZ || z == 0) return;
+                //}
+
+                if (activematerial == d_Data.BlockIdCuboid())
+                {
+                    ClearFillArea();
+
+                    if (fillstart != null)
+                    {
+                        Vector3IntRef f = fillstart;
+                        if (!IsFillBlock(GetBlock(f.X, f.Y, f.Z)))
+                        {
+                            fillarea.Set(f.X, f.Y, f.Z, GetBlock(f.X, f.Y, f.Z));
+                        }
+                        SetBlock(f.X, f.Y, f.Z, d_Data.BlockIdFillStart());
+
+
+                        FillFill(v, fillstart);
+                    }
+                    if (!IsFillBlock(GetBlock(v.X, v.Y, v.Z)))
+                    {
+                        fillarea.Set(v.X, v.Y, v.Z, GetBlock(v.X, v.Y, v.Z));
+                    }
+                    SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdCuboid());
+                    fillend = v;
+                    RedrawBlock(v.X, v.Y, v.Z);
+                    return;
+                }
+                if (activematerial == d_Data.BlockIdFillStart())
+                {
+                    ClearFillArea();
+                    if (!IsFillBlock(GetBlock(v.X, v.Y, v.Z)))
+                    {
+                        fillarea.Set(v.X, v.Y, v.Z, GetBlock(v.X, v.Y, v.Z));
+                    }
+                    SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdFillStart());
+                    fillstart = v;
+                    fillend = null;
+                    RedrawBlock(v.X, v.Y, v.Z);
+                    return;
+                }
+                if (fillarea.ContainsKey(v.X, v.Y, v.Z))// && fillarea[v])
+                {
+                    SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activematerial);
+                    ClearFillArea();
+                    fillstart = null;
+                    fillend = null;
+                    return;
+                }
+            }
+            else
+            {
+                if (blocktypes[activematerial].IsTool)
+                {
+                    OnPickUseWithTool(blockposX, blockposY, blockposoldZ);
+                    return;
+                }
+                //delete fill start
+                if (fillstart != null && fillstart.X == v.X && fillstart.Y == v.Y && fillstart.Z == v.Z)
+                {
+                    ClearFillArea();
+                    fillstart = null;
+                    fillend = null;
+                    return;
+                }
+                //delete fill end
+                if (fillend != null && fillend.X == v.X && fillend.Y == v.Y && fillend.Z == v.Z)
+                {
+                    ClearFillArea();
+                    fillend = null;
+                    return;
+                }
+            }
+            if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart())
+            {
+                //CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
+                //cmd2.x = (short)x;
+                //cmd2.y = (short)y;
+                //cmd2.z = (short)z;
+                //TrySendCommand(MakeCommand(CommandId.RailVehicleBuild, cmd2));
+                return;
+            }
+            //if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
+            SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
+        }
+    }
+
+    internal void Set3dProjection1(float zfar_)
+    {
+        Set3dProjection(zfar_, currentfov());
+    }
+
+    internal void Set3dProjection2()
+    {
+        Set3dProjection1(zfar());
+    }
+
+    internal void OnResize()
+    {
+        platform.GlViewport(0, 0, Width(), Height());
+        this.Set3dProjection2();
+    }
+
+    internal void Reconnect()
+    {
+        reconnect = true;
+        platform.WindowExit();
+    }
+
+    internal void ClientCommand(string s_)
+    {
+        if (s_ == "")
+        {
+            return;
+        }
+        IntRef ssCount = new IntRef();
+        string[] ss = platform.StringSplit(s_, " ", ssCount);
+        if (StringTools.StringStartsWith(platform, s_, "."))
+        {
+            string strFreemoveNotAllowed = language.FreemoveNotAllowed();
+            //try
+            {
+                string cmd = StringTools.StringSubstringToEnd(platform, ss[0], 1);
+                string arguments;
+                if (platform.StringIndexOf(s_, " ") == -1)
+                {
+                    arguments = "";
+                }
+                else
+                {
+                    arguments = StringTools.StringSubstringToEnd(platform, s_, platform.StringIndexOf(s_, " "));
+                }
+                arguments = platform.StringTrim(arguments);
+                if (cmd == "pos")
+                {
+                    ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
+                }
+                else if (cmd == "fog")
+                {
+                    int foglevel;
+                    foglevel = platform.IntParse(arguments);
+                    //if (foglevel <= 16)
+                    //{
+                    //    terrain.DrawDistance = (int)Math.Pow(2, foglevel);
+                    //}
+                    //else
+                    {
+                        int foglevel2 = foglevel;
+                        if (foglevel2 > 1024)
+                        {
+                            foglevel2 = 1024;
+                        }
+                        if (foglevel2 % 2 == 0)
+                        {
+                            foglevel2--;
+                        }
+                        d_Config3d.viewdistance = foglevel2;
+                        //terrain.UpdateAllTiles();
+                    }
+                    OnResize();
+                }
+                else if (cmd == "noclip")
+                {
+                    ENABLE_NOCLIP = BoolCommandArgument(arguments);
+                }
+                else if (cmd == "freemove")
+                {
+                    if (this.AllowFreemove)
+                    {
+                        ENABLE_FREEMOVE = BoolCommandArgument(arguments);
+                    }
+                    else
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
+                }
+                else if (cmd == "fov")
+                {
+                    int arg = platform.IntParse(arguments);
+                    int minfov = 1;
+                    int maxfov = 179;
+                    if (!issingleplayer)
+                    {
+                        minfov = 60;
+                    }
+                    if (arg < minfov || arg > maxfov)
+                    {
+                        platform.ThrowException(platform.StringFormat2("Valid field of view: {0}-{1}", platform.IntToString(minfov), platform.IntToString(maxfov)));
+                    }
+                    float fov_ = (2 * Game.GetPi() * (one * arg / 360));
+                    this.fov = fov_;
+                    OnResize();
+                }
+                else if (cmd == "clients")
+                {
+                    Log("Clients:");
+                    for (int i = 0; i < entitiesCount; i++)
+                    {
+                        if (entities[i] == null)
+                        {
+                            continue;
+                        }
+                        if (entities[i].player == null)
+                        {
+                            continue;
+                        }
+                        Log(platform.StringFormat2("{0} {1}", platform.IntToString(i), entities[i].player.Name));
+                    }
+                }
+                else if (cmd == "movespeed")
+                {
+                    //try
+                    //{
+                        if (this.AllowFreemove)
+                        {
+                            if (platform.FloatParse(arguments) <= 500)
+                            {
+                                movespeed = basemovespeed * platform.FloatParse(arguments);
+                                AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
+                            }
+                            else
+                            {
+                                AddChatline("Entered movespeed to high! max. 500x");
+                            }
+                        }
+                        else
+                        {
+                            Log(strFreemoveNotAllowed);
+                            return;
+                        }
+                    //}
+                    //catch
+                    //{
+                    //    AddChatline("Invalid value!");
+                    //    AddChatline("USE: .movespeed [movespeed]");
+                    //}
+                }
+                else if (cmd == "testmodel")
+                {
+                    ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
+                }
+                else if (cmd == "gui")
+                {
+                    ENABLE_DRAW2D = BoolCommandArgument(arguments);
+                }
+                else if (cmd == "reconnect")
+                {
+                    Reconnect();
+                }
+                else
+                {
+                    for (int i = 0; i < clientmodsCount; i++)
+                    {
+                        ClientCommandArgs args = new ClientCommandArgs();
+                        args.arguments = arguments;
+                        args.command = cmd;
+                        clientmods[i].OnClientCommand(args);
+                    }
+                    string chatline = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, MinInt(d_HudChat.GuiTypingBuffer.Length, 256));
+                    SendChat(chatline);
+                }
+            }
+            //catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
+        }
+        else
+        {
+            string chatline = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, Game.MinInt(StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer), 4096));
+            SendChat(chatline);
+        }
+    }
+    bool BoolCommandArgument(string arguments)
+    {
+        arguments = platform.StringTrim(arguments);
+        return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
+    }
+    internal string[] typinglog;
+    internal int typinglogCount;
+
+    internal void ProcessServerIdentification(Packet_Server packet)
+    {
+        this.LocalPlayerId = packet.Identification.AssignedClientId;
+        this.ServerInfo.connectdata = this.connectdata;
+        this.ServerInfo.ServerName = packet.Identification.ServerName;
+        this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
+        this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint_ == RenderHintEnum.Fast;
+        ChatLog("---Connected---");
+        SendRequestBlob();
+        if (packet.Identification.MapSizeX != MapSizeX
+            || packet.Identification.MapSizeY != MapSizeY
+            || packet.Identification.MapSizeZ != MapSizeZ)
+        {
+            Reset(packet.Identification.MapSizeX,
+                packet.Identification.MapSizeY,
+                packet.Identification.MapSizeZ);
+            d_Heightmap.Restart();
+        }
+        //serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
+        terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
+        maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
+        if (maxdrawdistance == 0)
+        {
+            maxdrawdistance = 128;
+        }
+    }
+
+    internal void ProcessPacket(Packet_Server packet)
+    {
+        switch (packet.Id)
+        {
+            case Packet_ServerIdEnum.ServerIdentification:
+                {
+                    string invalidversionstr = language.InvalidVersionConnectAnyway();
+
+                    string servergameversion = packet.Identification.MdProtocolVersion;
+                    if (servergameversion != platform.GetGameVersion())
+                    {
+                        string q = platform.StringFormat2(invalidversionstr, platform.GetGameVersion(), servergameversion);
+                        invalidVersionDrawMessage = q;
+                        invalidVersionPacketIdentification = packet;
+                    }
+                    else
+                    {
+                        ProcessServerIdentification(packet);
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.Ping:
+                {
+                    this.SendPingReply();
+                    this.ServerInfo.ServerPing.Send(platform);
+                }
+                break;
+            case Packet_ServerIdEnum.PlayerPing:
+                {
+                    for (int i = 0; i < this.ServerInfo.Players.count; i++)
+                    {
+                        ConnectedPlayer k = ServerInfo.Players.items[i];
+                        if (k == null)
+                        {
+                            continue;
+                        }
+                        if (k.id == packet.PlayerPing.ClientId)
+                        {
+                            if (k.id == this.LocalPlayerId)
+                            {
+                                this.ServerInfo.ServerPing.Receive(platform);
+                            }
+                            k.ping = packet.PlayerPing.Ping;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.LevelInitialize:
+                {
+                    ReceivedMapLength = 0;
+                    InvokeMapLoadingProgress(0, 0, language.Connecting());
+                }
+                break;
+            case Packet_ServerIdEnum.LevelDataChunk:
+                {
+                    MapLoadingPercentComplete = packet.LevelDataChunk.PercentComplete;
+                    MapLoadingStatus = packet.LevelDataChunk.Status;
+                    InvokeMapLoadingProgress(MapLoadingPercentComplete, ReceivedMapLength, MapLoadingStatus);
+                }
+                break;
+            case Packet_ServerIdEnum.LevelFinalize:
+                {
+                    //d_Data.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
+                    //    MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")),
+                    //    MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
+                    //d_CraftingRecipes.Load(MyStream.ReadAllLines(d_GetFile.GetFile("craftingrecipes.csv")));
+
+                    MapLoaded();
+                }
+                break;
+            case Packet_ServerIdEnum.SetBlock:
+                {
+                    int x = packet.SetBlock.X;
+                    int y = packet.SetBlock.Y;
+                    int z = packet.SetBlock.Z;
+                    int type = packet.SetBlock.BlockType;
+                    //try
+                    {
+                        SetTileAndUpdate(x, y, z, type);
+                    }
+                    //catch { Console.WriteLine("Cannot update tile!"); }
+                }
+                break;
+            case Packet_ServerIdEnum.FillArea:
+                {
+                    int ax = packet.FillArea.X1;
+                    int ay = packet.FillArea.Y1;
+                    int az = packet.FillArea.Z1;
+                    int bx = packet.FillArea.X2;
+                    int by = packet.FillArea.Y2;
+                    int bz = packet.FillArea.Z2;
+
+                    int startx = MinInt(ax, bx);
+                    int endx = MaxInt(ax, bx);
+                    int starty = MinInt(ay, by);
+                    int endy = MaxInt(ay, by);
+                    int startz = MinInt(az, bz);
+                    int endz = MaxInt(az, bz);
+
+                    int blockCount = packet.FillArea.BlockCount;
+                    {
+                        for (int x = startx; x <= endx; x++)
+                        {
+                            for (int y = starty; y <= endy; y++)
+                            {
+                                for (int z = startz; z <= endz; z++)
+                                {
+                                    // if creative mode is off and player run out of blocks
+                                    if (blockCount == 0)
+                                    {
+                                        return;
+                                    }
+                                    //try
+                                    {
+                                        SetTileAndUpdate(x, y, z, packet.FillArea.BlockType);
+                                    }
+                                    //catch
+                                    //{
+                                    //    Console.WriteLine("Cannot update tile!");
+                                    //}
+                                    blockCount--;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.FillAreaLimit:
+                {
+                    this.fillAreaLimit = packet.FillAreaLimit.Limit;
+                    if (this.fillAreaLimit > 100000)
+                    {
+                        this.fillAreaLimit = 100000;
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.Freemove:
+                {
+                    this.AllowFreemove = packet.Freemove.IsEnabled != 0;
+                    if (!this.AllowFreemove)
+                    {
+                        ENABLE_FREEMOVE = false;
+                        ENABLE_NOCLIP = false;
+                        movespeed = basemovespeed;
+                        Log(language.MoveNormal());
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.PlayerSpawnPosition:
+                {
+                    int x = packet.PlayerSpawnPosition.X;
+                    int y = packet.PlayerSpawnPosition.Y;
+                    int z = packet.PlayerSpawnPosition.Z;
+                    this.playerPositionSpawnX = x;
+                    this.playerPositionSpawnY = z;
+                    this.playerPositionSpawnZ = y;
+                    Log(platform.StringFormat(language.SpawnPositionSetTo(), platform.StringFormat3("{0},{1},{2}", platform.IntToString(x), platform.IntToString(y), platform.IntToString(z))));
+                }
+                break;
+            case Packet_ServerIdEnum.SpawnPlayer:
+                {
+                    int playerid = packet.SpawnPlayer.PlayerId;
+                    string playername = packet.SpawnPlayer.PlayerName;
+                    bool isnewplayer = true;
+                    for (int i = 0; i < ServerInfo.Players.count; i++)
+                    {
+                        ConnectedPlayer p = ServerInfo.Players.items[i];
+                        if (p == null)
+                        {
+                            continue;
+                        }
+                        if (p.id == playerid)
+                        {
+                            isnewplayer = false;
+                            p.name = playername;
+                        }
+                    }
+                    if (isnewplayer)
+                    {
+                        ConnectedPlayer p = new ConnectedPlayer();
+                        p.name = playername;
+                        p.id = playerid;
+                        p.ping = -1;
+                        this.ServerInfo.Players.Add(p);
+                    }
+                    entities[playerid] = new Entity();
+                    entities[playerid].player = new Player();
+                    entities[playerid].player.Name = playername;
+                    entities[playerid].player.Model = packet.SpawnPlayer.Model_;
+                    entities[playerid].player.Texture = packet.SpawnPlayer.Texture_;
+                    entities[playerid].player.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
+                    entities[playerid].player.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
+                    ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
+                    if (playerid == this.LocalPlayerId)
+                    {
+                        spawned = true;
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.PlayerPositionAndOrientation:
+                {
+                    int playerid = packet.PositionAndOrientation.PlayerId;
+                    ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
+                }
+                break;
+            case Packet_ServerIdEnum.Monster:
+                {
+                    if (packet.Monster.Monsters == null)
+                    {
+                        break;
+                    }
+                    for (int i = 0; i < packet.Monster.MonstersCount; i++)
+                    {
+                        Packet_ServerMonster k = packet.Monster.Monsters[i];
+                        int id = k.Id + MonsterIdFirst;
+                        if (entities[id] == null)
+                        {
+                            entities[id] = new Entity();
+                            entities[id].player = new Player();
+                            entities[id].player.Name = d_DataMonsters.MonsterName[k.MonsterType];
+                        }
+                        ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
+                        entities[id].player.Type = PlayerType.Monster;
+                        entities[id].player.Health = k.Health;
+                        entities[id].player.MonsterType = k.MonsterType;
+                    }
+                    //remove all old monsters that were not sent by server now.
+
+                    //this causes monster flicker on chunk boundaries,
+                    //commented out
+                    //foreach (int id in new List<int>(players.Keys))
+                    //{
+                    //    if (id >= MonsterIdFirst)
+                    //    {
+                    //        if (!updatedMonsters.ContainsKey(id))
+                    //        {
+                    //            players.Remove(id);
+                    //        }
+                    //    }
+                    //}
+                }
+                break;
+            case Packet_ServerIdEnum.DespawnPlayer:
+                {
+                    int playerid = packet.DespawnPlayer.PlayerId;
+                    for (int i = 0; i < this.ServerInfo.Players.count; i++)
+                    {
+                        ConnectedPlayer p = ServerInfo.Players.items[i];
+                        if (p == null)
+                        {
+                            continue;
+                        }
+                        if (p.id == playerid)
+                        {
+                            this.ServerInfo.Players.RemoveAt(i);
+                        }
+                    }
+                    entities[playerid] = null;
+                }
+                break;
+            case Packet_ServerIdEnum.Message:
+                {
+                    AddChatline(packet.Message.Message);
+                    ChatLog(packet.Message.Message);
+                }
+                break;
+            case Packet_ServerIdEnum.DisconnectPlayer:
+                {
+                    platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
+                    platform.Exit();
+                    //Not needed anymore - avoids "cryptic" error messages on being kicked/banned
+                    //throw new Exception(packet.DisconnectPlayer.DisconnectReason);
+                    break;
+                }
+            case Packet_ServerIdEnum.ChunkPart:
+                byte[] arr = packet.ChunkPart.CompressedChunkPart;
+                int arrLength = platform.ByteArrayLength(arr); // todo
+                for (int i = 0; i < arrLength; i++)
+                {
+                    CurrentChunk[CurrentChunkCount++] = arr[i];
+                }
+                break;
+            case Packet_ServerIdEnum.Chunk_:
+                {
+                    Packet_ServerChunk p = packet.Chunk_;
+                    int[] receivedchunk;
+                    if (CurrentChunkCount != 0)
+                    {
+                        byte[] decompressedchunk = platform.GzipDecompress(CurrentChunk, CurrentChunkCount);
+                        receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
+                        {
+                            int i = 0;
+                            for (int zz = 0; zz < p.SizeZ; zz++)
+                            {
+                                for (int yy = 0; yy < p.SizeY; yy++)
+                                {
+                                    for (int xx = 0; xx < p.SizeX; xx++)
+                                    {
+                                        receivedchunk[MapUtilCi.Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
+                                        i += 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
+                    }
+                    {
+                        SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
+                        for (int xx = 0; xx < 2; xx++)
+                        {
+                            for (int yy = 0; yy < 2; yy++)
+                            {
+                                for (int zz = 0; zz < 2; zz++)
+                                {
+                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                }
+                            }
+                        }
+                    }
+                    ReceivedMapLength += CurrentChunkCount;// lengthPrefixLength + packetLength;
+                    CurrentChunkCount = 0;
+                }
+                break;
+            case Packet_ServerIdEnum.HeightmapChunk:
+                {
+                    Packet_ServerHeightmapChunk p = packet.HeightmapChunk;
+                    byte[] decompressedchunk = platform.GzipDecompress(p.CompressedHeightmap, platform.ByteArrayLength(p.CompressedHeightmap));
+                    int[] decompressedchunk1 = ByteArrayToUshortArray(decompressedchunk, p.SizeX * p.SizeY * 2);
+                    for (int xx = 0; xx < p.SizeX; xx++)
+                    {
+                        for (int yy = 0; yy < p.SizeY; yy++)
+                        {
+                            int height = decompressedchunk1[MapUtilCi.Index2d(xx, yy, p.SizeX)];
+                            d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
+                        }
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.PlayerStats:
+                {
+                    Packet_ServerPlayerStats p = packet.PlayerStats;
+                    this.PlayerStats = p;
+                }
+                break;
+            case Packet_ServerIdEnum.FiniteInventory:
+                {
+                    //check for null so it's possible to connect
+                    //to old versions of game (before 2011-05-05)
+                    if (packet.Inventory.Inventory != null)
+                    {
+                        //d_Inventory.CopyFrom(ConvertInventory(packet.Inventory.Inventory));
+                        UseInventory(packet.Inventory.Inventory);
+                    }
+                    //FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
+                    //ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
+                    //FiniteInventoryMax = packet.FiniteInventory.Max;
+                }
+                break;
+            case Packet_ServerIdEnum.Season:
+                {
+                    packet.Season.Hour -= 1;
+                    if (packet.Season.Hour < 0)
+                    {
+                        //shouldn't happen
+                        packet.Season.Hour = 12 * HourDetail;
+                    }
+                    int sunlight = NightLevels[packet.Season.Hour];
+                    SkySphereNight = sunlight < 8;
+                    d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
+                    int hour = packet.Season.Hour / HourDetail;
+                    if (d_SunMoonRenderer.GetHour() != hour)
+                    {
+                        d_SunMoonRenderer.SetHour(hour);
+                    }
+
+                    if (sunlight_ != sunlight)
+                    {
+                        sunlight_ = sunlight;
+                        //d_Shadows.ResetShadows();
+                        RedrawAllBlocks();
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.BlobInitialize:
+                {
+                    blobdownload = new CitoMemoryStream();
+                    //blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
+                    blobdownloadname = packet.BlobInitialize.Name;
+                    ReceivedMapLength = 0; //todo
+                }
+                break;
+            case Packet_ServerIdEnum.BlobPart:
+                {
+                    int length = platform.ByteArrayLength(packet.BlobPart.Data);
+                    blobdownload.Write(packet.BlobPart.Data, 0, length);
+                    ReceivedMapLength += length;
+                }
+                break;
+            case Packet_ServerIdEnum.BlobFinalize:
+                {
+                    byte[] downloaded = blobdownload.ToArray();
+
+                    //if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
+                    //{
+                    //    if (blobdownloadhash == serverterraintexture)
+                    //    {
+                    //        using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
+                    //        {
+                    //            d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
+                    //        }
+                    //    }
+                    //}
+
+                    if (blobdownloadname != null) // old servers
+                    {
+                        SetFile(blobdownloadname, downloaded);
+                    }
+                    blobdownload = null;
+                }
+                break;
+            case Packet_ServerIdEnum.Sound:
+                {
+                    PlaySoundAt(packet.Sound.Name, packet.Sound.X, packet.Sound.Y, packet.Sound.Z);
+                }
+                break;
+            case Packet_ServerIdEnum.RemoveMonsters:
+                {
+                    for (int i = MonsterIdFirst; i < MonsterIdFirst + 1000; i++)
+                    {
+                        entities[i] = null;
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.Translation:
+                language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
+                break;
+            case Packet_ServerIdEnum.BlockType:
+                NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
+                break;
+            case Packet_ServerIdEnum.SunLevels:
+                NightLevels = packet.SunLevels.Sunlevels;
+                break;
+            case Packet_ServerIdEnum.LightLevels:
+                for (int i = 0; i < packet.LightLevels.LightlevelsCount; i++)
+                {
+                    mLightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
+                }
+                break;
+            case Packet_ServerIdEnum.CraftingRecipes:
+                d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
+                break;
+            case Packet_ServerIdEnum.Dialog:
+                Packet_ServerDialog d = packet.Dialog;
+                if (d.Dialog == null)
+                {
+                    if (GetDialogId(d.DialogId) != -1 && dialogs[GetDialogId(d.DialogId)].value.IsModal != 0)
+                    {
+                        GuiStateBackToGame();
+                    }
+                    dialogs[GetDialogId(d.DialogId)] = null;
+                    if (DialogsCount() == 0)
+                    {
+                        SetFreeMouse(false);
+                    }
+                }
+                else
+                {
+                    VisibleDialog d2 = new VisibleDialog();
+                    d2.key = d.DialogId;
+                    d2.value = d.Dialog;
+                    if (GetDialogId(d.DialogId) == -1)
+                    {
+                        for (int i = 0; i < dialogsCount; i++)
+                        {
+                            if (dialogs[i] == null)
+                            {
+                                dialogs[i] = d2;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        dialogs[GetDialogId(d.DialogId)] = d2;
+                    }
+                    if (d.Dialog.IsModal != 0)
+                    {
+                        guistate = GuiState.ModalDialog;
+                        SetFreeMouse(true);
+                    }
+                }
+                break;
+            case Packet_ServerIdEnum.Follow:
+                IntRef oldFollowId = FollowId();
+                Follow = packet.Follow.Client;
+                if (packet.Follow.Tpp != 0)
+                {
+                    SetCamera(CameraType.Overhead);
+                    player.playerorientation.X = Game.GetPi();
+                    GuiStateBackToGame();
+                }
+                else
+                {
+                    SetCamera(CameraType.Fpp);
+                }
+                break;
+            case Packet_ServerIdEnum.Bullet:
+                EntityAddLocal(CreateBulletEntity(
+                    DeserializeFloat(packet.Bullet.FromXFloat),
+                    DeserializeFloat(packet.Bullet.FromYFloat),
+                    DeserializeFloat(packet.Bullet.FromZFloat),
+                    DeserializeFloat(packet.Bullet.ToXFloat),
+                    DeserializeFloat(packet.Bullet.ToYFloat),
+                    DeserializeFloat(packet.Bullet.ToZFloat),
+                    DeserializeFloat(packet.Bullet.SpeedFloat)));
+                break;
+            case Packet_ServerIdEnum.Ammo:
+                if (!ammostarted)
+                {
+                    ammostarted = true;
+                    for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
+                    {
+                        Packet_IntInt k = packet.Ammo.TotalAmmo[i];
+                        LoadedAmmo[k.Key_] = MinInt(k.Value_, blocktypes[k.Key_].AmmoMagazine);
+                    }
+                }
+                TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
+                for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
+                {
+                    TotalAmmo[packet.Ammo.TotalAmmo[i].Key_] = packet.Ammo.TotalAmmo[i].Value_;
+                }
+                break;
+            case Packet_ServerIdEnum.Explosion:
+                {
+                    Entity entity = new Entity();
+                    entity.expires = new Expires();
+                    entity.expires.timeLeft = DeserializeFloat(packet.Explosion.TimeFloat);
+                    entity.push = packet.Explosion;
+                    EntityAddLocal(entity);
+                }
+                break;
+            case Packet_ServerIdEnum.Projectile:
+                {
+                    Entity entity = new Entity();
+
+                    Sprite sprite = new Sprite();
+                    sprite.image = "ChemicalGreen.png";
+                    sprite.size = 14;
+                    sprite.animationcount = 0;
+                    sprite.positionX = DeserializeFloat(packet.Projectile.FromXFloat);
+                    sprite.positionY = DeserializeFloat(packet.Projectile.FromYFloat);
+                    sprite.positionZ = DeserializeFloat(packet.Projectile.FromZFloat);
+                    entity.sprite = sprite;
+
+                    Grenade_ grenade = new Grenade_();
+                    grenade.velocityX = DeserializeFloat(packet.Projectile.VelocityXFloat);
+                    grenade.velocityY = DeserializeFloat(packet.Projectile.VelocityYFloat);
+                    grenade.velocityZ = DeserializeFloat(packet.Projectile.VelocityZFloat);
+                    grenade.block = packet.Projectile.BlockId;
+                    grenade.sourcePlayer = packet.Projectile.SourcePlayerID;
+                    entity.grenade = grenade;
+
+                    entity.expires = Expires.Create(DeserializeFloat(packet.Projectile.ExplodesAfterFloat));
+
+                    EntityAddLocal(entity);
+                }
+                break;
+            case Packet_ServerIdEnum.BlockTypes:
+                blocktypes = NewBlockTypes;
+                NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
+
+                int textureInAtlasIdsCount = 1024;
+                string[] textureInAtlasIds = new string[textureInAtlasIdsCount];
+                int lastTextureId = 0;
+                for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+                {
+                    if (blocktypes[i] != null)
+                    {
+                        string[] to_load = new string[7];
+                        int to_loadLength = 7;
+                        {
+                            to_load[0] = blocktypes[i].TextureIdLeft;
+                            to_load[1] = blocktypes[i].TextureIdRight;
+                            to_load[2] = blocktypes[i].TextureIdFront;
+                            to_load[3] = blocktypes[i].TextureIdBack;
+                            to_load[4] = blocktypes[i].TextureIdTop;
+                            to_load[5] = blocktypes[i].TextureIdBottom;
+                            to_load[6] = blocktypes[i].TextureIdForInventory;
+                        }
+                        for (int k = 0; k < to_loadLength; k++)
+                        {
+                            if (!Contains(textureInAtlasIds, textureInAtlasIdsCount, to_load[k]))
+                            {
+                                textureInAtlasIds[lastTextureId++] = to_load[k];
+                            }
+                        }
+                    }
+                }
+                d_Data.UseBlockTypes(platform, blocktypes, GlobalVar.MAX_BLOCKTYPES);
+                for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
+                {
+                    Packet_BlockType b = blocktypes[i];
+                    //Indexed by block id and TileSide.
+                    if (textureInAtlasIds != null)
+                    {
+                        TextureId[i][0] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdTop);
+                        TextureId[i][1] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdBottom);
+                        TextureId[i][2] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdFront);
+                        TextureId[i][3] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdBack);
+                        TextureId[i][4] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdLeft);
+                        TextureId[i][5] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdRight);
+                        TextureIdForInventory[i] = IndexOf(textureInAtlasIds, textureInAtlasIdsCount, b.TextureIdForInventory);
+                    }
+                }
+                UseTerrainTextures(textureInAtlasIds, textureInAtlasIdsCount);
+                d_Weapon.redraw = true;
+                RedrawAllBlocks();
+                break;
+        }
+    }
+
+    DictionaryStringByteArray files;
+    void SetFile(string blobdownloadname, byte[] downloaded)
+    {
+        files.Set(blobdownloadname, downloaded);
+    }
+
+    bool ammostarted;
+    internal Packet_CraftingRecipe[] d_CraftingRecipes;
+    internal Packet_BlockType[] NewBlockTypes;
+    internal bool ENABLE_PER_SERVER_TEXTURES;
+    internal string blobdownloadname;
+    internal CitoMemoryStream blobdownload;
+    internal SunMoonRenderer d_SunMoonRenderer;
+    internal int[] NightLevels;
+    public const int HourDetail = 4;
+    internal byte[] CurrentChunk;
+    internal int CurrentChunkCount;
+    public static int[] ByteArrayToUshortArray(byte[] input, int inputLength)
+    {
+        int outputLength = inputLength / 2;
+        int[] output = new int[outputLength];
+        for (int i = 0; i < outputLength; i++)
+        {
+            output[i] = (input[i * 2 + 1] << 8) + input[i * 2];
+        }
+        return output;
+    }
+
+    internal byte[] GetFile(string p)
+    {
+        return files.Get(p);
+    }
+
+    internal void InvalidVersionAllow()
+    {
+        if (invalidVersionDrawMessage != null)
+        {
+            invalidVersionDrawMessage = null;
+            ProcessServerIdentification(invalidVersionPacketIdentification);
+            invalidVersionPacketIdentification = null;
+        }
+    }
+
+    internal int maxTextureSize; // detected at runtime
+    internal int atlas1dheight() { return maxTextureSize; }
+    internal int atlas2dtiles() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } // 16x16
+    internal TextureAtlasConverter d_TextureAtlasConverter;
+    
+    internal void UseTerrainTextureAtlas2d(BitmapCi atlas2d, int atlas2dWidth)
+    {
+        terrainTexture = platform.LoadTextureFromBitmap(atlas2d);
+        int[] terrainTextures1d_;
+        int terrainTextures1dCount = 0;
+        {
+            terrainTexturesPerAtlas = atlas1dheight() / (atlas2dWidth / atlas2dtiles());
+            IntRef atlasesidCount = new IntRef();
+            BitmapCi[] atlases1d = d_TextureAtlasConverter.Atlas2dInto1d(platform, atlas2d, atlas2dtiles(), atlas1dheight(), atlasesidCount);
+            terrainTextures1d_ = new int[atlasesidCount.value];
+            for (int i = 0; i < atlasesidCount.value; i++)
+            {
+                BitmapCi bmp = atlases1d[i];
+                int texture = platform.LoadTextureFromBitmap(bmp);
+                terrainTextures1d_[terrainTextures1dCount++] = texture;
+                platform.BitmapDelete(bmp);
+            }
+        }
+        this.terrainTextures1d = terrainTextures1d_;
+    }
+
+    internal void UseTerrainTextures(string[] textureIds, int textureIdsCount)
+    {            //todo bigger than 32x32
+        int tilesize = 32;
+        BitmapData_ atlas2d = BitmapData_.Create(tilesize * atlas2dtiles(), tilesize * atlas2dtiles());
+
+        for (int i = 0; i < textureIdsCount; i++)
+        {
+            if (textureIds[i] == null)
+            {
+                continue;
+            }
+            byte[] fileData = GetFile(StringTools.StringAppend(platform, textureIds[i], ".png"));
+            BitmapCi bmp = platform.BitmapCreateFromPng(fileData, platform.ByteArrayLength(fileData));
+            int[] bmpPixels = new int[tilesize * tilesize];
+            platform.BitmapGetPixelsArgb(bmp, bmpPixels);
+
+            int x = i % texturesPacked();
+            int y = i / texturesPacked();
+            for (int xx = 0; xx < tilesize; xx++)
+            {
+                for (int yy = 0; yy < tilesize; yy++)
+                {
+                    int c = bmpPixels[xx + yy * tilesize];
+                    atlas2d.SetPixel(x * tilesize + xx, y * tilesize + yy, c);
+                }
+            }
+
+            platform.BitmapDelete(bmp);
+        }
+        BitmapCi bitmap = platform.BitmapCreate(atlas2d.width, atlas2d.height);
+        platform.BitmapSetPixelsArgb(bitmap, atlas2d.argb);
+        UseTerrainTextureAtlas2d(bitmap, atlas2d.width);
+    }
+
+    int IndexOf(string[] arr, int arrLength, string value)
+    {
+        for (int i = 0; i < arrLength; i++)
+        {
+            if (arr[i] == value)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    bool Contains(string[] arr, int arrLength, string value)
+    {
+        return IndexOf(arr, arrLength, value) != -1;
+    }
+
+    internal void TryReadPacket(byte[] data, int dataLength)
+    {
+        Packet_Server packet = new Packet_Server();
+        Packet_ServerSerializer.DeserializeBuffer(data, dataLength, packet);
+        ProcessPacket(packet);
+        LastReceivedMilliseconds = currentTimeMilliseconds;
+        //return lengthPrefixLength + packetLength;
+    }
+
+    internal void NetworkProcess()
+    {
+        currentTimeMilliseconds = platform.TimeMillisecondsFromStart();
+        if (main == null)
+        {
+            return;
+        }
+        INetIncomingMessage msg;
+        for (; ; )
+        {
+            if (invalidVersionPacketIdentification != null)
+            {
+                break;
+            }
+            msg = main.ReadMessage();
+            if (msg == null)
+            {
+                break;
+            }
+            TryReadPacket(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes());
+        }
+        if (spawned && ((platform.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
+        {
+            lastpositionsentMilliseconds = platform.TimeMillisecondsFromStart();
+            SendPosition(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
+                player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
+        }
+        int now = platform.TimeMillisecondsFromStart();
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            if (entities[i] == null)
+            {
+                continue;
+            }
+            if (entities[i].player == null)
+            {
+                continue;
+            }
+            int kKey = i;
+            Player p = entities[i].player;
+            if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
+            {
+                p.playerDrawInfo = null;
+                p.PositionLoaded = false;
+            }
+        }
+    }
+
+    internal string skinserver;
+    internal void LoadPlayerTextures()
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity e = entities[i];
+            if (e == null) { continue; }
+            if (e.player == null) { continue; }
+            if (e.player.CurrentTexture != -1)
+            {
+                continue;
+            }
+            // a) download skin
+            if (!issingleplayer && e.player.Type == PlayerType.Player)
+            {
+                if (e.player.SkinDownloadResponse == null)
+                {
+                    e.player.SkinDownloadResponse = new HttpResponseCi();
+                    string url = StringTools.StringAppend(platform, skinserver, StringTools.StringSubstringToEnd(platform, e.player.Name, 2));
+                    url = StringTools.StringAppend(platform, url, ".png");
+                    platform.WebClientDownloadDataAsync(url, e.player.SkinDownloadResponse);
+                    continue;
+                }
+                if (!e.player.SkinDownloadResponse.done)
+                {
+                    continue;
+                }
+                BitmapCi bmp_ = platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
+                if (bmp_ != null)
+                {
+                    e.player.CurrentTexture = GetTextureOrLoad(e.player.Texture, bmp_);
+                    platform.BitmapDelete(bmp_);
+                    continue;
+                }
+            }
+            // b) file skin
+            if (e.player.Texture == null)
+            {
+                e.player.CurrentTexture = GetTexture("mineplayer.png");
+                continue;
+            }
+
+            byte[] file = GetFile(e.player.Texture);
+            if (file == null)
+            {
+                e.player.CurrentTexture = 0;
+                continue;
+            }
+            BitmapCi bmp = platform.BitmapCreateFromPng(file, platform.ByteArrayLength(file));
+            if (bmp == null)
+            {
+                e.player.CurrentTexture = 0;
+                continue;
+            }
+            e.player.CurrentTexture = GetTextureOrLoad(e.player.Texture, bmp);
+            platform.BitmapDelete(bmp);
+        }
+    }
+}
+
+class StringByteArray
+{
+    internal string name;
+    internal byte[] data;
+}
+
+class DictionaryStringByteArray
+{
+    public DictionaryStringByteArray()
+    {
+        items = new StringByteArray[1024];
+        itemsCount = 1024;
+    }
+    internal StringByteArray[] items;
+    internal int itemsCount;
+
+    internal void Set(string name, byte[] value)
+    {
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] == null) { continue; }
+            if (items[i].name == name)
+            {
+                items[i].data = value;
+                return;
+            }
+        }
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] == null)
+            {
+                items[i] = new StringByteArray();
+                items[i].name = name;
+                items[i].data = value;
+                return;
+            }
+        }
+    }
+
+    internal byte[] Get(string name)
+    {
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] == null) { continue; }
+            if (items[i].name == name)
+            {
+                return items[i].data;
+            }
+        }
+        return null;
+    }
+}
+
+public class RenderHintEnum
+{
+    public const int Fast = 0;
+    public const int Nice = 1;
+}
+
+public class Speculative
+{
+    internal int x;
+    internal int y;
+    internal int z;
+    internal int timeMilliseconds;
+    internal int blocktype;
 }
 
 public class TimerCi
@@ -4658,6 +6031,7 @@ public class Player
         Model = "player.txt";
         EyeHeight = one * 15 / 10;
         ModelHeight = one * 17 / 10;
+        CurrentTexture = -1;
     }
     internal bool PositionLoaded;
     internal float PositionX;
@@ -4682,6 +6056,8 @@ public class Player
     internal byte NetworkPitch;
     internal PlayerDrawInfo playerDrawInfo;
     internal bool moves;
+    internal int CurrentTexture;
+    internal HttpResponseCi SkinDownloadResponse;
 }
 
 public enum PlayerType

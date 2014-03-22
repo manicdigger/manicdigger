@@ -20,11 +20,11 @@ namespace GameModeFortress
             return ontable;
         }
         public int maxcraftingtablesize = 2000;
-        public List<Vector3i> GetTable(Vector3i pos)
+        public List<Vector3i> GetTable(int posx, int posy, int posz)
         {
             List<Vector3i> l = new List<Vector3i>();
             Queue<Vector3i> todo = new Queue<Vector3i>();
-            todo.Enqueue(pos);
+            todo.Enqueue(new Vector3i(posx, posy, posz));
             for (; ; )
             {
                 if (todo.Count == 0 || l.Count >= maxcraftingtablesize)

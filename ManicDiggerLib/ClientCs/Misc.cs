@@ -215,18 +215,5 @@ namespace ManicDigger
             }
             return output;
         }
-        public static unsafe ushort[] ByteArrayToUshortArray(byte[] a)
-        {
-            ushort[] output = new ushort[a.Length / 2];
-            fixed (byte* a1 = a)
-            {
-                ushort* a2 = (ushort*)a1;
-                for (int i = 0; i < a.Length / 2; i++)
-                {
-                    output[i] = a2[i];
-                }
-            }
-            return output;
-        }
     }
 }

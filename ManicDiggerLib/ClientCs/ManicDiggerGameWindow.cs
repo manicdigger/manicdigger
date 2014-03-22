@@ -5,7 +5,6 @@ using ManicDigger;
 using ManicDigger.Renderers;
 using OpenTK;
 using System.Drawing;
-using ManicDigger.Network;
 using OpenTK.Graphics.OpenGL;
 using System.IO;
 using System.Windows.Forms;
@@ -67,14 +66,6 @@ namespace ManicDigger
             terrainTextures.game = game;
             bool IsMono = Type.GetType("Mono.Runtime") != null;
             d_TextureAtlasConverter = new TextureAtlasConverter();
-            if (IsMono)
-            {
-                d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmapDummy(); };
-            }
-            else
-            {
-                d_TextureAtlasConverter.d_FastBitmapFactory = () => { return new FastBitmap(); };
-            }
             w.game.d_TerrainTextures = terrainTextures;
             var blockrenderertorch = new BlockRendererTorch();
             blockrenderertorch.d_TerainRenderer = terrainTextures;
@@ -115,22 +106,21 @@ namespace ManicDigger
             clientgame.d_GetFile = getfile;
             w.Reset(10 * 1000, 10 * 1000, 128);
             clientgame.d_Map = game;
-            PlayerSkinDownloader playerskindownloader = new PlayerSkinDownloader();
-            playerskindownloader.d_Exit = d_Exit;
-            playerskindownloader.d_The3d = the3d;
-            try
+            if (!issingleplayer)
             {
-                if (playerskindownloader.skinserver == null)
+                try
                 {
-                    WebClient c = new WebClient();
-                    playerskindownloader.skinserver = c.DownloadString("http://manicdigger.sourceforge.net/skinserver.txt");
+                    if (skinserver == null)
+                    {
+                        WebClient c = new WebClient();
+                        skinserver = c.DownloadString("http://manicdigger.sourceforge.net/skinserver.txt");
+                    }
+                }
+                catch
+                {
+                    skinserver = "";
                 }
             }
-            catch
-            {
-                playerskindownloader.skinserver = "";
-            }
-            w.playerskindownloader = playerskindownloader;
             w.d_FrustumCulling = frustumculling;
             //w.d_CurrentShadows = this;
             var sunmoonrenderer = new SunMoonRenderer() { game = game };
@@ -212,12 +202,10 @@ namespace ManicDigger
         public GetFileStream d_GetFile;
         public ICharacterRenderer d_CharacterRenderer;
         public ICurrentShadows d_CurrentShadows;
-        public SunMoonRenderer d_SunMoonRenderer;
         public IGameExit d_Exit;
         public IInventoryController d_InventoryController;
         public CraftingTableTool d_CraftingTableTool;
         public ManicDiggerGameWindow d_Shadows;
-        public Packet_CraftingRecipe[] d_CraftingRecipes;
 
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
         public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
@@ -263,18 +251,20 @@ namespace ManicDigger
                     resolutions.Add(r);
                 }
             }
+            int maxTextureSize_;
             try
             {
-                GL.GetInteger(GetPName.MaxTextureSize, out maxTextureSize);
+                GL.GetInteger(GetPName.MaxTextureSize, out maxTextureSize_);
             }
             catch
             {
-                maxTextureSize = 1024;
+                maxTextureSize_ = 1024;
             }
             if (maxTextureSize < 1024)
             {
-                maxTextureSize = 1024;
+                maxTextureSize_ = 1024;
             }
+            maxTextureSize = maxTextureSize_;
             //Start();
             //Connect();
             MapLoadingStart();
@@ -358,6 +348,7 @@ namespace ManicDigger
             {
                 d_HudInventory.Mouse_ButtonDown(GetMouseEventArgs(e));
             }
+            InvalidVersionAllow();
         }
 
         MouseEventArgs GetMouseEventArgs(OpenTK.Input.MouseButtonEventArgs e)
@@ -400,176 +391,6 @@ namespace ManicDigger
             d_Exit.exit = true;
             //..base.OnClosed(e);
         }
-        void ClientCommand(string s)
-        {
-            if (s == "")
-            {
-                return;
-            }
-            string[] ss = s.Split(new char[] { ' ' });
-            if (s.StartsWith("."))
-            {
-                string strFreemoveNotAllowed = game.language.FreemoveNotAllowed();
-                try
-                {
-                    string cmd = ss[0].Substring(1);
-                    string arguments;
-                    if (s.IndexOf(" ") == -1)
-                    { arguments = ""; }
-                    else
-                    { arguments = s.Substring(s.IndexOf(" ")); }
-                    arguments = arguments.Trim();
-                    if (cmd == "pos")
-                    {
-                        ENABLE_DRAWPOSITION = BoolCommandArgument(arguments);
-                    }
-                    else if (cmd == "fog")
-                    {
-                        int foglevel;
-                        foglevel = int.Parse(arguments);
-                        //if (foglevel <= 16)
-                        //{
-                        //    terrain.DrawDistance = (int)Math.Pow(2, foglevel);
-                        //}
-                        //else
-                        {
-                            int foglevel2 = foglevel;
-                            if (foglevel2 > 1024)
-                            {
-                                foglevel2 = 1024;
-                            }
-                            if (foglevel2 % 2 == 0)
-                            {
-                                foglevel2--;
-                            }
-                            d_Config3d.viewdistance = foglevel2;
-                            //terrain.UpdateAllTiles();
-                        }
-                        OnResize(new EventArgs());
-                    }
-                    else if (cmd == "noclip")
-                    {
-                        ENABLE_NOCLIP = BoolCommandArgument(arguments);
-                    }
-                    else if (cmd == "freemove")
-                    {
-                        if (this.AllowFreemove)
-                        {
-                            ENABLE_FREEMOVE = BoolCommandArgument(arguments);
-                        }
-                        else
-                        {
-                            Log(strFreemoveNotAllowed);
-                            return;
-                        }
-                    }
-                    else if (cmd == "fov")
-                    {
-                        int arg = int.Parse(arguments);
-                        int minfov = 1;
-                        int maxfov = 179;
-                        if (!issingleplayer)
-                        {
-                            minfov = 60;
-                        }
-                        if (arg < minfov || arg > maxfov)
-                        {
-                            throw new Exception(string.Format("Valid field of view: {0}-{1}", minfov, maxfov));
-                        }
-                        float fov = (2 * Game.GetPi() * (one * arg / 360));
-                        this.fov = fov;
-                        OnResize(new EventArgs());
-                    }
-                    else if (cmd == "clients")
-                    {
-                        Log("Clients:");
-                        for (int i = 0; i < entitiesCount; i++)
-                        {
-                            if (entities[i] == null)
-                            {
-                                continue;
-                            }
-                            if (entities[i].player == null)
-                            {
-                                continue;
-                            }
-                            Log(string.Format("{0} {1}", i, entities[i].player.Name));
-                        }
-                    }
-                    else if (cmd == "movespeed")
-                    {
-                        try
-                        {
-                            if (this.AllowFreemove)
-                            {
-                                if (float.Parse(arguments) <= 500)
-                                {
-                                    movespeed = basemovespeed * float.Parse(arguments);
-                                    AddChatline("Movespeed: " + arguments + "x");
-                                }
-                                else
-                                {
-                                    AddChatline("Entered movespeed to high! max. 500x");
-                                }
-                            }
-                            else
-                            {
-                                Log(strFreemoveNotAllowed);
-                                return;
-                            }
-                        }
-                        catch
-                        {
-                            AddChatline("Invalid value!");
-                            AddChatline("USE: .movespeed [movespeed]");
-                        }
-                    }
-                    else if (cmd == "testmodel")
-                    {
-                        ENABLE_DRAW_TEST_CHARACTER = BoolCommandArgument(arguments);
-                    }
-                    else if (cmd == "gui")
-                    {
-                        ENABLE_DRAW2D = BoolCommandArgument(arguments);
-                    }
-                    else if (cmd == "reconnect")
-                    {
-                        Reconnect();
-                    }
-                    else
-                    {
-                        for (int i = 0; i < clientmodsCount; i++)
-                        {
-                            ClientCommandArgs args = new ClientCommandArgs();
-                            args.arguments = arguments;
-                            args.command = cmd;
-                            clientmods[i].OnClientCommand(args);
-                        }
-                        string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 256));
-                        SendChat(chatline);
-                    }
-                }
-                catch (Exception e) { AddChatline(new StringReader(e.Message).ReadLine()); }
-            }
-            else
-            {
-                string chatline = d_HudChat.GuiTypingBuffer.Substring(0, Math.Min(d_HudChat.GuiTypingBuffer.Length, 4096));
-                SendChat(chatline);
-
-            }
-        }
-
-        void Reconnect()
-        {
-            reconnect = true;
-            d_GlWindow.Exit();
-        }
-
-        private static bool BoolCommandArgument(string arguments)
-        {
-            arguments = arguments.Trim();
-            return (arguments == "" || arguments == "1" || arguments == "on" || arguments == "yes");
-        }
 
         void Keyboard_KeyUp(object sender, OpenTK.Input.KeyboardKeyEventArgs e)
         {
@@ -591,6 +412,7 @@ namespace ManicDigger
                 args_.SetKeyCode(eKey);
                 clientmods[i].OnKeyDown(args_);
             }
+            InvalidVersionAllow();
             if (eKey == GetKey(GlKeys.F6))
             {
                 float lagSeconds = one * (game.platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
@@ -600,7 +422,9 @@ namespace ManicDigger
                 }
             }
             if (eKey == GetKey(GlKeys.ShiftLeft) || eKey == GetKey(GlKeys.ShiftRight))
+            {
                 IsShiftPressed = true;
+            }
             if (eKey == GetKey(GlKeys.F11))
             {
                 if (d_GlWindow.WindowState == WindowState.Fullscreen)
@@ -618,15 +442,16 @@ namespace ManicDigger
             }
             if (eKey == (GetKey(GlKeys.C)) && GuiTyping == TypingState.None)
             {
-                if (PickCubePos != new Vector3(-1, -1, -1))
+                if (!(SelectedBlockPositionX == -1 && SelectedBlockPositionY == -1 && SelectedBlockPositionZ == -1))
                 {
-                    Vector3i pos = new Vector3i((int)PickCubePos.X, (int)PickCubePos.Z, (int)PickCubePos.Y);
-                    if (d_Map.GetBlock(pos.x, pos.y, pos.z)
-                        == d_Data.BlockIdCraftingTable())
+                    int posx = SelectedBlockPositionX;
+                    int posy = SelectedBlockPositionZ;
+                    int posz = SelectedBlockPositionY;
+                    if (d_Map.GetBlock(posx, posy, posz) == d_Data.BlockIdCraftingTable())
                     {
                         //draw crafting recipes list.
-                        CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(pos)),
-                        (recipe) => { CraftingRecipeSelected(pos.x, pos.y, pos.z, recipe); });
+                        CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(posx, posy, posz)),
+                        (recipe) => { CraftingRecipeSelected(posx, posy, posz, recipe); });
                     }
                 }
             }
@@ -672,8 +497,8 @@ namespace ManicDigger
                 {
                     if (GuiTyping == TypingState.Typing)
                     {
-                        typinglog.Add(d_HudChat.GuiTypingBuffer);
-                        typinglogpos = typinglog.Count;
+                        typinglog[typinglogCount++] = d_HudChat.GuiTypingBuffer;
+                        typinglogpos = typinglogCount;
                         ClientCommand(d_HudChat.GuiTypingBuffer);
 
                         d_HudChat.GuiTypingBuffer = "";
@@ -720,7 +545,7 @@ namespace ManicDigger
                     {
                         typinglogpos--;
                         if (typinglogpos < 0) { typinglogpos = 0; }
-                        if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
+                        if (typinglogpos >= 0 && typinglogpos < typinglogCount)
                         {
                             d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
@@ -728,12 +553,12 @@ namespace ManicDigger
                     if (key == GetKey(GlKeys.Down))
                     {
                         typinglogpos++;
-                        if (typinglogpos > typinglog.Count) { typinglogpos = typinglog.Count; }
-                        if (typinglogpos >= 0 && typinglogpos < typinglog.Count)
+                        if (typinglogpos > typinglogCount) { typinglogpos = typinglogCount; }
+                        if (typinglogpos >= 0 && typinglogpos < typinglogCount)
                         {
                             d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
                         }
-                        if (typinglogpos == typinglog.Count)
+                        if (typinglogpos == typinglogCount)
                         {
                             d_HudChat.GuiTypingBuffer = "";
                         }
@@ -792,7 +617,7 @@ namespace ManicDigger
                 {
                     drawblockinfo = !drawblockinfo;
                 }
-                PerformanceInfo.Set("height", "height:" + d_Heightmap.GetBlock((int)player.playerposition.X, (int)player.playerposition.Z));
+                PerformanceInfo.Set("height", "height:" + d_Heightmap.GetBlock(platform.FloatToInt(player.playerposition.X), platform.FloatToInt(player.playerposition.Z)));
                 if (eKey == GetKey(GlKeys.F5))
                 {
                     if (cameratype == CameraType.Fpp)
@@ -873,20 +698,22 @@ namespace ManicDigger
                 {
                     if (currentAttackedBlock != null)
                     {
-                        Vector3 pos = new Vector3(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
+                        int posX = currentAttackedBlock.X;
+                        int posY = currentAttackedBlock.Y;
+                        int posZ = currentAttackedBlock.Z;
                         int blocktype = d_Map.GetBlock(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
                         if (IsUsableBlock(blocktype))
                         {
                             if (d_Data.IsRailTile(blocktype))
                             {
-                                player.playerposition.X = pos.X + .5f;
-                                player.playerposition.Y = pos.Z + 1;
-                                player.playerposition.Z = pos.Y + .5f;
+                                player.playerposition.X = posX + (one / 2);
+                                player.playerposition.Y = posZ + 1;
+                                player.playerposition.Z = posY + (one / 2);
                                 ENABLE_FREEMOVE = false;
                             }
                             else
                             {
-                                SendSetBlock(platform.FloatToInt(pos.X), platform.FloatToInt(pos.Y), platform.FloatToInt(pos.Z), Packet_BlockSetModeEnum.Use, 0, ActiveMaterial);
+                                SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.Use, 0, ActiveMaterial);
                             }
                         }
                     }
@@ -943,8 +770,8 @@ namespace ManicDigger
                 if (eKey == GetKey(GlKeys.F))
                 {
                     ToggleFog();
-                    Log(string.Format(language.FogDistance(), d_Config3d.viewdistance));
-                    OnResize(new EventArgs());
+                    Log(platform.StringFormat(language.FogDistance(), platform.IntToString(platform.FloatToInt(d_Config3d.viewdistance))));
+                    OnResize();
                 }
                 if (eKey == GetKey(GlKeys.B))
                 {
@@ -1011,7 +838,6 @@ namespace ManicDigger
             return new Vector3(vector3Ref.X, vector3Ref.Y, vector3Ref.Z);
         }
 
-        List<string> typinglog = new List<string>();
         public CrashReporter crashreporter;
         private void Connect()
         {
@@ -1045,13 +871,6 @@ namespace ManicDigger
             {
                 materialSlots = value;
             }
-        }
-        public void OnResize(EventArgs e)
-        {
-            //.mainwindow.OnResize(e);
-
-            GL.Viewport(0, 0, Width(), Height());
-            this.Set3dProjection();
         }
 
         Point mouse_previous;
@@ -1144,15 +963,8 @@ namespace ManicDigger
         public float MouseAcceleration1 = 0.12f;
         public float MouseAcceleration2 = 0.7f;
         OpenTK.Input.MouseState mouse_previous_state;
-        float fallspeed { get { return movespeed / 10; } }
         int lastbuildMilliseconds;
-        bool IsInLeft(Vector3 player_yy, Vector3 tile_yy)
-        {
-            return (int)player_yy.X == (int)tile_yy.X && (int)player_yy.Z == (int)tile_yy.Z;
-        }
-
         bool enable_move = true;
-        public bool ENABLE_MOVE { get { return enable_move; } set { enable_move = value; } }
         public void OnUpdateFrame(FrameEventArgs e)
         {
         }
@@ -1163,6 +975,7 @@ namespace ManicDigger
             //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
             //UpdateTerrain();
             OnNewFrame(dt);
+            RailOnNewFrame(dt);
             UpdateMousePosition();
             if (guistate == GuiState.Normal && game.enableCameraControl)
             {
@@ -1232,7 +1045,7 @@ namespace ManicDigger
                             player.playerorientation.X = Game.GetPi();
                         }
                     }
-                    else if (ENABLE_MOVE)
+                    else if (enable_move)
                     {
                         if (keyboardState[GetKey(GlKeys.W)]) { movedy += 1; }
                         if (keyboardState[GetKey(GlKeys.S)]) { movedy += -1; }
@@ -1290,12 +1103,12 @@ namespace ManicDigger
                     }
                 }
             }
-            float jumpstartacceleration = 13.333f * d_Physics.gravity;
+            float jumpstartacceleration = (13 + one * 333 / 1000) * d_Physics.gravity;
             if (blockunderplayer != null && blockunderplayer.value == d_Data.BlockIdTrampoline()
                 && (!player.isplayeronground) && !shiftkeydown)
             {
                 wantsjump = true;
-                jumpstartacceleration = 20.666f * d_Physics.gravity;
+                jumpstartacceleration = (20 + one * 666 / 1000) * d_Physics.gravity;
             }
             //no aircontrol
             if (!player.isplayeronground)
@@ -1509,8 +1322,8 @@ namespace ManicDigger
             float unit_x = 0;
             float unit_y = 0;
             int NEAR = 1;
-            int FOV = (int)currentfov() * 10; // 600
-            float ASPECT = 640f / 480;
+            int FOV = platform.FloatToInt(currentfov() * 10); // 600
+            float ASPECT = one * 640 / 480;
             float near_height = NEAR * one * (platform.MathTan(FOV * Game.GetPi() / 360));
             Vector3 ray = new Vector3(unit_x * near_height * ASPECT, unit_y * near_height, 1);//, 0);
 
@@ -2029,23 +1842,13 @@ namespace ManicDigger
         {
             //playerdestination = pick0.pos;
         }
-        Vector3 ToMapPos(Vector3 a)
-        {
-            return new Vector3((int)a.X, (int)a.Z, (int)a.Y);
-        }
         bool fastclicking = false;
 
-        //double currentTime = 0;
         double accumulator = 0;
         double t = 0;
-        //Vector3 oldplayerposition;
 
-        public float CharacterModelHeight { get { return entities[LocalPlayerId].player.ModelHeight; } }
-        public Stopwatch framestopwatch;
         public void OnRenderFrame(FrameEventArgs e)
         {
-            framestopwatch = new Stopwatch();
-            framestopwatch.Start();
             terrainRenderer.UpdateTerrain();
             if (guistate == GuiState.MapLoading)
             {
@@ -2073,6 +1876,7 @@ namespace ManicDigger
                 t += dt;
                 accumulator -= dt;
             }
+            LoadPlayerTextures();
 
             if (guistate == GuiState.MapLoading) { goto draw2d; }
 
@@ -2153,7 +1957,7 @@ namespace ManicDigger
                 {
                     d_CharacterRenderer.DrawCharacter(a, playerPositionSpawnX,
                         playerPositionSpawnY, playerPositionSpawnZ,
-                        0, 0, true, (float)dt, GetPlayerTexture(this.LocalPlayerId),
+                        0, 0, true, (float)dt, entities[LocalPlayerId].player.CurrentTexture,
                         new AnimationHint(), new float());
                 }
                 foreach (IModelToDraw m in Models)
@@ -2218,81 +2022,7 @@ namespace ManicDigger
         }
 
         bool startedconnecting;
-        Dictionary<string, int> playertextures = new Dictionary<string, int>();
-        Dictionary<int, int> monstertextures = new Dictionary<int, int>();
-        Dictionary<string, int> diskplayertextures = new Dictionary<string, int>();
-        private int GetPlayerTexture(int playerid)
-        {
-            if (playertexturedefault == -1)
-            {
-                playertexturedefault = LoadTexture(Game.playertexturedefaultfilename);
-            }
-            Player player = this.entities[playerid].player;
-            if (player.Type == PlayerType.Monster)
-            {
-                if (!monstertextures.ContainsKey(player.MonsterType))
-                {
-                    string skinfile = d_DataMonsters.MonsterSkin[this.entities[playerid].player.MonsterType];
-                    using (Bitmap bmp = new Bitmap(d_GetFile.GetFile(skinfile)))
-                    {
-                        monstertextures[player.MonsterType] = d_The3d.LoadTexture(bmp);
-                    }
-                }
-                return monstertextures[player.MonsterType];
-            }
-            if (!string.IsNullOrEmpty(player.Texture))
-            {
-                if (!diskplayertextures.ContainsKey(player.Texture))
-                {
-                    try
-                    {
-                        diskplayertextures[player.Texture] = LoadTexture(d_GetFile.GetFile(player.Texture));
-                    }
-                    catch
-                    {
-                        diskplayertextures[player.Texture] = playertexturedefault; // invalid
-                    }
-                }
-                return diskplayertextures[player.Texture];
-            }
-            List<string> players_ = new List<string>();
-            for (int i = 0; i < entitiesCount; i++)
-            {
-                if (entities[i] == null)
-                {
-                    continue;
-                }
-                if (entities[i].player == null)
-                {
-                    continue;
-                }
-                Player p = entities[i].player;
-                if (!p.Name.Equals("Local", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    players_.Add(p.Name);
-                }
-            }
-            playerskindownloader.Update(players_.ToArray(), playertextures, playertexturedefault);
-            string playername;
-            if (playerid == this.LocalPlayerId)
-            {
-                playername = connectdata.Username;
-            }
-            else
-            {
-                playername = entities[playerid].player.Name;
-            }
-            if (playername == null)
-            {
-                playername = "";
-            }
-            if (playertextures.ContainsKey(playername))
-            {
-                return playertextures[playername];
-            }
-            return playertexturedefault;
-        }
-        public PlayerSkinDownloader playerskindownloader { get; set; }
+
         private void DrawPlayers(float dt)
         {
             totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
@@ -2323,7 +2053,7 @@ namespace ManicDigger
                 {
                     continue;
                 }
-                float shadow = (one * d_Shadows.MaybeGetLight(platform.FloatToInt(p.PositionX), platform.FloatToInt(p.PositionZ), platform.FloatToInt(p.PositionY))) / d_Shadows.maxlight;
+                float shadow = (one * d_Shadows.MaybeGetLight(platform.FloatToInt(p.PositionX), platform.FloatToInt(p.PositionZ), platform.FloatToInt(p.PositionY))) / Game.maxlight;
                 p.playerDrawInfo.anim.light = shadow;
                 float FeetPosX = p.PositionX;
                 float FeetPosY = p.PositionY;
@@ -2334,7 +2064,7 @@ namespace ManicDigger
                 {
                     ICharacterRenderer r = GetCharacterRenderer(p.Model);
                     r.SetAnimation("walk");
-                    r.DrawCharacter(p.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p.Heading - 256 / 4), p.Pitch, p.moves, dt, GetPlayerTexture(i), animHint, playerspeed);
+                    r.DrawCharacter(p.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p.Heading - 256 / 4), p.Pitch, p.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
                     //DrawCharacter(info.anim, FeetPos,
                     //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
                 }
@@ -2347,7 +2077,7 @@ namespace ManicDigger
                     //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
                     r.DrawCharacter(p.playerDrawInfo.anim, p.PositionX, p.PositionY, p.PositionZ,
                         Game.IntToByte(-p.Heading - 256 / 4), p.Pitch,
-                        p.moves, dt, GetPlayerTexture(i), animHint, playerspeed);
+                        p.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
                 }
             }
             if (ENABLE_TPP_VIEW)
@@ -2358,7 +2088,7 @@ namespace ManicDigger
                     platform.FloatToInt(LocalPlayerPosition.X),
                     platform.FloatToInt(LocalPlayerPosition.Z),
                     platform.FloatToInt(LocalPlayerPosition.Y)))
-                    / d_Shadows.maxlight;
+                    / Game.maxlight;
                 localplayeranim.light = shadow;
                 ICharacterRenderer r = GetCharacterRenderer(entities[LocalPlayerId].player.Model);
                 r.SetAnimation("walk");
@@ -2369,7 +2099,7 @@ namespace ManicDigger
                     LocalPlayerPosition.Z,
                     Game.IntToByte(-HeadingByte(LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z) - 256 / 4),
                     PitchByte(LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z),
-                    moves, dt, GetPlayerTexture(this.LocalPlayerId), localplayeranimationhint, playerspeedf);
+                    moves, dt, entities[LocalPlayerId].player.CurrentTexture, localplayeranimationhint, playerspeedf);
                 lastlocalplayerpos = LocalPlayerPosition;
             }
         }
@@ -2500,7 +2230,8 @@ namespace ManicDigger
                 screenshotflash--;
             }
             float lagSeconds = one * (game.platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
-            if (lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
+            if ((lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
+                && invalidVersionDrawMessage == null)
             {
                 Draw2dBitmapFile("disconnected.png", Width() - 100, 50, 50, 50);
                 FontCi font = new FontCi();
@@ -2511,8 +2242,6 @@ namespace ManicDigger
             }
             PerspectiveMode();
         }
-
-        bool ammostarted;
 
         public int DISCONNECTED_ICON_AFTER_SECONDS = 10;
 
@@ -2637,931 +2366,12 @@ namespace ManicDigger
                 d_HudInventory.OnKeyPress(e.KeyChar);
             }
         }
-
-        public Vector3i SelectedBlock()
-        {
-            Vector3 pos = new Vector3(SelectedBlockPositionX, SelectedBlockPositionY, SelectedBlockPositionZ);
-            if (pos == new Vector3(-1, -1, -1))
-            {
-                pos = ToVector3(player.playerposition);
-            }
-            return new Vector3i((int)pos.X, (int)pos.Z, (int)pos.Y);
-        }
-        public void OnPick(int blockposX, int blockposY, int blockposZ,
-            int blockposoldX, int blockposoldY, int blockposoldZ,
-            float[] collisionPos, bool right)
-        {
-            float xfract = collisionPos[0] - MathFloor(collisionPos[0]);
-            float zfract = collisionPos[2] - MathFloor(collisionPos[2]);
-            int activematerial = MaterialSlots[ActiveMaterial];
-            int railstart = d_Data.BlockIdRailstart();
-            if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
-                || activematerial == railstart + RailDirectionFlags.Corners)
-            {
-                RailDirection dirnew;
-                if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical)
-                {
-                    dirnew = PickHorizontalVertical(xfract, zfract);
-                }
-                else
-                {
-                    dirnew = PickCorners(xfract, zfract);
-                }
-                int dir = d_Data.Rail()[GetBlock(blockposoldX, blockposoldY, blockposoldZ)];
-                if (dir != 0)
-                {
-                    blockposX = blockposoldX;
-                    blockposY = blockposoldY;
-                    blockposZ = blockposoldZ;
-                }
-                activematerial = railstart + (dir | DirectionUtils.ToRailDirectionFlags(dirnew));
-                //Console.WriteLine(blockposold);
-                //Console.WriteLine(xfract + ":" + zfract + ":" + activematerial + ":" + dirnew);
-            }
-            int x = platform.FloatToInt(blockposX);
-            int y = platform.FloatToInt(blockposY);
-            int z = platform.FloatToInt(blockposZ);
-            int mode = right ? Packet_BlockSetModeEnum.Create : Packet_BlockSetModeEnum.Destroy;
-            {
-                if (IsAnyPlayerInPos(x, y, z) || activematerial == 151)
-                {
-                    return;
-                }
-                Vector3IntRef v = Vector3IntRef.Create(x, y, z);
-                Vector3IntRef oldfillstart = fillstart;
-                Vector3IntRef oldfillend = fillend;
-                if (mode == Packet_BlockSetModeEnum.Create)
-                {
-                    if (game.blocktypes[activematerial].IsTool)
-                    {
-                        OnPickUseWithTool(blockposX, blockposY, blockposZ);
-                        return;
-                    }
-                    
-                    //if (GameDataManicDigger.IsDoorTile(activematerial))
-                    //{
-                    //    if (z + 1 == d_Map.MapSizeZ || z == 0) return;
-                    //}
-                    
-                    if (activematerial == d_Data.BlockIdCuboid())
-                    {
-                        ClearFillArea();
-
-                        if (fillstart != null)
-                        {
-                            Vector3IntRef f = fillstart;
-                            if (!IsFillBlock(d_Map.GetBlock(f.X, f.Y, f.Z)))
-                            {
-                                fillarea.Set(f.X, f.Y, f.Z, d_Map.GetBlock(f.X, f.Y, f.Z));
-                            }
-                            SetBlock(f.X, f.Y, f.Z, d_Data.BlockIdFillStart());
-
-
-                            FillFill(v, fillstart);
-                        }
-                        if (!IsFillBlock(d_Map.GetBlock(v.X, v.Y, v.Z)))
-                        {
-                            fillarea.Set(v.X, v.Y, v.Z, d_Map.GetBlock(v.X, v.Y, v.Z));
-                        }
-                        SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdCuboid());
-                        fillend = v;
-                        RedrawBlock(v.X, v.Y, v.Z);
-                        return;
-                    }
-                    if (activematerial == d_Data.BlockIdFillStart())
-                    {
-                        ClearFillArea();
-                        if (!IsFillBlock(d_Map.GetBlock(v.X, v.Y, v.Z)))
-                        {
-                            fillarea.Set(v.X, v.Y, v.Z, d_Map.GetBlock(v.X, v.Y, v.Z));
-                        }
-                        SetBlock(v.X, v.Y, v.Z, d_Data.BlockIdFillStart());
-                        fillstart = v;
-                        fillend = null;
-                        RedrawBlock(v.X, v.Y, v.Z);
-                        return;
-                    }
-                    if (fillarea.ContainsKey(v.X, v.Y, v.Z))// && fillarea[v])
-                    {
-                        SendFillArea(fillstart.X, fillstart.Y, fillstart.Z, fillend.X, fillend.Y, fillend.Z, activematerial);
-                        ClearFillArea();
-                        fillstart = null;
-                        fillend = null;
-                        return;
-                    }
-                }
-                else
-                {
-                    if (game.blocktypes[activematerial].IsTool)
-                    {
-                        OnPickUseWithTool(blockposX, blockposY, blockposoldZ);
-                        return;
-                    }
-                    //delete fill start
-                    if (fillstart != null && fillstart == v)
-                    {
-                        ClearFillArea();
-                        fillstart = null;
-                        fillend = null;
-                        return;
-                    }
-                    //delete fill end
-                    if (fillend != null && fillend == v)
-                    {
-                        ClearFillArea();
-                        fillend = null;
-                        return;
-                    }
-                }
-                if (mode == Packet_BlockSetModeEnum.Create && activematerial == d_Data.BlockIdMinecart())
-                {
-                    //CommandRailVehicleBuild cmd2 = new CommandRailVehicleBuild();
-                    //cmd2.x = (short)x;
-                    //cmd2.y = (short)y;
-                    //cmd2.z = (short)z;
-                    //TrySendCommand(MakeCommand(CommandId.RailVehicleBuild, cmd2));
-                    return;
-                }
-                //if (TrySendCommand(MakeCommand(CommandId.Build, cmd)))
-                SendSetBlockAndUpdateSpeculative(activematerial, x, y, z, mode);
-            }
-        }
-        private void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
-        {
-            SendSetBlock(x, y, z, mode, material, ActiveMaterial);
-
-            Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
-            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
-            {
-                //int blockid = d_Inventory.RightHand[d_Viewport.ActiveMaterial].BlockId;
-                int blockid = material;
-                if (mode == Packet_BlockSetModeEnum.Destroy)
-                {
-                    blockid = SpecialBlockId.Empty;
-                }
-                speculative[new Vector3i(x, y, z)] = new Speculative() { blocktype = d_Map.GetBlock(x, y, z), timeMilliseconds = game.platform.TimeMillisecondsFromStart() };
-                SetBlock(x, y, z, blockid);
-                RedrawBlock(x, y, z);
-            }
-            else
-            {
-                //TODO
-            }
-        }
-        struct Speculative
-        {
-            public int timeMilliseconds;
-            public int blocktype;
-        }
-        Dictionary<Vector3i, Speculative> speculative = new Dictionary<Vector3i, Speculative>();
-        public void OnNewFrame(double dt)
-        {
-            foreach (var k in new Dictionary<Vector3i, Speculative>(speculative))
-            {
-                if ((one * (game.platform.TimeMillisecondsFromStart() - k.Value.timeMilliseconds) / 1000) > 2)
-                {
-                    speculative.Remove(k.Key);
-                    RedrawBlock(k.Key.x, k.Key.y, k.Key.z);
-                }
-            }
-            RailOnNewFrame((float)dt);
-        }
-
         public void ModelClick(int selectedmodelid)
         {
         }
-        public int HourDetail = 4;
-        public int[] NightLevels;
-        public bool ENABLE_PER_SERVER_TEXTURES = false;
-        string blobdownloadname;
-        MemoryStream blobdownload;
-        #region ICurrentSeason Members
-        public int CurrentSeason { get; set; }
-        #endregion
 
         IntRef packetLen = new IntRef();
-        /// <summary>
-        /// This function should be called in program main loop.
-        /// It exits immediately.
-        /// </summary>
-        public void NetworkProcess()
-        {
-            currentTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
-            if (main == null)
-            {
-                return;
-            }
-            INetIncomingMessage msg;
-            while ((msg = main.ReadMessage()) != null)
-            {
-                TryReadPacket(msg.ReadBytes(msg.LengthBytes()));
-            }
-            if (spawned && ((game.platform.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
-            {
-                lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
-                SendPosition(LocalPlayerPosition.X, LocalPlayerPosition.Y, LocalPlayerPosition.Z,
-                    LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z);
-            }
-            int now = game.platform.TimeMillisecondsFromStart();
-            for (int i = 0; i < entitiesCount; i++)
-            {
-                if (entities[i] == null)
-                {
-                    continue;
-                }
-                if (entities[i].player == null)
-                {
-                    continue;
-                }
-                int kKey = i;
-                Player p = entities[i].player;
-                if ((one * (now - p.LastUpdateMilliseconds) / 1000) > 2)
-                {
-                    p.playerDrawInfo = null;
-                    p.PositionLoaded = false;
-                }
-            }
-        }
 
-        private void TryReadPacket(byte[] data)
-        {
-            Packet_Server packet = new Packet_Server();
-            Packet_ServerSerializer.DeserializeBuffer(data,data.Length, packet);
-            if (Debugger.IsAttached
-                && packet.Id != Packet_ServerIdEnum.PositionUpdate
-                && packet.Id != Packet_ServerIdEnum.OrientationUpdate
-                && packet.Id != Packet_ServerIdEnum.PlayerPositionAndOrientation
-                && packet.Id != Packet_ServerIdEnum.ExtendedPacketTick
-                && packet.Id != Packet_ServerIdEnum.Chunk_
-                && packet.Id != Packet_ServerIdEnum.Ping)
-            {
-                //Console.WriteLine("read packet: " + Enum.GetName(typeof(MinecraftServerPacketId), packet.PacketId));
-            }
-            switch (packet.Id)
-            {
-                case Packet_ServerIdEnum.ServerIdentification:
-                    {
-                        string invalidversionstr = language.InvalidVersionConnectAnyway();
-                        {
-                            string servergameversion = packet.Identification.MdProtocolVersion;
-                            if (servergameversion != platform.GetGameVersion())
-                            {
-                                for (int i = 0; i < 5; i++)
-                                {
-                                    System.Windows.Forms.Cursor.Show();
-                                    System.Threading.Thread.Sleep(100);
-                                    Application.DoEvents();
-                                }
-                                string q = string.Format(invalidversionstr, platform.GetGameVersion(), servergameversion);
-                                var result = System.Windows.Forms.MessageBox.Show(q, "Invalid version", System.Windows.Forms.MessageBoxButtons.OKCancel);
-                                if (result == System.Windows.Forms.DialogResult.Cancel)
-                                {
-                                    throw new Exception(q);
-                                }
-                                for (int i = 0; i < 10; i++)
-                                {
-                                    System.Windows.Forms.Cursor.Hide();
-                                    System.Threading.Thread.Sleep(100);
-                                    Application.DoEvents();
-                                }
-                            }
-                        }
-                        this.LocalPlayerId = packet.Identification.AssignedClientId;
-                        this.ServerInfo.connectdata = this.connectdata;
-                        this.ServerInfo.ServerName = packet.Identification.ServerName;
-                        this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
-                        this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint_ == (int)RenderHint.Fast;
-                        ChatLog("---Connected---");
-                        SendRequestBlob();
-                        if (packet.Identification.MapSizeX != d_Map.MapSizeX
-                            || packet.Identification.MapSizeY != d_Map.MapSizeY
-                            || packet.Identification.MapSizeZ != d_Map.MapSizeZ)
-                        {
-                            Reset(packet.Identification.MapSizeX,
-                                packet.Identification.MapSizeY,
-                                packet.Identification.MapSizeZ);
-                            d_Heightmap.Restart();
-                        }
-                        //serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
-                        terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
-                        maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
-                        if (maxdrawdistance == 0)
-                        {
-                            maxdrawdistance = 128;
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.Ping:
-                    {
-                        this.SendPingReply();
-                        this.ServerInfo.ServerPing.Send(game.platform);
-                    }
-                    break;
-                case Packet_ServerIdEnum.PlayerPing:
-                    {
-                        for (int i = 0; i < this.ServerInfo.Players.count;i++)
-                        {
-                            ConnectedPlayer k = ServerInfo.Players.items[i];
-                            if (k == null)
-                            {
-                                continue;
-                            }
-                            if (k.id == packet.PlayerPing.ClientId)
-                            {
-                                if (k.id == this.LocalPlayerId)
-                                {
-                                    this.ServerInfo.ServerPing.Receive(game.platform);
-                                }
-                                k.ping = packet.PlayerPing.Ping;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.LevelInitialize:
-                    {
-                        ReceivedMapLength = 0;
-                        InvokeMapLoadingProgress(0, 0, language.Connecting());
-                    }
-                    break;
-                case Packet_ServerIdEnum.LevelDataChunk:
-                    {
-                        MapLoadingPercentComplete = packet.LevelDataChunk.PercentComplete;
-                        MapLoadingStatus = packet.LevelDataChunk.Status;
-                        InvokeMapLoadingProgress(MapLoadingPercentComplete, (int)ReceivedMapLength, MapLoadingStatus);
-                    }
-                    break;
-                case Packet_ServerIdEnum.LevelFinalize:
-                    {
-                        //d_Data.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
-                        //    MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")),
-                        //    MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
-                        //d_CraftingRecipes.Load(MyStream.ReadAllLines(d_GetFile.GetFile("craftingrecipes.csv")));
-
-                        MapLoaded();
-                    }
-                    break;
-                case Packet_ServerIdEnum.SetBlock:
-                    {
-                        int x = packet.SetBlock.X;
-                        int y = packet.SetBlock.Y;
-                        int z = packet.SetBlock.Z;
-                        int type = packet.SetBlock.BlockType;
-                        try { SetTileAndUpdate(x, y, z, type); }
-                        catch { Console.WriteLine("Cannot update tile!"); }
-                    }
-                    break;
-                case Packet_ServerIdEnum.FillArea:
-                    {
-                        Vector3i a = new Vector3i(packet.FillArea.X1, packet.FillArea.Y1, packet.FillArea.Z1);
-                        Vector3i b = new Vector3i(packet.FillArea.X2, packet.FillArea.Y2, packet.FillArea.Z2);
-
-                        int startx = Math.Min(a.x, b.x);
-                        int endx = Math.Max(a.x, b.x);
-                        int starty = Math.Min(a.y, b.y);
-                        int endy = Math.Max(a.y, b.y);
-                        int startz = Math.Min(a.z, b.z);
-                        int endz = Math.Max(a.z, b.z);
-
-                        int blockCount = packet.FillArea.BlockCount;
-
-                        Jint.Delegates.Action fillArea = delegate
-                        {
-                            for (int x = startx; x <= endx; ++x)
-                            {
-                                for (int y = starty; y <= endy; ++y)
-                                {
-                                    for (int z = startz; z <= endz; ++z)
-                                    {
-                                        // if creative mode is off and player run out of blocks
-                                        if (blockCount == 0)
-                                        {
-                                            return;
-                                        }
-                                        try
-                                        {
-                                            SetTileAndUpdate(x, y, z, packet.FillArea.BlockType);
-                                        }
-                                        catch
-                                        {
-                                            Console.WriteLine("Cannot update tile!");
-                                        }
-                                        blockCount--;
-                                    }
-                                }
-                            }
-                        };
-                        fillArea();
-                    }
-                    break;
-                case Packet_ServerIdEnum.FillAreaLimit:
-                    {
-                        this.fillAreaLimit = packet.FillAreaLimit.Limit;
-                        if (this.fillAreaLimit > 100000)
-                        {
-                            this.fillAreaLimit = 100000;
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.Freemove:
-                    {
-                        this.AllowFreemove = packet.Freemove.IsEnabled != 0;
-                        if (!this.AllowFreemove)
-                        {
-                            ENABLE_FREEMOVE = false;
-                            ENABLE_NOCLIP = false;
-                            movespeed = basemovespeed;
-                            Log(language.MoveNormal());
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.PlayerSpawnPosition:
-                    {
-                        int x = packet.PlayerSpawnPosition.X;
-                        int y = packet.PlayerSpawnPosition.Y;
-                        int z = packet.PlayerSpawnPosition.Z;
-                        this.playerPositionSpawnX = x;
-                        this.playerPositionSpawnY = z;
-                        this.playerPositionSpawnZ = y;
-                        Log(string.Format(language.SpawnPositionSetTo(), x + "," + y + "," + z));
-                    }
-                    break;
-                case Packet_ServerIdEnum.SpawnPlayer:
-                    {
-                        int playerid = packet.SpawnPlayer.PlayerId;
-                        string playername = packet.SpawnPlayer.PlayerName;
-                        bool isnewplayer = true;
-                        for (int i = 0; i < ServerInfo.Players.count; i++)
-                        {
-                            ConnectedPlayer p = ServerInfo.Players.items[i];
-                            if (p == null)
-                            {
-                                continue;
-                            }
-                            if (p.id == playerid)
-                            {
-                                isnewplayer = false;
-                                p.name = playername;
-                            }
-                        }
-                        if (isnewplayer)
-                        {
-                            this.ServerInfo.Players.Add(new ConnectedPlayer() { name = playername, id = playerid, ping = -1 });
-                        }
-                        entities[playerid] = new Entity();
-                        entities[playerid].player = new Player();
-                        entities[playerid].player.Name = playername;
-                        entities[playerid].player.Model = packet.SpawnPlayer.Model_;
-                        entities[playerid].player.Texture = packet.SpawnPlayer.Texture_;
-                        entities[playerid].player.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
-                        entities[playerid].player.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
-                        ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
-                        if (playerid == this.LocalPlayerId)
-                        {
-                            spawned = true;
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.PlayerPositionAndOrientation:
-                    {
-                        int playerid = packet.PositionAndOrientation.PlayerId;
-                        ReadAndUpdatePlayerPosition(packet.PositionAndOrientation.PositionAndOrientation, playerid);
-                    }
-                    break;
-                case Packet_ServerIdEnum.Monster:
-                    {
-                        if (packet.Monster.Monsters == null)
-                        {
-                            break;
-                        }
-                        Dictionary<int, int> updatedMonsters = new Dictionary<int, int>();
-                        foreach (var k in packet.Monster.Monsters)
-                        {
-                            int id = k.Id + MonsterIdFirst;
-                            if (entities[id] == null)
-                            {
-                                entities[id] = new Entity();
-                                entities[id].player = new Player();
-                                entities[id].player.Name = d_DataMonsters.MonsterName[k.MonsterType];
-                            }
-                            ReadAndUpdatePlayerPosition(k.PositionAndOrientation, id);
-                            entities[id].player.Type = PlayerType.Monster;
-                            entities[id].player.Health = k.Health;
-                            entities[id].player.MonsterType = k.MonsterType;
-                            updatedMonsters[id] = 1;
-                        }
-                        //remove all old monsters that were not sent by server now.
-
-                        //this causes monster flicker on chunk boundaries,
-                        //commented out
-                        /*foreach (int id in new List<int>(players.Keys))
-                        {
-                            if (id >= MonsterIdFirst)
-                            {
-                                if (!updatedMonsters.ContainsKey(id))
-                                {
-                                    players.Remove(id);
-                                }
-                            }
-                        }*/
-                    }
-                    break;
-                case Packet_ServerIdEnum.DespawnPlayer:
-                    {
-                        int playerid = packet.DespawnPlayer.PlayerId;
-                        for (int i = 0; i < this.ServerInfo.Players.count; i++)
-                        {
-                            ConnectedPlayer p = ServerInfo.Players.items[i];
-                            if (p == null)
-                            {
-                                continue;
-                            }
-                            if (p.id == playerid)
-                            {
-                                this.ServerInfo.Players.RemoveAt(i);
-                            }
-                        }
-                        entities[playerid] = null;
-                    }
-                    break;
-                case Packet_ServerIdEnum.Message:
-                    {
-                        AddChatline(packet.Message.Message);
-                        ChatLog(packet.Message.Message);
-                    }
-                    break;
-                case Packet_ServerIdEnum.DisconnectPlayer:
-                    {
-                        System.Windows.Forms.MessageBox.Show(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
-                        d_GlWindow.Exit();
-                        //Not needed anymore - avoids "cryptic" error messages on being kicked/banned
-                        //throw new Exception(packet.DisconnectPlayer.DisconnectReason);
-                        break;
-                    }
-                case Packet_ServerIdEnum.ChunkPart:
-                    BinaryWriter bw1 = new BinaryWriter(CurrentChunk);
-                    bw1.Write((byte[])packet.ChunkPart.CompressedChunkPart);
-                    break;
-                case Packet_ServerIdEnum.Chunk_:
-                    {
-                        var p = packet.Chunk_;
-                        int[] receivedchunk;
-                        if (CurrentChunk.Length != 0)
-                        {
-                            byte[] decompressedchunk = platform.GzipDecompress(CurrentChunk.ToArray(), (int)CurrentChunk.Length);
-                            receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
-                            {
-                                BinaryReader br2 = new BinaryReader(new MemoryStream(decompressedchunk));
-                                for (int zz = 0; zz < p.SizeZ; zz++)
-                                {
-                                    for (int yy = 0; yy < p.SizeY; yy++)
-                                    {
-                                        for (int xx = 0; xx < p.SizeX; xx++)
-                                        {
-                                            receivedchunk[MapUtilCi.Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = br2.ReadUInt16();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
-                        }
-                        {
-                            SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
-                            for (int xx = 0; xx < 2; xx++)
-                            {
-                                for (int yy = 0; yy < 2; yy++)
-                                {
-                                    for (int zz = 0; zz < 2; zz++)
-                                    {
-                                        //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
-                                    }
-                                }
-                            }
-                        }
-                        ReceivedMapLength += data.Length;// lengthPrefixLength + packetLength;
-                        CurrentChunk = new MemoryStream();
-                    }
-                    break;
-                case Packet_ServerIdEnum.HeightmapChunk:
-                    {
-                        var p = packet.HeightmapChunk;
-                        byte[] decompressedchunk = platform.GzipDecompress(p.CompressedHeightmap, p.CompressedHeightmap.Length);
-                        ushort[] decompressedchunk1 = Misc.ByteArrayToUshortArray(decompressedchunk);
-                        for (int xx = 0; xx < p.SizeX; xx++)
-                        {
-                            for (int yy = 0; yy < p.SizeY; yy++)
-                            {
-                                int height = decompressedchunk1[MapUtilCi.Index2d(xx, yy, p.SizeX)];
-                                d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
-                            }
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.PlayerStats:
-                    {
-                        var p = packet.PlayerStats;
-                        this.PlayerStats = p;
-                    }
-                    break;
-                case Packet_ServerIdEnum.FiniteInventory:
-                    {
-                        //check for null so it's possible to connect
-                        //to old versions of game (before 2011-05-05)
-                        if (packet.Inventory.Inventory != null)
-                        {
-                            //d_Inventory.CopyFrom(ConvertInventory(packet.Inventory.Inventory));
-                            UseInventory(packet.Inventory.Inventory);
-                        }
-                        /*
-                        FiniteInventory = packet.FiniteInventory.BlockTypeAmount;
-                        ENABLE_FINITEINVENTORY = packet.FiniteInventory.IsFinite;
-                        FiniteInventoryMax = packet.FiniteInventory.Max;
-                        */
-                    }
-                    break;
-                case Packet_ServerIdEnum.Season:
-                    {
-                        packet.Season.Hour -= 1;
-                        if (packet.Season.Hour < 0)
-                        {
-                            //shouldn't happen
-                            packet.Season.Hour = 12 * HourDetail;
-                        }
-                        if (NightLevels == null)
-                        {
-                            string[] l = MyStream.ReadAllLines(d_GetFile.GetFile("sunlevels.csv"));
-                            NightLevels = new int[24 * HourDetail];
-                            for (int i = 0; i < 24 * HourDetail; i++)
-                            {
-                                string s = l[i];
-                                if (s.Contains(";")) { s = s.Substring(0, s.IndexOf(";")); }
-                                if (s.Contains(",")) { s = s.Substring(0, s.IndexOf(",")); }
-                                s = s.Trim();
-                                NightLevels[i] = int.Parse(s);
-                            }
-                        }
-                        int sunlight = NightLevels[packet.Season.Hour];
-                        SkySphereNight = sunlight < 8;
-                        d_SunMoonRenderer.day_length_in_seconds = 60 * 60 * 24 / packet.Season.DayNightCycleSpeedup;
-                        int hour = packet.Season.Hour / HourDetail;
-                        if (d_SunMoonRenderer.GetHour() != hour)
-                        {
-                            d_SunMoonRenderer.SetHour(hour);
-                        }
-
-                        if (d_Shadows.sunlight_ != sunlight)
-                        {
-                            d_Shadows.sunlight_ = sunlight;
-                            //d_Shadows.ResetShadows();
-                            RedrawAllBlocks();
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.BlobInitialize:
-                    {
-                        blobdownload = new MemoryStream();
-                        //blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
-                        blobdownloadname = packet.BlobInitialize.Name;
-                        ReceivedMapLength = 0; //todo
-                    }
-                    break;
-                case Packet_ServerIdEnum.BlobPart:
-                    {
-                        BinaryWriter bw = new BinaryWriter(blobdownload);
-                        bw.Write(packet.BlobPart.Data);
-                        ReceivedMapLength += packet.BlobPart.Data.Length; //todo
-                    }
-                    break;
-                case Packet_ServerIdEnum.BlobFinalize:
-                    {
-                        byte[] downloaded = blobdownload.ToArray();
-                        /*
-                        if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
-                        {
-                            if (blobdownloadhash == serverterraintexture)
-                            {
-                                using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
-                                {
-                                    d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
-                                }
-                            }
-                        }
-                        */
-                        if (blobdownloadname != null) // old servers
-                        {
-                            d_GetFile.SetFile(blobdownloadname, downloaded);
-                        }
-                        blobdownload = null;
-                    }
-                    break;
-                case Packet_ServerIdEnum.Sound:
-                    {
-                        PlaySoundAt(packet.Sound.Name, packet.Sound.X, packet.Sound.Y, packet.Sound.Z);
-                    }
-                    break;
-                case Packet_ServerIdEnum.RemoveMonsters:
-                    {
-                        for (int i = MonsterIdFirst; i < MonsterIdFirst + 1000; i++)
-                        {
-                            entities[i] = null;
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.Translation:
-                    language.Override(packet.Translation.Lang, packet.Translation.Id, packet.Translation.Translation);
-                    break;
-                case Packet_ServerIdEnum.BlockType:
-                    NewBlockTypes[packet.BlockType.Id] = packet.BlockType.Blocktype;
-                    break;
-                case Packet_ServerIdEnum.BlockTypes:
-                    game.blocktypes = NewBlockTypes;
-                    NewBlockTypes = new Packet_BlockType[game.blocktypes.Length];
-
-                    Dictionary<string, int> textureInAtlasIds = new Dictionary<string, int>();
-                    int lastTextureId = 0;
-                    for (int i = 0; i < game.blocktypes.Length; i++)
-                    {
-                        if (game.blocktypes[i] != null)
-                        {
-                            string[] to_load = new string[]
-                            {
-                                game.blocktypes[i].TextureIdLeft,
-                                game.blocktypes[i].TextureIdRight,
-                                game.blocktypes[i].TextureIdFront,
-                                game.blocktypes[i].TextureIdBack,
-                                game.blocktypes[i].TextureIdTop,
-                                game.blocktypes[i].TextureIdBottom,
-                                game.blocktypes[i].TextureIdForInventory,
-                            };
-                            for (int k = 0; k < to_load.Length; k++)
-                            {
-                                if (!textureInAtlasIds.ContainsKey(to_load[k]))
-                                {
-                                    textureInAtlasIds[to_load[k]] = lastTextureId++;
-                                }
-                            }
-                        }
-                    }
-                    d_Data.UseBlockTypes(game.platform, game.blocktypes, game.blocktypes.Length);
-                    for (int i = 0; i < game.blocktypes.Length; i++)
-                    {
-                        Packet_BlockType b = game.blocktypes[i];
-                        //Indexed by block id and TileSide.
-                        if (textureInAtlasIds != null)
-                        {
-                            game.TextureId[i][0] = textureInAtlasIds[b.TextureIdTop];
-                            game.TextureId[i][1] = textureInAtlasIds[b.TextureIdBottom];
-                            game.TextureId[i][2] = textureInAtlasIds[b.TextureIdFront];
-                            game.TextureId[i][3] = textureInAtlasIds[b.TextureIdBack];
-                            game.TextureId[i][4] = textureInAtlasIds[b.TextureIdLeft];
-                            game.TextureId[i][5] = textureInAtlasIds[b.TextureIdRight];
-                            game.TextureIdForInventory[i] = textureInAtlasIds[b.TextureIdForInventory];
-                        }
-                    }
-                    UseTerrainTextures(textureInAtlasIds);
-                    d_Weapon.redraw = true;
-                    RedrawAllBlocks();
-                    break;
-                case Packet_ServerIdEnum.SunLevels:
-                    NightLevels = packet.SunLevels.Sunlevels;
-                    break;
-                case Packet_ServerIdEnum.LightLevels:
-                    for (int i = 0; i < packet.LightLevels.LightlevelsCount; i++)
-                    {
-                        game.mLightLevels[i] = DeserializeFloat(packet.LightLevels.Lightlevels[i]);
-                    }
-                    break;
-                case Packet_ServerIdEnum.CraftingRecipes:
-                    d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
-                    break;
-                case Packet_ServerIdEnum.Dialog:
-                    var d = packet.Dialog;
-                    if (d.Dialog == null)
-                    {
-                        if (GetDialogId(d.DialogId) != -1 && dialogs[GetDialogId(d.DialogId)].value.IsModal != 0)
-                        {
-                            GuiStateBackToGame();
-                        }
-                        dialogs[GetDialogId(d.DialogId)] = null;
-                        if (DialogsCount() == 0)
-                        {
-                            FreeMouse = false;
-                        }
-                    }
-                    else
-                    {
-                        VisibleDialog d2 = new VisibleDialog();
-                        d2.key = d.DialogId;
-                        d2.value = d.Dialog;
-                        if (GetDialogId(d.DialogId) == -1)
-                        {
-                            for (int i = 0; i < dialogsCount; i++)
-                            {
-                                if (dialogs[i] == null)
-                                {
-                                    dialogs[i] = d2;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            dialogs[GetDialogId(d.DialogId)] = d2;
-                        }
-                        if (d.Dialog.IsModal != 0)
-                        {
-                            guistate = GuiState.ModalDialog;
-                            FreeMouse = true;
-                        }
-                    }
-                    break;
-                case Packet_ServerIdEnum.Follow:
-                    IntRef oldFollowId = FollowId();
-                    Follow = packet.Follow.Client;
-                    if (packet.Follow.Tpp != 0)
-                    {
-                        SetCamera(CameraType.Overhead);
-                        player.playerorientation.X = Game.GetPi();
-                        GuiStateBackToGame();
-                    }
-                    else
-                    {
-                        SetCamera(CameraType.Fpp);
-                    }
-                    break;
-                case Packet_ServerIdEnum.Bullet:
-                    EntityAddLocal(CreateBulletEntity(
-                        DeserializeFloat(packet.Bullet.FromXFloat),
-                        DeserializeFloat(packet.Bullet.FromYFloat),
-                        DeserializeFloat(packet.Bullet.FromZFloat),
-                        DeserializeFloat(packet.Bullet.ToXFloat),
-                        DeserializeFloat(packet.Bullet.ToYFloat),
-                        DeserializeFloat(packet.Bullet.ToZFloat),
-                        DeserializeFloat(packet.Bullet.SpeedFloat)));
-                    break;
-                case Packet_ServerIdEnum.Ammo:
-                    if (!ammostarted)
-                    {
-                        ammostarted = true;
-                        for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-                        {
-                            var k = packet.Ammo.TotalAmmo[i];
-                            LoadedAmmo[k.Key_] = Math.Min(k.Value_, game.blocktypes[k.Key_].AmmoMagazine);
-                        }
-                    }
-                    TotalAmmo = new int[GlobalVar.MAX_BLOCKTYPES];
-                    for (int i = 0; i < packet.Ammo.TotalAmmoCount; i++)
-                    {
-                        TotalAmmo[packet.Ammo.TotalAmmo[i].Key_] = packet.Ammo.TotalAmmo[i].Value_;
-                    }
-                    break;
-                case Packet_ServerIdEnum.Explosion:
-                    {
-                        Entity entity = new Entity();
-                        entity.expires = new Expires();
-                        entity.expires.timeLeft = DeserializeFloat(packet.Explosion.TimeFloat);
-                        entity.push = packet.Explosion;
-                        EntityAddLocal(entity);
-                    }
-                    break;
-                case Packet_ServerIdEnum.Projectile:
-                    {
-                        Entity entity = new Entity();
-                        
-                        Sprite sprite = new Sprite();
-                        sprite.image = "ChemicalGreen.png";
-                        sprite.size = 14;
-                        sprite.animationcount = 0;
-                        sprite.positionX = DeserializeFloat(packet.Projectile.FromXFloat);
-                        sprite.positionY = DeserializeFloat(packet.Projectile.FromYFloat);
-                        sprite.positionZ = DeserializeFloat(packet.Projectile.FromZFloat);
-                        entity.sprite = sprite;
-
-                        Grenade_ grenade = new Grenade_();
-                        grenade.velocityX = DeserializeFloat(packet.Projectile.VelocityXFloat);
-                        grenade.velocityY = DeserializeFloat(packet.Projectile.VelocityYFloat);
-                        grenade.velocityZ = DeserializeFloat(packet.Projectile.VelocityZFloat);
-                        grenade.block = packet.Projectile.BlockId;
-                        grenade.sourcePlayer = packet.Projectile.SourcePlayerID;
-                        entity.grenade = grenade;
-
-                        entity.expires = Expires.Create(DeserializeFloat(packet.Projectile.ExplodesAfterFloat));
-
-                        EntityAddLocal(entity);
-                    }
-                    break;
-                default:
-                    break;
-            }
-            LastReceivedMilliseconds = currentTimeMilliseconds;
-            //return lengthPrefixLength + packetLength;
-        }
-
-        MemoryStream CurrentChunk = new MemoryStream();
-        Packet_BlockType[] NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
         public void Dispose()
         {
             if (main != null)
@@ -3570,61 +2380,6 @@ namespace ManicDigger
                 main = null;
             }
         }
-
-        public TextureAtlasConverter d_TextureAtlasConverter;
-
-        public void UseTerrainTextures(Dictionary<string, int> textureIds)
-        {
-            //todo bigger than 32x32
-            int tilesize = 32;
-            Bitmap atlas2d = new Bitmap(tilesize * atlas2dtiles, tilesize * atlas2dtiles);
-            IFastBitmap atlas2dFast;
-            if (IsMono) { atlas2dFast = new FastBitmapDummy(); } else { atlas2dFast = new FastBitmap(); }
-            atlas2dFast.bmp = atlas2d;
-            atlas2dFast.Lock();
-            foreach (var k in textureIds)
-            {
-                using (Bitmap bmp = new Bitmap(d_GetFile.GetFile(k.Key + ".png")))
-                {
-                    IFastBitmap bmpFast;
-                    if (IsMono) { bmpFast = new FastBitmapDummy(); } else { bmpFast = new FastBitmap(); }
-                    bmpFast.bmp = bmp;
-                    bmpFast.Lock();
-                    int x = k.Value % game.texturesPacked();
-                    int y = k.Value / game.texturesPacked();
-                    for (int xx = 0; xx < tilesize; xx++)
-                    {
-                        for (int yy = 0; yy < tilesize; yy++)
-                        {
-                            int c = bmpFast.GetPixel(xx, yy);
-                            atlas2dFast.SetPixel(x * tilesize + xx, y * tilesize + yy, c);
-                        }
-                    }
-                    bmpFast.Unlock();
-                }
-            }
-            atlas2dFast.Unlock();
-            UseTerrainTextureAtlas2d(atlas2d);
-        }
-        public void UseTerrainTextureAtlas2d(Bitmap atlas2d)
-        {
-            game.terrainTexture = d_The3d.LoadTexture(atlas2d);
-            List<int> terrainTextures1d = new List<int>();
-            {
-                terrainTexturesPerAtlas = atlas1dheight / (atlas2d.Width / atlas2dtiles);
-                List<Bitmap> atlases1d = d_TextureAtlasConverter.Atlas2dInto1d(atlas2d, atlas2dtiles, atlas1dheight);
-                foreach (Bitmap bmp in atlases1d)
-                {
-                    int texture = LoadTexture(bmp);
-                    terrainTextures1d.Add(texture);
-                    bmp.Dispose();
-                }
-            }
-            game.terrainTextures1d = terrainTextures1d.ToArray();
-        }
-        int maxTextureSize; // detected at runtime
-        public int atlas1dheight { get { return maxTextureSize; } }
-        public int atlas2dtiles = GlobalVar.MAX_BLOCKTYPES_SQRT; // 16x16
         public int LoadTexture(Stream file)
         {
             using (file)
@@ -3635,17 +2390,8 @@ namespace ManicDigger
                 }
             }
         }
-        public void Set3dProjection()
-        {
-            Set3dProjection(zfar());
-        }
-        public void Set3dProjection(float zfar)
-        {
-            game.Set3dProjection(zfar, currentfov());
-        }
-
         public bool ShadowsFull { get { return false; } set { } }
-        internal int maxlight { get { return terrainRenderer.maxlight(); } }
         public FontType Font;
     }
 }
+

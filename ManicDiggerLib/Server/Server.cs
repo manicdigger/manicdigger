@@ -2713,7 +2713,7 @@ if (sent >= unknown.Count) { break; }
             {
                 return false;
             }
-            List<Vector3i> table = d_CraftingTableTool.GetTable(new Vector3i(cmd.X, cmd.Y, cmd.Z));
+            List<Vector3i> table = d_CraftingTableTool.GetTable(cmd.X, cmd.Y, cmd.Z);
             List<int> ontable = d_CraftingTableTool.GetOnTable(table);
             List<int> outputtoadd = new List<int>();
             //for (int i = 0; i < craftingrecipes.Count; i++)
@@ -4609,5 +4609,22 @@ if (sent >= unknown.Count) { break; }
         {
             return string.Format("[{0}, {1}]", x, y);
         }
+    }
+    [ProtoContract()]
+    public class Ingredient
+    {
+        [ProtoMember(1)]
+        public int Type;
+        [ProtoMember(2)]
+        public int Amount;
+    }
+
+    [ProtoContract()]
+    public class CraftingRecipe
+    {
+        [ProtoMember(1)]
+        public Ingredient[] ingredients;
+        [ProtoMember(2)]
+        public Ingredient output;
     }
 }

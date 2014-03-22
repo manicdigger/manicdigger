@@ -8,7 +8,6 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
 using ManicDigger;
-using ManicDigger.Network;
 using ManicDigger.Renderers;
 using ManicDiggerServer;
 using System.Text;

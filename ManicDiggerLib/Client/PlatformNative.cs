@@ -149,6 +149,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return string.Format(format, arg0, arg1);
     }
 
+    public override string StringFormat3(string format, string arg0, string arg1, string arg2)
+    {
+        return string.Format(format, arg0, arg1, arg2);
+    }
+
     public override void ClipboardSetText(string s)
     {
         System.Windows.Forms.Clipboard.SetText(s);
@@ -259,18 +264,19 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return lines;
     }
 
-    public override void WebClientDownloadStringAsync(string url, HttpResponseCi response)
+    public override void WebClientDownloadDataAsync(string url, HttpResponseCi response)
     {
         WebClient c = new WebClient();
-        c.DownloadStringCompleted += new DownloadStringCompletedEventHandler(c_DownloadStringCompleted);
-        c.DownloadStringAsync(new Uri(url), response);
+        c.DownloadDataCompleted += new DownloadDataCompletedEventHandler(c_DownloadStringCompleted);
+        c.DownloadDataAsync(new Uri(url), response);
     }
 
-    void c_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+    void c_DownloadStringCompleted(object sender, DownloadDataCompletedEventArgs e)
     {
         if (e.Error == null)
         {
             ((HttpResponseCi)e.UserState).value = e.Result;
+            ((HttpResponseCi)e.UserState).valueLength = e.Result.Length;
             ((HttpResponseCi)e.UserState).done = true;
         }
     }
@@ -575,7 +581,7 @@ public class GamePlatformNative : GamePlatform, IGameExit
     {
         using (Bitmap bmp = new Bitmap(fullPath))
         {
-            return LoadTexture(bmp, true);
+            return LoadTexture(bmp, false);
         }
     }
 
@@ -702,28 +708,82 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return bmp;
     }
 
-    public override void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels)
+    public override void BitmapSetPixelsArgb(BitmapCi bmp, int[] pixels)
     {
         BitmapCiCs bmp_ = (BitmapCiCs)bmp;
         int width = bmp_.bmp.Width;
         int height = bmp_.bmp.Height;
-        for (int y = 0; y < height; y++)
+        if (IsMono)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int color = pixels[x + y * width];
+                    bmp_.bmp.SetPixel(x, y, Color.FromArgb(color));
+                }
+            }
+        }
+        else
+        {
+            FastBitmap fastbmp = new FastBitmap();
+            fastbmp.bmp = bmp_.bmp;
+            fastbmp.Lock();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    fastbmp.SetPixel(x, y, pixels[x + y * width]);
+                }
+            }
+            fastbmp.Unlock();
+        }
+    }
+
+    public override BitmapCi BitmapCreateFromPng(byte[] data, int dataLength)
+    {
+        BitmapCiCs bmp = new BitmapCiCs();
+        bmp.bmp = new Bitmap(new MemoryStream(data, 0, dataLength));
+        return bmp;
+    }
+
+    public bool IsMono = Type.GetType("Mono.Runtime") != null;
+
+    public override void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels)
+    {
+        BitmapCiCs bmp = (BitmapCiCs)bitmap;
+        int width = bmp.bmp.Width;
+        int height = bmp.bmp.Height;
+        if (IsMono)
         {
             for (int x = 0; x < width; x++)
             {
-                byte r = pixels[x * 4 + y * width + 0];
-                byte g = pixels[x * 4 + y * width + 1];
-                byte b = pixels[x * 4 + y * width + 2];
-                byte a = pixels[x * 4 + y * width + 3];
-                bmp_.bmp.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                for (int y = 0; y < height; y++)
+                {
+                    bmpPixels[x + y * width] = bmp.bmp.GetPixel(x, y).ToArgb();
+                }
             }
+        }
+        else
+        {
+            FastBitmap fastbmp = new FastBitmap();
+            fastbmp.bmp = bmp.bmp;
+            fastbmp.Lock();
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    bmpPixels[x + y * width] = fastbmp.GetPixel(x, y);
+                }
+            }
+            fastbmp.Unlock();
         }
     }
 
     public override int LoadTextureFromBitmap(BitmapCi bmp)
     {
         BitmapCiCs bmp_ = (BitmapCiCs)bmp;
-        return LoadTexture(bmp_.bmp, true);
+        return LoadTexture(bmp_.bmp, false);
     }
 
     public override void GLLineWidth(int width)
@@ -1110,7 +1170,12 @@ public class GamePlatformNative : GamePlatform, IGameExit
     ICompression compression = new CompressionGzip();
     public override byte[] GzipDecompress(byte[] compressed, int compressedLength)
     {
-        return compression.Decompress(compressed);
+        byte[] data = new byte[compressedLength];
+        for (int i = 0; i < compressedLength; i++)
+        {
+            data[i] = compressed[i];
+        }
+        return compression.Decompress(data);
     }
     public bool ENABLE_CHATLOG = true;
     public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }
@@ -1158,6 +1223,32 @@ public class GamePlatformNative : GamePlatform, IGameExit
     public override bool StringStartsWithIgnoreCase(string a, string b)
     {
         return a.StartsWith(b, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    public override int StringIndexOf(string s, string p)
+    {
+        return s.IndexOf(p);
+    }
+
+    public override void WindowExit()
+    {
+        window.Exit();
+    }
+
+    public override void MessageBoxShowError(string text, string caption)
+    {
+        System.Windows.Forms.MessageBox.Show(text, caption, System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+    }
+
+    public override int ByteArrayLength(byte[] arr)
+    {
+        return arr.Length;
+    }
+
+    public override string StringFromUtf8ByteArray(byte[] value, int valueLength)
+    {
+        string s = Encoding.UTF8.GetString(value, 0, valueLength);
+        return s;
     }
 }
 

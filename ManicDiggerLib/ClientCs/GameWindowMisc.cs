@@ -12,7 +12,6 @@ using System.Threading;
 using System.IO;
 using System.Net;
 using System.Drawing.Drawing2D;
-using ManicDigger.Network;
 using ManicDigger.Renderers;
 
 namespace ManicDigger
@@ -31,7 +30,7 @@ namespace ManicDigger
         void OnLoad(EventArgs e);
         void OnFocusedChanged(EventArgs e);
         void OnClosed(EventArgs e);
-        void OnResize(EventArgs e);
+        void OnResize();
         void OnUpdateFrame(FrameEventArgs e);
         void OnRenderFrame(FrameEventArgs e);
         void OnKeyPress(OpenTK.KeyPressEventArgs e);
@@ -56,7 +55,7 @@ namespace ManicDigger
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
-            mywindow.OnResize(e);
+            mywindow.OnResize();
         }
         protected override void OnUpdateFrame(FrameEventArgs e)
         {

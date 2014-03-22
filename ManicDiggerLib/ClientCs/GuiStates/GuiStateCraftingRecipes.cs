@@ -80,22 +80,4 @@ namespace ManicDigger
             }
         }
     }
-
-    [ProtoContract()]
-    public class Ingredient
-    {
-        [ProtoMember(1)]
-        public int Type;
-        [ProtoMember(2)]
-        public int Amount;
-    }
-
-    [ProtoContract()]
-    public class CraftingRecipe
-    {
-        [ProtoMember(1)]
-        public Ingredient[] ingredients;
-        [ProtoMember(2)]
-        public Ingredient output;
-    }
 }

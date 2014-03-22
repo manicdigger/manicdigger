@@ -15,6 +15,7 @@
     public abstract string Timestamp();
     public abstract string StringFormat(string format, string arg0);
     public abstract string StringFormat2(string format, string arg0, string arg1);
+    public abstract string StringFormat3(string format, string arg0, string arg1, string arg2);
     public abstract void ClipboardSetText(string s);
     public abstract TextTexture CreateTextTexture(string text, float fontSize);
     public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
@@ -25,7 +26,7 @@
     public abstract string PathCombine(string part1, string part2);
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
     public abstract string[] FileReadAllLines(string path, IntRef length);
-    public abstract void WebClientDownloadStringAsync(string url, HttpResponseCi response);
+    public abstract void WebClientDownloadDataAsync(string url, HttpResponseCi response);
     public abstract string FileName(string fullpath);
     public abstract void AddOnNewFrame(NewFrameHandler handler);
     public abstract void AddOnKeyEvent(KeyEventHandler handler);
@@ -53,7 +54,7 @@
     public abstract void DeleteModel(Model model);
     public abstract void GlEnableTexture2d();
     public abstract BitmapCi BitmapCreate(int width, int height);
-    public abstract void BitmapSetPixelsRgba(BitmapCi bmp, byte[] pixels);
+    public abstract void BitmapSetPixelsArgb(BitmapCi bmp, int[] pixels);
     public abstract int LoadTextureFromBitmap(BitmapCi bmp);
     public abstract void GLLineWidth(int width);
     public abstract void GLDisableAlphaTest();
@@ -114,6 +115,13 @@
     public abstract float MathTan(float p);
     public abstract bool IsValidTypingChar(int c);
     public abstract bool StringStartsWithIgnoreCase(string a, string b);
+    public abstract int StringIndexOf(string s, string p);
+    public abstract void WindowExit();
+    public abstract void MessageBoxShowError(string text, string caption);
+    public abstract int ByteArrayLength(byte[] arr);
+    public abstract BitmapCi BitmapCreateFromPng(byte[] data, int dataLength);
+    public abstract void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels);
+    public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
 }
 
 public abstract class RandomCi

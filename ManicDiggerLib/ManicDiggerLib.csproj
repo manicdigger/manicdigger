@@ -193,12 +193,10 @@
     <Compile Include="ClientCs\GameWindowMisc.cs" />
     <Compile Include="ClientCs\ManicDigger.cs" />
     <Compile Include="ClientCs\Misc.cs" />
-    <Compile Include="ClientCs\Network\PlayerSkinDownloader.cs" />
     <Compile Include="ClientCs\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
     <Compile Include="ClientNative\TextRenderer.cs" />
-    <Compile Include="ClientCs\TextureAtlasConverter.cs" />
     <Compile Include="ClientCs\The3d.cs" />
   </ItemGroup>
   <ItemGroup>
