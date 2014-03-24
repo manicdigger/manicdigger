@@ -30,7 +30,7 @@ namespace MdMonsterEditor
             RichTextBoxContextMenu(richTextBox1);
             RichTextBoxContextMenu(richTextBox2);
             UpdateLabels();
-            the3d = new ManicDigger.The3d() { d_Config3d = config3d };
+            the3d = new ManicDigger.TextureLoader() { d_Config3d = config3d };
             glControl1.Paint += new PaintEventHandler(glControl1_Paint);
             glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
             loaded = true;
@@ -193,7 +193,7 @@ namespace MdMonsterEditor
         {
             return ((((float)headingbyte) / 256) * -360) - 90;
         }
-        IThe3d the3d;
+        TextureLoader the3d;
         int grasstexture = -1;
         private void DrawGrass()
         {
@@ -357,6 +357,13 @@ namespace MdMonsterEditor
             {
                 richTextBox1.Text = File.ReadAllText(openFileDialog2.FileName);
             }
+        }
+    }
+    public static class MyStream
+    {
+        public static byte[] ReadAllBytes(Stream stream)
+        {
+            return new BinaryReader(stream).ReadBytes((int)stream.Length);
         }
     }
 }

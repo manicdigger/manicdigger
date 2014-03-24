@@ -912,5 +912,10 @@ namespace ManicDigger
             game.LoadPlayerTextures();
         }
         string skinserver { get { return game.skinserver; } set { game.skinserver = value; } }
+        AnimationHint localplayeranimationhint { get { return game.localplayeranimationhint; } set { game.localplayeranimationhint = value; } }
+        private void DrawPlayers(float dt)
+        {
+            game.DrawPlayers(dt);
+        }
     }
 }

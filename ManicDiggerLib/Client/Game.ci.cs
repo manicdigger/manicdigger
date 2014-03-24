@@ -99,6 +99,9 @@
         CurrentChunkCount = 0;
         NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
         files = new DictionaryStringByteArray();
+        localplayeranim = new AnimationState();
+        localplayeranimationhint = new AnimationHint();
+        MonsterRenderers = new DictionaryStringCharacterRenderer();
     }
     float one;
 
@@ -5240,6 +5243,182 @@
             platform.BitmapDelete(bmp);
         }
     }
+
+    internal void DrawPlayers(float dt)
+    {
+        totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            if (entities[i] == null)
+            {
+                continue;
+            }
+            if (entities[i].player == null)
+            {
+                continue;
+            }
+            Player p_ = entities[i].player;
+            if (i == LocalPlayerId)
+            {
+                continue;
+            }
+            if (!p_.PositionLoaded)
+            {
+                continue;
+            }
+            if (!d_FrustumCulling.SphereInFrustum(p_.PositionX, p_.PositionY, p_.PositionZ, 3))
+            {
+                continue;
+            }
+            if (!terrainRenderer.IsChunkRendered(platform.FloatToInt(p_.PositionX) / chunksize, platform.FloatToInt(p_.PositionZ) / chunksize, platform.FloatToInt(p_.PositionY) / chunksize))
+            {
+                continue;
+            }
+            float shadow = (one * MaybeGetLight(platform.FloatToInt(p_.PositionX), platform.FloatToInt(p_.PositionZ), platform.FloatToInt(p_.PositionY))) / Game.maxlight;
+            p_.playerDrawInfo.anim.light = shadow;
+            float FeetPosX = p_.PositionX;
+            float FeetPosY = p_.PositionY;
+            float FeetPosZ = p_.PositionZ;
+            AnimationHint animHint = entities[i].player.AnimationHint_;
+            float playerspeed = (Length(p_.playerDrawInfo.velocityX, p_.playerDrawInfo.velocityY, p_.playerDrawInfo.velocityZ) / dt) * (one * 4 / 100);
+            if (p_.Type == PlayerType.Player)
+            {
+                ICharacterRenderer r = GetCharacterRenderer(p_.Model);
+                r.SetAnimation("walk");
+                r.DrawCharacter(p_.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch, p_.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
+                //DrawCharacter(info.anim, FeetPos,
+                //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
+            }
+            else
+            {
+                //fix crash on monster spawn
+                ICharacterRenderer r = GetCharacterRenderer(d_DataMonsters.MonsterCode[p_.MonsterType]);
+                //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
+                r.SetAnimation("walk");
+                //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
+                r.DrawCharacter(p_.playerDrawInfo.anim, p_.PositionX, p_.PositionY, p_.PositionZ,
+                    Game.IntToByte(-p_.Heading - 256 / 4), p_.Pitch,
+                    p_.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
+            }
+        }
+        if (ENABLE_TPP_VIEW)
+        {
+            float LocalPlayerPositionX = player.playerposition.X;
+            float LocalPlayerPositionY = player.playerposition.Y;
+            float LocalPlayerPositionZ = player.playerposition.Z;
+            float LocalPlayerOrientationX = player.playerorientation.X;
+            float LocalPlayerOrientationY = player.playerorientation.Y;
+            float LocalPlayerOrientationZ = player.playerorientation.Z;
+            float velocityX = lastlocalplayerposX - LocalPlayerPositionX;
+            float velocityY = lastlocalplayerposY - LocalPlayerPositionY;
+            float velocityZ = lastlocalplayerposZ - LocalPlayerPositionZ;
+            bool moves = (lastlocalplayerposX != LocalPlayerPositionX
+                || lastlocalplayerposY != LocalPlayerPositionY
+                || lastlocalplayerposZ != LocalPlayerPositionZ); //bool moves = velocity.Length > 0.08;
+            float shadow = (one * MaybeGetLight(
+                platform.FloatToInt(LocalPlayerPositionX),
+                platform.FloatToInt(LocalPlayerPositionZ),
+                platform.FloatToInt(LocalPlayerPositionY)))
+                / Game.maxlight;
+            localplayeranim.light = shadow;
+            ICharacterRenderer r = GetCharacterRenderer(entities[LocalPlayerId].player.Model);
+            r.SetAnimation("walk");
+            Vector3Ref playerspeed = Vector3Ref.Create(playervelocity.X / 60, playervelocity.Y / 60, playervelocity.Z / 60);
+            float playerspeedf = playerspeed.Length() * (one * 15 / 10);
+            r.DrawCharacter
+                (localplayeranim, LocalPlayerPositionX, LocalPlayerPositionY,
+                LocalPlayerPositionZ,
+                Game.IntToByte(-HeadingByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ) - 256 / 4),
+                PitchByte(LocalPlayerOrientationX, LocalPlayerOrientationY, LocalPlayerOrientationZ),
+                moves, dt, entities[LocalPlayerId].player.CurrentTexture, localplayeranimationhint, playerspeedf);
+            lastlocalplayerposX = LocalPlayerPositionX;
+            lastlocalplayerposY = LocalPlayerPositionY;
+            lastlocalplayerposZ = LocalPlayerPositionZ;
+        }
+    }
+
+    float lastlocalplayerposX;
+    float lastlocalplayerposY;
+    float lastlocalplayerposZ;
+    AnimationState localplayeranim;
+    internal AnimationHint localplayeranimationhint;
+
+    ICharacterRenderer GetCharacterRenderer(string key)
+    {
+        if (!MonsterRenderers.ContainsKey(key))
+        {
+            IntRef linesCount = new IntRef();
+            byte[] file = GetFile(key);
+            string[] lines = platform.ReadAllLines(platform.StringFromUtf8ByteArray(file, platform.ByteArrayLength(file)) , linesCount);
+            CharacterRendererMonsterCode renderer = new CharacterRendererMonsterCode();
+            renderer.game = this;
+            renderer.Load(lines, linesCount.value);
+            MonsterRenderers.Set(key, renderer);
+        }
+        return MonsterRenderers.Get(key);
+    }
+    DictionaryStringCharacterRenderer MonsterRenderers;
+}
+
+class DictionaryStringCharacterRenderer
+{
+    public DictionaryStringCharacterRenderer()
+    {
+        itemsCount = 512;
+        items = new StringCharacterRenderer[itemsCount];
+    }
+    StringCharacterRenderer[] items;
+    int itemsCount;
+
+    internal bool ContainsKey(string key)
+    {
+        return GetIndex(key) != -1;
+    }
+
+    int GetIndex(string key)
+    {
+        for (int i = 0; i < itemsCount; i++)
+        {
+            if (items[i] == null) { continue; }
+            if (items[i].key == key)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    internal ICharacterRenderer Get(string key)
+    {
+        return items[GetIndex(key)].value;
+    }
+
+    internal void Set(string key, ICharacterRenderer r)
+    {
+        if (GetIndex(key) != -1)
+        {
+            items[GetIndex(key)].value = r;
+        }
+        else
+        {
+            for (int i = 0; i < itemsCount; i++)
+            {
+                if (items[i] == null)
+                {
+                    items[i] = new StringCharacterRenderer();
+                    items[i].key = key;
+                    items[i].value = r;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+class StringCharacterRenderer
+{
+    internal string key;
+    internal ICharacterRenderer value;
 }
 
 class StringByteArray
@@ -6174,6 +6353,10 @@ public class Config3d
     internal float viewdistance;
     public float GetViewDistance() { return viewdistance; }
     public void SetViewDistance(float value) { viewdistance = value; }
+    public bool GetEnableTransparency() { return ENABLE_TRANSPARENCY; }
+    public void SetEnableTransparency(bool value) { ENABLE_TRANSPARENCY = value; }
+    public bool GetEnableMipmaps() { return ENABLE_MIPMAPS; }
+    public void SetEnableMipmaps(bool value) { ENABLE_MIPMAPS = value; }
 }
 
 public class MapUtilCi

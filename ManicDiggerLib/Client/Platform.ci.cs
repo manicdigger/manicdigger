@@ -122,6 +122,7 @@
     public abstract BitmapCi BitmapCreateFromPng(byte[] data, int dataLength);
     public abstract void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels);
     public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
+    public abstract string[] ReadAllLines(string p, IntRef retCount);
 }
 
 public abstract class RandomCi

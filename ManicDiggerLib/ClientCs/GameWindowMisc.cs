@@ -16,11 +16,6 @@ using ManicDigger.Renderers;
 
 namespace ManicDigger
 {
-    public interface IThe3d
-    {
-        int LoadTexture(Bitmap bmp);
-    }
-
     public interface ICurrentShadows
     {
         bool ShadowsFull { get; set; }

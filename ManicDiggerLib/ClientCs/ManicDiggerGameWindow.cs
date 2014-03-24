@@ -53,11 +53,6 @@ namespace ManicDigger
             var network = w;
             var mapstorage = clientgame;
             var config3d = new Config3d();
-            var the3d = new The3d();
-            the3d.game = this;
-            the3d.d_GetFile = getfile;
-            the3d.d_Config3d = config3d;
-            w.d_The3d = the3d;
             var localplayerposition = w;
             var physics = new CharacterPhysicsCi();
             var internetgamefactory = this;
@@ -92,9 +87,6 @@ namespace ManicDigger
             w.d_Weapon = new WeaponRenderer() { d_BlockRendererTorch = blockrenderertorch, game = game };
             var playerrenderer = new CharacterRendererMonsterCode();
             playerrenderer.game = this.game;
-            string[] playerTxtLines = MyStream.ReadAllLines(getfile.GetFile("player.txt"));
-            playerrenderer.Load(playerTxtLines, playerTxtLines.Length);
-            w.d_CharacterRenderer = playerrenderer;
             var particle = new ParticleEffectBlockBreak();
             w.particleEffectBlockBreak = particle;
             w.d_Shadows = w;
@@ -196,11 +188,9 @@ namespace ManicDigger
         }
 
         public GlWindow d_GlWindow;
-        public The3d d_The3d;
         public Game d_Map;
 
         public GetFileStream d_GetFile;
-        public ICharacterRenderer d_CharacterRenderer;
         public ICurrentShadows d_CurrentShadows;
         public IGameExit d_Exit;
         public IInventoryController d_InventoryController;
@@ -210,16 +200,6 @@ namespace ManicDigger
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
         public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
 
-        public int LoadTexture(string filename)
-        {
-            d_The3d.d_Config3d = d_Config3d;
-            return LoadTexture(d_GetFile.GetFile(filename));
-        }
-        public int LoadTexture(Bitmap bmp)
-        {
-            d_The3d.d_Config3d = d_Config3d;
-            return d_The3d.LoadTexture(bmp);
-        }
         public GuiStateEscapeMenu escapeMenu = new GuiStateEscapeMenu();
         public void OnFocusedChanged(EventArgs e)
         {
@@ -1953,13 +1933,6 @@ namespace ManicDigger
                 }
                 DrawSprites();
                 UpdateBullets((float)e.Time);
-                if (ENABLE_DRAW_TEST_CHARACTER)
-                {
-                    d_CharacterRenderer.DrawCharacter(a, playerPositionSpawnX,
-                        playerPositionSpawnY, playerPositionSpawnZ,
-                        0, 0, true, (float)dt, entities[LocalPlayerId].player.CurrentTexture,
-                        new AnimationHint(), new float());
-                }
                 foreach (IModelToDraw m in Models)
                 {
                     if (m.Id() == selectedmodelid)
@@ -2023,110 +1996,6 @@ namespace ManicDigger
 
         bool startedconnecting;
 
-        private void DrawPlayers(float dt)
-        {
-            totaltimeMilliseconds = platform.TimeMillisecondsFromStart();
-            for (int i = 0; i < entitiesCount; i++)
-            {
-                if (entities[i] == null)
-                {
-                    continue;
-                }
-                if (entities[i].player == null)
-                {
-                    continue;
-                }
-                Player p = entities[i].player;
-                if (i == this.LocalPlayerId)
-                {
-                    continue;
-                }
-                if (!p.PositionLoaded)
-                {
-                    continue;
-                }
-                if (!d_FrustumCulling.SphereInFrustum(p.PositionX, p.PositionY, p.PositionZ, 3))
-                {
-                    continue;
-                }
-                if (!terrainRenderer.IsChunkRendered(platform.FloatToInt(p.PositionX) / chunksize, platform.FloatToInt(p.PositionZ) / chunksize, platform.FloatToInt(p.PositionY) / chunksize))
-                {
-                    continue;
-                }
-                float shadow = (one * d_Shadows.MaybeGetLight(platform.FloatToInt(p.PositionX), platform.FloatToInt(p.PositionZ), platform.FloatToInt(p.PositionY))) / Game.maxlight;
-                p.playerDrawInfo.anim.light = shadow;
-                float FeetPosX = p.PositionX;
-                float FeetPosY = p.PositionY;
-                float FeetPosZ = p.PositionZ;
-                AnimationHint animHint = entities[i].player.AnimationHint_;
-                float playerspeed = (Length(p.playerDrawInfo.velocityX, p.playerDrawInfo.velocityY, p.playerDrawInfo.velocityZ) / dt) * 0.04f;
-                if (p.Type == PlayerType.Player)
-                {
-                    ICharacterRenderer r = GetCharacterRenderer(p.Model);
-                    r.SetAnimation("walk");
-                    r.DrawCharacter(p.playerDrawInfo.anim, FeetPosX, FeetPosY, FeetPosZ, Game.IntToByte(-p.Heading - 256 / 4), p.Pitch, p.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
-                    //DrawCharacter(info.anim, FeetPos,
-                    //    curstate.heading, curstate.pitch, moves, dt, GetPlayerTexture(k.Key), animHint);
-                }
-                else
-                {
-                    //fix crash on monster spawn
-                    ICharacterRenderer r = GetCharacterRenderer(d_DataMonsters.MonsterCode[p.MonsterType]);
-                    //var r = MonsterRenderers[d_DataMonsters.MonsterCode[k.Value.MonsterType]];
-                    r.SetAnimation("walk");
-                    //curpos += new Vector3(0, -CharacterPhysics.walldistance, 0); //todos
-                    r.DrawCharacter(p.playerDrawInfo.anim, p.PositionX, p.PositionY, p.PositionZ,
-                        Game.IntToByte(-p.Heading - 256 / 4), p.Pitch,
-                        p.moves, dt, entities[i].player.CurrentTexture, animHint, playerspeed);
-                }
-            }
-            if (ENABLE_TPP_VIEW)
-            {
-                Vector3 velocity = lastlocalplayerpos - LocalPlayerPosition;
-                bool moves = lastlocalplayerpos != LocalPlayerPosition; //bool moves = velocity.Length > 0.08;
-                float shadow = (one * d_Shadows.MaybeGetLight(
-                    platform.FloatToInt(LocalPlayerPosition.X),
-                    platform.FloatToInt(LocalPlayerPosition.Z),
-                    platform.FloatToInt(LocalPlayerPosition.Y)))
-                    / Game.maxlight;
-                localplayeranim.light = shadow;
-                ICharacterRenderer r = GetCharacterRenderer(entities[LocalPlayerId].player.Model);
-                r.SetAnimation("walk");
-                Vector3Ref playerspeed = Vector3Ref.Create(playervelocity.X / 60, playervelocity.Y / 60, playervelocity.Z / 60);
-                float playerspeedf = playerspeed.Length() * 1.5f;
-                r.DrawCharacter
-                    (localplayeranim, LocalPlayerPosition.X, LocalPlayerPosition.Y,
-                    LocalPlayerPosition.Z,
-                    Game.IntToByte(-HeadingByte(LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z) - 256 / 4),
-                    PitchByte(LocalPlayerOrientation.X, LocalPlayerOrientation.Y, LocalPlayerOrientation.Z),
-                    moves, dt, entities[LocalPlayerId].player.CurrentTexture, localplayeranimationhint, playerspeedf);
-                lastlocalplayerpos = LocalPlayerPosition;
-            }
-        }
-
-        ICharacterRenderer GetCharacterRenderer(string modelfilename)
-        {
-            if (!MonsterRenderers.ContainsKey(modelfilename))
-            {
-                try
-                {
-                    string[] lines = MyStream.ReadAllLines(d_GetFile.GetFile(modelfilename));
-                    var renderer = new CharacterRendererMonsterCode();
-                    renderer.game = this.game;
-                    renderer.Load(lines, lines.Length);
-                    MonsterRenderers[modelfilename] = renderer;
-                }
-                catch
-                {
-                    MonsterRenderers[modelfilename] = GetCharacterRenderer("player.txt"); // todo invalid.txt
-                }
-            }
-            return MonsterRenderers[modelfilename];
-        }
-        Vector3 lastlocalplayerpos;
-        AnimationState localplayeranim = new AnimationState();
-
-        Dictionary<string, ICharacterRenderer> MonsterRenderers = new Dictionary<string, ICharacterRenderer>();
         private void Draw2d()
         {
             OrthoMode(Width(), Height());
@@ -2350,7 +2219,6 @@ namespace ManicDigger
         }
         #endregion
         
-        internal AnimationHint localplayeranimationhint = new AnimationHint();
         #region IViewport3d Members
         public Vector3 PickCubePos { get { return new Vector3(SelectedBlockPositionX, SelectedBlockPositionY, SelectedBlockPositionZ); } }
         #endregion
@@ -2380,16 +2248,7 @@ namespace ManicDigger
                 main = null;
             }
         }
-        public int LoadTexture(Stream file)
-        {
-            using (file)
-            {
-                using (Bitmap bmp = new Bitmap(file))
-                {
-                    return LoadTexture(bmp);
-                }
-            }
-        }
+ 
         public bool ShadowsFull { get { return false; } set { } }
         public FontType Font;
     }

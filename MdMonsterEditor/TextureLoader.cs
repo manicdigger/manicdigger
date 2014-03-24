@@ -10,13 +10,9 @@ using System.IO;
 
 namespace ManicDigger
 {
-    //Eventually all calls to OpenGL should be here.
-    //This class should become replaceable with DirectX.
-    public class The3d : IThe3d
+    public class TextureLoader
     {
-        public ManicDiggerGameWindow game;
         public Config3d d_Config3d;
-        public IGetFileStream d_GetFile;
         public bool ALLOW_NON_POWER_OF_TWO = false;
 
 
@@ -43,7 +39,7 @@ namespace ManicDigger
             GL.Enable(EnableCap.Texture2D);
             int id = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, id);
-            if (!d_Config3d.ENABLE_MIPMAPS)
+            if (!d_Config3d.GetEnableMipmaps())
             {
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
@@ -74,14 +70,14 @@ namespace ManicDigger
 
             GL.Enable(EnableCap.DepthTest);
 
-            if (d_Config3d.ENABLE_TRANSPARENCY)
+            if (d_Config3d.GetEnableTransparency())
             {
                 GL.Enable(EnableCap.AlphaTest);
                 GL.AlphaFunc(AlphaFunction.Greater, 0.5f);
             }
 
 
-            if (d_Config3d.ENABLE_TRANSPARENCY)
+            if (d_Config3d.GetEnableTransparency())
             {
                 GL.Enable(EnableCap.Blend);
                 GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);

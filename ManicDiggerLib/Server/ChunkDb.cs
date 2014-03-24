@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using ManicDiggerServer;
+using ManicDigger.ClientNative;
 
 namespace GameModeFortress
 {

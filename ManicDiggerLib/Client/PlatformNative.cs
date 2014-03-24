@@ -1250,6 +1250,19 @@ public class GamePlatformNative : GamePlatform, IGameExit
         string s = Encoding.UTF8.GetString(value, 0, valueLength);
         return s;
     }
+
+    public override string[] ReadAllLines(string p, IntRef retCount)
+    {
+        List<string> lines = new List<string>();
+        StringReader reader = new StringReader(p);
+        string line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            lines.Add(line);
+        }
+        retCount.value = lines.Count;
+        return lines.ToArray();
+    }
 }
 
 public class RandomNative : RandomCi
