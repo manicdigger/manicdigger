@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
@@ -9,9 +7,9 @@ namespace ManicDigger.Mods
         public void PreStart(ModManager m)
         {
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             if (m.IsSinglePlayer())
             {
                 m.SetPlayerAreaSize(512);

@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO;
 
 namespace ManicDigger.Mods
 {
@@ -12,9 +10,9 @@ namespace ManicDigger.Mods
             m.RequireMod("Default");
             m.RequireMod("BuildLog");
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.SetBlockType("VandalFinder", new BlockType()
             {
                 AllTextures = "VandalFinder",

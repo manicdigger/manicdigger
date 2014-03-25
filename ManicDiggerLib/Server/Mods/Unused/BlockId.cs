@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using ProtoBuf;
 
@@ -21,9 +20,9 @@ namespace ManicDigger.Mods
             m.RequireMod("VandalFinder");
 
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.RegisterOnLoad(OnLoad);
         }
 

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
@@ -28,9 +26,9 @@ namespace ManicDigger.Mods
             m.RequireMod ("DefaultWar");
         }
 
-        public void Start (ModManager m)
+        public void Start (ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.RegisterWorldGenerator (GetChunk);
          
             this.emtpy = m.GetBlockId ("Empty");

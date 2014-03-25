@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 
 namespace ManicDigger.Mods.Fortress
 {
     public class PlayerList : IMod
     {
-        public void PreStart(ModManager m)
-        {
-        }
+        public void PreStart(ModManager m) { }
 
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.RegisterOnSpecialKey(OnTabKey);
             m.RegisterOnDialogClick(OnTabResponse);
             m.RegisterTimer(UpdateTab, 1);

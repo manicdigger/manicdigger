@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
     //for debugging
     public class Ghost : IMod
     {
-        public void PreStart(ModManager m)
-        {
-        }
+        public void PreStart(ModManager m) { }
 
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             if (enabled)
             {
                 m.RegisterTimer(f, 0.1);
