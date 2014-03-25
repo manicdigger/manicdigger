@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 
 namespace ManicDigger.Mods
@@ -11,9 +10,9 @@ namespace ManicDigger.Mods
         {
             m.RequireMod("DefaultWar");
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.SetCreative(false);
             m.SetWorldSize(256, 256, 128);
             m.RegisterOnPlayerJoin(PlayerJoin);

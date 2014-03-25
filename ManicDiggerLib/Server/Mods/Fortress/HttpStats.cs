@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using FragLabs.HTTP;
 using System.Diagnostics;
 
@@ -8,9 +6,7 @@ namespace ManicDigger.Mods.Fortress
 {
     public class HttpStats : IMod
     {
-        public void PreStart(ModManager m)
-        {
-        }
+        public void PreStart(ModManager m) { }
 
         public void Start(ModManager m)
         {

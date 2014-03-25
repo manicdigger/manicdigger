@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
     public class Default : IMod
     {
-        public void PreStart(ModManager m)
+        public void PreStart(ModManager m) { }
+        public void Start(ModManager manager)
         {
-        }
-        public void Start(ModManager m)
-        {
-            this.m = m;
+            m = manager;
             m.RenderHint(RenderHint.Fast);
             if (m.IsSinglePlayer())
             {

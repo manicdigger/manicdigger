@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
@@ -10,9 +8,9 @@ namespace ManicDigger.Mods
         {
             m.RequireMod("Default");
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             TileIdStone = m.GetBlockId("Stone");
             TileIdGravel = m.GetBlockId("Gravel");
             TileIdDirt = m.GetBlockId("Dirt");

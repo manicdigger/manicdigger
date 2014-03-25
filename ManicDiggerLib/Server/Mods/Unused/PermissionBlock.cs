@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
@@ -14,9 +12,9 @@ namespace ManicDigger.Mods
         public int PermissionLevelsCount = 4;
         public int AreaSize = 64;
 
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
 
             for (int i = 0; i < PermissionLevelsCount; i++)
             {

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ManicDigger.Mods
 {
@@ -10,11 +8,11 @@ namespace ManicDigger.Mods
         {
             m.RequireMod("Default");
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
+            m = manager;
             m.RegisterOnBlockBuild(Build);
             m.RegisterOnBlockDelete(Delete);
-            this.m = m;
         }
 
         ModManager m;

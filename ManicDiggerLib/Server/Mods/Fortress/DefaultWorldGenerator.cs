@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using LibNoise;
 using LibNoise.Modifiers;
 
@@ -12,9 +10,9 @@ namespace ManicDigger.Mods
         {
             m.RequireMod("Default");
         }
-        public void Start(ModManager m)
+        public void Start(ModManager manager)
         {
-            this.m = m;
+            m = manager;
             m.RegisterWorldGenerator(GetChunk);
             m.RegisterOptionBool("DefaultGenCaves", false);
             m.RegisterOptionBool("DefaultGenLavaCaves", false);
