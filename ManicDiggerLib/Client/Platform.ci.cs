@@ -123,6 +123,10 @@
     public abstract void BitmapGetPixelsArgb(BitmapCi bitmap, int[] bmpPixels);
     public abstract string StringFromUtf8ByteArray(byte[] value, int valueLength);
     public abstract string[] ReadAllLines(string p, IntRef retCount);
+    public abstract bool ClipboardContainsText();
+    public abstract string ClipboardGetText();
+    public abstract void SetTitle(string applicationname);
+    public abstract bool Focused();
 }
 
 public abstract class RandomCi

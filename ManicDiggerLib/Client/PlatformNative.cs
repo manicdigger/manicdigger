@@ -16,6 +16,7 @@ using OpenTK.Audio;
 using ManicDigger.ClientNative;
 using System.Xml.Serialization;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 public class GamePlatformNative : GamePlatform, IGameExit
 {
@@ -806,7 +807,7 @@ public class GamePlatformNative : GamePlatform, IGameExit
         GL.DeleteTexture(id);
     }
 
-    TextRenderer textrenderer = new TextRenderer();
+    ManicDigger.Renderers.TextRenderer textrenderer = new ManicDigger.Renderers.TextRenderer();
 
     public override BitmapCi CreateTextTexture2(Text_ t)
     {
@@ -1262,6 +1263,26 @@ public class GamePlatformNative : GamePlatform, IGameExit
         }
         retCount.value = lines.Count;
         return lines.ToArray();
+    }
+
+    public override bool ClipboardContainsText()
+    {
+        return Clipboard.ContainsText();
+    }
+
+    public override string ClipboardGetText()
+    {
+        return Clipboard.GetText();
+    }
+
+    public override void SetTitle(string applicationname)
+    {
+        window.Title = applicationname;
+    }
+
+    public override bool Focused()
+    {
+        return window.Focused;
     }
 }
 

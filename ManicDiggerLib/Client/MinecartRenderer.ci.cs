@@ -6,6 +6,7 @@
 
 public class Minecart : IModelToDraw
 {
+    internal bool enabled;
     internal float positionX;
     internal float positionY;
     internal float positionZ;

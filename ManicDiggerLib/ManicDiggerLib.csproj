@@ -136,7 +136,6 @@
     </Compile>
     <Compile Include="Client\MainMenu.ci.cs" />
     <Compile Include="ClientCs\Misc2.cs" />
-    <Compile Include="ClientCs\ModeFortressRail.cs" />
     <Compile Include="Server\ModLoader.cs" />
     <Compile Include="ClientCs\MultiplayerForm.cs">
       <SubType>Form</SubType>

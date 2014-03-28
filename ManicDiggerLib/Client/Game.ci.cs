@@ -102,6 +102,8 @@
         localplayeranim = new AnimationState();
         localplayeranimationhint = new AnimationHint();
         MonsterRenderers = new DictionaryStringCharacterRenderer();
+        railheight = one * 3 / 10;
+        enable_move = true;
     }
     float one;
 
@@ -1655,6 +1657,10 @@
 
     public void AudioPlayAt(string file, float x, float y, float z)
     {
+        if (file == null)
+        {
+            return;
+        }
         if (!AudioEnabled)
         {
             return;
@@ -5358,6 +5364,1959 @@
         return MonsterRenderers.Get(key);
     }
     DictionaryStringCharacterRenderer MonsterRenderers;
+
+    internal RailMapUtil d_RailMapUtil;
+    internal int GetUpDownMove(int railblockX, int railblockY, int railblockZ, TileEnterDirection dir)
+    {
+        if (!IsValidPos(railblockX, railblockY, railblockZ))
+        {
+            return UpDown.None;
+        }
+        //going up
+        RailSlope slope = d_RailMapUtil.GetRailSlope(railblockX, railblockY, railblockZ);
+        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Up)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Down)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Right)
+        {
+            return UpDown.Up;
+        }
+        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Left)
+        {
+            return UpDown.Up;
+        }
+        //going down
+        if (slope == RailSlope.TwoDownRaised && dir == TileEnterDirection.Down)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoUpRaised && dir == TileEnterDirection.Up)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoLeftRaised && dir == TileEnterDirection.Left)
+        {
+            return UpDown.Down;
+        }
+        if (slope == RailSlope.TwoRightRaised && dir == TileEnterDirection.Right)
+        {
+            return UpDown.Down;
+        }
+        return UpDown.None;
+    }
+
+    internal float currentvehiclespeed;
+    internal int currentrailblockX;
+    internal int currentrailblockY;
+    internal int currentrailblockZ;
+    internal float currentrailblockprogress;
+    internal VehicleDirection12 currentdirection;
+    internal VehicleDirection12 lastdirection;
+    internal float railheight;
+
+    internal Vector3Ref CurrentRailPos()
+    {
+        RailSlope slope = d_RailMapUtil.GetRailSlope(currentrailblockX,
+            currentrailblockY, currentrailblockZ);
+        float aX = currentrailblockX;
+        float aY = currentrailblockY;
+        float aZ = currentrailblockZ;
+        float x_correction = 0;
+        float y_correction = 0;
+        float z_correction = 0;
+        float half = one / 2;
+        switch (currentdirection)
+        {
+            case VehicleDirection12.HorizontalRight:
+                x_correction += currentrailblockprogress;
+                y_correction += half;
+                if (slope == RailSlope.TwoRightRaised)
+                    z_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoLeftRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                break;
+            case VehicleDirection12.HorizontalLeft:
+                x_correction += 1 - currentrailblockprogress;
+                y_correction += half;
+                if (slope == RailSlope.TwoRightRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoLeftRaised)
+                    z_correction += currentrailblockprogress;
+                break;
+            case VehicleDirection12.VerticalDown:
+                x_correction += half;
+                y_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoDownRaised)
+                    z_correction += currentrailblockprogress;
+                if (slope == RailSlope.TwoUpRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                break;
+            case VehicleDirection12.VerticalUp:
+                x_correction += half;
+                y_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoDownRaised)
+                    z_correction += 1 - currentrailblockprogress;
+                if (slope == RailSlope.TwoUpRaised)
+                    z_correction += currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpLeftLeft:
+                x_correction += half * (1 - currentrailblockprogress);
+                y_correction += half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpLeftUp:
+                x_correction += half * currentrailblockprogress;
+                y_correction += half - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpRightRight:
+                x_correction += half + half * currentrailblockprogress;
+                y_correction += half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.UpRightUp:
+                x_correction += 1 - half * currentrailblockprogress;
+                y_correction += half - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownLeftLeft:
+                x_correction += half * (1 - currentrailblockprogress);
+                y_correction += 1 - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownLeftDown:
+                x_correction += half * currentrailblockprogress;
+                y_correction += half + half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownRightRight:
+                x_correction += half + half * currentrailblockprogress;
+                y_correction += 1 - half * currentrailblockprogress;
+                break;
+            case VehicleDirection12.DownRightDown:
+                x_correction += 1 - half * currentrailblockprogress;
+                y_correction += half + half * currentrailblockprogress;
+                break;
+        }
+        //+1 because player can't be inside rail block (picking wouldn't work)
+        return Vector3Ref.Create(aX + x_correction, aZ + railheight + 1 + z_correction, aY + y_correction);
+    }
+
+    internal bool railriding;
+    int lastrailsoundtimeMilliseconds;
+    int lastrailsound;
+    internal void RailSound()
+    {
+        float railsoundpersecond = currentvehiclespeed;
+        if (railsoundpersecond > 10)
+        {
+            railsoundpersecond = 10;
+        }
+        AudioPlayLoop("railnoise.wav", railriding && railsoundpersecond > (one * 1 / 10), false);
+        if (!railriding)
+        {
+            return;
+        }
+        if ((platform.TimeMillisecondsFromStart() - lastrailsoundtimeMilliseconds) > 1000 / railsoundpersecond)
+        {
+            AudioPlay(platform.StringFormat("rail{0}.wav", platform.IntToString(lastrailsound + 1)));
+            lastrailsoundtimeMilliseconds = platform.TimeMillisecondsFromStart();
+            lastrailsound++;
+            if (lastrailsound >= 4)
+            {
+                lastrailsound = 0;
+            }
+        }
+    }
+
+    internal VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
+    {
+        retFound.value = true;
+        if (turnright)
+        {
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0)
+            {
+                return VehicleDirection12.DownRightRight;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0)
+            {
+                return VehicleDirection12.UpRightUp;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0)
+            {
+                return VehicleDirection12.UpLeftLeft;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0)
+            {
+                return VehicleDirection12.DownLeftDown;
+            }
+        }
+        if (turnleft)
+        {
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0)
+            {
+                return VehicleDirection12.DownRightDown;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0)
+            {
+                return VehicleDirection12.UpRightRight;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0)
+            {
+                return VehicleDirection12.UpLeftUp;
+            }
+            if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0)
+            {
+                return VehicleDirection12.DownLeftLeft;
+            }
+        }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftDown) != 0) { return VehicleDirection12.DownLeftDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownLeftLeft) != 0) { return VehicleDirection12.DownLeftLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightDown) != 0) { return VehicleDirection12.DownRightDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.DownRightRight) != 0) { return VehicleDirection12.DownRightRight; }
+
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalLeft) != 0) { return VehicleDirection12.HorizontalLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.HorizontalRight) != 0) { return VehicleDirection12.HorizontalRight; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftLeft) != 0) { return VehicleDirection12.UpLeftLeft; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpLeftUp) != 0) { return VehicleDirection12.UpLeftUp; }
+
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightRight) != 0) { return VehicleDirection12.UpRightRight; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.UpRightUp) != 0) { return VehicleDirection12.UpRightUp; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalDown) != 0) { return VehicleDirection12.VerticalDown; }
+        if ((dirVehicleDirection12Flags & VehicleDirection12Flags.VerticalUp) != 0) { return VehicleDirection12.VerticalUp; }
+
+        retFound.value = false;
+        return VehicleDirection12.DownLeftDown; // return null
+    }
+
+    internal bool enable_move;
+
+    internal float originalmodelheight;
+    internal void ExitVehicle()
+    {
+        SetCharacterEyesHeight(originalmodelheight);
+        railriding = false;
+        ENABLE_FREEMOVE = false;
+        enable_move = true;
+    }
+
+    internal void Reverse()
+    {
+        currentdirection = DirectionUtils.Reverse(currentdirection);
+        currentrailblockprogress = 1 - currentrailblockprogress;
+        lastdirection = currentdirection;
+        //currentvehiclespeed = 0;
+    }
+
+    public static Vector3IntRef NextTile(VehicleDirection12 direction, int currentTileX, int currentTileY, int currentTileZ)
+    {
+        return NextTile_(DirectionUtils.ResultExit(direction), currentTileX, currentTileY, currentTileZ);
+    }
+
+    public static Vector3IntRef NextTile_(TileExitDirection direction, int currentTileX, int currentTileY, int currentTileZ)
+    {
+        switch (direction)
+        {
+            case TileExitDirection.Left:
+                return Vector3IntRef.Create(currentTileX - 1, currentTileY, currentTileZ);
+            case TileExitDirection.Right:
+                return Vector3IntRef.Create(currentTileX + 1, currentTileY, currentTileZ);
+            case TileExitDirection.Up:
+                return Vector3IntRef.Create(currentTileX, currentTileY - 1, currentTileZ);
+            case TileExitDirection.Down:
+                return Vector3IntRef.Create(currentTileX, currentTileY + 1, currentTileZ);
+            default:
+                return null;
+        }
+    }
+
+    internal int PossibleRails(TileEnterData enter)
+    {
+        int possible_railsVehicleDirection12Flags = 0;
+        if (IsValidPos(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ))
+        {
+            int newpositionrail = d_Data.Rail()[
+                GetBlock(enter.BlockPositionX, enter.BlockPositionY, enter.BlockPositionZ)];
+            VehicleDirection12[] all_possible_rails = new VehicleDirection12[3];
+            int all_possible_railsCount = 0;
+            VehicleDirection12[] possibleRails3 = DirectionUtils.PossibleNewRails3(enter.EnterDirection);
+            for (int i = 0; i < 3; i++)
+            {
+                VehicleDirection12 z = possibleRails3[i];
+                if ((newpositionrail & DirectionUtils.ToRailDirectionFlags(DirectionUtils.ToRailDirection(z)))
+                    != 0)
+                {
+                    all_possible_rails[all_possible_railsCount++] = z;
+                }
+            }
+            possible_railsVehicleDirection12Flags = DirectionUtils.ToVehicleDirection12Flags_(all_possible_rails, all_possible_railsCount);
+        }
+        return possible_railsVehicleDirection12Flags;
+    }
+
+    Entity localMinecart;
+
+    internal void RailOnNewFrame(float dt)
+    {
+        if (localMinecart == null)
+        {
+            localMinecart = new Entity();
+            localMinecart.minecart = new Minecart();
+            EntityAddLocal(localMinecart);
+        }
+        localMinecart.minecart.enabled = railriding;
+        if (railriding)
+        {
+            Minecart m = localMinecart.minecart;
+            m.positionX = player.playerposition.X;
+            m.positionY = player.playerposition.Y;
+            m.positionZ = player.playerposition.Z;
+            m.direction = currentdirection;
+            m.lastdirection = lastdirection;
+            m.progress = currentrailblockprogress;
+        }
+
+        localplayeranimationhint.InVehicle = railriding;
+        localplayeranimationhint.DrawFixX = 0;
+        localplayeranimationhint.DrawFixY = railriding ? (-one * 7 / 10) : 0;
+        localplayeranimationhint.DrawFixZ = 0;
+
+        bool turnright = keyboardState[GetKey(GlKeys.D)];
+        bool turnleft = keyboardState[GetKey(GlKeys.A)];
+        RailSound();
+        if (railriding)
+        {
+            ENABLE_FREEMOVE = true;
+            enable_move = false;
+            Vector3Ref railPos = CurrentRailPos();
+            player.playerposition.X = railPos.X;
+            player.playerposition.Y = railPos.Y;
+            player.playerposition.Z = railPos.Z;
+            currentrailblockprogress += currentvehiclespeed * dt;
+            if (currentrailblockprogress >= 1)
+            {
+                lastdirection = currentdirection;
+                currentrailblockprogress = 0;
+                TileEnterData newenter = new TileEnterData();
+                Vector3IntRef nexttile = Game.NextTile(currentdirection, currentrailblockX, currentrailblockY, currentrailblockZ);
+                newenter.BlockPositionX = nexttile.X;
+                newenter.BlockPositionY = nexttile.Y;
+                newenter.BlockPositionZ = nexttile.Z;
+                //slope
+                if (GetUpDownMove(currentrailblockX, currentrailblockY, currentrailblockZ,
+                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Up)
+                {
+                    newenter.BlockPositionZ++;
+                }
+                if (GetUpDownMove(newenter.BlockPositionX,
+                    newenter.BlockPositionY,
+                    newenter.BlockPositionZ - 1,
+                    DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection))) == UpDown.Down)
+                {
+                    newenter.BlockPositionZ--;
+                }
+
+                newenter.EnterDirection = DirectionUtils.ResultEnter(DirectionUtils.ResultExit(currentdirection));
+                BoolRef newdirFound = new BoolRef();
+                VehicleDirection12 newdir = BestNewDirection(PossibleRails(newenter), turnleft, turnright, newdirFound);
+                if (!newdirFound.value)
+                {
+                    //end of rail
+                    currentdirection = DirectionUtils.Reverse(currentdirection);
+                }
+                else
+                {
+                    currentdirection = newdir;
+                    currentrailblockX = platform.FloatToInt(newenter.BlockPositionX);
+                    currentrailblockY = platform.FloatToInt(newenter.BlockPositionY);
+                    currentrailblockZ = platform.FloatToInt(newenter.BlockPositionZ);
+                }
+            }
+        }
+        if (keyboardState[GetKey(GlKeys.W)] && GuiTyping != TypingState.Typing)
+        {
+            currentvehiclespeed += 1 * dt;
+        }
+        if (keyboardState[GetKey(GlKeys.S)] && GuiTyping != TypingState.Typing)
+        {
+            currentvehiclespeed -= 5 * dt;
+        }
+        if (currentvehiclespeed < 0)
+        {
+            currentvehiclespeed = 0;
+        }
+        //todo fix
+        //if (viewport.keypressed != null && viewport.keypressed.Key == GlKeys.Q)            
+        if (!wasqpressed && keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing)
+        {
+            Reverse();
+        }
+        if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && !railriding && !ENABLE_FREEMOVE && GuiTyping != TypingState.Typing)
+        {
+            currentrailblockX = platform.FloatToInt(player.playerposition.X);
+            currentrailblockY = platform.FloatToInt(player.playerposition.Z);
+            currentrailblockZ = platform.FloatToInt(player.playerposition.Y) - 1;
+            if (!IsValidPos(currentrailblockX, currentrailblockY, currentrailblockZ))
+            {
+                ExitVehicle();
+            }
+            else
+            {
+                int railunderplayer = d_Data.Rail()[this.GetBlock(currentrailblockX, currentrailblockY, currentrailblockZ)];
+                railriding = true;
+                originalmodelheight = GetCharacterEyesHeight();
+                SetCharacterEyesHeight(minecartheight());
+                currentvehiclespeed = 0;
+                if ((railunderplayer & RailDirectionFlags.Horizontal) != 0)
+                {
+                    currentdirection = VehicleDirection12.HorizontalRight;
+                }
+                else if ((railunderplayer & RailDirectionFlags.Vertical) != 0)
+                {
+                    currentdirection = VehicleDirection12.VerticalUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpLeft) != 0)
+                {
+                    currentdirection = VehicleDirection12.UpLeftUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.UpRight) != 0)
+                {
+                    currentdirection = VehicleDirection12.UpRightUp;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownLeft) != 0)
+                {
+                    currentdirection = VehicleDirection12.DownLeftLeft;
+                }
+                else if ((railunderplayer & RailDirectionFlags.DownRight) != 0)
+                {
+                    currentdirection = VehicleDirection12.DownRightRight;
+                }
+                else
+                {
+                    ExitVehicle();
+                }
+                lastdirection = currentdirection;
+            }
+        }
+        else if (!wasepressed && keyboardState[GetKey(GlKeys.E)] && railriding && GuiTyping != TypingState.Typing)
+        {
+            ExitVehicle();
+            player.playerposition.Y += one * 7 / 10;
+        }
+        wasqpressed = keyboardState[GetKey(GlKeys.Q)] && GuiTyping != TypingState.Typing;
+        wasepressed = keyboardState[GetKey(GlKeys.E)] && GuiTyping != TypingState.Typing;
+    }
+    float minecartheight() { return one / 2; }
+    bool wasqpressed;
+    bool wasepressed;
+
+    internal MinecartRenderer d_MinecartRenderer;
+    internal void DrawMinecarts(float dt)
+    {
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            if (entities[i] == null) { continue; }
+            if (entities[i].minecart == null) { continue; }
+            Minecart m = entities[i].minecart;
+            if (!m.enabled) { continue; }
+            d_MinecartRenderer.Draw(m.positionX, m.positionY, m.positionZ, m.direction, m.lastdirection, m.progress);
+        }
+    }
+    public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
+    internal void KeyDown(int eKey, BoolRef keyHandled)
+    {
+        keyboardState[eKey] = true;
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            KeyEventArgs args_ = new KeyEventArgs();
+            args_.SetKeyCode(eKey);
+            clientmods[i].OnKeyDown(args_);
+        }
+        InvalidVersionAllow();
+        if (eKey == GetKey(GlKeys.F6))
+        {
+            float lagSeconds = one * (platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
+            if ((lagSeconds >= DISCONNECTED_ICON_AFTER_SECONDS) || guistate == GuiState.MapLoading)
+            {
+                Reconnect();
+            }
+        }
+        if (eKey == GetKey(GlKeys.ShiftLeft) || eKey == GetKey(GlKeys.ShiftRight))
+        {
+            IsShiftPressed = true;
+        }
+        if (guistate == GuiState.Normal)
+        {
+            if (keyboardState[GetKey(GlKeys.Escape)])
+            {
+                for (int i = 0; i < dialogsCount; i++)
+                {
+                    if (dialogs[i] == null)
+                    {
+                        continue;
+                    }
+                    VisibleDialog d = dialogs[i];
+                    if (d.value.IsModal != 0)
+                    {
+                        dialogs[i] = null;
+                        return;
+                    }
+                }
+                guistate = GuiState.EscapeMenu;
+                menustate = new MenuState();
+                SetFreeMouse(true);
+                keyHandled.value = true;
+                return;
+            }
+            if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
+            {
+                GuiTyping = TypingState.Typing;
+                d_HudChat.IsTyping = true;
+                d_HudChat.GuiTypingBuffer = "";
+                d_HudChat.IsTeamchat = false;
+                return;
+            }
+            if (eKey == GetKey(GlKeys.PageUp) && GuiTyping == TypingState.Typing)
+            {
+                d_HudChat.ChatPageScroll++;
+            }
+            if (eKey == GetKey(GlKeys.PageDown) && GuiTyping == TypingState.Typing)
+            {
+                d_HudChat.ChatPageScroll--;
+            }
+            d_HudChat.ChatPageScroll = Game.ClampInt(d_HudChat.ChatPageScroll, 0, d_HudChat.ChatLinesCount / d_HudChat.ChatLinesMaxToDraw);
+            if (eKey == GetKey(GlKeys.Enter) || eKey == GetKey(GlKeys.KeypadEnter))
+            {
+                if (GuiTyping == TypingState.Typing)
+                {
+                    typinglog[typinglogCount++] = d_HudChat.GuiTypingBuffer;
+                    typinglogpos = typinglogCount;
+                    ClientCommand(d_HudChat.GuiTypingBuffer);
+
+                    d_HudChat.GuiTypingBuffer = "";
+                    d_HudChat.IsTyping = false;
+
+                    GuiTyping = TypingState.None;
+                }
+                else if (GuiTyping == TypingState.None)
+                {
+                    GuiTyping = TypingState.Typing;
+                    d_HudChat.IsTyping = true;
+                    d_HudChat.GuiTypingBuffer = "";
+                    d_HudChat.IsTeamchat = false;
+                }
+                else if (GuiTyping == TypingState.Ready)
+                {
+                    platform.ConsoleWriteLine("Keyboard_KeyDown ready");
+                }
+                return;
+            }
+            if (GuiTyping == TypingState.Typing)
+            {
+                int key = eKey;
+                if (key == GetKey(GlKeys.BackSpace))
+                {
+                    if (StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer) > 0)
+                    {
+                        d_HudChat.GuiTypingBuffer = StringTools.StringSubstring(platform, d_HudChat.GuiTypingBuffer, 0, StringTools.StringLength(platform, d_HudChat.GuiTypingBuffer) - 1);
+                    }
+                    return;
+                }
+                if (keyboardState[GetKey(GlKeys.ControlLeft)] || keyboardState[GetKey(GlKeys.ControlRight)])
+                {
+                    if (key == GetKey(GlKeys.V))
+                    {
+                        if (platform.ClipboardContainsText())
+                        {
+                            d_HudChat.GuiTypingBuffer = StringTools.StringAppend(platform, d_HudChat.GuiTypingBuffer, platform.ClipboardGetText());
+                        }
+                        return;
+                    }
+                }
+                if (key == GetKey(GlKeys.Up))
+                {
+                    typinglogpos--;
+                    if (typinglogpos < 0) { typinglogpos = 0; }
+                    if (typinglogpos >= 0 && typinglogpos < typinglogCount)
+                    {
+                        d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
+                    }
+                }
+                if (key == GetKey(GlKeys.Down))
+                {
+                    typinglogpos++;
+                    if (typinglogpos > typinglogCount) { typinglogpos = typinglogCount; }
+                    if (typinglogpos >= 0 && typinglogpos < typinglogCount)
+                    {
+                        d_HudChat.GuiTypingBuffer = typinglog[typinglogpos];
+                    }
+                    if (typinglogpos == typinglogCount)
+                    {
+                        d_HudChat.GuiTypingBuffer = "";
+                    }
+                }
+                return;
+            }
+
+            string strFreemoveNotAllowed = "You are not allowed to enable freemove.";
+
+            if (eKey == GetKey(GlKeys.F1))
+            {
+                if (!this.AllowFreemove)
+                {
+                    Log(strFreemoveNotAllowed);
+                    return;
+                }
+                movespeed = basemovespeed * 1;
+                Log("Move speed: 1x.");
+            }
+            if (eKey == GetKey(GlKeys.F2))
+            {
+                if (!this.AllowFreemove)
+                {
+                    Log(strFreemoveNotAllowed);
+                    return;
+                }
+                movespeed = basemovespeed * 10;
+                Log(platform.StringFormat(language.MoveSpeed(), platform.IntToString(10)));
+            }
+            if (eKey == GetKey(GlKeys.F3))
+            {
+                if (!this.AllowFreemove)
+                {
+                    Log(strFreemoveNotAllowed);
+                    return;
+                }
+                player.movedz = 0;
+                if (!ENABLE_FREEMOVE)
+                {
+                    ENABLE_FREEMOVE = true;
+                    Log(language.MoveFree());
+                }
+                else if (ENABLE_FREEMOVE && (!ENABLE_NOCLIP))
+                {
+                    ENABLE_NOCLIP = true;
+                    Log(language.MoveFreeNoclip());
+                }
+                else if (ENABLE_FREEMOVE && ENABLE_NOCLIP)
+                {
+                    ENABLE_FREEMOVE = false;
+                    ENABLE_NOCLIP = false;
+                    Log(language.MoveNormal());
+                }
+            }
+            if (eKey == GetKey(GlKeys.I))
+            {
+                drawblockinfo = !drawblockinfo;
+            }
+            performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(platform.FloatToInt(player.playerposition.X), platform.FloatToInt(player.playerposition.Z)))));
+            if (eKey == GetKey(GlKeys.F5))
+            {
+                if (cameratype == CameraType.Fpp)
+                {
+                    cameratype = CameraType.Tpp;
+                    ENABLE_TPP_VIEW = true;
+                }
+                else if (cameratype == CameraType.Tpp)
+                {
+                    cameratype = CameraType.Overhead;
+                    overheadcamera = true;
+                    SetFreeMouse(true);
+                    ENABLE_TPP_VIEW = true;
+                    playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
+                }
+                else if (cameratype == CameraType.Overhead)
+                {
+                    cameratype = CameraType.Fpp;
+                    SetFreeMouse(false);
+                    ENABLE_TPP_VIEW = false;
+                    overheadcamera = false;
+                }
+                else
+                {
+                    platform.ThrowException("");
+                }
+            }
+            if (eKey == GetKey(GlKeys.Plus) || eKey == GetKey(GlKeys.KeypadPlus))
+            {
+                if (cameratype == CameraType.Overhead)
+                {
+                    overheadcameradistance -= 1;
+                }
+                else if (cameratype == CameraType.Tpp)
+                {
+                    tppcameradistance -= 1;
+                }
+            }
+            if (eKey == GetKey(GlKeys.Minus) || eKey == GetKey(GlKeys.KeypadMinus))
+            {
+                if (cameratype == CameraType.Overhead)
+                {
+                    overheadcameradistance += 1;
+                }
+                else if (cameratype == CameraType.Tpp)
+                {
+                    tppcameradistance += 1;
+                }
+            }
+            if (overheadcameradistance < TPP_CAMERA_DISTANCE_MIN) { overheadcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+            if (overheadcameradistance > TPP_CAMERA_DISTANCE_MAX) { overheadcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+
+            if (tppcameradistance < TPP_CAMERA_DISTANCE_MIN) { tppcameradistance = TPP_CAMERA_DISTANCE_MIN; }
+            if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+
+            if (eKey == GetKey(GlKeys.F6))
+            {
+                RedrawAllBlocks();
+            }
+            if (eKey == GlKeys.F8)
+            {
+                ToggleVsync();
+                if (ENABLE_LAG == 0) { Log(language.FrameRateVsync()); }
+                if (ENABLE_LAG == 1) { Log(language.FrameRateUnlimited()); }
+                if (ENABLE_LAG == 2) { Log(language.FrameRateLagSimulation()); }
+            }
+            if (eKey == GetKey(GlKeys.F12))
+            {
+                platform.SaveScreenshot();
+                screenshotflash = 5;
+            }
+            if (eKey == GetKey(GlKeys.Tab))
+            {
+                Packet_Client p = new Packet_Client();
+                p.Id = Packet_ClientIdEnum.SpecialKey;
+                p.SpecialKey_ = new Packet_ClientSpecialKey();
+                p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.TabPlayerList;
+                SendPacketClient(p);
+            }
+            if (eKey == GetKey(GlKeys.E))
+            {
+                if (currentAttackedBlock != null)
+                {
+                    int posX = currentAttackedBlock.X;
+                    int posY = currentAttackedBlock.Y;
+                    int posZ = currentAttackedBlock.Z;
+                    int blocktype = GetBlock(currentAttackedBlock.X, currentAttackedBlock.Y, currentAttackedBlock.Z);
+                    if (IsUsableBlock(blocktype))
+                    {
+                        if (d_Data.IsRailTile(blocktype))
+                        {
+                            player.playerposition.X = posX + (one / 2);
+                            player.playerposition.Y = posZ + 1;
+                            player.playerposition.Z = posY + (one / 2);
+                            ENABLE_FREEMOVE = false;
+                        }
+                        else
+                        {
+                            SendSetBlock(posX, posY, posZ, Packet_BlockSetModeEnum.Use, 0, ActiveMaterial);
+                        }
+                    }
+                }
+            }
+            if (eKey == GetKey(GlKeys.R))
+            {
+                Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+                if (item != null && item.ItemClass == Packet_ItemClassEnum.Block
+                    && blocktypes[item.BlockId].IsPistol
+                    && reloadstartMilliseconds == 0)
+                {
+                    int sound = rnd.Next() % blocktypes[item.BlockId].Sounds.ReloadCount;
+                    AudioPlay(StringTools.StringAppend(platform, blocktypes[item.BlockId].Sounds.Reload[sound], ".ogg"));
+                    reloadstartMilliseconds = platform.TimeMillisecondsFromStart();
+                    reloadblock = item.BlockId;
+                    Packet_Client p = new Packet_Client();
+                    p.Id = Packet_ClientIdEnum.Reload;
+                    p.Reload = new Packet_ClientReload();
+                    SendPacketClient(p);
+                }
+            }
+            if (eKey == GetKey(GlKeys.O))
+            {
+                Respawn();
+            }
+            if (eKey == GetKey(GlKeys.L))
+            {
+                Packet_Client p = new Packet_Client();
+                {
+                    p.Id = Packet_ClientIdEnum.SpecialKey;
+                    p.SpecialKey_ = new Packet_ClientSpecialKey();
+                    p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SelectTeam;
+                }
+                SendPacketClient(p);
+            }
+            if (eKey == GetKey(GlKeys.P))
+            {
+                Packet_Client p = new Packet_Client();
+                {
+                    p.Id = Packet_ClientIdEnum.SpecialKey;
+                    p.SpecialKey_ = new Packet_ClientSpecialKey();
+                    p.SpecialKey_.Key_ = Packet_SpecialKeyEnum.SetSpawn;
+                }
+                SendPacketClient(p);
+
+                playerPositionSpawnX = player.playerposition.X;
+                playerPositionSpawnY = player.playerposition.Y;
+                playerPositionSpawnZ = player.playerposition.Z;
+
+                player.playerposition.X = platform.FloatToInt(player.playerposition.X) + one / 2;
+                //player.playerposition.Y = player.playerposition.Y;
+                player.playerposition.Z = platform.FloatToInt(player.playerposition.Z) + one / 2;
+            }
+            if (eKey == GetKey(GlKeys.F))
+            {
+                ToggleFog();
+                Log(platform.StringFormat(language.FogDistance(), platform.IntToString(platform.FloatToInt(d_Config3d.viewdistance))));
+                OnResize();
+            }
+            if (eKey == GetKey(GlKeys.B))
+            {
+                guistate = GuiState.Inventory;
+                menustate = new MenuState();
+                SetFreeMouse(true);
+                return;
+            }
+            HandleMaterialKeys(eKey);
+        }
+        if (guistate == GuiState.Inventory)
+        {
+            if (eKey == GetKey(GlKeys.B)
+                || eKey == GetKey(GlKeys.Escape))
+            {
+                GuiStateBackToGame();
+            }
+            if (eKey == GetKey(GlKeys.F12))
+            {
+                platform.SaveScreenshot();
+                screenshotflash = 5;
+            }
+            return;
+        }
+        if (guistate == GuiState.ModalDialog)
+        {
+            if (eKey == GetKey(GlKeys.B)
+                || eKey == GetKey(GlKeys.Escape))
+            {
+                GuiStateBackToGame();
+            }
+            if (eKey == GetKey(GlKeys.F12))
+            {
+                platform.SaveScreenshot();
+                screenshotflash = 5;
+            }
+        }
+        if (guistate == GuiState.MapLoading)
+        {
+        }
+        if (guistate == GuiState.CraftingRecipes)
+        {
+            if (eKey == GetKey(GlKeys.Escape))
+            {
+                GuiStateBackToGame();
+            }
+        }
+    }
+    internal bool drawblockinfo;
+
+    internal void UpdateTitleFps(float dt)
+    {
+        float elapsed = one * (platform.TimeMillisecondsFromStart() - lasttitleupdateMilliseconds) / 1000;
+        if (elapsed >= 1)
+        {
+            lasttitleupdateMilliseconds = platform.TimeMillisecondsFromStart();
+            int chunkupdates = terrainRenderer.ChunkUpdates();
+            performanceinfo.Set("chunk updates", platform.StringFormat(language.ChunkUpdates(), platform.IntToString(chunkupdates - lastchunkupdates)));
+            lastchunkupdates = terrainRenderer.ChunkUpdates();
+            performanceinfo.Set("triangles", platform.StringFormat(language.Triangles(), platform.IntToString(terrainRenderer.TrianglesCount())));
+        }
+        if (!titleset)
+        {
+            platform.SetTitle(language.GameName());
+            titleset = true;
+        }
+    }
+    bool titleset;
+
+    internal void Draw2d()
+    {
+        OrthoMode(Width(), Height());
+        switch (guistate)
+        {
+            case GuiState.Normal:
+                {
+                    if (!ENABLE_DRAW2D)
+                    {
+                        if (GuiTyping == TypingState.Typing)
+                        {
+                            d_HudChat.DrawChatLines(true);
+                            d_HudChat.DrawTypingBuffer();
+                        }
+                        PerspectiveMode();
+                        return;
+                    }
+                    if (cameratype != CameraType.Overhead)
+                    {
+                        DrawAim();
+                    }
+                    d_HudInventory.DrawMaterialSelector();
+                    DrawPlayerHealth();
+                    DrawPlayerOxygen();
+                    DrawEnemyHealthBlock();
+                    DrawCompass();
+                    d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
+                    if (GuiTyping == TypingState.Typing)
+                    {
+                        d_HudChat.DrawTypingBuffer();
+                    }
+                    DrawAmmo();
+                    DrawDialogs();
+                }
+                break;
+            case GuiState.Inventory:
+                {
+                    DrawDialogs();
+                    //d_The3d.ResizeGraphics(Width, Height);
+                    //d_The3d.OrthoMode(d_HudInventory.ConstWidth, d_HudInventory.ConstHeight);
+                    d_HudInventory.Draw();
+                    //d_The3d.PerspectiveMode();
+                }
+                break;
+            case GuiState.MapLoading:
+                {
+                    MapLoadingDraw();
+                }
+                break;
+            case GuiState.ModalDialog:
+                {
+                    DrawDialogs();
+                }
+                break;
+        }
+        
+        //d_The3d.OrthoMode(Width, Height);
+        if (ENABLE_DRAWPOSITION)
+        {
+            float heading = one * HeadingByte(player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
+            float pitch = one * PitchByte(player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
+            string postext = platform.StringFormat("X: {0}", platform.IntToString(MathFloor(player.playerposition.X)));
+            postext = StringTools.StringAppend(platform, postext, ",\tY: ");
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Z)));
+            postext = StringTools.StringAppend(platform, postext,  ",\tZ: ");
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Y)));
+            postext = StringTools.StringAppend(platform, postext, "\nHeading: ");
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(heading)));
+            postext = StringTools.StringAppend(platform, postext, "\nPitch: ");
+            postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(pitch)));
+            FontCi font = new FontCi();
+            font.family = "Arial";
+            font.size = d_HudChat.ChatFontSize;
+            Draw2dText(postext, font, 100, 460, null, false);
+        }
+        if (drawblockinfo)
+        {
+            DrawBlockInfo();
+        }
+        if (GetFreeMouse())
+        {
+            DrawMouseCursor();
+        }
+        if (screenshotflash > 0)
+        {
+            DrawScreenshotFlash();
+            screenshotflash--;
+        }
+        float lagSeconds = one * (platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
+        if ((lagSeconds >= Game.DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
+            && invalidVersionDrawMessage == null)
+        {
+            Draw2dBitmapFile("disconnected.png", Width() - 100, 50, 50, 50);
+            FontCi font = new FontCi();
+            font.family = "Arial";
+            font.size = 12;
+            Draw2dText(platform.IntToString(platform.FloatToInt(lagSeconds)), font, Width() - 100, 50 + 50 + 10, null, false);
+            Draw2dText("Press F6 to reconnect", font, Width() / 2 - 200 / 2, 50, null, false);
+        }
+    }
+
+    internal void FrameTick(float dt)
+    {
+        //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
+        //UpdateTerrain();
+        OnNewFrame(dt);
+        RailOnNewFrame(dt);
+        if (guistate == GuiState.Normal && enableCameraControl)
+        {
+            UpdateMouseViewportControl(dt);
+        }
+        NetworkProcess();
+
+        if (guistate == GuiState.MapLoading) { return; }
+
+        SetPlayers();
+        bool angleup = false;
+        bool angledown = false;
+        float overheadcameraanglemovearea = one * 5 / 100;
+        float overheadcameraspeed = 3;
+        if (guistate == GuiState.Normal && platform.Focused() && cameratype == CameraType.Overhead)
+        {
+            if (mouseCurrentX > Width() - Width() * overheadcameraanglemovearea)
+            {
+                overheadcameraK.TurnLeft(dt * overheadcameraspeed);
+            }
+            if (mouseCurrentX < Width() * overheadcameraanglemovearea)
+            {
+                overheadcameraK.TurnRight(dt * overheadcameraspeed);
+            }
+            if (mouseCurrentY < Height() * overheadcameraanglemovearea)
+            {
+                angledown = true;
+            }
+            if (mouseCurrentY > Height() - Height() * overheadcameraanglemovearea)
+            {
+                angleup = true;
+            }
+        }
+        bool wantsjump = GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)];
+        bool shiftkeydown = keyboardState[GetKey(GlKeys.ShiftLeft)];
+        int movedx = 0;
+        int movedy = 0;
+        bool moveup = false;
+        bool movedown = false;
+        if (guistate == GuiState.Normal)
+        {
+            if (GuiTyping == TypingState.None)
+            {
+                if (overheadcamera)
+                {
+                    CameraMove m = new CameraMove();
+                    if (keyboardState[GetKey(GlKeys.A)]) { overheadcameraK.TurnRight(dt * overheadcameraspeed); }
+                    if (keyboardState[GetKey(GlKeys.D)]) { overheadcameraK.TurnLeft(dt * overheadcameraspeed); }
+                    if (keyboardState[GetKey(GlKeys.W)]) { angleup = true; }
+                    if (keyboardState[GetKey(GlKeys.S)]) { angledown = true; }
+                    overheadcameraK.Center.X = player.playerposition.X;
+                    overheadcameraK.Center.Y = player.playerposition.Y;
+                    overheadcameraK.Center.Z = player.playerposition.Z;
+                    m.Distance = overheadcameradistance;
+                    m.AngleUp = angleup;
+                    m.AngleDown = angledown;
+                    overheadcameraK.Move(m, dt);
+                    float toDest = Dist(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
+                        playerdestination.X, playerdestination.Y, playerdestination.Z);
+                    if (toDest >= 1)
+                    {
+                        movedy += 1;
+                        if (d_Physics.reachedwall)
+                        {
+                            wantsjump = true;
+                        }
+                        //player orientation
+                        float qX = playerdestination.X - player.playerposition.X;
+                        float qY = playerdestination.Y - player.playerposition.Y;
+                        float qZ = playerdestination.Z - player.playerposition.Z;
+                        float angle = VectorAngleGet(qX, qY, qZ);
+                        player.playerorientation.Y = Game.GetPi() / 2 + angle;
+                        player.playerorientation.X = Game.GetPi();
+                    }
+                }
+                else if (enable_move)
+                {
+                    if (keyboardState[GetKey(GlKeys.W)]) { movedy += 1; }
+                    if (keyboardState[GetKey(GlKeys.S)]) { movedy += -1; }
+                    if (keyboardState[GetKey(GlKeys.A)]) { movedx += -1; localplayeranimationhint.leanleft = true; localstance = 1; }
+                    else { localplayeranimationhint.leanleft = false; }
+                    if (keyboardState[GetKey(GlKeys.D)]) { movedx += 1; localplayeranimationhint.leanright = true; localstance = 2; }
+                    else { localplayeranimationhint.leanright = false; }
+                    if (!localplayeranimationhint.leanleft && !localplayeranimationhint.leanright) { localstance = 0; }
+                }
+            }
+            if (ENABLE_FREEMOVE || Swimming())
+            {
+                if (GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)])
+                {
+                    moveup = true;
+                }
+                if (GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.ControlLeft)])
+                {
+                    movedown = true;
+                }
+            }
+        }
+        if (guistate == GuiState.EscapeMenu)
+        {
+        }
+        else if (guistate == GuiState.Inventory)
+        {
+        }
+        else if (guistate == GuiState.MapLoading)
+        {
+            //todo back to game when escape key pressed.
+        }
+        else if (guistate == GuiState.CraftingRecipes)
+        {
+        }
+        else if (guistate == GuiState.ModalDialog)
+        {
+        }
+        float movespeednow = MoveSpeedNow();
+        Acceleration acceleration = new Acceleration();
+        IntRef blockunderplayer = BlockUnderPlayer();
+        {
+            //slippery walk on ice and when swimming
+            if ((blockunderplayer != null && d_Data.IsSlipperyWalk()[blockunderplayer.value]) || Swimming())
+            {
+                acceleration = new Acceleration();
+                {
+                    acceleration.acceleration1 = one * 99 / 100;
+                    acceleration.acceleration2 = one * 2 / 10;
+                    acceleration.acceleration3 = 70;
+                }
+            }
+        }
+        float jumpstartacceleration = (13 + one * 333 / 1000) * d_Physics.gravity;
+        if (blockunderplayer != null && blockunderplayer.value == d_Data.BlockIdTrampoline()
+            && (!player.isplayeronground) && !shiftkeydown)
+        {
+            wantsjump = true;
+            jumpstartacceleration = (20 + one * 666 / 1000) * d_Physics.gravity;
+        }
+        //no aircontrol
+        if (!player.isplayeronground)
+        {
+            acceleration = new Acceleration();
+            {
+                acceleration.acceleration1 = one * 99 / 100;
+                acceleration.acceleration2 = one * 2 / 10;
+                acceleration.acceleration3 = 70;
+            }
+        }
+        float pushX = 0;
+        float pushY = 0;
+        float pushZ = 0;
+        Vector3Ref push = new Vector3Ref();
+        GetEntitiesPush(push);
+        pushX += push.X;
+        pushY += push.Y;
+        pushZ += push.Z;
+        EntityExpire(dt);
+        MoveInfo move = new MoveInfo();
+        {
+            move.movedx = movedx;
+            move.movedy = movedy;
+            move.acceleration = acceleration;
+            move.ENABLE_FREEMOVE = ENABLE_FREEMOVE;
+            move.ENABLE_NOCLIP = ENABLE_NOCLIP;
+            move.jumpstartacceleration = jumpstartacceleration;
+            move.movespeednow = movespeednow;
+            move.moveup = moveup;
+            move.movedown = movedown;
+            move.Swimming = Swimming();
+            move.wantsjump = wantsjump;
+            move.shiftkeydown = shiftkeydown;
+        }
+        BoolRef soundnow = new BoolRef();
+        if (FollowId() == null)
+        {
+            d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
+            if (soundnow.value)
+            {
+                UpdateWalkSound(-1);
+            }
+            if (player.isplayeronground && movedx != 0 || movedy != 0)
+            {
+                UpdateWalkSound(dt);
+            }
+            UpdateBlockDamageToPlayer(dt);
+            UpdateFallDamageToPlayer();
+        }
+        else
+        {
+            if (FollowId().value == LocalPlayerId)
+            {
+                move.movedx = 0;
+                move.movedy = 0;
+                move.wantsjump = false;
+                d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
+            }
+        }
+        if (guistate == GuiState.EscapeMenu)
+        {
+            //EscapeMenuMouse();
+        }
+
+        float orientationX = platform.MathSin(player.playerorientation.Y);
+        float orientationY = 0;
+        float orientationZ = -platform.MathCos(player.playerorientation.Y);
+        platform.AudioUpdateListener(EyesPosX(), EyesPosY(), EyesPosZ(), orientationX, orientationY, orientationZ);
+
+        Packet_Item activeitem = d_Inventory.RightHand[ActiveMaterial];
+        int activeblock = 0;
+        if (activeitem != null) { activeblock = activeitem.BlockId; }
+        if (activeblock != PreviousActiveMaterialBlock)
+        {
+            Packet_Client p = new Packet_Client();
+            {
+                p.Id = Packet_ClientIdEnum.ActiveMaterialSlot;
+                p.ActiveMaterialSlot = new Packet_ClientActiveMaterialSlot();
+                p.ActiveMaterialSlot.ActiveMaterialSlot = ActiveMaterial;
+            }
+            SendPacketClient(p);
+        }
+        PreviousActiveMaterialBlock = activeblock;
+        playervelocity.X = player.playerposition.X - lastplayerpositionX;
+        playervelocity.Y = player.playerposition.Y - lastplayerpositionY;
+        playervelocity.Z = player.playerposition.Z - lastplayerpositionZ;
+        playervelocity.X *= 75;
+        playervelocity.Y *= 75;
+        playervelocity.Z *= 75;
+        lastplayerpositionX = player.playerposition.X;
+        lastplayerpositionY = player.playerposition.Y;
+        lastplayerpositionZ = player.playerposition.Z;
+        if (reloadstartMilliseconds != 0
+            && (one * (platform.TimeMillisecondsFromStart() - reloadstartMilliseconds) / 1000)
+            > DeserializeFloat(blocktypes[reloadblock].ReloadDelayFloat))
+        {
+            {
+                int loaded = TotalAmmo[reloadblock];
+                loaded = Game.MinInt(blocktypes[reloadblock].AmmoMagazine, loaded);
+                LoadedAmmo[reloadblock] = loaded;
+                reloadstartMilliseconds = 0;
+                reloadblock = -1;
+            }
+        }
+        for (int i = 0; i < entitiesCount; i++)
+        {
+            Entity entity = entities[i];
+            if (entity == null) { continue; }
+            if (entity.grenade == null) { continue; }
+            UpdateGrenade(i, dt);
+        }
+    }
+
+    float lastplayerpositionX;
+    float lastplayerpositionY;
+    float lastplayerpositionZ;
+
+    internal void NextBullet(int bulletsshot)
+    {
+        bool left = mouseLeft;
+        bool middle = mouseMiddle;
+        bool right = mouseRight;
+
+        bool IsNextShot = bulletsshot != 0;
+
+        if (!leftpressedpicking)
+        {
+            if (mouseleftclick)
+            {
+                leftpressedpicking = true;
+            }
+            else
+            {
+                left = false;
+            }
+        }
+        else
+        {
+            if (mouseleftdeclick)
+            {
+                leftpressedpicking = false;
+                left = false;
+            }
+        }
+        if (!left)
+        {
+            currentAttackedBlock = null;
+        }
+
+        float pick_distance = PICK_DISTANCE;
+        if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
+        if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
+
+        Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+        bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
+        bool ispistolshoot = ispistol && left;
+        bool isgrenade = ispistol && blocktypes[item.BlockId].PistolType == Packet_PistolTypeEnum.Grenade;
+        if (ispistol && isgrenade)
+        {
+            ispistolshoot = mouseleftdeclick;
+        }
+        //grenade cooking
+        if (mouseleftclick)
+        {
+            grenadecookingstartMilliseconds = platform.TimeMillisecondsFromStart();
+            if (ispistol && isgrenade)
+            {
+                if (blocktypes[item.BlockId].Sounds.ShootCount > 0)
+                {
+                    AudioPlay(platform.StringFormat("{0}.ogg", blocktypes[item.BlockId].Sounds.Shoot[0]));
+                }
+            }
+        }
+        float wait = ((one * (platform.TimeMillisecondsFromStart() - grenadecookingstartMilliseconds)) / 1000);
+        if (isgrenade && left)
+        {
+            if (wait >= grenadetime && isgrenade && grenadecookingstartMilliseconds != 0)
+            {
+                ispistolshoot = true;
+                mouseleftdeclick = true;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            grenadecookingstartMilliseconds = 0;
+        }
+
+        if (ispistol && mouserightclick && (platform.TimeMillisecondsFromStart() - lastironsightschangeMilliseconds) >= 500)
+        {
+            IronSights = !IronSights;
+            lastironsightschangeMilliseconds = platform.TimeMillisecondsFromStart();
+        }
+
+        float unit_x = 0;
+        float unit_y = 0;
+        int NEAR = 1;
+        int FOV = platform.FloatToInt(currentfov() * 10); // 600
+        float ASPECT = one * 640 / 480;
+        float near_height = NEAR * one * (platform.MathTan(FOV * Game.GetPi() / 360));
+        float[] ray = new float[3];
+        ray[0] = unit_x * near_height * ASPECT;
+        ray[1] = unit_y * near_height;
+        ray[2] = 1; //, 0);
+
+        float[] ray_start_point = new float[3];
+        PointFloatRef aim = GetAim();
+        if (overheadcamera || aim.X != 0 || aim.Y != 0)
+        {
+            float mx = 0;
+            float my = 0;
+            if (overheadcamera)
+            {
+                mx = one * mouseCurrentX / Width() - (one / 2);
+                my = one * mouseCurrentY / Height() - (one / 2);
+            }
+            else if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
+            {
+                mx += aim.X / Width();
+                my += aim.Y / Height();
+            }
+            //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
+            ray_start_point[0] = mx * 3;
+            ray_start_point[1] = -my * (one * 22 / 10);
+            ray_start_point[2] = -1;
+        }
+
+        //Matrix4 the_modelview;
+        //Read the current modelview matrix into the array the_modelview
+        //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
+
+        float[] theModelView = mvMatrix.Peek();
+        //if (theModelView[0] == float.NaN || theModelView.Equals(new Matrix4())) { return; }
+        //Matrix4 theModelView = d_The3d.ModelViewMatrix;
+        Mat4.Invert(theModelView, theModelView);
+        //the_modelview = new Matrix4();
+        Vec3.TransformMat4(ray, ray, theModelView);
+        Vec3.TransformMat4(ray_start_point, ray_start_point, theModelView);
+        //ray_start_point = Vector3.Transform(ray_start_point, theModelView);
+        Line3D pick = new Line3D();
+        float raydirX = -(ray[0] - ray_start_point[0]);
+        float raydirY = -(ray[1] - ray_start_point[1]);
+        float raydirZ = -(ray[2] - ray_start_point[2]);
+        float raydirLength = Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength;
+        raydirY /= raydirLength;
+        raydirZ /= raydirLength;
+
+        pick.Start = new float[3];
+        pick.Start[0] = ray[0] + raydirX; //do not pick behind
+        pick.Start[1] = ray[1] + raydirY;
+        pick.Start[2] = ray[2] + raydirZ;
+
+        float pickDistance1 = pick_distance * ((ispistolshoot) ? 100 : 2);
+        pick.End = new float[3];
+        pick.End[0] = ray[0] + raydirX * pickDistance1;
+        pick.End[1] = ray[1] + raydirY * pickDistance1;
+        pick.End[2] = ray[2] + raydirZ * pickDistance1;
+
+        if (left)
+        {
+            d_Weapon.SetAttack(true, false);
+        }
+        else if (right)
+        {
+            d_Weapon.SetAttack(true, true);
+        }
+
+        //pick terrain
+        s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
+        IntRef pick2count = new IntRef();
+        BlockPosSide[] pick2 = s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick, pick2count);
+        PickSort(pick2, pick2count.value, ray_start_point[0], ray_start_point[1], ray_start_point[2]);
+
+        if (overheadcamera && pick2count.value > 0 && left)
+        {
+            //if not picked any object, and mouse button is pressed, then walk to destination.
+            playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2]);
+        }
+        bool pickdistanceok = pick2count.value > 0 &&
+            (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2],
+            player.playerposition.X, player.playerposition.Y, player.playerposition.Z)) <= pick_distance;
+        bool playertileempty = IsTileEmptyForPhysics(
+                    platform.FloatToInt(player.playerposition.X),
+                    platform.FloatToInt(player.playerposition.Z),
+                    platform.FloatToInt(player.playerposition.Y + (one / 2)));
+        bool playertileemptyclose = IsTileEmptyForPhysicsClose(
+                    platform.FloatToInt(player.playerposition.X),
+                    platform.FloatToInt(player.playerposition.Z),
+                    platform.FloatToInt(player.playerposition.Y + (one / 2)));
+        BlockPosSide pick0 = new BlockPosSide();
+        if (pick2count.value > 0 &&
+            ((pickdistanceok && (playertileempty || (playertileemptyclose)))
+            || overheadcamera)
+            )
+        {
+            SelectedBlockPositionX = platform.FloatToInt(pick2[0].Current()[0]);
+            SelectedBlockPositionY = platform.FloatToInt(pick2[0].Current()[1]);
+            SelectedBlockPositionZ = platform.FloatToInt(pick2[0].Current()[2]);
+            pick0 = pick2[0];
+        }
+        else
+        {
+            SelectedBlockPositionX = -1;
+            SelectedBlockPositionY = -1;
+            SelectedBlockPositionZ = -1;
+            pick0.blockPos = new float[3];
+            pick0.blockPos[0] = -1;
+            pick0.blockPos[1] = -1;
+            pick0.blockPos[2] = -1;
+        }
+        if (GetFreeMouse())
+        {
+            if (pick2count.value > 0)
+            {
+                OnPick_(pick0);
+            }
+            return;
+        }
+        int ntileX = platform.FloatToInt(pick0.Current()[0]);
+        int ntileY = platform.FloatToInt(pick0.Current()[1]);
+        int ntileZ = platform.FloatToInt(pick0.Current()[2]);
+        if (IsUsableBlock(GetBlock(ntileX, ntileZ, ntileY)))
+        {
+            currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
+        }
+        if ((one * (platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay()
+            || IsNextShot)
+        {
+            if (left && d_Inventory.RightHand[ActiveMaterial] == null)
+            {
+                Packet_ClientHealth p = new Packet_ClientHealth();
+                p.CurrentHealth = platform.FloatToInt(2 + rnd.NextFloat() * 4);
+                Packet_Client packet = new Packet_Client();
+                packet.Id = Packet_ClientIdEnum.MonsterHit;
+                packet.Health = p;
+                SendPacketClient(packet);
+            }
+            if (left && !fastclicking)
+            {
+                //todo animation
+                fastclicking = false;
+            }
+            if ((left || right || middle) && (!isgrenade))
+            {
+                lastbuildMilliseconds = platform.TimeMillisecondsFromStart();
+            }
+            if (isgrenade && mouseleftdeclick)
+            {
+                lastbuildMilliseconds = platform.TimeMillisecondsFromStart();
+            }
+            if (reloadstartMilliseconds != 0)
+            {
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (ispistolshoot)
+            {
+                if ((!(LoadedAmmo[item.BlockId] > 0))
+                    || (!(TotalAmmo[item.BlockId] > 0)))
+                {
+                    AudioPlay("Dry Fire Gun-SoundBible.com-2053652037.ogg");
+                    PickingEnd(left, right, middle, ispistol);
+                    return;
+                }
+            }
+            if (ispistolshoot)
+            {
+                float toX = pick.End[0];
+                float toY = pick.End[1];
+                float toZ = pick.End[2];
+                if (pick2count.value > 0)
+                {
+                    toX = pick2[0].blockPos[0];
+                    toY = pick2[0].blockPos[1];
+                    toZ = pick2[0].blockPos[2];
+                }
+
+                Packet_ClientShot shot = new Packet_ClientShot();
+                shot.FromX = SerializeFloat(pick.Start[0]);
+                shot.FromY = SerializeFloat(pick.Start[1]);
+                shot.FromZ = SerializeFloat(pick.Start[2]);
+                shot.ToX = SerializeFloat(toX);
+                shot.ToY = SerializeFloat(toY);
+                shot.ToZ = SerializeFloat(toZ);
+                shot.HitPlayer = -1;
+
+                for (int i = 0; i < entitiesCount; i++)
+                {
+                    if (entities[i] == null)
+                    {
+                        continue;
+                    }
+                    if (entities[i].player == null)
+                    {
+                        continue;
+                    }
+                    Player p_ = entities[i].player;
+                    if (!p_.PositionLoaded)
+                    {
+                        continue;
+                    }
+                    float feetposX = p_.PositionX;
+                    float feetposY = p_.PositionY;
+                    float feetposZ = p_.PositionZ;
+                    //var p = PlayerPositionSpawn;
+                    Box3D bodybox = new Box3D();
+                    float headsize = (p_.ModelHeight - p_.EyeHeight) * 2; //0.4f;
+                    float h = p_.ModelHeight - headsize;
+                    float r = one * 35 / 100;
+
+                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ - r);
+                    bodybox.AddPoint(feetposX - r, feetposY + 0, feetposZ + r);
+                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ - r);
+                    bodybox.AddPoint(feetposX + r, feetposY + 0, feetposZ + r);
+
+                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
+                    bodybox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
+                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
+                    bodybox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
+
+                    Box3D headbox = new Box3D();
+
+                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ - r);
+                    headbox.AddPoint(feetposX - r, feetposY + h, feetposZ + r);
+                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ - r);
+                    headbox.AddPoint(feetposX + r, feetposY + h, feetposZ + r);
+
+                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ - r);
+                    headbox.AddPoint(feetposX - r, feetposY + h + headsize, feetposZ + r);
+                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ - r);
+                    headbox.AddPoint(feetposX + r, feetposY + h + headsize, feetposZ + r);
+
+                    float[] p;
+                    float localeyeposX = EyesPosX();
+                    float localeyeposY = EyesPosY();
+                    float localeyeposZ = EyesPosZ();
+                    p = Intersection.CheckLineBoxExact(pick, headbox);
+                    if (p != null)
+                    {
+                        //do not allow to shoot through terrain
+                        if (pick2count.value == 0 || (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
+                            > Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
+                        {
+                            if (!isgrenade)
+                            {
+                                Entity entity = new Entity();
+                                Sprite sprite = new Sprite();
+                                sprite.positionX = p[0];
+                                sprite.positionY = p[1];
+                                sprite.positionZ = p[2];
+                                sprite.image = "blood.png";
+                                entity.sprite = sprite;
+                                entity.expires = Expires.Create(one * 2 / 10);
+                                EntityAddLocal(entity);
+                            }
+                            shot.HitPlayer = i;
+                            shot.IsHitHead = 1;
+                        }
+                    }
+                    else
+                    {
+                        p = Intersection.CheckLineBoxExact(pick, bodybox);
+                        if (p != null)
+                        {
+                            //do not allow to shoot through terrain
+                            if (pick2count.value == 0 || (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2], localeyeposX, localeyeposY, localeyeposZ)
+                                > Dist(p[0], p[1], p[2], localeyeposX, localeyeposY, localeyeposZ)))
+                            {
+                                if (!isgrenade)
+                                {
+                                    Entity entity = new Entity();
+                                    Sprite sprite = new Sprite();
+                                    sprite.positionX = p[0];
+                                    sprite.positionY = p[1];
+                                    sprite.positionZ = p[2];
+                                    sprite.image = "blood.png";
+                                    entity.sprite = sprite;
+                                    entity.expires = Expires.Create(one * 2 / 10);
+                                    EntityAddLocal(entity);
+                                }
+                                shot.HitPlayer = i;
+                                shot.IsHitHead = 0;
+                            }
+                        }
+                    }
+                }
+                shot.WeaponBlock = item.BlockId;
+                LoadedAmmo[item.BlockId] = LoadedAmmo[item.BlockId] - 1;
+                TotalAmmo[item.BlockId] = TotalAmmo[item.BlockId] - 1;
+                float projectilespeed = DeserializeFloat(blocktypes[item.BlockId].ProjectileSpeedFloat);
+                if (projectilespeed == 0)
+                {
+                    {
+                        Entity entity = CreateBulletEntity(
+                          pick.Start[0], pick.Start[1], pick.Start[2],
+                          toX, toY, toZ, 150);
+                        EntityAddLocal(entity);
+                    }
+                }
+                else
+                {
+                    float vX = toX - pick.Start[0];
+                    float vY = toY - pick.Start[1];
+                    float vZ = toZ - pick.Start[2];
+                    float vLength = Length(vX, vY, vZ);
+                    vX /= vLength;
+                    vY /= vLength;
+                    vZ /= vLength;
+                    vX *= projectilespeed;
+                    vY *= projectilespeed;
+                    vZ *= projectilespeed;
+                    shot.ExplodesAfter = SerializeFloat(grenadetime - wait);
+
+                    {
+                        Entity grenadeEntity = new Entity();
+
+                        Sprite sprite = new Sprite();
+                        sprite.image = "ChemicalGreen.png";
+                        sprite.size = 14;
+                        sprite.animationcount = 0;
+                        sprite.positionX = pick.Start[0];
+                        sprite.positionY = pick.Start[1];
+                        sprite.positionZ = pick.Start[2];
+                        grenadeEntity.sprite = sprite;
+
+                        Grenade_ projectile = new Grenade_();
+                        projectile.velocityX = vX;
+                        projectile.velocityY = vY;
+                        projectile.velocityZ = vZ;
+                        projectile.block = item.BlockId;
+
+                        grenadeEntity.expires = Expires.Create(grenadetime - wait);
+
+                        grenadeEntity.grenade = projectile;
+                        EntityAddLocal(grenadeEntity);
+                    }
+                }
+                Packet_Client packet = new Packet_Client();
+                packet.Id = Packet_ClientIdEnum.Shot;
+                packet.Shot = shot;
+                SendPacketClient(packet);
+
+                if (blocktypes[item.BlockId].Sounds.ShootEndCount > 0)
+                {
+                    pistolcycle = rnd.Next() % blocktypes[item.BlockId].Sounds.ShootEndCount;
+                    AudioPlay(platform.StringFormat("{0}.ogg", blocktypes[item.BlockId].Sounds.ShootEnd[pistolcycle]));
+                }
+
+                bulletsshot++;
+                if (bulletsshot < DeserializeFloat(blocktypes[item.BlockId].BulletsPerShotFloat))
+                {
+                    NextBullet(bulletsshot);
+                }
+
+                //recoil
+                player.playerorientation.X -= rnd.NextFloat() * CurrentRecoil();
+                player.playerorientation.Y += rnd.NextFloat() * CurrentRecoil() * 2 - CurrentRecoil();
+
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (ispistol && right)
+            {
+                PickingEnd(left, right, middle, ispistol);
+                return;
+            }
+            if (pick2count.value > 0)
+            {
+                if (middle)
+                {
+                    int newtileX = platform.FloatToInt(pick0.Current()[0]);
+                    int newtileY = platform.FloatToInt(pick0.Current()[1]);
+                    int newtileZ = platform.FloatToInt(pick0.Current()[2]);
+                    if (IsValidPos(newtileX, newtileZ, newtileY))
+                    {
+                        int clonesource = GetBlock(newtileX, newtileZ, newtileY);
+                        int clonesource2 = d_Data.WhenPlayerPlacesGetsConvertedTo()[clonesource];
+                        bool gotoDone = false;
+                        //find this block in another right hand.
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (d_Inventory.RightHand[i] != null
+                                && d_Inventory.RightHand[i].ItemClass == Packet_ItemClassEnum.Block
+                                && d_Inventory.RightHand[i].BlockId == clonesource2)
+                            {
+                                ActiveMaterial = i;
+                                gotoDone = true;
+                            }
+                        }
+                        if (!gotoDone)
+                        {
+                            IntRef freehand = d_InventoryUtil.FreeHand(ActiveMaterial);
+                            //find this block in inventory.
+                            for (int i = 0; i < d_Inventory.ItemsCount; i++)
+                            {
+                                Packet_PositionItem k = d_Inventory.Items[i];
+                                if (k == null)
+                                {
+                                    continue;
+                                }
+                                if (k.Value_.ItemClass == Packet_ItemClassEnum.Block
+                                    && k.Value_.BlockId == clonesource2)
+                                {
+                                    //free hand
+                                    if (freehand != null)
+                                    {
+                                        WearItem(
+                                            InventoryPositionMainArea(k.X, k.Y),
+                                            InventoryPositionMaterialSelector(freehand.value));
+                                        break;
+                                    }
+                                    //try to replace current slot
+                                    if (d_Inventory.RightHand[ActiveMaterial] != null
+                                        && d_Inventory.RightHand[ActiveMaterial].ItemClass == Packet_ItemClassEnum.Block)
+                                    {
+                                        MoveToInventory(
+                                            InventoryPositionMaterialSelector(ActiveMaterial));
+                                        WearItem(
+                                            InventoryPositionMainArea(k.X, k.Y),
+                                            InventoryPositionMaterialSelector(ActiveMaterial));
+                                    }
+                                }
+                            }
+                        }
+                        string[] sound = d_Data.CloneSound()[clonesource];
+                        if (sound != null) // && sound.Length > 0)
+                        {
+                            AudioPlay(sound[0]); //todo sound cycle
+                        }
+                    }
+                }
+                if (left || right)
+                {
+                    BlockPosSide tile = pick0;
+                    int newtileX;
+                    int newtileY;
+                    int newtileZ;
+                    if (right)
+                    {
+                        newtileX = platform.FloatToInt(tile.Translated()[0]);
+                        newtileY = platform.FloatToInt(tile.Translated()[1]);
+                        newtileZ = platform.FloatToInt(tile.Translated()[2]);
+                    }
+                    else
+                    {
+                        newtileX = platform.FloatToInt(tile.Current()[0]);
+                        newtileY = platform.FloatToInt(tile.Current()[1]);
+                        newtileZ = platform.FloatToInt(tile.Current()[2]);
+                    }
+                    if (IsValidPos(newtileX, newtileZ, newtileY))
+                    {
+                        //Console.WriteLine(". newtile:" + newtile + " type: " + d_Map.GetBlock(newtileX, newtileZ, newtileY));
+                        if (!(pick0.blockPos[0] == -1
+                             && pick0.blockPos[1] == -1
+                            && pick0.blockPos[2] == -1))
+                        {
+                            int blocktype;
+                            if (left) { blocktype = GetBlock(newtileX, newtileZ, newtileY); }
+                            else { blocktype = ((BlockInHand() == null) ? 1 : BlockInHand().value); }
+                            if (left && blocktype == d_Data.BlockIdAdminium())
+                            {
+                                PickingEnd(left, right, middle, ispistol);
+                                return;
+                            }
+                            string[] sound = left ? d_Data.BreakSound()[blocktype] : d_Data.BuildSound()[blocktype];
+                            if (sound != null) // && sound.Length > 0)
+                            {
+                                AudioPlay(sound[0]); //todo sound cycle
+                            }
+                        }
+                        //normal attack
+                        if (!right)
+                        {
+                            //attack
+                            int posx = newtileX;
+                            int posy = newtileZ;
+                            int posz = newtileY;
+                            currentAttackedBlock = Vector3IntRef.Create(posx, posy, posz);
+                            if (!blockHealth.ContainsKey(posx, posy, posz))
+                            {
+                                blockHealth.Set(posx, posy, posz, GetCurrentBlockHealth(posx, posy, posz));
+                            }
+                            blockHealth.Set(posx, posy, posz, blockHealth.Get(posx, posy, posz) - WeaponAttackStrength());
+                            float health = GetCurrentBlockHealth(posx, posy, posz);
+                            if (health <= 0)
+                            {
+                                if (currentAttackedBlock != null)
+                                {
+                                    blockHealth.Remove(posx, posy, posz);
+                                }
+                                currentAttackedBlock = null;
+                                OnPick(platform.FloatToInt(newtileX), platform.FloatToInt(newtileZ), platform.FloatToInt(newtileY),
+                                    platform.FloatToInt(tile.Current()[0]), platform.FloatToInt(tile.Current()[2]), platform.FloatToInt(tile.Current()[1]),
+                                    tile.collisionPos,
+                                    right);
+                            }
+                            PickingEnd(left, right, middle, ispistol);
+                            return;
+                        }
+                        if (!right)
+                        {
+                            particleEffectBlockBreak.StartParticleEffect(newtileX, newtileY, newtileZ);//must be before deletion - gets ground type.
+                        }
+                        if (!IsValidPos(newtileX, newtileZ, newtileY))
+                        {
+                            platform.ThrowException("");
+                        }
+                        OnPick(platform.FloatToInt(newtileX), platform.FloatToInt(newtileZ), platform.FloatToInt(newtileY),
+                            platform.FloatToInt(tile.Current()[0]), platform.FloatToInt(tile.Current()[2]), platform.FloatToInt(tile.Current()[1]),
+                            tile.collisionPos,
+                            right);
+                        //network.SendSetBlock(new Vector3((int)newtile.X, (int)newtile.Z, (int)newtile.Y),
+                        //    right ? BlockSetMode.Create : BlockSetMode.Destroy, (byte)MaterialSlots[activematerial]);
+                    }
+                }
+            }
+        }
+        PickingEnd(left, right, middle, ispistol);
+    }
+
+    int lastbuildMilliseconds;
+
+    void OnPick_(BlockPosSide pick0)
+    {
+        //playerdestination = pick0.pos;
+    }
+
+    void PickSort(BlockPosSide[] pick, int pickCount, float x, float y, float z)
+    {
+        bool changed = false;
+        do
+        {
+            changed = false;
+            for (int i = 0; i < pickCount - 1; i++)
+            {
+                float dist = Dist(pick[i].blockPos[0], pick[i].blockPos[1], pick[i].blockPos[2], x, y, z);
+                float distNext = Dist(pick[i + 1].blockPos[0], pick[i + 1].blockPos[1], pick[i + 1].blockPos[2], x, y, z);
+                if (dist > distNext)
+                {
+                    changed = true;
+
+                    BlockPosSide swapTemp = pick[i];
+                    pick[i] = pick[i + 1];
+                    pick[i + 1] = swapTemp;
+                }
+            }
+        }
+        while (changed);
+    }
+    bool fastclicking;
+    void PickingEnd(bool left, bool right, bool middle, bool ispistol)
+    {
+        fastclicking = false;
+        if ((!(left || right || middle)) && (!ispistol))
+        {
+            lastbuildMilliseconds = 0;
+            fastclicking = true;
+        }
+    }
+
+    internal void UpdatePicking()
+    {
+        if (FollowId() != null)
+        {
+            SelectedBlockPositionX = 0 - 1;
+            SelectedBlockPositionY = 0 - 1;
+            SelectedBlockPositionZ = 0 - 1;
+            return;
+        }
+        NextBullet(0);
+    }
+    internal bool mouseLeft;
+    internal bool mouseMiddle;
+    internal bool mouseRight;
+
+    internal void MouseDown(MouseEventArgs args)
+    {
+        if (args.GetButton() == MouseButtonEnum.Left) { mouseLeft = true; }
+        if (args.GetButton() == MouseButtonEnum.Middle) { mouseMiddle = true; }
+        if (args.GetButton() == MouseButtonEnum.Right) { mouseRight = true; }
+        if (args.GetButton() == MouseButtonEnum.Left)
+        {
+            mouseleftclick = true;
+        }
+        if (args.GetButton() == MouseButtonEnum.Right)
+        {
+            mouserightclick = true;
+        }
+        if (guistate == GuiState.Normal)
+        {
+            UpdatePicking();
+        }
+        if (guistate == GuiState.Inventory)
+        {
+            d_HudInventory.Mouse_ButtonDown(args);
+        }
+        InvalidVersionAllow();
+    }
+
+    internal void MouseUp(MouseEventArgs args)
+    {
+        if (args.GetButton() == MouseButtonEnum.Left) { mouseLeft = false; }
+        if (args.GetButton() == MouseButtonEnum.Middle) { mouseMiddle = false; }
+        if (args.GetButton() == MouseButtonEnum.Right) { mouseRight = false; }
+        if (args.GetButton() == MouseButtonEnum.Left)
+        {
+            mouseleftdeclick = true;
+        }
+        if (args.GetButton() == MouseButtonEnum.Right)
+        {
+            mouserightdeclick = true;
+        }
+        if (guistate == GuiState.Normal)
+        {
+            UpdatePicking();
+        }
+        if (guistate == GuiState.Inventory)
+        {
+            d_HudInventory.Mouse_ButtonUp(args);
+        }
+    }
+}
+
+public class TileEnterData
+{
+    internal int BlockPositionX;
+    internal int BlockPositionY;
+    internal int BlockPositionZ;
+    internal TileEnterDirection EnterDirection;
+}
+
+public class UpDown
+{
+    public const int None = 0;
+    public const int Up = 1;
+    public const int Down = 2;
 }
 
 class DictionaryStringCharacterRenderer
@@ -5667,6 +7626,7 @@ public class Entity
     internal Bullet_ bullet;
     internal Player player;
     internal DrawName drawName;
+    internal Minecart minecart;
 }
 
 public class DictionaryVector3Float

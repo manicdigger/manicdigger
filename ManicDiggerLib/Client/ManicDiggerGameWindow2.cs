@@ -917,5 +917,60 @@ namespace ManicDigger
         {
             game.DrawPlayers(dt);
         }
+        public RailMapUtil d_RailMapUtil { get { return game.d_RailMapUtil; } set { game.d_RailMapUtil = value; } }
+        int GetUpDownMove(int railblockX, int railblockY, int railblockZ, TileEnterDirection dir)
+        {
+            return game.GetUpDownMove(railblockX, railblockY, railblockZ, dir);
+        }
+        float currentvehiclespeed { get { return game.currentvehiclespeed; } set { game.currentvehiclespeed = value; } }
+        int currentrailblockX { get { return game.currentrailblockX; } set { game.currentrailblockX = value; } }
+        int currentrailblockY { get { return game.currentrailblockY; } set { game.currentrailblockY = value; } }
+        int currentrailblockZ { get { return game.currentrailblockZ; } set { game.currentrailblockZ = value; } }
+
+        float currentrailblockprogress { get { return game.currentrailblockprogress; } set { game.currentrailblockprogress = value; } }
+        VehicleDirection12 currentdirection { get { return game.currentdirection; } set { game.currentdirection = value; } }
+        VehicleDirection12 lastdirection { get { return game.lastdirection; } set { game.lastdirection = value; } }
+        float railheight { get { return game.railheight; } set { game.railheight = value; } }
+        Vector3Ref CurrentRailPos()
+        {
+            return game.CurrentRailPos();
+        }
+        bool railriding { get { return game.railriding; } set { game.railriding = value; } }
+        VehicleDirection12 BestNewDirection(int dirVehicleDirection12Flags, bool turnleft, bool turnright, BoolRef retFound)
+        {
+            return game.BestNewDirection(dirVehicleDirection12Flags, turnleft, turnright, retFound);
+        }
+        void RailSound()
+        {
+            game.RailSound();
+        }
+        bool enable_move { get { return game.enable_move; } set { game.enable_move = value; } }
+        float originalmodelheight { get { return game.originalmodelheight; } set { game.originalmodelheight = value; } }
+        private void ExitVehicle()
+        {
+            game.ExitVehicle();
+        }
+        private void Reverse()
+        {
+            game.Reverse();
+        }
+        public int PossibleRails(TileEnterData enter)
+        {
+            return game.PossibleRails(enter);
+        }
+        void RailOnNewFrame(float dt)
+        {
+            game.RailOnNewFrame(dt);
+        }
+        public void DrawMinecarts(float dt)
+        {
+            game.DrawMinecarts(dt);
+        }
+        internal MinecartRenderer d_MinecartRenderer { get { return game.d_MinecartRenderer; } set { game.d_MinecartRenderer = value; } }
+        bool drawblockinfo { get { return game.drawblockinfo; } set { game.drawblockinfo = value; } }
+        void UpdateTitleFps(float dt)
+        {
+            game.UpdateTitleFps(dt);
+        }
     }
 }
