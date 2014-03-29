@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-using System.Diagnostics;
-using System.Windows.Forms;
 
 namespace ManicDigger
 {
@@ -16,11 +14,11 @@ namespace ManicDigger
         #region IGetFilePath Members
         public Stream GetFile(string p)
         {
-			throw new FileNotFoundException();
+            throw new FileNotFoundException();
         }
         #endregion
     }
-    
+
     public class GetFileStream : IGetFileStream
     {
         public GetFileStream(IEnumerable<string> datapaths)
@@ -86,9 +84,9 @@ namespace ManicDigger
 
             throw new FileNotFoundException(filename);
         }
-		public void SetFile(string name, byte[] data)
-		{
-			cache[name] = data;
-		}
-	}
+        public void SetFile(string name, byte[] data)
+        {
+            cache[name] = data;
+        }
+    }
 }

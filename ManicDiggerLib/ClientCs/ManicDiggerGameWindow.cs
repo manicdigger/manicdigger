@@ -21,83 +21,15 @@ using ManicDigger.ClientNative;
 namespace ManicDigger
 {
     //This is the main game class.
-    public partial class ManicDiggerGameWindow : IMyGameWindow,
-        IMapStorage,
-        ICurrentShadows
+    public partial class ManicDiggerGameWindow : IMyGameWindow
     {
         public ManicDiggerGameWindow()
         {
-            one = 1;
             game = new Game();
-            game.language.platform = new GamePlatformNative();
-            game.language.LoadTranslations();
-            mvMatrix.Push(Mat4.Create());
-            pMatrix.Push(Mat4.Create());
-            PerformanceInfo = new DictionaryStringString();
-            AudioEnabled = true;
-            OverheadCamera_cameraEye = new Vector3Ref();
-            playerPositionSpawnX = 15 + one / 2;
-            playerPositionSpawnY = 64;
-            playerPositionSpawnZ = 15 + one / 2;
         }
-        float one;
+        
         public void Start()
         {
-            game.platform = new GamePlatformNative() { window = d_GlWindow };
-            string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
-            var getfile = new GetFileStream(datapaths);
-            var w = this;
-            var gamedata = new GameData();
-            gamedata.Start();
-            var clientgame = w;
-            var network = w;
-            var mapstorage = clientgame;
-            var config3d = new Config3d();
-            var localplayerposition = w;
-            var physics = new CharacterPhysicsCi();
-            var internetgamefactory = this;
-            //network.d_ResetMap = this;
-            var terrainTextures = new ITerrainTextures();
-            terrainTextures.game = game;
-            bool IsMono = Type.GetType("Mono.Runtime") != null;
-            d_TextureAtlasConverter = new TextureAtlasConverter();
-            w.game.d_TerrainTextures = terrainTextures;
-            var blockrenderertorch = new BlockRendererTorch();
-            blockrenderertorch.d_TerainRenderer = terrainTextures;
-            blockrenderertorch.d_Data = gamedata;
-            //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
-            var map = w;
-            var terrainchunktesselator = new TerrainChunkTesselatorCi();
-            w.d_TerrainChunkTesselator = terrainchunktesselator;
-            var frustumculling = new FrustumCulling() { d_GetCameraMatrix = game.CameraMatrix, platform = game.platform };
-            w.d_Batcher = new MeshBatcher() { d_FrustumCulling = frustumculling, game = game };
-            w.d_FrustumCulling = frustumculling;
-            //w.d_Map = clientgame.mapforphysics;
-            w.d_Physics = physics;
-            w.d_Data = gamedata;
-            w.d_DataMonsters = new GameDataMonsters();
-            w.d_GetFile = getfile;
-            w.d_Config3d = config3d;
-            w.PICK_DISTANCE = 4.5f;
-            var skysphere = new SkySphere();
-            skysphere.game = game;
-            skysphere.d_MeshBatcher = new MeshBatcher() { d_FrustumCulling = new FrustumCullingDummy(), game = game };
-            w.skysphere = skysphere;
-            Packet_Inventory inventory = new Packet_Inventory();
-            w.d_Weapon = new WeaponRenderer() { d_BlockRendererTorch = blockrenderertorch, game = game };
-            var playerrenderer = new CharacterRendererMonsterCode();
-            playerrenderer.game = this.game;
-            var particle = new ParticleEffectBlockBreak();
-            w.particleEffectBlockBreak = particle;
-            w.d_Shadows = w;
-            clientgame.d_Data = gamedata;
-            clientgame.d_CraftingTableTool = new CraftingTableTool() { d_Map = mapstorage, d_Data = gamedata };
-            clientgame.d_RailMapUtil = new RailMapUtil() { game = game };
-            clientgame.d_MinecartRenderer = new MinecartRenderer() { game = game };
-            clientgame.game.d_TerrainTextures = terrainTextures;
-            clientgame.d_GetFile = getfile;
-            w.Reset(10 * 1000, 10 * 1000, 128);
-            clientgame.d_Map = game;
             if (!issingleplayer)
             {
                 try
@@ -113,93 +45,22 @@ namespace ManicDigger
                     skinserver = "";
                 }
             }
-            w.d_FrustumCulling = frustumculling;
-            //w.d_CurrentShadows = this;
-            var sunmoonrenderer = new SunMoonRenderer() { game = game };
-            w.d_SunMoonRenderer = sunmoonrenderer;
-            clientgame.d_SunMoonRenderer = sunmoonrenderer;
-            this.d_Heightmap = new InfiniteMapChunked2d() { d_Map = game };
-            d_Heightmap.Restart();
-            network.d_Heightmap = d_Heightmap;
-            //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
-            //light.Restart();
-            w.d_TerrainChunkTesselator = terrainchunktesselator;
-            terrainchunktesselator.game = game;
-            /*
-            if (fullshadows)
-            {
-                UseShadowsFull();
-            }
-            else
-            {
-                UseShadowsSimple();
-            }
-            */
-            terrainRenderer = new TerrainRenderer();
-            terrainRenderer.game = game;
-            w.d_HudChat = new HudChat() { game = this.game };
-            var dataItems = new GameDataItemsClient() { game = game };
-            var inventoryController = ClientInventoryController.Create(game);
-            var inventoryUtil = new InventoryUtilClient();
-            var hudInventory = new HudInventory();
-            hudInventory.game = game;
-            hudInventory.dataItems = dataItems;
-            hudInventory.inventoryUtil = inventoryUtil;
-            hudInventory.controller = inventoryController;
-            w.d_Inventory = inventory;
-            w.d_InventoryController = inventoryController;
-            w.d_InventoryUtil = inventoryUtil;
-            inventoryUtil.d_Inventory = inventory;
-            inventoryUtil.d_Items = dataItems;
 
-            d_Physics.game = game;
-            clientgame.d_Inventory = inventory;
-            w.d_HudInventory = hudInventory;
-            w.d_CurrentShadows = this;
-            crashreporter.OnCrash += new EventHandler(crashreporter_OnCrash);
-
-            clientmods = new ClientMod[128];
-            clientmodsCount = 0;
-            modmanager.game = game;
-            AddMod(new ModAutoCamera());
-            AddMod(new ModFpsHistoryGraph());
-            s = new BlockOctreeSearcher();
-            s.platform = game.platform;
-            escapeMenu.game = this;
-        }
-        void AddMod(ClientMod mod)
-        {
-            clientmods[clientmodsCount++] = mod;
-            mod.Start(modmanager);
+            game.Start();
+            escapeMenu.game = game;
         }
 
-        internal Game game;
-
-        void crashreporter_OnCrash(object sender, EventArgs e)
-        {
-            try
-            {
-                SendLeave(Packet_LeaveReasonEnum.Crash);
-            }
-            catch
-            {
-            }
-        }
+        public Game game;
 
         public GlWindow d_GlWindow;
         public Game d_Map;
 
-        public GetFileStream d_GetFile;
-        public ICurrentShadows d_CurrentShadows;
-        public IGameExit d_Exit;
-        public IInventoryController d_InventoryController;
-        public CraftingTableTool d_CraftingTableTool;
         public ManicDiggerGameWindow d_Shadows;
 
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
         public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
 
-        public GuiStateEscapeMenu escapeMenu = new GuiStateEscapeMenu();
+        
         public void OnFocusedChanged(EventArgs e)
         {
             if (guistate == GuiState.Normal)
@@ -215,21 +76,9 @@ namespace ManicDigger
             else { throw new Exception(); }
             //..base.OnFocusedChanged(e);
         }
-        public List<DisplayResolution> resolutions;
+        
         public void OnLoad(EventArgs e)
         {
-            if (resolutions == null)
-            {
-                resolutions = new List<DisplayResolution>();
-                foreach (var r in DisplayDevice.Default.AvailableResolutions)
-                {
-                    if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel < 16)
-                    {
-                        continue;
-                    }
-                    resolutions.Add(r);
-                }
-            }
             int maxTextureSize_;
             try
             {
@@ -355,66 +204,12 @@ namespace ManicDigger
         {
             BoolRef keyHandled = new BoolRef();
             game.KeyDown(eKey, keyHandled);
-            if (keyHandled.value)
-            {
-                return;
-            }
-
-            if (eKey == GetKey(GlKeys.F11))
-            {
-                if (d_GlWindow.WindowState == WindowState.Fullscreen)
-                {
-                    d_GlWindow.WindowState = WindowState.Normal;
-                    escapeMenu.RestoreResolution();
-                    escapeMenu.SaveOptions();
-                }
-                else
-                {
-                    d_GlWindow.WindowState = WindowState.Fullscreen;
-                    escapeMenu.UseResolution();
-                    escapeMenu.SaveOptions();
-                }
-            }
-            if (eKey == (GetKey(GlKeys.C)) && GuiTyping == TypingState.None)
-            {
-                if (!(SelectedBlockPositionX == -1 && SelectedBlockPositionY == -1 && SelectedBlockPositionZ == -1))
-                {
-                    int posx = SelectedBlockPositionX;
-                    int posy = SelectedBlockPositionZ;
-                    int posz = SelectedBlockPositionY;
-                    if (d_Map.GetBlock(posx, posy, posz) == d_Data.BlockIdCraftingTable())
-                    {
-                        //draw crafting recipes list.
-                        CraftingRecipesStart(d_CraftingRecipes, d_CraftingTableTool.GetOnTable(d_CraftingTableTool.GetTable(posx, posy, posz)),
-                        (recipe) => { CraftingRecipeSelected(posx, posy, posz, recipe); });
-                    }
-                }
-            }
-
-            if (guistate == GuiState.Normal)
-            {
-                if (eKey == GetKey(GlKeys.Escape))
-                {
-                    escapeMenu.EscapeMenuStart();
-                    return;
-                }
-            }
-            if (guistate == GuiState.EscapeMenu)
-            {
-                escapeMenu.EscapeMenuKeyDown(eKey);
-                return;
-            }
         }
 
         public CrashReporter crashreporter;
         private void Connect()
         {
             escapeMenu.LoadOptions();
-
-            while (issingleplayer && !StartedSinglePlayerServer)
-            {
-                Thread.Sleep(1);
-            }
 
             if (string.IsNullOrEmpty(connectdata.ServerPassword))
             {
@@ -526,22 +321,8 @@ namespace ManicDigger
         void FrameTick(FrameEventArgs e)
         {
             float dt = (float)e.Time;
-            game.FrameTick(dt);
             UpdateMousePosition();
-
-            if (guistate == GuiState.Normal)
-            {
-                UpdatePicking();
-            }
-            if (guistate == GuiState.CraftingRecipes)
-            {
-                CraftingMouse();
-            }
-        }
-
-        private void UpdatePicking()
-        {
-            game.UpdatePicking();
+            game.FrameTick(dt);
         }
 
         double accumulator;
@@ -693,59 +474,18 @@ namespace ManicDigger
             d_GlWindow.SwapBuffers();
             mouseleftclick = mouserightclick = false;
             mouseleftdeclick = mouserightdeclick = false;
-            if (!startedconnecting) { startedconnecting = true; Connect(); }
+            if ((!issingleplayer)
+                || (issingleplayer && StartedSinglePlayerServer))
+            {
+                if (!startedconnecting)
+                {
+                    startedconnecting = true;
+                    Connect();
+                }
+            }
         }
         bool startedconnecting;
-
-        private void Draw2d()
-        {
-            game.Draw2d();
-
-            if (guistate == GuiState.EscapeMenu)
-            {
-                if (!ENABLE_DRAW2D)
-                {
-                    PerspectiveMode();
-                    return;
-                }
-                d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
-                DrawDialogs();
-                escapeMenu.EscapeMenuDraw();
-            }
-            if (guistate == GuiState.CraftingRecipes)
-            {
-                DrawCraftingRecipes();
-            }
-
-            PerspectiveMode();
-        }
         
-        void CraftingMouse()
-        {
-            if (okrecipes == null)
-            {
-                return;
-            }
-            int menustartx = xcenter(600);
-            int menustarty = ycenter(okrecipes.Count * 80);
-            if (mouseCurrentY >= menustarty && mouseCurrentY < menustarty + okrecipes.Count * 80)
-            {
-                craftingselectedrecipe = (mouseCurrentY - menustarty) / 80;
-            }
-            else
-            {
-                //craftingselectedrecipe = -1;
-            }
-            if (mouseleftclick)
-            {
-                if (okrecipes.Count != 0)
-                {
-                    craftingrecipeselected(IntRef.Create(okrecipes[craftingselectedrecipe]));
-                }
-                mouseleftclick = false;
-                GuiStateBackToGame();
-            }
-        }
         Random rnd = new Random();        
         public OpenTK.Input.MouseDevice Mouse { get { return d_GlWindow.Mouse; } }
         public void Run()
@@ -754,10 +494,7 @@ namespace ManicDigger
         }
         public void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
-            if (guistate == GuiState.Inventory)
-            {
-                d_HudInventory.OnKeyPress(e.KeyChar);
-            }
+            game.OnKeyPress(e.KeyChar);
         }
 
         public void Dispose()
@@ -770,7 +507,6 @@ namespace ManicDigger
         }
  
         public bool ShadowsFull { get { return false; } set { } }
-        public FontType Font;
     }
 }
 

@@ -44,7 +44,7 @@ namespace ManicDiggerServer
         [ProtoMember(5, IsRequired = false)]
         public List<Monster> Monsters = new List<Monster>();
     }
-    public class ServerMap : IMapStorage
+    public class ServerMap : IMapStorage2, IMapStorage
     {
         public Server server;
         public IChunkDb d_ChunkDb;
@@ -56,12 +56,15 @@ namespace ManicDiggerServer
         public int MapSizeX { get; set; }
         public int MapSizeY { get; set; }
         public int MapSizeZ { get; set; }
-        public int GetBlock(int x, int y, int z)
+        public override int GetMapSizeX() { return MapSizeX; }
+        public override int GetMapSizeY() { return MapSizeY; }
+        public override int GetMapSizeZ() { return MapSizeZ; }
+        public override int GetBlock(int x, int y, int z)
         {
             ushort[] chunk = GetChunk(x, y, z);
             return chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)];
         }
-        public void SetBlock(int x, int y, int z, int tileType)
+        public override void SetBlock(int x, int y, int z, int tileType)
         {
             ushort[] chunk = GetChunk(x, y, z);
             chunk[MapUtil.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize)] = (byte)tileType;

@@ -9,6 +9,7 @@
         textTexturesCount = 0;
         screen = new ScreenMain();
         screen.menu = this;
+        loginClient = new LoginClientCi();
     }
 
     internal GamePlatform p;
@@ -271,6 +272,7 @@
         HandleKeys();
         DrawScene();
         Animate();
+        loginClient.Update(p);
     }
 
     public void HandleMouseDown(MouseEventArgs e)
@@ -353,9 +355,11 @@
         screen.menu = this;
     }
 
-    internal void StartLogin()
+    internal void StartLogin(string serverHash)
     {
-        screen = new ScreenLogin();
+        ScreenLogin screenLogin = new ScreenLogin();
+        screenLogin.serverHash = serverHash;
+        screen = screenLogin;
         screen.menu = this;
     }
 
@@ -382,7 +386,7 @@
         screen.menu = this;
     }
 
-    internal void Login(string user, string password, LoginResultRef loginResult)
+    internal void Login(string user, string password, string serverHash, LoginResultRef loginResult, LoginData loginResultData)
     {
         if (user == "" || password == "")
         {
@@ -390,9 +394,10 @@
         }
         else
         {
-            loginResult.value = LoginResult.Ok;
+            loginClient.Login(p, user, password, serverHash, loginResult, loginResultData);
         }
     }
+    LoginClientCi loginClient;
 
     internal void CreateAccount(string user, string password, LoginResultRef loginResult)
     {
@@ -457,6 +462,45 @@
 
     internal void StartModifyWorld()
     {
+    }
+
+    internal void ConnectToGame(LoginData loginResultData, string username)
+    {
+        ConnectData connectData = new ConnectData();
+        connectData.Ip = loginResultData.ServerAddress;
+        connectData.Port = loginResultData.Port;
+        connectData.Auth = loginResultData.AuthCode;
+        connectData.Username = username;
+
+        MenuResultSinglePlayer = false;
+        MenuResultMenuConnectData = connectData;
+        p.WindowExit();
+    }
+
+    public void ConnectToSingleplayer(string filename)
+    {
+        MenuResultSinglePlayer = true;
+        MenuResultSavegamePath = filename;
+        p.WindowExit();
+    }
+
+    internal bool MenuResultSinglePlayer;
+    internal ConnectData MenuResultMenuConnectData;
+    internal string MenuResultSavegamePath;
+
+    public bool GetMenuResultSinglePlayer()
+    {
+        return MenuResultSinglePlayer;
+    }
+
+    public ConnectData GetMenuResultMenuConnectData()
+    {
+        return MenuResultMenuConnectData;
+    }
+
+    public string GetMenuResultSavegamePath()
+    {
+        return MenuResultSavegamePath;
     }
 }
 
@@ -687,7 +731,7 @@ public class ScreenMain : Screen
         }
         if (w == multiplayer)
         {
-            menu.StartLogin();
+            menu.StartMultiplayer();
         }
     }
 
@@ -710,18 +754,22 @@ public class ScreenSingleplayer : Screen
         back = new MenuWidget();
         back.text = "Back";
         back.type = WidgetType.Button;
+        open = new MenuWidget();
+        open.text = "Create or open...";
+        open.type = WidgetType.Button;
 
         widgets[0] = play;
         widgets[1] = newWorld;
         widgets[2] = modify;
         widgets[3] = back;
+        widgets[4] = open;
 
         worldButtons = new MenuWidget[10];
         for (int i = 0; i < 10; i++)
         {
             worldButtons[i] = new MenuWidget();
             worldButtons[i].visible = false;
-            widgets[4 + i] = worldButtons[i];
+            widgets[5 + i] = worldButtons[i];
         }
     }
 
@@ -729,6 +777,7 @@ public class ScreenSingleplayer : Screen
     MenuWidget play;
     MenuWidget modify;
     MenuWidget back;
+    MenuWidget open;
 
     MenuWidget[] worldButtons;
 
@@ -769,6 +818,12 @@ public class ScreenSingleplayer : Screen
         back.sizex = 256 * scale;
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
+
+        open.x = leftx;
+        open.y = y + 0 * scale;
+        open.sizex = 256 * scale;
+        open.sizey = 64 * scale;
+        open.fontSize = 14 * scale;
         
         if (savegames == null)
         {
@@ -790,6 +845,15 @@ public class ScreenSingleplayer : Screen
             worldButtons[i].sizex = 256 * scale;
             worldButtons[i].sizey = 64 * scale;
             worldButtons[i].fontSize = 14 * scale;
+        }
+
+
+        play.visible = false;
+        newWorld.visible = false;
+        modify.visible = false;
+        for (int i = 0; i < savegamesCount; i++)
+        {
+            worldButtons[i].visible = false;
         }
 
         DrawWidgets();
@@ -831,6 +895,15 @@ public class ScreenSingleplayer : Screen
         if (w == back)
         {
             OnBackPressed();
+        }
+
+        if (w == open)
+        {
+            string result = menu.p.FileOpenDialog("mddbs", "Manic Digger Savegame", menu.p.PathSavegames());
+            if (result != null)
+            {
+                menu.ConnectToSingleplayer(result);
+            }
         }
     }
 }
@@ -948,9 +1021,11 @@ public class ScreenLogin : Screen
 
     public override void Render()
     {
-        if (loginResult.value == LoginResult.Ok)
+        if (loginResultData != null
+            && loginResultData.ServerCorrect
+            && loginResultData.PasswordCorrect)
         {
-            menu.StartMultiplayer();
+            menu.ConnectToGame(loginResultData, loginUsername.text);
         }
 
         GamePlatform p = menu.p;
@@ -961,9 +1036,18 @@ public class ScreenLogin : Screen
         float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
         float y = p.GetCanvasHeight() / 2 - 250 * scale;
 
+        string loginResultText = null;
         if (loginResult.value == LoginResult.Failed)
         {
-            menu.DrawText("&4Invalid username or password", 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+            loginResultText = "&4Invalid username or password";
+        }
+        if (loginResult.value == LoginResult.Connecting)
+        {
+            loginResultText = "Connecting...";
+        }
+        if (loginResultText != null)
+        {
+            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
         menu.DrawText("Login", 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
@@ -994,7 +1078,7 @@ public class ScreenLogin : Screen
 
         float rightx = p.GetCanvasWidth() / 2 + 150 * scale;
 
-        menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        // menu.DrawText("Create account", 14 * scale, rightx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
         createAccountUsername.x = rightx;
         createAccountUsername.y = y + 100 * scale;
@@ -1020,6 +1104,11 @@ public class ScreenLogin : Screen
         createAccount.sizey = 64 * scale;
         createAccount.fontSize = 14 * scale;
 
+        createAccountUsername.visible = false;
+        createAccountPassword.visible = false;
+        createAccountRememberMe.visible = false;
+        createAccount.visible = false;
+
         back.x = 40 * scale;
         back.y = p.GetCanvasHeight() - 104 * scale;
         back.sizex = 256 * scale;
@@ -1031,16 +1120,18 @@ public class ScreenLogin : Screen
 
     public override void OnBackPressed()
     {
-        menu.StartMainMenu();
+        menu.StartMultiplayer();
     }
 
     LoginResultRef loginResult;
+    LoginData loginResultData;
 
     public override void OnButton(MenuWidget w)
     {
         if (w == login)
         {
-            menu.Login(loginUsername.text, loginPassword.text, loginResult);
+            loginResultData = new LoginData();
+            menu.Login(loginUsername.text, loginPassword.text, serverHash, loginResult, loginResultData);
         }
         if (w == createAccount)
         {
@@ -1062,6 +1153,7 @@ public class ScreenLogin : Screen
             OnBackPressed();
         }
     }
+    internal string serverHash;
 }
 
 public enum LoginResult
@@ -1112,6 +1204,7 @@ public class ScreenMultiplayer : Screen
             serverButtons[i] = b;
             widgets[3 + i] = b;
         }
+        loading = true;
     }
 
     bool loaded;
@@ -1120,7 +1213,7 @@ public class ScreenMultiplayer : Screen
     ServerOnList[] serversOnList;
     const int serversOnListCount = 1024;
 
-
+    bool loading;
     public override void Render()
     {
         if (!loaded)
@@ -1135,6 +1228,7 @@ public class ScreenMultiplayer : Screen
         }
         if (serverListCsv.done)
         {
+            loading = false;
             serverListCsv.done = false;
             for (int i = 0; i < serversOnListCount; i++)
             {
@@ -1190,6 +1284,11 @@ public class ScreenMultiplayer : Screen
         menu.DrawBackground();
         menu.DrawText("Multiplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
+        if (loading)
+        {
+            menu.DrawText("Loading...", 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
+        }
+
         for (int i = 0; i < serverButtonsCount; i++)
         {
             serverButtons[i].visible = false;
@@ -1230,7 +1329,7 @@ public class ScreenMultiplayer : Screen
     {
         menu.StartMainMenu();
     }
-
+    string selectedServerHash;
     public override void OnButton(MenuWidget w)
     {
         for (int i = 0; i < serverButtonsCount; i++)
@@ -1239,6 +1338,7 @@ public class ScreenMultiplayer : Screen
             if (serverButtons[i] == w)
             {
                 serverButtons[i].selected = true;
+                selectedServerHash = serversOnList[i].hash;
             }
         }
         if (w == back)
@@ -1247,10 +1347,15 @@ public class ScreenMultiplayer : Screen
         }
         if (w == connect)
         {
+            if (selectedServerHash != null)
+            {
+                menu.StartLogin(selectedServerHash);
+            }
         }
         if (w == refresh)
         {
             loaded = false;
+            loading = true;
         }
     }
 }
@@ -1265,6 +1370,8 @@ public class HttpResponseCi
     {
         return platform.StringFromUtf8ByteArray(value, valueLength);
     }
+
+    internal bool error;
 }
 
 public class ServerOnList

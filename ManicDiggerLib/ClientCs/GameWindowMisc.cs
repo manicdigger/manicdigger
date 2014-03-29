@@ -16,10 +16,6 @@ using ManicDigger.Renderers;
 
 namespace ManicDigger
 {
-    public interface ICurrentShadows
-    {
-        bool ShadowsFull { get; set; }
-    }
     public interface IMyGameWindow
     {
         void OnLoad(EventArgs e);

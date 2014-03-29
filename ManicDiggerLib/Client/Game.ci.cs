@@ -3,6 +3,13 @@
     public Game()
     {
         one = 1;
+        performanceinfo = new DictionaryStringString();
+        AudioEnabled = true;
+        OverheadCamera_cameraEye = new Vector3Ref();
+        playerPositionSpawnX = 15 + one / 2;
+        playerPositionSpawnY = 64;
+        playerPositionSpawnZ = 15 + one / 2;
+
         chunksize = 16;
         player = new CharacterPhysicsState();
 
@@ -20,6 +27,8 @@
         sunlight_ = 15;
         mvMatrix = new StackFloatArray();
         pMatrix = new StackFloatArray();
+        mvMatrix.Push(Mat4.Create());
+        pMatrix.Push(Mat4.Create());
         whitetexture = -1;
         cachedTextTexturesMax = 1024;
         cachedTextTextures = new CachedTextTexture[cachedTextTexturesMax];
@@ -104,8 +113,129 @@
         MonsterRenderers = new DictionaryStringCharacterRenderer();
         railheight = one * 3 / 10;
         enable_move = true;
+        escapeMenu = new GuiStateEscapeMenu();
     }
-    float one;
+
+    public void Start()
+    {
+        language.platform = platform;
+        language.LoadTranslations();
+        GameData gamedata = new GameData();
+        gamedata.Start();
+        Config3d config3d = new Config3d();
+        CharacterPhysicsCi physics = new CharacterPhysicsCi();
+        //network.d_ResetMap = this;
+        ITerrainTextures terrainTextures = new ITerrainTextures();
+        terrainTextures.game = this;
+        d_TextureAtlasConverter = new TextureAtlasConverter();
+        d_TerrainTextures = terrainTextures;
+        BlockRendererTorch blockrenderertorch = new BlockRendererTorch();
+        blockrenderertorch.d_TerainRenderer = terrainTextures;
+        blockrenderertorch.d_Data = gamedata;
+        //InfiniteMapChunked map = new InfiniteMapChunked();// { generator = new WorldGeneratorDummy() };
+
+        FrustumCulling frustumculling = new FrustumCulling();
+        frustumculling.d_GetCameraMatrix = this.CameraMatrix;
+        frustumculling.platform = platform;
+        d_FrustumCulling = frustumculling;
+
+        TerrainChunkTesselatorCi terrainchunktesselator = new TerrainChunkTesselatorCi();
+        d_TerrainChunkTesselator = terrainchunktesselator;
+        d_Batcher = new MeshBatcher();
+        d_Batcher.d_FrustumCulling = frustumculling;
+        d_Batcher.game = this;
+        d_FrustumCulling = frustumculling;
+        //w.d_Map = clientgame.mapforphysics;
+        d_Physics = physics;
+        d_Data = gamedata;
+        d_DataMonsters = new GameDataMonsters();
+        d_Config3d = config3d;
+        SkySphere skysphere_ = new SkySphere();
+        skysphere_.game = this;
+        skysphere_.d_MeshBatcher = new MeshBatcher();
+        skysphere_.d_MeshBatcher.d_FrustumCulling = new FrustumCullingDummy();
+        skysphere_.game = this;
+        this.skysphere = skysphere_;
+
+        d_Weapon = new WeaponRenderer();
+        d_Weapon.d_BlockRendererTorch = blockrenderertorch;
+        d_Weapon.game = this;
+        CharacterRendererMonsterCode playerrenderer = new CharacterRendererMonsterCode();
+        playerrenderer.game = this;
+        ParticleEffectBlockBreak particle = new ParticleEffectBlockBreak();
+        this.particleEffectBlockBreak = particle;
+        this.d_Data = gamedata;
+        this.d_CraftingTableTool = new CraftingTableTool();
+        this.d_CraftingTableTool.d_Map = MapStorage2.Create(this);
+        this.d_CraftingTableTool.d_Data = gamedata;
+        this.d_RailMapUtil = new RailMapUtil();
+        this.d_RailMapUtil.game = this;
+        this.d_MinecartRenderer = new MinecartRenderer();
+        this.d_MinecartRenderer.game = this;
+        d_TerrainTextures = terrainTextures;
+
+        this.Reset(10 * 1000, 10 * 1000, 128);
+
+        //w.d_CurrentShadows = this;
+        SunMoonRenderer sunmoonrenderer = new SunMoonRenderer();
+        sunmoonrenderer.game = this;
+        d_SunMoonRenderer = sunmoonrenderer;
+        d_SunMoonRenderer = sunmoonrenderer;
+        d_Heightmap = new InfiniteMapChunked2d();
+        d_Heightmap.d_Map = this;
+        d_Heightmap.Restart();
+        //this.light = new InfiniteMapChunkedSimple() { d_Map = map };
+        //light.Restart();
+        d_TerrainChunkTesselator = terrainchunktesselator;
+        terrainchunktesselator.game = this;
+
+        //if (fullshadows)
+        //{
+        //    UseShadowsFull();
+        //}
+        //else
+        //{
+        //    UseShadowsSimple();
+        //}
+        Packet_Inventory inventory = new Packet_Inventory();
+        terrainRenderer = new TerrainRenderer();
+        terrainRenderer.game = this;
+        d_HudChat = new HudChat();
+        d_HudChat.game = this;
+        GameDataItemsClient dataItems = new GameDataItemsClient();
+        dataItems.game = this;
+        ClientInventoryController inventoryController = ClientInventoryController.Create(this);
+        InventoryUtilClient inventoryUtil = new InventoryUtilClient();
+        HudInventory hudInventory = new HudInventory();
+        hudInventory.game = this;
+        hudInventory.dataItems = dataItems;
+        hudInventory.inventoryUtil = inventoryUtil;
+        hudInventory.controller = inventoryController;
+        d_Inventory = inventory;
+        d_InventoryUtil = inventoryUtil;
+        inventoryUtil.d_Inventory = inventory;
+        inventoryUtil.d_Items = dataItems;
+        d_Physics.game = this;
+        d_Inventory = inventory;
+        d_HudInventory = hudInventory;
+        platform.AddOnCrash(OnCrashHandlerLeave.Create(this));
+
+        clientmods = new ClientMod[128];
+        clientmodsCount = 0;
+        modmanager.game = this;
+        AddMod(new ModAutoCamera());
+        AddMod(new ModFpsHistoryGraph());
+        s = new BlockOctreeSearcher();
+        s.platform = platform;
+    }
+
+    void AddMod(ClientMod mod)
+    {
+        clientmods[clientmodsCount++] = mod;
+        mod.Start(modmanager);
+    }
+
+    internal float one;
 
     const int MaxBlockTypes = 1024;
 
@@ -1119,8 +1249,12 @@
         int Width = platform.GetCanvasWidth();
         int Height = platform.GetCanvasHeight();
 
-        Draw2dTexture(GetTexture(platform.PathCombine("gui", "background.png")), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        Draw2dTexture(GetTexture("background.png"), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
         string connecting = language.Connecting();
+        if (issingleplayer && (!StartedSinglePlayerServer))
+        {
+            connecting = "Starting game...";
+        }
         if (maploadingprogress.ProgressStatus != null)
         {
             connecting = maploadingprogress.ProgressStatus;
@@ -4843,6 +4977,7 @@
                 break;
             case Packet_ServerIdEnum.CraftingRecipes:
                 d_CraftingRecipes = packet.CraftingRecipes.CraftingRecipes;
+                d_CraftingRecipesCount = packet.CraftingRecipes.CraftingRecipesCount;
                 break;
             case Packet_ServerIdEnum.Dialog:
                 Packet_ServerDialog d = packet.Dialog;
@@ -5022,6 +5157,7 @@
 
     bool ammostarted;
     internal Packet_CraftingRecipe[] d_CraftingRecipes;
+    internal int d_CraftingRecipesCount;
     internal Packet_BlockType[] NewBlockTypes;
     internal bool ENABLE_PER_SERVER_TEXTURES;
     internal string blobdownloadname;
@@ -6213,7 +6349,55 @@
                 GuiStateBackToGame();
             }
         }
+        if (eKey == GetKey(GlKeys.F11))
+        {
+            if (platform.GetWindowState() == WindowState.Fullscreen)
+            {
+                platform.SetWindowState(WindowState.Normal);
+                escapeMenu.RestoreResolution();
+                escapeMenu.SaveOptions();
+            }
+            else
+            {
+                platform.SetWindowState(WindowState.Fullscreen);
+                escapeMenu.UseResolution();
+                escapeMenu.SaveOptions();
+            }
+        }
+        if (eKey == (GetKey(GlKeys.C)) && GuiTyping == TypingState.None)
+        {
+            if (!(SelectedBlockPositionX == -1 && SelectedBlockPositionY == -1 && SelectedBlockPositionZ == -1))
+            {
+                int posx = SelectedBlockPositionX;
+                int posy = SelectedBlockPositionZ;
+                int posz = SelectedBlockPositionY;
+                if (GetBlock(posx, posy, posz) == d_Data.BlockIdCraftingTable())
+                {
+                    //draw crafting recipes list.
+                    IntRef tableCount = new IntRef();
+                    Vector3IntRef[] table = d_CraftingTableTool.GetTable(posx, posy, posz, tableCount);
+                    IntRef onTableCount = new IntRef();
+                    int[] onTable = d_CraftingTableTool.GetOnTable(table, tableCount.value, onTableCount);
+                    CraftingRecipesStart(d_CraftingRecipes, d_CraftingRecipesCount, onTable, onTableCount.value, posx, posy, posz);
+                }
+            }
+        }
+
+        if (guistate == GuiState.Normal)
+        {
+            if (eKey == GetKey(GlKeys.Escape))
+            {
+                escapeMenu.EscapeMenuStart();
+                return;
+            }
+        }
+        if (guistate == GuiState.EscapeMenu)
+        {
+            escapeMenu.EscapeMenuKeyDown(eKey);
+            return;
+        }
     }
+    internal GuiStateEscapeMenu escapeMenu;
     internal bool drawblockinfo;
 
     internal void UpdateTitleFps(float dt)
@@ -6289,6 +6473,23 @@
                     DrawDialogs();
                 }
                 break;
+            case GuiState.EscapeMenu:
+                {
+                    if (!ENABLE_DRAW2D)
+                    {
+                        PerspectiveMode();
+                        return;
+                    }
+                    d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
+                    DrawDialogs();
+                    escapeMenu.EscapeMenuDraw();
+                }
+                break;
+            case GuiState.CraftingRecipes:
+                {
+                    DrawCraftingRecipes();
+                }
+                break;
         }
         
         //d_The3d.OrthoMode(Width, Height);
@@ -6334,6 +6535,8 @@
             Draw2dText(platform.IntToString(platform.FloatToInt(lagSeconds)), font, Width() - 100, 50 + 50 + 10, null, false);
             Draw2dText("Press F6 to reconnect", font, Width() / 2 - 200 / 2, 50, null, false);
         }
+
+        PerspectiveMode();
     }
 
     internal void FrameTick(float dt)
@@ -6587,6 +6790,14 @@
             if (entity == null) { continue; }
             if (entity.grenade == null) { continue; }
             UpdateGrenade(i, dt);
+        }
+        if (guistate == GuiState.Normal)
+        {
+            UpdatePicking();
+        }
+        if (guistate == GuiState.CraftingRecipes)
+        {
+            CraftingMouse();
         }
     }
 
@@ -7301,6 +7512,255 @@
         {
             d_HudInventory.Mouse_ButtonUp(args);
         }
+    }
+
+    internal int craftingTableposx;
+    internal int craftingTableposy;
+    internal int craftingTableposz;
+    internal Packet_CraftingRecipe[] craftingrecipes2;
+    internal int craftingrecipes2Count;
+    internal int[] craftingblocks;
+    internal int craftingblocksCount;
+    internal int craftingselectedrecipe;
+    internal void CraftingRecipesStart(Packet_CraftingRecipe[] recipes, int recipesCount, int[] blocks, int blocksCount, int posx, int posy, int posz)
+    {
+        this.craftingrecipes2 = recipes;
+        this.craftingrecipes2Count = recipesCount;
+        this.craftingblocks = blocks;
+        this.craftingblocksCount = blocksCount;
+        craftingTableposx = posx;
+        craftingTableposy = posy;
+        craftingTableposz = posz;
+        guistate = GuiState.CraftingRecipes;
+        menustate = new MenuState();
+        SetFreeMouse(true);
+    }
+
+    internal int[] okrecipes;
+    internal int okrecipesCount;
+    internal void DrawCraftingRecipes()
+    {
+        okrecipes = new int[1024];
+        okrecipesCount = 0;
+        for (int i = 0; i < craftingrecipes2Count; i++)
+        {
+            Packet_CraftingRecipe r = craftingrecipes2[i];
+            if (r == null)
+            {
+                continue;
+            }
+            bool next = false;
+            //can apply recipe?
+            for (int k = 0; k < r.IngredientsCount; k++)
+            {
+                Packet_Ingredient ingredient = r.Ingredients[k];
+                if (ingredient == null)
+                {
+                    continue;
+                }
+                if (craftingblocksFindAllCount(craftingblocks, craftingblocksCount, ingredient.Type) < ingredient.Amount)
+                {
+                    next = true;
+                    break;
+                }
+            }
+            if (!next)
+            {
+                okrecipes[okrecipesCount++] = i;
+            }
+        }
+        int menustartx = xcenter(600);
+        int menustarty = ycenter(okrecipesCount * 80);
+        if (okrecipesCount == 0)
+        {
+            Draw2dText1(language.NoMaterialsForCrafting(), xcenter(200), ycenter(20), 12, null, false);
+            return;
+        }
+        for (int i = 0; i < okrecipesCount; i++)
+        {
+            Packet_CraftingRecipe r = craftingrecipes2[okrecipes[i]];
+            for (int ii = 0; ii < r.IngredientsCount; ii++)
+            {
+                int xx = menustartx + 20 + ii * 130;
+                int yy = menustarty + i * 80;
+                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 30, 30, IntRef.Create(TextureIdForInventory[r.Ingredients[ii].Type]), terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Ingredients[ii].Amount), blocktypes[r.Ingredients[ii].Type].Name), xx + 50, yy, 12,
+                   IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
+            }
+            {
+                int xx = menustartx + 20 + 400;
+                int yy = menustarty + i * 80;
+                Draw2dTexture(d_TerrainTextures.terrainTexture(), xx, yy, 40, 40, IntRef.Create(TextureIdForInventory[r.Output.Type]), terrainTexture, Game.ColorFromArgb(255, 255, 255, 255), false);
+                Draw2dText1(platform.StringFormat2("{0} {1}", platform.IntToString(r.Output.Amount), blocktypes[r.Output.Type].Name), xx + 50, yy, 12,
+                  IntRef.Create(i == craftingselectedrecipe ? Game.ColorFromArgb(255, 255, 0, 0) : Game.ColorFromArgb(255, 255, 255, 255)), false);
+            }
+        }
+    }
+    int craftingblocksFindAllCount(int[] craftingblocks_, int craftingblocksCount_, int p)
+    {
+        int count = 0;
+        for (int i = 0; i < craftingblocksCount_; i++)
+        {
+            if (craftingblocks_[i] == p)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    internal void CraftingMouse()
+    {
+        if (okrecipes == null)
+        {
+            return;
+        }
+        int menustartx = xcenter(600);
+        int menustarty = ycenter(okrecipesCount * 80);
+        if (mouseCurrentY >= menustarty && mouseCurrentY < menustarty + okrecipesCount * 80)
+        {
+            craftingselectedrecipe = (mouseCurrentY - menustarty) / 80;
+        }
+        else
+        {
+            //craftingselectedrecipe = -1;
+        }
+        if (mouseleftclick)
+        {
+            if (okrecipesCount != 0)
+            {
+                CraftingRecipeSelected(craftingTableposx, craftingTableposy, craftingTableposz, IntRef.Create(okrecipes[craftingselectedrecipe]));
+            }
+            mouseleftclick = false;
+            GuiStateBackToGame();
+        }
+    }
+    internal CraftingTableTool d_CraftingTableTool;
+
+    public GamePlatform GetPlatform()
+    {
+        return platform;
+    }
+
+    public void SetPlatform(GamePlatform value)
+    {
+        platform = value;
+    }
+
+    internal int Font;
+    internal GameExit d_Exit;
+
+    internal void OnKeyPress(int keyChar)
+    {
+        if (guistate == GuiState.Inventory)
+        {
+            d_HudInventory.OnKeyPress(keyChar);
+        }
+    }
+}
+
+public class LoginData
+{
+    internal string ServerAddress;
+    internal int Port;
+    internal string AuthCode; //Md5(private server key + player name)
+
+    internal bool PasswordCorrect;
+    internal bool ServerCorrect;
+}
+
+public class LoginClientCi
+{
+    internal LoginResultRef loginResult;
+    public void Login(GamePlatform platform, string user, string password, string publicServerKey, LoginResultRef result, LoginData resultLoginData_)
+    {
+        loginResult = result;
+        resultLoginData = resultLoginData_;
+        result.value = LoginResult.Connecting;
+
+        LoginUser = user;
+        LoginPassword = password;
+        LoginPublicServerKey = publicServerKey;
+        shouldLogin = true;
+    }
+    string LoginUser;
+    string LoginPassword;
+    string LoginPublicServerKey;
+
+    bool shouldLogin;
+    string loginUrl;
+    HttpResponseCi loginUrlResponse;
+    HttpResponseCi loginResponse;
+    LoginData resultLoginData;
+    public void Update(GamePlatform platform)
+    {
+        if (loginResult == null)
+        {
+            return;
+        }
+
+        if (loginUrlResponse == null)
+        {
+            loginUrlResponse = new HttpResponseCi();
+            platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/login.txt", loginUrlResponse);
+        }
+        if (loginUrlResponse != null && loginUrlResponse.done)
+        {
+            loginUrl = platform.StringFromUtf8ByteArray(loginUrlResponse.value, loginUrlResponse.valueLength);
+            loginUrlResponse = null;
+        }
+
+        if (loginUrl != null)
+        {
+            if (shouldLogin)
+            {
+                shouldLogin = false;
+                string requestString = platform.StringFormat3("username={0}&password={1}&server={2}"
+                    , LoginUser, LoginPassword, LoginPublicServerKey);
+                IntRef byteArrayLength = new IntRef();
+                byte[] byteArray = platform.StringToUtf8ByteArray(requestString, byteArrayLength);
+                loginResponse = new HttpResponseCi();
+                platform.WebClientUploadDataAsync(loginUrl, byteArray, byteArrayLength.value, loginResponse);
+            }
+            if (loginResponse != null && loginResponse.done)
+            {
+                string responseString = platform.StringFromUtf8ByteArray(loginResponse.value, loginResponse.valueLength);
+                resultLoginData.PasswordCorrect = !(platform.StringContains(responseString, "Wrong username") || platform.StringContains(responseString, "Incorrect username"));
+                resultLoginData.ServerCorrect = !platform.StringContains(responseString, "server");
+                if (resultLoginData.PasswordCorrect)
+                {
+                    loginResult.value = LoginResult.Ok;
+                }
+                else
+                {
+                    loginResult.value = LoginResult.Failed;
+                }
+                IntRef linesCount = new IntRef();
+                string[] lines = platform.ReadAllLines(responseString, linesCount);
+                if (linesCount.value >= 3)
+                {
+                    resultLoginData.AuthCode = lines[0];
+                    resultLoginData.ServerAddress = lines[1];
+                    resultLoginData.Port = platform.IntParse(lines[2]);
+                }
+                loginResponse = null;
+            }
+        }
+    }
+}
+
+public class GameExit
+{
+    internal bool exit;
+
+    public void SetExit(bool p)
+    {
+        exit = p;
+    }
+
+    public bool GetExit()
+    {
+        return exit;
     }
 }
 
@@ -8880,6 +9340,128 @@ public class Kamera
     }
 }
 
+public class CraftingTableTool
+{
+    internal IMapStorage2 d_Map;
+    internal GameData d_Data;
+    public int[] GetOnTable(Vector3IntRef[] table, int tableCount, IntRef retCount)
+    {
+        int[] ontable = new int[2048];
+        int ontableCount = 0;
+        for (int i = 0; i < tableCount; i++)
+        {
+            Vector3IntRef v = table[i];
+            int t = d_Map.GetBlock(v.X, v.Y, v.Z + 1);
+            ontable[ontableCount++] = t;
+        }
+        retCount.value = ontableCount;
+        return ontable;
+    }
+    const int maxcraftingtablesize = 2000;
+    public Vector3IntRef[] GetTable(int posx, int posy, int posz, IntRef retCount)
+    {
+        Vector3IntRef[] l = new Vector3IntRef[2048];
+        int lCount = 0;
+        Vector3IntRef[] todo = new Vector3IntRef[2048];
+        int todoCount = 0;
+        todo[todoCount++] = Vector3IntRef.Create(posx, posy, posz);
+        for (; ; )
+        {
+            if (todoCount == 0 || lCount >= maxcraftingtablesize)
+            {
+                break;
+            }
+            Vector3IntRef p = todo[todoCount - 1];
+            todoCount--;
+            if (Vector3IntRefArrayContains(l, lCount, p))
+            {
+                continue;
+            }
+            l[lCount++] = p;
+            Vector3IntRef a = Vector3IntRef.Create(p.X + 1, p.Y, p.Z);
+            if (d_Map.GetBlock(a.X, a.Y, a.Z) == d_Data.BlockIdCraftingTable())
+            {
+                todo[todoCount++] = a;
+            }
+            Vector3IntRef b = Vector3IntRef.Create(p.X - 1, p.Y, p.Z);
+            if (d_Map.GetBlock(b.X, b.Y, b.Z) == d_Data.BlockIdCraftingTable())
+            {
+                todo[todoCount++] = b;
+            }
+            Vector3IntRef c = Vector3IntRef.Create(p.X, p.Y + 1, p.Z);
+            if (d_Map.GetBlock(c.X, c.Y, c.Z) == d_Data.BlockIdCraftingTable())
+            {
+                todo[todoCount++] = c;
+            }
+            Vector3IntRef d = Vector3IntRef.Create(p.X, p.Y - 1, p.Z);
+            if (d_Map.GetBlock(d.X, d.Y, d.Z) == d_Data.BlockIdCraftingTable())
+            {
+                todo[todoCount++] = d;
+            }
+        }
+        retCount.value = lCount;
+        return l;
+    }
+
+    bool Vector3IntRefArrayContains(Vector3IntRef[] l, int lCount, Vector3IntRef p)
+    {
+        for (int i = 0; i < lCount; i++)
+        {
+            if (l[i].X == p.X
+                && l[i].Y == p.Y
+                && l[i].Z == p.Z)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+public abstract class IMapStorage2
+{
+    public abstract int GetMapSizeX();
+    public abstract int GetMapSizeY();
+    public abstract int GetMapSizeZ();
+    public abstract int GetBlock(int x, int y, int z);
+    public abstract void SetBlock(int x, int y, int z, int tileType);
+}
+
+public class MapStorage2 : IMapStorage2
+{
+    public static MapStorage2 Create(Game game)
+    {
+        MapStorage2 s = new MapStorage2();
+        s.game = game;
+        return s;
+    }
+    Game game;
+    public override int GetMapSizeX()
+    {
+        return game.MapSizeX;
+    }
+
+    public override int GetMapSizeY()
+    {
+        return game.MapSizeY;
+    }
+
+    public override int GetMapSizeZ()
+    {
+        return game.MapSizeZ;
+    }
+
+    public override int GetBlock(int x, int y, int z)
+    {
+        return game.GetBlock(x, y, z);
+    }
+
+    public override void SetBlock(int x, int y, int z, int tileType)
+    {
+        game.SetBlock(x, y, z, tileType);
+    }
+}
+
 public class GameDataMonsters
 {
     public GameDataMonsters()
@@ -9208,5 +9790,20 @@ public class GameData
     {
         float one = 1;
         return (one * p) / 32;
+    }
+}
+
+public class OnCrashHandlerLeave : OnCrashHandler
+{
+    public static OnCrashHandlerLeave Create(Game game)
+    {
+        OnCrashHandlerLeave oncrash = new OnCrashHandlerLeave();
+        oncrash.g = game;
+        return oncrash;
+    }
+    Game g;
+    public override void OnCrash()
+    {
+        g.SendLeave(Packet_LeaveReasonEnum.Crash);
     }
 }

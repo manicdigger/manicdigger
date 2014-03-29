@@ -486,7 +486,7 @@ namespace ManicDigger
         {
             return game.NextFloat(min, max);
         }
-        GamePlatform platform { get { return game.platform; } }
+        public GamePlatform platform { get { return game.platform; } }
         public void SendPosition(float positionX, float positionY, float positionZ, float orientationX, float orientationY, float orientationZ)
         {
             game.SendPosition(positionX, positionY, positionZ, orientationX, orientationY, orientationZ);
@@ -881,6 +881,7 @@ namespace ManicDigger
         SunMoonRenderer d_SunMoonRenderer { get { return game.d_SunMoonRenderer; } set { game.d_SunMoonRenderer = value; } }
         Packet_BlockType[] NewBlockTypes { get { return game.NewBlockTypes; } set { game.NewBlockTypes = value; } }
         Packet_CraftingRecipe[] d_CraftingRecipes { get { return game.d_CraftingRecipes; } set { game.d_CraftingRecipes = value; } }
+        int d_CraftingRecipesCount { get { return game.d_CraftingRecipesCount; } set { game.d_CraftingRecipesCount = value; } }
         void InvalidVersionAllow()
         {
             game.InvalidVersionAllow();
@@ -971,6 +972,37 @@ namespace ManicDigger
         void UpdateTitleFps(float dt)
         {
             game.UpdateTitleFps(dt);
+        }
+        int craftingTableposx { get { return game.craftingTableposx; } set { game.craftingTableposx = value; } }
+        int craftingTableposy { get { return game.craftingTableposy; } set { game.craftingTableposy = value; } }
+        int craftingTableposz { get { return game.craftingTableposz; } set { game.craftingTableposz = value; } }
+        internal Packet_CraftingRecipe[] craftingrecipes2 { get { return game.craftingrecipes2; } set { game.craftingrecipes2 = value; } }
+        internal int craftingrecipes2Count { get { return game.craftingrecipes2Count; } set { game.craftingrecipes2Count = value; } }
+        internal int[] craftingblocks { get { return game.craftingblocks; } set { game.craftingblocks = value; } }
+        internal int craftingblocksCount { get { return game.craftingblocksCount; } set { game.craftingblocksCount = value; } }
+        internal int craftingselectedrecipe { get { return game.craftingselectedrecipe; } set { game.craftingselectedrecipe = value; } }
+        int[] okrecipes { get { return game.okrecipes; } set { game.okrecipes = value; } }
+        int okrecipesCount { get { return game.okrecipesCount; } set { game.okrecipesCount = value; } }
+        public void DrawCraftingRecipes()
+        {
+            game.DrawCraftingRecipes();
+        }
+        void CraftingMouse()
+        {
+            game.CraftingMouse();
+        }
+        CraftingTableTool d_CraftingTableTool { get { return game.d_CraftingTableTool; } set { game.d_CraftingTableTool = value; } }
+        float one { get { return game.one; } }
+        private void UpdatePicking()
+        {
+            game.UpdatePicking();
+        }
+        internal int Font { get { return game.Font; } set { game.Font = value; } }
+        public GameExit d_Exit { get { return game.d_Exit; } set { game.d_Exit = value; } }
+        public GuiStateEscapeMenu escapeMenu { get { return game.escapeMenu; } set { game.escapeMenu = value; } }
+        private void Draw2d()
+        {
+            game.Draw2d();
         }
     }
 }

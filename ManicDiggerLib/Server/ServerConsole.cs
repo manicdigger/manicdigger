@@ -8,9 +8,9 @@ namespace GameModeFortress
     public class ServerConsole
     {
         private Server server;
-        public IGameExit Exit;
+        public GameExit Exit;
 
-        public ServerConsole(Server server, IGameExit exit)
+        public ServerConsole(Server server, GameExit exit)
         {
             this.server = server;
             this.Exit = exit;

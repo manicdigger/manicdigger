@@ -29,7 +29,7 @@ namespace ManicDigger
     }
     public class AudioOpenAl : IAudio
     {
-        public IGameExit d_GameExit;
+        public GameExit d_GameExit;
         public AudioOpenAl()
         {
             try
@@ -119,7 +119,7 @@ namespace ManicDigger
         Dictionary<string, AudioSample> cache = new Dictionary<string, AudioSample>();
         class AudioTask
         {
-            public AudioTask(IGameExit gameexit, string id, AudioOpenAl audio, Vector3 position)
+            public AudioTask(GameExit gameexit, string id, AudioOpenAl audio, Vector3 position)
             {
                 this.gameexit = gameexit;
                 this.filename = id;
@@ -127,7 +127,7 @@ namespace ManicDigger
                 this.position = position;
             }
             AudioOpenAl audio;
-            IGameExit gameexit;
+            GameExit gameexit;
             public string filename;
             public Vector3 position;
             public void Play()

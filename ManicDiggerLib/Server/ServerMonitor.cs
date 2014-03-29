@@ -14,11 +14,11 @@ namespace GameModeFortress
     public class ServerMonitor
     {
         private ServerMonitorConfig config;
-        public IGameExit Exit;
+        public GameExit Exit;
         private Server server;
         private Dictionary<int, MonitorClient> monitorClients;
 
-        public ServerMonitor(Server server, IGameExit exit)
+        public ServerMonitor(Server server, GameExit exit)
         {
             this.server = server;
             this.LoadConfig();

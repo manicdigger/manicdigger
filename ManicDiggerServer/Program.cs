@@ -76,7 +76,7 @@ namespace ManicDiggerServer
         void ChildServer()
         {
             Server server = new Server();
-            server.exit = new GameExitDummy();
+            server.exit = new GameExit();
             server.Public = true;
             server.Start();
             autoRestartCycle = server.config.AutoRestartCycle;
@@ -85,7 +85,7 @@ namespace ManicDiggerServer
                 port = server.config.Port;
                 server.Process();
                 Thread.Sleep(1);
-                if (server.exit != null && server.exit.exit) { return; }
+                if (server.exit != null && server.exit.GetExit()) { return; }
 
                 if (!ENABLE_AUTORESTARTER)
                 {

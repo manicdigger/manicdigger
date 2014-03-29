@@ -90,6 +90,7 @@
     <Compile Include="..\Packet.Serializer.ci.cs">
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
+    <Compile Include="Client\EscapeMenu.ci.cs" />
     <Compile Include="Client\ManicDiggerGameWindow2.cs" />
     <Compile Include="ClientNative\Audio.cs" />
     <Compile Include="ClientNative\AviWriter.cs" />
@@ -123,26 +124,12 @@
     <Compile Include="Client\TerrainChunkTesselator.ci.cs" />
     <Compile Include="Client\TerrainRenderer.ci.cs" />
     <Compile Include="Client\GlMatrix.ci.cs" />
+    <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
-    <Compile Include="ClientCs\GuiStates\GuiStateCraftingRecipes.cs" />
-    <Compile Include="ClientCs\GuiStates\GuiStateEscapeMenu.cs" />
     <Compile Include="ClientCs\ManicDiggerGameWindow.cs" />
-    <Compile Include="ClientCs\Menu.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ClientCs\Menu.Designer.cs">
-      <DependentUpon>Menu.cs</DependentUpon>
-    </Compile>
     <Compile Include="Client\MainMenu.ci.cs" />
-    <Compile Include="ClientCs\Misc2.cs" />
     <Compile Include="Server\ModLoader.cs" />
-    <Compile Include="ClientCs\MultiplayerForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ClientCs\MultiplayerForm.Designer.cs">
-      <DependentUpon>MultiplayerForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Server\Mods\Fortress\BuildLog.cs" />
     <Compile Include="Server\Mods\Fortress\CraftingTable.cs" />
     <Compile Include="Server\Mods\Fortress\Default.cs" />
@@ -167,12 +154,6 @@
     <Compile Include="Server\Mods\War\War.cs" />
     <Compile Include="Server\Mods\War\WaterSimple.cs" />
     <Compile Include="Server\Packets.cs" />
-    <Compile Include="ClientCs\PasswordForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ClientCs\PasswordForm.Designer.cs">
-      <DependentUpon>PasswordForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Client\Platform.ci.cs" />
     <Compile Include="Client\PlatformNative.cs" />
     <Compile Include="Server\ScriptConsole.cs" />
@@ -187,12 +168,8 @@
     <Compile Include="Server\ServerMonitor.cs" />
     <Compile Include="Server\ServerWorldManager.cs" />
     <Compile Include="Server\Mod.cs" />
-    <Compile Include="ClientCs\Network\LoginClient.cs" />
     <Compile Include="ClientNative\OggDecoder.cs" />
     <Compile Include="ClientCs\GameWindowMisc.cs" />
-    <Compile Include="ClientCs\ManicDigger.cs" />
-    <Compile Include="ClientCs\Misc.cs" />
-    <Compile Include="ClientCs\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
     <Compile Include="ClientNative\TextRenderer.cs" />
@@ -202,20 +179,8 @@
     <None Include="c.snk" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ClientCs\Menu.resx">
-      <DependentUpon>Menu.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ClientCs\MultiplayerForm.resx">
-      <DependentUpon>MultiplayerForm.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <None Include="..\Packet.proto">
       <Link>Packet.proto</Link>
-    </None>
-    <None Include="ClientCs\PasswordForm.resx">
-      <DependentUpon>PasswordForm.cs</DependentUpon>
-      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <ItemGroup>

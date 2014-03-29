@@ -16,6 +16,7 @@
     public abstract string StringFormat(string format, string arg0);
     public abstract string StringFormat2(string format, string arg0, string arg1);
     public abstract string StringFormat3(string format, string arg0, string arg1, string arg2);
+    public abstract string StringFormat4(string format, string arg0, string arg1, string arg2, string arg3);
     public abstract void ClipboardSetText(string s);
     public abstract TextTexture CreateTextTexture(string text, float fontSize);
     public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
@@ -127,6 +128,29 @@
     public abstract string ClipboardGetText();
     public abstract void SetTitle(string applicationname);
     public abstract bool Focused();
+    public abstract void AddOnCrash(OnCrashHandler handler);
+    public abstract string KeyName(int key);
+    public abstract DisplayResolutionCi[] GetDisplayResolutions(IntRef resolutionsCount);
+    public abstract WindowState GetWindowState();
+    public abstract void SetWindowState(WindowState value);
+    public abstract void ChangeResolution(int width, int height, int bitsPerPixel, float refreshRate);
+    public abstract DisplayResolutionCi GetDisplayResolutionDefault();
+    public abstract byte[] StringToUtf8ByteArray(string s, IntRef retLength);
+    public abstract void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response);
+    public abstract string FileOpenDialog(string extension, string extensionName, string initialDirectory);
+}
+
+public enum WindowState
+{
+    Normal,
+    Minimized,
+    Maximized,
+    Fullscreen
+}
+
+public class OnCrashHandler
+{
+    public virtual void OnCrash() { }
 }
 
 public abstract class RandomCi

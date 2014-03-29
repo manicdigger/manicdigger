@@ -42,6 +42,11 @@ namespace GameModeFortress
             }
             bool IsSinglePlayer;
             string singleplayerpath;
+
+            bool MenuResultSinglePlayer = false;
+            ConnectData MenuResultMenuConnectData = null;
+            string MenuResultSavegamePath = null;
+
             ConnectData connectdata = new ConnectData();
             if (args.Length > 0)
             {
@@ -87,6 +92,9 @@ namespace GameModeFortress
                             //g.Start();
                             game.Run(60.0);
                         }
+                        MenuResultSinglePlayer = mainmenu.GetMenuResultSinglePlayer();
+                        MenuResultMenuConnectData = mainmenu.GetMenuResultMenuConnectData();
+                        MenuResultSavegamePath = mainmenu.GetMenuResultSavegamePath();
                     }
                 }
                 catch
@@ -95,44 +103,52 @@ namespace GameModeFortress
                 //new Thread(ServerThreadStart).Start();
                 //p.GameUrl = "127.0.0.1:25570";
                 //p.User = "Local";
-                Menu form = new Menu();
-                Application.Run(form);
-                if (form.Chosen == ChosenGameType.None)
+              //  Menu form = new Menu();
+              //  Application.Run(form);
+              //  if (form.Chosen == ChosenGameType.None)
+              //  {
+              //      return;
+              //  }
+              //  IsSinglePlayer = form.Chosen == ChosenGameType.Singleplayer;
+                if (MenuResultSinglePlayer)
                 {
-                    return;
-                }
-                IsSinglePlayer = form.Chosen == ChosenGameType.Singleplayer;
-                if (IsSinglePlayer)
-                {
-                    singleplayerpath = form.SinglePlayerSaveGamePath;
+                    if (MenuResultSavegamePath == null)
+                    {
+                        return;
+                    }
+                    singleplayerpath = MenuResultSavegamePath;
                     connectdata.SetIsServePasswordProtected(false);
                 }
                 else
                 {
-                    connectdata = form.MultiplayerConnectData;
+                    if (MenuResultMenuConnectData == null)
+                    {
+                        return;
+                    }
+                    connectdata = MenuResultMenuConnectData;
                     singleplayerpath = null;
                 }
             }
             savefilename = singleplayerpath;
 
             string serverPassword = "";
-            if (connectdata.GetIsServePasswordProtected())
-            {
-                PasswordForm passwordForm = new PasswordForm();
-                DialogResult dialogResult = passwordForm.ShowDialog();
+            //if (connectdata.GetIsServePasswordProtected())
+            //{
+            //    PasswordForm passwordForm = new PasswordForm();
+            //    DialogResult dialogResult = passwordForm.ShowDialog();
 
-                if (dialogResult == DialogResult.OK)
-                {
-                    serverPassword = passwordForm.Password;
-                }
-                if (dialogResult == DialogResult.Cancel)
-                {
-                    // TODO: go back to main menu
-                    throw new Exception();
-                }
-            }
+            //    if (dialogResult == DialogResult.OK)
+            //    {
+            //        serverPassword = passwordForm.Password;
+            //    }
+            //    if (dialogResult == DialogResult.Cancel)
+            //    {
+            //        // TODO: go back to main menu
+            //        throw new Exception();
+            //    }
+            //}
             connectdata.SetServerPassword(serverPassword);
-            StartGameWindowAndConnect(IsSinglePlayer, connectdata, singleplayerpath);
+            StartGameWindowAndConnect(MenuResultSinglePlayer, connectdata, singleplayerpath);
         }
 
         void StartGameWindowAndConnect(bool issingleplayer, ConnectData connectdata, string singleplayersavepath)
@@ -166,21 +182,24 @@ namespace GameModeFortress
             w.d_GlWindow = glwindow;
             w.d_Exit = exit;
             w.connectdata = connectdata;
-            w.crashreporter = crashreporter;
+            GamePlatformNative platform = new GamePlatformNative() { window = w.d_GlWindow };
+            platform.SetExit(exit);
+            w.game.SetPlatform(platform);
+             ((GamePlatformNative)w.game.GetPlatform()).crashreporter = crashreporter;
             w.Start();
             w.Run();
             if (w.reconnect)
             {
                 goto restart;
             }
-            exit.exit = true;
+            exit.SetExit(true);
         }
         ManicDiggerGameWindow curw;
 
         DummyNetwork dummyNetwork;
 
         string savefilename;
-        public IGameExit exit = new GameExitDummy();
+        public GameExit exit = new GameExit();
         //bool StartedSinglePlayerServer = false;
         public void ServerThreadStart()
         {
@@ -203,7 +222,7 @@ namespace GameModeFortress
                         Thread.Sleep(1);
                     }
                     curw.StartedSinglePlayerServer = true;
-                    if (exit != null && exit.exit) { server.SaveAll(); return; }
+                    if (exit != null && exit.GetExit()) { server.SaveAll(); return; }
                 }
             }
             catch (Exception e)

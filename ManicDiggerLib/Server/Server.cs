@@ -55,7 +55,7 @@ namespace ManicDiggerServer
     }
     public partial class Server : ICurrentTime, IDropItem
     {
-        public IGameExit exit;
+        public GameExit exit;
         public ServerMap d_Map;
         public GameData d_Data;
         public CraftingTableTool d_CraftingTableTool;
@@ -2713,8 +2713,10 @@ if (sent >= unknown.Count) { break; }
             {
                 return false;
             }
-            List<Vector3i> table = d_CraftingTableTool.GetTable(cmd.X, cmd.Y, cmd.Z);
-            List<int> ontable = d_CraftingTableTool.GetOnTable(table);
+            IntRef tableCount = new IntRef();
+            Vector3IntRef[] table = d_CraftingTableTool.GetTable(cmd.X, cmd.Y, cmd.Z, tableCount);
+            IntRef ontableCount = new IntRef();
+            int[] ontable = d_CraftingTableTool.GetOnTable(table, tableCount.value, ontableCount);
             List<int> outputtoadd = new List<int>();
             //for (int i = 0; i < craftingrecipes.Count; i++)
             int i = cmd.RecipeId;
@@ -2725,7 +2727,7 @@ if (sent >= unknown.Count) { break; }
                     //check if ingredients available
                     foreach (Ingredient ingredient in craftingrecipes[i].ingredients)
                     {
-                        if (ontable.FindAll(v => v == ingredient.Type).Count < ingredient.Amount)
+                        if (ontableFindAllCount(ontable, ontableCount, ingredient.Type) < ingredient.Amount)
                         {
                             goto nextrecipe;
                         }
@@ -2736,7 +2738,7 @@ if (sent >= unknown.Count) { break; }
                         for (int ii = 0; ii < ingredient.Amount; ii++)
                         {
                             //replace on table
-                            ReplaceOne(ontable, ingredient.Type, d_Data.BlockIdEmpty());
+                            ReplaceOne(ontable, ontableCount.value, ingredient.Type, d_Data.BlockIdEmpty());
                         }
                     }
                     //add output
@@ -2750,22 +2752,36 @@ if (sent >= unknown.Count) { break; }
             }
             foreach (var v in outputtoadd)
             {
-                ReplaceOne(ontable, d_Data.BlockIdEmpty(), v);
+                ReplaceOne(ontable, ontableCount.value, d_Data.BlockIdEmpty(), v);
             }
             int zz = 0;
             if (execute)
             {
                 foreach (var v in table)
                 {
-                    SetBlockAndNotify(v.x, v.y, v.z + 1, ontable[zz]);
+                    SetBlockAndNotify(v.X, v.Y, v.Z + 1, ontable[zz]);
                     zz++;
                 }
             }
             return true;
         }
-        private void ReplaceOne<T>(List<T> l, T from, T to)
+
+        private int ontableFindAllCount(int[] ontable, IntRef ontableCount, int p)
         {
-            for (int ii = 0; ii < l.Count; ii++)
+            int count = 0;
+            for (int i = 0; i < ontableCount.value; i++)
+            {
+                if (ontable[i] == p)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        private void ReplaceOne<T>(T[] l, int lCount, T from, T to)
+        {
+            for (int ii = 0; ii < lCount; ii++)
             {
                 if (l[ii].Equals(from))
                 {
@@ -4609,6 +4625,58 @@ if (sent >= unknown.Count) { break; }
         {
             return string.Format("[{0}, {1}]", x, y);
         }
+    }
+    public struct Vector3i
+    {
+        public Vector3i(int x, int y, int z)
+        {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+        public int x;
+        public int y;
+        public int z;
+        public override bool Equals(object obj)
+        {
+            if (obj is Vector3i)
+            {
+                Vector3i other = (Vector3i)obj;
+                return this.x == other.x && this.y == other.y && this.z == other.z;
+            }
+            return base.Equals(obj);
+        }
+        public static bool operator ==(Vector3i a, Vector3i b)
+        {
+            return a.x == b.x && a.y == b.y && a.z == b.z;
+        }
+        public static bool operator !=(Vector3i a, Vector3i b)
+        {
+            return !(a.x == b.x && a.y == b.y && a.z == b.z);
+        }
+        public override int GetHashCode()
+        {
+            int hash = 23;
+            unchecked
+            {
+                hash = hash * 37 + x;
+                hash = hash * 37 + y;
+                hash = hash * 37 + z;
+            }
+            return hash;
+        }
+        public override string ToString()
+        {
+            return string.Format("[{0}, {1}, {2}]", x, y, z);
+        }
+    }
+    public interface IMapStorage
+    {
+        int MapSizeX { get; set; }
+        int MapSizeY { get; set; }
+        int MapSizeZ { get; set; }
+        int GetBlock(int x, int y, int z);
+        void SetBlock(int x, int y, int z, int tileType);
     }
     [ProtoContract()]
     public class Ingredient

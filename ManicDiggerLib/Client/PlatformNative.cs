@@ -18,13 +18,12 @@ using System.Xml.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
-public class GamePlatformNative : GamePlatform, IGameExit
+public class GamePlatformNative : GamePlatform
 {
     public GamePlatformNative()
     {
         System.Threading.ThreadPool.SetMinThreads(32, 32);
         System.Threading.ThreadPool.SetMaxThreads(128, 128);
-        audio.d_GameExit = this;
         datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
         start.Start();
     }
@@ -155,6 +154,11 @@ public class GamePlatformNative : GamePlatform, IGameExit
         return string.Format(format, arg0, arg1, arg2);
     }
 
+    public override string StringFormat4(string format, string arg0, string arg1, string arg2, string arg3)
+    {
+        return string.Format(format, arg0, arg1, arg2, arg3);
+    }
+
     public override void ClipboardSetText(string s)
     {
         System.Windows.Forms.Clipboard.SetText(s);
@@ -238,7 +242,7 @@ public class GamePlatformNative : GamePlatform, IGameExit
 
     public override string PathSavegames()
     {
-        return ".";
+        return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
     }
 
     public override string PathCombine(string part1, string part2)
@@ -1283,6 +1287,174 @@ public class GamePlatformNative : GamePlatform, IGameExit
     public override bool Focused()
     {
         return window.Focused;
+    }
+
+    public CrashReporter crashreporter;
+
+    public override void AddOnCrash(OnCrashHandler handler)
+    {
+        crashreporter.OnCrash += (a, b) => { handler.OnCrash(); };
+    }
+
+    public override string KeyName(int key)
+    {
+        if (Enum.IsDefined(typeof(OpenTK.Input.Key), key))
+        {
+            string s = Enum.GetName(typeof(OpenTK.Input.Key), key);
+            return s;
+        }
+        //if (Enum.IsDefined(typeof(SpecialKey), key))
+        //{
+        //    string s = Enum.GetName(typeof(SpecialKey), key);
+        //    return s;
+        //}
+        return key.ToString();
+    }
+    DisplayResolutionCi[] resolutions;
+    int resolutionsCount;
+    public override DisplayResolutionCi[] GetDisplayResolutions(IntRef retResolutionsCount)
+    {
+        if (resolutions == null)
+        {
+            resolutions = new DisplayResolutionCi[1024];
+            foreach (var r in DisplayDevice.Default.AvailableResolutions)
+            {
+                if (r.Width < 800 || r.Height < 600 || r.BitsPerPixel < 16)
+                {
+                    continue;
+                }
+                DisplayResolutionCi r2 = new DisplayResolutionCi();
+                r2.Width = r.Width;
+                r2.Height = r.Height;
+                r2.BitsPerPixel = r.BitsPerPixel;
+                r2.RefreshRate = r.RefreshRate;
+                resolutions[resolutionsCount++] = r2;
+            }
+        }
+        retResolutionsCount.value = resolutionsCount;
+        return resolutions;
+    }
+
+    public override WindowState GetWindowState()
+    {
+        return (WindowState)window.WindowState;
+    }
+
+    public override void SetWindowState(WindowState value)
+    {
+        window.WindowState = (OpenTK.WindowState)value;
+    }
+
+    public override void ChangeResolution(int width, int height, int bitsPerPixel, float refreshRate)
+    {
+        DisplayDevice.Default.ChangeResolution(width, height, bitsPerPixel, refreshRate);
+    }
+
+    public void SetExit(GameExit exit)
+    {
+        audio.d_GameExit = exit;
+    }
+
+    public override DisplayResolutionCi GetDisplayResolutionDefault()
+    {
+        DisplayDevice d = DisplayDevice.Default;
+        DisplayResolutionCi r = new DisplayResolutionCi();
+        r.Width = d.Width;
+        r.Height = d.Height;
+        r.BitsPerPixel = d.BitsPerPixel;
+        r.RefreshRate = d.RefreshRate;
+        return r;
+    }
+
+    public override byte[] StringToUtf8ByteArray(string s, IntRef retLength)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(s);
+        retLength.value = data.Length;
+        return data;
+    }
+
+    class UploadData
+    {
+        public string url;
+        public byte[] data;
+        public int dataLength;
+        public HttpResponseCi response;
+    }
+
+    public override void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response)
+    {
+        UploadData d=new UploadData();
+        d.url=url;
+        d.data=data;
+        d.dataLength = dataLength;
+        d.response = response;
+        System.Threading.ThreadPool.QueueUserWorkItem(DoUploadData, d);
+    }
+
+    void DoUploadData(object o)
+    {
+        UploadData d = (UploadData)o;
+        try
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(d.url);
+            request.Method = "POST";
+            request.Timeout = 15000; // 15s timeout
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
+
+            request.ContentLength = d.dataLength;
+
+            System.Net.ServicePointManager.Expect100Continue = false; // fixes lighthttpd 417 error
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(d.data, 0, d.dataLength);
+                requestStream.Flush();
+            }
+            WebResponse response_ = request.GetResponse();
+
+            MemoryStream m = new MemoryStream();
+            using (Stream s = response_.GetResponseStream())
+            {
+                CopyTo(s, m);
+            }
+            d.response.value = m.ToArray();
+            d.response.valueLength = d.response.value.Length;
+            d.response.done = true;
+
+            request.Abort();
+
+        }
+        catch
+        {
+            d.response.error = true;
+        }
+    }
+
+    public static void CopyTo(Stream source, Stream destination)
+    {
+        // TODO: Argument validation
+        byte[] buffer = new byte[16384]; // For example...
+        int bytesRead;
+        while ((bytesRead = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            destination.Write(buffer, 0, bytesRead);
+        }
+    }
+
+    public override string FileOpenDialog(string extension, string extensionName, string initialDirectory)
+    {
+        OpenFileDialog d = new OpenFileDialog();
+        d.InitialDirectory = initialDirectory;
+        d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
+        string dir = System.Environment.CurrentDirectory;
+        DialogResult result = d.ShowDialog();
+        System.Environment.CurrentDirectory = dir;
+        if (result == DialogResult.OK)
+        {
+            return d.FileName;
+        }
+        return null;
     }
 }
 
