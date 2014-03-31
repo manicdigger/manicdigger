@@ -3643,6 +3643,7 @@
             {
                 PlayerStats.CurrentOxygen = PlayerStats.MaxOxygen;
             }
+            if (ServerVersionAtLeast(2014, 3, 31))
             {
                 Packet_Client packet = new Packet_Client();
                 packet.Id = Packet_ClientIdEnum.Oxygen;
@@ -3652,6 +3653,64 @@
             }
             lastOxygenTickMilliseconds = platform.TimeMillisecondsFromStart();
         }
+    }
+
+    bool ServerVersionAtLeast(int year, int month, int day)
+    {
+        if (serverGameVersion == null)
+        {
+            return true;
+        }
+        if (VersionToInt(serverGameVersion) < DateToInt(year, month, day))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    bool IsVersionDate(string version)
+    {
+        IntRef versionCharsCount = new IntRef();
+        int[] versionChars = platform.StringToCharArray(version, versionCharsCount);
+        if (versionCharsCount.value >= 10)
+        {
+            if (versionChars[4] == 45 && versionChars[7] == 45) // '-'
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    int VersionToInt(string version)
+    {
+        int max = 1000 * 1000 * 1000;
+        if (!IsVersionDate(version))
+        {
+            return max;
+        }
+        FloatRef year = new FloatRef();
+        FloatRef month = new FloatRef();
+        FloatRef day = new FloatRef();
+        if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 0, 4), year))
+        {
+            if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 5, 2), month))
+            {
+                if (platform.FloatTryParse(StringTools.StringSubstring(platform, version, 8, 2), day))
+                {
+                    int year_ = platform.FloatToInt(year.value);
+                    int month_ = platform.FloatToInt(month.value);
+                    int day_ = platform.FloatToInt(day.value);
+                    return year_ * 10000 + month_ * 100 + day_;
+                }
+            }
+        }
+        return max;
+    }
+
+    int DateToInt(int year, int month, int day)
+    {
+        return year * 10000 + month * 100 + day;
     }
 
     internal BlockPosSide Nearest(BlockPosSide[] pick2, int pick2Count, float x, float y, float z)
@@ -4523,6 +4582,7 @@
         }
     }
 
+    string serverGameVersion;
     internal void ProcessPacket(Packet_Server packet)
     {
         switch (packet.Id)
@@ -4531,10 +4591,10 @@
                 {
                     string invalidversionstr = language.InvalidVersionConnectAnyway();
 
-                    string servergameversion = packet.Identification.MdProtocolVersion;
-                    if (servergameversion != platform.GetGameVersion())
+                    serverGameVersion = packet.Identification.MdProtocolVersion;
+                    if (serverGameVersion != platform.GetGameVersion())
                     {
-                        string q = platform.StringFormat2(invalidversionstr, platform.GetGameVersion(), servergameversion);
+                        string q = platform.StringFormat2(invalidversionstr, platform.GetGameVersion(), serverGameVersion);
                         invalidVersionDrawMessage = q;
                         invalidVersionPacketIdentification = packet;
                     }
