@@ -3136,18 +3136,18 @@
             Player p = e.player;
 
             PlayerDrawInfo info = p.playerDrawInfo;
-            float realposX = p.NetworkX;
-            float realposY = p.NetworkY;
-            float realposZ = p.NetworkZ;
-            if ((!Vec3Equal(realposX, realposY, realposZ,
-                            info.lastrealposX, info.lastrealposY, info.lastrealposZ))
-                || p.Heading != info.lastrealheading
-                || p.Pitch != info.lastrealpitch)
+            float networkposX = p.NetworkX;
+            float networkposY = p.NetworkY;
+            float networkposZ = p.NetworkZ;
+            if ((!Vec3Equal(networkposX, networkposY, networkposZ,
+                            info.lastnetworkposX, info.lastnetworkposY, info.lastnetworkposZ))
+                || p.NetworkHeading != info.lastnetworkheading
+                || p.NetworkPitch != info.lastnetworkpitch)
             {
                 PlayerInterpolationState state = new PlayerInterpolationState();
-                state.positionX = realposX;
-                state.positionY = realposY;
-                state.positionZ = realposZ;
+                state.positionX = networkposX;
+                state.positionY = networkposY;
+                state.positionZ = networkposZ;
                 state.heading = p.NetworkHeading;
                 state.pitch = p.NetworkPitch;
                 info.interpolation.AddNetworkPacket(state, totaltimeMilliseconds);
@@ -3174,11 +3174,11 @@
             info.lastcurposX = curposX;
             info.lastcurposY = curposY;
             info.lastcurposZ = curposZ;
-            info.lastrealposX = realposX;
-            info.lastrealposY = realposY;
-            info.lastrealposZ = realposZ;
-            info.lastrealheading = p.Heading;
-            info.lastrealpitch = p.Pitch;
+            info.lastnetworkposX = networkposX;
+            info.lastnetworkposY = networkposY;
+            info.lastnetworkposZ = networkposZ;
+            info.lastnetworkheading = p.NetworkHeading;
+            info.lastnetworkpitch = p.NetworkPitch;
 
             p.PositionX = curposX;
             p.PositionY = curposY;
@@ -8065,14 +8065,14 @@ public class PlayerDrawInfo
     }
     internal AnimationState anim;
     internal NetworkInterpolation interpolation;
-    internal float lastrealposX;
-    internal float lastrealposY;
-    internal float lastrealposZ;
+    internal float lastnetworkposX;
+    internal float lastnetworkposY;
+    internal float lastnetworkposZ;
     internal float lastcurposX;
     internal float lastcurposY;
     internal float lastcurposZ;
-    internal byte lastrealheading;
-    internal byte lastrealpitch;
+    internal byte lastnetworkheading;
+    internal byte lastnetworkpitch;
     internal float velocityX;
     internal float velocityY;
     internal float velocityZ;
