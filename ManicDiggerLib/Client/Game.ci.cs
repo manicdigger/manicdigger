@@ -115,6 +115,7 @@
         enable_move = true;
         escapeMenu = new GuiStateEscapeMenu();
         handTexture = -1;
+        modelViewInverted = new float[16];
     }
 
     public void Start()
@@ -6868,6 +6869,7 @@
     float lastplayerpositionY;
     float lastplayerpositionZ;
 
+    float[] modelViewInverted;
     internal void NextBullet(int bulletsshot)
     {
         bool left = mouseLeft;
@@ -6981,18 +6983,11 @@
             ray_start_point[2] = -1;
         }
 
-        //Matrix4 the_modelview;
-        //Read the current modelview matrix into the array the_modelview
-        //GL.GetFloat(GetPName.ModelviewMatrix, out the_modelview);
+        Mat4.Copy(modelViewInverted, mvMatrix.Peek());
+        Mat4.Invert(modelViewInverted, modelViewInverted);
+        Vec3.TransformMat4(ray, ray, modelViewInverted);
+        Vec3.TransformMat4(ray_start_point, ray_start_point, modelViewInverted);
 
-        float[] theModelView = mvMatrix.Peek();
-        //if (theModelView[0] == float.NaN || theModelView.Equals(new Matrix4())) { return; }
-        //Matrix4 theModelView = d_The3d.ModelViewMatrix;
-        Mat4.Invert(theModelView, theModelView);
-        //the_modelview = new Matrix4();
-        Vec3.TransformMat4(ray, ray, theModelView);
-        Vec3.TransformMat4(ray_start_point, ray_start_point, theModelView);
-        //ray_start_point = Vector3.Transform(ray_start_point, theModelView);
         Line3D pick = new Line3D();
         float raydirX = -(ray[0] - ray_start_point[0]);
         float raydirY = -(ray[1] - ray_start_point[1]);
