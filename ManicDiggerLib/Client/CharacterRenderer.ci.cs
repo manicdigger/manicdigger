@@ -44,7 +44,8 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
     public CharacterRendererMonsterCode()
     {
         one = 1;
-        animperiod = one * 3 / 10; //was 0.8
+        animperiod = one * 3 / 10;
+        animperiodUpDown = one * 8 / 10;
         jumpheight = one * 25 / 1000; //0.025f;
         code = new ValueArray[8 * 1024];
     }
@@ -91,6 +92,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
     ValueArray[] code;
     int codeCount;
     float animperiod;
+    float animperiodUpDown;
     float characterlight;
     float outofphase;
     float speed;
@@ -184,7 +186,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         variables.SetFloat("pitch", pitch);
         variables.SetFloat("headingdeg", (headingdeg));
         variables.SetFloat("pitchdeg", (one * pitch / 256) * 360);
-        variables.SetFloat("updown", UpDown(animstate.interp, animperiod));
+        variables.SetFloat("updown", UpDown(animstate.interp, animperiodUpDown));
         variables.SetFloat("limbrotation1", LeftLegRotation(animstate.interp, animperiod));
         variables.SetFloat("limbrotation2", RightLegRotation(animstate.interp, animperiod));
         variables.SetFloat("skin", playertexture);
@@ -379,8 +381,8 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
     {
         //float jumpheight = 0.10f;
         //return (float)TriWave(2 * Math.PI * time / (period / 2)) * jumpheight + jumpheight / 2;
-
-        return game.platform.MathSin(2 * Game.GetPi() * time / (period / 2)) * jumpheight + jumpheight / 2;
+        float jumpheightNow = jumpheight * speed;
+        return game.platform.MathSin(2 * Game.GetPi() * time / (period / 2)) * jumpheightNow + jumpheightNow / 2;
     }
     float LeftLegRotation(float time, float period)
     {
