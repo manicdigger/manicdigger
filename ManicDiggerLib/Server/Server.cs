@@ -754,6 +754,8 @@ namespace ManicDiggerServer
             	banlist = null;
                 SaveBanlist();
             }
+            banlist.ClearTimeBans();
+            SaveBanlist();
             Console.WriteLine(language.ServerBanlistLoaded());
         }
         
@@ -1063,6 +1065,7 @@ namespace ManicDiggerServer
                             ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                             KillPlayer(this.lastClientId);
                         }
+                        SaveBanlist();  //Save the banlist as the previous check can alter it (removing timebans)
                         break;
                     case NetworkMessageType.Data:
                         if (clientid == -1)
@@ -2077,6 +2080,7 @@ if (sent >= unknown.Count) { break; }
                             KillPlayer(clientid);
                             break;
                         }
+                        SaveBanlist();  //Save the banlist as the previous check can alter it (removing timebans)
 
                         //When a duplicate user connects, append a number to name.
                         foreach (var k in clients)
