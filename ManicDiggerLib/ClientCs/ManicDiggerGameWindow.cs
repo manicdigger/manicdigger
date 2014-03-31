@@ -454,7 +454,18 @@ namespace ManicDigger
                     else
                     {
                         OrthoMode(Width(), Height());
-                        Draw2dBitmapFile(img, Width() / 2, Height() - 512, 512, 512);
+                        if (lasthandimage != img)
+                        {
+                            lasthandimage = img;
+                            byte[] file = game.GetFile(img);
+                            BitmapCi bmp = platform.BitmapCreateFromPng(file, platform.ByteArrayLength(file));
+                            if (bmp != null)
+                            {
+                                game.handTexture = game.platform.LoadTextureFromBitmap(bmp);
+                                platform.BitmapDelete(bmp);
+                            }
+                        }
+                        Draw2dTexture(game.handTexture, Width() / 2, Height() - 512, 512, 512, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
                         PerspectiveMode();
                     }
                 }
@@ -484,6 +495,7 @@ namespace ManicDigger
                 }
             }
         }
+        string lasthandimage;
         bool startedconnecting;
         
         Random rnd = new Random();        

@@ -114,6 +114,7 @@
         railheight = one * 3 / 10;
         enable_move = true;
         escapeMenu = new GuiStateEscapeMenu();
+        handTexture = -1;
     }
 
     public void Start()
@@ -5214,6 +5215,8 @@
     {
         files.Set(blobdownloadname, downloaded);
     }
+
+    internal int handTexture;
 
     bool ammostarted;
     internal Packet_CraftingRecipe[] d_CraftingRecipes;
