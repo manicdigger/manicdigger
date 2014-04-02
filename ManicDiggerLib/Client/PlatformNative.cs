@@ -17,6 +17,7 @@ using ManicDigger.ClientNative;
 using System.Xml.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Threading;
 
 public class GamePlatformNative : GamePlatform
 {
@@ -185,15 +186,6 @@ public class GamePlatformNative : GamePlatform
         return t;
     }
     ManicDigger.Renderers.TextRenderer r = new ManicDigger.Renderers.TextRenderer();
-    void LoadBitmap(int target, int level, int type, Bitmap bmp2)
-    {
-        BitmapData bmp_data = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-        GL.TexImage2D((TextureTarget)target, level, PixelInternalFormat.Rgba,
-            bmp2.Width, bmp2.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, (PixelType)type, bmp_data.Scan0);
-
-        bmp2.UnlockBits(bmp_data);
-    }
     Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
     public SizeF TextSize(string text, float fontsize)
     {
@@ -284,6 +276,10 @@ public class GamePlatformNative : GamePlatform
             ((HttpResponseCi)e.UserState).valueLength = e.Result.Length;
             ((HttpResponseCi)e.UserState).done = true;
         }
+        else
+        {
+            ((HttpResponseCi)e.UserState).error = true;
+        }
     }
 
     public override string FileName(string fullpath)
@@ -336,6 +332,7 @@ public class GamePlatformNative : GamePlatform
         window.Mouse.Move += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
         window.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
         window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
+        window.TargetRenderFrequency = 0;
     }
 
     void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
@@ -861,20 +858,32 @@ public class GamePlatformNative : GamePlatform
         return (float)Math.Sin(a);
     }
 
-    AudioOpenAl audio = new AudioOpenAl();
+    AudioOpenAl audio;
+    public GameExit gameexit;
+    void StartAudio()
+    {
+        if (audio == null)
+        {
+            audio = new AudioOpenAl();
+            audio.d_GameExit = gameexit;
+        }
+    }
 
     public override void AudioPlay(string path, float x, float y, float z)
     {
+        StartAudio();
         audio.Play(path, new Vector3(x, y, z));
     }
     
     public override void AudioPlayLoop(string path, bool play, bool restart)
     {
+        StartAudio();
         audio.PlayAudioLoop(path, play, restart);
     }
 
     public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
     {
+        StartAudio();
         audio.UpdateListener(new Vector3(posX,posY,posZ), new Vector3(orientX, orientY, orientZ));
     }
 
@@ -1352,7 +1361,7 @@ public class GamePlatformNative : GamePlatform
 
     public void SetExit(GameExit exit)
     {
-        audio.d_GameExit = exit;
+        gameexit = exit;
     }
 
     public override DisplayResolutionCi GetDisplayResolutionDefault()
@@ -1455,6 +1464,180 @@ public class GamePlatformNative : GamePlatform
             return d.FileName;
         }
         return null;
+    }
+
+    public override int GlGetMaxTextureSize()
+    {
+        int size = 1024;
+        try
+        {
+            GL.GetInteger(GetPName.MaxTextureSize, out size);
+        }
+        catch
+        {
+        }
+        return size;
+    }
+
+    public override void GlDepthMask(bool flag)
+    {
+        GL.DepthMask(flag);
+    }
+
+    public override void GlCullFaceBack()
+    {
+        GL.CullFace(CullFaceMode.Back);
+    }
+
+    public override void GlEnableLighting()
+    {
+        GL.Enable(EnableCap.Lighting);
+    }
+
+    public override void GlEnableColorMaterial()
+    {
+        GL.Enable(EnableCap.ColorMaterial);
+    }
+
+    public override void GlColorMaterialFrontAndBackAmbientAndDiffuse()
+    {
+        GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
+    }
+
+    public override void GlShadeModelSmooth()
+    {
+        GL.ShadeModel(ShadingModel.Smooth);
+    }
+
+    public override void MouseCursorHide()
+    {
+        if (!IsMac)
+        {
+            System.Windows.Forms.Cursor.Hide();
+        }
+        else
+        {
+            window.CursorVisible = false;
+        }
+    }
+
+    public override void ApplicationDoEvents()
+    {
+        if (IsMono)
+        {
+            Application.DoEvents();
+            Thread.Sleep(0);
+        }
+    }
+
+    public override void UpdateMousePosition(UpdateMousePositionArgs args)
+    {
+        args.mouseCurrentX = System.Windows.Forms.Cursor.Position.X;
+        args.mouseCurrentY = System.Windows.Forms.Cursor.Position.Y;
+        if (args.freemouse)
+        {
+            args.mouseCurrentX = args.mouseCurrentX - window.X;
+            args.mouseCurrentY = args.mouseCurrentY - window.Y;
+
+            args.mouseCurrentY = args.mouseCurrentY - System.Windows.Forms.SystemInformation.CaptionHeight;
+        }
+        if (!window.Focused)
+        {
+            return;
+        }
+        if (args.freemousejustdisabled)
+        {
+            mouse_previous.X = args.mouseCurrentX;
+            mouse_previous.Y = args.mouseCurrentY;
+            args.freemousejustdisabled = false;
+        }
+        if (!args.freemouse)
+        {
+            //There are two versions:
+
+            //a) System.Windows.Forms.Cursor and GameWindow.CursorVisible = true.
+            //It works by centering global mouse cursor every frame.
+            //*Windows:
+            //   *OK.
+            //   *On a few YouTube videos mouse cursor is not hiding properly.
+            //    That could be just a problem with video recording software.
+            //*Ubuntu: Broken, mouse cursor doesn't hide.
+            //*Mac: Broken, mouse doesn't move at all.
+
+            //b) OpenTk.Input.Mouse and GameWindow.CursorVisible = false.
+            //Uses raw mouse coordinates, movement is not accelerated.
+            //*Windows:
+            //  *OK.
+            //  *Worse than a), because this doesn't use system-wide mouse acceleration.
+            //*Ubuntu: Broken, crashes with "libxi" library missing.
+            //*Mac: OK.
+
+            if (!IsMac)
+            {
+                //a)
+                int centerx = window.Bounds.Left + (window.Bounds.Width / 2);
+                int centery = window.Bounds.Top + (window.Bounds.Height / 2);
+
+                args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
+                args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
+
+                System.Windows.Forms.Cursor.Position =
+                    new Point(centerx, centery);
+                mouse_previous = new Point(centerx, centery);
+            }
+            else
+            {
+                //b)
+                var state = OpenTK.Input.Mouse.GetState();
+                float dx = state.X - mouse_previous_state.X;
+                float dy = state.Y - mouse_previous_state.Y;
+                mouse_previous_state = state;
+                //These are raw coordinates, so need to apply acceleration manually.
+                float dx2 = (dx * Math.Abs(dx) * MouseAcceleration1);
+                float dy2 = (dy * Math.Abs(dy) * MouseAcceleration1);
+                dx2 += dx * MouseAcceleration2;
+                dy2 += dy * MouseAcceleration2;
+                args.mouseDeltaX = dx2;
+                args.mouseDeltaY = dy2;
+            }
+        }
+    }
+    public float MouseAcceleration1 = 0.12f;
+    public float MouseAcceleration2 = 0.7f;
+    OpenTK.Input.MouseState mouse_previous_state;
+    Point mouse_previous;
+
+    public override void ThreadSpinWait(int iterations)
+    {
+        Thread.SpinWait(iterations);
+    }
+
+    public override void GlDisableFog()
+    {
+        GL.Disable(EnableCap.Fog);
+    }
+
+    public override bool SinglePlayerServerAvailable()
+    {
+        return true;
+    }
+
+    public override void SinglePlayerServerStart(string saveFilename)
+    {
+        StartSinglePlayerServer(saveFilename);
+    }
+
+    public System.Action<string> StartSinglePlayerServer;
+    public bool singlePlayerServerLoaded;
+
+    public override bool SinglePlayerServerLoaded()
+    {
+        return singlePlayerServerLoaded;
+    }
+    public DummyNetwork singlePlayerServerDummyNetwork;
+    public override DummyNetwork SinglePlayerServerGetNetwork()
+    {
+        return singlePlayerServerDummyNetwork;
     }
 }
 

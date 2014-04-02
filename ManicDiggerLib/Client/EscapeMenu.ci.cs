@@ -53,7 +53,6 @@
         {
             RestoreResolution();
             game.SendLeave(Packet_LeaveReasonEnum.Leave);
-            game.d_Exit.exit = true;
             game.platform.WindowExit();
         }
     }

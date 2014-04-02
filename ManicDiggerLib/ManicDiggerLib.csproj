@@ -91,7 +91,6 @@
       <Link>Common\Packet.Serializer.ci.cs</Link>
     </Compile>
     <Compile Include="Client\EscapeMenu.ci.cs" />
-    <Compile Include="Client\ManicDiggerGameWindow2.cs" />
     <Compile Include="ClientNative\Audio.cs" />
     <Compile Include="ClientNative\AviWriter.cs" />
     <Compile Include="ClientNative\Misc.cs" />
@@ -127,7 +126,6 @@
     <Compile Include="Server\GetFile.cs" />
     <Compile Include="Server\Inventory.cs" />
     <Compile Include="Server\ChunkDb.cs" />
-    <Compile Include="ClientCs\ManicDiggerGameWindow.cs" />
     <Compile Include="Client\MainMenu.ci.cs" />
     <Compile Include="Server\ModLoader.cs" />
     <Compile Include="Server\Mods\Fortress\BuildLog.cs" />
@@ -169,7 +167,6 @@
     <Compile Include="Server\ServerWorldManager.cs" />
     <Compile Include="Server\Mod.cs" />
     <Compile Include="ClientNative\OggDecoder.cs" />
-    <Compile Include="ClientCs\GameWindowMisc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\Shadows.cs" />
     <Compile Include="ClientNative\TextRenderer.cs" />

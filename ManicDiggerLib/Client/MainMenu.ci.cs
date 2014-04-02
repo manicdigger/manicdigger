@@ -51,11 +51,13 @@
     public void HandleKeyDown(KeyEventArgs e)
     {
         currentlyPressedKeys[e.GetKeyCode()] = true;
+        screen.OnKeyDown(e);
     }
 
     public void HandleKeyUp(KeyEventArgs e)
     {
         currentlyPressedKeys[e.GetKeyCode()] = false;
+        screen.OnKeyUp(e);
     }
 
     public void HandleKeyPress(KeyPressEventArgs e)
@@ -110,7 +112,7 @@
         }
     }
 
-    void DrawScene()
+    void DrawScene(float dt)
     {
         p.GlViewport(0, 0, viewportWidth, viewportHeight);
         p.GlClearColorBufferAndDepthBuffer();
@@ -125,7 +127,7 @@
             Mat4.Ortho(pMatrix, 0, p.GetCanvasWidth(), p.GetCanvasHeight(), 0, 0, 10);
         }
 
-        screen.Render();
+        screen.Render(dt);
     }
 
     Screen screen;
@@ -270,7 +272,7 @@
         viewportWidth = p.GetCanvasWidth();
         viewportHeight = p.GetCanvasHeight();
         HandleKeys();
-        DrawScene();
+        DrawScene(args.GetDt());
         Animate();
         loginClient.Update(p);
     }
@@ -464,6 +466,13 @@
     {
     }
 
+    internal void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
+    {
+        ScreenGame screenGame = new ScreenGame();
+        screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
+        screen = screenGame;
+    }
+
     internal void ConnectToGame(LoginData loginResultData, string username)
     {
         ConnectData connectData = new ConnectData();
@@ -474,14 +483,14 @@
 
         MenuResultSinglePlayer = false;
         MenuResultMenuConnectData = connectData;
-        p.WindowExit();
+        StartGame(false, null, connectData);
     }
 
     public void ConnectToSingleplayer(string filename)
     {
         MenuResultSinglePlayer = true;
         MenuResultSavegamePath = filename;
-        p.WindowExit();
+        StartGame(true, filename, null);
     }
 
     internal bool MenuResultSinglePlayer;
@@ -529,7 +538,7 @@ public class Screen
         widgets = new MenuWidget[WidgetCount];
     }
     internal MainMenu menu;
-    public virtual void Render() { }
+    public virtual void Render(float dt) { }
     public virtual void OnKeyDown(KeyEventArgs e) {  }
     public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
     public virtual void OnKeyUp(KeyEventArgs e) { }
@@ -700,7 +709,7 @@ public class ScreenMain : Screen
     }
     MenuWidget singleplayer;
     MenuWidget multiplayer;
-    public override void Render()
+    public override void Render(float dt)
     {
         GamePlatform p = menu.p;
 
@@ -784,7 +793,7 @@ public class ScreenSingleplayer : Screen
     string[] savegames;
     int savegamesCount;
 
-    public override void Render()
+    public override void Render(float dt)
     {
         GamePlatform p = menu.p;
 
@@ -921,7 +930,7 @@ public class ScreenModifyWorld : Screen
 
     MenuWidget back;
 
-    public override void Render()
+    public override void Render(float dt)
     {
         GamePlatform p = menu.p;
 
@@ -1019,7 +1028,7 @@ public class ScreenLogin : Screen
 
     MenuWidget back;
 
-    public override void Render()
+    public override void Render(float dt)
     {
         if (loginResultData != null
             && loginResultData.ServerCorrect
@@ -1156,6 +1165,85 @@ public class ScreenLogin : Screen
     internal string serverHash;
 }
 
+public class ScreenGame : Screen
+{
+    public ScreenGame()
+    {
+        game = new Game();
+    }
+    Game game;
+
+    public void Start(GamePlatform platform, bool singleplayer, string singleplayerSavePath, ConnectData connectData)
+    {
+        game.platform = platform;
+        game.issingleplayer = singleplayer;
+        if (singleplayer)
+        {
+            platform.SinglePlayerServerStart(singleplayerSavePath);
+            connectData = new ConnectData();
+            connectData.Username = "Local";
+            game.connectdata = connectData;
+
+            DummyNetClient netclient = new DummyNetClient();
+            netclient.SetPlatform(platform);
+            netclient.SetNetwork(platform.SinglePlayerServerGetNetwork());
+            game.main = netclient;
+        }
+        else
+        {
+            game.connectdata = connectData;
+            EnetNetClient client = new EnetNetClient();
+            client.SetPlatform(platform);
+            game.main = client;
+        }
+        game.Start();
+        game.OnLoad();
+    }
+
+    public override void Render(float dt)
+    {
+        game.OnRenderFrame(dt);
+    }
+
+    public override void OnKeyDown(KeyEventArgs e)
+    {
+        game.KeyDown(e.GetKeyCode());
+    }
+
+    public override void OnKeyUp(KeyEventArgs e)
+    {
+        game.KeyUp(e.GetKeyCode());
+    }
+
+    public override void OnKeyPress(KeyPressEventArgs e)
+    {
+        game.KeyPress(e.GetKeyChar());
+    }
+
+    public override void OnMouseDown(MouseEventArgs e)
+    {
+        if (!game.platform.Focused())
+        {
+            return;
+        }
+        game.MouseDown(e);
+    }
+
+    public override void OnMouseUp(MouseEventArgs e)
+    {
+        if (!game.platform.Focused())
+        {
+            return;
+        }
+        game.MouseUp(e);
+    }
+
+    public override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        game.MouseWheelChanged(e.GetDeltaPrecise());
+    }
+}
+
 public enum LoginResult
 {
     None,
@@ -1214,7 +1302,7 @@ public class ScreenMultiplayer : Screen
     const int serversOnListCount = 1024;
 
     bool loading;
-    public override void Render()
+    public override void Render(float dt)
     {
         if (!loaded)
         {

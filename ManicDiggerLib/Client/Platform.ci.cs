@@ -138,6 +138,32 @@
     public abstract byte[] StringToUtf8ByteArray(string s, IntRef retLength);
     public abstract void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response);
     public abstract string FileOpenDialog(string extension, string extensionName, string initialDirectory);
+    public abstract int GlGetMaxTextureSize();
+    public abstract void GlDepthMask(bool flag);
+    public abstract void GlCullFaceBack();
+    public abstract void GlEnableLighting();
+    public abstract void GlEnableColorMaterial();
+    public abstract void GlColorMaterialFrontAndBackAmbientAndDiffuse();
+    public abstract void GlShadeModelSmooth();
+    public abstract void MouseCursorHide();
+    public abstract void ApplicationDoEvents();
+    public abstract void UpdateMousePosition(UpdateMousePositionArgs args);
+    public abstract void ThreadSpinWait(int iterations);
+    public abstract void GlDisableFog();
+    public abstract bool SinglePlayerServerAvailable();
+    public abstract void SinglePlayerServerStart(string saveFilename);
+    public abstract bool SinglePlayerServerLoaded();
+    public abstract DummyNetwork SinglePlayerServerGetNetwork();
+}
+
+public class UpdateMousePositionArgs
+{
+    internal bool freemouse;
+    internal bool freemousejustdisabled;
+    internal int mouseCurrentX;
+    internal int mouseCurrentY;
+    internal float mouseDeltaX;
+    internal float mouseDeltaY;
 }
 
 public enum WindowState

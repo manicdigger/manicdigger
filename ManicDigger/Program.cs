@@ -14,6 +14,7 @@ using System.Text;
 using System.Net.Sockets;
 using Lidgren.Network;
 using ManicDigger.ClientNative;
+using OpenTK.Graphics;
 #endregion
 
 namespace GameModeFortress
@@ -76,40 +77,27 @@ namespace GameModeFortress
             }
             else
             {
-                try
+                MainMenu mainmenu = new MainMenu();
+                GamePlatformNative platform = new GamePlatformNative();
+                platform.SetExit(exit);
+                platform.crashreporter = crashreporter;
+                platform.singlePlayerServerDummyNetwork = dummyNetwork;
+                this.platform = platform;
+                platform.StartSinglePlayerServer = (filename) => { savefilename = filename; new Thread(ServerThreadStart).Start(); };
+                GraphicsMode mode = GraphicsMode.Default;
+                using (GameWindowNative game = new GameWindowNative(mode))
                 {
-                    if (File.Exists("cito.txt"))
-                    {
-                        MainMenu mainmenu = new MainMenu();
-                        GamePlatformNative platform = new GamePlatformNative();
-                        OpenTK.Graphics.GraphicsMode mode = new OpenTK.Graphics.GraphicsMode(new OpenTK.Graphics.ColorFormat(32), 24, 0, 2, new OpenTK.Graphics.ColorFormat(32));
-                        using (GameWindowNative game = new GameWindowNative(mode))
-                        {
-                            platform.window = game;
-                            game.platform = platform;
-                            mainmenu.Start(platform);
-                            platform.Start();
-                            //g.Start();
-                            game.Run(60.0);
-                        }
-                        MenuResultSinglePlayer = mainmenu.GetMenuResultSinglePlayer();
-                        MenuResultMenuConnectData = mainmenu.GetMenuResultMenuConnectData();
-                        MenuResultSavegamePath = mainmenu.GetMenuResultSavegamePath();
-                    }
+                    platform.window = game;
+                    game.platform = platform;
+                    mainmenu.Start(platform);
+                    platform.Start();
+                    //g.Start();
+                    game.Run();
                 }
-                catch
-                {
-                }
-                //new Thread(ServerThreadStart).Start();
-                //p.GameUrl = "127.0.0.1:25570";
-                //p.User = "Local";
-              //  Menu form = new Menu();
-              //  Application.Run(form);
-              //  if (form.Chosen == ChosenGameType.None)
-              //  {
-              //      return;
-              //  }
-              //  IsSinglePlayer = form.Chosen == ChosenGameType.Singleplayer;
+                MenuResultSinglePlayer = mainmenu.GetMenuResultSinglePlayer();
+                MenuResultMenuConnectData = mainmenu.GetMenuResultMenuConnectData();
+                MenuResultSavegamePath = mainmenu.GetMenuResultSavegamePath();
+
                 if (MenuResultSinglePlayer)
                 {
                     if (MenuResultSavegamePath == null)
@@ -147,60 +135,16 @@ namespace GameModeFortress
             //        throw new Exception();
             //    }
             //}
-            connectdata.SetServerPassword(serverPassword);
-            StartGameWindowAndConnect(MenuResultSinglePlayer, connectdata, singleplayerpath);
+            //connectdata.SetServerPassword(serverPassword);
+            //StartGameWindowAndConnect(MenuResultSinglePlayer, connectdata, singleplayerpath);
         }
-
-        void StartGameWindowAndConnect(bool issingleplayer, ConnectData connectdata, string singleplayersavepath)
-        {
-            if (issingleplayer)
-            {
-                new Thread(ServerThreadStart).Start();
-                connectdata.SetUsername("Local");
-            }
-        restart:
-            ManicDiggerGameWindow w = new ManicDiggerGameWindow();
-            w.issingleplayer = issingleplayer;
-            this.curw = w;
-            if (issingleplayer)
-            {
-                DummyNetClient netclient = new DummyNetClient();
-                netclient.SetPlatform(new GamePlatformNative());
-                netclient.SetNetwork(dummyNetwork);
-                w.main = netclient;
-            }
-            else
-            {
-                var config = new NetPeerConfiguration("ManicDigger");
-                //w.main = new MyNetClient() { client = new NetClient(config) };
-                //w.main = new TcpNetClient() { };
-                EnetNetClient client = new EnetNetClient();
-                client.SetPlatform(new GamePlatformNative());
-                w.main = client;
-            }
-            var glwindow = new GlWindow(w);
-            w.d_GlWindow = glwindow;
-            w.d_Exit = exit;
-            w.connectdata = connectdata;
-            GamePlatformNative platform = new GamePlatformNative() { window = w.d_GlWindow };
-            platform.SetExit(exit);
-            w.game.SetPlatform(platform);
-             ((GamePlatformNative)w.game.GetPlatform()).crashreporter = crashreporter;
-            w.Start();
-            w.Run();
-            if (w.reconnect)
-            {
-                goto restart;
-            }
-            exit.SetExit(true);
-        }
-        ManicDiggerGameWindow curw;
 
         DummyNetwork dummyNetwork;
 
         string savefilename;
         public GameExit exit = new GameExit();
         //bool StartedSinglePlayerServer = false;
+        GamePlatformNative platform;
         public void ServerThreadStart()
         {
             try
@@ -217,11 +161,11 @@ namespace GameModeFortress
                 {
                     server.Process();
                     Thread.Sleep(1);
-                    while (curw == null)
-                    {
-                        Thread.Sleep(1);
-                    }
-                    curw.StartedSinglePlayerServer = true;
+                    //while (curw == null)
+                    //{
+                    //    Thread.Sleep(1);
+                    //}
+                    platform.singlePlayerServerLoaded = true;
                     if (exit != null && exit.GetExit()) { server.SaveAll(); return; }
                 }
             }

@@ -120,6 +120,11 @@
 
     public void Start()
     {
+        if (!issingleplayer)
+        {
+            skinserverResponse = new HttpResponseCi();
+            platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/skinserver.txt", skinserverResponse);
+        }
         language.platform = platform;
         language.LoadTranslations();
         GameData gamedata = new GameData();
@@ -220,6 +225,7 @@
         d_Physics.game = this;
         d_Inventory = inventory;
         d_HudInventory = hudInventory;
+        escapeMenu.game = this;
         platform.AddOnCrash(OnCrashHandlerLeave.Create(this));
 
         clientmods = new ClientMod[128];
@@ -230,6 +236,8 @@
         s = new BlockOctreeSearcher();
         s.platform = platform;
     }
+
+    HttpResponseCi skinserverResponse;
 
     void AddMod(ClientMod mod)
     {
@@ -1253,7 +1261,7 @@
 
         Draw2dTexture(GetTexture("background.png"), 0, 0, 1024 * (one * Width / 800), 1024 * (one * Height / 600), null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
         string connecting = language.Connecting();
-        if (issingleplayer && (!StartedSinglePlayerServer))
+        if (issingleplayer && (!platform.SinglePlayerServerLoaded()))
         {
             connecting = "Starting game...";
         }
@@ -2340,7 +2348,6 @@
     internal TypingState GuiTyping;
     internal ConnectData connectdata;
     internal bool issingleplayer;
-    internal bool StartedSinglePlayerServer;
     internal bool IsShiftPressed;
     internal bool reconnect;
     internal float rotation_speed;
@@ -3486,6 +3493,27 @@
                 tppcameradistance -= eDeltaPrecise;
                 if (tppcameradistance < TPP_CAMERA_DISTANCE_MIN) { tppcameradistance = TPP_CAMERA_DISTANCE_MIN; }
                 if (tppcameradistance > TPP_CAMERA_DISTANCE_MAX) { tppcameradistance = TPP_CAMERA_DISTANCE_MAX; }
+            }
+        }
+        if (d_HudInventory.IsMouseOverCells() && guistate == GuiState.Inventory)
+        {
+            float delta = eDeltaPrecise;
+            if (delta > 0)
+            {
+                d_HudInventory.ScrollUp();
+            }
+            if (delta < 0)
+            {
+                d_HudInventory.ScrollDown();
+            }
+        }
+        else if (!keyboardState[GetKey(GlKeys.LControl)])
+        {
+            ActiveMaterial -= platform.FloatToInt(eDeltaPrecise);
+            ActiveMaterial = ActiveMaterial % 10;
+            while (ActiveMaterial < 0)
+            {
+                ActiveMaterial += 10;
             }
         }
     }
@@ -5394,6 +5422,21 @@
     internal string skinserver;
     internal void LoadPlayerTextures()
     {
+        if (!issingleplayer)
+        {
+            if (skinserverResponse.done)
+            {
+                skinserver = platform.StringFromUtf8ByteArray(skinserverResponse.value, skinserverResponse.valueLength);
+            }
+            else if (skinserverResponse.error)
+            {
+                skinserver = null;
+            }
+            else
+            {
+                return;
+            }
+        }
         for (int i = 0; i < entitiesCount; i++)
         {
             Entity e = entities[i];
@@ -6022,7 +6065,7 @@
         }
     }
     public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
-    internal void KeyDown(int eKey, BoolRef keyHandled)
+    internal void KeyDown(int eKey)
     {
         keyboardState[eKey] = true;
         for (int i = 0; i < clientmodsCount; i++)
@@ -6064,7 +6107,6 @@
                 guistate = GuiState.EscapeMenu;
                 menustate = new MenuState();
                 SetFreeMouse(true);
-                keyHandled.value = true;
                 return;
             }
             if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
@@ -6605,6 +6647,7 @@
 
     internal void FrameTick(float dt)
     {
+        UpdateMousePosition();
         //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
         //UpdateTerrain();
         OnNewFrame(dt);
@@ -7719,6 +7762,236 @@
             d_HudInventory.OnKeyPress(keyChar);
         }
     }
+
+    internal void OnFocusChanged()
+    {
+        if (guistate == GuiState.Normal)
+        {
+            escapeMenu.EscapeMenuStart();
+        }
+    }
+
+    internal void OnLoad()
+    {
+        int maxTextureSize_ = platform.GlGetMaxTextureSize();
+        if (maxTextureSize_ < 1024)
+        {
+            maxTextureSize_ = 1024;
+        }
+        maxTextureSize = maxTextureSize_;
+        //Start();
+        //Connect();
+        MapLoadingStart();
+        platform.GlClearColorRgbaf(0, 0, 0, 1);
+        if (d_Config3d.ENABLE_BACKFACECULLING)
+        {
+            platform.GlDepthMask(true);
+            platform.GlEnableDepthTest();
+            platform.GlCullFaceBack();
+            platform.GlEnableCullFace();
+        }
+        platform.GlEnableLighting();
+        platform.GlEnableColorMaterial();
+        platform.GlColorMaterialFrontAndBackAmbientAndDiffuse();
+        platform.GlShadeModelSmooth();
+        platform.MouseCursorHide();
+    }
+
+    internal void Connect__()
+    {
+        escapeMenu.LoadOptions();
+
+        if (connectdata.ServerPassword == null || connectdata.ServerPassword == "")
+        {
+            Connect(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth);
+        }
+        else
+        {
+            Connect_(connectdata.Ip, connectdata.Port, connectdata.Username, connectdata.Auth, connectdata.ServerPassword);
+        }
+        MapLoadingStart();
+    }
+
+    float accumulator;
+    internal void OnRenderFrame(float deltaTime)
+    {
+        UpdateResize();
+        terrainRenderer.UpdateTerrain();
+        if (guistate == GuiState.MapLoading)
+        {
+            platform.GlClearColorRgbaf(0, 0, 0, 1);
+        }
+        else
+        {
+            platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
+        }
+        //Sleep is required in Mono for running the terrain background thread.
+        platform.ApplicationDoEvents();
+
+        accumulator += deltaTime;
+        float dt = one / 75;
+
+        while (accumulator >= dt)
+        {
+            FrameTick(dt);
+            accumulator -= dt;
+        }
+        LoadPlayerTextures();
+
+        if (guistate == GuiState.MapLoading)
+        {
+            GotoDraw2d(deltaTime);
+            return;
+        }
+
+        if (ENABLE_LAG == 2)
+        {
+            platform.ThreadSpinWait(20 * 1000 * 1000);
+        }
+
+        SetAmbientLight(terraincolor());
+        UpdateTitleFps(deltaTime);
+        platform.GlClearColorBufferAndDepthBuffer();
+        platform.BindTexture2d(d_TerrainTextures.terrainTexture());
+
+        GLMatrixModeModelView();
+
+        float[] camera;
+        if (overheadcamera)
+        {
+            camera = OverheadCamera();
+        }
+        else
+        {
+            camera = FppCamera();
+        }
+        GLLoadMatrix(camera);
+        CameraMatrix.lastmvmatrix = camera;
+
+        d_FrustumCulling.CalcFrustumEquations();
+
+        bool drawgame = guistate != GuiState.MapLoading;
+        if (drawgame)
+        {
+            platform.GlDisableFog();
+            DrawSkySphere();
+            if (d_Config3d.viewdistance < 512)
+            {
+                SetFog();
+            }
+            d_SunMoonRenderer.Draw(deltaTime);
+
+            InterpolatePositions(deltaTime);
+            DrawPlayers(deltaTime);
+            terrainRenderer.DrawTerrain();
+            DrawPlayerNames();
+            particleEffectBlockBreak.Draw(deltaTime);
+            if (ENABLE_DRAW2D)
+            {
+                DrawLinesAroundSelectedBlock(SelectedBlockPositionX,
+                    SelectedBlockPositionY, SelectedBlockPositionZ);
+            }
+            DrawSprites();
+            UpdateBullets(deltaTime);
+            DrawMinecarts(deltaTime);
+            if ((!ENABLE_TPP_VIEW) && ENABLE_DRAW2D)
+            {
+                Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
+                string img = null;
+                if (item != null)
+                {
+                    img = blocktypes[item.BlockId].Handimage;
+                    if (IronSights)
+                    {
+                        img = blocktypes[item.BlockId].IronSightsImage;
+                    }
+                }
+                if (img == null)
+                {
+                    d_Weapon.DrawWeapon(deltaTime);
+                }
+                else
+                {
+                    OrthoMode(Width(), Height());
+                    if (lasthandimage != img)
+                    {
+                        lasthandimage = img;
+                        byte[] file = GetFile(img);
+                        BitmapCi bmp = platform.BitmapCreateFromPng(file, platform.ByteArrayLength(file));
+                        if (bmp != null)
+                        {
+                            handTexture = platform.LoadTextureFromBitmap(bmp);
+                            platform.BitmapDelete(bmp);
+                        }
+                    }
+                    Draw2dTexture(handTexture, Width() / 2, Height() - 512, 512, 512, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+                    PerspectiveMode();
+                }
+            }
+        }
+        GotoDraw2d(deltaTime);
+    }
+
+    int lastWidth;
+    int lastHeight;
+    void UpdateResize()
+    {
+        if (lastWidth != platform.GetCanvasWidth()
+            || lastHeight != platform.GetCanvasHeight())
+        {
+            lastWidth = platform.GetCanvasWidth();
+            lastHeight = platform.GetCanvasHeight();
+            OnResize();
+        }
+    }
+
+    string lasthandimage;
+
+    internal void UpdateMousePosition()
+    {
+        UpdateMousePositionArgs args = new UpdateMousePositionArgs();
+        args.freemouse = GetFreeMouse();
+        args.freemousejustdisabled = freemousejustdisabled;
+        args.mouseCurrentX = mouseCurrentX;
+        args.mouseCurrentY = mouseCurrentY;
+        args.mouseDeltaX = mouseDeltaX;
+        args.mouseDeltaY = mouseDeltaY;
+
+        platform.UpdateMousePosition(args);
+
+        SetFreeMouse(args.freemouse);
+        freemousejustdisabled = args.freemousejustdisabled;
+        mouseCurrentX = args.mouseCurrentX;
+        mouseCurrentY = args.mouseCurrentY;
+        mouseDeltaX = args.mouseDeltaX;
+        mouseDeltaY = args.mouseDeltaY;
+    }
+
+    bool startedconnecting;
+    internal void GotoDraw2d(float dt)
+    {
+        SetAmbientLight(Game.ColorFromArgb(255, 255, 255, 255));
+        Draw2d();
+
+        for (int i = 0; i < clientmodsCount; i++)
+        {
+            NewFrameEventArgs args_ = new NewFrameEventArgs();
+            args_.SetDt(dt);
+            clientmods[i].OnNewFrame(args_);
+        }
+
+        mouseleftclick = mouserightclick = false;
+        mouseleftdeclick = mouserightdeclick = false;
+        if ((!issingleplayer)
+            || (issingleplayer && platform.SinglePlayerServerLoaded()))
+        {
+            if (!startedconnecting)
+            {
+                startedconnecting = true;
+                Connect__();
+            }
+        }
+    }
 }
 
 public class LoginData
@@ -8823,14 +9096,12 @@ public class Config3d
         ENABLE_BACKFACECULLING = true;
         ENABLE_TRANSPARENCY = true;
         ENABLE_MIPMAPS = true;
-        ENABLE_VSYNC = false;
         ENABLE_VISIBILITY_CULLING = false;
         viewdistance = 128;
     }
     internal bool ENABLE_BACKFACECULLING;
     internal bool ENABLE_TRANSPARENCY;
     internal bool ENABLE_MIPMAPS;
-    internal bool ENABLE_VSYNC;
     internal bool ENABLE_VISIBILITY_CULLING;
     internal float viewdistance;
     public float GetViewDistance() { return viewdistance; }

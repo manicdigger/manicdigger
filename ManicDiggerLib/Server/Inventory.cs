@@ -268,7 +268,6 @@ namespace ManicDigger
 
     public interface IGameDataItems
     {
-        string ItemInfo(Item item);
         int ItemSizeX(Item item);
         int ItemSizeY(Item item);
         /// <summary>
@@ -277,7 +276,6 @@ namespace ManicDigger
         Item Stack(Item itemA, Item itemB);
         bool CanWear(int selectedWear, Item item);
         string ItemGraphics(Item item);
-        int[] TextureIdForInventory { get; }
     }
 
     public interface IDropItem
@@ -474,16 +472,7 @@ namespace ManicDigger
     }
     public class GameDataItemsBlocks : IGameDataItems
     {
-        public ManicDiggerGameWindow game;
         public GameData d_Data;
-        public string ItemInfo(Item item)
-        {
-            if (item.ItemClass == ItemClass.Block)
-            {
-            	return game.game.language.Get("Block_" + game.game.blocktypes[item.BlockId].Name);
-            }
-            throw new NotImplementedException();
-        }
 
         public int ItemSizeX(Item item)
         {
@@ -540,12 +529,6 @@ namespace ManicDigger
         public string ItemGraphics(Item item)
         {
             throw new NotImplementedException();
-        }
-
-
-        public int[] TextureIdForInventory
-        {
-            get { return game.game.TextureIdForInventory; }
         }
     }
 }
