@@ -6651,6 +6651,10 @@
         {
             if (GuiTyping == TypingState.None)
             {
+                if (d_Physics.reachedwall_1blockhigh)
+                {
+                    wantsjump = true;
+                }
                 if (overheadcamera)
                 {
                     CameraMove m = new CameraMove();

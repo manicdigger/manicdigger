@@ -133,6 +133,7 @@ public class CharacterPhysicsCi
     internal bool swimmingtop;
     internal float walldistance;
     internal bool reachedceiling;
+    internal bool reachedwall_1blockhigh;
     internal bool reachedwall;
     internal float gravity;
     internal float WaterGravityMultiplier;
@@ -401,6 +402,7 @@ public class CharacterPhysicsCi
 
         reachedceiling = false;
         reachedwall = false;
+        reachedwall_1blockhigh = false;
         
         int oldPosX = FloatToInt(Floor(oldposition[0]));
         int oldPosY = FloatToInt(Floor(oldposition[2]));
@@ -427,6 +429,7 @@ public class CharacterPhysicsCi
                 	{
                 		//New Y coordinate of position not valid. Set back to old coordinate.
                 	    reachedwall = true;
+                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
                 	    playerposition[2] = oldposition[2];
                 	}
                 	else	//Block is empty or halfstep
@@ -488,6 +491,7 @@ public class CharacterPhysicsCi
                 	{
                 		//New X coordinate of position not valid. Set back to old coordinate.
                 	    reachedwall = true;
+                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
                 	    playerposition[0] = oldposition[0];
                 	}
                 	else	//Block is empty or halfstep
@@ -586,6 +590,7 @@ public class CharacterPhysicsCi
                 	{
                 		//New Y coordinate of position not valid. Set back to old coordinate.
                 	    reachedwall = true;
+                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
                 	    playerposition[2] = oldposition[2];
                 	}
                 	else	//Block is empty or halfstep
@@ -647,6 +652,7 @@ public class CharacterPhysicsCi
                 	{
                 		//New X coordinate of position not valid. Set back to old coordinate.
                 	    reachedwall = true;
+                        if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
                 	    playerposition[0] = oldposition[0];
                 	}
                 	else	//Block is empty or halfstep
@@ -705,6 +711,7 @@ public class CharacterPhysicsCi
                 if (!newempty)
                 {
                     reachedwall = true;
+                    if (NewEmpty(high, p0, p1 + 1, p2)) { reachedwall_1blockhigh = true; }
                     playerposition[1] = oldposition[1];
                 }
             }
