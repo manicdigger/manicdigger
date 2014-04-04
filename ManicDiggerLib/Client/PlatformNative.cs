@@ -263,22 +263,32 @@ public class GamePlatformNative : GamePlatform
 
     public override void WebClientDownloadDataAsync(string url, HttpResponseCi response)
     {
-        WebClient c = new WebClient();
-        c.DownloadDataCompleted += new DownloadDataCompletedEventHandler(c_DownloadStringCompleted);
-        c.DownloadDataAsync(new Uri(url), response);
+        DownloadDataArgs args = new DownloadDataArgs();
+        args.url = url;
+        args.response = response;
+        ThreadPool.QueueUserWorkItem(DownloadData, args);
     }
 
-    void c_DownloadStringCompleted(object sender, DownloadDataCompletedEventArgs e)
+    class DownloadDataArgs
     {
-        if (e.Error == null)
+        public string url;
+        public HttpResponseCi response;
+    }
+
+    void DownloadData(object o)
+    {
+        DownloadDataArgs args = (DownloadDataArgs)o;
+        WebClient c = new WebClient();
+        try
         {
-            ((HttpResponseCi)e.UserState).value = e.Result;
-            ((HttpResponseCi)e.UserState).valueLength = e.Result.Length;
-            ((HttpResponseCi)e.UserState).done = true;
+            byte[] data = c.DownloadData(args.url);
+            args.response.value = data;
+            args.response.valueLength = data.Length;
+            args.response.done = true;
         }
-        else
+        catch
         {
-            ((HttpResponseCi)e.UserState).error = true;
+            args.response.error = true;
         }
     }
 
