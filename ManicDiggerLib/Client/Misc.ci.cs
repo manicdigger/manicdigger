@@ -133,7 +133,7 @@ public class DictionaryStringString
             {
                 continue;
             }
-            if (items[i].key == key)
+            if (Game.StringEquals(items[i].key, key))
             {
                 items[i].value = value;
                 return;
@@ -159,7 +159,7 @@ public class DictionaryStringString
             {
                 continue;
             }
-            if (items[i].key == key)
+            if (Game.StringEquals(items[i].key, key))
             {
                 return true;
             }
@@ -175,7 +175,7 @@ public class DictionaryStringString
             {
                 continue;
             }
-            if (items[i].key == key)
+            if (Game.StringEquals(items[i].key, key))
             {
                 return items[i].value;
             }
@@ -234,7 +234,7 @@ public class DictionaryStringInt1024
             {
                 continue;
             }
-            if (items[i].key == key)
+            if (Game.StringEquals(items[i].key, key))
             {
                 return true;
             }
@@ -246,7 +246,7 @@ public class DictionaryStringInt1024
     {
         for (int i = 0; i < count; i++)
         {
-            if (items[i].key == key)
+            if (Game.StringEquals(items[i].key, key))
             {
                 return items[i].value;
             }

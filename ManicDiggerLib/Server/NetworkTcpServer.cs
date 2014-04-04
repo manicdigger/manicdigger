@@ -1,0 +1,370 @@
+﻿using System.Net.Sockets;
+using System.Text;
+using System;
+using System.Collections.Generic;
+using System.Net;
+
+public class TcpNetServer : INetServer
+{
+    public TcpNetServer()
+    {
+        configuration = new TcpPeerConfiguration();
+        messages = new Queue<TcpServerNetIncomingMessage>();
+        server = new ServerManager();
+    }
+
+    public override void Start()
+    {
+        server.StartServer(configuration.Port);
+        server.Connected += new EventHandler<ConnectionEventArgs>(server_Connected);
+        server.ReceivedMessage += new EventHandler<MessageEventArgs>(server_ReceivedMessage);
+        server.Disconnected += new EventHandler<ConnectionEventArgs>(server_Disconnected);
+    }
+
+    void server_Connected(object sender, ConnectionEventArgs e)
+    {
+        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
+        msg.type = NetworkMessageType.Connect;
+        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        lock (messages)
+        {
+            messages.Enqueue(msg);
+        }
+    }
+
+    void server_Disconnected(object sender, ConnectionEventArgs e)
+    {
+        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
+        msg.type = NetworkMessageType.Disconnect;
+        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        lock (messages)
+        {
+            messages.Enqueue(msg);
+        }
+    }
+
+    void server_ReceivedMessage(object sender, MessageEventArgs e)
+    {
+        TcpServerNetIncomingMessage msg = new TcpServerNetIncomingMessage();
+        msg.type = NetworkMessageType.Data;
+        msg.message = e.data;
+        msg.messageLength = e.data.Length;
+        msg.connection = new TcpNetConnection() { peer = (TcpConnection)e.ClientId };
+        lock (messages)
+        {
+            messages.Enqueue(msg);
+        }
+    }
+
+    ServerManager server;
+
+    public override void Recycle(INetIncomingMessage msg)
+    {
+    }
+
+    public override INetIncomingMessage ReadMessage()
+    {
+        lock (messages)
+        {
+            if (messages.Count > 0)
+            {
+                return messages.Dequeue();
+            }
+        }
+
+        return null;
+    }
+    Queue<TcpServerNetIncomingMessage> messages;
+
+    TcpPeerConfiguration configuration;
+
+    public override INetPeerConfiguration Configuration()
+    {
+        return configuration;
+    }
+
+    public override INetOutgoingMessage CreateMessage()
+    {
+        return new TcpNetOutgoingMessage();
+    }
+}
+
+public class TcpServerNetIncomingMessage : INetIncomingMessage
+{
+    public TcpNetConnection connection;
+    public override INetConnection SenderConnection()
+    {
+        return connection;
+    }
+
+    internal byte[] message;
+    internal int messageLength;
+
+    public override byte[] ReadBytes(int numberOfBytes)
+    {
+        return message;
+    }
+
+    public override int LengthBytes()
+    {
+        return messageLength;
+    }
+
+    internal NetworkMessageType type;
+    public override NetworkMessageType Type() { return type; }
+}
+
+public class TcpNetConnection : INetConnection
+{
+    public TcpConnection peer;
+
+    public override IPEndPointCi RemoteEndPoint()
+    {
+        return IPEndPointCiDefault.Create(peer.address);
+    }
+
+    public override void SendMessage(INetOutgoingMessage msg, MyNetDeliveryMethod method, int sequenceChannel)
+    {
+        TcpNetOutgoingMessage msg1 = (TcpNetOutgoingMessage)msg;
+        byte[] data = new byte[msg1.messageLength];
+        for (int i = 0; i < msg1.messageLength; i++)
+        {
+            data[i] = msg1.message[i];
+        }
+        peer.Send(data);
+    }
+
+    public override void Update()
+    {
+    }
+
+    public override bool EqualsConnection(INetConnection connection)
+    {
+        return peer.sock == ((TcpNetConnection)connection).peer.sock;
+    }
+}
+
+public class ServerManager
+{
+    Socket sock;
+    IPAddress addr = IPAddress.Any;
+    public void StartServer(int port)
+    {
+        this.sock = new Socket(
+            addr.AddressFamily,
+            SocketType.Stream,
+            ProtocolType.Tcp);
+        sock.NoDelay = true;
+        sock.Bind(new IPEndPoint(this.addr, port));
+        this.sock.Listen(10);
+        this.sock.BeginAccept(this.OnConnectRequest, sock);
+    }
+
+    void OnConnectRequest(IAsyncResult result)
+    {
+        Socket sock = (Socket)result.AsyncState;
+
+        TcpConnection newConn = new TcpConnection(sock.EndAccept(result));
+        newConn.ReceivedMessage += new EventHandler<MessageEventArgs>(newConn_ReceivedMessage);
+        newConn.Disconnected += new EventHandler<ConnectionEventArgs>(newConn_Disconnected);
+        if (Connected != null)
+        {
+            Connected(this, new ConnectionEventArgs() { ClientId = newConn });
+        }
+        sock.BeginAccept(this.OnConnectRequest, sock);
+    }
+
+    void newConn_Disconnected(object sender, ConnectionEventArgs e)
+    {
+        try
+        {
+            Disconnected(sender, e);
+        }
+        catch (Exception ex)
+        {
+            // Console.WriteLine(ex.ToString());
+        }
+    }
+
+    void newConn_ReceivedMessage(object sender, MessageEventArgs e)
+    {
+        try
+        {
+            ReceivedMessage(sender, e);
+        }
+        catch (Exception ex)
+        {
+            // Console.WriteLine(ex.ToString());
+        }
+    }
+
+    public event EventHandler<ConnectionEventArgs> Connected;
+    public event EventHandler<MessageEventArgs> ReceivedMessage;
+    public event EventHandler<ConnectionEventArgs> Disconnected;
+
+    public void Send(object sender, byte[] data)
+    {
+        ((TcpConnection)sender).Send(data);
+    }
+}
+
+public class TcpConnection
+{
+    public Socket sock;
+    public string address;
+
+    public TcpConnection(Socket s)
+    {
+        this.sock = s;
+        address = s.RemoteEndPoint.ToString();
+        this.BeginReceive();
+    }
+    void BeginReceive()
+    {
+        this.sock.BeginReceive(
+                this.dataRcvBuf, 0,
+                this.dataRcvBuf.Length,
+                SocketFlags.None,
+                new AsyncCallback(this.OnBytesReceived),
+                this);
+    }
+    byte[] dataRcvBuf = new byte[1024 * 8];
+    protected void OnBytesReceived(IAsyncResult result)
+    {
+        int nBytesRec;
+        try
+        {
+            nBytesRec = this.sock.EndReceive(result);
+        }
+        catch
+        {
+            try
+            {
+                this.sock.Close();
+            }
+            catch
+            {
+            }
+            if (Disconnected != null)
+            {
+                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+            }
+            return;
+        }
+        if (nBytesRec <= 0)
+        {
+            try
+            {
+                this.sock.Close();
+            }
+            catch
+            {
+            }
+            if (Disconnected != null)
+            {
+                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+            }
+            return;
+        }
+
+        for (int i = 0; i < nBytesRec; i++)
+        {
+            receivedBytes.Add(dataRcvBuf[i]);
+        }
+
+        //packetize
+        while (receivedBytes.Count >= 4)
+        {
+            byte[] receivedBytesArray = receivedBytes.ToArray();
+            int packetLength = ReadInt(receivedBytesArray, 0);
+            if (receivedBytes.Count >= 4 + packetLength)
+            {
+                //read packet
+                byte[] packet = new byte[packetLength];
+                for (int i = 0; i < packetLength; i++)
+                {
+                    packet[i] = receivedBytesArray[4 + i];
+                }
+                receivedBytes.RemoveRange(0, 4 + packetLength);
+                ReceivedMessage.Invoke(this, new MessageEventArgs() { ClientId = this, data = packet });
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        this.sock.BeginReceive(
+            this.dataRcvBuf, 0,
+            this.dataRcvBuf.Length,
+            SocketFlags.None,
+            new AsyncCallback(this.OnBytesReceived),
+            this);
+    }
+    public void Send(byte[] data)
+    {
+        try
+        {
+            int length = data.Length;
+            byte[] data2 = new byte[length + 4];
+            WriteInt(data2, 0, length);
+            for (int i = 0; i < length; i++)
+            {
+                data2[4 + i] = data[i];
+            }
+            sock.BeginSend(data2, 0, data2.Length, SocketFlags.None, new AsyncCallback(OnSend), null);
+        }
+        catch (Exception e)
+        {
+        }
+    }
+    int total;
+    void OnSend(IAsyncResult result)
+    {
+        sock.EndSend(result);
+    }
+    List<byte> receivedBytes = new List<byte>();
+    public event EventHandler<MessageEventArgs> ReceivedMessage;
+    public event EventHandler<ConnectionEventArgs> Disconnected;
+
+    void WriteInt(byte[] writeBuf, int writePos, int n)
+    {
+        int a = (n >> 24) & 0xFF;
+        int b = (n >> 16) & 0xFF;
+        int c = (n >> 8) & 0xFF;
+        int d = n & 0xFF;
+        writeBuf[writePos] = (byte)(a);
+        writeBuf[writePos + 1] = (byte)(b);
+        writeBuf[writePos + 2] = (byte)(c);
+        writeBuf[writePos + 3] = (byte)(d);
+    }
+
+    int ReadInt(byte[] readBuf, int readPos)
+    {
+        int n = readBuf[readPos] << 24;
+        n |= readBuf[readPos + 1] << 16;
+        n |= readBuf[readPos + 2] << 8;
+        n |= readBuf[readPos + 3];
+        return n;
+    }
+
+    public override string ToString()
+    {
+        if (address != null)
+        {
+            return address.ToString();
+        }
+        return base.ToString();
+    }
+}
+
+public class ConnectionEventArgs : System.EventArgs
+{
+    public TcpConnection ClientId;
+}
+
+public class MessageEventArgs : System.EventArgs
+{
+    public TcpConnection ClientId;
+    public byte[] data;
+}

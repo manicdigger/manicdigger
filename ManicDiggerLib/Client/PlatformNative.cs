@@ -18,6 +18,7 @@ using System.Xml.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Threading;
+using System.Net.Sockets;
 
 public class GamePlatformNative : GamePlatform
 {
@@ -163,27 +164,6 @@ public class GamePlatformNative : GamePlatform
     public override void ClipboardSetText(string s)
     {
         System.Windows.Forms.Clipboard.SetText(s);
-    }
-    public override TextTexture CreateTextTexture(string text, float fontSize)
-    {
-        TextTexture t = new TextTexture();
-        t.text = text;
-        t.size = fontSize;
-        System.Drawing.Bitmap bmp = r.MakeTextTexture(new Text_() { fontsize = fontSize, text = text, color = Game.ColorFromArgb(255, 255, 255, 255) });
-        t.texturewidth = bmp.Width;
-        t.textureheight = bmp.Height;
-        var size = r.MeasureTextSize(text, fontSize);
-        t.textwidth = (int)size.Width;
-        t.textheight = (int)size.Height;
-        //var texture = gl.CreateTexture();
-        //gl.BindTexture(Gl.Texture2d, texture);
-        //LoadBitmap(Gl.Texture2d, 0, (int)PixelType.UnsignedByte, bmp);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMagFilter, Gl.Linear);
-        //gl.TexParameteri(Gl.Texture2d, Gl.TextureMinFilter, Gl.LinearMipmapNearest);
-        //gl.GenerateMipmap(Gl.Texture2d);
-        //gl.BindTexture(Gl.Texture2d, null);
-        t.texture = LoadTexture(bmp, true);
-        return t;
     }
     ManicDigger.Renderers.TextRenderer r = new ManicDigger.Renderers.TextRenderer();
     Dictionary<TextAndSize, SizeF> textsizes = new Dictionary<TextAndSize, SizeF>();
@@ -820,7 +800,7 @@ public class GamePlatformNative : GamePlatform
 
     ManicDigger.Renderers.TextRenderer textrenderer = new ManicDigger.Renderers.TextRenderer();
 
-    public override BitmapCi CreateTextTexture2(Text_ t)
+    public override BitmapCi CreateTextTexture(Text_ t)
     {
         Bitmap bmp= textrenderer.MakeTextTexture(t);
         return new BitmapCiCs() { bmp = bmp };
@@ -1648,6 +1628,212 @@ public class GamePlatformNative : GamePlatform
     public override DummyNetwork SinglePlayerServerGetNetwork()
     {
         return singlePlayerServerDummyNetwork;
+    }
+
+    public override bool TcpAvailable()
+    {
+        return true;
+    }
+
+    public override void TcpConnect(string ip, int port, BoolRef connected)
+    {
+        this.connected = connected;
+        sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        sock.NoDelay = true;
+        sock.BeginConnect(ip, port, OnConnect, sock);
+    }
+    Socket sock;
+    BoolRef connected;
+    Connection c;
+    void OnConnect(IAsyncResult result)
+    {
+        Socket sock = (Socket)result.AsyncState;
+        c = new Connection(sock);
+        c.ReceivedData += new EventHandler<MessageEventArgs>(c_ReceivedData);
+        if (tosend.Count > 0)
+        {
+            c.Send(tosend.ToArray());
+            tosend.Clear();
+        }
+        connected.value = true;
+    }
+
+    void c_ReceivedData(object sender, MessageEventArgs e)
+    {
+        lock (received)
+        {
+            for (int i = 0; i < e.data.Length; i++)
+            {
+                received.Enqueue(e.data[i]);
+            }
+        }
+    }
+    Queue<byte> tosend = new Queue<byte>();
+    public override void TcpSend(byte[] data, int length)
+    {
+        if (c == null)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                tosend.Enqueue(data[i]);
+            }
+        }
+        else
+        {
+            byte[] data1 = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data1[i] = data[i];
+            }
+            c.Send(data1);
+        }
+    }
+    Queue<byte> received = new Queue<byte>();
+    public override int TcpReceive(byte[] data, int dataLength)
+    {
+        if (c == null)
+        {
+            return 0;
+        }
+        int total = 0;
+        lock (received)
+        {
+            for (int i = 0; i < dataLength; i++)
+            {
+                if (received.Count == 0)
+                {
+                    break;
+                }
+                data[i] = received.Dequeue();
+                total++;
+            }
+        }
+        return total;
+    }
+
+    public override TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message)
+    {
+        return (TcpNetOutgoingMessage)message;
+    }
+
+    public class Connection
+    {
+        public Socket sock;
+        public string address;
+
+        Encoding encoding = Encoding.UTF8;
+
+        public Connection(Socket s)
+        {
+            this.sock = s;
+            address = s.RemoteEndPoint.ToString();
+            this.BeginReceive();
+        }
+        Stopwatch st = new Stopwatch();
+        private void BeginReceive()
+        {
+            this.sock.BeginReceive(
+                    this.dataRcvBuf, 0,
+                    this.dataRcvBuf.Length,
+                    SocketFlags.None,
+                    new AsyncCallback(this.OnBytesReceived),
+                    this);
+        }
+        byte[] dataRcvBuf = new byte[1024 * 8];
+        static int i = 0;
+        protected void OnBytesReceived(IAsyncResult result)
+        {
+            int nBytesRec;
+            try
+            {
+                nBytesRec = this.sock.EndReceive(result);
+            }
+            catch
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                if (Disconnected != null)
+                {
+                    Disconnected(null, new ConnectionEventArgs() {  });
+                }
+                return;
+            }
+            if (nBytesRec <= 0)
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                if (Disconnected != null)
+                {
+                    Disconnected(null, new ConnectionEventArgs() { });
+                }
+                return;
+            }
+
+            byte[] receivedBytes = new byte[nBytesRec];
+            for (int i = 0; i < nBytesRec; i++)
+            {
+                receivedBytes[i] = dataRcvBuf[i];
+            }
+
+            if (nBytesRec > 0)
+            {
+                ReceivedData.Invoke(this, new MessageEventArgs() { data = receivedBytes });
+            }
+
+            st.Reset();
+            st.Start();
+
+            this.sock.BeginReceive(
+                this.dataRcvBuf, 0,
+                this.dataRcvBuf.Length,
+                SocketFlags.None,
+                new AsyncCallback(this.OnBytesReceived),
+                this);
+        }
+        public void Send(byte[] data)
+        {
+            try
+            {
+                sock.BeginSend(data, 0, data.Length, SocketFlags.None, new AsyncCallback(OnSend), null);
+            }
+            catch (Exception e)
+            {
+            }
+        }
+        void OnSend(IAsyncResult result)
+        {
+            sock.EndSend(result);
+        }
+        public event EventHandler<MessageEventArgs> ReceivedData;
+        public event EventHandler<ConnectionEventArgs> Disconnected;
+
+        public override string ToString()
+        {
+            if (address != null)
+            {
+                return address.ToString();
+            }
+            return base.ToString();
+        }
+    }
+
+    public override void ShowKeyboard(bool show)
+    {
+    }
+
+    public override bool IsFastSystem()
+    {
+        return true;
     }
 }
 

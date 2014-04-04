@@ -757,4 +757,6 @@ public class CharacterPhysicsCi
 public class BoolRef
 {
     internal bool value;
+    public bool GetValue() { return value; }
+    public void SetValue(bool value_) { value = value_; }
 }

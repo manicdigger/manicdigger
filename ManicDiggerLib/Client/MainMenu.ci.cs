@@ -165,7 +165,7 @@
         }
         Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
     }
-    
+
     TextTexture GetTextTexture(string text, float fontSize)
     {
         for (int i = 0; i < textTexturesCount; i++)
@@ -180,9 +180,33 @@
                 return t;
             }
         }
-        TextTexture tnew = p.CreateTextTexture(text, fontSize);
-        textTextures[textTexturesCount++] = tnew;
-        return tnew;
+        TextTexture textTexture = new TextTexture();
+
+        Text_ text_ = new Text_();
+        text_.text = text;
+        text_.fontsize = fontSize;
+        text_.fontfamily = "Arial";
+        text_.color = Game.ColorFromArgb(255, 255, 255, 255);
+        BitmapCi textBitmap = p.CreateTextTexture(text_);
+
+        int texture = p.LoadTextureFromBitmap(textBitmap);
+        
+        IntRef textWidth = new IntRef();
+        IntRef textHeight = new IntRef();
+        p.TextSize(text, fontSize, textWidth, textHeight);
+
+        textTexture.texture = texture;
+        textTexture.texturewidth = p.FloatToInt(p.BitmapGetWidth(textBitmap));
+        textTexture.textureheight = p.FloatToInt(p.BitmapGetHeight(textBitmap));
+        textTexture.text = text;
+        textTexture.size = fontSize;
+        textTexture.textwidth = textWidth.value;
+        textTexture.textheight = textHeight.value;
+
+        p.BitmapDelete(textBitmap);
+        
+        textTextures[textTexturesCount++] = textTexture;
+        return textTexture;
     }
 
     internal int GetTexture(string name)
@@ -583,6 +607,7 @@ public class Screen
 
     void MouseDown(int x, int y)
     {
+        bool editingChange = false;
         for (int i = 0; i < WidgetCount; i++)
         {
             MenuWidget w = widgets[i];
@@ -595,7 +620,17 @@ public class Screen
                 if (w.type == WidgetType.Textbox)
                 {
                     w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    bool wasEditing = w.editing;
                     w.editing = w.pressed;
+                    if (w.editing && (!wasEditing))
+                    {
+                        menu.p.ShowKeyboard(true);
+                        editingChange = true;
+                    }
+                    if ((!w.editing) && wasEditing && (!editingChange))
+                    {
+                        menu.p.ShowKeyboard(false);
+                    }
                 }
             }
         }
@@ -1192,9 +1227,22 @@ public class ScreenGame : Screen
         else
         {
             game.connectdata = connectData;
-            EnetNetClient client = new EnetNetClient();
-            client.SetPlatform(platform);
-            game.main = client;
+            if (platform.EnetAvailable())
+            {
+                EnetNetClient client = new EnetNetClient();
+                client.SetPlatform(platform);
+                game.main = client;
+            }
+            else if (platform.TcpAvailable())
+            {
+                TcpNetClient client = new TcpNetClient();
+                client.SetPlatform(platform);
+                game.main = client;
+            }
+            else
+            {
+                platform.ThrowException("Network not implemented");
+            }
         }
         game.Start();
         game.OnLoad();
@@ -1382,7 +1430,7 @@ public class ScreenMultiplayer : Screen
             serverButtons[i].visible = false;
         }
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 30; i++)
         {
             ServerOnList s = serversOnList[i];
             if (s == null)
@@ -1460,6 +1508,11 @@ public class HttpResponseCi
     }
 
     internal bool error;
+
+    public bool GetDone() { return done; } public void SetDone(bool value_) { done = value_; }
+    public byte[] GetValue() { return value; } public void SetValue(byte[] value_) { value = value_; }
+    public int GetValueLength() { return valueLength; } public void SetValueLength(int value_) { valueLength = value_; }
+    public bool GetError() { return error; } public void SetError(bool value_) { error = value_; }
 }
 
 public class ServerOnList

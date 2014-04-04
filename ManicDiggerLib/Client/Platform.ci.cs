@@ -18,7 +18,6 @@
     public abstract string StringFormat3(string format, string arg0, string arg1, string arg2);
     public abstract string StringFormat4(string format, string arg0, string arg1, string arg2, string arg3);
     public abstract void ClipboardSetText(string s);
-    public abstract TextTexture CreateTextTexture(string text, float fontSize);
     public abstract void TextSize(string text, float fontSize, IntRef outWidth, IntRef outHeight);
     public abstract void Exit();
     public abstract int[] StringToCharArray(string s, IntRef length);
@@ -61,7 +60,7 @@
     public abstract void GLDisableAlphaTest();
     public abstract void GLEnableAlphaTest();
     public abstract void GLDeleteTexture(int id);
-    public abstract BitmapCi CreateTextTexture2(Text_ t);
+    public abstract BitmapCi CreateTextTexture(Text_ t);
     public abstract float BitmapGetWidth(BitmapCi bmp);
     public abstract float BitmapGetHeight(BitmapCi bmp);
     public abstract void BitmapDelete(BitmapCi bmp);
@@ -154,6 +153,13 @@
     public abstract void SinglePlayerServerStart(string saveFilename);
     public abstract bool SinglePlayerServerLoaded();
     public abstract DummyNetwork SinglePlayerServerGetNetwork();
+    public abstract bool TcpAvailable();
+    public abstract void TcpConnect(string ip, int port, BoolRef connected);
+    public abstract void TcpSend(byte[] data, int length);
+    public abstract int TcpReceive(byte[] data, int dataLength);
+    public abstract TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message);
+    public abstract void ShowKeyboard(bool show);
+    public abstract bool IsFastSystem();
 }
 
 public class UpdateMousePositionArgs
@@ -192,7 +198,7 @@ public class OptionsCi
         float one = 1;
         Shadows = false;
         Font = 0;
-        DrawDistance = 256;
+        DrawDistance = 32;
         UseServerTextures = true;
         EnableSound = true;
         Framerate = 0;
@@ -287,6 +293,9 @@ public class FloatRef
         return f;
     }
     internal float value;
+
+    public float GetValue() { return value; }
+    public void SetValue(float value_) { value = value_; }
 }
 
 public class KeyEventArgs

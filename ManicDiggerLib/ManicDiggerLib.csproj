@@ -97,6 +97,7 @@
     <Compile Include="ClientNative\Screenshot.cs" />
     <Compile Include="Client\HudInventory.ci.cs" />
     <Compile Include="Client\MinecartRenderer.ci.cs" />
+    <Compile Include="Client\NetworkTcp.ci.cs" />
     <Compile Include="Client\WeaponRenderer.ci.cs" />
     <Compile Include="Client\BlockRendererTorch.ci.cs" />
     <Compile Include="Client\CharacterRenderer.ci.cs" />
@@ -151,6 +152,7 @@
     <Compile Include="Server\Mods\War\TreeGenerator.cs" />
     <Compile Include="Server\Mods\War\War.cs" />
     <Compile Include="Server\Mods\War\WaterSimple.cs" />
+    <Compile Include="Server\NetworkTcpServer.cs" />
     <Compile Include="Server\Packets.cs" />
     <Compile Include="Client\Platform.ci.cs" />
     <Compile Include="Client\PlatformNative.cs" />

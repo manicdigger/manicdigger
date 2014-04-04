@@ -155,7 +155,7 @@ namespace GameModeFortress
                 DummyNetServer netServer = new DummyNetServer();
                 netServer.SetPlatform(new GamePlatformNative());
                 netServer.SetNetwork(dummyNetwork);
-                server.d_MainSocket = netServer;
+                server.mainSocket0 = netServer;
                 server.Start();
                 for (; ; )
                 {

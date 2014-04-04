@@ -659,4 +659,8 @@ public class DisplayResolutionCi
     internal int Height;
     internal int BitsPerPixel;
     internal float RefreshRate;
+    public int GetWidth() { return Width; } public void SetWidth(int value) { Width = value; }
+    public int GetHeight() { return Height; } public void SetHeight(int value) { Height = value; }
+    public int GetBitsPerPixel() { return BitsPerPixel; } public void SetBitsPerPixel(int value) { BitsPerPixel = value; }
+    public float GetRefreshRate() { return RefreshRate; } public void SetRefreshRate(float value) { RefreshRate = value; }
 }

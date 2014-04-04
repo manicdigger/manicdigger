@@ -62,7 +62,8 @@ namespace ManicDiggerServer
         public IGetFileStream d_GetFile;
         public IChunkDb d_ChunkDb;
         public ICompression d_NetworkCompression;
-        public INetServer d_MainSocket;
+        public INetServer mainSocket0;
+        public INetServer mainSocket1;
         public IServerHeartbeat d_Heartbeat;
 
         public bool LocalConnectionsOnly { get; set; }
@@ -182,10 +183,15 @@ namespace ManicDiggerServer
             map.d_Data = server.d_Data;
             server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
             server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
-            if (d_MainSocket == null)
+            if (mainSocket0 == null)
             {
-                server.d_MainSocket = new EnetNetServer() { platform = new GamePlatformNative() };
+                server.mainSocket0 = new EnetNetServer() { platform = new GamePlatformNative() };
+                if (mainSocket1 == null)
+                {
+                    server.mainSocket1 = new TcpNetServer();
+                }
             }
+
             server.d_Heartbeat = new ServerHeartbeat();
             if ((Public) && (server.config.Public))
             {
@@ -852,13 +858,19 @@ namespace ManicDiggerServer
                 iep = new IPEndPoint(IPAddress.Any, port);
             }
             */
-            d_MainSocket.Configuration().SetPort(port);
-            d_MainSocket.Start();
+            mainSocket0.Configuration().SetPort(port);
+            mainSocket0.Start();
+            if (mainSocket1 != null)
+            {
+                mainSocket1.Configuration().SetPort(port);
+                mainSocket1.Start();
+            }
+            int httpPort = port + 1;
             if (config.EnableHTTPServer)
             {
             	try
             	{
-                	httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, port));
+                    httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, httpPort));
                 	var m = new MainHttpModule();
                 	m.server = this;
                 	httpServer.Install(m);
@@ -867,11 +879,11 @@ namespace ManicDiggerServer
                     	httpServer.Install(module.module);
                 	}
                 	httpServer.Start();
-                	Console.WriteLine(language.ServerHTTPServerStarted(), port);
+                    Console.WriteLine(language.ServerHTTPServerStarted(), httpPort);
             	}
             	catch
             	{
-            		Console.WriteLine(language.ServerHTTPServerError(), port);
+                    Console.WriteLine(language.ServerHTTPServerError(), httpPort);
             	}
             }
         }
@@ -969,7 +981,7 @@ namespace ManicDiggerServer
 
         public void Process1()
         {
-            if (d_MainSocket == null)
+            if (mainSocket0 == null)
             {
                 return;
             }
@@ -1008,95 +1020,15 @@ namespace ManicDiggerServer
             INetIncomingMessage msg;
             Stopwatch s = new Stopwatch();
             s.Start();
-            while ((msg = d_MainSocket.ReadMessage()) != null)
+            while ((msg = mainSocket0.ReadMessage()) != null)
             {
-                if (msg.SenderConnection() == null)
+                ProcessNetMessage(msg, mainSocket0, s);
+            }
+            if (mainSocket1 != null)
+            {
+                while ((msg = mainSocket1.ReadMessage()) != null)
                 {
-                    continue;
-                }
-                int clientid = -1;
-                foreach (var k in clients)
-                {
-                    if (k.Value.socket.EqualsConnection(msg.SenderConnection()))
-                    {
-                        clientid = k.Key;
-                    }
-                }
-                switch (msg.Type())
-                {
-                    case NetworkMessageType.Connect:
-                        //new connection
-                        //ISocket client1 = d_MainSocket.Accept();
-                        INetConnection client1 = msg.SenderConnection();
-                        IPEndPointCi iep1 = client1.RemoteEndPoint();
-
-                        Client c = new Client();
-                        c.socket = client1;
-                        c.Ping.SetTimeoutValue(config.ClientConnectionTimeout);
-                        c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
-                        lock (clients)
-                        {
-                            this.lastClientId = this.GenerateClientId();
-                            c.Id = lastClientId;
-                            clients[lastClientId] = c;
-                        }
-                        //clientid = c.Id;
-                        c.notifyMapTimer = new Timer()
-                        {
-                            INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
-                        };
-                        c.notifyMonstersTimer = new Timer()
-                        {
-                            INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
-                        };
-                        if (clients.Count > config.MaxClients)
-                        {
-                        	SendDisconnectPlayer(this.lastClientId, language.ServerTooManyPlayers());
-                            KillPlayer(this.lastClientId);
-                        }
-                        else if (banlist.IsIPBanned(iep1.AddressToString()))
-                        {
-                            IPEntry entry = banlist.GetIPEntry(iep1.AddressToString());
-                            string reason = entry.Reason;
-                            if (string.IsNullOrEmpty(reason))
-                                reason = "";
-                            SendDisconnectPlayer(this.lastClientId, string.Format(language.ServerIPBanned(), reason));
-                            Console.WriteLine(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
-                            ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
-                            KillPlayer(this.lastClientId);
-                        }
-                        SaveBanlist();  //Save the banlist as the previous check can alter it (removing timebans)
-                        break;
-                    case NetworkMessageType.Data:
-                        if (clientid == -1)
-                        {
-                            break;
-                        }
-
-                        // process packet
-                        try
-                        {
-                            TotalReceivedBytes += msg.LengthBytes();
-                            TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes()));
-                            d_MainSocket.Recycle(msg);
-                        }
-                        catch (Exception e)
-                        {
-                            //client problem. disconnect client.
-                            Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
-                            SendDisconnectPlayer(clientid, language.ServerClientException());
-                            KillPlayer(clientid);
-                            Console.WriteLine(e.ToString());
-                        }
-                        if (s.Elapsed.TotalMilliseconds > 15)
-                        {
-                            break;
-                        }
-                        break;
-                    case NetworkMessageType.Disconnect:
-                        Console.WriteLine("Client disconnected.");
-                        KillPlayer(clientid);
-                        break;
+                    ProcessNetMessage(msg, mainSocket1, s);
                 }
             }
             foreach (var k in clients)
@@ -1185,6 +1117,100 @@ namespace ManicDiggerServer
                 botpositionupdate = DateTime.UtcNow;
             }
         }
+
+        private void ProcessNetMessage(INetIncomingMessage msg, INetServer mainSocket, Stopwatch s)
+        {
+            if (msg.SenderConnection() == null)
+            {
+                return;
+            }
+            int clientid = -1;
+            foreach (var k in clients)
+            {
+                if (k.Value.socket.EqualsConnection(msg.SenderConnection()))
+                {
+                    clientid = k.Key;
+                }
+            }
+            switch (msg.Type())
+            {
+                case NetworkMessageType.Connect:
+                    //new connection
+                    //ISocket client1 = d_MainSocket.Accept();
+                    INetConnection client1 = msg.SenderConnection();
+                    IPEndPointCi iep1 = client1.RemoteEndPoint();
+
+                    Client c = new Client();
+                    c.mainSocket = mainSocket;
+                    c.socket = client1;
+                    c.Ping.SetTimeoutValue(config.ClientConnectionTimeout);
+                    c.chunksseen = new bool[d_Map.MapSizeX / chunksize * d_Map.MapSizeY / chunksize * d_Map.MapSizeZ / chunksize];
+                    lock (clients)
+                    {
+                        this.lastClientId = this.GenerateClientId();
+                        c.Id = lastClientId;
+                        clients[lastClientId] = c;
+                    }
+                    //clientid = c.Id;
+                    c.notifyMapTimer = new Timer()
+                    {
+                        INTERVAL = 1.0 / SEND_CHUNKS_PER_SECOND,
+                    };
+                    c.notifyMonstersTimer = new Timer()
+                    {
+                        INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
+                    };
+                    if (clients.Count > config.MaxClients)
+                    {
+                        SendDisconnectPlayer(this.lastClientId, language.ServerTooManyPlayers());
+                        KillPlayer(this.lastClientId);
+                    }
+                    else if (banlist.IsIPBanned(iep1.AddressToString()))
+                    {
+                        IPEntry entry = banlist.GetIPEntry(iep1.AddressToString());
+                        string reason = entry.Reason;
+                        if (string.IsNullOrEmpty(reason))
+                            reason = "";
+                        SendDisconnectPlayer(this.lastClientId, string.Format(language.ServerIPBanned(), reason));
+                        Console.WriteLine(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
+                        ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
+                        KillPlayer(this.lastClientId);
+                    }
+                    SaveBanlist();  //Save the banlist as the previous check can alter it (removing timebans)
+                    break;
+                case NetworkMessageType.Data:
+                    if (clientid == -1)
+                    {
+                        break;
+                    }
+
+                    // process packet
+                    try
+                    {
+                        TotalReceivedBytes += msg.LengthBytes();
+                        TryReadPacket(clientid, msg.ReadBytes(msg.LengthBytes()));
+                        mainSocket.Recycle(msg);
+                    }
+                    catch (Exception e)
+                    {
+                        //client problem. disconnect client.
+                        Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
+                        SendDisconnectPlayer(clientid, language.ServerClientException());
+                        KillPlayer(clientid);
+                        Console.WriteLine(e.ToString());
+                    }
+                    if (s.Elapsed.TotalMilliseconds > 15)
+                    {
+                        break;
+                    }
+                    break;
+                case NetworkMessageType.Disconnect:
+                    Console.WriteLine("Client disconnected.");
+                    KillPlayer(clientid);
+                    break;
+            }
+        }
+
         DateTime statsupdate;
         DateTime botpositionupdate = DateTime.UtcNow;
 
@@ -3361,7 +3387,7 @@ if (sent >= unknown.Count) { break; }
             TotalSentBytes += packet.Length;
             try
             {
-                INetOutgoingMessage msg = d_MainSocket.CreateMessage();
+                INetOutgoingMessage msg = clients[clientid].mainSocket.CreateMessage();
                 msg.Write(packet, packet.Length);
                 clients[clientid].socket.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered, 0);
             }
@@ -3699,6 +3725,7 @@ if (sent >= unknown.Count) { break; }
             public int Id = -1;
             public ClientStateOnServer state = ClientStateOnServer.Connecting;
             public int maploadingsentchunks = 0;
+            public INetServer mainSocket;
             public INetConnection socket;
             public List<byte> received = new List<byte>();
             public Ping_ Ping = new Ping_();
@@ -4038,7 +4065,7 @@ if (sent >= unknown.Count) { break; }
 
         public bool IsSinglePlayer
         {
-            get { return d_MainSocket.GetType() == typeof(DummyNetServer); }
+            get { return mainSocket0.GetType() == typeof(DummyNetServer); }
         }
 
         public void SendDialog(int player, string id, Dialog dialog)

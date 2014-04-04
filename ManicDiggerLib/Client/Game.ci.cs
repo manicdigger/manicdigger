@@ -130,6 +130,14 @@
         GameData gamedata = new GameData();
         gamedata.Start();
         Config3d config3d = new Config3d();
+        if (platform.IsFastSystem())
+        {
+            config3d.viewdistance = 128;
+        }
+        else
+        {
+            config3d.viewdistance = 32;
+        }
         CharacterPhysicsCi physics = new CharacterPhysicsCi();
         //network.d_ResetMap = this;
         ITerrainTextures terrainTextures = new ITerrainTextures();
@@ -1048,7 +1056,7 @@
     CachedTexture MakeTextTexture(Text_ t)
     {
         CachedTexture ct = new CachedTexture();
-        BitmapCi bmp = platform.CreateTextTexture2(t);
+        BitmapCi bmp = platform.CreateTextTexture(t);
         ct.sizeX = platform.BitmapGetWidth(bmp);
         ct.sizeY = platform.BitmapGetHeight(bmp);
         ct.textureId = platform.LoadTextureFromBitmap(bmp);
@@ -5349,12 +5357,25 @@
     {
         for (int i = 0; i < arrLength; i++)
         {
-            if (arr[i] == value)
+            if (StringEquals(arr[i], value))
             {
                 return i;
             }
         }
         return -1;
+    }
+
+    public static bool StringEquals(string strA, string strB)
+    {
+        if (strA == null && strB == null)
+        {
+            return true;
+        }
+        if (strA == null || strB == null)
+        {
+            return false;
+        }
+        return strA == strB;
     }
 
     bool Contains(string[] arr, int arrLength, string value)
@@ -8196,7 +8217,7 @@ class DictionaryStringByteArray
         for (int i = 0; i < itemsCount; i++)
         {
             if (items[i] == null) { continue; }
-            if (items[i].name == name)
+            if (Game.StringEquals(items[i].name, name))
             {
                 items[i].data = value;
                 return;
@@ -8219,7 +8240,7 @@ class DictionaryStringByteArray
         for (int i = 0; i < itemsCount; i++)
         {
             if (items[i] == null) { continue; }
-            if (items[i].name == name)
+            if (Game.StringEquals(items[i].name, name))
             {
                 return items[i].data;
             }
@@ -9522,6 +9543,12 @@ public class Text_
             && this.fontfamily == t.fontfamily
             && this.fontstyle == t.fontstyle;
     }
+
+    public string GetText() { return text; } public void SetText(string value) { text = value; }
+    public float GetFontSize() { return fontsize; } public void SetFontSize(float value) { fontsize = value; }
+    public int GetColor() { return color; } public void SetColor(int value) { color = value; }
+    public string GetFontFamily() { return fontfamily; } public void SetFontFamily(string value) { fontfamily = value; }
+    public int GetFontStyle() { return fontstyle; } public void SetFontStyle(int value) { fontstyle = value; }
 }
 
 public class CachedTextTexture
