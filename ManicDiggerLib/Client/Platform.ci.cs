@@ -93,8 +93,6 @@
     public abstract float FloatModulo(float a, int b);
     public abstract void SetFreeMouse(bool value);
     public abstract UriCi ParseUri(string uri);
-    public abstract OptionsCi LoadOptions();
-    public abstract void SaveOptions(OptionsCi options);
     public abstract bool StringContains(string a, string b);
     public abstract RandomCi RandomCreate();
     public abstract void GlClearDepthBuffer();
@@ -160,6 +158,8 @@
     public abstract TcpNetOutgoingMessage CastToTcpNetOutgoingMessage(INetOutgoingMessage message);
     public abstract void ShowKeyboard(bool show);
     public abstract bool IsFastSystem();
+    public abstract Preferences GetPreferences();
+    public abstract void SetPreferences(Preferences preferences);
 }
 
 public class UpdateMousePositionArgs
@@ -191,34 +191,73 @@ public abstract class RandomCi
     public abstract int Next();
 }
 
-public class OptionsCi
+public class Preferences
 {
-    public OptionsCi()
+    public Preferences()
     {
-        float one = 1;
-        Shadows = false;
-        Font = 0;
-        DrawDistance = 32;
-        UseServerTextures = true;
-        EnableSound = true;
-        Framerate = 0;
-        Resolution = 0;
-        Fullscreen = false;
-        Smoothshadows = true;
-        BlockShadowSave = one * 6 / 10;
-        Keys = new int[256];
+        items = new DictionaryStringString();
     }
-    internal bool Shadows;
-    internal int Font;
-    internal int DrawDistance;
-    internal bool UseServerTextures;
-    internal bool EnableSound;
-    internal int Framerate;
-    internal int Resolution;
-    internal bool Fullscreen;
-    internal bool Smoothshadows;
-    internal float BlockShadowSave;
-    internal int[] Keys;
+    internal GamePlatform platform;
+    internal DictionaryStringString items;
+    public string GetString(string key, string default_)
+    {
+        if (!items.ContainsKey(key))
+        {
+            return default_;
+        }
+        return items.Get(key);
+    }
+    public void SetString(string key, string value)
+    {
+        items.Set(key, value);
+    }
+
+    public bool GetBool(string key, bool default_)
+    {
+        string value = GetString(key, null);
+        if (value == null)
+        {
+            return default_;
+        }
+        if (value == "0")
+        {
+            return false;
+        }
+        if (value == "1")
+        {
+            return true;
+        }
+        return default_;
+    }
+
+    public int GetInt(string key, int default_)
+    {
+        if (GetString(key, null) == null)
+        {
+            return default_;
+        }
+        FloatRef ret = new FloatRef();
+        if (platform.FloatTryParse(GetString(key, null), ret))
+        {
+            return platform.FloatToInt(ret.value);
+        }
+        return default_;
+    }
+
+    public void SetBool(string key, bool value)
+    {
+        SetString(key, value ? "1" : "0");
+    }
+
+    public void SetInt(string key, int value)
+    {
+        SetString(key, platform.IntToString(value));
+    }
+
+    internal void Remove(string key)
+    {
+        items.Remove(key);
+    }
 }
 
 public class UriCi

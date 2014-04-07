@@ -1032,68 +1032,6 @@ public class GamePlatformNative : GamePlatform
         return ret;
     }
 
-    public override OptionsCi LoadOptions()
-    {
-        Options loaded = new Options();
-        string path = Path.Combine(gamepathconfig, filename);
-        if (!File.Exists(path))
-        {
-            return null;
-        }
-        string s = File.ReadAllText(path);
-        loaded = (Options)x.Deserialize(new System.IO.StringReader(s));
-
-        OptionsCi ret = new OptionsCi();
-        ret.Shadows = loaded.Shadows;
-        ret.Font = loaded.Font;
-        ret.DrawDistance = loaded.DrawDistance;
-        ret.UseServerTextures = loaded.UseServerTextures;
-        ret.EnableSound = loaded.EnableSound;
-        ret.Framerate = loaded.Framerate;
-        ret.Resolution = loaded.Resolution;
-        ret.Fullscreen = loaded.Fullscreen;
-        ret.Smoothshadows = loaded.Smoothshadows;
-        ret.BlockShadowSave = loaded.BlockShadowSave;
-        foreach (KeyValuePair<int, int> k in loaded.Keys)
-        {
-            ret.Keys[k.Key] = k.Value;
-        }
-        return ret;
-    }
-
-    XmlSerializer x = new XmlSerializer(typeof(Options));
-    public string gamepathconfig = GameStorePath.GetStorePath();
-    string filename = "ClientConfig.txt";
-
-    public override void SaveOptions(OptionsCi options)
-    {
-        Options save = new Options();
-        save.Shadows = options.Shadows;
-        save.Font = options.Font;
-        save.DrawDistance = options.DrawDistance;
-        save.UseServerTextures = options.UseServerTextures;
-        save.EnableSound = options.EnableSound;
-        save.Framerate = options.Framerate;
-        save.Resolution = options.Resolution;
-        save.Fullscreen = options.Fullscreen;
-        save.Smoothshadows = options.Smoothshadows;
-        save.BlockShadowSave = options.BlockShadowSave;
-        save.Keys = new SerializableDictionary<int, int>();
-        for (int i = 0; i < options.Keys.Length; i++)
-        {
-            if (options.Keys[i] != 0)
-            {
-                save.Keys[i] = options.Keys[i];
-            }
-        }
-
-        string path = Path.Combine(gamepathconfig, filename);
-        MemoryStream ms = new MemoryStream();
-        x.Serialize(ms, save);
-        string xml = Encoding.UTF8.GetString(ms.ToArray());
-        File.WriteAllText(path, xml);
-    }
-
     public override bool StringContains(string a, string b)
     {
         return a.Contains(b);
@@ -1835,6 +1773,71 @@ public class GamePlatformNative : GamePlatform
     {
         return true;
     }
+
+    static string GetPreferencesFilePath()
+    {
+        string path = GameStorePath.GetStorePath();
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
+        }
+        return Path.Combine(path, "Preferences.txt");
+    }
+
+    public override Preferences GetPreferences()
+    {
+        if (File.Exists(GetPreferencesFilePath()))
+        {
+            try
+            {
+                Preferences p = new Preferences();
+                p.platform = this;
+                string[] lines = File.ReadAllLines(GetPreferencesFilePath());
+                foreach (string l in lines)
+                {
+                    int a = l.IndexOf("=");
+                    string name = l.Substring(0, a);
+                    string value = l.Substring(a + 1);
+                    p.SetString(name, value);
+                }
+                return p;
+            }
+            catch
+            {
+                File.Delete(GetPreferencesFilePath());
+                return new Preferences();
+            }
+        }
+        else
+        {
+            Preferences p = new Preferences();
+            p.platform = this;
+            return p;
+        }
+    }
+
+    public override void SetPreferences(Preferences preferences)
+    {
+        DictionaryStringString items = preferences.items;
+        List<string> lines = new List<string>();
+        for (int i = 0; i < items.count; i++)
+        {
+            if (items.items[i] == null)
+            {
+                continue;
+            }
+            string key = items.items[i].key;
+            string value = items.items[i].value;
+            lines.Add(key + "=" + value);
+        }
+        try
+        {
+            File.WriteAllLines(GetPreferencesFilePath(), lines.ToArray());
+        }
+        catch
+        {
+        }
+    }
 }
 
 public class RandomNative : RandomCi
@@ -1849,21 +1852,6 @@ public class RandomNative : RandomCi
     {
         return rnd.Next();
     }
-}
-
-public class Options
-{
-    public bool Shadows;
-    public int Font;
-    public int DrawDistance = 256;
-    public bool UseServerTextures = true;
-    public bool EnableSound = true;
-    public int Framerate = 0;
-    public int Resolution = 0;
-    public bool Fullscreen = false;
-    public bool Smoothshadows = true;
-    public float BlockShadowSave = 0.6f;
-    public SerializableDictionary<int, int> Keys = new SerializableDictionary<int, int>();
 }
 
 public class MyUri

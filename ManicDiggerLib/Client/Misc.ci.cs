@@ -119,9 +119,15 @@ public class DictionaryStringString
 {
     public DictionaryStringString()
     {
-        items = new KeyValueStringString[64];
-        count = 64;
+        Start(64);
     }
+
+    public void Start(int count_)
+    {
+        items = new KeyValueStringString[count_];
+        count = count_;
+    }
+
     internal KeyValueStringString[] items;
     internal int count;
 
@@ -181,6 +187,21 @@ public class DictionaryStringString
             }
         }
         return null;
+    }
+
+    internal void Remove(string key)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (items[i] == null)
+            {
+                continue;
+            }
+            if (Game.StringEquals(items[i].key, key))
+            {
+                items[i] = null;
+            }
+        }
     }
 }
 

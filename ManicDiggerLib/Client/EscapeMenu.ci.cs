@@ -593,7 +593,7 @@
     }
     public void LoadOptions()
     {
-        OptionsCi o = game.platform.LoadOptions();
+        OptionsCi o = LoadOptions_();
         if (o == null)
         {
             return;
@@ -612,6 +612,36 @@
         game.UseVsync();
         UseResolution();
     }
+
+    OptionsCi LoadOptions_()
+    {
+        OptionsCi options = new OptionsCi();
+        Preferences preferences = game.platform.GetPreferences();
+                
+        options.Shadows = preferences.GetBool("Shadows", true);
+        options.Font = preferences.GetInt("Font", 0);
+        options.DrawDistance = preferences.GetInt("DrawDistance", game.platform.IsFastSystem() ? 128 : 32);
+        options.UseServerTextures = preferences.GetBool("UseServerTextures", true);
+        options.EnableSound = preferences.GetBool("EnableSound", true);
+        options.Framerate = preferences.GetInt("Framerate", 0);
+        options.Resolution = preferences.GetInt("Resolution", 0);
+        options.Fullscreen = preferences.GetBool("Fullscreen", false);
+        options.Smoothshadows = preferences.GetBool("Smoothshadows", true);
+        options.BlockShadowSave = one * preferences.GetInt("BlockShadowSave", 70) / 100;
+
+        for (int i = 0; i < 256; i++)
+        {
+            string preferencesKey = StringTools.StringAppend(game.platform, "Key", game.platform.IntToString(i));
+            int value = preferences.GetInt(preferencesKey, 0);
+            if (value != 0)
+            {
+                options.Keys[i] = value;
+            }
+        }
+
+        return options;
+    }
+
     public void SaveOptions()
     {
         OptionsCi options = game.options;
@@ -624,7 +654,38 @@
         options.Fullscreen = game.platform.GetWindowState() == WindowState.Fullscreen;
         options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
 
-        game.platform.SaveOptions(options);
+        SaveOptions_(options);
+    }
+
+    void SaveOptions_(OptionsCi options)
+    {
+        Preferences preferences = game.platform.GetPreferences();
+
+        preferences.SetBool("Shadows", options.Shadows);
+        preferences.SetInt("Font", options.Font);
+        preferences.SetInt("DrawDistance", options.DrawDistance);
+        preferences.SetBool("UseServerTextures", options.UseServerTextures);
+        preferences.SetBool("EnableSound", options.EnableSound);
+        preferences.SetInt("Framerate", options.Framerate);
+        preferences.SetInt("Resolution", options.Resolution);
+        preferences.SetBool("Fullscreen", options.Fullscreen);
+        preferences.SetBool("Smoothshadows", options.Smoothshadows);
+        preferences.SetInt("BlockShadowSave", game.platform.FloatToInt(options.BlockShadowSave * 100));
+
+        for (int i = 0; i < 256; i++)
+        {
+            int value = options.Keys[i];string preferencesKey = StringTools.StringAppend(game.platform, "Key", game.platform.IntToString(i));
+            if (value != 0)
+            {
+                preferences.SetInt(preferencesKey, value);
+            }
+            else
+            {
+                preferences.Remove(preferencesKey);
+            }
+        }
+
+        game.platform.SetPreferences(preferences);
     }
 }
 
