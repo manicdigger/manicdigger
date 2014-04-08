@@ -381,11 +381,20 @@
         screen.menu = this;
     }
 
-    internal void StartLogin(string serverHash)
+    internal void StartLogin(string serverHash, string ip, int port)
     {
         ScreenLogin screenLogin = new ScreenLogin();
         screenLogin.serverHash = serverHash;
+        screenLogin.serverIp = ip;
+        screenLogin.serverPort = port;
         screen = screenLogin;
+        screen.menu = this;
+    }
+
+    internal void StartConnectToIp()
+    {
+        ScreenConnectToIp screenConnectToIp = new ScreenConnectToIp();
+        screen = screenConnectToIp;
         screen.menu = this;
     }
 
@@ -1175,7 +1184,18 @@ public class ScreenLogin : Screen
         if (w == login)
         {
             loginResultData = new LoginData();
-            menu.Login(loginUsername.text, loginPassword.text, serverHash, loginResult, loginResultData);
+            if (serverHash != null)
+            {
+                menu.Login(loginUsername.text, loginPassword.text, serverHash, loginResult, loginResultData);
+            }
+            else
+            {
+                ConnectData connectdata = new ConnectData();
+                connectdata.Ip = serverIp;
+                connectdata.Port = serverPort;
+                connectdata.Username = loginUsername.text;
+                menu.StartGame(false, null, connectdata);
+            }
         }
         if (w == createAccount)
         {
@@ -1198,6 +1218,8 @@ public class ScreenLogin : Screen
         }
     }
     internal string serverHash;
+    internal string serverIp;
+    internal int serverPort;
 }
 
 public class ScreenGame : Screen
@@ -1317,6 +1339,9 @@ public class ScreenMultiplayer : Screen
         connect = new MenuWidget();
         connect.text = "Connect";
         connect.type = WidgetType.Button;
+        connectToIp = new MenuWidget();
+        connectToIp.text = "Connect to IP";
+        connectToIp.type = WidgetType.Button;
         refresh = new MenuWidget();
         refresh.text = "Refresh";
         refresh.type = WidgetType.Button;
@@ -1324,6 +1349,7 @@ public class ScreenMultiplayer : Screen
         widgets[0] = back;
         widgets[1] = connect;
         widgets[2] = refresh;
+        widgets[3] = connectToIp;
 
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
@@ -1338,7 +1364,7 @@ public class ScreenMultiplayer : Screen
             b.type = WidgetType.Button;
             b.visible = false;
             serverButtons[i] = b;
-            widgets[3 + i] = b;
+            widgets[4 + i] = b;
         }
         loading = true;
     }
@@ -1405,13 +1431,19 @@ public class ScreenMultiplayer : Screen
         back.sizey = 64 * scale;
         back.fontSize = 14 * scale;
 
-        connect.x = p.GetCanvasWidth() / 2 - 200 * scale;
+        connect.x = p.GetCanvasWidth() / 2 - 300 * scale;
         connect.y = p.GetCanvasHeight() - 104 * scale;
         connect.sizex = 256 * scale;
         connect.sizey = 64 * scale;
         connect.fontSize = 14 * scale;
 
-        refresh.x = p.GetCanvasWidth() / 2 + 200 * scale;
+        connectToIp.x = p.GetCanvasWidth() / 2 - 0 * scale;
+        connectToIp.y = p.GetCanvasHeight() - 104 * scale;
+        connectToIp.sizex = 256 * scale;
+        connectToIp.sizey = 64 * scale;
+        connectToIp.fontSize = 14 * scale;
+
+        refresh.x = p.GetCanvasWidth() / 2 + 350 * scale;
         refresh.y = p.GetCanvasHeight() - 104 * scale;
         refresh.sizex = 256 * scale;
         refresh.sizey = 64 * scale;
@@ -1457,6 +1489,7 @@ public class ScreenMultiplayer : Screen
 
     MenuWidget back;
     MenuWidget connect;
+    MenuWidget connectToIp;
     MenuWidget refresh;
     MenuWidget[] serverButtons;
     const int serverButtonsCount = 1024;
@@ -1485,13 +1518,143 @@ public class ScreenMultiplayer : Screen
         {
             if (selectedServerHash != null)
             {
-                menu.StartLogin(selectedServerHash);
+                menu.StartLogin(selectedServerHash, null, 0);
             }
+        }
+        if (w == connectToIp)
+        {
+            menu.StartConnectToIp();
         }
         if (w == refresh)
         {
             loaded = false;
             loading = true;
+        }
+    }
+}
+
+public class ScreenConnectToIp : Screen
+{
+    public ScreenConnectToIp()
+    {
+        buttonConnect = new MenuWidget();
+        buttonConnect.text = "Connect";
+        buttonConnect.type = WidgetType.Button;
+        textboxIp = new MenuWidget();
+        textboxIp.type = WidgetType.Textbox;
+        textboxIp.text = "";
+        textboxIp.description = "Ip";
+        textboxPort = new MenuWidget();
+        textboxPort.type = WidgetType.Textbox;
+        textboxPort.text = "";
+        textboxPort.description = "Port"; 
+
+        back = new MenuWidget();
+        back.text = "Back";
+        back.type = WidgetType.Button;
+
+        widgets[0] = buttonConnect;
+        widgets[1] = textboxIp;
+        widgets[2] = textboxPort;
+        widgets[3] = back;
+    }
+
+    MenuWidget buttonConnect;
+    MenuWidget textboxIp;
+    MenuWidget textboxPort;
+
+    MenuWidget back;
+
+    bool loaded;
+
+    string preferences_ip;
+    string preferences_port;
+    public override void Render(float dt)
+    {
+        if (!loaded)
+        {
+            preferences_ip = menu.p.GetPreferences().GetString("ConnectToIpIp", "127.0.0.1");
+            preferences_port = menu.p.GetPreferences().GetString("ConnectToIpPort", "25565");
+            textboxIp.text = preferences_ip;
+            textboxPort.text = preferences_port;
+            loaded = true;
+        }
+
+        if (textboxIp.text != preferences_ip
+            || textboxPort.text != preferences_port)
+        {
+            preferences_ip = textboxIp.text;
+            preferences_port = textboxPort.text;
+            Preferences preferences = menu.p.GetPreferences();
+            preferences.SetString("ConnectToIpIp", preferences_ip);
+            preferences.SetString("ConnectToIpPort", preferences_port);
+            menu.p.SetPreferences(preferences);
+        }
+
+        GamePlatform p = menu.p;
+        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        menu.DrawBackground();
+
+
+        float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
+        float y = p.GetCanvasHeight() / 2 - 250 * scale;
+
+        string loginResultText = null;
+        if (errorText != null)
+        {
+            menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
+        }
+
+        menu.DrawText("Connect to IP", 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+
+        textboxIp.x = leftx;
+        textboxIp.y = y + 100 * scale;
+        textboxIp.sizex = 256 * scale;
+        textboxIp.sizey = 64 * scale;
+        textboxIp.fontSize = 14 * scale;
+
+        textboxPort.x = leftx;
+        textboxPort.y = y + 200 * scale;
+        textboxPort.sizex = 256 * scale;
+        textboxPort.sizey = 64 * scale;
+        textboxPort.fontSize = 14 * scale;
+
+        buttonConnect.x = leftx;
+        buttonConnect.y = y + 400 * scale;
+        buttonConnect.sizex = 256 * scale;
+        buttonConnect.sizey = 64 * scale;
+        buttonConnect.fontSize = 14 * scale;
+
+        back.x = 40 * scale;
+        back.y = p.GetCanvasHeight() - 104 * scale;
+        back.sizex = 256 * scale;
+        back.sizey = 64 * scale;
+        back.fontSize = 14 * scale;
+
+        DrawWidgets();
+    }
+
+    string errorText;
+
+    public override void OnBackPressed()
+    {
+        menu.StartMultiplayer();
+    }
+
+    public override void OnButton(MenuWidget w)
+    {
+        if (w == buttonConnect)
+        {
+            FloatRef ret = new FloatRef();
+            if (!Game.StringEquals(textboxIp.text, "")
+                && menu.p.FloatTryParse(textboxPort.text, ret))
+            {
+                menu.StartLogin(null, textboxIp.text, menu.p.IntParse(textboxPort.text));
+            }
+        }
+        if (w == back)
+        {
+            OnBackPressed();
         }
     }
 }
