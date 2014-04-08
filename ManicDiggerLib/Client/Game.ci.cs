@@ -2544,8 +2544,8 @@
     {
         if (!overheadcamera)
         {
-            player.playerorientation.Y += mouseDeltaX * rotationspeed * dt;
-            player.playerorientation.X += mouseDeltaY * rotationspeed * dt;
+            player.playerorientation.Y += mouseDeltaX * rotationspeed * (one / 75);
+            player.playerorientation.X += mouseDeltaY * rotationspeed * (one / 75);
             player.playerorientation.X = Game.ClampFloat(player.playerorientation.X,
                 Game.GetPi() / 2 + (one * 15 / 1000),
                 (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
@@ -6675,10 +6675,6 @@
         //UpdateTerrain();
         OnNewFrame(dt);
         RailOnNewFrame(dt);
-        if (guistate == GuiState.Normal && enableCameraControl)
-        {
-            UpdateMouseViewportControl(dt);
-        }
         NetworkProcess();
 
         if (guistate == GuiState.MapLoading) { return; }
@@ -7839,7 +7835,7 @@
     internal void OnRenderFrame(float deltaTime)
     {
         UpdateResize();
-        terrainRenderer.UpdateTerrain();
+        
         if (guistate == GuiState.MapLoading)
         {
             platform.GlClearColorRgbaf(0, 0, 0, 1);
@@ -7848,6 +7844,12 @@
         {
             platform.GlClearColorRgbaf(one * Game.clearcolorR / 255, one * Game.clearcolorG / 255, one * Game.clearcolorB / 255, one * Game.clearcolorA / 255);
         }
+
+        if (guistate == GuiState.Normal && enableCameraControl)
+        {
+            UpdateMouseViewportControl(deltaTime);
+        }
+
         //Sleep is required in Mono for running the terrain background thread.
         platform.ApplicationDoEvents();
 
@@ -7953,6 +7955,7 @@
             }
         }
         GotoDraw2d(deltaTime);
+        terrainRenderer.UpdateTerrain();
     }
 
     int lastWidth;
