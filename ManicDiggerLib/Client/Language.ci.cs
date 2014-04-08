@@ -2,7 +2,7 @@
 {
     public Language()
     {
-        stringsMax = 1024;
+        stringsMax = 1024 * 32;
         stringsCount = 0;
         strings = new TranslatedString[stringsMax];
     }
