@@ -2201,7 +2201,8 @@ if (sent >= unknown.Count) { break; }
                                 SendPlayerSpawn(clientid, k.Key);
                             }
                         }
-                        clients[clientid].state = ClientStateOnServer.LoadingGenerating;
+                        SendLevelFinalize(clientid);
+                        clients[clientid].state = ClientStateOnServer.Playing;
                         NotifySeason(clientid);
                     }
                     break;

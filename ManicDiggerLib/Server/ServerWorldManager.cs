@@ -33,62 +33,6 @@ namespace ManicDiggerServer
                     continue;
                 }
                 Vector3i playerpos = PlayerBlockPosition(k.Value);
-                //a) if player is loading, then first generate all (LoadingGenerating), and then send all (LoadingSending)
-                //b) if player is playing, then load 1, send 1.
-                if (k.Value.state == ClientStateOnServer.LoadingGenerating)
-                {
-                    var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
-                    //load
-                    for (int i = 0; i < chunksAround.Count; i++)
-                    {
-                        Vector3i v = chunksAround[i];
-                        LoadChunk(v.x / chunksize, v.y / chunksize, v.z / chunksize);
-                        if (k.Value.state == ClientStateOnServer.LoadingGenerating)
-                        {
-                            //var a = PlayerArea(k.Key);
-                            if (i % 10 == 0)
-                            {
-                                if (i >= k.Value.generatingworldprogress)
-                                {
-                                    k.Value.generatingworldprogress = i;
-                                    SendLevelProgress(k.Key, (int)(((float)i / chunksAround.Count) * 100), language.ServerProgressGenerating());
-                                }
-                            }
-                        }
-                        if (s.ElapsedMilliseconds > 10)
-                        {
-                            return;
-                        }
-                    }
-                    k.Value.state = ClientStateOnServer.LoadingSending;
-                }
-                else if (k.Value.state == ClientStateOnServer.LoadingSending)
-                {
-                    var chunksAround = new List<Vector3i>(PlayerAreaChunks(k.Key));
-                    //send
-                    for (int i = 0; i < chunksAround.Count; i++)
-                    {
-                        Vector3i v = chunksAround[i];
-                        if (!ClientSeenChunk(k.Key, v.x, v.y, v.z))
-                        {
-                            SendChunk(k.Key, v);
-                            SendLevelProgress(k.Key, (int)(((float)k.Value.maploadingsentchunks++ / chunksAround.Count) * 100), language.ServerProgressDownloadingMap());
-                            if (s.ElapsedMilliseconds > 10)
-                            {
-                                return;
-                            }
-                        }
-                    }
-                    //Finished map loading for a connecting player.
-                    bool sent_all_in_range = (k.Value.maploadingsentchunks == chunksAround.Count);
-                    if (sent_all_in_range)
-                    {
-                        SendLevelFinalize(k.Key);
-                        clients[k.Key].state = ClientStateOnServer.Playing;
-                        clients[k.Key].Ping.SetTimeoutValue(config.ClientPlayingTimeout);
-                    }
-                }
-                else //b)
                 {
                     //inlined PlayerAreaChunks
                     PointG p = PlayerArea(k.Key);
