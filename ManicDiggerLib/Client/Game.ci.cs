@@ -1487,7 +1487,12 @@
 
     internal bool IsWater(int blockType)
     {
-        return platform.StringContains(blocktypes[blockType].Name, "Water"); // todo
+        string name = blocktypes[blockType].Name;
+        if (name == null)
+        {
+            return false;
+        }
+        return platform.StringContains(name, "Water"); // todo
     }
 
     internal int mouseCurrentX;
