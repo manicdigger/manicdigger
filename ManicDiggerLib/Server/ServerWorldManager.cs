@@ -17,7 +17,7 @@ namespace ManicDiggerServer
     public partial class Server
     {
         //The main function for loading, unloading and sending chunks to players.
-        private void NotifyMap()
+        void NotifyMap()
         {
             Stopwatch s = new Stopwatch();
             s.Start();
@@ -26,73 +26,95 @@ namespace ManicDiggerServer
             int mapsizeXchunks = d_Map.MapSizeX / chunksize;
             int mapsizeYchunks = d_Map.MapSizeY / chunksize;
             int mapsizeZchunks = d_Map.MapSizeZ / chunksize;
-            foreach (var k in clients)
+            int[] retNearest = new int[3];
+            bool loaded = true;
+            while ((s.ElapsedMilliseconds < 10) && (loaded))
             {
-                if (k.Value.state == ClientStateOnServer.Connecting)
+                loaded = false;
+                foreach (var k in clients)
                 {
-                    continue;
-                }
-                Vector3i playerpos = PlayerBlockPosition(k.Value);
-                {
-                    //inlined PlayerAreaChunks
-                    PointG p = PlayerArea(k.Key);
-                    Client c = clients[k.Key];
-                    int pchunksx = p.X / chunksize;
-                    int pchunksy = p.Y / chunksize;
-                    for (int x = 0; x < areasizechunks; x++)
+                    if (k.Value.state == ClientStateOnServer.Connecting)
                     {
-                        for (int y = 0; y < areasizechunks; y++)
-                        {
-                            for (int z = 0; z < areasizeZchunks; z++)
-                            {
-                                int vx = pchunksx + x;
-                                int vy = pchunksy + y;
-                                int vz = z;
-                                //if (MapUtil.IsValidPos(d_Map, vx, vy, vz))
-                                if (vx >= 0 && vy >= 0 && vz >= 0
-                                    && vx < mapsizeXchunks && vy < mapsizeYchunks && vz < mapsizeZchunks)
-                                {
-                                    LoadAndSendChunk(c, k.Key, vx, vy, vz, s);
-                                    if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
-                                    {
-                                        return;
-                                    }
-                                    d_Map.wasChunkGenerated = false;
-                                }
-                            }
-                        }
+                        continue;
                     }
-                    //inlined ChunksAroundPlayer
-                    //ChunksAroundPlayer is needed for preloading terrain behind current MapArea edges.
-                    //chunksAround.AddRange(ChunksAroundPlayer(playerpos));
-                    int playerpos2xchunks = (playerpos.x / chunksize);
-                    int playerpos2ychunks = (playerpos.y / chunksize);
-                    for (int x = -chunkdrawdistance; x <= chunkdrawdistance; x++)
+                    Vector3i playerpos = PlayerBlockPosition(k.Value);
+
+                    NearestDirty(k.Key, playerpos.x, playerpos.y, playerpos.z, retNearest);
+
+                    if (retNearest[0] != -1)
                     {
-                        for (int y = -chunkdrawdistance; y <= chunkdrawdistance; y++)
+                        LoadAndSendChunk(k.Value, k.Key, retNearest[0], retNearest[1], retNearest[2], s);
+                        loaded = true;
+                    }
+                }
+            }
+        }
+
+        int mapAreaSize() { return chunkdrawdistance * chunksize * 2; }
+        int mapAreaSizeZ() { return mapAreaSize(); }
+
+        int mapsizexchunks() { return d_Map.MapSizeX / chunksize; }
+        int mapsizeychunks() { return d_Map.MapSizeY / chunksize; }
+        int mapsizezchunks() { return d_Map.MapSizeZ / chunksize; }
+
+        const int intMaxValue = 2147483647;
+        void NearestDirty(int clientid, int playerx, int playery, int playerz, int[] retNearest)
+        {
+            int nearestdist = intMaxValue;
+            retNearest[0] = -1;
+            retNearest[1] = -1;
+            retNearest[2] = -1;
+            int px = (int)(playerx) / chunksize;
+            int py = (int)(playery) / chunksize;
+            int pz = (int)(playerz) / chunksize;
+
+            int chunksxy = this.mapAreaSize() / chunksize / 2;
+            int chunksz = this.mapAreaSizeZ() / chunksize / 2;
+
+            int startx = px - chunksxy;
+            int endx = px + chunksxy;
+            int starty = py - chunksxy;
+            int endy = py + chunksxy;
+            int startz = pz - chunksz;
+            int endz = pz + chunksz;
+
+            if (startx < 0) { startx = 0; }
+            if (starty < 0) { starty = 0; }
+            if (startz < 0) { startz = 0; }
+            if (endx >= mapsizexchunks()) { endx = mapsizexchunks() - 1; }
+            if (endy >= mapsizeychunks()) { endy = mapsizeychunks() - 1; }
+            if (endz >= mapsizezchunks()) { endz = mapsizezchunks() - 1; }
+
+            Client client = clients[clientid];
+            for (int x = startx; x <= endx; x++)
+            {
+                for (int y = starty; y <= endy; y++)
+                {
+                    for (int z = startz; z <= endz; z++)
+                    {
+                        int pos = MapUtil.Index3d(x, y, z, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+                        if (client.chunksseen[pos])
                         {
-                            for (int z = 0; z < areasizeZchunks; z++)
+                            continue;
+                        }
+                        {
+                            int dx = px - x;
+                            int dy = py - y;
+                            int dz = pz - z;
+                            int dist = dx * dx + dy * dy + dz * dz;
+                            if (dist < nearestdist)
                             {
-                                int p2x = playerpos2xchunks + x;
-                                int p2y = playerpos2ychunks + y;
-                                int p2z = z;
-                                if (p2x >= 0 && p2y >= 0 && p2z >= 0
-                                    && p2x < mapsizeXchunks && p2y < mapsizeYchunks && p2z < mapsizeZchunks)
-                                {
-                                    LoadAndSendChunk(c, k.Key, p2x, p2y, p2z, s);
-                                    if (d_Map.wasChunkGenerated && s.ElapsedMilliseconds > 10)
-                                    {
-                                        return;
-                                    }
-                                    d_Map.wasChunkGenerated = false;
-                                }
+                                nearestdist = dist;
+                                retNearest[0] = x;
+                                retNearest[1] = y;
+                                retNearest[2] = z;
                             }
                         }
                     }
                 }
             }
         }
-
+        
         void LoadAndSendChunk(Client c, int kKey, int vx, int vy, int vz, Stopwatch s)
         {
             //load
