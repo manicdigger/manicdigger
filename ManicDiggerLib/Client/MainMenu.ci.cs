@@ -1299,6 +1299,15 @@ public class ScreenGame : Screen
         game.MouseDown(e);
     }
 
+    public override void OnMouseMove(MouseEventArgs e)
+    {
+        if (!game.platform.Focused())
+        {
+            return;
+        }
+        game.MouseMove(e);
+    }
+
     public override void OnMouseUp(MouseEventArgs e)
     {
         if (!game.platform.Focused())
@@ -1311,6 +1320,26 @@ public class ScreenGame : Screen
     public override void OnMouseWheel(MouseWheelEventArgs e)
     {
         game.MouseWheelChanged(e.GetDeltaPrecise());
+    }
+
+    public override void OnTouchStart(TouchEventArgs e)
+    {
+        game.OnTouchStart(e);
+    }
+
+    public override void OnTouchMove(TouchEventArgs e)
+    {
+        game.OnTouchMove(e);
+    }
+
+    public override void OnTouchEnd(TouchEventArgs e)
+    {
+        game.OnTouchEnd(e);
+    }
+
+    public override void OnBackPressed()
+    {
+        game.OnBackPressed();
     }
 }
 

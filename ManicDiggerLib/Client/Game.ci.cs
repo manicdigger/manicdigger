@@ -1232,7 +1232,6 @@
     }
 
     internal GuiState guistate;
-    internal bool freemouse;
     internal bool overheadcamera;
     public bool GetFreeMouse()
     {
@@ -1240,19 +1239,25 @@
         {
             return true;
         }
-        return freemouse;
+        return !platform.IsMousePointerLocked();
     }
     public void SetFreeMouse(bool value)
     {
-        platform.SetFreeMouse(value);
-        freemouse = value;
+        if (value)
+        {
+            platform.ExitMousePointerLock();
+        }
+        else
+        {
+            platform.RequestMousePointerLock();
+        }
     }
     internal MapLoadingProgressEventArgs maploadingprogress;
 
     public void MapLoadingStart()
     {
         guistate = GuiState.MapLoading;
-        SetFreeMouse(true);
+        platform.ExitMousePointerLock();
         maploadingprogress = new MapLoadingProgressEventArgs();
         fontMapLoading = FontCi.Create("Arial", 14, 0);
     }
@@ -1560,7 +1565,7 @@
         if (type == CameraType.Fpp)
         {
             cameratype = CameraType.Fpp;
-            SetFreeMouse(false);
+            platform.RequestMousePointerLock();
             ENABLE_TPP_VIEW = false;
             overheadcamera = false;
         }
@@ -1573,7 +1578,7 @@
         {
             cameratype = CameraType.Overhead;
             overheadcamera = true;
-            SetFreeMouse(true);
+            platform.ExitMousePointerLock();
             ENABLE_TPP_VIEW = true;
             playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
         }
@@ -2351,7 +2356,6 @@
     internal int reloadstartMilliseconds;
     internal int PreviousActiveMaterialBlock;
     internal int lastOxygenTickMilliseconds;
-    internal bool freemousejustdisabled;
     internal int typinglogpos;
     internal TypingState GuiTyping;
     internal ConnectData connectdata;
@@ -3478,8 +3482,7 @@
     internal void GuiStateBackToGame()
     {
         guistate = GuiState.Normal;
-        SetFreeMouse(false);
-        freemousejustdisabled = true;
+        platform.RequestMousePointerLock();
     }
 
     internal float overheadcameradistance;
@@ -6127,7 +6130,7 @@
                 }
                 guistate = GuiState.EscapeMenu;
                 menustate = new MenuState();
-                SetFreeMouse(true);
+                platform.ExitMousePointerLock();
                 return;
             }
             if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
@@ -6283,14 +6286,14 @@
                 {
                     cameratype = CameraType.Overhead;
                     overheadcamera = true;
-                    SetFreeMouse(true);
+                    platform.ExitMousePointerLock();
                     ENABLE_TPP_VIEW = true;
                     playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
                 }
                 else if (cameratype == CameraType.Overhead)
                 {
                     cameratype = CameraType.Fpp;
-                    SetFreeMouse(false);
+                    platform.RequestMousePointerLock();
                     ENABLE_TPP_VIEW = false;
                     overheadcamera = false;
                 }
@@ -6434,7 +6437,7 @@
             {
                 guistate = GuiState.Inventory;
                 menustate = new MenuState();
-                SetFreeMouse(true);
+                platform.ExitMousePointerLock();
                 return;
             }
             HandleMaterialKeys(eKey);
@@ -6668,7 +6671,6 @@
 
     internal void FrameTick(float dt)
     {
-        UpdateMousePosition();
         //if ((DateTime.Now - lasttodo).TotalSeconds > BuildDelay && todo.Count > 0)
         //UpdateTerrain();
         OnNewFrame(dt);
@@ -7659,7 +7661,7 @@
         craftingTableposz = posz;
         guistate = GuiState.CraftingRecipes;
         menustate = new MenuState();
-        SetFreeMouse(true);
+        platform.ExitMousePointerLock();
     }
 
     internal int[] okrecipes;
@@ -7968,26 +7970,6 @@
 
     string lasthandimage;
 
-    internal void UpdateMousePosition()
-    {
-        UpdateMousePositionArgs args = new UpdateMousePositionArgs();
-        args.freemouse = GetFreeMouse();
-        args.freemousejustdisabled = freemousejustdisabled;
-        args.mouseCurrentX = mouseCurrentX;
-        args.mouseCurrentY = mouseCurrentY;
-        args.mouseDeltaX = mouseDeltaX;
-        args.mouseDeltaY = mouseDeltaY;
-
-        platform.UpdateMousePosition(args);
-
-        SetFreeMouse(args.freemouse);
-        freemousejustdisabled = args.freemousejustdisabled;
-        mouseCurrentX = args.mouseCurrentX;
-        mouseCurrentY = args.mouseCurrentY;
-        mouseDeltaX = args.mouseDeltaX;
-        mouseDeltaY = args.mouseDeltaY;
-    }
-
     bool startedconnecting;
     internal void GotoDraw2d(float dt)
     {
@@ -8012,6 +7994,30 @@
                 Connect__();
             }
         }
+    }
+
+    public void OnTouchStart(TouchEventArgs e)
+    {
+    }
+
+    public void OnTouchMove(TouchEventArgs e)
+    {
+    }
+
+    public void OnTouchEnd(TouchEventArgs e)
+    {
+    }
+
+    public void OnBackPressed()
+    {
+    }
+
+    public void MouseMove(MouseEventArgs e)
+    {
+        mouseCurrentX = e.GetX();
+        mouseCurrentY = e.GetY();
+        mouseDeltaX = e.GetMovementX();
+        mouseDeltaY = e.GetMovementY();
     }
 }
 

@@ -32,6 +32,8 @@ public class GamePlatformNative : GamePlatform
 
     public GameWindow window;
 
+    public bool TouchTest = false;
+
     string[] datapaths;
     Dictionary<string, string> cache = new Dictionary<string, string>();
     Dictionary<string, string> remap = new Dictionary<string, string>();
@@ -327,6 +329,18 @@ public class GamePlatformNative : GamePlatform
 
     void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
     {
+        UpdateMousePositionArgs a = new UpdateMousePositionArgs();
+        UpdateMousePosition(a);
+        foreach (MouseEventHandler h in mouseEventHandlers)
+        {
+            MouseEventArgs args2 = new MouseEventArgs();
+            args2.SetX(a.mouseCurrentX);
+            args2.SetY(a.mouseCurrentY);
+            args2.SetMovementX((int)a.mouseDeltaX);
+            args2.SetMovementY((int)a.mouseDeltaY);
+            h.OnMouseMove(args2);
+        }
+
         foreach (NewFrameHandler h in newFrameHandlers)
         {
             NewFrameEventArgs args = new NewFrameEventArgs();
@@ -349,36 +363,78 @@ public class GamePlatformNative : GamePlatform
 
     void Mouse_ButtonDown(object sender, MouseButtonEventArgs e)
     {
-        foreach (MouseEventHandler h in mouseEventHandlers)
+        if (TouchTest)
         {
-            MouseEventArgs args = new MouseEventArgs();
-            args.SetX(e.X);
-            args.SetY(e.Y);
-            args.SetButton((int)e.Button);
-            h.OnMouseDown(args);
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchStart(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetButton((int)e.Button);
+                h.OnMouseDown(args);
+            }
         }
     }
 
     void Mouse_ButtonUp(object sender, MouseButtonEventArgs e)
     {
-        foreach (MouseEventHandler h in mouseEventHandlers)
+        if (TouchTest)
         {
-            MouseEventArgs args = new MouseEventArgs();
-            args.SetX(e.X);
-            args.SetY(e.Y);
-            args.SetButton((int)e.Button);
-            h.OnMouseUp(args);
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchEnd(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetButton((int)e.Button);
+                h.OnMouseUp(args);
+            }
         }
     }
 
     void Mouse_Move(object sender, MouseMoveEventArgs e)
     {
-        foreach (MouseEventHandler h in mouseEventHandlers)
+        if (TouchTest)
         {
-            MouseEventArgs args = new MouseEventArgs();
-            args.SetX(e.X);
-            args.SetY(e.Y);
-            h.OnMouseMove(args);
+            foreach (TouchEventHandler h in touchEventHandlers)
+            {
+                TouchEventArgs args = new TouchEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                args.SetId(0);
+                h.OnTouchMove(args);
+            }
+        }
+        else
+        {
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args = new MouseEventArgs();
+                args.SetX(e.X);
+                args.SetY(e.Y);
+                h.OnMouseMove(args);
+            }
         }
     }
 
@@ -1005,17 +1061,6 @@ public class GamePlatformNative : GamePlatform
         return a % b;
     }
 
-    public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
-
-    public override void SetFreeMouse(bool value)
-    {
-        if (IsMac)
-        {
-            window.CursorVisible = value;
-            System.Windows.Forms.Cursor.Hide();
-        }
-    }
-
     public override UriCi ParseUri(string uri)
     {
         MyUri myuri = new MyUri(uri);
@@ -1458,11 +1503,12 @@ public class GamePlatformNative : GamePlatform
         }
     }
 
-    public override void UpdateMousePosition(UpdateMousePositionArgs args)
+    bool wasMousePointerLocked;
+    void UpdateMousePosition(UpdateMousePositionArgs args)
     {
         args.mouseCurrentX = System.Windows.Forms.Cursor.Position.X;
         args.mouseCurrentY = System.Windows.Forms.Cursor.Position.Y;
-        if (args.freemouse)
+        if (!mousePointerLocked)
         {
             args.mouseCurrentX = args.mouseCurrentX - window.X;
             args.mouseCurrentY = args.mouseCurrentY - window.Y;
@@ -1473,13 +1519,14 @@ public class GamePlatformNative : GamePlatform
         {
             return;
         }
-        if (args.freemousejustdisabled)
+        if (mousePointerLocked && (!wasMousePointerLocked))
         {
             mouse_previous.X = args.mouseCurrentX;
             mouse_previous.Y = args.mouseCurrentY;
             args.freemousejustdisabled = false;
         }
-        if (!args.freemouse)
+        wasMousePointerLocked = mousePointerLocked;
+        if (mousePointerLocked)
         {
             //There are two versions:
 
@@ -1837,6 +1884,38 @@ public class GamePlatformNative : GamePlatform
         catch
         {
         }
+    }
+
+    bool mousePointerLocked;
+
+    public override bool IsMousePointerLocked()
+    {
+        return mousePointerLocked;
+    }
+
+    public bool IsMac = Environment.OSVersion.Platform == PlatformID.MacOSX;
+
+    public override void RequestMousePointerLock()
+    {
+        if (TouchTest)
+        {
+            return;
+        }
+        if (IsMac)
+        {
+            window.CursorVisible = false;
+            System.Windows.Forms.Cursor.Hide();
+        }
+        mousePointerLocked = true;
+    }
+
+    public override void ExitMousePointerLock()
+    {
+        if (IsMac)
+        {
+            window.CursorVisible = true;
+        }
+        mousePointerLocked = false;
     }
 }
 

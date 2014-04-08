@@ -304,7 +304,7 @@
     {
         game.guistate = GuiState.EscapeMenu;
         game.menustate = new MenuState();
-        game.SetFreeMouse(true);
+        game.platform.ExitMousePointerLock();
         SetEscapeMenuState(EscapeMenuState.Main);
     }
     EscapeMenuState escapemenustate;

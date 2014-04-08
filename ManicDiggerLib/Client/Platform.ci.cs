@@ -91,7 +91,6 @@
     public abstract AviWriterCi AviWriterCreate();
     public abstract bool StringEmpty(string data);
     public abstract float FloatModulo(float a, int b);
-    public abstract void SetFreeMouse(bool value);
     public abstract UriCi ParseUri(string uri);
     public abstract bool StringContains(string a, string b);
     public abstract RandomCi RandomCreate();
@@ -144,7 +143,6 @@
     public abstract void GlShadeModelSmooth();
     public abstract void MouseCursorHide();
     public abstract void ApplicationDoEvents();
-    public abstract void UpdateMousePosition(UpdateMousePositionArgs args);
     public abstract void ThreadSpinWait(int iterations);
     public abstract void GlDisableFog();
     public abstract bool SinglePlayerServerAvailable();
@@ -160,11 +158,13 @@
     public abstract bool IsFastSystem();
     public abstract Preferences GetPreferences();
     public abstract void SetPreferences(Preferences preferences);
+    public abstract bool IsMousePointerLocked();
+    public abstract void RequestMousePointerLock();
+    public abstract void ExitMousePointerLock();
 }
 
 public class UpdateMousePositionArgs
 {
-    internal bool freemouse;
     internal bool freemousejustdisabled;
     internal int mouseCurrentX;
     internal int mouseCurrentY;
