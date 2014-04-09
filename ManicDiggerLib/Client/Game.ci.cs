@@ -116,6 +116,8 @@
         escapeMenu = new GuiStateEscapeMenu();
         handTexture = -1;
         modelViewInverted = new float[16];
+        touchIdMove = -1;
+        touchIdRotate = -1;
     }
 
     public void Start()
@@ -2554,6 +2556,11 @@
             player.playerorientation.X = Game.ClampFloat(player.playerorientation.X,
                 Game.GetPi() / 2 + (one * 15 / 1000),
                 (Game.GetPi() / 2 + Game.GetPi() - (one * 15 / 1000)));
+
+            player.playerorientation.X += touchOrientationDy * rotation_speed * (one / 75);
+            player.playerorientation.Y += touchOrientationDx * rotation_speed * (one / 75);
+            touchOrientationDx = 0;
+            touchOrientationDy = 0;
         }
     }
 
@@ -6710,8 +6717,8 @@
         }
         bool wantsjump = GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)];
         bool shiftkeydown = keyboardState[GetKey(GlKeys.ShiftLeft)];
-        int movedx = 0;
-        int movedy = 0;
+        float movedx = 0;
+        float movedy = 0;
         bool moveup = false;
         bool movedown = false;
         if (guistate == GuiState.Normal)
@@ -6763,6 +6770,9 @@
                     if (keyboardState[GetKey(GlKeys.D)]) { movedx += 1; localplayeranimationhint.leanright = true; localstance = 2; }
                     else { localplayeranimationhint.leanright = false; }
                     if (!localplayeranimationhint.leanleft && !localplayeranimationhint.leanright) { localstance = 0; }
+
+                    movedx += touchMoveDx;
+                    movedy += touchMoveDy;
                 }
             }
             if (ENABLE_FREEMOVE || Swimming())
@@ -6834,6 +6844,8 @@
         pushY += push.Y;
         pushZ += push.Z;
         EntityExpire(dt);
+        movedx = ClampFloat(movedx, -1, 1);
+        movedy = ClampFloat(movedy, -1, 1);
         MoveInfo move = new MoveInfo();
         {
             move.movedx = movedx;
@@ -8004,16 +8016,86 @@
         }
     }
 
+    int touchIdMove;
+    int touchMoveStartX;
+    int touchMoveStartY;
+    int touchIdRotate;
+    int touchRotateStartX;
+    int touchRotateStartY;
+
     public void OnTouchStart(TouchEventArgs e)
     {
+        if (e.GetX() <= Width() / 2)
+        {
+            if (touchIdMove == -1)
+            {
+                touchIdMove = e.GetId();
+                touchMoveStartX = e.GetX();
+                touchMoveStartY = e.GetY();
+                touchMoveDx = 0;
+                touchMoveDy = 1;
+            }
+        }
+        if (((touchIdMove != -1)
+            && (e.GetId() != touchIdMove))
+            || (e.GetX() > Width() / 2))
+        {
+            if (touchIdRotate == -1)
+            {
+                touchIdRotate = e.GetId();
+                touchRotateStartX = e.GetX();
+                touchRotateStartY = e.GetY();
+            }
+        }
     }
 
+    float touchMoveDx;
+    float touchMoveDy;
+    float touchOrientationDx;
+    float touchOrientationDy;
     public void OnTouchMove(TouchEventArgs e)
     {
+        if (e.GetId() == touchIdMove)
+        {
+            float range = Width() * one / 20;
+            touchMoveDx = e.GetX() - touchMoveStartX;
+            touchMoveDy = -((e.GetY()-1) - touchMoveStartY);
+
+            float length = Length(touchMoveDx, touchMoveDy, 0);
+            if (length > range)
+            {
+                touchMoveDx /= length;
+                touchMoveDy /= length;
+            }
+            else
+            {
+                touchMoveDx = 0;
+                touchMoveDy = 1;
+            }
+        }
+        if (e.GetId() == touchIdRotate)
+        {
+            touchOrientationDx += (e.GetX() - touchRotateStartX) / (Width() * one / 40);
+            touchOrientationDy += (e.GetY() - touchRotateStartY) / (Width() * one / 40);
+            touchRotateStartX = e.GetX();
+            touchRotateStartY = e.GetY();
+        }
     }
 
     public void OnTouchEnd(TouchEventArgs e)
     {
+        if (e.GetId() == touchIdMove)
+        {
+            touchIdMove = -1;
+            touchMoveDx = 0;
+            touchMoveDy = 0;
+        }
+        if (e.GetId() == touchIdRotate)
+        {
+            touchIdRotate = -1;
+            touchOrientationDx = 0;
+            touchOrientationDy = 0;
+        }
     }
 
     public void OnBackPressed()

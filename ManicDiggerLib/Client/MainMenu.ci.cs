@@ -345,6 +345,7 @@
         touchId = e.GetId();
         previousTouchX = e.GetX();
         previousTouchY = e.GetY();
+        screen.OnTouchStart(e);
     }
 
     int touchId;
@@ -353,6 +354,7 @@
 
     public void HandleTouchMove(TouchEventArgs e)
     {
+        screen.OnTouchMove(e);
         if (e.GetId() != touchId)
         {
             return;
@@ -368,6 +370,7 @@
 
     public void HandleTouchEnd(TouchEventArgs e)
     {
+        screen.OnTouchEnd(e);
     }
 
     LoadedTexture[] textures;

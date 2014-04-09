@@ -104,8 +104,8 @@ public class MoveInfo
     internal bool Swimming;
     internal Acceleration acceleration;
     internal float movespeednow;
-    internal int movedx;
-    internal int movedy;
+    internal float movedx;
+    internal float movedy;
     internal bool ENABLE_NOCLIP;
     internal bool wantsjump;
     internal bool moveup;
