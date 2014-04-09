@@ -199,6 +199,24 @@ public class Preferences
     }
     internal GamePlatform platform;
     internal DictionaryStringString items;
+
+    public string GetKey(int i)
+    {
+        if (items.items[i] != null)
+        {
+            return items.items[i].key;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public int GetKeysCount()
+    {
+        return items.count;
+    }
+
     public string GetString(string key, string default_)
     {
         if (!items.ContainsKey(key))
