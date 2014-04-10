@@ -202,6 +202,12 @@ public class QueueByte
     internal int start;
     internal int count;
     internal int max;
+
+    public int GetCount()
+    {
+        return count;
+    }
+
     public void Enqueue(byte value)
     {
         int pos = start + count;
@@ -210,7 +216,7 @@ public class QueueByte
         items[pos] = value;
     }
 
-    byte Dequeue()
+    public byte Dequeue()
     {
         byte ret = items[start];
         start++;

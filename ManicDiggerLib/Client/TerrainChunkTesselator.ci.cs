@@ -74,16 +74,21 @@ public class TerrainChunkTesselatorCi
         for (int i = 0; i < toreturnatlas1dLength; i++)
         {
             toreturnatlas1d[i] = new ModelData();
-            toreturnatlas1d[i].xyz = new float[65536 * 3];
-            toreturnatlas1d[i].uv = new float[65536 * 2];
-            toreturnatlas1d[i].rgba = new byte[65536 * 4];
-            toreturnatlas1d[i].indices = new int[65536];
+            int max = 1024;
+            toreturnatlas1d[i].xyz = new float[max * 3];
+            toreturnatlas1d[i].uv = new float[max * 2];
+            toreturnatlas1d[i].rgba = new byte[max * 4];
+            toreturnatlas1d[i].indices = new int[max];
+            toreturnatlas1d[i].verticesMax = max;
+            toreturnatlas1d[i].indicesMax = max;
 
             toreturnatlas1dtransparent[i] = new ModelData();
-            toreturnatlas1dtransparent[i].xyz = new float[65536 * 3];
-            toreturnatlas1dtransparent[i].uv = new float[65536 * 2];
-            toreturnatlas1dtransparent[i].rgba = new byte[65536 * 4];
-            toreturnatlas1dtransparent[i].indices = new int[65536];
+            toreturnatlas1dtransparent[i].xyz = new float[max * 3];
+            toreturnatlas1dtransparent[i].uv = new float[max * 2];
+            toreturnatlas1dtransparent[i].rgba = new byte[max * 4];
+            toreturnatlas1dtransparent[i].indices = new int[max];
+            toreturnatlas1dtransparent[i].verticesMax = max;
+            toreturnatlas1dtransparent[i].indicesMax = max;
         }
     }
     int toreturnatlas1dLength;
@@ -706,16 +711,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
         //bottom - same as top, but z is 1 less.
         if (drawbottom > 0)
@@ -738,16 +743,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
         //front
         if (drawfront > 0)
@@ -770,16 +775,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
         //back - same as front, but x is 1 greater.
         if (drawback > 0)
@@ -802,16 +807,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
         if (drawleft > 0)
         {
@@ -834,16 +839,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
         //right - same as left, but y is 1 greater.
         if (drawright > 0)
@@ -867,16 +872,16 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
     }
 
@@ -1281,10 +1286,10 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);//leftbottom 4
-            AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);//rightbottom 2
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor4);//topleft  3
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor2);//topright  * tilecount
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);//leftbottom 4
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1, texrecLeft, texrecBottom, curcolor);//rightbottom 2
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor4);//topleft  3
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1, texrecRight, texrecBottom, curcolor2);//topright  * tilecount
 
             //revert triangles to fix gradient problem
             //if occluded, revert to proper occlusion direction
@@ -1293,41 +1298,41 @@ public class TerrainChunkTesselatorCi
             {
                 if (!occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//1
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//3
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn,(lastelement + 2));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
         }
 
@@ -1498,10 +1503,10 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor3);
-            AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor2);
-            AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor4);
+            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 0, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z, y + 1, texrecLeft, texrecBottom, curcolor3);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 0, texrecRight, texrecTop, curcolor2);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z, y + 1, texrecRight, texrecBottom, curcolor4);
 
             //revert triangles to fix gradient problem
             //if occluded, revert to proper occlusion direction
@@ -1510,41 +1515,41 @@ public class TerrainChunkTesselatorCi
             {
                 if (occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
             }
 
         }
@@ -1710,49 +1715,49 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor2);
-            AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);
-            AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor4);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 0, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + 0, y + 1 * tilecount, texrecRight, texrecBottom, curcolor2);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight00, y + 0, texrecLeft, texrecTop, curcolor3);
+            ModelDataTool.AddVertex(toreturn, x + 0 + flowerfix, z + blockheight01, y + 1 * tilecount, texrecRight, texrecTop, curcolor4);
             if (occluded)
             {
                 if (!occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
             }
 
         }
@@ -1918,49 +1923,49 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor2);
-            AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor3);
-            AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor4);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 0, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + 0, y + 1 * tilecount, texrecLeft, texrecBottom, curcolor2);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight10, y + 0, texrecRight, texrecTop, curcolor3);
+            ModelDataTool.AddVertex(toreturn, x + 1 - flowerfix, z + blockheight11, y + 1 * tilecount, texrecLeft, texrecTop, curcolor4);
             if (occluded)
             {
                 if (!occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//2
             }
         }
         if (drawleft > 0)
@@ -2125,49 +2130,49 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor2);
-            AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor4);
-            AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor3);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 0 + flowerfix, texrecRight, texrecBottom, curcolor2);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight00, y + 0 + flowerfix, texrecRight, texrecTop, curcolor4);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 0 + flowerfix, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight10, y + 0 + flowerfix, texrecLeft, texrecTop, curcolor3);
             if (occluded)
             {
                 if (occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
         }
         //right - same as left, but y is 1 greater.
@@ -2332,49 +2337,49 @@ public class TerrainChunkTesselatorCi
             float texrecBottom = texrecTop + texrecHeight;
             float texrecRight = texrecLeft + texrecWidth;
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor3);
-            AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor2);
-            AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor4);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + 0, y + 1 - flowerfix, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, x + 0, z + blockheight01, y + 1 - flowerfix, texrecLeft, texrecTop, curcolor3);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + 0, y + 1 - flowerfix, texrecRight, texrecBottom, curcolor2);
+            ModelDataTool.AddVertex(toreturn, x + 1 * tilecount, z + blockheight11, y + 1 - flowerfix, texrecRight, texrecTop, curcolor4);
             if (occluded)
             {
                 if (occdirnorthwest)
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
                 }
                 else
                 {
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                    toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                    ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
                 }
             }
 
             else if (Game.ColorR(curcolor) != Game.ColorR(curcolor4) || Game.ColorR(curcolor3) == Game.ColorR(curcolor2))
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//2
             }
             else
             {
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//0
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));//3
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));//1
-                toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 1));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//0
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
+                ModelDataTool.AddIndex(toreturn, (lastelement + 0));//3
+                ModelDataTool.AddIndex(toreturn, (lastelement + 2));//1
+                ModelDataTool.AddIndex(toreturn, (lastelement + 3));//2
             }
         }
     }
@@ -2638,16 +2643,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecBottom, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
 
         //bottom - same as top, but z is 1 less.
@@ -2661,16 +2666,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
 
         //front
@@ -2684,16 +2689,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecRight, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
 
         //back - same as front, but x is 1 greater.
@@ -2707,16 +2712,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecLeft, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
 
         {
@@ -2729,16 +2734,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecRight, texrecTop, curcolor);
-            AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecLeft, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, bottom00.X, bottom00.Y, bottom00.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top00.X, top00.Y, top00.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom10.X, bottom10.Y, bottom10.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top10.X, top10.Y, top10.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
 
         //right - same as left, but y is 1 greater.
@@ -2752,16 +2757,16 @@ public class TerrainChunkTesselatorCi
             ModelData toreturn = GetToReturn(tt, sidetexture);
 
             int lastelement = toreturn.verticesCount;
-            AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
-            AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecTop, curcolor);
-            AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
-            AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecTop, curcolor);
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 0));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 3));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 1));
-            toreturn.indices[toreturn.indicesCount++] = ((lastelement + 2));
+            ModelDataTool.AddVertex(toreturn, bottom01.X, bottom01.Y, bottom01.Z, texrecLeft, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top01.X, top01.Y, top01.Z, texrecLeft, texrecTop, curcolor);
+            ModelDataTool.AddVertex(toreturn, bottom11.X, bottom11.Y, bottom11.Z, texrecRight, texrecBottom, curcolor);
+            ModelDataTool.AddVertex(toreturn, top11.X, top11.Y, top11.Z, texrecRight, texrecTop, curcolor);
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 0));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 3));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 1));
+            ModelDataTool.AddIndex(toreturn, (lastelement + 2));
         }
     }
 

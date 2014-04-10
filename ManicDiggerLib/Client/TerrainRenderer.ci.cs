@@ -5,7 +5,7 @@
         currentChunk = new int[18 * 18 * 18];
         currentChunkShadows = new byte[18 * 18 * 18];
         tempnearestpos = new int[3];
-        unloadxyztemp = new int[2];
+        unloadxyztemp = new Vector3IntRef();
         chunksizebits = 4;
         ids = new int[1024];
         idsCount = 0;
@@ -131,7 +131,7 @@
     }
 
     int unloadIterationXy;
-    int[] unloadxyztemp;
+    Vector3IntRef unloadxyztemp;
     void UnloadRendererChunks()
     {
         int px = game.platform.FloatToInt(game.player.playerposition.X) / chunksize;
@@ -155,20 +155,32 @@
         if (endy >= mapsizeychunks()) { endy = mapsizeychunks() - 1; }
         if (endz >= mapsizezchunks()) { endz = mapsizezchunks() - 1; }
 
+        int mapsizexchunks_ = mapsizexchunks();
+        int mapsizeychunks_ = mapsizeychunks();
+        int mapsizezchunks_ = mapsizezchunks();
 
-        for (int i = 0; i < 1000; i++)
+        int count;
+        if (game.platform.IsFastSystem())
+        {
+            count = 1000;
+        }
+        else
+        {
+            count = 250;
+        }
+
+        for (int i = 0; i < count; i++)
         {
             unloadIterationXy++;
-            if (unloadIterationXy >= mapsizexchunks() * mapsizeychunks() * mapsizezchunks())
+            if (unloadIterationXy >= mapsizexchunks_ * mapsizeychunks_ * mapsizezchunks_)
             {
                 unloadIterationXy = 0;
             }
-            Vector3IntRef xyz = new Vector3IntRef();
-            MapUtilCi.PosInt(unloadIterationXy, mapsizexchunks(), mapsizeychunks(), xyz);
-            int x = xyz.X;
-            int y = xyz.Y;
-            int z = xyz.Z;
-            int pos = MapUtilCi.Index3d(x, y, z, mapsizexchunks(), mapsizeychunks());
+            MapUtilCi.PosInt(unloadIterationXy, mapsizexchunks_, mapsizeychunks_, unloadxyztemp);
+            int x = unloadxyztemp.X;
+            int y = unloadxyztemp.Y;
+            int z = unloadxyztemp.Z;
+            int pos = MapUtilCi.Index3d(x, y, z, mapsizexchunks_, mapsizeychunks_);
             bool unloaded = false;
 
             Chunk c = game.chunks[pos];

@@ -131,7 +131,6 @@
         return -1;
     }
 
-    public const int MAX_DISPLAY_LISTS = 32 * 1024;
     void SortListsByTexture()
     {
         if (tocallSolid == null)
@@ -145,8 +144,11 @@
             }
             for (int i = 0; i < texturesCount; i++)
             {
-                tocallSolid[i].Lists = new Model[MAX_DISPLAY_LISTS];
-                tocallTransparent[i].Lists = new Model[MAX_DISPLAY_LISTS];
+                int max = 256;
+                tocallSolid[i].Lists = new Model[max];
+                tocallSolid[i].Max = max;
+                tocallTransparent[i].Lists = new Model[max];
+                tocallTransparent[i].Max = max;
             }
         }
         for (int i = 0; i < texturesCount; i++)
@@ -165,16 +167,27 @@
             {
                 continue;
             }
+            ToCall tocall;
             if (!li.transparent)
             {
-                ToCall tocall = tocallSolid[li.texture];
-                tocall.Lists[tocall.Count++] = models[i].model;
+                tocall = tocallSolid[li.texture];
             }
             else
             {
-                ToCall tocall = tocallTransparent[li.texture];
-                tocall.Lists[tocall.Count++] = models[i].model;
+                tocall = tocallTransparent[li.texture];
             }
+            if (tocall.Count >= tocall.Max)
+            {
+                Model[] old = tocall.Lists;
+                Model[] new_ = new Model[tocall.Max * 2];
+                for (int k = 0; k < tocall.Max; k++)
+                {
+                    new_[k] = old[k];
+                }
+                tocall.Lists = new_;
+                tocall.Max = tocall.Max * 2;
+            }
+            tocall.Lists[tocall.Count++] = models[i].model;
         }
     }
 
@@ -239,6 +252,7 @@ public class ToCall
 {
     internal Model[] Lists;
     internal int Count;
+    internal int Max;
 }
 
 public class ListInfo

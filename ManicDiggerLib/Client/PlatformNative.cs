@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Threading;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 
 public class GamePlatformNative : GamePlatform
 {
