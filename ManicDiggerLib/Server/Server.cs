@@ -1127,6 +1127,10 @@ namespace ManicDiggerServer
             int clientid = -1;
             foreach (var k in clients)
             {
+                if (k.Value.mainSocket != mainSocket)
+                {
+                    continue;
+                }
                 if (k.Value.socket.EqualsConnection(msg.SenderConnection()))
                 {
                     clientid = k.Key;
