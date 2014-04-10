@@ -245,6 +245,18 @@
         AddMod(new ModFpsHistoryGraph());
         s = new BlockOctreeSearcher();
         s.platform = platform;
+
+        scheduler = new TaskScheduler_();
+        scheduler.platform = platform;
+        DrawTask drawTask = new DrawTask();
+        drawTask.game = this;
+        scheduler.AddMainThreadTask(drawTask);
+
+        UnloadRendererChunks unloadRendererChunks = new UnloadRendererChunks();
+        unloadRendererChunks.game = this;
+        scheduler.QueueTask(unloadRendererChunks);
+
+        scheduler.QueueTask(terrainRenderer);
     }
 
     HttpResponseCi skinserverResponse;
@@ -7848,8 +7860,13 @@
         MapLoadingStart();
     }
 
+    public void OnRenderFrame(float deltaTime)
+    {
+        TaskScheduler(deltaTime);
+    }
+
     float accumulator;
-    internal void OnRenderFrame(float deltaTime)
+    internal void MainThreadOnRenderFrame(float deltaTime)
     {
         UpdateResize();
         
@@ -7972,7 +7989,6 @@
             }
         }
         GotoDraw2d(deltaTime);
-        terrainRenderer.UpdateTerrain();
     }
 
     int lastWidth;
@@ -8108,6 +8124,144 @@
         mouseCurrentY = e.GetY();
         mouseDeltaX = e.GetMovementX();
         mouseDeltaY = e.GetMovementY();
+    }
+
+    public void QueueTask(Task task)
+    {
+        scheduler.QueueTask(task);
+    }
+    TaskScheduler_ scheduler;
+
+    void TaskScheduler(float deltaTime)
+    {
+        scheduler.Update(deltaTime);
+    }
+}
+
+public abstract class Action_
+{
+    public abstract void Run();
+}
+
+public class TaskAction : Action_
+{
+    public static TaskAction Create(Task task)
+    {
+        TaskAction action = new TaskAction();
+        action.task = task;
+        return action;
+    }
+    internal Task task;
+    public override void Run()
+    {
+        task.BackgroundReadOnly();
+    }
+}
+
+public class Task
+{
+    internal Game game;
+    public virtual void BackgroundReadOnly() { }
+    public virtual void MainThreadCommit(float dt) { }
+    internal bool Done;
+}
+
+public class TaskScheduler_
+{
+    public TaskScheduler_()
+    {
+        newTasks = new Task[128];
+        newTasksCount = 0;
+        tasks = new Task[128];
+        tasksCount = 0;
+        mainTasks = new Task[128];
+        mainTasksCount = 0;
+    }
+    internal GamePlatform platform;
+
+    public void QueueTask(Task task)
+    {
+        newTasks[newTasksCount++] = task;
+    }
+    Task[] newTasks;
+    int newTasksCount;
+    Task[] tasks;
+    int tasksCount;
+
+    internal void Update(float dt)
+    {
+        for (int i = 0; i < mainTasksCount; i++)
+        {
+            mainTasks[i].BackgroundReadOnly();
+        }
+        for (int i = 0; i < mainTasksCount; i++)
+        {
+            mainTasks[i].MainThreadCommit(dt);
+        }
+
+        if (platform.MultithreadingAvailable())
+        {
+            bool allDone = true;
+            for (int i = 0; i < tasksCount; i++)
+            {
+                if (!tasks[i].Done)
+                {
+                    allDone = false;
+                    break;
+                }
+            }                
+            if (allDone) // no background tasks. can modify world now.
+            {
+                for (int i = 0; i < tasksCount; i++)
+                {
+                    tasks[i].MainThreadCommit(dt);
+                }
+                tasksCount = 0;
+                for (int i = 0; i < newTasksCount; i++)
+                {
+                    Task t = newTasks[i];
+                    t.Done = false;
+                    tasks[tasksCount++] = t;
+                    platform.QueueUserWorkItem(TaskAction.Create(t));
+                }
+                newTasksCount = 0;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < tasksCount; i++)
+            {
+                tasks[i].BackgroundReadOnly();
+                tasks[i].MainThreadCommit(dt);
+            }
+            tasksCount = 0;
+            for (int i = 0; i < newTasksCount; i++)
+            {
+                Task t = newTasks[i];
+                t.Done = false;
+                tasks[tasksCount++] = t;
+            }
+            newTasksCount = 0;
+        }
+    }
+
+    Task[] mainTasks;
+    int mainTasksCount;
+    public void AddMainThreadTask(DrawTask task)
+    {
+        mainTasks[mainTasksCount++] = task;
+    }
+}
+
+public class DrawTask : Task
+{
+    public override void BackgroundReadOnly()
+    {
+        
+    }
+    public override void MainThreadCommit(float dt)
+    {
+        game.MainThreadOnRenderFrame(dt);
     }
 }
 

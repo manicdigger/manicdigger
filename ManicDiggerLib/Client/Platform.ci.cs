@@ -161,6 +161,8 @@
     public abstract bool IsMousePointerLocked();
     public abstract void RequestMousePointerLock();
     public abstract void ExitMousePointerLock();
+    public abstract bool MultithreadingAvailable();
+    public abstract void QueueUserWorkItem(Action_ action);
 }
 
 public class UpdateMousePositionArgs

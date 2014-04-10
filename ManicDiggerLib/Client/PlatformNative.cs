@@ -1918,6 +1918,16 @@ public class GamePlatformNative : GamePlatform
         }
         mousePointerLocked = false;
     }
+
+    public override bool MultithreadingAvailable()
+    {
+        return true;
+    }
+
+    public override void QueueUserWorkItem(Action_ action)
+    {
+        ThreadPool.QueueUserWorkItem((a) => { action.Run(); });
+    }
 }
 
 public class RandomNative : RandomCi
