@@ -162,16 +162,22 @@ public class ServerManager
 
     void OnConnectRequest(IAsyncResult result)
     {
-        Socket sock = (Socket)result.AsyncState;
-
-        TcpConnection newConn = new TcpConnection(sock.EndAccept(result));
-        newConn.ReceivedMessage += new EventHandler<MessageEventArgs>(newConn_ReceivedMessage);
-        newConn.Disconnected += new EventHandler<ConnectionEventArgs>(newConn_Disconnected);
-        if (Connected != null)
+        try
         {
-            Connected(this, new ConnectionEventArgs() { ClientId = newConn });
+            Socket sock = (Socket)result.AsyncState;
+
+            TcpConnection newConn = new TcpConnection(sock.EndAccept(result));
+            newConn.ReceivedMessage += new EventHandler<MessageEventArgs>(newConn_ReceivedMessage);
+            newConn.Disconnected += new EventHandler<ConnectionEventArgs>(newConn_Disconnected);
+            if (Connected != null)
+            {
+                Connected(this, new ConnectionEventArgs() { ClientId = newConn });
+            }
+            sock.BeginAccept(this.OnConnectRequest, sock);
         }
-        sock.BeginAccept(this.OnConnectRequest, sock);
+        catch
+        {
+        }
     }
 
     void newConn_Disconnected(object sender, ConnectionEventArgs e)
@@ -204,7 +210,13 @@ public class ServerManager
 
     public void Send(object sender, byte[] data)
     {
-        ((TcpConnection)sender).Send(data);
+        try
+        {
+            ((TcpConnection)sender).Send(data);
+        }
+        catch
+        {
+        }
     }
 }
 
@@ -221,86 +233,103 @@ public class TcpConnection
     }
     void BeginReceive()
     {
-        this.sock.BeginReceive(
+        try
+        {
+            this.sock.BeginReceive(
+                    this.dataRcvBuf, 0,
+                    this.dataRcvBuf.Length,
+                    SocketFlags.None,
+                    new AsyncCallback(this.OnBytesReceived),
+                    this);
+        }
+        catch
+        {
+            InvokeDisconnected();
+        }
+    }
+    byte[] dataRcvBuf = new byte[1024 * 8];
+    protected void OnBytesReceived(IAsyncResult result)
+    {
+        try
+        {
+            int nBytesRec;
+            try
+            {
+                nBytesRec = this.sock.EndReceive(result);
+            }
+            catch
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                InvokeDisconnected();
+                return;
+            }
+            if (nBytesRec <= 0)
+            {
+                try
+                {
+                    this.sock.Close();
+                }
+                catch
+                {
+                }
+                InvokeDisconnected();
+                return;
+            }
+
+            for (int i = 0; i < nBytesRec; i++)
+            {
+                receivedBytes.Add(dataRcvBuf[i]);
+            }
+
+            //packetize
+            while (receivedBytes.Count >= 4)
+            {
+                byte[] receivedBytesArray = receivedBytes.ToArray();
+                int packetLength = ReadInt(receivedBytesArray, 0);
+                if (receivedBytes.Count >= 4 + packetLength)
+                {
+                    //read packet
+                    byte[] packet = new byte[packetLength];
+                    for (int i = 0; i < packetLength; i++)
+                    {
+                        packet[i] = receivedBytesArray[4 + i];
+                    }
+                    receivedBytes.RemoveRange(0, 4 + packetLength);
+                    ReceivedMessage.Invoke(this, new MessageEventArgs() { ClientId = this, data = packet });
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            this.sock.BeginReceive(
                 this.dataRcvBuf, 0,
                 this.dataRcvBuf.Length,
                 SocketFlags.None,
                 new AsyncCallback(this.OnBytesReceived),
                 this);
-    }
-    byte[] dataRcvBuf = new byte[1024 * 8];
-    protected void OnBytesReceived(IAsyncResult result)
-    {
-        int nBytesRec;
-        try
-        {
-            nBytesRec = this.sock.EndReceive(result);
         }
         catch
         {
-            try
-            {
-                this.sock.Close();
-            }
-            catch
-            {
-            }
-            if (Disconnected != null)
-            {
-                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
-            }
-            return;
+            InvokeDisconnected();
         }
-        if (nBytesRec <= 0)
-        {
-            try
-            {
-                this.sock.Close();
-            }
-            catch
-            {
-            }
-            if (Disconnected != null)
-            {
-                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
-            }
-            return;
-        }
-
-        for (int i = 0; i < nBytesRec; i++)
-        {
-            receivedBytes.Add(dataRcvBuf[i]);
-        }
-
-        //packetize
-        while (receivedBytes.Count >= 4)
-        {
-            byte[] receivedBytesArray = receivedBytes.ToArray();
-            int packetLength = ReadInt(receivedBytesArray, 0);
-            if (receivedBytes.Count >= 4 + packetLength)
-            {
-                //read packet
-                byte[] packet = new byte[packetLength];
-                for (int i = 0; i < packetLength; i++)
-                {
-                    packet[i] = receivedBytesArray[4 + i];
-                }
-                receivedBytes.RemoveRange(0, 4 + packetLength);
-                ReceivedMessage.Invoke(this, new MessageEventArgs() { ClientId = this, data = packet });
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        this.sock.BeginReceive(
-            this.dataRcvBuf, 0,
-            this.dataRcvBuf.Length,
-            SocketFlags.None,
-            new AsyncCallback(this.OnBytesReceived),
-            this);
     }
+
+    void InvokeDisconnected()
+    {
+        if (Disconnected != null)
+        {
+            Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+        }
+    }
+
     public void Send(byte[] data)
     {
         try
@@ -316,12 +345,20 @@ public class TcpConnection
         }
         catch (Exception e)
         {
+            InvokeDisconnected();
         }
     }
     int total;
     void OnSend(IAsyncResult result)
     {
-        sock.EndSend(result);
+        try
+        {
+            sock.EndSend(result);
+        }
+        catch
+        {
+            InvokeDisconnected();
+        }
     }
     List<byte> receivedBytes = new List<byte>();
     public event EventHandler<MessageEventArgs> ReceivedMessage;

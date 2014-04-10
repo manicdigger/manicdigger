@@ -32,7 +32,7 @@ public class GamePlatformNative : GamePlatform
 
     public GameWindow window;
 
-    public bool TouchTest = true;
+    public bool TouchTest = false;
 
     string[] datapaths;
     Dictionary<string, string> cache = new Dictionary<string, string>();

@@ -43,7 +43,7 @@ namespace ManicDiggerServer
         }
 
         bool ENABLE_REDIRECT_STANDARD_INPUT;
-        bool ENABLE_AUTORESTARTER = true;
+        bool ENABLE_AUTORESTARTER = !Debugger.IsAttached;
         int parentid;
         bool IsAutoRestarter = true;
         int autoRestartCycle = 6;
