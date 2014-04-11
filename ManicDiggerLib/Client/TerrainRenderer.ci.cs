@@ -52,13 +52,14 @@
     int mapsizeychunks() { return game.MapSizeY >> chunksizebits; }
     int mapsizezchunks() { return game.MapSizeZ >> chunksizebits; }
 
-    public override void BackgroundReadOnly()
+    public override void Run(float dt)
     {
         UpdateTerrain();
-        Done = true;
+        game.QueueTaskCommit(TerrainRendererCommit.Create(this));
+        game.QueueTaskReadOnlyBackgroundPerFrame(this);
     }
 
-    public override void MainThreadCommit(float dt)
+    public void MainThreadCommit(float dt)
     {
         for (int i = 0; i < redrawCount; i++)
         {
@@ -66,8 +67,6 @@
             redraw[i] = null;
         }
         redrawCount = 0;
-
-        game.QueueTask(this);
     }
 
     public void UpdateTerrain()
@@ -596,6 +595,21 @@
     int minlight;
 }
 
+public class TerrainRendererCommit : Task
+{
+    public static TerrainRendererCommit Create(TerrainRenderer renderer)
+    {
+        TerrainRendererCommit c = new TerrainRendererCommit();
+        c.renderer = renderer;
+        return c;
+    }
+    TerrainRenderer renderer;
+    public override void Run(float dt)
+    {
+        renderer.MainThreadCommit(dt);
+    }
+}
+
 public class TerrainRendererRedraw
 {
     internal Chunk c;
@@ -608,10 +622,9 @@ public class UnloadRendererChunks : Task
     public UnloadRendererChunks()
     {
         unloadxyztemp = new Vector3IntRef();
-        unloadChunkPos = -1;
     }
 
-    public override void BackgroundReadOnly()
+    public override void Run(float dt)
     {
         chunksize = game.chunksize;
         mapsizexchunks = game.MapSizeX / chunksize;
@@ -677,7 +690,12 @@ public class UnloadRendererChunks : Task
             if (x < startx || y < starty || z < startz
                 || x > endx || y > endy || z > endz)
             {
-                unloadChunkPos = pos;
+                int unloadChunkPos = pos;
+                
+                UnloadRendererChunksCommit commit = new UnloadRendererChunksCommit();
+                commit.game = game;
+                commit.unloadChunkPos = unloadChunkPos;
+                game.QueueTaskCommit(commit);
             }
             unloaded = true;
             if (unloaded)
@@ -685,7 +703,8 @@ public class UnloadRendererChunks : Task
                 break;
             }
         }
-        Done = true;
+
+        game.QueueTaskReadOnlyBackgroundPerFrame(this);
     }
 
     int mapAreaSize() { return game.platform.FloatToInt(game.d_Config3d.viewdistance) * 2; }
@@ -700,10 +719,13 @@ public class UnloadRendererChunks : Task
 
     int unloadIterationXy;
     Vector3IntRef unloadxyztemp;
+}
 
-
-    int unloadChunkPos;
-    public override void MainThreadCommit(float dt)
+public class UnloadRendererChunksCommit : Task
+{
+    internal Game game;
+    internal int unloadChunkPos;
+    public override void Run(float dt)
     {
         if (unloadChunkPos != -1)
         {
@@ -719,7 +741,6 @@ public class UnloadRendererChunks : Task
 
             unloadChunkPos = -1;
         }
-        game.QueueTask(this);
     }
 }
 

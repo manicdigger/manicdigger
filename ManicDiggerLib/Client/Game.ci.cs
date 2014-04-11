@@ -238,6 +238,8 @@
         escapeMenu.game = this;
         platform.AddOnCrash(OnCrashHandlerLeave.Create(this));
 
+        rnd = platform.RandomCreate();
+
         clientmods = new ClientMod[128];
         clientmodsCount = 0;
         modmanager.game = this;
@@ -250,13 +252,17 @@
         scheduler.platform = platform;
         DrawTask drawTask = new DrawTask();
         drawTask.game = this;
-        scheduler.AddMainThreadTask(drawTask);
+        QueueTaskReadOnlyMainThread(drawTask);
 
         UnloadRendererChunks unloadRendererChunks = new UnloadRendererChunks();
         unloadRendererChunks.game = this;
-        scheduler.QueueTask(unloadRendererChunks);
+        QueueTaskReadOnlyMainThread(unloadRendererChunks);
 
-        scheduler.QueueTask(terrainRenderer);
+        QueueTaskReadOnlyMainThread(terrainRenderer);
+
+        UpdateTask update = new UpdateTask();
+        update.game = this;
+        QueueTaskCommit(update);
     }
 
     HttpResponseCi skinserverResponse;
@@ -1712,10 +1718,6 @@
 
     internal PointFloatRef GetAim()
     {
-        if (rnd == null)
-        {
-            rnd = platform.RandomCreate();
-        }
         if (CurrentAimRadius() <= 1)
         {
             return PointFloatRef.Create(0, 0);
@@ -6898,6 +6900,7 @@
                 d_Physics.Move(player, move, dt, soundnow, Vector3Ref.Create(pushX, pushY, pushZ), entities[LocalPlayerId].player.ModelHeight);
             }
         }
+
         if (guistate == GuiState.EscapeMenu)
         {
             //EscapeMenuMouse();
@@ -6950,19 +6953,101 @@
             if (entity.grenade == null) { continue; }
             UpdateGrenade(i, dt);
         }
-        if (guistate == GuiState.Normal)
-        {
-            UpdatePicking();
-        }
         if (guistate == GuiState.CraftingRecipes)
         {
             CraftingMouse();
         }
     }
 
+    public void Update()
+    {
+        if (guistate == GuiState.Normal)
+        {
+            UpdatePicking();
+        }
+    }
+
     float lastplayerpositionX;
     float lastplayerpositionY;
     float lastplayerpositionZ;
+
+    public void GetPickingLine(Line3D retPick, bool ispistolshoot)
+    {
+        float unit_x = 0;
+        float unit_y = 0;
+        int NEAR = 1;
+        int FOV = platform.FloatToInt(currentfov() * 10); // 600
+        float ASPECT = one * 640 / 480;
+        float near_height = NEAR * one * (platform.MathTan(FOV * Game.GetPi() / 360));
+        float[] ray = new float[3];
+        ray[0] = unit_x * near_height * ASPECT;
+        ray[1] = unit_y * near_height;
+        ray[2] = 1; //, 0);
+
+        float[] ray_start_point = new float[3];
+        PointFloatRef aim = GetAim();
+        if (overheadcamera || aim.X != 0 || aim.Y != 0)
+        {
+            float mx = 0;
+            float my = 0;
+            if (overheadcamera)
+            {
+                mx = one * mouseCurrentX / Width() - (one / 2);
+                my = one * mouseCurrentY / Height() - (one / 2);
+            }
+            else if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
+            {
+                mx += aim.X / Width();
+                my += aim.Y / Height();
+            }
+            //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
+            ray_start_point[0] = mx * 3;
+            ray_start_point[1] = -my * (one * 22 / 10);
+            ray_start_point[2] = -1;
+        }
+
+        Mat4.Copy(modelViewInverted, mvMatrix.Peek());
+        Mat4.Invert(modelViewInverted, modelViewInverted);
+        Vec3.TransformMat4(ray, ray, modelViewInverted);
+        Vec3.TransformMat4(ray_start_point, ray_start_point, modelViewInverted);
+
+        float raydirX = -(ray[0] - ray_start_point[0]);
+        float raydirY = -(ray[1] - ray_start_point[1]);
+        float raydirZ = -(ray[2] - ray_start_point[2]);
+        float raydirLength = Length(raydirX, raydirY, raydirZ);
+        raydirX /= raydirLength;
+        raydirY /= raydirLength;
+        raydirZ /= raydirLength;
+
+        retPick.Start = new float[3];
+        retPick.Start[0] = ray[0] + raydirX; //do not pick behind
+        retPick.Start[1] = ray[1] + raydirY;
+        retPick.Start[2] = ray[2] + raydirZ;
+
+        float pickDistance1 = CurrentPickDistance() * ((ispistolshoot) ? 100 : 2);
+        retPick.End = new float[3];
+        retPick.End[0] = ray[0] + raydirX * pickDistance1;
+        retPick.End[1] = ray[1] + raydirY * pickDistance1;
+        retPick.End[2] = ray[2] + raydirZ * pickDistance1;
+    }
+
+
+    public BlockPosSide[] Pick(BlockOctreeSearcher s_, Line3D line, IntRef retCount)
+    {
+        //pick terrain
+        s_.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
+        BlockPosSide[] pick2 = s_.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), line, retCount);
+        PickSort(pick2, retCount.value, line.Start[0], line.Start[1], line.Start[2]);
+        return pick2;
+    }
+
+    float CurrentPickDistance()
+    {
+        float pick_distance = PICK_DISTANCE;
+        if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
+        if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
+        return pick_distance;
+    }
 
     float[] modelViewInverted;
     internal void NextBullet(int bulletsshot)
@@ -6996,10 +7081,6 @@
         {
             currentAttackedBlock = null;
         }
-
-        float pick_distance = PICK_DISTANCE;
-        if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
-        if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
 
         Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
         bool ispistol = (item != null && blocktypes[item.BlockId].IsPistol);
@@ -7045,63 +7126,10 @@
             lastironsightschangeMilliseconds = platform.TimeMillisecondsFromStart();
         }
 
-        float unit_x = 0;
-        float unit_y = 0;
-        int NEAR = 1;
-        int FOV = platform.FloatToInt(currentfov() * 10); // 600
-        float ASPECT = one * 640 / 480;
-        float near_height = NEAR * one * (platform.MathTan(FOV * Game.GetPi() / 360));
-        float[] ray = new float[3];
-        ray[0] = unit_x * near_height * ASPECT;
-        ray[1] = unit_y * near_height;
-        ray[2] = 1; //, 0);
-
-        float[] ray_start_point = new float[3];
-        PointFloatRef aim = GetAim();
-        if (overheadcamera || aim.X != 0 || aim.Y != 0)
-        {
-            float mx = 0;
-            float my = 0;
-            if (overheadcamera)
-            {
-                mx = one * mouseCurrentX / Width() - (one / 2);
-                my = one * mouseCurrentY / Height() - (one / 2);
-            }
-            else if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
-            {
-                mx += aim.X / Width();
-                my += aim.Y / Height();
-            }
-            //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
-            ray_start_point[0] = mx * 3;
-            ray_start_point[1] = -my * (one * 22 / 10);
-            ray_start_point[2] = -1;
-        }
-
-        Mat4.Copy(modelViewInverted, mvMatrix.Peek());
-        Mat4.Invert(modelViewInverted, modelViewInverted);
-        Vec3.TransformMat4(ray, ray, modelViewInverted);
-        Vec3.TransformMat4(ray_start_point, ray_start_point, modelViewInverted);
-
+        IntRef pick2count = new IntRef();
         Line3D pick = new Line3D();
-        float raydirX = -(ray[0] - ray_start_point[0]);
-        float raydirY = -(ray[1] - ray_start_point[1]);
-        float raydirZ = -(ray[2] - ray_start_point[2]);
-        float raydirLength = Length(raydirX, raydirY, raydirZ);
-        raydirX /= raydirLength;
-        raydirY /= raydirLength;
-        raydirZ /= raydirLength;
-
-        pick.Start = new float[3];
-        pick.Start[0] = ray[0] + raydirX; //do not pick behind
-        pick.Start[1] = ray[1] + raydirY;
-        pick.Start[2] = ray[2] + raydirZ;
-
-        float pickDistance1 = pick_distance * ((ispistolshoot) ? 100 : 2);
-        pick.End = new float[3];
-        pick.End[0] = ray[0] + raydirX * pickDistance1;
-        pick.End[1] = ray[1] + raydirY * pickDistance1;
-        pick.End[2] = ray[2] + raydirZ * pickDistance1;
+        GetPickingLine(pick, ispistolshoot);
+        BlockPosSide[] pick2 = Pick(s, pick, pick2count);
 
         if (left)
         {
@@ -7112,12 +7140,6 @@
             d_Weapon.SetAttack(true, true);
         }
 
-        //pick terrain
-        s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
-        IntRef pick2count = new IntRef();
-        BlockPosSide[] pick2 = s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick, pick2count);
-        PickSort(pick2, pick2count.value, ray_start_point[0], ray_start_point[1], ray_start_point[2]);
-
         if (overheadcamera && pick2count.value > 0 && left)
         {
             //if not picked any object, and mouse button is pressed, then walk to destination.
@@ -7125,7 +7147,7 @@
         }
         bool pickdistanceok = pick2count.value > 0 &&
             (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2],
-            player.playerposition.X, player.playerposition.Y, player.playerposition.Z)) <= pick_distance;
+            player.playerposition.X, player.playerposition.Y, player.playerposition.Z)) <= CurrentPickDistance();
         bool playertileempty = IsTileEmptyForPhysics(
                     platform.FloatToInt(player.playerposition.X),
                     platform.FloatToInt(player.playerposition.Z),
@@ -8126,17 +8148,38 @@
         mouseDeltaY = e.GetMovementY();
     }
 
-    public void QueueTask(Task task)
-    {
-        scheduler.QueueTask(task);
-    }
     TaskScheduler_ scheduler;
 
     void TaskScheduler(float deltaTime)
     {
         scheduler.Update(deltaTime);
     }
+
+    public void QueueTaskReadOnlyBackgroundPerFrame(Task task)
+    {
+        scheduler.QueueTaskReadOnlyBackgroundPerFrame(task);
+    }
+
+    public void QueueTaskCommit(Task task)
+    {
+        scheduler.QueueTaskCommit(task);
+    }
+
+    public void QueueTaskReadOnlyMainThread(Task task)
+    {
+        scheduler.QueueTaskReadOnlyMainThread(task);
+    }
 }
+
+public class UpdateTask : Task
+{
+    public override void Run(float dt)
+    {
+        game.Update();
+        game.QueueTaskReadOnlyMainThread(this); // todo
+    }
+}
+
 
 public abstract class Action_
 {
@@ -8154,15 +8197,15 @@ public class TaskAction : Action_
     internal Task task;
     public override void Run()
     {
-        task.BackgroundReadOnly();
+        task.Run(1);
+        task.Done = true;
     }
 }
 
 public class Task
 {
     internal Game game;
-    public virtual void BackgroundReadOnly() { }
-    public virtual void MainThreadCommit(float dt) { }
+    public virtual void Run(float dt) { }
     internal bool Done;
 }
 
@@ -8170,98 +8213,152 @@ public class TaskScheduler_
 {
     public TaskScheduler_()
     {
-        newTasks = new Task[128];
-        newTasksCount = 0;
-        tasks = new Task[128];
-        tasksCount = 0;
-        mainTasks = new Task[128];
-        mainTasksCount = 0;
+        mainTasks = new QueueTask();
+        backgroundPerFrameTasks = new QueueTask();
+        commitTasks = new QueueTask();
+        tasks = new QueueTask();
+        newPerFrameTasks = new QueueTask();
     }
     internal GamePlatform platform;
 
-    public void QueueTask(Task task)
+    public void QueueTaskReadOnlyMainThread(Task task)
     {
-        newTasks[newTasksCount++] = task;
+        mainTasks.Enqueue(task);
     }
-    Task[] newTasks;
-    int newTasksCount;
-    Task[] tasks;
-    int tasksCount;
 
-    internal void Update(float dt)
+    QueueTask newPerFrameTasks;
+
+    public void QueueTaskReadOnlyBackgroundPerFrame(Task task)
     {
-        for (int i = 0; i < mainTasksCount; i++)
+        newPerFrameTasks.Enqueue(task);
+    }
+
+    public void QueueTaskCommit(Task task)
+    {
+        commitTasks.Enqueue(task);
+    }
+
+    QueueTask mainTasks;
+    QueueTask backgroundPerFrameTasks;
+    QueueTask commitTasks;
+
+    QueueTask tasks;
+
+    public void Update(float dt)
+    {
+        Move(mainTasks, tasks);
+        while (tasks.Count() > 0)
         {
-            mainTasks[i].BackgroundReadOnly();
-        }
-        for (int i = 0; i < mainTasksCount; i++)
-        {
-            mainTasks[i].MainThreadCommit(dt);
+            tasks.Dequeue().Run(dt);
         }
 
         if (platform.MultithreadingAvailable())
         {
-            bool allDone = true;
-            for (int i = 0; i < tasksCount; i++)
+            for (int i = backgroundPerFrameTasks.count - 1; i >= 0; i--)
             {
-                if (!tasks[i].Done)
+                if (backgroundPerFrameTasks.items[i].Done)
                 {
-                    allDone = false;
-                    break;
+                    backgroundPerFrameTasks.RemoveAt(i);
                 }
-            }                
-            if (allDone) // no background tasks. can modify world now.
+            }
+            if (backgroundPerFrameTasks.Count() == 0)
             {
-                for (int i = 0; i < tasksCount; i++)
+                Move(commitTasks, tasks);
+                while (tasks.Count() > 0)
                 {
-                    tasks[i].MainThreadCommit(dt);
+                    tasks.Dequeue().Run(dt);
                 }
-                tasksCount = 0;
-                for (int i = 0; i < newTasksCount; i++)
+
+                Move(newPerFrameTasks, tasks);
+                while (tasks.Count() > 0)
                 {
-                    Task t = newTasks[i];
-                    t.Done = false;
-                    tasks[tasksCount++] = t;
-                    platform.QueueUserWorkItem(TaskAction.Create(t));
+                    Task task = tasks.Dequeue();
+                    backgroundPerFrameTasks.Enqueue(task);
+                    task.Done = false;
+                    platform.QueueUserWorkItem(TaskAction.Create(task));
                 }
-                newTasksCount = 0;
             }
         }
         else
         {
-            for (int i = 0; i < tasksCount; i++)
+            Move(backgroundPerFrameTasks, tasks);
+            while (tasks.Count() > 0)
             {
-                tasks[i].BackgroundReadOnly();
-                tasks[i].MainThreadCommit(dt);
+                tasks.Dequeue().Run(dt);
             }
-            tasksCount = 0;
-            for (int i = 0; i < newTasksCount; i++)
+            Move(commitTasks, tasks);
+            while (tasks.Count() > 0)
             {
-                Task t = newTasks[i];
-                t.Done = false;
-                tasks[tasksCount++] = t;
+                tasks.Dequeue().Run(dt);
             }
-            newTasksCount = 0;
         }
     }
 
-    Task[] mainTasks;
-    int mainTasksCount;
-    public void AddMainThreadTask(DrawTask task)
+    void Move(QueueTask from, QueueTask to)
     {
-        mainTasks[mainTasksCount++] = task;
+        to.count = from.count;
+        for (int i = 0; i < from.count; i++)
+        {
+            to.items[i] = from.items[i];
+        }
+        from.count = 0;
+    }
+}
+
+public class QueueTask
+{
+    public QueueTask()
+    {
+        items = new Task[128];
+        count = 0;
+    }
+    internal Task[] items;
+    internal int count;
+    public void Enqueue(Task task)
+    {
+        items[count++] = task;
+    }
+    public Task Dequeue()
+    {
+        Task task = items[0];
+        for (int i = 0; i < count - 1; i++)
+        {
+            items[i] = items[i + 1];
+        }
+        items[count - 1] = null;
+        count--;
+        return task;
+    }
+    public int Count()
+    {
+        return count;
+    }
+
+    public void Clear()
+    {
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = null;
+        }
+        count = 0;
+    }
+    public void RemoveAt(int index)
+    {
+        for (int i = index; i < count; i++)
+        {
+            items[i] = items[i + 1];
+        }
+        items[count - 1] = null;
+        count--;
     }
 }
 
 public class DrawTask : Task
 {
-    public override void BackgroundReadOnly()
-    {
-        
-    }
-    public override void MainThreadCommit(float dt)
+    public override void Run(float dt)
     {
         game.MainThreadOnRenderFrame(dt);
+        game.QueueTaskReadOnlyMainThread(this);
     }
 }
 
