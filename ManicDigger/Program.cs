@@ -87,6 +87,7 @@ namespace GameModeFortress
                 GraphicsMode mode = GraphicsMode.Default;
                 using (GameWindowNative game = new GameWindowNative(mode))
                 {
+                    game.VSync = OpenTK.VSyncMode.Adaptive;
                     platform.window = game;
                     game.platform = platform;
                     mainmenu.Start(platform);
