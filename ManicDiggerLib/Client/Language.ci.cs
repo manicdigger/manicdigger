@@ -67,6 +67,7 @@
     public string ReturnToOptionsMenu() { return Get("ReturnToOptionsMenu"); }
     public string ShadowsOption() { return Get("ShadowsOption"); }
     public string SoundOption() { return Get("SoundOption"); }
+    public string AutoJumpOption() { return Get("AutoJumpOption"); }
     public string SpawnPositionSet() { return Get("SpawnPositionSet"); }
     public string SpawnPositionSetTo() { return Get("SpawnPositionSetTo"); }
     public string Triangles() { return Get("Triangles"); }
@@ -228,6 +229,7 @@
         Add("en", "ReturnToOptionsMenu", "Return to options menu");
         Add("en", "ShadowsOption", "Shadows: {0}");
         Add("en", "SoundOption", "Sound: {0}");
+        Add("en", "AutoJumpOption", "Auto Jump: {0}");
         Add("en", "SpawnPositionSet", "Spawn position set.");
         Add("en", "SpawnPositionSetTo", "Spawn position set to: {0}");
         Add("en", "Triangles", "Triangles: {0}");
