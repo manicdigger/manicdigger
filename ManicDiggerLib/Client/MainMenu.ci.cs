@@ -254,7 +254,8 @@
 
     void SetMatrixUniforms()
     {
-        p.SetMatrixUniforms(pMatrix, mvMatrix);
+        p.SetMatrixUniformProjection(pMatrix);
+        p.SetMatrixUniformModelView(mvMatrix);
     }
 
     float degToRad(float degrees)

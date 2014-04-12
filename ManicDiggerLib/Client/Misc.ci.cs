@@ -215,11 +215,12 @@ public class DictionaryStringInt1024
 {
     public DictionaryStringInt1024()
     {
-        items = new KeyValueStringInt[1024];
-        count = 1024;
+        items = new KeyValueStringInt[max];
+        count = 0;
     }
     internal KeyValueStringInt[] items;
     internal int count;
+    const int max = 1024;
 
     public void Set(string key, int value)
     {
@@ -245,6 +246,10 @@ public class DictionaryStringInt1024
                 return;
             }
         }
+        KeyValueStringInt k = new KeyValueStringInt();
+        k.key = key;
+        k.value = value;
+        items[count++] = k;
     }
 
     internal bool Contains(string key)

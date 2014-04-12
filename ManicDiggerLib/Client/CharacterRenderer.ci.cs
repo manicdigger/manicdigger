@@ -282,6 +282,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                         break;
                     case "drawcuboid":
                         {
+                            game.SetMatrixUniforms();
                             DrawCuboid(
                                GetFloat(ss[1], variables),
                                 GetFloat(ss[2], variables),
@@ -517,7 +518,7 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
 
         game.platform.BindTexture2d(textureid);
         game.platform.GlDisableCullFace();
-        game.platform.DrawModelData(data);
+        game.DrawModelData(data);
         game.platform.GlEnableCullFace();
     }
     public void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)

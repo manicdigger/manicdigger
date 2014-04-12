@@ -82,8 +82,8 @@
         rotationspeed = one * 15 / 100;
         bouncespeedmultiply = one * 5 / 10;
         walldistance = one * 3 / 10;
-        entities = new Entity[4096];
-        entitiesCount = 4096;
+        entities = new Entity[entitiesMax];
+        entitiesCount = 512;
         PlayerPushDistance = 2;
         projectilegravity = 20;
         keyboardState = new bool[256];
@@ -99,8 +99,8 @@
         walksoundtimer = 0;
         lastwalksound = 0;
         stepsoundduration = one * 4 / 10;
-        speculativeCount = 1024 * 8;
-        speculative = new Speculative[speculativeCount];
+        speculativeCount = 0;
+        speculative = new Speculative[speculativeMax];
         typinglog = new string[1024 * 16];
         typinglogCount = 0;
         CurrentChunk = new byte[1024 * 64];
@@ -272,6 +272,15 @@
         QueueTaskCommit(update);
     }
 
+#if CITO
+    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
+#else
+    static int Index3d(int x, int y, int h, int sizex, int sizey)
+    {
+        return (h * sizey + y) * sizex + x;
+    }
+#endif
+
     HttpResponseCi skinserverResponse;
 
     void AddMod(ClientMod mod)
@@ -320,18 +329,22 @@
         {
             return 0;
         }
+        return GetBlockValid(x, y, z);
+    }
 
+    public int GetBlockValid(int x, int y, int z)
+    {
         int cx = x >> chunksizebits;
         int cy = y >> chunksizebits;
         int cz = z >> chunksizebits;
-        int chunkpos = MapUtilCi.Index3d(cx, cy, cz, MapSizeX >> chunksizebits, MapSizeY >> chunksizebits);
+        int chunkpos = Index3d(cx, cy, cz, MapSizeX >> chunksizebits, MapSizeY >> chunksizebits);
         if (chunks[chunkpos] == null)
         {
             return 0;
         }
         else
         {
-            int pos = MapUtilCi.Index3d(x & (chunksize - 1), y & (chunksize - 1), z & (chunksize - 1), chunksize, chunksize);
+            int pos = Index3d(x & (chunksize - 1), y & (chunksize - 1), z & (chunksize - 1), chunksize, chunksize);
             return GetBlockInChunk(chunks[chunkpos], pos);
         }
     }
@@ -351,7 +364,7 @@
     public void SetBlockRaw(int x, int y, int z, int tileType)
     {
         Chunk chunk = GetChunk(x, y, z);
-        int pos = MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize);
+        int pos = Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize);
         SetBlockInChunk(chunk, pos, tileType);
     }
 
@@ -394,13 +407,13 @@
         z = z / chunksize;
         int mapsizexchunks = MapSizeX / chunksize;
         int mapsizeychunks = MapSizeY / chunksize;
-        Chunk chunk = chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+        Chunk chunk = chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
         if (chunk == null)
         {
             Chunk c = new Chunk();
             c.data = new byte[chunksize * chunksize * chunksize];
-            chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = c;
-            return chunks[MapUtilCi.Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
+            chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)] = c;
+            return chunks[Index3d(x, y, z, mapsizexchunks, mapsizeychunks)];
         }
         return chunk;
     }
@@ -643,7 +656,7 @@
         GLScale(one / 2, one / 2, 0);
         GLTranslate(one, one, 0);
 
-        platform.DrawModel(quadModel);
+        DrawModel(quadModel);
         GLPopMatrix();
 
         if (!enabledepthtest)
@@ -671,7 +684,7 @@
         }
         ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
             x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color));
-        platform.DrawModelData(data);
+        DrawModelData(data);
         if (!enabledepthtest)
         {
             platform.GlEnableDepthTest();
@@ -757,7 +770,7 @@
 
         platform.GlDisableDepthTest();
 
-        platform.DrawModelData(combined);
+        DrawModelData(combined);
 
         platform.GlEnableDepthTest();
 
@@ -781,7 +794,18 @@
 
     public void SetMatrixUniforms()
     {
-        platform.SetMatrixUniforms(pMatrix.Peek(), mvMatrix.Peek());
+        platform.SetMatrixUniformProjection(pMatrix.Peek());
+        platform.SetMatrixUniformModelView(mvMatrix.Peek());
+    }
+
+    public void SetMatrixUniformProjection()
+    {
+        platform.SetMatrixUniformProjection(pMatrix.Peek());
+    }
+
+    public void SetMatrixUniformModelView()
+    {
+        platform.SetMatrixUniformModelView(mvMatrix.Peek());
     }
 
     public void GLLoadMatrix(float[] m)
@@ -796,14 +820,12 @@
         }
         else
         {
-            if (pMatrix.Count() > 0)
+            if (mvMatrix.Count() > 0)
             {
                 mvMatrix.Pop();
             }
             mvMatrix.Push(m);
         }
-
-        SetMatrixUniforms();
     }
 
     public void GLPopMatrix()
@@ -822,8 +844,6 @@
                 mvMatrix.Pop();
             }
         }
-
-        SetMatrixUniforms();
     }
 
     float[] GLScaleTempVec3;
@@ -840,8 +860,6 @@
         }
         Vec3.Set(GLScaleTempVec3, x, y, z);
         Mat4.Scale(m, m, GLScaleTempVec3);
-
-        SetMatrixUniforms();
     }
 
     float[] GLRotateTempVec3;
@@ -860,7 +878,6 @@
         }
         Vec3.Set(GLRotateTempVec3, x, y, z);
         Mat4.Rotate(m, m, angle, GLRotateTempVec3);
-        SetMatrixUniforms();
     }
 
     float[] GLTranslateTempVec3;
@@ -877,7 +894,6 @@
         }
         Vec3.Set(GLTranslateTempVec3, x, y, z);
         Mat4.Translate(m, m, GLTranslateTempVec3);
-        SetMatrixUniforms();
     }
 
     public void GLPushMatrix()
@@ -890,7 +906,6 @@
         {
             mvMatrix.Push(mvMatrix.Peek());
         }
-        SetMatrixUniforms();
     }
 
     float[] identityMatrix;
@@ -912,22 +927,19 @@
             }
             mvMatrix.Push(identityMatrix);
         }
-        SetMatrixUniforms();
     }
 
     public void GLOrtho(float left, float right, float bottom, float top, float zNear, float zFar)
     {
-        float[] m;
         if (currentMatrixModeProjection)
         {
-            m = pMatrix.Peek();
+            float[] m = pMatrix.Peek();
+            Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
         }
         else
         {
-            m = mvMatrix.Peek();
+            platform.ThrowException("GLOrtho");
         }
-        Mat4.Ortho(m, left, right, bottom, top, zNear, zFar);
-        SetMatrixUniforms();
     }
 
     public void OrthoMode(int width, int height)
@@ -937,9 +949,12 @@
         GLPushMatrix();
         GLLoadIdentity();
         GLOrtho(0, width, height, 0, 0, 1);
+        SetMatrixUniformProjection();
+
         GLMatrixModeModelView();
         GLPushMatrix();
         GLLoadIdentity();
+        SetMatrixUniformModelView();
     }
 
     public void PerspectiveMode()
@@ -948,9 +963,12 @@
         GLMatrixModeProjection();
         // Pop off the last matrix pushed on when in projection mode (Get rid of ortho mode)
         GLPopMatrix();
+        SetMatrixUniformProjection();
+
         // Go back to our model view matrix like normal
         GLMatrixModeModelView();
         GLPopMatrix();
+        SetMatrixUniformModelView();
         //GL.LoadIdentity();
         //GL.Enable(EnableCap.DepthTest);
     }
@@ -1031,7 +1049,7 @@
         GLPushMatrix();
         GLTranslate(posx, posy, posz);
         GLScale(size, pickcubeheight * size, size);
-        platform.DrawModel(wireframeCube);
+        DrawModel(wireframeCube);
         GLPopMatrix();
     }
 
@@ -1496,6 +1514,7 @@
         CameraMatrix.lastpmatrix = Set3dProjectionTempMat4;
         GLMatrixModeProjection();
         GLLoadMatrix(Set3dProjectionTempMat4);
+        SetMatrixUniformProjection();
     }
     internal bool ENABLE_ZFAR;
 
@@ -2003,9 +2022,10 @@
         {
             return ENABLE_FREEMOVE;
         }
-        return GetBlock(x, y, z) == SpecialBlockId.Empty
-            || GetBlock(x, y, z) == d_Data.BlockIdFillArea()
-            || IsWater(GetBlock(x, y, z));
+        int block = GetBlockValid(x, y, z);
+        return block == SpecialBlockId.Empty
+            || block == d_Data.BlockIdFillArea()
+            || IsWater(block);
     }
 
     internal bool IsTileEmptyForPhysicsClose(int x, int y, int z)
@@ -2340,7 +2360,6 @@
         SendPacketClient(pp);
     }
 
-    public const int MonsterIdFirst = 1000;
     internal int currentTimeMilliseconds;
     internal GameDataMonsters d_DataMonsters;
     internal int ReceivedMapLength;
@@ -2772,7 +2791,7 @@
             circleModelData.uv[i] = 0;
         }
 
-        platform.DrawModelData(circleModelData);
+        DrawModelData(circleModelData);
 
         GLPopMatrix();
     }
@@ -2975,6 +2994,10 @@
 
     internal Entity[] entities;
     internal int entitiesCount;
+    internal const int entitiesMax = 4096;
+    public const int entityMonsterIdStart = 128;
+    public const int entityMonsterIdCount = 128;
+    public const int entityLocalIdStart = 256;
 
     internal void EntityExpire(float dt)
     {
@@ -2995,18 +3018,17 @@
         }
     }
 
-    const int localEntityId = 3000;
-
     internal void EntityAddLocal(Entity entity)
     {
-        for (int i = localEntityId; i < entitiesCount; i++)
+        for (int i = entityLocalIdStart; i < entitiesCount; i++)
         {
             if (entities[i] == null)
             {
                 entities[i] = entity;
-                break;
+                return;
             }
         }
+        entities[entitiesCount++] = entity;
     }
 
     internal void GetEntitiesPush(Vector3Ref push)
@@ -3428,7 +3450,11 @@
         float pY = player.playerposition.Y;
         float pZ = player.playerposition.Z;
         pY += entities[LocalPlayerId].player.EyeHeight;
-        if (!IsValidPos(MathFloor(pX), MathFloor(pZ), MathFloor(pY)))
+        int bx = MathFloor(pX);
+        int by = MathFloor(pZ);
+        int bz = MathFloor(pY);
+
+        if (!IsValidPos(bx, by, bz))
         {
             if (pY < WaterLevel())
             {
@@ -3436,7 +3462,7 @@
             }
             return 0;
         }
-        return GetBlock(platform.FloatToInt(pX), platform.FloatToInt(pZ), platform.FloatToInt(pY));
+        return GetBlockValid(bx, by, bz);
     }
 
     public float WaterLevel() { return MapSizeZ / 2; }
@@ -3974,8 +4000,8 @@
                     //    && y + sourcey < source.GetUpperBound(1) + 1
                     //    && z + sourcez < source.GetUpperBound(2) + 1)
                     {
-                        SetBlockInChunk(destination, MapUtilCi.Index3d(x, y, z, destinationchunksize, destinationchunksize)
-                            , source[MapUtilCi.Index3d(x + sourcex, y + sourcey, z + sourcez, sourcechunksizeX, sourcechunksizeY)]);
+                        SetBlockInChunk(destination, Index3d(x, y, z, destinationchunksize, destinationchunksize)
+                            , source[Index3d(x + sourcex, y + sourcey, z + sourcez, sourcechunksizeX, sourcechunksizeY)]);
                     }
                 }
             }
@@ -3997,8 +4023,8 @@
             {
                 for (int cz = 0; cz < chunksizex / chunksize; cz++)
                 {
-                    localchunks[MapUtilCi.Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))] = GetChunk(x + cx * chunksize, y + cy * chunksize, z + cz * chunksize);
-                    FillChunk(localchunks[MapUtilCi.Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk, sizeX, sizeY, sizeZ);
+                    localchunks[Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))] = GetChunk(x + cx * chunksize, y + cy * chunksize, z + cz * chunksize);
+                    FillChunk(localchunks[Index3d(cx, cy, cz, (chunksizex / chunksize), (chunksizey / chunksize))], chunksize, cx * chunksize, cy * chunksize, cz * chunksize, chunk, sizeX, sizeY, sizeZ);
                 }
             }
         }
@@ -4290,6 +4316,7 @@
 
     internal Speculative[] speculative;
     internal int speculativeCount;
+    internal const int speculativeMax = 8 * 1024;
 
     internal void SendSetBlockAndUpdateSpeculative(int material, int x, int y, int z, int mode)
     {
@@ -4330,6 +4357,7 @@
                 return;
             }
         }
+        speculative[speculativeCount++] = s_;
     }
 
     internal void OnNewFrame(float dt)
@@ -4924,7 +4952,7 @@
                     for (int i = 0; i < packet.Monster.MonstersCount; i++)
                     {
                         Packet_ServerMonster k = packet.Monster.Monsters[i];
-                        int id = k.Id + MonsterIdFirst;
+                        int id = k.Id + entityMonsterIdStart;
                         if (entities[id] == null)
                         {
                             entities[id] = new Entity();
@@ -5006,7 +5034,7 @@
                                 {
                                     for (int xx = 0; xx < p.SizeX; xx++)
                                     {
-                                        receivedchunk[MapUtilCi.Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
+                                        receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
                                         i += 2;
                                     }
                                 }
@@ -5142,7 +5170,7 @@
                 break;
             case Packet_ServerIdEnum.RemoveMonsters:
                 {
-                    for (int i = MonsterIdFirst; i < MonsterIdFirst + 1000; i++)
+                    for (int i = entityMonsterIdStart; i < entityMonsterIdStart + entityMonsterIdCount; i++)
                     {
                         entities[i] = null;
                     }
@@ -8240,6 +8268,24 @@
     public void QueueTaskReadOnlyMainThread(Task task)
     {
         scheduler.QueueTaskReadOnlyMainThread(task);
+    }
+
+    public void DrawModel(Model model)
+    {
+        SetMatrixUniformModelView();
+        platform.DrawModel(model);
+    }
+
+    public void DrawModels(Model[] model, int count)
+    {
+        SetMatrixUniformModelView();
+        platform.DrawModels(model, count);
+    }
+
+    public void DrawModelData(ModelData data)
+    {
+        SetMatrixUniformModelView();
+        platform.DrawModelData(data);
     }
 }
 

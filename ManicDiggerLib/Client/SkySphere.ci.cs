@@ -28,7 +28,7 @@
             game.player.playerposition.Y,
             game.player.playerposition.Z);
         game.platform.BindTexture2d(SkyTexture);
-        game.platform.DrawModel(skymodel);
+        game.DrawModel(skymodel);
         game.GLPopMatrix();
         game.Set3dProjection(game.zfar(), fov);
     }

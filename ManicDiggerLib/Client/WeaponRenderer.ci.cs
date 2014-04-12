@@ -222,7 +222,7 @@
 
         game.platform.GlEnableTexture2d();
         game.platform.BindTexture2d(terrainTexture());
-        game.platform.DrawModelData(modelData);
+        game.DrawModelData(modelData);
 
         game.GLPopMatrix();
     }

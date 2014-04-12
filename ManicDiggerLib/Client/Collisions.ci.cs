@@ -10,13 +10,14 @@ public class Box3D
         if (MinEdge == null)
         {
             MinEdge = new float[3];
-        }
-        if (MaxEdge == null)
-        {
             MaxEdge = new float[3];
         }
-        Vec3.Set(MinEdge, x, y, z);
-        Vec3.Set(MaxEdge, x + size, y + size, z + size);
+        MinEdge[0] = x;
+        MinEdge[1] = y;
+        MinEdge[2] = z;
+        MaxEdge[0] = x + size;
+        MaxEdge[1] = y + size;
+        MaxEdge[2] = z + size;
     }
     internal float[] MinEdge;
     internal float[] MaxEdge;

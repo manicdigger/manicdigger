@@ -41,7 +41,8 @@
     public abstract Model CreateModel(ModelData modelData);
     public abstract void DrawModel(Model model);
     public abstract void InitShaders();
-    public abstract void SetMatrixUniforms(float[] pMatrix, float[] mvMatrix);
+    public abstract void SetMatrixUniformProjection(float[] pMatrix);
+    public abstract void SetMatrixUniformModelView(float[] mvMatrix);
     public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
     public abstract void GlEnableDepthTest();
     public abstract int LoadTextureFromFile(string fullPath);

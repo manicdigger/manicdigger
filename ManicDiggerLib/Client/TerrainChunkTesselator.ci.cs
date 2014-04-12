@@ -52,6 +52,16 @@ public class TerrainChunkTesselatorCi
     internal float Blueness;
 
     float one;
+
+#if CITO
+    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
+#else
+    static int Index3d(int x, int y, int h, int sizex, int sizey)
+    {
+        return (h * sizey + y) * sizex + x;
+    }
+#endif
+
     public void Start()
     {
         currentChunk18 = new int[(chunksize + 2) * (chunksize + 2) * (chunksize + 2)];
@@ -123,7 +133,7 @@ public class TerrainChunkTesselatorCi
                 {
                     for (int yy = 1; yy < chunksize + 1; yy++)
                     {
-                        int posstart = MapUtilCi.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
+                        int posstart = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
                         for (int xx = 1; xx < chunksize + 1; xx++)
                         {
                             int pos = posstart + xx;
@@ -200,7 +210,7 @@ public class TerrainChunkTesselatorCi
                                     draw |= TileSideFlagsEnum.Right;
                                 }
                             }
-                            currentChunkDraw16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
+                            currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)] = Game.IntToByte(draw);
                         }
                     }
                 }
@@ -232,7 +242,7 @@ public class TerrainChunkTesselatorCi
             {
                 for (int yy = 1; yy < chunksize + 1; yy++)
                 {
-                    int pos = MapUtilCi.Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
+                    int pos = Index3d(0, yy, zz, chunksize + 2, chunksize + 2);
                     for (int xx = 1; xx < chunksize + 1; xx++)
                     {
                         int tt = currentChunk_[pos + xx];
@@ -240,39 +250,39 @@ public class TerrainChunkTesselatorCi
                         int x = startx + xx - 1;
                         int y = starty + yy - 1;
                         int z = startz + zz - 1;
-                        int draw = currentChunkDraw16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
+                        int draw = currentChunkDraw16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)];
                         if (draw == 0) { continue; } //faster
                         if (EnableSmoothLight)
                         {
                             if ((draw & TileSideFlagsEnum.Top) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Top, TileSideFlags.Top);
                             }
                             if ((draw & TileSideFlagsEnum.Bottom) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Bottom, TileSideFlags.Bottom);
                             }
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Front, TileSideFlags.Front);
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Back, TileSideFlags.Back);
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Left, TileSideFlags.Left);
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = 1;// (byte)GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSide.Right, TileSideFlags.Right);
                             }
                         }
                         else
@@ -280,32 +290,32 @@ public class TerrainChunkTesselatorCi
                             if ((draw & TileSideFlagsEnum.Top) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Top, TileSideFlagsEnum.Top));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Top, TileSideFlagsEnum.Top));
                             }
                             if ((draw & TileSideFlagsEnum.Bottom) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Bottom, TileSideFlagsEnum.Bottom));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Bottom, TileSideFlagsEnum.Bottom));
                             }
                             if ((draw & TileSideFlagsEnum.Front) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Front));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Front, TileSideFlagsEnum.Front));
                             }
                             if ((draw & TileSideFlagsEnum.Back) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Back));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Back, TileSideFlagsEnum.Back));
                             }
                             if ((draw & TileSideFlagsEnum.Left) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy - 1, zz, x, y - 1, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Left));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Left, TileSideFlagsEnum.Left));
                             }
                             if ((draw & TileSideFlagsEnum.Right) != 0)
                             {
                                 int shadowratioTop = GetShadowRatio(xx, yy + 1, zz, x, y + 1, z);
-                                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Right));
+                                currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right] = Game.IntToByte(GetTilingCount(currentChunk, xx, yy, zz, tt, x, y, z, shadowratioTop, TileSideEnum.Right, TileSideFlagsEnum.Right));
                             }
                         }
                     }
@@ -324,8 +334,8 @@ public class TerrainChunkTesselatorCi
             return 1;
         }
         //fixes tree Z-fighting
-        if (istransparent[currentChunk[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
-            && !IsTransparentFully(currentChunk[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)])) { return 1; }
+        if (istransparent[currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]]
+            && !IsTransparentFully(currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)])) { return 1; }
         if (dir == TileSideEnum.Top || dir == TileSideEnum.Bottom)
         {
             int shadowz = dir == TileSideEnum.Top ? 1 : -1;
@@ -333,12 +343,12 @@ public class TerrainChunkTesselatorCi
             for (; ; )
             {
                 if (newxx >= chunksize + 1) { break; }
-                if (currentChunk[MapUtilCi.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                 int shadowratio2 = GetShadowRatio(newxx, yy, zz + shadowz, x + (newxx - xx), y, z + shadowz);
                 if (shadowratio != shadowratio2) { break; }
-                if ((currentChunkDraw16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                currentChunkDrawCount16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-                currentChunkDraw16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+                if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
+                currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
                 newxx++;
             }
             return newxx - xx;
@@ -350,12 +360,12 @@ public class TerrainChunkTesselatorCi
             for (; ; )
             {
                 if (newyy >= chunksize + 1) { break; }
-                if (currentChunk[MapUtilCi.Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                if (currentChunk[Index3d(xx, newyy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                 int shadowratio2 = GetShadowRatio(xx + shadowx, newyy, zz, x + shadowx, y + (newyy - yy), z);
                 if (shadowratio != shadowratio2) { break; }
-                if ((currentChunkDraw16[MapUtilCi.Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-                currentChunkDraw16[MapUtilCi.Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+                if ((currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                currentChunkDrawCount16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
+                currentChunkDraw16[Index3d(xx - 1, newyy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
                 newyy++;
             }
             return newyy - yy;
@@ -367,12 +377,12 @@ public class TerrainChunkTesselatorCi
             for (; ; )
             {
                 if (newxx >= chunksize + 1) { break; }
-                if (currentChunk[MapUtilCi.Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
+                if (currentChunk[Index3d(newxx, yy, zz, chunksize + 2, chunksize + 2)] != tt) { break; }
                 int shadowratio2 = GetShadowRatio(newxx, yy + shadowy, zz, x + (newxx - xx), y + shadowy, z);
                 if (shadowratio != shadowratio2) { break; }
-                if ((currentChunkDraw16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
-                currentChunkDrawCount16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
-                currentChunkDraw16[MapUtilCi.Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
+                if ((currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] & dirflags) == 0) { break; } // fixes water and rail problem (chunk-long stripes)
+                currentChunkDrawCount16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)][dir] = 0;
+                currentChunkDraw16[Index3d(newxx - 1, yy - 1, zz - 1, chunksize, chunksize)] &= Game.IntToByte(~dirflags);
                 newxx++;
             }
             return newxx - xx;
@@ -388,7 +398,7 @@ public class TerrainChunkTesselatorCi
 
     public int GetShadowRatio(int xx, int yy, int zz, int globalx, int globaly, int globalz)
     {
-        return currentChunkShadows18[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+        return currentChunkShadows18[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
     }
 
     public void CalculateBlockPolygons(int x, int y, int z)
@@ -403,7 +413,7 @@ public class TerrainChunkTesselatorCi
                     int yyy = y * chunksize + yy;
                     int zzz = z * chunksize + zz;
                     //Most blocks aren't rendered at all, quickly reject them.
-                    if (currentChunkDraw16[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
+                    if (currentChunkDraw16[Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
                     {
                         BlockPolygons(xxx, yyy, zzz, currentChunk18);
                     }
@@ -424,7 +434,7 @@ public class TerrainChunkTesselatorCi
                     int yyy = y * chunksize + yy;
                     int zzz = z * chunksize + zz;
                     //Most blocks aren't rendered at all, quickly reject them.
-                    if (currentChunkDraw16[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
+                    if (currentChunkDraw16[Index3d(xx, yy, zz, chunksize, chunksize)] != 0)
                     {
                         SmoothLightBlockPolygons(xxx, yyy, zzz, currentChunk18);
                     }
@@ -444,17 +454,17 @@ public class TerrainChunkTesselatorCi
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
         int zz = z % chunksize + 1;
-        int tt = currentChunk[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+        int tt = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
         if (!isvalid(tt))
         {
             return;
         }
-        byte drawtop = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
-        byte drawbottom = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
-        byte drawfront = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
-        byte drawback = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
-        byte drawleft = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
-        byte drawright = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
+        byte drawtop = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
+        byte drawbottom = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
+        byte drawfront = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
+        byte drawback = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
+        byte drawleft = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
+        byte drawright = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
         int tiletype = tt;
         if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
         {
@@ -493,8 +503,8 @@ public class TerrainChunkTesselatorCi
             drawbottom = 0;
             flowerfix = one * 9 / 10; // 0.9f;
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 0;
@@ -502,8 +512,8 @@ public class TerrainChunkTesselatorCi
                 drawright = 0;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 1;
                 drawfront = 0;
@@ -517,8 +527,8 @@ public class TerrainChunkTesselatorCi
             drawbottom = 0;
             flowerfix = one * 9 / 10; // 0.9f;
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 0;
@@ -526,8 +536,8 @@ public class TerrainChunkTesselatorCi
                 drawright = 1;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 1;
@@ -546,14 +556,14 @@ public class TerrainChunkTesselatorCi
             flowerfix = one / 2;// 0.5f;
 
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
+                || currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 drawleft = 1;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
+                || currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 drawfront = 1;
             }
@@ -609,13 +619,13 @@ public class TerrainChunkTesselatorCi
         if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
         {
             int type = TorchTypeEnum.Normal;
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
+            if (CanSupportTorch(currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
+            if (CanSupportTorch(currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
+            if (CanSupportTorch(currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
+            if (CanSupportTorch(currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
             TorchSideTexture = TextureId(tt, TileSideEnum.Front);
             TorchTopTexture = TextureId(tt, TileSideEnum.Top);
-            AddTorch(x, y, z, type, currentChunk[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]);
+            AddTorch(x, y, z, type, currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)]);
             return;
         }
         //slope
@@ -901,17 +911,17 @@ public class TerrainChunkTesselatorCi
         int xx = x % chunksize + 1;
         int yy = y % chunksize + 1;
         int zz = z % chunksize + 1;
-        int tt = currentChunk[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+        int tt = currentChunk[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
         if (!isvalid(tt))
         {
             return;
         }
-        byte drawtop = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
-        byte drawbottom = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
-        byte drawfront = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
-        byte drawback = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
-        byte drawleft = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
-        byte drawright = currentChunkDrawCount16[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
+        byte drawtop = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Top];
+        byte drawbottom = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Bottom];
+        byte drawfront = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Front];
+        byte drawback = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Back];
+        byte drawleft = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Left];
+        byte drawright = currentChunkDrawCount16[Index3d(xx - 1, yy - 1, zz - 1, chunksize, chunksize)][TileSideEnum.Right];
         int tiletype = tt;
         if (drawtop == 0 && drawbottom == 0 && drawfront == 0 && drawback == 0 && drawleft == 0 && drawright == 0)
         {
@@ -950,8 +960,8 @@ public class TerrainChunkTesselatorCi
             drawbottom = 0;
             flowerfix = one * 9 / 10; // 0.9f;
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 0;
@@ -959,8 +969,8 @@ public class TerrainChunkTesselatorCi
                 drawright = 0;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 1;
                 drawfront = 0;
@@ -974,8 +984,8 @@ public class TerrainChunkTesselatorCi
             drawbottom = 0;
             flowerfix = one * 9 / 10; // 0.9f;
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 0;
@@ -983,8 +993,8 @@ public class TerrainChunkTesselatorCi
                 drawright = 1;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
-                && currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] == 0
+                && currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] == 0)
             {
                 drawback = 0;
                 drawfront = 1;
@@ -1004,14 +1014,14 @@ public class TerrainChunkTesselatorCi
             flowerfix = one / 2; // 0.5f;
 
             //x-1, x+1
-            if (currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
+            if (currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)] != 0
+                || currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 drawleft = 1;
             }
             //y-1, y+1
-            if (currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
-                || currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
+            if (currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)] != 0
+                || currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)] != 0)
             {
                 drawfront = 1;
             }
@@ -1069,10 +1079,10 @@ public class TerrainChunkTesselatorCi
         if (game.blocktypes[tt].DrawType == Packet_DrawTypeEnum.Torch)
         {
             int type = TorchTypeEnum.Normal;
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
-            if (CanSupportTorch(currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
+            if (CanSupportTorch(currentChunk[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Front; }
+            if (CanSupportTorch(currentChunk[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Back; }
+            if (CanSupportTorch(currentChunk[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Left; }
+            if (CanSupportTorch(currentChunk[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)])) { type = TorchTypeEnum.Right; }
             TorchSideTexture = TextureId(tt, TileSideEnum.Front);
             TorchTopTexture = TextureId(tt, TileSideEnum.Top);
             AddTorch(x, y, z, type, tt);
@@ -1111,7 +1121,7 @@ public class TerrainChunkTesselatorCi
         if (tt == 8)
         {
             //Only do this, when no other water block is above to prevent gaps
-            if (currentChunk[MapUtilCi.Index3d(xx, yy, zz+1, chunksize + 2, chunksize + 2)] != 8)
+            if (currentChunk[Index3d(xx, yy, zz+1, chunksize + 2, chunksize + 2)] != 8)
             {
                 blockheight00 = one * 9 / 10; // 0.9f;
                 blockheight01 = one * 9 / 10;
@@ -1134,14 +1144,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx, yy, zz + 1, x, y, z + 1);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -1347,14 +1357,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx, yy, zz - 1, x, y, z - 1);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -1562,14 +1572,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx - 1, yy, zz, x - 1, y, z);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx - 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx - 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -1770,14 +1780,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx + 1, yy, zz, x + 1, y, z);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx + 1, yy, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx + 1, yy, zz - 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -1976,14 +1986,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx, yy - 1, zz, x + 1, y, z);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx + 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx - 1, yy - 1, zz, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx + 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx - 1, yy - 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx + 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx - 1, yy - 1, zz - 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -2184,14 +2194,14 @@ public class TerrainChunkTesselatorCi
             int shadowratio = GetShadowRatio(xx, yy + 1, zz, x + 1, y, z);
             //if (true)
             {
-                int top = currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottom = currentChunk[MapUtilCi.Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int left = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int right = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
-                int topleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int topright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
-                int bottomleft = currentChunk[MapUtilCi.Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
-                int bottomright = currentChunk[MapUtilCi.Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int top = currentChunk[Index3d(xx, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottom = currentChunk[Index3d(xx, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int left = currentChunk[Index3d(xx - 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
+                int right = currentChunk[Index3d(xx + 1, yy + 1, zz, chunksize + 2, chunksize + 2)];
+                int topleft = currentChunk[Index3d(xx - 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int topright = currentChunk[Index3d(xx + 1, yy + 1, zz + 1, chunksize + 2, chunksize + 2)];
+                int bottomleft = currentChunk[Index3d(xx - 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
+                int bottomright = currentChunk[Index3d(xx + 1, yy + 1, zz - 1, chunksize + 2, chunksize + 2)];
                 int shadowratio3 = shadowratio;//down
                 int shadowratio4 = shadowratio;//right
                 int shadowratio5 = shadowratio;//up
@@ -2444,12 +2454,12 @@ public class TerrainChunkTesselatorCi
 
     public int GetRailSlope(int xx, int yy, int zz)
     {
-        int tiletype = currentChunk18[MapUtilCi.Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
+        int tiletype = currentChunk18[Index3d(xx, yy, zz, chunksize + 2, chunksize + 2)];
         int rail = Rail(tiletype);
         int blocknear;
         //if (x < d_MapStorage.MapSizeX - 1)
         {
-            blocknear = currentChunk18[MapUtilCi.Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)];
+            blocknear = currentChunk18[Index3d(xx + 1, yy, zz, chunksize + 2, chunksize + 2)];
             if (rail == RailDirectionFlagsEnum.Horizontal &&
                  blocknear != 0 && Rail(blocknear) == RailDirectionFlagsEnum.None)
             {
@@ -2458,7 +2468,7 @@ public class TerrainChunkTesselatorCi
         }
         //if (x > 0)
         {
-            blocknear = currentChunk18[MapUtilCi.Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)];
+            blocknear = currentChunk18[Index3d(xx - 1, yy, zz, chunksize + 2, chunksize + 2)];
             if (rail == RailDirectionFlagsEnum.Horizontal &&
                  blocknear != 0 && Rail(blocknear) == RailDirectionFlagsEnum.None)
             {
@@ -2468,7 +2478,7 @@ public class TerrainChunkTesselatorCi
         }
         //if (y > 0)
         {
-            blocknear = currentChunk18[MapUtilCi.Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)];
+            blocknear = currentChunk18[Index3d(xx, yy - 1, zz, chunksize + 2, chunksize + 2)];
             if (rail == RailDirectionFlagsEnum.Vertical &&
                   blocknear != 0 && Rail(blocknear) == RailDirectionFlagsEnum.None)
             {
@@ -2477,7 +2487,7 @@ public class TerrainChunkTesselatorCi
         }
         //if (y < d_MapStorage.MapSizeY - 1)
         {
-            blocknear = currentChunk18[MapUtilCi.Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)];
+            blocknear = currentChunk18[Index3d(xx, yy + 1, zz, chunksize + 2, chunksize + 2)];
             if (rail == RailDirectionFlagsEnum.Vertical &&
                   blocknear != 0 && Rail(blocknear) == RailDirectionFlagsEnum.None)
             {
@@ -2509,23 +2519,23 @@ public class TerrainChunkTesselatorCi
         bool left = false;
         //bool right=false;
         int wallscount = 0;
-        if (currentChunk[MapUtilCi.Index3d(x, y - 1, z, chunksize + 2, chunksize + 2)] != 0)
+        if (currentChunk[Index3d(x, y - 1, z, chunksize + 2, chunksize + 2)] != 0)
         {
             front = true;
             wallscount++;
         }
-        if (currentChunk[MapUtilCi.Index3d(x, y + 1, z, chunksize + 2, chunksize + 2)] != 0)
+        if (currentChunk[Index3d(x, y + 1, z, chunksize + 2, chunksize + 2)] != 0)
         {
             back = true;
             wallscount++;
         }
-        int c = currentChunk[MapUtilCi.Index3d(x - 1, y, z, chunksize + 2, chunksize + 2)];
+        int c = currentChunk[Index3d(x - 1, y, z, chunksize + 2, chunksize + 2)];
         if (c != 0)
         {
             left = true;
             wallscount++;
         }
-        if (currentChunk[MapUtilCi.Index3d(x + 1, y, z, chunksize + 2, chunksize + 2)] != 0)
+        if (currentChunk[Index3d(x + 1, y, z, chunksize + 2, chunksize + 2)] != 0)
         {
             //right = true;
             wallscount++;
@@ -2561,9 +2571,9 @@ public class TerrainChunkTesselatorCi
         int result = 0;
         //try
         {
-            while ((MapUtilCi.Index3d(x, y, z + dz, chunksize + 2, chunksize + 2) >= 0)
-                && (MapUtilCi.Index3d(x, y, z + dz, chunksize + 2, chunksize + 2) < (chunksize + 2) * (chunksize + 2) * (chunksize + 2))
-                && currentChunk[MapUtilCi.Index3d(x, y, z + dz, chunksize + 2, chunksize + 2)] == 152)
+            while ((Index3d(x, y, z + dz, chunksize + 2, chunksize + 2) >= 0)
+                && (Index3d(x, y, z + dz, chunksize + 2, chunksize + 2) < (chunksize + 2) * (chunksize + 2) * (chunksize + 2))
+                && currentChunk[Index3d(x, y, z + dz, chunksize + 2, chunksize + 2)] == 152)
             {
                 result = dz;
                 if (getBestLadderWall(x, y, z + dz, currentChunk) != -1) return result;

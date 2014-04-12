@@ -608,10 +608,14 @@ public class GamePlatformNative : GamePlatform
     {
     }
 
-    public override void SetMatrixUniforms(float[] pMatrix, float[] mvMatrix)
+    public override void SetMatrixUniformProjection(float[] pMatrix)
     {
         GL.MatrixMode(MatrixMode.Projection);
         GL.LoadMatrix(pMatrix);
+    }
+
+    public override void SetMatrixUniformModelView(float[] mvMatrix)
+    {
         GL.MatrixMode(MatrixMode.Modelview);
         GL.LoadMatrix(mvMatrix);
     }

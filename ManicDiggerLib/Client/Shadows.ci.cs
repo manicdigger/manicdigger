@@ -69,6 +69,15 @@ public class Shadows3x3x3 : IShadows3x3x3
     int[] workportionArr;
     byte[] worklightArr;
 
+#if CITO
+    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
+#else
+    static int Index3d(int x, int y, int h, int sizex, int sizey)
+    {
+        return (h * sizey + y) * sizex + x;
+    }
+#endif
+
     const int minlight = 0;
     const int chunksize = 16;
     //copies 3x3x3 16*16*16 input chunks to one 48*48*48 temporary portion.
@@ -81,7 +90,7 @@ public class Shadows3x3x3 : IShadows3x3x3
                 for (int zz = 0; zz < 3; zz++)
                 {
                     //if (IsValidChunkPos(x / chunksize + xx, y / chunksize + yy, z / chunksize + zz))
-                    int[] chunk = inputMapChunks[MapUtilCi.Index3d(xx, yy, zz, 3, 3)];
+                    int[] chunk = inputMapChunks[Index3d(xx, yy, zz, 3, 3)];
                     if (chunk != null)
                     {
                         CopyChunk(workportionArr,
@@ -104,8 +113,8 @@ public class Shadows3x3x3 : IShadows3x3x3
             {
                 for (int yy = 0; yy < 16; yy++)
                 {
-                    int pos = MapUtilCi.Index3d(0, yy, zz, 16, 16);
-                    int pos2 = MapUtilCi.Index3d(x + 0, y + yy, z + zz, portionsizex, portionsizey);
+                    int pos = Index3d(0, yy, zz, 16, 16);
+                    int pos2 = Index3d(x + 0, y + yy, z + zz, portionsizex, portionsizey);
 
                     //pos /= 2;
                     //pos2 /= 2;
@@ -148,7 +157,7 @@ public class Shadows3x3x3 : IShadows3x3x3
                     //h = MyMath.Clamp(h, 0, portionsize);
                     if (h < 0) { h = 0; }
                     if (h > portionsize) { continue; }
-                    int pos = MapUtilCi.Index3d(xx, yy, h, portionsize, portionsize);
+                    int pos = Index3d(xx, yy, h, portionsize, portionsize);
 
                     //for (int zz = 0; zz < h; zz++)
                     //{
@@ -298,7 +307,7 @@ public class Shadows3x3x3 : IShadows3x3x3
     public void FloodLight_(int[] portion, byte[] light, int startx, int starty, int startz)
     {
         const int portionsize = 16 * 3;
-        int pos = MapUtilCi.Index3d(startx, starty, startz, portionsize, portionsize);
+        int pos = Index3d(startx, starty, startz, portionsize, portionsize);
         if (light[pos] == minlight)
         {
             return;
@@ -323,7 +332,7 @@ public class Shadows3x3x3 : IShadows3x3x3
         //start.x = startx;
         //start.y = starty;
         //start.z = startz;
-        int start = MapUtilCi.Index3d(startx, starty, startz, portionsize, portionsize);
+        int start = Index3d(startx, starty, startz, portionsize, portionsize);
         q.Push(start);
         for (; ; )
         {
@@ -408,8 +417,8 @@ public class Shadows3x3x3 : IShadows3x3x3
                         //d_Light.SetBlock(x + chunksize + xx, y + chunksize + yy, z + chunksize + zz,
                         //    light[MapUtil.Index3d(xx + chunksize, yy + chunksize, zz + chunksize,
                         //    chunksize * 3, chunksize * 3)]);
-                        outputChunkLight[MapUtilCi.Index3d(xx + 1, yy + 1, zz + 1, 18, 18)] =
-                            worklightArr[MapUtilCi.Index3d(xx + chunksize, yy + chunksize, zz + chunksize,
+                        outputChunkLight[Index3d(xx + 1, yy + 1, zz + 1, 18, 18)] =
+                            worklightArr[Index3d(xx + chunksize, yy + chunksize, zz + chunksize,
                             chunksize * 3, chunksize * 3)];
                     }
                 }

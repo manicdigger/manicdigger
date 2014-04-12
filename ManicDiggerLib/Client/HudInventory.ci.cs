@@ -383,12 +383,15 @@
     public void DrawMaterialSelector()
     {
         game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStartX(), MaterialSelectorBackgroundStartY(), 1024, 128);
+        int materialSelectorStartX_ = MaterialSelectorStartX();
+        int materialSelectorStartY_ = MaterialSelectorStartY();
         for (int i = 0; i < 10; i++)
         {
-            if (game.d_Inventory.RightHand[i] != null)
+            Packet_Item item = game.d_Inventory.RightHand[i];
+            if (item != null)
             {
-                DrawItem(MaterialSelectorStartX() + i * ActiveMaterialCellSize, MaterialSelectorStartY(),
-                    game.d_Inventory.RightHand[i], ActiveMaterialCellSize, ActiveMaterialCellSize);
+                DrawItem(materialSelectorStartX_ + i * ActiveMaterialCellSize, materialSelectorStartY_,
+                    item, ActiveMaterialCellSize, ActiveMaterialCellSize);
             }
         }
         game.Draw2dBitmapFile("activematerial2.png",
