@@ -10,7 +10,6 @@
         playerPositionSpawnY = 64;
         playerPositionSpawnZ = 15 + one / 2;
 
-        chunksize = 16;
         player = new CharacterPhysicsState();
 
         TextureId = new int[MaxBlockTypes][];
@@ -25,8 +24,8 @@
         lastplacedblockZ = -1;
         mLightLevels = new float[16];
         sunlight_ = 15;
-        mvMatrix = new StackFloatArray();
-        pMatrix = new StackFloatArray();
+        mvMatrix = new StackMatrix4();
+        pMatrix = new StackMatrix4();
         mvMatrix.Push(Mat4.Create());
         pMatrix.Push(Mat4.Create());
         whitetexture = -1;
@@ -118,6 +117,14 @@
         modelViewInverted = new float[16];
         touchIdMove = -1;
         touchIdRotate = -1;
+        GLScaleTempVec3 = Vec3.Create();
+        GLRotateTempVec3 = Vec3.Create();
+        GLTranslateTempVec3 = Vec3.Create();
+        identityMatrix = Mat4.Identity_(Mat4.Create());
+        Set3dProjectionTempMat4 = Mat4.Create();
+        upVec3 = Vec3.FromValues(0, 1, 0);
+        receivedchunk = new int[32 * 32 * 32];
+        decompressedchunk = new byte[32 * 32 * 32 * 2];
     }
 
     public void Start()
@@ -286,7 +293,8 @@
     internal int MapSizeX;
     internal int MapSizeY;
     internal int MapSizeZ;
-    internal int chunksize;
+    internal const int chunksize = 16;
+    internal const int chunksizebits = 4;
 
     internal CharacterPhysicsState player;
 
@@ -313,17 +321,18 @@
             return 0;
         }
 
-        int cx = x / chunksize;
-        int cy = y / chunksize;
-        int cz = z / chunksize;
-        int chunkpos = MapUtilCi.Index3d(cx, cy, cz, MapSizeX / chunksize, MapSizeY / chunksize);
+        int cx = x >> chunksizebits;
+        int cy = y >> chunksizebits;
+        int cz = z >> chunksizebits;
+        int chunkpos = MapUtilCi.Index3d(cx, cy, cz, MapSizeX >> chunksizebits, MapSizeY >> chunksizebits);
         if (chunks[chunkpos] == null)
         {
             return 0;
         }
         else
         {
-            return GetBlockInChunk(chunks[chunkpos], MapUtilCi.Index3d(x % chunksize, y % chunksize, z % chunksize, chunksize, chunksize));
+            int pos = MapUtilCi.Index3d(x & (chunksize - 1), y & (chunksize - 1), z & (chunksize - 1), chunksize, chunksize);
+            return GetBlockInChunk(chunks[chunkpos], pos);
         }
     }
 
@@ -409,16 +418,16 @@
         return true;
     }
 
-    public int blockheight(int x, int y)
+    public int blockheight(int x, int y, int z_)
     {
-        for (int z = MapSizeZ - 1; z >= 0; z--)
+        for (int z = z_; z >= 0; z--)
         {
             if (GetBlock(x, y, z) != 0)
             {
                 return z + 1;
             }
         }
-        return MapSizeZ / 2;
+        return 0;
     }
 
     public bool IsValidChunkPos(int cx, int cy, int cz, int chunksize_)
@@ -536,7 +545,7 @@
         {
             platform.ThrowException("GetMapPortion");
         }
-        int chunksizebits = 4;
+
         int mapchunksx = MapSizeX / chunksize;
         int mapchunksy = MapSizeY / chunksize;
         int mapchunksz = MapSizeZ / chunksize;
@@ -601,6 +610,51 @@
     internal int sunlight_;
 
     public void Draw2dTexture(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
+    {
+        if (color == ColorFromArgb(255, 255, 255, 255) && inAtlasId == null)
+        {
+            Draw2dTextureSimple(textureid, x1, y1, width, height, enabledepthtest);
+        }
+        else
+        {
+            Draw2dTextureInAtlas(textureid, x1, y1, width, height, inAtlasId, atlastextures, color, enabledepthtest);
+        }
+    }
+
+    Model quadModel;
+    void Draw2dTextureSimple(int textureid, float x1, float y1, float width, float height, bool enabledepthtest)
+    {
+        RectFRef rect = RectFRef.Create(0, 0, 1, 1);
+        platform.GlDisableCullFace();
+        platform.GlEnableTexture2d();
+        platform.BindTexture2d(textureid);
+
+        if (!enabledepthtest)
+        {
+            platform.GlDisableDepthTest();
+        }
+        if (quadModel == null)
+        {
+            quadModel = platform.CreateModel(QuadModelData.GetQuadModelData());
+        }
+        GLPushMatrix();
+        GLTranslate(x1, y1, 0);
+        GLScale(width, height, 0);
+        GLScale(one / 2, one / 2, 0);
+        GLTranslate(one, one, 0);
+
+        platform.DrawModel(quadModel);
+        GLPopMatrix();
+
+        if (!enabledepthtest)
+        {
+            platform.GlEnableDepthTest();
+        }
+        platform.GlEnableCullFace();
+        platform.GlEnableTexture2d();
+    }
+
+    void Draw2dTextureInAtlas(int textureid, float x1, float y1, float width, float height, IntRef inAtlasId, int atlastextures, int color, bool enabledepthtest)
     {
         RectFRef rect = RectFRef.Create(0, 0, 1, 1);
         if (inAtlasId != null)
@@ -712,8 +766,8 @@
     }
 
     internal bool currentMatrixModeProjection;
-    internal StackFloatArray mvMatrix;
-    internal StackFloatArray pMatrix;
+    internal StackMatrix4 mvMatrix;
+    internal StackMatrix4 pMatrix;
 
     public void GLMatrixModeModelView()
     {
@@ -772,6 +826,7 @@
         SetMatrixUniforms();
     }
 
+    float[] GLScaleTempVec3;
     public void GLScale(float x, float y, float z)
     {
         float[] m;
@@ -783,11 +838,13 @@
         {
             m = mvMatrix.Peek();
         }
-        Mat4.Scale(m, m, Vec3.FromValues(x, y, z));
+        Vec3.Set(GLScaleTempVec3, x, y, z);
+        Mat4.Scale(m, m, GLScaleTempVec3);
 
         SetMatrixUniforms();
     }
 
+    float[] GLRotateTempVec3;
     public void GLRotate(float angle, float x, float y, float z)
     {
         angle /= 360;
@@ -801,10 +858,12 @@
         {
             m = mvMatrix.Peek();
         }
-        Mat4.Rotate(m, m, angle, Vec3.FromValues(x, y, z));
+        Vec3.Set(GLRotateTempVec3, x, y, z);
+        Mat4.Rotate(m, m, angle, GLRotateTempVec3);
         SetMatrixUniforms();
     }
 
+    float[] GLTranslateTempVec3;
     public void GLTranslate(float x, float y, float z)
     {
         float[] m;
@@ -816,7 +875,8 @@
         {
             m = mvMatrix.Peek();
         }
-        Mat4.Translate(m, m, Vec3.FromValues(x, y, z));
+        Vec3.Set(GLTranslateTempVec3, x, y, z);
+        Mat4.Translate(m, m, GLTranslateTempVec3);
         SetMatrixUniforms();
     }
 
@@ -824,15 +884,16 @@
     {
         if (currentMatrixModeProjection)
         {
-            pMatrix.Push(Mat4.CloneIt(pMatrix.Peek()));
+            pMatrix.Push(pMatrix.Peek());
         }
         else
         {
-            mvMatrix.Push(Mat4.CloneIt(mvMatrix.Peek()));
+            mvMatrix.Push(mvMatrix.Peek());
         }
         SetMatrixUniforms();
     }
 
+    float[] identityMatrix;
     public void GLLoadIdentity()
     {
         if (currentMatrixModeProjection)
@@ -841,7 +902,7 @@
             {
                 pMatrix.Pop();
             }
-            pMatrix.Push(Mat4.Identity_(Mat4.Create()));
+            pMatrix.Push(identityMatrix);
         }
         else
         {
@@ -849,7 +910,7 @@
             {
                 mvMatrix.Pop();
             }
-            mvMatrix.Push(Mat4.Identity_(Mat4.Create()));
+            mvMatrix.Push(identityMatrix);
         }
         SetMatrixUniforms();
     }
@@ -1427,14 +1488,14 @@
 
     internal GetCameraMatrix CameraMatrix;
 
+    float[] Set3dProjectionTempMat4;
     public void Set3dProjection(float zfar, float fov)
     {
         float aspect_ratio = one * Width() / Height();
-        float[] perspective = Mat4.Create();
-        Mat4.Perspective(perspective, fov, aspect_ratio, znear, zfar);
-        CameraMatrix.lastpmatrix = perspective;
+        Mat4.Perspective(Set3dProjectionTempMat4, fov, aspect_ratio, znear, zfar);
+        CameraMatrix.lastpmatrix = Set3dProjectionTempMat4;
         GLMatrixModeProjection();
-        GLLoadMatrix(perspective);
+        GLLoadMatrix(Set3dProjectionTempMat4);
     }
     internal bool ENABLE_ZFAR;
 
@@ -1544,18 +1605,18 @@
         return (one * value) / 32;
     }
 
-    internal IntRef BlockUnderPlayer()
+    internal int BlockUnderPlayer()
     {
         if (!IsValidPos(platform.FloatToInt(player.playerposition.X),
             platform.FloatToInt(player.playerposition.Z),
             platform.FloatToInt(player.playerposition.Y) - 1))
         {
-            return null;
+            return -1;
         }
         int blockunderplayer = GetBlock(platform.FloatToInt(player.playerposition.X),
             platform.FloatToInt(player.playerposition.Z),
             platform.FloatToInt(player.playerposition.Y) - 1);
-        return IntRef.Create(blockunderplayer);
+        return blockunderplayer;
     }
 
     internal void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
@@ -1869,17 +1930,13 @@
         platform.AudioPlayLoop(fullpath, play, restart);
     }
 
-    public int[] MaterialSlots()
+    public int MaterialSlots(int i)
     {
-        int[] m = new int[10];
-        for (int i = 0; i < 10; i++)
+        Packet_Item item = d_Inventory.RightHand[i];
+        int m = d_Data.BlockIdDirt();
+        if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
         {
-            Packet_Item item = d_Inventory.RightHand[i];
-            m[i] = d_Data.BlockIdDirt();
-            if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
-            {
-                m[i] = d_Inventory.RightHand[i].BlockId;
-            }
+            m = d_Inventory.RightHand[i].BlockId;
         }
         return m;
     }
@@ -1893,7 +1950,7 @@
     {
         for (int i = 0; i < 10; i++)
         {
-            if (MaterialSlots()[i] == d_Data.BlockIdCompass())
+            if (MaterialSlots(i) == d_Data.BlockIdCompass())
             {
                 return true;
             }
@@ -2043,7 +2100,7 @@
         int posX = GetPlayerEyesBlockX();
         int posY = GetPlayerEyesBlockY();
         int posZ = GetPlayerEyesBlockZ();
-        if ((blockheight(posX, posY) < posZ - 8)
+        if ((blockheight(posX, posY, posZ) < posZ - 8)
             || fallspeed > 3)
         {
             AudioPlayLoop("fallloop.wav", fallspeed > 2, true);
@@ -3165,6 +3222,8 @@
             Entity e = entities[i];
             if (e == null) { continue; }
             if (e.player == null) { continue; }
+            if (i == LocalPlayerId) { continue; }
+            if (!e.player.PositionLoaded) { continue; }
 
             if (e.player.playerDrawInfo == null)
             {
@@ -3347,8 +3406,9 @@
 
     internal bool Swimming()
     {
-        if (GetPlayerEyesBlock() == -1) { return true; }
-        return d_Data.WalkableType1()[GetPlayerEyesBlock()] == Packet_WalkableTypeEnum.Fluid;
+        int eyesBlock = GetPlayerEyesBlock();
+        if (eyesBlock == -1) { return true; }
+        return d_Data.WalkableType1()[eyesBlock] == Packet_WalkableTypeEnum.Fluid;
     }
 
     internal bool WaterSwimming()
@@ -3430,10 +3490,10 @@
         float movespeednow = movespeed;
         {
             //walk faster on cobblestone
-            IntRef blockunderplayer = BlockUnderPlayer();
-            if (blockunderplayer != null)
+            int blockunderplayer = BlockUnderPlayer();
+            if (blockunderplayer != -1)
             {
-                movespeednow *= d_Data.WalkSpeed()[blockunderplayer.value];
+                movespeednow *= d_Data.WalkSpeed()[blockunderplayer];
             }
         }
         if (keyboardState[GetKey(GlKeys.ShiftLeft)])
@@ -3821,9 +3881,8 @@
         pick.End[2] = ray_start_point.Z + raydirZ;
 
         //pick terrain
-        s.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(Game.MaxInt(MapSizeX, Game.MaxInt(MapSizeY, MapSizeZ))));
         IntRef pick2Count = new IntRef();
-        BlockPosSide[] pick2 = s.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), pick, pick2Count);
+        BlockPosSide[] pick2 = Pick(s, pick, pick2Count);
 
         if (pick2Count.value > 0)
         {
@@ -3850,9 +3909,6 @@
         eye.Z = target.Z + raydirZ * curtppcameradistance.value;
     }
 
-    public const int upX = 0;
-    public const int upY = 1;
-    public const int upZ = 0;
     internal Kamera overheadcameraK;
     internal Vector3Ref OverheadCamera_cameraEye;
     internal float[] OverheadCamera()
@@ -3865,10 +3921,11 @@
         float[] ret = new float[16];
         Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
             Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
-            Vec3.FromValues(upX, upY, upZ));
+            upVec3);
         return ret;
     }
 
+    float[] upVec3;
     internal float[] FppCamera()
     {
         Vector3Ref forward = new Vector3Ref();
@@ -3901,7 +3958,7 @@
         float[] ret = new float[16];
         Mat4.LookAt(ret, Vec3.FromValues(cameraEye.X, cameraEye.Y, cameraEye.Z),
             Vec3.FromValues(cameraTarget.X, cameraTarget.Y, cameraTarget.Z),
-            Vec3.FromValues(upX, upY, upZ));
+            upVec3);
         return ret;
     }
 
@@ -4080,10 +4137,10 @@
 
     internal string[] soundwalkcurrent()
     {
-        IntRef b = BlockUnderPlayer();
-        if (b != null)
+        int b = BlockUnderPlayer();
+        if (b != -1)
         {
-            return d_Data.WalkSound()[b.value];
+            return d_Data.WalkSound()[b];
         }
         return d_Data.WalkSound()[0];
     }
@@ -4296,7 +4353,7 @@
     {
         float xfract = collisionPos[0] - MathFloor(collisionPos[0]);
         float zfract = collisionPos[2] - MathFloor(collisionPos[2]);
-        int activematerial = MaterialSlots()[ActiveMaterial];
+        int activematerial = MaterialSlots(ActiveMaterial);
         int railstart = d_Data.BlockIdRailstart();
         if (activematerial == railstart + RailDirectionFlags.TwoHorizontalVertical
             || activematerial == railstart + RailDirectionFlags.Corners)
@@ -4649,6 +4706,8 @@
         }
     }
 
+    int[] receivedchunk;
+    byte[] decompressedchunk;
     string serverGameVersion;
     internal void ProcessPacket(Packet_Server packet)
     {
@@ -4936,11 +4995,9 @@
             case Packet_ServerIdEnum.Chunk_:
                 {
                     Packet_ServerChunk p = packet.Chunk_;
-                    int[] receivedchunk;
                     if (CurrentChunkCount != 0)
                     {
-                        byte[] decompressedchunk = platform.GzipDecompress(CurrentChunk, CurrentChunkCount);
-                        receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
+                        platform.GzipDecompress(CurrentChunk, CurrentChunkCount, decompressedchunk);
                         {
                             int i = 0;
                             for (int zz = 0; zz < p.SizeZ; zz++)
@@ -4958,7 +5015,11 @@
                     }
                     else
                     {
-                        receivedchunk = new int[p.SizeX * p.SizeY * p.SizeZ];
+                        int size = p.SizeX * p.SizeY * p.SizeZ;
+                        for (int i = 0; i < size; i++)
+                        {
+                            receivedchunk[i] = 0;
+                        }
                     }
                     {
                         SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
@@ -4980,7 +5041,7 @@
             case Packet_ServerIdEnum.HeightmapChunk:
                 {
                     Packet_ServerHeightmapChunk p = packet.HeightmapChunk;
-                    byte[] decompressedchunk = platform.GzipDecompress(p.CompressedHeightmap, platform.ByteArrayLength(p.CompressedHeightmap));
+                    platform.GzipDecompress(p.CompressedHeightmap, platform.ByteArrayLength(p.CompressedHeightmap), decompressedchunk);
                     int[] decompressedchunk1 = ByteArrayToUshortArray(decompressedchunk, p.SizeX * p.SizeY * 2);
                     for (int xx = 0; xx < p.SizeX; xx++)
                     {
@@ -6819,10 +6880,10 @@
         }
         float movespeednow = MoveSpeedNow();
         Acceleration acceleration = new Acceleration();
-        IntRef blockunderplayer = BlockUnderPlayer();
+        int blockunderplayer = BlockUnderPlayer();
         {
             //slippery walk on ice and when swimming
-            if ((blockunderplayer != null && d_Data.IsSlipperyWalk()[blockunderplayer.value]) || Swimming())
+            if ((blockunderplayer != -1 && d_Data.IsSlipperyWalk()[blockunderplayer]) || Swimming())
             {
                 acceleration = new Acceleration();
                 {
@@ -6833,7 +6894,7 @@
             }
         }
         float jumpstartacceleration = (13 + one * 333 / 1000) * d_Physics.gravity;
-        if (blockunderplayer != null && blockunderplayer.value == d_Data.BlockIdTrampoline()
+        if (blockunderplayer != -1 && blockunderplayer == d_Data.BlockIdTrampoline()
             && (!player.isplayeronground) && !shiftkeydown)
         {
             wantsjump = true;
@@ -7035,7 +7096,18 @@
     public BlockPosSide[] Pick(BlockOctreeSearcher s_, Line3D line, IntRef retCount)
     {
         //pick terrain
-        s_.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
+        int minX = platform.FloatToInt(MinFloat(line.Start[0], line.End[0]));
+        int minY = platform.FloatToInt(MinFloat(line.Start[1], line.End[1]));
+        int minZ = platform.FloatToInt(MinFloat(line.Start[2], line.End[2]));
+        int maxX = platform.FloatToInt(MaxFloat(line.Start[0], line.End[0]));
+        int maxY = platform.FloatToInt(MaxFloat(line.Start[1], line.End[1]));
+        int maxZ = platform.FloatToInt(MaxFloat(line.Start[2], line.End[2]));
+        int sizex = maxX - minX;
+        int sizey = maxY - minY;
+        int sizez = maxZ - minZ;
+        int size = BitTools.NextPowerOfTwo(MaxInt(sizex, MaxInt(sizey, sizez)));
+        s_.StartBox = Box3D.Create(minX, minY, minZ, size);
+        //s_.StartBox = Box3D.Create(0, 0, 0, BitTools.NextPowerOfTwo(MaxInt(MapSizeX, MaxInt(MapSizeY, MapSizeZ))));
         BlockPosSide[] pick2 = s_.LineIntersection(IsBlockEmpty_.Create(this), GetBlockHeight_.Create(this), line, retCount);
         PickSort(pick2, retCount.value, line.Start[0], line.Start[1], line.Start[2]);
         return pick2;
@@ -9833,11 +9905,15 @@ public class TextureAtlasCi
     }
 }
 
-public class StackFloatArray
+public class StackMatrix4
 {
-    public StackFloatArray()
+    public StackMatrix4()
     {
         values = new float[max][];
+        for (int i = 0; i < max; i++)
+        {
+            values[i] = Mat4.Create();
+        }
     }
     float[][] values;
     const int max = 1024;
@@ -9845,7 +9921,8 @@ public class StackFloatArray
 
     internal void Push(float[] p)
     {
-        values[count++] = p;
+        Mat4.Copy(values[count], p);
+        count++;
     }
 
     internal float[] Peek()

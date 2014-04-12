@@ -10,6 +10,8 @@
         idsCount = 0;
         redraw = new TerrainRendererRedraw[128];
         redrawCount = 0;
+        CalculateShadowslightRadius = new int[GlobalVar.MAX_BLOCKTYPES];
+        CalculateShadowsisTransparentForLight = new bool[GlobalVar.MAX_BLOCKTYPES];
     }
     internal Game game;
     int chunkupdates;
@@ -21,7 +23,7 @@
 
     int GetChunksize()
     {
-        return game.chunksize;
+        return Game.chunksize;
     }
 
     public void StartTerrain()
@@ -486,6 +488,8 @@
             chunksize + 2, chunksize + 2, chunksize + 2);
     }
 
+    int[] CalculateShadowslightRadius;
+    bool[] CalculateShadowsisTransparentForLight;
     int[][] chunks3x3x3;
     int[][] heightchunks3x3;
     void CalculateShadows(int cx, int cy, int cz)
@@ -550,19 +554,17 @@
             }
         }
 
-        int[] lightRadius = new int[GlobalVar.MAX_BLOCKTYPES];
-        bool[] isTransparentForLight = new bool[GlobalVar.MAX_BLOCKTYPES];
         for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
         {
             if (game.blocktypes[i] == null)
             {
                 continue;
             }
-            lightRadius[i] = game.blocktypes[i].LightRadius;
-            isTransparentForLight[i] = IsTransparentForLight(i);
+            CalculateShadowslightRadius[i] = game.blocktypes[i].LightRadius;
+            CalculateShadowsisTransparentForLight[i] = IsTransparentForLight(i);
         }
 
-        shadows.Update(currentChunkShadows, chunks3x3x3, heightchunks3x3, lightRadius, isTransparentForLight, game.sunlight_, cz * chunksize - chunksize);
+        shadows.Update(currentChunkShadows, chunks3x3x3, heightchunks3x3, CalculateShadowslightRadius, CalculateShadowsisTransparentForLight, game.sunlight_, cz * chunksize - chunksize);
 
         //for MaybeGetLight
         Chunk chunkLight = game.chunks[MapUtilCi.Index3d(cx, cy, cz, mapsizexchunks(), mapsizeychunks())];
@@ -626,7 +628,7 @@ public class UnloadRendererChunks : Task
 
     public override void Run(float dt)
     {
-        chunksize = game.chunksize;
+        chunksize = Game.chunksize;
         mapsizexchunks = game.MapSizeX / chunksize;
         mapsizeychunks = game.MapSizeY / chunksize;
         mapsizezchunks = game.MapSizeZ / chunksize;

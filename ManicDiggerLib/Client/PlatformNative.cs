@@ -1156,14 +1156,18 @@ public class GamePlatformNative : GamePlatform
         GL.Fog(FogParameter.FogDensity, density);
     }
     ICompression compression = new CompressionGzip();
-    public override byte[] GzipDecompress(byte[] compressed, int compressedLength)
+    public override void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret)
     {
         byte[] data = new byte[compressedLength];
         for (int i = 0; i < compressedLength; i++)
         {
             data[i] = compressed[i];
         }
-        return compression.Decompress(data);
+        byte[] decompressed = compression.Decompress(data);
+        for (int i = 0; i < decompressed.Length; i++)
+        {
+            ret[i] = decompressed[i];
+        }
     }
     public bool ENABLE_CHATLOG = true;
     public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }

@@ -158,14 +158,20 @@ public class CharacterPhysicsCi
         {
             return ENABLE_FREEMOVE;
         }
+        int block = game.GetBlock(x, y, z);
+        Packet_BlockType blocktype = game.blocktypes[block];
+        int blockabove = game.GetBlock(x, y, z + 1);
+        Packet_BlockType blocktypeabove = game.blocktypes[blockabove];
+
         //this test is so the player does not walk on water.
-        if (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) &&
-            !game.IsFluid(game.blocktypes[game.GetBlock(x, y, z + 1)])) { return true; }
-        return game.GetBlock(x, y, z) == 0
-            || (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight && game.GetBlock(x, y, z + 2) == 0 && game.GetBlock(x, y, z + 1) == 0) // also check if the block above the stair is empty
-            || (game.IsFluid(game.blocktypes[game.GetBlock(x, y, z)]) && (!swimmingtop))
-            || game.IsEmptyForPhysics(game.blocktypes[game.GetBlock(x, y, z)])
-        	|| game.IsRail(game.blocktypes[game.GetBlock(x, y, z)]);
+        if (game.IsFluid(blocktype) &&
+            !game.IsFluid(blocktypeabove)) { return true; }
+        int blockabove2 = game.GetBlock(x, y, z + 2);
+        return block == 0
+            || (blocktype.DrawType == Packet_DrawTypeEnum.HalfHeight && blockabove2 == 0 && blockabove == 0) // also check if the block above the stair is empty
+            || (game.IsFluid(blocktype) && (!swimmingtop))
+            || game.IsEmptyForPhysics(blocktype)
+            || game.IsRail(blocktype);
     }
 
     public void Move(CharacterPhysicsState state, MoveInfo move, float dt, BoolRef soundnow, Vector3Ref push, float modelheight)
@@ -193,14 +199,14 @@ public class CharacterPhysicsCi
         diff1.Z += push.Z * dt;
 
         bool loaded = false;
-        int cx = game.platform.FloatToInt(game.player.playerposition.X / game.chunksize);
-        int cy = game.platform.FloatToInt(game.player.playerposition.Z / game.chunksize);
-        int cz = game.platform.FloatToInt(game.player.playerposition.Y / game.chunksize);
-        if (game.IsValidChunkPos(cx, cy, cz, game.chunksize))
+        int cx = game.platform.FloatToInt(game.player.playerposition.X / Game.chunksize);
+        int cy = game.platform.FloatToInt(game.player.playerposition.Z / Game.chunksize);
+        int cz = game.platform.FloatToInt(game.player.playerposition.Y / Game.chunksize);
+        if (game.IsValidChunkPos(cx, cy, cz, Game.chunksize))
         {
             if (game.chunks[MapUtilCi.Index3d(cx, cy, cz,
-                game.MapSizeX / game.chunksize,
-                game.MapSizeY / game.chunksize)] != null)
+                game.MapSizeX / Game.chunksize,
+                game.MapSizeY / Game.chunksize)] != null)
             {
                 loaded = true;
             }
@@ -722,8 +728,9 @@ public class CharacterPhysicsCi
     
     bool isHalfHeight(int x, int y, int z)
     {
-    	return (game.blocktypes[game.GetBlock(x, y, z)].DrawType == Packet_DrawTypeEnum.HalfHeight
-    	        || game.IsRail(game.blocktypes[game.GetBlock(x, y, z)]));
+        int block = game.GetBlock(x, y, z);
+    	return (game.blocktypes[block].DrawType == Packet_DrawTypeEnum.HalfHeight
+    	        || game.IsRail(game.blocktypes[block]));
     }
 
     float Floor(float aFloat)

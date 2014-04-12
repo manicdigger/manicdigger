@@ -107,7 +107,7 @@
     public abstract void GlFogFogModeExp2();
     public abstract void GlFogFogColor(int r, int g, int b, int a);
     public abstract void GlFogFogDensity(float density);
-    public abstract byte[] GzipDecompress(byte[] compressed, int compressedLength);
+    public abstract void GzipDecompress(byte[] compressed, int compressedLength, byte[] ret);
     public abstract bool ChatLog(string servername, string p);
     public abstract float MathTan(float p);
     public abstract bool IsValidTypingChar(int c);

@@ -145,16 +145,19 @@
 
     void Draw()
     {
-        m.OrthoMode();
-        if (drawfpsgraph)
+        if (drawfpsgraph || drawfpstext)
         {
-            DrawGraph();
+            m.OrthoMode();
+            if (drawfpsgraph)
+            {
+                DrawGraph();
+            }
+            if (drawfpstext)
+            {
+                m.Draw2dText(fpstext, 20, 20, ChatFontSize);
+            }
+            m.PerspectiveMode();
         }
-        if (drawfpstext)
-        {
-            m.Draw2dText(fpstext, 20, 20, ChatFontSize);
-        }
-        m.PerspectiveMode();
     }
 
     Draw2dData[] todraw;

@@ -11,6 +11,7 @@
         font.size = ChatFontSize;
         ChatLinesMax = 1;
         ChatLines = new Chatline[ChatLinesMax];
+        chatlines2 = new Chatline[1024];
     }
 
     internal Game game;
@@ -78,9 +79,9 @@
         ChatLines[ChatLinesCount++] = chatline;
     }
 
+    Chatline[] chatlines2;
     public void DrawChatLines(bool all)
     {
-        Chatline[] chatlines2 = new Chatline[1024];
         int chatlines2Count = 0;
         if (!all)
         {
