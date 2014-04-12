@@ -21,10 +21,16 @@
         this.p = p_;
 
         xRot = 0;
-        xSpeed = 0;
+        xInv = false;
+        xSpeed = 10;
 
         yRot = 0;
-        ySpeed = 0;
+        yInv = false;
+        ySpeed = 10;
+
+        overlap = 200;
+        minspeed = 5;
+        rnd = p.RandomCreate();
 
         z = -5;
 
@@ -263,10 +269,16 @@
     }
 
     float xRot;
+    bool xInv;
     float xSpeed;
 
     float yRot;
+    bool yInv;
     float ySpeed;
+
+    int overlap;
+    int minspeed;
+    RandomCi rnd;
 
     float z;
 
@@ -278,8 +290,42 @@
 
     void Animate()
     {
-        xRot += xSpeed * elapsed;
-        yRot += ySpeed * elapsed;
+        if (xInv)
+        {
+            if (xRot <= -overlap)
+            {
+                xInv = false;
+                xSpeed = minspeed + rnd.MaxNext(5);
+            }
+            xRot -= xSpeed * elapsed;
+        }
+        else
+        {
+            if (xRot >= overlap)
+            {
+                xInv = true;
+                xSpeed = minspeed + rnd.MaxNext(5);
+            }
+            xRot += xSpeed * elapsed;
+        }
+        if (yInv)
+        {
+            if (yRot <= -overlap)
+            {
+                yInv = false;
+                ySpeed = minspeed + rnd.MaxNext(5);
+            }
+            yRot -= ySpeed * elapsed;
+        }
+        else
+        {
+            if (yRot >= overlap)
+            {
+                yInv = true;
+                ySpeed = minspeed + rnd.MaxNext(5);
+            }
+            yRot += ySpeed * elapsed;
+        }
     }
 
     public void OnNewFrame(NewFrameEventArgs args)
@@ -328,8 +374,8 @@
         previousMouseY = e.GetY();
         if (mousePressed)
         {
-            ySpeed += dx / 10;
-            xSpeed += dy / 10;
+//            ySpeed += dx / 10;
+//            xSpeed += dy / 10;
         }
         screen.OnMouseMove(e);
     }
@@ -414,8 +460,11 @@
 
     internal void DrawBackground()
     {
-        float scale = one * p.GetCanvasWidth() / 1280;
-        Draw2dQuad(GetTexture("background.png"), 0, 0, 1280 * scale, 1280 * scale);
+        int basex = 1280;
+        int basey = 720;
+        float scalex = one * p.GetCanvasWidth() / basex;
+        float scaley = one * p.GetCanvasHeight() / basey;
+        Draw2dQuad(GetTexture("background.png"), -overlap + xRot, -overlap + yRot, basex * scalex + 2 * overlap, basey * scaley + 2 * overlap);
     }
 
     internal void StartMultiplayer()

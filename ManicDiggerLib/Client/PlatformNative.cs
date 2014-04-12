@@ -1946,6 +1946,11 @@ public class RandomNative : RandomCi
     {
         return rnd.Next();
     }
+
+    public override int MaxNext(int range)
+    {
+        return rnd.Next(range);
+    }
 }
 
 public class MyUri
