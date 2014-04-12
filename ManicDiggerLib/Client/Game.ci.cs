@@ -103,8 +103,6 @@
         speculative = new Speculative[speculativeMax];
         typinglog = new string[1024 * 16];
         typinglogCount = 0;
-        CurrentChunk = new byte[1024 * 64];
-        CurrentChunkCount = 0;
         NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
         files = new DictionaryStringByteArray();
         localplayeranim = new AnimationState();
@@ -123,8 +121,6 @@
         identityMatrix = Mat4.Identity_(Mat4.Create());
         Set3dProjectionTempMat4 = Mat4.Create();
         upVec3 = Vec3.FromValues(0, 1, 0);
-        receivedchunk = new int[32 * 32 * 32];
-        decompressedchunk = new byte[32 * 32 * 32 * 2];
     }
 
     public void Start()
@@ -256,7 +252,7 @@
         s.platform = platform;
 
         scheduler = new TaskScheduler_();
-        scheduler.platform = platform;
+        scheduler.Start(platform);
         DrawTask drawTask = new DrawTask();
         drawTask.game = this;
         QueueTaskReadOnlyMainThread(drawTask);
@@ -270,6 +266,10 @@
         UpdateTask update = new UpdateTask();
         update.game = this;
         QueueTaskCommit(update);
+
+        NetworkProcessTask networkProcessTask = new NetworkProcessTask();
+        networkProcessTask.game = this;
+        QueueTaskReadOnlyBackgroundPerFrame(networkProcessTask);
     }
 
 #if CITO
@@ -4734,8 +4734,6 @@
         }
     }
 
-    int[] receivedchunk;
-    byte[] decompressedchunk;
     string serverGameVersion;
     internal void ProcessPacket(Packet_Server packet)
     {
@@ -5012,75 +5010,6 @@
                     //throw new Exception(packet.DisconnectPlayer.DisconnectReason);
                     break;
                 }
-            case Packet_ServerIdEnum.ChunkPart:
-                byte[] arr = packet.ChunkPart.CompressedChunkPart;
-                int arrLength = platform.ByteArrayLength(arr); // todo
-                for (int i = 0; i < arrLength; i++)
-                {
-                    CurrentChunk[CurrentChunkCount++] = arr[i];
-                }
-                break;
-            case Packet_ServerIdEnum.Chunk_:
-                {
-                    Packet_ServerChunk p = packet.Chunk_;
-                    if (CurrentChunkCount != 0)
-                    {
-                        platform.GzipDecompress(CurrentChunk, CurrentChunkCount, decompressedchunk);
-                        {
-                            int i = 0;
-                            for (int zz = 0; zz < p.SizeZ; zz++)
-                            {
-                                for (int yy = 0; yy < p.SizeY; yy++)
-                                {
-                                    for (int xx = 0; xx < p.SizeX; xx++)
-                                    {
-                                        receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
-                                        i += 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        int size = p.SizeX * p.SizeY * p.SizeZ;
-                        for (int i = 0; i < size; i++)
-                        {
-                            receivedchunk[i] = 0;
-                        }
-                    }
-                    {
-                        SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
-                        for (int xx = 0; xx < 2; xx++)
-                        {
-                            for (int yy = 0; yy < 2; yy++)
-                            {
-                                for (int zz = 0; zz < 2; zz++)
-                                {
-                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
-                                }
-                            }
-                        }
-                    }
-                    ReceivedMapLength += CurrentChunkCount;// lengthPrefixLength + packetLength;
-                    CurrentChunkCount = 0;
-                }
-                break;
-            case Packet_ServerIdEnum.HeightmapChunk:
-                {
-                    Packet_ServerHeightmapChunk p = packet.HeightmapChunk;
-                    platform.GzipDecompress(p.CompressedHeightmap, platform.ByteArrayLength(p.CompressedHeightmap), decompressedchunk);
-                    int[] decompressedchunk1 = ByteArrayToUshortArray(decompressedchunk, p.SizeX * p.SizeY * 2);
-                    for (int xx = 0; xx < p.SizeX; xx++)
-                    {
-                        for (int yy = 0; yy < p.SizeY; yy++)
-                        {
-                            int height = decompressedchunk1[MapUtilCi.Index2d(xx, yy, p.SizeX)];
-                            d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
-                        }
-                    }
-                }
-                break;
             case Packet_ServerIdEnum.PlayerStats:
                 {
                     Packet_ServerPlayerStats p = packet.PlayerStats;
@@ -5383,8 +5312,6 @@
     internal SunMoonRenderer d_SunMoonRenderer;
     internal int[] NightLevels;
     public const int HourDetail = 4;
-    internal byte[] CurrentChunk;
-    internal int CurrentChunkCount;
     public static int[] ByteArrayToUshortArray(byte[] input, int inputLength)
     {
         int outputLength = inputLength / 2;
@@ -5501,42 +5428,8 @@
         return IndexOf(arr, arrLength, value) != -1;
     }
 
-    internal void TryReadPacket(byte[] data, int dataLength)
+    void ClearInactivePlayersDrawInfo()
     {
-        Packet_Server packet = new Packet_Server();
-        Packet_ServerSerializer.DeserializeBuffer(data, dataLength, packet);
-        ProcessPacket(packet);
-        LastReceivedMilliseconds = currentTimeMilliseconds;
-        //return lengthPrefixLength + packetLength;
-    }
-
-    internal void NetworkProcess()
-    {
-        currentTimeMilliseconds = platform.TimeMillisecondsFromStart();
-        if (main == null)
-        {
-            return;
-        }
-        INetIncomingMessage msg;
-        for (; ; )
-        {
-            if (invalidVersionPacketIdentification != null)
-            {
-                break;
-            }
-            msg = main.ReadMessage();
-            if (msg == null)
-            {
-                break;
-            }
-            TryReadPacket(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes());
-        }
-        if (spawned && ((platform.TimeMillisecondsFromStart() - lastpositionsentMilliseconds) > 100))
-        {
-            lastpositionsentMilliseconds = platform.TimeMillisecondsFromStart();
-            SendPosition(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
-                player.playerorientation.X, player.playerorientation.Y, player.playerorientation.Z);
-        }
         int now = platform.TimeMillisecondsFromStart();
         for (int i = 0; i < entitiesCount; i++)
         {
@@ -6790,7 +6683,7 @@
         //UpdateTerrain();
         OnNewFrame(dt);
         RailOnNewFrame(dt);
-        NetworkProcess();
+        ClearInactivePlayersDrawInfo();
 
         if (guistate == GuiState.MapLoading) { return; }
 
@@ -8163,6 +8056,7 @@
 
     public void OnTouchStart(TouchEventArgs e)
     {
+        InvalidVersionAllow();
         if (e.GetX() <= Width() / 2)
         {
             if (touchIdMove == -1)
@@ -8298,6 +8192,167 @@ public class UpdateTask : Task
     }
 }
 
+public class NetworkProcessTask : Task
+{
+    public NetworkProcessTask()
+    {
+        CurrentChunk = new byte[1024 * 64];
+        CurrentChunkCount = 0;
+        receivedchunk = new int[32 * 32 * 32];
+        decompressedchunk = new byte[32 * 32 * 32 * 2];
+    }
+    internal byte[] CurrentChunk;
+    internal int CurrentChunkCount;
+    int[] receivedchunk;
+    byte[] decompressedchunk;
+
+#if CITO
+    macro Index3d(x, y, h, sizex, sizey) ((((((h) * (sizey)) + (y))) * (sizex)) + (x))
+#else
+    static int Index3d(int x, int y, int h, int sizex, int sizey)
+    {
+        return (h * sizey + y) * sizex + x;
+    }
+#endif
+
+    public override void Run(float dt)
+    {
+        NetworkProcess();
+        game.QueueTaskReadOnlyBackgroundPerFrame(this);
+    }
+
+    public void NetworkProcess()
+    {
+        game.currentTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+        if (game.main == null)
+        {
+            return;
+        }
+        INetIncomingMessage msg;
+        for (; ; )
+        {
+            if (game.invalidVersionPacketIdentification != null)
+            {
+                break;
+            }
+            msg = game.main.ReadMessage();
+            if (msg == null)
+            {
+                break;
+            }
+            TryReadPacket(msg.ReadBytes(msg.LengthBytes()), msg.LengthBytes());
+        }
+        if (game.spawned && ((game.platform.TimeMillisecondsFromStart() - game.lastpositionsentMilliseconds) > 100))
+        {
+            game.lastpositionsentMilliseconds = game.platform.TimeMillisecondsFromStart();
+            game.SendPosition(game.player.playerposition.X, game.player.playerposition.Y, game.player.playerposition.Z,
+                game.player.playerorientation.X, game.player.playerorientation.Y, game.player.playerorientation.Z);
+        }
+    }
+
+    public void TryReadPacket(byte[] data, int dataLength)
+    {
+        Packet_Server packet = new Packet_Server();
+        Packet_ServerSerializer.DeserializeBuffer(data, dataLength, packet);
+
+        ProcessInBackground(packet);
+
+        ProcessPacketTask task = new ProcessPacketTask();
+        task.game = game;
+        task.packet = packet;
+        game.QueueTaskCommit(task);
+
+        game.LastReceivedMilliseconds = game.currentTimeMilliseconds;
+        //return lengthPrefixLength + packetLength;
+    }
+
+    void ProcessInBackground(Packet_Server packet)
+    {
+        switch (packet.Id)
+        {
+            case Packet_ServerIdEnum.ChunkPart:
+                byte[] arr = packet.ChunkPart.CompressedChunkPart;
+                int arrLength = game.platform.ByteArrayLength(arr); // todo
+                for (int i = 0; i < arrLength; i++)
+                {
+                    CurrentChunk[CurrentChunkCount++] = arr[i];
+                }
+                break;
+            case Packet_ServerIdEnum.Chunk_:
+                {
+                    Packet_ServerChunk p = packet.Chunk_;
+                    if (CurrentChunkCount != 0)
+                    {
+                        game.platform.GzipDecompress(CurrentChunk, CurrentChunkCount, decompressedchunk);
+                        {
+                            int i = 0;
+                            for (int zz = 0; zz < p.SizeZ; zz++)
+                            {
+                                for (int yy = 0; yy < p.SizeY; yy++)
+                                {
+                                    for (int xx = 0; xx < p.SizeX; xx++)
+                                    {
+                                        receivedchunk[Index3d(xx, yy, zz, p.SizeX, p.SizeY)] = (decompressedchunk[i + 1] << 8) + decompressedchunk[i];
+                                        i += 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int size = p.SizeX * p.SizeY * p.SizeZ;
+                        for (int i = 0; i < size; i++)
+                        {
+                            receivedchunk[i] = 0;
+                        }
+                    }
+                    {
+                        game.SetMapPortion(p.X, p.Y, p.Z, receivedchunk, p.SizeX, p.SizeY, p.SizeZ);
+                        for (int xx = 0; xx < 2; xx++)
+                        {
+                            for (int yy = 0; yy < 2; yy++)
+                            {
+                                for (int zz = 0; zz < 2; zz++)
+                                {
+                                    //d_Shadows.OnSetChunk(p.X + 16 * xx, p.Y + 16 * yy, p.Z + 16 * zz);//todo
+                                }
+                            }
+                        }
+                    }
+                    game.ReceivedMapLength += CurrentChunkCount;// lengthPrefixLength + packetLength;
+                    CurrentChunkCount = 0;
+                }
+                break;
+            case Packet_ServerIdEnum.HeightmapChunk:
+                {
+                    Packet_ServerHeightmapChunk p = packet.HeightmapChunk;
+                    game.platform.GzipDecompress(p.CompressedHeightmap, game.platform.ByteArrayLength(p.CompressedHeightmap), decompressedchunk);
+                    int[] decompressedchunk1 = Game.ByteArrayToUshortArray(decompressedchunk, p.SizeX * p.SizeY * 2);
+                    for (int xx = 0; xx < p.SizeX; xx++)
+                    {
+                        for (int yy = 0; yy < p.SizeY; yy++)
+                        {
+                            int height = decompressedchunk1[MapUtilCi.Index2d(xx, yy, p.SizeX)];
+                            game.d_Heightmap.SetBlock(p.X + xx, p.Y + yy, height);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+}
+
+public class ProcessPacketTask : Task
+{
+    internal Packet_Server packet;
+
+    public override void Run(float dt)
+    {
+        game.ProcessPacket(packet);
+    }
+}
+
 
 public abstract class Action_
 {
@@ -8331,33 +8386,47 @@ public class TaskScheduler_
 {
     public TaskScheduler_()
     {
-        mainTasks = new QueueTask();
-        backgroundPerFrameTasks = new QueueTask();
-        commitTasks = new QueueTask();
-        tasks = new QueueTask();
-        newPerFrameTasks = new QueueTask();
+        mainTasks = QueueTask.Create(128);
+        backgroundPerFrameTasks = ListTask.Create(128);
+        commitTasks = QueueTask.Create(16 * 1024);
+        tasks = QueueTask.Create(16 * 1024);
+        newPerFrameTasks = QueueTask.Create(128);
     }
-    internal GamePlatform platform;
+
+    public void Start(GamePlatform platform_)
+    {
+        platform = platform_;
+        lockObject = platform.MonitorCreate();
+    }
+
+    GamePlatform platform;
+    MonitorObject lockObject;
 
     public void QueueTaskReadOnlyMainThread(Task task)
     {
+        platform.MonitorEnter(lockObject);
         mainTasks.Enqueue(task);
+        platform.MonitorExit(lockObject);
     }
 
     QueueTask newPerFrameTasks;
 
     public void QueueTaskReadOnlyBackgroundPerFrame(Task task)
     {
+        platform.MonitorEnter(lockObject);
         newPerFrameTasks.Enqueue(task);
+        platform.MonitorExit(lockObject);
     }
 
     public void QueueTaskCommit(Task task)
     {
+        platform.MonitorEnter(lockObject);
         commitTasks.Enqueue(task);
+        platform.MonitorExit(lockObject);
     }
 
     QueueTask mainTasks;
-    QueueTask backgroundPerFrameTasks;
+    ListTask backgroundPerFrameTasks;
     QueueTask commitTasks;
 
     QueueTask tasks;
@@ -8391,7 +8460,7 @@ public class TaskScheduler_
                 while (tasks.Count() > 0)
                 {
                     Task task = tasks.Dequeue();
-                    backgroundPerFrameTasks.Enqueue(task);
+                    backgroundPerFrameTasks.Add(task);
                     task.Done = false;
                     platform.QueueUserWorkItem(TaskAction.Create(task));
                 }
@@ -8399,11 +8468,12 @@ public class TaskScheduler_
         }
         else
         {
-            Move(backgroundPerFrameTasks, tasks);
-            while (tasks.Count() > 0)
+            for (int i = 0; i < backgroundPerFrameTasks.count; i++)
             {
-                tasks.Dequeue().Run(dt);
+                backgroundPerFrameTasks.items[i].Run(dt);
             }
+            backgroundPerFrameTasks.Clear();
+
             Move(commitTasks, tasks);
             while (tasks.Count() > 0)
             {
@@ -8414,12 +8484,12 @@ public class TaskScheduler_
 
     void Move(QueueTask from, QueueTask to)
     {
-        to.count = from.count;
-        for (int i = 0; i < from.count; i++)
-        {
-            to.items[i] = from.items[i];
-        }
-        from.count = 0;
+        platform.MonitorEnter(lockObject);
+        int count = from.count;
+        to.start = 0;
+        to.count = count;
+        from.DequeueRange(to.items, count);
+        platform.MonitorExit(lockObject);
     }
 }
 
@@ -8427,39 +8497,49 @@ public class QueueTask
 {
     public QueueTask()
     {
-        items = new Task[128];
+        Start(128);
+    }
+    public static QueueTask Create(int max_)
+    {
+        QueueTask queue = new QueueTask();
+        queue.Start(max_);
+        return queue;
+    }
+
+    void Start(int max_)
+    {
+        max = max_;
+        items = new Task[max_];
         count = 0;
     }
+
     internal Task[] items;
+    internal int start;
     internal int count;
-    public void Enqueue(Task task)
+    internal int max;
+
+    public void Enqueue(Task value)
     {
-        items[count++] = task;
+        int pos = start + count;
+        pos = pos % max;
+        count++;
+        items[pos] = value;
     }
+
     public Task Dequeue()
     {
-        Task task = items[0];
-        for (int i = 0; i < count - 1; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        items[count - 1] = null;
+        Task ret = items[start];
+        start++;
+        start = start % max;
         count--;
-        return task;
+        return ret;
     }
+
     public int Count()
     {
         return count;
     }
 
-    public void Clear()
-    {
-        for (int i = 0; i < count; i++)
-        {
-            items[i] = null;
-        }
-        count = 0;
-    }
     public void RemoveAt(int index)
     {
         for (int i = index; i < count; i++)
@@ -8468,6 +8548,71 @@ public class QueueTask
         }
         items[count - 1] = null;
         count--;
+    }
+
+    public void DequeueRange(Task[] data, int length)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            data[i] = Dequeue();
+        }
+    }
+
+    internal void PeekRange(Task[] data, int length)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            data[i] = items[(start + i) % max];
+        }
+    }
+}
+
+public class ListTask
+{
+    public static ListTask Create(int max_)
+    {
+        ListTask l = new ListTask();
+        l.Start(max_);
+        return l;
+    }
+
+    public void Start(int max_)
+    {
+        max = max_;
+        items = new Task[max_];
+        count = 0;
+    }
+
+    internal int max;
+    internal Task[] items;
+    internal int count;
+
+    internal void Clear()
+    {
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = null;
+        }
+        count = 0;
+    }
+
+    internal void RemoveAt(int index)
+    {
+        for (int i = index; i < count - 1; i++)
+        {
+            items[i] = items[i + 1];
+        }
+        count--;
+    }
+
+    internal int Count()
+    {
+        return count;
+    }
+
+    internal void Add(Task task)
+    {
+        items[count++] = task;
     }
 }
 
