@@ -485,25 +485,25 @@
         return iCol;
     }
 
-    public static byte ColorA(int color)
+    public static int ColorA(int color)
     {
         byte a = IntToByte(color >> 24);
         return a;
     }
 
-    public static byte ColorR(int color)
+    public static int ColorR(int color)
     {
         byte r = IntToByte(color >> 16);
         return r;
     }
 
-    public static byte ColorG(int color)
+    public static int ColorG(int color)
     {
         byte g = IntToByte(color >> 8);
         return g;
     }
 
-    public static byte ColorB(int color)
+    public static int ColorB(int color)
     {
         byte b = IntToByte(color);
         return b;
@@ -683,7 +683,7 @@
             platform.GlDisableDepthTest();
         }
         ModelData data = QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-            x1, y1, width, height, Game.ColorR(color), Game.ColorG(color), Game.ColorB(color), Game.ColorA(color));
+            x1, y1, width, height, Game.IntToByte(Game.ColorR(color)), Game.IntToByte(Game.ColorG(color)), Game.IntToByte(Game.ColorB(color)), Game.IntToByte(Game.ColorA(color)));
         DrawModelData(data);
         if (!enabledepthtest)
         {
@@ -758,7 +758,7 @@
 
             ModelData modelData =
                 QuadModelData.GetQuadModelData2(rect.x, rect.y, rect.w, rect.h,
-                x1, y1, width, height, ColorR(color), ColorG(color), ColorB(color), ColorA(color));
+                x1, y1, width, height, Game.IntToByte(ColorR(color)), Game.IntToByte(ColorG(color)), Game.IntToByte(ColorB(color)), Game.IntToByte(ColorA(color)));
             modelDatas[modelDatasCount++] = modelData;
         }
 
