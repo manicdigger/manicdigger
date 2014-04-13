@@ -1436,10 +1436,22 @@ public class ScreenMultiplayer : Screen
         refresh.text = "Refresh";
         refresh.type = WidgetType.Button;
 
+        page = 0;
+        pageUp = new MenuWidget();
+        pageUp.text = "Up";
+        pageUp.type = WidgetType.Button;
+        pageUp.buttonStyle = ButtonStyle.Text;
+        pageDown = new MenuWidget();
+        pageDown.text = "Down";
+        pageDown.type = WidgetType.Button;
+        pageDown.buttonStyle = ButtonStyle.Text;
+
         widgets[0] = back;
         widgets[1] = connect;
         widgets[2] = refresh;
         widgets[3] = connectToIp;
+        widgets[4] = pageUp;
+        widgets[5] = pageDown;
 
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
@@ -1454,7 +1466,7 @@ public class ScreenMultiplayer : Screen
             b.type = WidgetType.Button;
             b.visible = false;
             serverButtons[i] = b;
-            widgets[4 + i] = b;
+            widgets[6 + i] = b;
         }
         loading = true;
     }
@@ -1464,6 +1476,7 @@ public class ScreenMultiplayer : Screen
     HttpResponseCi serverListCsv;
     ServerOnList[] serversOnList;
     const int serversOnListCount = 1024;
+    int page;
 
     bool loading;
     public override void Render(float dt)
@@ -1539,6 +1552,18 @@ public class ScreenMultiplayer : Screen
         refresh.sizey = 64 * scale;
         refresh.fontSize = 14 * scale;
 
+        pageUp.x = p.GetCanvasWidth() - 100 * scale;
+        pageUp.y = p.GetCanvasHeight() - 160 * scale;
+        pageUp.sizex = 100 * scale;
+        pageUp.sizey = 50 * scale;
+        pageUp.fontSize = 14 * scale;
+
+        pageDown.x = p.GetCanvasWidth() - 100 * scale;
+        pageDown.y = 120;
+        pageDown.sizex = 100 * scale;
+        pageDown.sizey = 50 * scale;
+        pageDown.fontSize = 14 * scale;
+
         menu.DrawBackground();
         menu.DrawText("Multiplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
@@ -1552,14 +1577,15 @@ public class ScreenMultiplayer : Screen
             serverButtons[i].visible = false;
         }
 
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 10; i++)
         {
-            ServerOnList s = serversOnList[i];
+            int index = i + (10 * page);
+            ServerOnList s = serversOnList[index];
             if (s == null)
             {
                 continue;
             }
-            string t = menu.p.StringFormat2("{0}. {1}", menu.p.IntToString(i), s.name);
+            string t = menu.p.StringFormat2("{0}. {1}", menu.p.IntToString(index), s.name);
             t = menu.p.StringFormat2("{0} {1}", t, menu.p.IntToString(s.users));
             t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
             t = menu.p.StringFormat2("{0} {1}", t, s.gamemode);
@@ -1581,6 +1607,8 @@ public class ScreenMultiplayer : Screen
     MenuWidget connect;
     MenuWidget connectToIp;
     MenuWidget refresh;
+    MenuWidget pageUp;
+    MenuWidget pageDown;
     MenuWidget[] serverButtons;
     const int serverButtonsCount = 1024;
 
@@ -1598,6 +1626,20 @@ public class ScreenMultiplayer : Screen
             {
                 serverButtons[i].selected = true;
                 selectedServerHash = serversOnList[i].hash;
+            }
+        }
+        if (w == pageUp)
+        {
+            if (page < serverButtonsCount / 10 - 1)
+            {
+                page++;
+            }
+        }
+        if (w == pageDown)
+        {
+            if (page > 0)
+            {
+                page--;
             }
         }
         if (w == back)
@@ -1619,6 +1661,7 @@ public class ScreenMultiplayer : Screen
         {
             loaded = false;
             loading = true;
+            page = 0;
         }
     }
 }
