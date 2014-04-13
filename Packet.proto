@@ -36,6 +36,7 @@ package Packet;
 
 	message ClientRequestBlob
 	{
+		optional StringList requestedMd5 = 1;
 	}
 
     message ClientSetBlock
@@ -411,6 +412,12 @@ package Packet;
         optional int32 disableShadows = 11;
         optional int32 playerAreaSize = 12;
         optional int32 renderHint_ = 13;
+        optional StringList requiredBlobMd5 = 14;
+    }
+    
+    message StringList
+    {
+		repeated string items = 1;
     }
     
     message IntString
@@ -440,6 +447,7 @@ package Packet;
         //optional byte[] hash; //todo, currently ignored.
 
         optional string name = 2;
+        optional string md5 = 3;
     }
     
     message ServerBlobPart

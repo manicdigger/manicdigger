@@ -104,7 +104,6 @@
         typinglog = new string[1024 * 16];
         typinglogCount = 0;
         NewBlockTypes = new Packet_BlockType[GlobalVar.MAX_BLOCKTYPES];
-        files = new DictionaryStringByteArray();
         localplayeranim = new AnimationState();
         localplayeranimationhint = new AnimationHint();
         MonsterRenderers = new DictionaryStringCharacterRenderer();
@@ -121,10 +120,18 @@
         identityMatrix = Mat4.Identity_(Mat4.Create());
         Set3dProjectionTempMat4 = Mat4.Create();
         upVec3 = Vec3.FromValues(0, 1, 0);
+        assets = new AssetList();
+        assetsLoadProgress = new FloatRef();
+        getAsset = new string[1024 * 2];
     }
+
+    AssetList assets;
+    FloatRef assetsLoadProgress;
+    bool AssetsLoaded() { return assetsLoadProgress.value == 1; }
 
     public void Start()
     {
+        platform.LoadAssetsAsyc(assets, assetsLoadProgress);
         if (!issingleplayer)
         {
             skinserverResponse = new HttpResponseCi();
@@ -1442,7 +1449,10 @@
         if (!textures.Contains(p))
         {
             BoolRef found = new BoolRef();
-            textures.Set(p, platform.LoadTextureFromFile(platform.GetFullFilePath(p, found)));
+            BitmapCi bmp = platform.BitmapCreateFromPng(GetFile(p), GetFileLength(p));
+            int texture = platform.LoadTextureFromBitmap(bmp);
+            textures.Set(p, texture);
+            platform.BitmapDelete(bmp);
         }
         return textures.Get(p);
     }
@@ -2351,9 +2361,14 @@
         }
     }
 
-    internal void SendRequestBlob()
+    internal void SendRequestBlob(string[] required, int requiredCount)
     {
         Packet_ClientRequestBlob p = new Packet_ClientRequestBlob(); //{ RequestBlobMd5 = needed };
+        if (ServerVersionAtLeast(2014, 4, 13))
+        {
+            p.RequestedMd5 = new Packet_StringList();
+            p.RequestedMd5.SetItems(required, requiredCount, requiredCount);
+        }
         Packet_Client pp = new Packet_Client();
         pp.Id = Packet_ClientIdEnum.RequestBlob;
         pp.RequestBlob = p;
@@ -2813,9 +2828,12 @@
     {
         if (skyspheretexture == -1)
         {
-            BoolRef found = new BoolRef();
-            skyspheretexture = platform.LoadTextureFromFile(platform.GetFullFilePath("skysphere.png", found));
-            skyspherenighttexture = platform.LoadTextureFromFile(platform.GetFullFilePath("skyspherenight.png", found));
+            BitmapCi skysphereBmp = platform.BitmapCreateFromPng(GetFile("skysphere.png"), GetFileLength("skysphere.png"));
+            BitmapCi skysphereNightBmp = platform.BitmapCreateFromPng(GetFile("skyspherenight.png"), GetFileLength("skyspherenight.png"));
+            skyspheretexture = platform.LoadTextureFromBitmap(skysphereBmp);
+            skyspherenighttexture = platform.LoadTextureFromBitmap(skysphereNightBmp);
+            platform.BitmapDelete(skysphereBmp);
+            platform.BitmapDelete(skysphereNightBmp);
         }
         int texture = SkySphereNight ? skyspherenighttexture : skyspheretexture;
         if (terrainRenderer.shadowssimple) //d_Shadows.GetType() == typeof(ShadowsSimple))
@@ -4311,7 +4329,7 @@
 
     internal void DrawMouseCursor()
     {
-        Draw2dBitmapFile(platform.PathCombine("gui", "mousecursor.png"), mouseCurrentX, mouseCurrentY, 32, 32);
+        Draw2dBitmapFile("mousecursor.png", mouseCurrentX, mouseCurrentY, 32, 32);
     }
 
     internal Speculative[] speculative;
@@ -4707,6 +4725,7 @@
     internal string[] typinglog;
     internal int typinglogCount;
 
+    string[] getAsset;
     internal void ProcessServerIdentification(Packet_Server packet)
     {
         this.LocalPlayerId = packet.Identification.AssignedClientId;
@@ -4715,7 +4734,20 @@
         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
         this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint_ == RenderHintEnum.Fast;
         ChatLog("---Connected---");
-        SendRequestBlob();
+        Packet_StringList required = packet.Identification.RequiredBlobMd5;
+        int getCount = 0;
+        if (required != null)
+        {
+            for (int i = 0; i < required.ItemsCount; i++)
+            {
+                string md5 = required.Items[i];
+                if (!HasAsset(md5))
+                {
+                    getAsset[getCount++] = md5;
+                }
+            }
+        }
+        SendRequestBlob(getAsset, getCount);
         if (packet.Identification.MapSizeX != MapSizeX
             || packet.Identification.MapSizeY != MapSizeY
             || packet.Identification.MapSizeZ != MapSizeZ)
@@ -4732,6 +4764,18 @@
         {
             maxdrawdistance = 128;
         }
+    }
+
+    bool HasAsset(string md5)
+    {
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i].md5 == md5)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     string serverGameVersion;
@@ -5060,6 +5104,7 @@
                     blobdownload = new CitoMemoryStream();
                     //blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
                     blobdownloadname = packet.BlobInitialize.Name;
+                    blobdownloadmd5 = packet.BlobInitialize.Md5;
                     ReceivedMapLength = 0; //todo
                 }
                 break;
@@ -5087,7 +5132,7 @@
 
                     if (blobdownloadname != null) // old servers
                     {
-                        SetFile(blobdownloadname, downloaded);
+                        SetFile(blobdownloadname, blobdownloadmd5, downloaded, blobdownload.Length());
                     }
                     blobdownload = null;
                 }
@@ -5294,10 +5339,31 @@
         }
     }
 
-    DictionaryStringByteArray files;
-    void SetFile(string blobdownloadname, byte[] downloaded)
+    void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
     {
-        files.Set(blobdownloadname, downloaded);
+        string nameLowercase = platform.StringToLower(name);
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i] == null)
+            {
+                continue;
+            }
+            if (assets.items[i].name == nameLowercase)
+            {
+                if (options.UseServerTextures)
+                {
+                    assets.items[i].data = downloaded;
+                    assets.items[i].dataLength = downloadedLength;
+                }
+                return;
+            }
+        }
+        Asset asset = new Asset();
+        asset.data = downloaded;
+        asset.dataLength = downloadedLength;
+        asset.name = nameLowercase;
+        asset.md5 = md5;
+        assets.items[assets.count++] = asset;
     }
 
     internal int handTexture;
@@ -5308,6 +5374,7 @@
     internal Packet_BlockType[] NewBlockTypes;
     internal bool ENABLE_PER_SERVER_TEXTURES;
     internal string blobdownloadname;
+    internal string blobdownloadmd5;
     internal CitoMemoryStream blobdownload;
     internal SunMoonRenderer d_SunMoonRenderer;
     internal int[] NightLevels;
@@ -5325,7 +5392,27 @@
 
     internal byte[] GetFile(string p)
     {
-        return files.Get(p);
+        string pLowercase = platform.StringToLower(p);
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i].name == pLowercase)
+            {
+                return assets.items[i].data;
+            }
+        }
+        return null;
+    }
+
+    internal int GetFileLength(string p)
+    {
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i].name == p)
+            {
+                return assets.items[i].dataLength;
+            }
+        }
+        return 0;
     }
 
     internal void InvalidVersionAllow()
@@ -5365,7 +5452,8 @@
     }
 
     internal void UseTerrainTextures(string[] textureIds, int textureIdsCount)
-    {            //todo bigger than 32x32
+    {
+        //todo bigger than 32x32
         int tilesize = 32;
         BitmapData_ atlas2d = BitmapData_.Create(tilesize * atlas2dtiles(), tilesize * atlas2dtiles());
 
@@ -5376,7 +5464,25 @@
                 continue;
             }
             byte[] fileData = GetFile(StringTools.StringAppend(platform, textureIds[i], ".png"));
+            if (fileData == null)
+            {
+                fileData = GetFile("Unknown.png");
+            }
+            if (fileData == null)
+            {
+                continue;
+            }
             BitmapCi bmp = platform.BitmapCreateFromPng(fileData, platform.ByteArrayLength(fileData));
+            if (platform.BitmapGetWidth(bmp) != tilesize)
+            {
+                platform.BitmapDelete(bmp);
+                continue;
+            }
+            if (platform.BitmapGetHeight(bmp) != tilesize)
+            {
+                platform.BitmapDelete(bmp);
+                continue;
+            }
             int[] bmpPixels = new int[tilesize * tilesize];
             platform.BitmapGetPixelsArgb(bmp, bmpPixels);
 
@@ -7170,6 +7276,16 @@
             pick0.blockPos[1] = -1;
             pick0.blockPos[2] = -1;
         }
+        if (cameratype == CameraType.Fpp || cameratype == CameraType.Tpp)
+        {
+            int ntileX = platform.FloatToInt(pick0.Current()[0]);
+            int ntileY = platform.FloatToInt(pick0.Current()[1]);
+            int ntileZ = platform.FloatToInt(pick0.Current()[2]);
+            if (IsUsableBlock(GetBlock(ntileX, ntileZ, ntileY)))
+            {
+                currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
+            }
+        }
         if (GetFreeMouse())
         {
             if (pick2count.value > 0)
@@ -7178,13 +7294,7 @@
             }
             return;
         }
-        int ntileX = platform.FloatToInt(pick0.Current()[0]);
-        int ntileY = platform.FloatToInt(pick0.Current()[1]);
-        int ntileZ = platform.FloatToInt(pick0.Current()[2]);
-        if (IsUsableBlock(GetBlock(ntileX, ntileZ, ntileY)))
-        {
-            currentAttackedBlock = Vector3IntRef.Create(ntileX, ntileZ, ntileY);
-        }
+
         if ((one * (platform.TimeMillisecondsFromStart() - lastbuildMilliseconds) / 1000) >= BuildDelay()
             || IsNextShot)
         {

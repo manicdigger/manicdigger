@@ -164,6 +164,30 @@
     public abstract void ExitMousePointerLock();
     public abstract bool MultithreadingAvailable();
     public abstract void QueueUserWorkItem(Action_ action);
+    public abstract void LoadAssetsAsyc(AssetList list, FloatRef progress);
+    public abstract string StringToLower(string p);
+}
+
+public class Asset
+{
+    internal string name;
+    internal string md5;
+    internal byte[] data;
+    internal int dataLength;
+
+    public string GetName() { return name; } public void SetName(string value) { name = value; }
+    public string GetMd5() { return md5; }public void SetMd5(string value) { md5 = value; }
+    public byte[] GetData() { return data; } public void SetData(byte[] value) { data = value; }
+    public int GetDataLength() { return dataLength; } public void SetDataLength(int value) { dataLength = value; }
+}
+
+public class AssetList
+{
+    internal Asset[] items;
+    internal int count;
+
+    public Asset[] GetItems() { return items; } public void SetItems(Asset[] value) { items = value; }
+    public int GetCount() { return count; } public void SetCount(int value) { count = value; }
 }
 
 public class UpdateMousePositionArgs

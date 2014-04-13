@@ -167,6 +167,8 @@ namespace ManicDiggerServer
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             string[] datapathspublic = new[] { Path.Combine(datapaths[0], "public"), Path.Combine(datapaths[1], "public") };
             server.PublicDataPaths = datapathspublic;
+            assetLoader = new AssetLoader(datapathspublic);
+            LoadAssets();
             var getfile = new GetFileStream(datapaths);
             var data = new GameData();
             data.Start();
@@ -2187,7 +2189,7 @@ if (sent >= unknown.Count) { break; }
                         SendMessageToAll(string.Format(language.ServerPlayerJoin(), clients[clientid].ColoredPlayername(colorNormal)));
                         ServerEventLog(string.Format("{0} {1} joins.", clients[clientid].playername, ip));
                         SendMessage(clientid, colorSuccess + config.WelcomeMessage);
-                        SendBlobs(clientid);
+                        SendBlobs(clientid, packet.RequestBlob.RequestedMd5);
                         SendBlockTypes(clientid);
                         SendTranslations(clientid);
                         SendSunLevels(clientid);
@@ -3448,66 +3450,54 @@ if (sent >= unknown.Count) { break; }
             byte[] compressedchunk = d_NetworkCompression.Compress(ms.ToArray());
             return compressedchunk;
         }
-        struct PublicFile
+
+        Packet_StringList GetRequiredBlobMd5()
         {
-            public string Name;
-            public byte[] Data;
-        }
-        List<PublicFile> PublicFiles()
-        {
-            List<PublicFile> files = new List<PublicFile>();
-            foreach (string path in PublicDataPaths)
+            Packet_StringList p = new Packet_StringList();
+            List<string> list = new List<string>();
+
+            for (int i = 0; i < assets.count; i++)
             {
-                try
-                {
-                    if (!Directory.Exists(path))
-                    {
-                        continue;
-                    }
-                    foreach (string s in Directory.GetFiles(path, "*.*", SearchOption.AllDirectories))
-                    {
-                        try
-                        {
-                            FileInfo f = new FileInfo(s);
-                            if ((f.Attributes & FileAttributes.Hidden) != 0)
-                            {
-                                continue;
-                            }
-                            //cache[f.Name] = File.ReadAllBytes(s);
-                            files.Add(new PublicFile()
-                            {
-                                Name = f.Name,
-                                Data = File.ReadAllBytes(s),
-                            });
-                        }
-                        catch
-                        {
-                        }
-                    }
-                }
-                catch
-                {
-                }
+                list.Add(assets.items[i].md5);
             }
-            return files;
+
+            p.SetItems(list.ToArray(), list.Count, list.Count);
+            return p;
         }
+
+        AssetLoader assetLoader;
+        AssetList assets = new AssetList();
+
         int BlobPartLength = 1024 * 1;
-        private void SendBlobs(int clientid)
+        private void SendBlobs(int clientid, Packet_StringList list)
         {
             SendLevelInitialize(clientid);
+            LoadAssets();
 
-            List<PublicFile> files = PublicFiles();
-            for (int i = 0; i < files.Count; i++)
+            List<Asset> tosend = new List<Asset>();
+            for (int i = 0; i < assets.count; i++)
             {
-                PublicFile f = files[i];
-                SendBlobInitialize(clientid, f.Name == "terrain.png" ? terrainTextureMd5 : new byte[16], f.Name);
-                byte[] blob = f.Data;
+                Asset f = assets.items[i];
+                for (int k = 0; k < list.ItemsCount; k++)
+                {
+                    if (f.md5 == list.Items[k])
+                    {
+                        tosend.Add(f);
+                    }
+                }
+            }
+
+            for (int i = 0; i < tosend.Count; i++)
+            {
+                Asset f = tosend[i];
+                SendBlobInitialize(clientid, f.md5, f.name);
+                byte[] blob = f.data;
                 int totalsent = 0;
                 foreach (byte[] part in Parts(blob, BlobPartLength))
                 {
                     SendLevelProgress(clientid,
-                        (int)(((float)i / files.Count
-                	                         + ((float)totalsent / blob.Length) / files.Count) * 100), language.ServerProgressDownloadingData());
+                        (int)(((float)i / tosend.Count
+                                             + ((float)totalsent / blob.Length) / tosend.Count) * 100), language.ServerProgressDownloadingData());
                     SendBlobPart(clientid, part);
                     totalsent += part.Length;
                 }
@@ -3515,6 +3505,17 @@ if (sent >= unknown.Count) { break; }
             }
             SendLevelProgress(clientid, 0, language.ServerProgressGenerating());
         }
+
+        void LoadAssets()
+        {
+            FloatRef progress = new FloatRef();
+            assetLoader.LoadAssetsAsync(assets, progress);
+            while (progress.value < 1)
+            {
+                Thread.Sleep(1);
+            }
+        }
+
         static IEnumerable<byte[]> Parts(byte[] blob, int partsize)
         {
             int i = 0;
@@ -3532,9 +3533,9 @@ if (sent >= unknown.Count) { break; }
                 i += curpartsize;
             }
         }
-        private void SendBlobInitialize(int clientid, byte[] hash, string name)
+        private void SendBlobInitialize(int clientid, string hash, string name)
         {
-            Packet_ServerBlobInitialize p = new Packet_ServerBlobInitialize() { Name = name };
+            Packet_ServerBlobInitialize p = new Packet_ServerBlobInitialize() { Name = name, Md5 = hash };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.BlobInitialize, BlobInitialize = p }));
         }
         private void SendBlobPart(int clientid, byte[] data)
@@ -3679,9 +3680,11 @@ if (sent >= unknown.Count) { break; }
                 DisableShadows = enableshadows ? 0 : 1,
                 PlayerAreaSize = playerareasize,
                 RenderHint_ = (int)RenderHint,
+                RequiredBlobMd5 = GetRequiredBlobMd5(),
             };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.ServerIdentification, Identification = p }));
         }
+
         public void SendFreemoveState(int clientid, bool isEnabled)
         {
             Packet_ServerFreemove p = new Packet_ServerFreemove()
