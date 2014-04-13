@@ -728,6 +728,14 @@ public class Screen
 
     void MouseMove(MouseEventArgs e)
     {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                w.hover = pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey);
+            }
+        }
     }
 
     bool pointInRect(float x, float y, float rx, float ry, float rw, float rh)
@@ -762,7 +770,7 @@ public class Screen
                     }
                     else
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.hover);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -781,7 +789,7 @@ public class Screen
                     }
                     else
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.pressed);
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing));
                     }
                 }
                 if (w.description != null)
@@ -1794,6 +1802,7 @@ public class MenuWidget
     internal float sizex;
     internal float sizey;
     internal bool pressed;
+    internal bool hover;
     internal WidgetType type;
     internal bool editing;
     internal bool visible;
