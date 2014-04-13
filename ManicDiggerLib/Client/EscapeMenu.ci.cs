@@ -190,17 +190,21 @@
 
     Button otherSoundOption;
     Button otherReturnToOptionsMenu;
+    Button otherAutoJumpOption;
     void OtherSet()
     {
         Language language = game.language;
 
         otherSoundOption = new Button();
         otherSoundOption.Text = game.platform.StringFormat(language.SoundOption(), (game.AudioEnabled ? language.On() : language.Off()));
+        otherAutoJumpOption = new Button();
+        otherAutoJumpOption.Text = game.platform.StringFormat(language.AutoJumpOption(), (game.AutoJumpEnabled ? language.On() : language.Off()));
         otherReturnToOptionsMenu = new Button();
         otherReturnToOptionsMenu.Text = language.ReturnToOptionsMenu();
 
         WidgetsClear();
         AddWidget(otherSoundOption);
+        AddWidget(otherAutoJumpOption);
         AddWidget(otherReturnToOptionsMenu);
     }
 
@@ -209,6 +213,10 @@
         if (b == otherSoundOption)
         {
             game.AudioEnabled = !game.AudioEnabled;
+        }
+        if (b == otherAutoJumpOption)
+        {
+            game.AutoJumpEnabled = !game.AutoJumpEnabled;
         }
         if (b == otherReturnToOptionsMenu)
         {
@@ -605,6 +613,7 @@
         //game.d_CurrentShadows.ShadowsFull = options.Shadows;
         game.d_Config3d.viewdistance = options.DrawDistance;
         game.AudioEnabled = options.EnableSound;
+        game.AutoJumpEnabled = options.EnableAutoJump;
         game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
         game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
         game.ENABLE_LAG = options.Framerate;
@@ -623,6 +632,7 @@
         options.DrawDistance = preferences.GetInt("DrawDistance", game.platform.IsFastSystem() ? 128 : 32);
         options.UseServerTextures = preferences.GetBool("UseServerTextures", true);
         options.EnableSound = preferences.GetBool("EnableSound", true);
+        options.EnableAutoJump = preferences.GetBool("EnableAutoJump", false);
         options.Framerate = preferences.GetInt("Framerate", 0);
         options.Resolution = preferences.GetInt("Resolution", 0);
         options.Fullscreen = preferences.GetBool("Fullscreen", false);
@@ -650,6 +660,7 @@
         options.Shadows = true; // game.d_CurrentShadows.ShadowsFull;
         options.DrawDistance = game.platform.FloatToInt(game.d_Config3d.viewdistance);
         options.EnableSound = game.AudioEnabled;
+        options.EnableAutoJump = game.AutoJumpEnabled;
         options.Framerate = game.ENABLE_LAG;
         options.Fullscreen = game.platform.GetWindowState() == WindowState.Fullscreen;
         options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
@@ -666,6 +677,7 @@
         preferences.SetInt("DrawDistance", options.DrawDistance);
         preferences.SetBool("UseServerTextures", options.UseServerTextures);
         preferences.SetBool("EnableSound", options.EnableSound);
+        preferences.SetBool("EnableAutoJump", options.EnableAutoJump);
         preferences.SetInt("Framerate", options.Framerate);
         preferences.SetInt("Resolution", options.Resolution);
         preferences.SetBool("Fullscreen", options.Fullscreen);

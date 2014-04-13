@@ -5,6 +5,7 @@
         one = 1;
         performanceinfo = new DictionaryStringString();
         AudioEnabled = true;
+        AutoJumpEnabled = false;
         OverheadCamera_cameraEye = new Vector3Ref();
         playerPositionSpawnX = 15 + one / 2;
         playerPositionSpawnY = 64;
@@ -1480,6 +1481,7 @@
     internal ServerInformation ServerInfo;
     internal EscapeMenuState escapemenustate;
     internal bool AudioEnabled;
+    internal bool AutoJumpEnabled;
     internal MenuState menustate;
     internal bool mouseleftclick;
     internal bool mouseleftdeclick;
@@ -6827,7 +6829,7 @@
         {
             if (GuiTyping == TypingState.None)
             {
-                if (d_Physics.reachedwall_1blockhigh)
+                if (d_Physics.reachedwall_1blockhigh && AutoJumpEnabled)
                 {
                     wantsjump = true;
                 }
@@ -10896,6 +10898,7 @@ public class OptionsCi
         DrawDistance = 32;
         UseServerTextures = true;
         EnableSound = true;
+        EnableAutoJump = false;
         Framerate = 0;
         Resolution = 0;
         Fullscreen = false;
@@ -10908,6 +10911,7 @@ public class OptionsCi
     internal int DrawDistance;
     internal bool UseServerTextures;
     internal bool EnableSound;
+    internal bool EnableAutoJump;
     internal int Framerate;
     internal int Resolution;
     internal bool Fullscreen;

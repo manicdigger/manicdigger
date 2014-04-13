@@ -216,6 +216,7 @@ public abstract class RandomCi
 {
     public abstract float NextFloat();
     public abstract int Next();
+    public abstract int MaxNext(int range);
 }
 
 public class Preferences
