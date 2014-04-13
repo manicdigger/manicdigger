@@ -8486,9 +8486,11 @@ public class TaskScheduler_
     {
         platform.MonitorEnter(lockObject);
         int count = from.count;
-        to.start = 0;
-        to.count = count;
-        from.DequeueRange(to.items, count);
+        for (int i = 0; i < count; i++)
+        {
+            Task task = from.Dequeue();
+            to.Enqueue(task);
+        }
         platform.MonitorExit(lockObject);
     }
 }
@@ -8520,15 +8522,32 @@ public class QueueTask
 
     public void Enqueue(Task value)
     {
+        if (count == max)
+        {
+            Resize(max * 2);
+        }
         int pos = start + count;
         pos = pos % max;
         count++;
         items[pos] = value;
     }
 
+    void Resize(int newSize)
+    {
+        Task[] items2 = new Task[newSize];
+        for (int i = 0; i < max; i++)
+        {
+            items2[i] = items[(start + i) % max];
+        }
+        items = items2;
+        start = 0;
+        max = newSize;
+    }
+
     public Task Dequeue()
     {
         Task ret = items[start];
+        items[start] = null;
         start++;
         start = start % max;
         count--;
@@ -8538,32 +8557,6 @@ public class QueueTask
     public int Count()
     {
         return count;
-    }
-
-    public void RemoveAt(int index)
-    {
-        for (int i = index; i < count; i++)
-        {
-            items[i] = items[i + 1];
-        }
-        items[count - 1] = null;
-        count--;
-    }
-
-    public void DequeueRange(Task[] data, int length)
-    {
-        for (int i = 0; i < length; i++)
-        {
-            data[i] = Dequeue();
-        }
-    }
-
-    internal void PeekRange(Task[] data, int length)
-    {
-        for (int i = 0; i < length; i++)
-        {
-            data[i] = items[(start + i) % max];
-        }
     }
 }
 
