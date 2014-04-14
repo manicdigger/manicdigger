@@ -552,7 +552,7 @@
     {
     }
 
-    internal void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
+    public void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
     {
         ScreenGame screenGame = new ScreenGame();
         screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
@@ -567,35 +567,12 @@
         connectData.Auth = loginResultData.AuthCode;
         connectData.Username = username;
 
-        MenuResultSinglePlayer = false;
-        MenuResultMenuConnectData = connectData;
         StartGame(false, null, connectData);
     }
 
     public void ConnectToSingleplayer(string filename)
     {
-        MenuResultSinglePlayer = true;
-        MenuResultSavegamePath = filename;
         StartGame(true, filename, null);
-    }
-
-    internal bool MenuResultSinglePlayer;
-    internal ConnectData MenuResultMenuConnectData;
-    internal string MenuResultSavegamePath;
-
-    public bool GetMenuResultSinglePlayer()
-    {
-        return MenuResultSinglePlayer;
-    }
-
-    public ConnectData GetMenuResultMenuConnectData()
-    {
-        return MenuResultMenuConnectData;
-    }
-
-    public string GetMenuResultSavegamePath()
-    {
-        return MenuResultSavegamePath;
     }
 }
 
