@@ -637,7 +637,18 @@ public class Screen
                         {
                             return;
                         }
-                        w.text = StringTools.StringAppend(menu.p, w.text, s);
+                        if (e.GetKeyChar() == 22) //paste
+                        {
+                            if (menu.p.ClipboardContainsText())
+                            {
+                                w.text = StringTools.StringAppend(menu.p, w.text, menu.p.ClipboardGetText());
+                            }
+                            return;
+                        }
+                        if (menu.p.IsValidTypingChar(e.GetKeyChar()))
+                        {
+                            w.text = StringTools.StringAppend(menu.p, w.text, s);
+                        }
                     }
                 }
             }
