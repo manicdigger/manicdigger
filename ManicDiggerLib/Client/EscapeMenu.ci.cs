@@ -376,6 +376,12 @@
     {
         if (game.options.Fullscreen)
         {
+            if (!changedResolution)
+            {
+                originalResolutionWidth = game.platform.GetDisplayResolutionDefault().Width;
+                originalResolutionHeight = game.platform.GetDisplayResolutionDefault().Height;
+                changedResolution = true;
+            }
             game.platform.SetWindowState(WindowState.Fullscreen);
             UseResolution();
         }
@@ -427,17 +433,12 @@
         if (changedResolution)
         {
             game.platform.ChangeResolution(originalResolutionWidth, originalResolutionHeight, 32, -1);
+            changedResolution = false;
         }
     }
     public void UseResolution()
     {
         OptionsCi options = game.options;
-        if (!changedResolution)
-        {
-            originalResolutionWidth = game.platform.GetDisplayResolutionDefault().Width;
-            originalResolutionHeight = game.platform.GetDisplayResolutionDefault().Height;
-            changedResolution = true;
-        }
         IntRef resolutionsCount = new IntRef();
         DisplayResolutionCi[] resolutions = game.platform.GetDisplayResolutions(resolutionsCount);
 
