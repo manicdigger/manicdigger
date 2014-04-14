@@ -5407,9 +5407,10 @@
 
     internal int GetFileLength(string p)
     {
+        string pLowercase = platform.StringToLower(p);
         for (int i = 0; i < assets.count; i++)
         {
-            if (assets.items[i].name == p)
+            if (assets.items[i].name == pLowercase)
             {
                 return assets.items[i].dataLength;
             }
