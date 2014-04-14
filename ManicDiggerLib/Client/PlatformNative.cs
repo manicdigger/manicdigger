@@ -1437,7 +1437,10 @@ public class GamePlatformNative : GamePlatform
     {
         OpenFileDialog d = new OpenFileDialog();
         d.InitialDirectory = initialDirectory;
+        d.FileName = "Default.mddbs";
         d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
+        d.CheckFileExists = false;
+        d.CheckPathExists = true;
         string dir = System.Environment.CurrentDirectory;
         DialogResult result = d.ShowDialog();
         System.Environment.CurrentDirectory = dir;
