@@ -2055,7 +2055,7 @@ if (sent >= unknown.Count) { break; }
             {
                 case Packet_ClientIdEnum.PingReply:
                     clients[clientid].Ping.Receive(platform);
-                    clients[clientid].LastPing = (float)(clients[clientid].Ping.RoundtripTimeTotalMilliseconds() / 1000);
+                    clients[clientid].LastPing = ((float)clients[clientid].Ping.RoundtripTimeTotalMilliseconds() / 1000);
                     this.NotifyPing(clientid, (int)clients[clientid].Ping.RoundtripTimeTotalMilliseconds());
                     break;
                 case Packet_ClientIdEnum.PlayerIdentification:
