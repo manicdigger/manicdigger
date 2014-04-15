@@ -214,8 +214,7 @@ public class DummyNetwork
 {
     public DummyNetwork()
     {
-        ServerReceiveBuffer = new QueueByteArray();
-        ClientReceiveBuffer = new QueueByteArray();
+        Clear();
     }
     internal QueueByteArray ServerReceiveBuffer;
     internal QueueByteArray ClientReceiveBuffer;
@@ -225,6 +224,12 @@ public class DummyNetwork
     {
         ServerReceiveBufferLock = lock1;
         ClientReceiveBufferLock = lock2;
+    }
+
+    public void Clear()
+    {
+        ServerReceiveBuffer = new QueueByteArray();
+        ClientReceiveBuffer = new QueueByteArray();
     }
 }
 

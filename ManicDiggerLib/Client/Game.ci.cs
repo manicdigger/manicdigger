@@ -4558,7 +4558,6 @@
     internal void Reconnect()
     {
         reconnect = true;
-        platform.WindowExit();
     }
 
     internal void ClientCommand(string s_)
@@ -8303,6 +8302,10 @@
     {
         SetMatrixUniformModelView();
         platform.DrawModelData(data);
+    }
+
+    public void Dispose()
+    {
     }
 }
 

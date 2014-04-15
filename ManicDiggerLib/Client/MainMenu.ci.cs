@@ -1279,13 +1279,27 @@ public class ScreenGame : Screen
     }
     Game game;
 
-    public void Start(GamePlatform platform, bool singleplayer, string singleplayerSavePath, ConnectData connectData)
+    public void Start(GamePlatform platform_, bool singleplayer_, string singleplayerSavePath_, ConnectData connectData_)
     {
+        platform = platform_;
+        singleplayer = singleplayer_;
+        singleplayerSavePath = singleplayerSavePath_;
+        connectData = connectData_;
+
         game.platform = platform;
         game.issingleplayer = singleplayer;
+
+        Connect(platform);
+        game.Start();
+        game.OnLoad();
+    }
+
+    void Connect(GamePlatform platform)
+    {
         if (singleplayer)
         {
             platform.SinglePlayerServerStart(singleplayerSavePath);
+
             connectData = new ConnectData();
             connectData.Username = "Local";
             game.connectdata = connectData;
@@ -1315,12 +1329,25 @@ public class ScreenGame : Screen
                 platform.ThrowException("Network not implemented");
             }
         }
-        game.Start();
-        game.OnLoad();
     }
 
+    GamePlatform platform;
+    ConnectData connectData;
+    bool singleplayer;
+    string singleplayerSavePath;
+    
     public override void Render(float dt)
     {
+        if (game.reconnect)
+        {
+            game.Dispose();
+            game = new Game();
+            game.platform = platform;
+            game.issingleplayer = singleplayer;
+            Connect(platform);
+            game.Start();
+            game.OnLoad();
+        }
         game.OnRenderFrame(dt);
     }
 

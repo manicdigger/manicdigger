@@ -868,7 +868,7 @@ namespace ManicDiggerServer
                 mainSocket1.Start();
             }
             int httpPort = port + 1;
-            if (config.EnableHTTPServer)
+            if (config.EnableHTTPServer && (!IsSinglePlayer))
             {
             	try
             	{
