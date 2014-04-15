@@ -4392,7 +4392,7 @@
             if ((one * (platform.TimeMillisecondsFromStart() - s_.timeMilliseconds) / 1000) > 2)
             {
                 RedrawBlock(s_.x, s_.y, s_.z);
-                s_ = null;
+                speculative[i] = null;
             }
         }
     }
