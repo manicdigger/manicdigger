@@ -803,7 +803,15 @@ public class GamePlatformNative : GamePlatform
     public override BitmapCi BitmapCreateFromPng(byte[] data, int dataLength)
     {
         BitmapCiCs bmp = new BitmapCiCs();
-        bmp.bmp = new Bitmap(new MemoryStream(data, 0, dataLength));
+        try
+        {
+            bmp.bmp = new Bitmap(new MemoryStream(data, 0, dataLength));
+        }
+        catch
+        {
+            bmp.bmp = new Bitmap(1, 1);
+            bmp.bmp.SetPixel(0, 0, Color.Orange);
+        }
         return bmp;
     }
 

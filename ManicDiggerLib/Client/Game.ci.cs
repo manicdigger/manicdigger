@@ -3162,7 +3162,7 @@
             Entity entity = new Entity();
 
             Sprite spritenew = new Sprite();
-            spritenew.image = "ani5.jpg";
+            spritenew.image = "ani5.png";
             spritenew.positionX = grenadeSprite.positionX;
             spritenew.positionY = grenadeSprite.positionY + 1;
             spritenew.positionZ = grenadeSprite.positionZ;
