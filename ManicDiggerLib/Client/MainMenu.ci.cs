@@ -461,11 +461,8 @@
 
     internal void DrawBackground()
     {
-        int basex = 1280;
-        int basey = 720;
-        float scalex = one * p.GetCanvasWidth() / basex;
-        float scaley = one * p.GetCanvasHeight() / basey;
-        Draw2dQuad(GetTexture("background.png"), -overlap + xRot, -overlap + yRot, basex * scalex + 2 * overlap, basey * scaley + 2 * overlap);
+        float scale = one * p.GetCanvasWidth() / 1280;
+        Draw2dQuad(GetTexture("background.png"), 0, 0, 1280 * scale, 1280 * scale);
     }
 
     internal void StartMultiplayer()
