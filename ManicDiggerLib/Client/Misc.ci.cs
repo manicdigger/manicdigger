@@ -27,6 +27,67 @@
     }
 }
 
+public class Unproject
+{
+    public Unproject()
+    {
+        finalMatrix = Mat4.Create();
+        inp = new float[4];
+        out_ = new float[4];
+    }
+    float[] finalMatrix;
+    float[] inp;
+    float[] out_;
+    public bool UnProject(int winX, int winY, int winZ, float[] model, float[] proj, float[] view, float[] objPos)
+    {
+        inp[0] = winX;
+        inp[1] = winY;
+        inp[2] = winZ;
+        inp[3] = 1;
+
+        Mat4.Multiply(finalMatrix, proj, model);
+        Mat4.Invert(finalMatrix, finalMatrix);
+
+        // Map x and y from window coordinates
+        inp[0] = (inp[0] - view[0]) / view[2];
+        inp[1] = (inp[1] - view[1]) / view[3];
+
+        // Map to range -1 to 1
+        inp[0] = inp[0] * 2 - 1;
+        inp[1] = inp[1] * 2 - 1;
+        inp[2] = inp[2] * 2 - 1;
+
+        MultMatrixVec(finalMatrix, inp, out_);
+
+        if (out_[3] == 0)
+        {
+            return false;
+        }
+
+        out_[0] /= out_[3];
+        out_[1] /= out_[3];
+        out_[2] /= out_[3];
+
+        objPos[0] = out_[0];
+        objPos[1] = out_[1];
+        objPos[2] = out_[2];
+
+        return true;
+    }
+
+    void MultMatrixVec(float[] matrix, float[] inp__, float[] out__)
+    {
+        for (int i = 0; i < 4; i = i + 1)
+        {
+            out__[i] =
+                inp__[0] * matrix[0 * 4 + i] +
+                inp__[1] * matrix[1 * 4 + i] +
+                inp__[2] * matrix[2 * 4 + i] +
+                inp__[3] * matrix[3 * 4 + i];
+        }
+    }
+}
+
 public class RectFRef
 {
     internal float x;

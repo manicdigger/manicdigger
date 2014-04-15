@@ -124,6 +124,10 @@
         assets = new AssetList();
         assetsLoadProgress = new FloatRef();
         getAsset = new string[1024 * 2];
+        unproject = new Unproject();
+        tempViewport = new float[4];
+        tempRay = new float[4];
+        tempRayStartPoint = new float[4];
     }
 
     AssetList assets;
@@ -7062,66 +7066,61 @@
     float lastplayerpositionY;
     float lastplayerpositionZ;
 
+    Unproject unproject;
+    float[] tempViewport;
+    float[] tempRay;
+    float[] tempRayStartPoint;
     public void GetPickingLine(Line3D retPick, bool ispistolshoot)
     {
-        float unit_x = 0;
-        float unit_y = 0;
-        int NEAR = 1;
-        int FOV = platform.FloatToInt(currentfov() * 10); // 600
-        float ASPECT = one * 640 / 480;
-        float near_height = NEAR * one * (platform.MathTan(FOV * Game.GetPi() / 360));
-        float[] ray = new float[3];
-        ray[0] = unit_x * near_height * ASPECT;
-        ray[1] = unit_y * near_height;
-        ray[2] = 1; //, 0);
+        int mouseX;
+        int mouseY;
 
-        float[] ray_start_point = new float[3];
-        PointFloatRef aim = GetAim();
-        if (overheadcamera || aim.X != 0 || aim.Y != 0)
+        if (cameratype == CameraType.Fpp || cameratype == CameraType.Tpp)
         {
-            float mx = 0;
-            float my = 0;
-            if (overheadcamera)
-            {
-                mx = one * mouseCurrentX / Width() - (one / 2);
-                my = one * mouseCurrentY / Height() - (one / 2);
-            }
-            else if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
-            {
-                mx += aim.X / Width();
-                my += aim.Y / Height();
-            }
-            //ray_start_point = new Vector3(mx * 1.4f, -my * 1.1f, 0.0f);
-            ray_start_point[0] = mx * 3;
-            ray_start_point[1] = -my * (one * 22 / 10);
-            ray_start_point[2] = -1;
+            mouseX = Width() / 2;
+            mouseY = Height() / 2;
+        }
+        else
+        {
+            mouseX = mouseCurrentX;
+            mouseY = mouseCurrentY;
         }
 
-        Mat4.Copy(modelViewInverted, mvMatrix.Peek());
-        Mat4.Invert(modelViewInverted, modelViewInverted);
-        Vec3.TransformMat4(ray, ray, modelViewInverted);
-        Vec3.TransformMat4(ray_start_point, ray_start_point, modelViewInverted);
+        PointFloatRef aim = GetAim();
+        if (ispistolshoot && (aim.X != 0 || aim.Y != 0))
+        {
+            mouseX += platform.FloatToInt(aim.X);
+            mouseY += platform.FloatToInt(aim.Y);
+        }
 
-        float raydirX = -(ray[0] - ray_start_point[0]);
-        float raydirY = -(ray[1] - ray_start_point[1]);
-        float raydirZ = -(ray[2] - ray_start_point[2]);
+        tempViewport[0] = 0;
+        tempViewport[1] = 0;
+        tempViewport[2] = Width();
+        tempViewport[3] = Height();
+
+        unproject.UnProject(mouseX, Height() - mouseY, 1, mvMatrix.Peek(), pMatrix.Peek(), tempViewport, tempRay);
+        unproject.UnProject(mouseX, Height() - mouseY, 0, mvMatrix.Peek(), pMatrix.Peek(), tempViewport, tempRayStartPoint);
+
+        float raydirX = (tempRay[0] - tempRayStartPoint[0]);
+        float raydirY = (tempRay[1] - tempRayStartPoint[1]);
+        float raydirZ = (tempRay[2] - tempRayStartPoint[2]);
         float raydirLength = Length(raydirX, raydirY, raydirZ);
         raydirX /= raydirLength;
         raydirY /= raydirLength;
         raydirZ /= raydirLength;
 
         retPick.Start = new float[3];
-        retPick.Start[0] = ray[0] + raydirX; //do not pick behind
-        retPick.Start[1] = ray[1] + raydirY;
-        retPick.Start[2] = ray[2] + raydirZ;
+        retPick.Start[0] = tempRayStartPoint[0];// +raydirX; //do not pick behind
+        retPick.Start[1] = tempRayStartPoint[1];// +raydirY;
+        retPick.Start[2] = tempRayStartPoint[2];// +raydirZ;
 
-        float pickDistance1 = CurrentPickDistance() * ((ispistolshoot) ? 100 : 2);
+        float pickDistance1 = CurrentPickDistance() * ((ispistolshoot) ? 100 : 1);
         retPick.End = new float[3];
-        retPick.End[0] = ray[0] + raydirX * pickDistance1;
-        retPick.End[1] = ray[1] + raydirY * pickDistance1;
-        retPick.End[2] = ray[2] + raydirZ * pickDistance1;
+        retPick.End[0] = tempRayStartPoint[0] + raydirX * pickDistance1;
+        retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;
+        retPick.End[2] = tempRayStartPoint[2] + raydirZ * pickDistance1;
     }
-
+    
 
     public BlockPosSide[] Pick(BlockOctreeSearcher s_, Line3D line, IntRef retCount)
     {
@@ -7146,8 +7145,21 @@
     float CurrentPickDistance()
     {
         float pick_distance = PICK_DISTANCE;
-        if (cameratype == CameraType.Tpp) { pick_distance = tppcameradistance * 2; }
-        if (cameratype == CameraType.Overhead) { pick_distance = overheadcameradistance; }
+        if (cameratype == CameraType.Tpp)
+        {
+            pick_distance = tppcameradistance + PICK_DISTANCE;
+        }
+        if (cameratype == CameraType.Overhead)
+        {
+            if (platform.IsFastSystem())
+            {
+                pick_distance = 100;
+            }
+            else
+            {
+                pick_distance = overheadcameradistance * 2;
+            }
+        }
         return pick_distance;
     }
 
@@ -7247,9 +7259,7 @@
             //if not picked any object, and mouse button is pressed, then walk to destination.
             playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2]);
         }
-        bool pickdistanceok = pick2count.value > 0 &&
-            (Dist(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2],
-            player.playerposition.X, player.playerposition.Y, player.playerposition.Z)) <= CurrentPickDistance();
+        bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
         bool playertileempty = IsTileEmptyForPhysics(
                     platform.FloatToInt(player.playerposition.X),
                     platform.FloatToInt(player.playerposition.Z),
