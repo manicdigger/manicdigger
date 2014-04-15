@@ -280,6 +280,10 @@ namespace ManicDigger.Renderers
           
 
             SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+            if (size2.Width == 0 || size2.Height == 0)
+            {
+                return new Bitmap(1, 1);
+            }
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using (Graphics g2 = Graphics.FromImage(bmp2))
             {
