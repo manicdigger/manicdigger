@@ -317,6 +317,7 @@ public class GamePlatformNative : GamePlatform
 
     public void Start()
     {
+        window.Keyboard.KeyRepeat = true;
         window.Keyboard.KeyDown += new EventHandler<KeyboardKeyEventArgs>(game_KeyDown);
         window.Keyboard.KeyUp += new EventHandler<KeyboardKeyEventArgs>(game_KeyUp);
         window.KeyPress += new EventHandler<OpenTK.KeyPressEventArgs>(game_KeyPress);
