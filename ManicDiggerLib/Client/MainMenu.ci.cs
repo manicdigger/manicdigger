@@ -1640,7 +1640,7 @@ public class ScreenMultiplayer : Screen
             if (serverButtons[i] == w)
             {
                 serverButtons[i].selected = true;
-                selectedServerHash = serversOnList[i].hash;
+                selectedServerHash = serversOnList[i + 10 * page].hash;
             }
         }
         if (w == pageUp)
