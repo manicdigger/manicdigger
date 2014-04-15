@@ -8749,6 +8749,7 @@ public class LoginData
     internal string ServerAddress;
     internal int Port;
     internal string AuthCode; //Md5(private server key + player name)
+    internal string Token;
 
     internal bool PasswordCorrect;
     internal bool ServerCorrect;
@@ -8757,7 +8758,7 @@ public class LoginData
 public class LoginClientCi
 {
     internal LoginResultRef loginResult;
-    public void Login(GamePlatform platform, string user, string password, string publicServerKey, LoginResultRef result, LoginData resultLoginData_)
+    public void Login(GamePlatform platform, string user, string password, string publicServerKey, string token, LoginResultRef result, LoginData resultLoginData_)
     {
         loginResult = result;
         resultLoginData = resultLoginData_;
@@ -8765,11 +8766,13 @@ public class LoginClientCi
 
         LoginUser = user;
         LoginPassword = password;
+        LoginToken = token;
         LoginPublicServerKey = publicServerKey;
         shouldLogin = true;
     }
     string LoginUser;
     string LoginPassword;
+    string LoginToken;
     string LoginPublicServerKey;
 
     bool shouldLogin;
@@ -8784,7 +8787,7 @@ public class LoginClientCi
             return;
         }
 
-        if (loginUrlResponse == null)
+        if (loginUrlResponse == null && loginUrl == null)
         {
             loginUrlResponse = new HttpResponseCi();
             platform.WebClientDownloadDataAsync("http://manicdigger.sourceforge.net/login.txt", loginUrlResponse);
@@ -8800,8 +8803,8 @@ public class LoginClientCi
             if (shouldLogin)
             {
                 shouldLogin = false;
-                string requestString = platform.StringFormat3("username={0}&password={1}&server={2}"
-                    , LoginUser, LoginPassword, LoginPublicServerKey);
+                string requestString = platform.StringFormat4("username={0}&password={1}&server={2}&token={3}"
+                    , LoginUser, LoginPassword, LoginPublicServerKey, LoginToken);
                 IntRef byteArrayLength = new IntRef();
                 byte[] byteArray = platform.StringToUtf8ByteArray(requestString, byteArrayLength);
                 loginResponse = new HttpResponseCi();
@@ -8827,6 +8830,7 @@ public class LoginClientCi
                     resultLoginData.AuthCode = lines[0];
                     resultLoginData.ServerAddress = lines[1];
                     resultLoginData.Port = platform.IntParse(lines[2]);
+                    resultLoginData.Token = lines[3];
                 }
                 loginResponse = null;
             }

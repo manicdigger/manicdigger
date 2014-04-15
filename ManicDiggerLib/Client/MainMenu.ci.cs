@@ -474,15 +474,15 @@
         screen.menu = this;
     }
 
-    internal void Login(string user, string password, string serverHash, LoginResultRef loginResult, LoginData loginResultData)
+    internal void Login(string user, string password, string serverHash, string token, LoginResultRef loginResult, LoginData loginResultData)
     {
-        if (user == "" || password == "")
+        if (user == "" || (password == "" && token == ""))
         {
             loginResult.value = LoginResult.Failed;
         }
         else
         {
-            loginClient.Login(p, user, password, serverHash, loginResult, loginResultData);
+            loginClient.Login(p, user, password, serverHash, token, loginResult, loginResultData);
         }
     }
     LoginClientCi loginClient;
@@ -1121,12 +1121,39 @@ public class ScreenLogin : Screen
 
     MenuWidget back;
 
+    bool triedSavedLogin;
+
     public override void Render(float dt)
     {
+        if (!triedSavedLogin)
+        {
+            Preferences preferences = menu.p.GetPreferences();
+            loginUsername.text = preferences.GetString("Username", "");
+            loginPassword.text = "";
+            string token = preferences.GetString("Password", "");
+
+            loginResultData = new LoginData();
+            if (serverHash != null && token != "")
+            {
+                menu.Login(loginUsername.text, loginPassword.text, serverHash, token, loginResult, loginResultData);
+            }
+
+            triedSavedLogin = true;
+        }
         if (loginResultData != null
             && loginResultData.ServerCorrect
             && loginResultData.PasswordCorrect)
         {
+            if (loginRememberMe.text == "Yes")
+            {
+                Preferences preferences = menu.p.GetPreferences();
+                preferences.SetString("Username", loginUsername.text);
+                if (loginResultData.Token != null && loginResultData.Token != "")
+                {
+                    preferences.SetString("Password", loginResultData.Token);
+                }
+                menu.p.SetPreferences(preferences);
+            }
             menu.ConnectToGame(loginResultData, loginUsername.text);
         }
 
@@ -1235,7 +1262,7 @@ public class ScreenLogin : Screen
             loginResultData = new LoginData();
             if (serverHash != null)
             {
-                menu.Login(loginUsername.text, loginPassword.text, serverHash, loginResult, loginResultData);
+                menu.Login(loginUsername.text, loginPassword.text, serverHash, "", loginResult, loginResultData);
             }
             else
             {
@@ -1461,12 +1488,24 @@ public class ScreenMultiplayer : Screen
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
 
+        loggedInName = new MenuWidget();
+        loggedInName.text = "";
+        loggedInName.type = WidgetType.Button;
+        loggedInName.buttonStyle = ButtonStyle.Text;
+
+        logout = new MenuWidget();
+        logout.text = "";
+        logout.type = WidgetType.Button;
+        logout.buttonStyle = ButtonStyle.Button;
+
         widgets[0] = back;
         widgets[1] = connect;
         widgets[2] = refresh;
         widgets[3] = connectToIp;
         widgets[4] = pageUp;
         widgets[5] = pageDown;
+        widgets[6] = loggedInName;
+        widgets[7] = logout;
 
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
@@ -1481,7 +1520,7 @@ public class ScreenMultiplayer : Screen
             b.type = WidgetType.Button;
             b.visible = false;
             serverButtons[i] = b;
-            widgets[6 + i] = b;
+            widgets[8 + i] = b;
         }
         loading = true;
     }
@@ -1579,6 +1618,27 @@ public class ScreenMultiplayer : Screen
         pageDown.sizey = 50 * scale;
         pageDown.fontSize = 14 * scale;
 
+        loggedInName.x = p.GetCanvasWidth() - 200 * scale;
+        loggedInName.y = 20 * scale;
+        loggedInName.sizex = 100 * scale;
+        loggedInName.sizey = 50 * scale;
+        loggedInName.fontSize = 14 * scale;
+        if (loggedInName.text == "")
+        {
+            if (p.GetPreferences().GetString("Password", "") != "")
+            {
+                loggedInName.text = p.GetPreferences().GetString("Username", "Invalid");
+            }
+        }
+        logout.visible = loggedInName.text != "";
+
+        logout.x = p.GetCanvasWidth() - 200 * scale;
+        logout.y = 50 * scale;
+        logout.sizex = 100 * scale;
+        logout.sizey = 50 * scale;
+        logout.fontSize = 14 * scale;
+        logout.text = "Logout";
+
         menu.DrawBackground();
         menu.DrawText("Multiplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
@@ -1624,6 +1684,8 @@ public class ScreenMultiplayer : Screen
     MenuWidget refresh;
     MenuWidget pageUp;
     MenuWidget pageDown;
+    MenuWidget loggedInName;
+    MenuWidget logout;
     MenuWidget[] serverButtons;
     const int serverButtonsCount = 1024;
 
@@ -1677,6 +1739,14 @@ public class ScreenMultiplayer : Screen
             loaded = false;
             loading = true;
             page = 0;
+        }
+        if (w == logout)
+        {
+            Preferences pref = menu.p.GetPreferences();
+            pref.Remove("Username");
+            pref.Remove("Password");
+            menu.p.SetPreferences(pref);
+            loggedInName.text = "";
         }
     }
 }
