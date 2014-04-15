@@ -5182,7 +5182,10 @@
                     {
                         GuiStateBackToGame();
                     }
-                    dialogs[GetDialogId(d.DialogId)] = null;
+                    if (GetDialogId(d.DialogId) != -1)
+                    {
+                        dialogs[GetDialogId(d.DialogId)] = null;
+                    }
                     if (DialogsCount() == 0)
                     {
                         SetFreeMouse(false);
