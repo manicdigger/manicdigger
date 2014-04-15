@@ -325,7 +325,13 @@ public class GamePlatformNative : GamePlatform
         window.Mouse.Move += new EventHandler<MouseMoveEventArgs>(Mouse_Move);
         window.Mouse.WheelChanged += new EventHandler<OpenTK.Input.MouseWheelEventArgs>(Mouse_WheelChanged);
         window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
+        window.Closed += new EventHandler<EventArgs>(window_Closed);
         window.TargetRenderFrequency = 0;
+    }
+
+    void window_Closed(object sender, EventArgs e)
+    {
+        gameexit.exit = true;
     }
 
     void window_RenderFrame(object sender, OpenTK.FrameEventArgs e)
@@ -938,8 +944,6 @@ public class GamePlatformNative : GamePlatform
         audio.UpdateListener(new Vector3(posX,posY,posZ), new Vector3(orientX, orientY, orientZ));
     }
 
-    public bool exit { get; set; }
-
     public override void ConsoleWriteLine(string s)
     {
         Console.WriteLine(s);
@@ -1228,6 +1232,10 @@ public class GamePlatformNative : GamePlatform
 
     public override void WindowExit()
     {
+        if (gameexit != null)
+        {
+            gameexit.exit = true;
+        }
         window.Exit();
     }
 
