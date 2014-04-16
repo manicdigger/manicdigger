@@ -142,10 +142,9 @@ public class BlockOctreeSearcher
     {
         pool_i = 0;
         listpool_i = 0;
-        if (StartBox.LengthX() == 0)
+        if (StartBox.LengthX() == 0 && StartBox.LengthY() == 0 && StartBox.LengthZ() == 0)
         {
-            //throw new Exception();
-            return null;
+            return new ListBox3d();
         }
         return SearchPrivate(query, StartBox);
     }
