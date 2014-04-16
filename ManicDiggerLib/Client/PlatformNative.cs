@@ -333,6 +333,7 @@ public class GamePlatformNative : GamePlatform
         window.RenderFrame += new EventHandler<OpenTK.FrameEventArgs>(window_RenderFrame);
         window.Closed += new EventHandler<EventArgs>(window_Closed);
         window.TargetRenderFrequency = 0;
+        window.Title = "Manic Digger";
     }
 
     void window_Closed(object sender, EventArgs e)
