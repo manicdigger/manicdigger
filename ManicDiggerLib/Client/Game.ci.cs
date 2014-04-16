@@ -6832,7 +6832,7 @@
         {
             if (GuiTyping == TypingState.None)
             {
-                if (d_Physics.reachedwall_1blockhigh && AutoJumpEnabled)
+                if (d_Physics.reachedwall_1blockhigh && (AutoJumpEnabled || (!platform.IsMousePointerLocked())))
                 {
                     wantsjump = true;
                 }
