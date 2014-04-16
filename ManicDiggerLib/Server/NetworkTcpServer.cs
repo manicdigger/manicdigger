@@ -326,7 +326,12 @@ public class TcpConnection
     {
         if (Disconnected != null)
         {
-            Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+            if (sock != null)
+            {
+                sock.Close();
+                sock = null;
+                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+            }
         }
     }
 
