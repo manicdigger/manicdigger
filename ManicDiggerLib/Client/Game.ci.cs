@@ -4811,6 +4811,7 @@
                     {
                         ProcessServerIdentification(packet);
                     }
+                    ReceivedMapLength = 0;
                 }
                 break;
             case Packet_ServerIdEnum.Ping:
@@ -5122,7 +5123,6 @@
                     //blobdownloadhash = ByteArrayToString(packet.BlobInitialize.hash);
                     blobdownloadname = packet.BlobInitialize.Name;
                     blobdownloadmd5 = packet.BlobInitialize.Md5;
-                    ReceivedMapLength = 0; //todo
                 }
                 break;
             case Packet_ServerIdEnum.BlobPart:
