@@ -6606,6 +6606,7 @@
                 platform.SaveScreenshot();
                 screenshotflash = 5;
             }
+            return;
         }
         if (guistate == GuiState.MapLoading)
         {
