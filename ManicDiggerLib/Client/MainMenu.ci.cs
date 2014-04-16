@@ -1699,7 +1699,10 @@ public class ScreenMultiplayer : Screen
             if (serverButtons[i] == w)
             {
                 serverButtons[i].selected = true;
-                selectedServerHash = serversOnList[i + 10 * page].hash;
+                if (serversOnList[i + 10 * page] != null)
+                {
+                    selectedServerHash = serversOnList[i + 10 * page].hash;
+                }
             }
         }
         if (w == pageUp)
