@@ -4970,6 +4970,10 @@
                         p.ping = -1;
                         this.ServerInfo.Players.Add(p);
                     }
+                    if (!platform.StringStartsWithIgnoreCase(playername, "&"))
+                    {
+                        playername = platform.StringFormat("&f{0}", playername);
+                    }
                     entities[playerid] = new Entity();
                     entities[playerid].player = new Player();
                     entities[playerid].player.Name = playername;
@@ -5594,7 +5598,7 @@
                 continue;
             }
             // a) download skin
-            if (!issingleplayer && e.player.Type == PlayerType.Player)
+            if (!issingleplayer && e.player.Type == PlayerType.Player && e.player.Texture == null)
             {
                 if (e.player.SkinDownloadResponse == null)
                 {
@@ -5604,16 +5608,19 @@
                     platform.WebClientDownloadDataAsync(url, e.player.SkinDownloadResponse);
                     continue;
                 }
-                if (!e.player.SkinDownloadResponse.done)
+                if (!e.player.SkinDownloadResponse.error)
                 {
-                    continue;
-                }
-                BitmapCi bmp_ = platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
-                if (bmp_ != null)
-                {
-                    e.player.CurrentTexture = GetTextureOrLoad(e.player.Texture, bmp_);
-                    platform.BitmapDelete(bmp_);
-                    continue;
+                    if (!e.player.SkinDownloadResponse.done)
+                    {
+                        continue;
+                    }
+                    BitmapCi bmp_ = platform.BitmapCreateFromPng(e.player.SkinDownloadResponse.value, e.player.SkinDownloadResponse.valueLength);
+                    if (bmp_ != null)
+                    {
+                        e.player.CurrentTexture = GetTextureOrLoad(e.player.Name, bmp_);
+                        platform.BitmapDelete(bmp_);
+                        continue;
+                    }
                 }
             }
             // b) file skin

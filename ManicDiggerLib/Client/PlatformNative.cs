@@ -196,6 +196,11 @@ public class GamePlatformNative : GamePlatform
 
     public override int[] StringToCharArray(string s, IntRef length)
     {
+        if (s == null)
+        {
+            length.value = 0;
+            return new int[0];
+        }
         length.value = s.Length;
         int[] charArray = new int[s.Length];
         for (int i = 0; i < s.Length; i++)
