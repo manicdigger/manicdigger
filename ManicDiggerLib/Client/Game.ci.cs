@@ -7144,8 +7144,8 @@
         int maxY = platform.FloatToInt(MaxFloat(line.Start[1], line.End[1]));
         int maxZ = platform.FloatToInt(MaxFloat(line.Start[2], line.End[2]));
         if (maxX > MapSizeX) { maxX = MapSizeX; }
-        if (maxY > MapSizeY) { maxY = MapSizeY; }
-        if (maxZ > MapSizeZ) { maxZ = MapSizeZ; }
+        if (maxY > MapSizeZ) { maxY = MapSizeZ; }
+        if (maxZ > MapSizeY) { maxZ = MapSizeY; }
         int sizex = maxX - minX;
         int sizey = maxY - minY;
         int sizez = maxZ - minZ;
