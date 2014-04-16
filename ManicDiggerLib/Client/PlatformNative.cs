@@ -1548,6 +1548,11 @@ public class GamePlatformNative : GamePlatform
             args.mouseCurrentY = args.mouseCurrentY - window.Y;
 
             args.mouseCurrentY = args.mouseCurrentY - System.Windows.Forms.SystemInformation.CaptionHeight;
+
+            args.mouseDeltaX = args.mouseCurrentX - mouse_previous.X;
+            args.mouseDeltaY = args.mouseCurrentY - mouse_previous.Y;
+            mouse_previous.X = args.mouseCurrentX;
+            mouse_previous.Y = args.mouseCurrentY;
         }
         if (!window.Focused)
         {

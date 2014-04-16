@@ -2673,6 +2673,14 @@
             touchOrientationDx = 0;
             touchOrientationDy = 0;
         }
+        if (guistate == GuiState.Normal && platform.Focused() && cameratype == CameraType.Overhead)
+        {
+            if (mouseMiddle || mouseRight)
+            {
+                overheadcameraK.TurnLeft(mouseDeltaX / 70);
+                overheadcameraK.TurnUp(mouseDeltaY / 3);
+            }
+        }
     }
 
     internal string Follow;
@@ -6814,25 +6822,6 @@
         bool angledown = false;
         float overheadcameraanglemovearea = one * 5 / 100;
         float overheadcameraspeed = 3;
-        if (guistate == GuiState.Normal && platform.Focused() && cameratype == CameraType.Overhead)
-        {
-            if (mouseCurrentX > Width() - Width() * overheadcameraanglemovearea)
-            {
-                overheadcameraK.TurnLeft(dt * overheadcameraspeed);
-            }
-            if (mouseCurrentX < Width() * overheadcameraanglemovearea)
-            {
-                overheadcameraK.TurnRight(dt * overheadcameraspeed);
-            }
-            if (mouseCurrentY < Height() * overheadcameraanglemovearea)
-            {
-                angledown = true;
-            }
-            if (mouseCurrentY > Height() - Height() * overheadcameraanglemovearea)
-            {
-                angleup = true;
-            }
-        }
         bool wantsjump = GuiTyping == TypingState.None && keyboardState[GetKey(GlKeys.Space)];
         bool shiftkeydown = keyboardState[GetKey(GlKeys.ShiftLeft)];
         float movedx = 0;
@@ -6862,7 +6851,7 @@
                     m.AngleDown = angledown;
                     overheadcameraK.Move(m, dt);
                     float toDest = Dist(player.playerposition.X, player.playerposition.Y, player.playerposition.Z,
-                        playerdestination.X, playerdestination.Y, playerdestination.Z);
+                        playerdestination.X + one / 2, playerdestination.Y - one / 2, playerdestination.Z + one / 2);
                     if (toDest >= 1)
                     {
                         movedy += 1;
@@ -7272,7 +7261,7 @@
         if (overheadcamera && pick2count.value > 0 && left)
         {
             //if not picked any object, and mouse button is pressed, then walk to destination.
-            playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1], pick2[0].blockPos[2]);
+            playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
         }
         bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
         bool playertileempty = IsTileEmptyForPhysics(
@@ -10430,9 +10419,15 @@ public class Kamera
         }
         SetDistance(camera_move.Distance);
         //if (MaximumAngle < MinimumAngle) { throw new Exception(); }
+        SetValidAngle();
+    }
+
+    void SetValidAngle()
+    {
         if (Angle > MaximumAngle) { Angle = MaximumAngle; }
         if (Angle < MinimumAngle) { Angle = MinimumAngle; }
     }
+
     internal int MaximumAngle;
     internal int MinimumAngle;
 
@@ -10451,6 +10446,12 @@ public class Kamera
         ret.X = Center.X;
         ret.Y = Center.Y;
         ret.Z = Center.Z;
+    }
+
+    public void TurnUp(float p)
+    {
+        Angle += p;
+        SetValidAngle();
     }
 }
 
