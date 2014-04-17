@@ -457,7 +457,10 @@ public class Intersection
         dir_[1] = line.End[1] - line.Start[1];
         dir_[2] = line.End[2] - line.Start[2];
         float[] hit = new float[3];
-        Intersection.HitBoundingBox(box.MinEdge, box.MaxEdge, line.Start, dir_, hit);
+        if (!Intersection.HitBoundingBox(box.MinEdge, box.MaxEdge, line.Start, dir_, hit))
+        {
+            return null;
+        }
         return hit;
     }
 }
