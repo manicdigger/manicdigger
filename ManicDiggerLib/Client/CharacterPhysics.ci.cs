@@ -164,13 +164,13 @@ public class CharacterPhysicsCi
             return true;
         }
         Packet_BlockType blocktype = game.blocktypes[block];
-        int blockabove = game.GetBlockValid(x, y, z + 1);
+        int blockabove = game.GetBlock(x, y, z + 1);
         Packet_BlockType blocktypeabove = game.blocktypes[blockabove];
 
         //this test is so the player does not walk on water.
         if (game.IsFluid(blocktype) &&
             !game.IsFluid(blocktypeabove)) { return true; }
-        int blockabove2 = game.GetBlockValid(x, y, z + 2);
+        int blockabove2 = game.GetBlock(x, y, z + 2);
         return (blocktype.DrawType == Packet_DrawTypeEnum.HalfHeight && blockabove2 == 0 && blockabove == 0) // also check if the block above the stair is empty
             || (game.IsFluid(blocktype) && (!swimmingtop))
             || game.IsEmptyForPhysics(blocktype)
