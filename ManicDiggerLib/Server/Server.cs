@@ -2794,8 +2794,9 @@ if (sent >= unknown.Count) { break; }
             int zz = 0;
             if (execute)
             {
-                foreach (var v in table)
+                for (int k = 0; k < tableCount.value; k++)
                 {
+                    Vector3IntRef v = table[k];
                     SetBlockAndNotify(v.X, v.Y, v.Z + 1, ontable[zz]);
                     zz++;
                 }
