@@ -1033,8 +1033,14 @@ public class GamePlatformNative : GamePlatform
 
     public override void EnetPeerSend(EnetPeer peer, byte channelID, byte[] data, int dataLength, int flags)
     {
-        EnetPeerNative peer_ = (EnetPeerNative)peer;
-        peer_.peer.Send(channelID, data, (ENet.PacketFlags)flags);
+        try
+        {
+            EnetPeerNative peer_ = (EnetPeerNative)peer;
+            peer_.peer.Send(channelID, data, (ENet.PacketFlags)flags);
+        }
+        catch
+        {
+        }
     }
 
     public override EnetNetConnection CastToEnetNetConnection(INetConnection connection)
