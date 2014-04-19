@@ -98,6 +98,7 @@
     <Compile Include="Client\HudInventory.ci.cs" />
     <Compile Include="Client\MinecartRenderer.ci.cs" />
     <Compile Include="Client\NetworkTcp.ci.cs" />
+    <Compile Include="Client\ServerSimple.ci.cs" />
     <Compile Include="Client\WeaponRenderer.ci.cs" />
     <Compile Include="Client\BlockRendererTorch.ci.cs" />
     <Compile Include="Client\CharacterRenderer.ci.cs" />

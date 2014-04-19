@@ -417,6 +417,17 @@ public class MiscCi
                 && (str != "FALSE"));
         }
     }
+    public static byte[] UshortArrayToByteArray(int[] input, int inputLength)
+    {
+        int outputLength = inputLength * 2;
+        byte[] output = new byte[outputLength];
+        for (int i = 0; i < inputLength; i++)
+        {
+            output[i * 2] = Game.IntToByte(input[i] & 255);
+            output[i * 2 + 1] = Game.IntToByte((input[i] >> 8) & 255);
+        }
+        return output;
+    }
 }
 
 public class ConnectData

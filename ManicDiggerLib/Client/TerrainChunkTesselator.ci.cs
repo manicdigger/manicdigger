@@ -2823,6 +2823,10 @@ public class TerrainChunkTesselatorCi
         for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
         {
             Packet_BlockType b = game.blocktypes[i];
+            if (b == null)
+            {
+                continue;
+            }
             istransparent[i] = (b.DrawType != Packet_DrawTypeEnum.Solid) && (b.DrawType != Packet_DrawTypeEnum.Fluid);
             ishalfheight[i] = (b.DrawType == Packet_DrawTypeEnum.HalfHeight) || (b.GetRail() != 0);
         }

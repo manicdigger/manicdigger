@@ -750,9 +750,9 @@ public class CharacterPhysicsCi
 
     bool NewEmpty(bool high, float qnewposition0, float qnewposition1, float qnewposition2)
     {
-        int x = FloatToInt(qnewposition0);
-        int y = FloatToInt(qnewposition1);
-        int z = FloatToInt(qnewposition2);
+        int x = FloatToInt(Floor(qnewposition0));
+        int y = FloatToInt(Floor(qnewposition1));
+        int z = FloatToInt(Floor(qnewposition2));
         return IsTileEmptyForPhysics(x, z, y)
                     && IsTileEmptyForPhysics(x, z, y + 1)
                     && (!high || IsTileEmptyForPhysics(x, z, y + 2));

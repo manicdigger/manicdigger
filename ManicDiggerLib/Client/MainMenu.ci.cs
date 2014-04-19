@@ -838,6 +838,23 @@ public class ScreenMain : Screen
     {
         menu.Exit();
     }
+
+    public override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.GetKeyCode() == GlKeys.F5)
+        {
+            string save;
+            if (menu.p.SinglePlayerServerAvailable())
+            {
+                save = "Default.mddbs";
+            }
+            else
+            {
+                save = "Default.mdss";
+            }
+            menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), save), null);
+        }
+    }
 }
 
 public class ScreenSingleplayer : Screen
@@ -998,7 +1015,16 @@ public class ScreenSingleplayer : Screen
 
         if (w == open)
         {
-            string result = menu.p.FileOpenDialog("mddbs", "Manic Digger Savegame", menu.p.PathSavegames());
+            string extension;
+            if (menu.p.SinglePlayerServerAvailable())
+            {
+                extension = "mddbs";
+            }
+            else
+            {
+                extension = "mdss";
+            }
+            string result = menu.p.FileOpenDialog(extension, "Manic Digger Savegame", menu.p.PathSavegames());
             if (result != null)
             {
                 menu.ConnectToSingleplayer(result);
@@ -1318,11 +1344,32 @@ public class ScreenGame : Screen
         game.OnLoad();
     }
 
+    ServerSimple serverSimple;
+    ServerSimpleRunner serverSimpleRunner;
+
     void Connect(GamePlatform platform)
     {
         if (singleplayer)
         {
-            platform.SinglePlayerServerStart(singleplayerSavePath);
+            if (platform.SinglePlayerServerAvailable())
+            {
+                platform.SinglePlayerServerStart(singleplayerSavePath);
+            }
+            else
+            {
+                serverSimple = new ServerSimple();
+                DummyNetwork network = platform.SinglePlayerServerGetNetwork();
+                network.Start(platform.MonitorCreate(), platform.MonitorCreate());
+                DummyNetServer server = new DummyNetServer();
+                server.network = network;
+                server.platform = platform;
+                server.Start();
+                serverSimple.Start(server, singleplayerSavePath, platform);
+                serverSimpleRunner = new ServerSimpleRunner();
+                serverSimpleRunner.server = serverSimple;
+                platform.QueueUserWorkItem(serverSimpleRunner);
+                platform.SinglePlayerServerGetNetwork().ServerReceiveBuffer.Enqueue(new ByteArray());
+            }
 
             connectData = new ConnectData();
             connectData.Username = "Local";

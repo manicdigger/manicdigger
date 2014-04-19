@@ -325,7 +325,9 @@
 
         if (l == 0)
         {
-            if (z >= game.d_Heightmap.GetBlock(x, y))
+            if ((x >= 0 && x < game.MapSizeX)
+                && (y >= 0 && y < game.MapSizeY)
+                && (z >= game.d_Heightmap.GetBlock(x, y)))
             {
                 return IntRef.Create(game.sunlight_);
             }

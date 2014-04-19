@@ -128,6 +128,12 @@
         tempViewport = new float[4];
         tempRay = new float[4];
         tempRayStartPoint = new float[4];
+        PlayerStats = new Packet_ServerPlayerStats();
+        mLightLevels = new float[16];
+        for (int i = 0; i < 16; i++)
+        {
+            mLightLevels[i] = one * i / 15;
+        }
     }
 
     AssetList assets;
@@ -230,6 +236,7 @@
         //    UseShadowsSimple();
         //}
         Packet_Inventory inventory = new Packet_Inventory();
+        inventory.RightHand = new Packet_Item[10];
         terrainRenderer = new TerrainRenderer();
         terrainRenderer.game = this;
         d_HudChat = new HudChat();
@@ -3551,7 +3558,11 @@
             int blockunderplayer = BlockUnderPlayer();
             if (blockunderplayer != -1)
             {
-                movespeednow *= d_Data.WalkSpeed()[blockunderplayer];
+                float floorSpeed = d_Data.WalkSpeed()[blockunderplayer];
+                if (floorSpeed != 0)
+                {
+                    movespeednow *= floorSpeed;
+                }
             }
         }
         if (keyboardState[GetKey(GlKeys.ShiftLeft)])
@@ -3562,10 +3573,18 @@
         Packet_Item item = d_Inventory.RightHand[ActiveMaterial];
         if (item != null && item.ItemClass == Packet_ItemClassEnum.Block)
         {
-            movespeednow *= DeserializeFloat(blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
+            float itemSpeed = DeserializeFloat(blocktypes[item.BlockId].WalkSpeedWhenUsedFloat);
+            if (itemSpeed != 0)
+            {
+                movespeednow *= itemSpeed;
+            }
             if (IronSights)
             {
-                movespeednow *= DeserializeFloat(blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
+                float ironSightsSpeed = DeserializeFloat(blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
+                if(ironSightsSpeed!=0)
+                {
+                    movespeednow *= ironSightsSpeed;
+                }
             }
         }
         return movespeednow;
@@ -4984,12 +5003,25 @@
                         playername = platform.StringFormat("&f{0}", playername);
                     }
                     entities[playerid] = new Entity();
-                    entities[playerid].player = new Player();
-                    entities[playerid].player.Name = playername;
-                    entities[playerid].player.Model = packet.SpawnPlayer.Model_;
-                    entities[playerid].player.Texture = packet.SpawnPlayer.Texture_;
-                    entities[playerid].player.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
-                    entities[playerid].player.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
+                    Player player_ = new Player();
+                    entities[playerid].player = player_;
+                    player_.Name = playername;
+                    player_.Model = packet.SpawnPlayer.Model_;
+                    if (player_.Model == null)
+                    {
+                        player_.Model = "player.txt";
+                    }
+                    player_.Texture = packet.SpawnPlayer.Texture_;
+                    player_.EyeHeight = DeserializeFloat(packet.SpawnPlayer.EyeHeightFloat);
+                    if (player_.EyeHeight == 0)
+                    {
+                        player_.EyeHeight = player_.DefaultEyeHeight();
+                    }
+                    player_.ModelHeight = DeserializeFloat(packet.SpawnPlayer.ModelHeightFloat);
+                    if (player_.ModelHeight == 0)
+                    {
+                        player_.ModelHeight = player_.DefaultModelHeight();
+                    }
                     ReadAndUpdatePlayerPosition(packet.SpawnPlayer.PositionAndOrientation, playerid);
                     if (playerid == this.LocalPlayerId)
                     {
@@ -5340,6 +5372,10 @@
                 for (int i = 0; i < GlobalVar.MAX_BLOCKTYPES; i++)
                 {
                     Packet_BlockType b = blocktypes[i];
+                    if (b == null)
+                    {
+                        continue;
+                    }
                     //Indexed by block id and TileSide.
                     if (textureInAtlasIds != null)
                     {
@@ -6412,7 +6448,13 @@
             {
                 drawblockinfo = !drawblockinfo;
             }
-            performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(platform.FloatToInt(player.playerposition.X), platform.FloatToInt(player.playerposition.Z)))));
+            int playerx = platform.FloatToInt(player.playerposition.X);
+            int playery = platform.FloatToInt(player.playerposition.Z);
+            if ((playerx >= 0 && playerx < MapSizeX)
+                && (playery >= 0 && playery < MapSizeY))
+            {
+                performanceinfo.Set("height", platform.StringFormat("height:{0}", platform.IntToString(d_Heightmap.GetBlock(playerx, playery))));
+            }
             if (eKey == GetKey(GlKeys.F5))
             {
                 if (cameratype == CameraType.Fpp)
@@ -8165,7 +8207,8 @@
         mouseleftclick = mouserightclick = false;
         mouseleftdeclick = mouserightdeclick = false;
         if ((!issingleplayer)
-            || (issingleplayer && platform.SinglePlayerServerLoaded()))
+            || (issingleplayer && platform.SinglePlayerServerLoaded())
+            || (!platform.SinglePlayerServerAvailable()))
         {
             if (!startedconnecting)
             {
@@ -9720,11 +9763,10 @@ public class Player
 {
     public Player()
     {
-        float one = 1;
         AnimationHint_ = new AnimationHint();
         Model = "player.txt";
-        EyeHeight = one * 15 / 10;
-        ModelHeight = one * 17 / 10;
+        EyeHeight = DefaultEyeHeight();
+        ModelHeight = DefaultModelHeight();
         CurrentTexture = -1;
     }
     internal bool PositionLoaded;
@@ -9752,6 +9794,18 @@ public class Player
     internal bool moves;
     internal int CurrentTexture;
     internal HttpResponseCi SkinDownloadResponse;
+    
+    public float DefaultEyeHeight()
+    {
+        float one = 1;
+        return one * 15 / 10;
+    }
+
+    public float DefaultModelHeight()
+    {
+        float one = 1;
+        return one * 17 / 10;
+    }
 }
 
 public enum PlayerType
@@ -10873,24 +10927,27 @@ public class GameData
         WalkSpeed()[id] = DeserializeFloat(b.WalkSpeedFloat);
         IsSlipperyWalk()[id] = b.IsSlipperyWalk;
         WalkSound()[id] = new string[SoundCount];
-        for (int i = 0; i < b.Sounds.WalkCount; i++)
-        {
-            WalkSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Walk[i], ".wav");
-        }
         BreakSound()[id] = new string[SoundCount];
-        for (int i = 0; i < b.Sounds.Break1Count; i++)
-        {
-            BreakSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Break1[i], ".wav");
-        }
         BuildSound()[id] = new string[SoundCount];
-        for (int i = 0; i < b.Sounds.BuildCount; i++)
-        {
-            BuildSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Build[i], ".wav");
-        }
         CloneSound()[id] = new string[SoundCount];
-        for (int i = 0; i < b.Sounds.CloneCount; i++)
+        if (b.Sounds != null)
         {
-            CloneSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Clone[i], ".wav");
+            for (int i = 0; i < b.Sounds.WalkCount; i++)
+            {
+                WalkSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Walk[i], ".wav");
+            }
+            for (int i = 0; i < b.Sounds.Break1Count; i++)
+            {
+                BreakSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Break1[i], ".wav");
+            }
+            for (int i = 0; i < b.Sounds.BuildCount; i++)
+            {
+                BuildSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Build[i], ".wav");
+            }
+            for (int i = 0; i < b.Sounds.CloneCount; i++)
+            {
+                CloneSound()[id][i] = StringTools.StringAppend(platform, b.Sounds.Clone[i], ".wav");
+            }
         }
         LightRadius()[id] = b.LightRadius;
         //StartInventoryAmount { get; }
@@ -10954,4 +11011,115 @@ public class OptionsCi
     internal bool Smoothshadows;
     internal float BlockShadowSave;
     internal int[] Keys;
+}
+
+public class ServerPackets
+{
+    public static Packet_Server Message(string text)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.Message;
+        p.Message = new Packet_ServerMessage();
+        p.Message.Message = text;
+        return p;
+    }
+    public static Packet_Server LevelInitialize()
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.LevelInitialize;
+        p.LevelInitialize = new Packet_ServerLevelInitialize();
+        return p;
+    }
+    public static Packet_Server LevelFinalize()
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.LevelFinalize;
+        p.LevelFinalize = new Packet_ServerLevelFinalize();
+        return p;
+    }
+    public static Packet_Server Identification(int assignedClientId, int mapSizeX, int mapSizeY, int mapSizeZ, string version)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.ServerIdentification;
+        p.Identification = new Packet_ServerIdentification();
+        p.Identification.AssignedClientId = assignedClientId;
+        p.Identification.MapSizeX = mapSizeX;
+        p.Identification.MapSizeY = mapSizeY;
+        p.Identification.MapSizeZ = mapSizeZ;
+        p.Identification.ServerName = "Simple";
+        p.Identification.MdProtocolVersion = version;
+        return p;
+    }
+    public static byte[] Serialize(Packet_Server packet, IntRef retLength)
+    {
+        CitoMemoryStream ms = new CitoMemoryStream();
+        Packet_ServerSerializer.Serialize(ms, packet);
+        byte[] data = ms.ToArray();
+        retLength.value = ms.Length();
+        return data;
+    }
+
+    public static Packet_Server BlockType(int id, Packet_BlockType blockType)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.BlockType;
+        p.BlockType = new Packet_ServerBlockType();
+        p.BlockType.Id = id;
+        p.BlockType.Blocktype = blockType;
+        return p;
+    }
+
+    public static Packet_Server BlockTypes()
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.BlockTypes;
+        p.BlockTypes = new Packet_ServerBlockTypes();
+        return p;
+    }
+
+    public static Packet_Server Spawn(int id, string name, Packet_PositionAndOrientation pos)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.SpawnPlayer;
+        p.SpawnPlayer = new Packet_ServerSpawnPlayer();
+        p.SpawnPlayer.PlayerId = id;
+        p.SpawnPlayer.PlayerName = name;
+        p.SpawnPlayer.PositionAndOrientation = pos;
+        return p;
+    }
+
+    public static Packet_Server Chunk_(int x, int y, int z, int chunksize)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.Chunk_;
+        p.Chunk_ = new Packet_ServerChunk();
+        p.Chunk_.X = x;
+        p.Chunk_.Y = y;
+        p.Chunk_.Z = z;
+        p.Chunk_.SizeX = chunksize;
+        p.Chunk_.SizeY = chunksize;
+        p.Chunk_.SizeZ = chunksize;
+        return p;
+    }
+
+    public static Packet_Server ChunkPart(byte[] compressedChunkPart)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.ChunkPart;
+        p.ChunkPart = new Packet_ServerChunkPart();
+        p.ChunkPart.CompressedChunkPart = compressedChunkPart;
+        return p;
+    }
+
+    internal static Packet_Server SetBlock(int x, int y, int z, int block)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.SetBlock;
+        p.SetBlock = new Packet_ServerSetBlock();
+        p.SetBlock.X = x;
+        p.SetBlock.Y = y;
+        p.SetBlock.Z = z;
+        p.SetBlock.BlockType = block;
+        return p;
+    }
 }

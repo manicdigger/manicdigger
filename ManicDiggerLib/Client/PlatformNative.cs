@@ -1198,6 +1198,17 @@ public class GamePlatformNative : GamePlatform
             ret[i] = decompressed[i];
         }
     }
+    public override byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength)
+    {
+        byte[] data_ = new byte[dataLength];
+        for (int i = 0; i < dataLength; i++)
+        {
+            data_[i] = data[i];
+        }
+        byte[] compressed = compression.Compress(data_);
+        retLength.value = compressed.Length;
+        return compressed;
+    }
     public bool ENABLE_CHATLOG = true;
     public string gamepathlogs() { return Path.Combine(PathStorage(), "Logs"); }
     private static string MakeValidFileName(string name)
@@ -1466,7 +1477,7 @@ public class GamePlatformNative : GamePlatform
     {
         OpenFileDialog d = new OpenFileDialog();
         d.InitialDirectory = initialDirectory;
-        d.FileName = "Default.mddbs";
+        d.FileName = "Default." + extension;
         d.Filter = string.Format("{1}|*.{0}|All files|*.*", extension, extensionName);
         d.CheckFileExists = false;
         d.CheckPathExists = true;
