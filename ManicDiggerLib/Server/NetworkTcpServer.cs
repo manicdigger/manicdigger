@@ -169,10 +169,6 @@ public class ServerManager
             TcpConnection newConn = new TcpConnection(sock.EndAccept(result));
             newConn.ReceivedMessage += new EventHandler<MessageEventArgs>(newConn_ReceivedMessage);
             newConn.Disconnected += new EventHandler<ConnectionEventArgs>(newConn_Disconnected);
-            if (Connected != null)
-            {
-                Connected(this, new ConnectionEventArgs() { ClientId = newConn });
-            }
             sock.BeginAccept(this.OnConnectRequest, sock);
         }
         catch
@@ -196,6 +192,15 @@ public class ServerManager
     {
         try
         {
+            if (Connected != null)
+            {
+                TcpConnection sender_ = (TcpConnection)sender;
+                if (!sender_.connected)
+                {
+                    sender_.connected = true;
+                    Connected(this, new ConnectionEventArgs() { ClientId = sender_ });
+                }
+            }
             ReceivedMessage(sender, e);
         }
         catch (Exception ex)
@@ -247,6 +252,7 @@ public class TcpConnection
             InvokeDisconnected();
         }
     }
+    public bool connected;
     byte[] dataRcvBuf = new byte[1024 * 8];
     protected void OnBytesReceived(IAsyncResult result)
     {
@@ -330,7 +336,10 @@ public class TcpConnection
             {
                 sock.Close();
                 sock = null;
-                Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+                if (connected)
+                {
+                    Disconnected(null, new ConnectionEventArgs() { ClientId = this });
+                }
             }
         }
     }
