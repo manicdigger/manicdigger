@@ -1649,9 +1649,10 @@ public class GamePlatformNative : GamePlatform
         GL.Disable(EnableCap.Fog);
     }
 
+    bool singlePlayerServerAvailable = true;
     public override bool SinglePlayerServerAvailable()
     {
-        return true;
+        return singlePlayerServerAvailable;
     }
 
     public override void SinglePlayerServerStart(string saveFilename)
@@ -1998,6 +1999,11 @@ public class GamePlatformNative : GamePlatform
     public override string StringToLower(string p)
     {
         return p.ToLowerInvariant();
+    }
+
+    public override void SinglePlayerServerDisable()
+    {
+        singlePlayerServerAvailable = false;
     }
 }
 

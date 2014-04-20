@@ -134,6 +134,7 @@
         {
             mLightLevels[i] = one * i / 15;
         }
+        scheduler = new TaskScheduler_();
     }
 
     AssetList assets;
@@ -270,7 +271,6 @@
         s = new BlockOctreeSearcher();
         s.platform = platform;
 
-        scheduler = new TaskScheduler_();
         scheduler.Start(platform);
         DrawTask drawTask = new DrawTask();
         drawTask.game = this;
@@ -8735,6 +8735,71 @@ public class QueueTask
     }
 }
 
+public class QueueAction
+{
+    public QueueAction()
+    {
+        Start(128);
+    }
+    public static QueueAction Create(int max_)
+    {
+        QueueAction queue = new QueueAction();
+        queue.Start(max_);
+        return queue;
+    }
+
+    void Start(int max_)
+    {
+        max = max_;
+        items = new Action_[max_];
+        count = 0;
+    }
+
+    internal Action_[] items;
+    internal int start;
+    internal int count;
+    internal int max;
+
+    public void Enqueue(Action_ value)
+    {
+        if (count == max)
+        {
+            Resize(max * 2);
+        }
+        int pos = start + count;
+        pos = pos % max;
+        count++;
+        items[pos] = value;
+    }
+
+    void Resize(int newSize)
+    {
+        Action_[] items2 = new Action_[newSize];
+        for (int i = 0; i < max; i++)
+        {
+            items2[i] = items[(start + i) % max];
+        }
+        items = items2;
+        start = 0;
+        max = newSize;
+    }
+
+    public Action_ Dequeue()
+    {
+        Action_ ret = items[start];
+        items[start] = null;
+        start++;
+        start = start % max;
+        count--;
+        return ret;
+    }
+
+    public int Count()
+    {
+        return count;
+    }
+}
+
 public class ListTask
 {
     public static ListTask Create(int max_)
@@ -11120,6 +11185,35 @@ public class ServerPackets
         p.SetBlock.Y = y;
         p.SetBlock.Z = z;
         p.SetBlock.BlockType = block;
+        return p;
+    }
+
+    internal static Packet_Server PlayerStats(int health, int maxHealth, int oxygen, int maxOxygen)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.PlayerStats;
+        p.PlayerStats = new Packet_ServerPlayerStats();
+        p.PlayerStats.CurrentHealth = health;
+        p.PlayerStats.MaxHealth = maxHealth;
+        p.PlayerStats.CurrentOxygen = oxygen;
+        p.PlayerStats.MaxOxygen = maxOxygen;
+        return p;
+    }
+
+    internal static Packet_Server Inventory(Packet_Inventory inventory)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.FiniteInventory;
+        p.Inventory = new Packet_ServerInventory();
+        p.Inventory.Inventory = inventory;
+        return p;
+    }
+
+    internal static Packet_Server Ping(Packet_Inventory packet_Inventory)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.Ping;
+        p.Ping = new Packet_ServerPing();
         return p;
     }
 }

@@ -167,6 +167,7 @@
     public abstract void LoadAssetsAsyc(AssetList list, FloatRef progress);
     public abstract string StringToLower(string p);
     public abstract byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength);
+    public abstract void SinglePlayerServerDisable();
 }
 
 public class Asset

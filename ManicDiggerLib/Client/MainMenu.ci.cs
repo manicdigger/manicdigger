@@ -841,18 +841,15 @@ public class ScreenMain : Screen
 
     public override void OnKeyDown(KeyEventArgs e)
     {
+        // debug
         if (e.GetKeyCode() == GlKeys.F5)
         {
-            string save;
-            if (menu.p.SinglePlayerServerAvailable())
-            {
-                save = "Default.mddbs";
-            }
-            else
-            {
-                save = "Default.mdss";
-            }
-            menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), save), null);
+            menu.p.SinglePlayerServerDisable();
+            menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), "Default.mdss"), null);
+        }
+        if (e.GetKeyCode() == GlKeys.F6)
+        {
+            menu.StartGame(true, menu.p.PathCombine(menu.p.PathSavegames(), "Default.mddbs"), null);
         }
     }
 }
@@ -1339,13 +1336,13 @@ public class ScreenGame : Screen
         game.platform = platform;
         game.issingleplayer = singleplayer;
 
-        Connect(platform);
         game.Start();
+        Connect(platform);
         game.OnLoad();
     }
 
     ServerSimple serverSimple;
-    ServerSimpleRunner serverSimpleRunner;
+    ServerSimpleTask serverSimpleTask;
 
     void Connect(GamePlatform platform)
     {
@@ -1365,9 +1362,11 @@ public class ScreenGame : Screen
                 server.platform = platform;
                 server.Start();
                 serverSimple.Start(server, singleplayerSavePath, platform);
-                serverSimpleRunner = new ServerSimpleRunner();
-                serverSimpleRunner.server = serverSimple;
-                platform.QueueUserWorkItem(serverSimpleRunner);
+
+                serverSimpleTask = new ServerSimpleTask();
+                serverSimpleTask.server = serverSimple;
+                serverSimpleTask.game = game;
+                game.QueueTaskReadOnlyBackgroundPerFrame(serverSimpleTask);
                 platform.SinglePlayerServerGetNetwork().ServerReceiveBuffer.Enqueue(new ByteArray());
             }
 
