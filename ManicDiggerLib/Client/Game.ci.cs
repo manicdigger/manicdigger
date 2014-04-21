@@ -7560,6 +7560,7 @@
                         projectile.velocityY = vY;
                         projectile.velocityZ = vZ;
                         projectile.block = item.BlockId;
+                        projectile.sourcePlayer = LocalPlayerId;
 
                         grenadeEntity.expires = Expires.Create(grenadetime - wait);
 
