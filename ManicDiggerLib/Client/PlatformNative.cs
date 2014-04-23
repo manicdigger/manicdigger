@@ -2005,6 +2005,11 @@ public class GamePlatformNative : GamePlatform
     {
         singlePlayerServerAvailable = false;
     }
+
+    public override string FloatToString(float value)
+    {
+        return value.ToString(CultureInfo.InvariantCulture);
+    }
 }
 
 public class AssetLoader

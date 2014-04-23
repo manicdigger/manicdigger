@@ -801,6 +801,10 @@ public class ScreenMain : Screen
     MenuWidget multiplayer;
     public override void Render(float dt)
     {
+        //KeyEventArgs args = new KeyEventArgs();
+        //args.SetKeyCode(GlKeys.F5);
+        //OnKeyDown(args);
+
         GamePlatform p = menu.p;
 
         float scale = menu.one * p.GetCanvasWidth() / 1280;

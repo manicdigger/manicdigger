@@ -12,6 +12,7 @@
     public abstract float MathSqrt(float value);
     public abstract string StringTrim(string value);
     public abstract string IntToString(int value);
+    public abstract string FloatToString(float value);
     public abstract string Timestamp();
     public abstract string StringFormat(string format, string arg0);
     public abstract string StringFormat2(string format, string arg0, string arg1);
@@ -168,6 +169,14 @@
     public abstract string StringToLower(string p);
     public abstract byte[] GzipCompress(byte[] data, int dataLength, IntRef retLength);
     public abstract void SinglePlayerServerDisable();
+    public virtual bool IsDebuggerAttached()
+    {
+#if !CITO
+        return System.Diagnostics.Debugger.IsAttached;
+#else
+        return false;
+#endif
+    }
 }
 
 public class Asset

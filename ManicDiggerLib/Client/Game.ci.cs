@@ -289,6 +289,8 @@
         NetworkProcessTask networkProcessTask = new NetworkProcessTask();
         networkProcessTask.game = this;
         QueueTaskReadOnlyBackgroundPerFrame(networkProcessTask);
+
+        ENABLE_DRAW_TEST_CHARACTER = platform.IsDebuggerAttached();
     }
 
 #if CITO
@@ -8128,6 +8130,7 @@
 
             InterpolatePositions(deltaTime);
             DrawPlayers(deltaTime);
+            DrawTestModel(deltaTime);
             terrainRenderer.DrawTerrain();
             DrawPlayerNames();
             particleEffectBlockBreak.Draw(deltaTime);
@@ -8176,6 +8179,29 @@
         }
         GotoDraw2d(deltaTime);
     }
+
+    void DrawTestModel(float deltaTime)
+    {
+        if (!ENABLE_DRAW_TEST_CHARACTER)
+        {
+            return;
+        }
+        if (testmodel == null)
+        {
+            testmodel = new AnimatedModelRenderer();
+            byte[] data = GetFile("player2.txt");
+            int dataLength = GetFileLength("player2.txt");
+            string dataString = platform.StringFromUtf8ByteArray(data, dataLength);
+            AnimatedModel model = AnimatedModelSerializer.Deserialize(platform, dataString);
+            testmodel.Start(this, model);
+        }
+        GLPushMatrix();
+        GLTranslate(MapSizeX / 2, blockheight(MapSizeX / 2, MapSizeY / 2 - 2, 128), MapSizeY / 2 - 2);
+        platform.BindTexture2d(GetTexture("mineplayer.png"));
+        testmodel.Render(deltaTime);
+        GLPopMatrix();
+    }
+    AnimatedModelRenderer testmodel;
 
     int lastWidth;
     int lastHeight;

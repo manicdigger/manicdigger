@@ -53,9 +53,10 @@ public class MinecartRenderer
         game.GLRotate(-rot - 90, 0, 1, 0);
         CharacterRendererMonsterCode c = new CharacterRendererMonsterCode();
         c.game = game;
-        RectangleFloat[] cc = c.CuboidNet(8, 8, 8, 0, 0);
-        CharacterRendererMonsterCode.CuboidNetNormalize(cc, 32, 16);
-        c.DrawCuboid(-(one * 5 / 10), -(one * 3 / 10), -(one * 5 / 10), 1, 1, 1, minecarttexture, cc, 1);
+        RectangleFloat[] cc = CuboidRenderer.CuboidNet(8, 8, 8, 0, 0);
+        CuboidRenderer.CuboidNetNormalize(cc, 32, 16);
+        game.platform.BindTexture2d(minecarttexture);
+        CuboidRenderer.DrawCuboid(game, -(one * 5 / 10), -(one * 3 / 10), -(one * 5 / 10), 1, 1, 1, cc, 1);
         game.GLPopMatrix();
     }
     float vehiclerotation(VehicleDirection12 dir)

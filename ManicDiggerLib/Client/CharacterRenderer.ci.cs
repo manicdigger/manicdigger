@@ -270,27 +270,27 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                         break;
                     case "makecoords":
                         {
-                            RectangleFloat[] coords = CuboidNet(
+                            RectangleFloat[] coords = CuboidRenderer.CuboidNet(
                                GetFloat(ss[2], variables),
                                GetFloat(ss[3], variables),
                                GetFloat(ss[4], variables),
                                GetFloat(ss[5], variables),
                                GetFloat(ss[6], variables));
-                            CuboidNetNormalize(coords, skinsizex, skinsizey);
+                            CuboidRenderer.CuboidNetNormalize(coords, skinsizex, skinsizey);
                             SetVariableCoords(variables, ss[1].valueString, coords);
                         }
                         break;
                     case "drawcuboid":
                         {
                             game.SetMatrixUniforms();
-                            DrawCuboid(
+                            game.platform.BindTexture2d(game.platform.FloatToInt(GetFloat(ss[7], variables)));
+                            CuboidRenderer.DrawCuboid(game,
                                GetFloat(ss[1], variables),
                                 GetFloat(ss[2], variables),
                                 GetFloat(ss[3], variables),
                                GetFloat(ss[4], variables),
                                 GetFloat(ss[5], variables),
                                 GetFloat(ss[6], variables),
-                               game.platform.FloatToInt(GetFloat(ss[7], variables)),
                                GetVariableCoords(ss[8].valueString, variables),
                                animstate.light
                                 );
@@ -420,13 +420,65 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         t += Game.GetPi() / 2;
         return Game.AbsFloat(one * 2 * (t / period - game.FloorFloat(t / period + (one * 5 / 10)))) * 2 - 1;
     }
+    public override string[] Animations(IntRef retCount)
+    {
+        string[] availableanimations = new string[1024];
+        int count = 0;
+        for (int i = 0; i < codeCount; i++)
+        {
+            if ((code[i].items[0].valueString) == "exportanim") //&& code[i].Length > 1)
+            {
+                string name = (code[i].items[1]).valueString;
+                if (!contains(availableanimations, count, name))
+                {
+                    availableanimations[count++] = name;
+                }
+            }
+        }
+        retCount.value = count;
+        return availableanimations;
+    }
+
+    bool contains(string[] list, int count, string name)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (list[i] == name)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    internal int currentanim;
+    public override void SetAnimation(string p)
+    {
+        IntRef count = new IntRef();
+        string[] animations = Animations(count);
+        for (int i = 0; i < count.value; i++)
+        {
+            if (animations[i] == p)
+            {
+                currentanim = i;
+            }
+        }
+    }
+
+    public void SetGame(Game game_)
+    {
+        game = game_;
+    }
+}
+
+public class CuboidRenderer
+{
     //Maps description of position of 6 faces
     //of a single cuboid in texture file to UV coordinates (in pixels)
     //(one RectangleF in texture file for each 3d face of cuboid).
     //Arguments:
     // Size (in pixels) in 2d cuboid net.
     // Start position of 2d cuboid net in texture file.
-    public RectangleFloat[] CuboidNet(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
+    public static RectangleFloat[] CuboidNet(float tsizex, float tsizey, float tsizez, float tstartx, float tstarty)
     {
         RectangleFloat[] coords = new RectangleFloat[6];
         {
@@ -448,9 +500,9 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
                 (coords[i].Width / texturewidth), (coords[i].Height / textureheight));
         }
     }
-    public void DrawCuboid(float posX, float posY, float posZ,
+    public static void DrawCuboid(Game game, float posX, float posY, float posZ,
         float sizeX, float sizeY, float sizeZ,
-        int textureid, RectangleFloat[] texturecoords, float light)
+        RectangleFloat[] texturecoords, float light)
     {
         ModelData data = new ModelData();
         data.xyz = new float[4 * 6 * 3];
@@ -516,12 +568,12 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         data.indicesCount = 36;
 
 
-        game.platform.BindTexture2d(textureid);
+
         game.platform.GlDisableCullFace();
         game.DrawModelData(data);
         game.platform.GlEnableCullFace();
     }
-    public void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)
+    public static void AddVertex(ModelData model, float x, float y, float z, float u, float v, int color)
     {
         model.xyz[model.GetXyzCount() + 0] = x;
         model.xyz[model.GetXyzCount() + 1] = y;
@@ -534,53 +586,80 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         model.rgba[model.GetRgbaCount() + 3] = Game.IntToByte(Game.ColorA(color));
         model.verticesCount++;
     }
-    public override string[] Animations(IntRef retCount)
-    {
-        string[] availableanimations = new string[1024];
-        int count = 0;
-        for (int i = 0; i < codeCount; i++)
-        {
-            if ((code[i].items[0].valueString) == "exportanim") //&& code[i].Length > 1)
-            {
-                string name = (code[i].items[1]).valueString;
-                if (!contains(availableanimations, count, name))
-                {
-                    availableanimations[count++] = name;
-                }
-            }
-        }
-        retCount.value = count;
-        return availableanimations;
-    }
 
-    bool contains(string[] list, int count, string name)
+    // correct
+    public static void DrawCuboid2(Game game, float posX, float posY, float posZ,
+        float sizeX, float sizeY, float sizeZ,
+        RectangleFloat[] texturecoords, float light)
     {
-        for (int i = 0; i < count; i++)
-        {
-            if (list[i] == name)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-    internal int currentanim;
-    public override void SetAnimation(string p)
-    {
-        IntRef count = new IntRef();
-        string[] animations = Animations(count);
-        for (int i = 0; i < count.value; i++)
-        {
-            if (animations[i] == p)
-            {
-                currentanim = i;
-            }
-        }
-    }
+        ModelData data = new ModelData();
+        data.xyz = new float[4 * 6 * 3];
+        data.uv = new float[4 * 6 * 2];
+        data.rgba = new byte[4 * 6 * 4];
+        int light255 = game.platform.FloatToInt(light * 255);
+        int color = Game.ColorFromArgb(255, light255, light255, light255);
 
-    public void SetGame(Game game_)
-    {
-        game = game_;
+        RectangleFloat rect;
+
+        //
+        rect = texturecoords[2];
+        AddVertex(data, posX, posY, posZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX, posY, posZ + sizeZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX, posY + sizeY, posZ + sizeZ, rect.X + rect.Width, rect.Y, color);
+        AddVertex(data, posX, posY + sizeY, posZ, rect.X, rect.Y, color);
+
+        //
+        rect = texturecoords[3];
+        AddVertex(data, posX + sizeX, posY, posZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX + sizeX, posY, posZ + sizeZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ + sizeZ, rect.X + rect.Width, rect.Y, color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ, rect.X, rect.Y, color);
+
+        //
+        rect = texturecoords[1];
+        AddVertex(data, posX + sizeX, posY, posZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX, posY, posZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX, posY + sizeY, posZ, rect.X + rect.Width, rect.Y, color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ, rect.X, rect.Y, color);
+
+        //
+        rect = texturecoords[0];
+        AddVertex(data, posX + sizeX, posY, posZ + sizeZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX, posY, posZ + sizeZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX, posY + sizeY, posZ + sizeZ, rect.X, rect.Y, color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ + sizeZ, rect.X + rect.Width, rect.Y, color);
+
+        //top
+        rect = texturecoords[4];
+        AddVertex(data, posX, posY + sizeY, posZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX, posY + sizeY, posZ + sizeZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ + sizeZ, rect.X + rect.Width, rect.Y, color);
+        AddVertex(data, posX + sizeX, posY + sizeY, posZ, rect.X, rect.Y, color);
+
+        //bottom
+        rect = texturecoords[5];
+        AddVertex(data, posX, posY, posZ, rect.X, rect.Bottom(), color);
+        AddVertex(data, posX, posY, posZ + sizeZ, rect.X + rect.Width, rect.Bottom(), color);
+        AddVertex(data, posX + sizeX, posY, posZ + sizeZ, rect.X + rect.Width, rect.Y, color);
+        AddVertex(data, posX + sizeX, posY, posZ, rect.X, rect.Y, color);
+
+        data.indices = new int[6 * 6];
+        for (int i = 0; i < 6; i++)
+        {
+            data.indices[i * 6 + 0] = i * 4 + 3;
+            data.indices[i * 6 + 1] = i * 4 + 2;
+            data.indices[i * 6 + 2] = i * 4 + 0;
+            data.indices[i * 6 + 3] = i * 4 + 2;
+            data.indices[i * 6 + 4] = i * 4 + 1;
+            data.indices[i * 6 + 5] = i * 4 + 0;
+        }
+        data.indicesCount = 36;
+
+
+
+        game.platform.GlDisableCullFace();
+        game.DrawModelData(data);
+        game.platform.GlEnableCullFace();
     }
 }
 
