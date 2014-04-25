@@ -135,6 +135,10 @@
             mLightLevels[i] = one * i / 15;
         }
         scheduler = new TaskScheduler_();
+        screens = new GameScreen[screensMax];
+        ScreenTouchButtons screenTouchButtons = new ScreenTouchButtons();
+        screenTouchButtons.game = this;
+        screens[0] = screenTouchButtons;
     }
 
     AssetList assets;
@@ -332,10 +336,10 @@
     {
         return block.DrawType == Packet_DrawTypeEnum.Fluid;
     }
-    
+
     public bool IsRail(Packet_BlockType block)
     {
-    	return block.Rail > 0;	//Does not include Rail0, but this can't be placed.
+        return block.Rail > 0;	//Does not include Rail0, but this can't be placed.
     }
 
     public bool IsEmptyForPhysics(Packet_BlockType block)
@@ -1052,10 +1056,10 @@
             return;
         }
 
-        float pickcubeheight = getblockheight(platform.FloatToInt(x),platform.FloatToInt(z),platform.FloatToInt(y));
+        float pickcubeheight = getblockheight(platform.FloatToInt(x), platform.FloatToInt(z), platform.FloatToInt(y));
 
-        float posx = x + one/2;
-        float posy = y + pickcubeheight * one/2;
+        float posx = x + one / 2;
+        float posy = y + pickcubeheight * one / 2;
         float posz = z + one / 2;
 
         platform.GLLineWidth(2);
@@ -1506,7 +1510,7 @@
 
     internal void DrawScreenshotFlash()
     {
-        Draw2dTexture(WhiteTexture(), 0, 0, platform.GetCanvasWidth(), platform.GetCanvasHeight(), null, 0, ColorFromArgb(255,255,255,255), false);
+        Draw2dTexture(WhiteTexture(), 0, 0, platform.GetCanvasWidth(), platform.GetCanvasHeight(), null, 0, ColorFromArgb(255, 255, 255, 255), false);
         string screenshottext = "&0Screenshot";
         IntRef textWidth = new IntRef();
         IntRef textHeight = new IntRef();
@@ -1565,10 +1569,10 @@
         if (PlayerStats != null)
         {
             float progress = one * PlayerStats.CurrentHealth / PlayerStats.MaxHealth;
-            int posX = barDistanceToMargin;
-            int posY = Height() - barDistanceToMargin;
-            Draw2dTexture(WhiteTexture(), posX, posY - barSizeY, barSizeX, barSizeY, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
-            Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY), barSizeX, (progress) * barSizeY, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
+            int posX = platform.FloatToInt(barDistanceToMargin * Scale());
+            int posY = platform.FloatToInt(Height() - barDistanceToMargin * Scale());
+            Draw2dTexture(WhiteTexture(), posX, posY - barSizeY * Scale(), barSizeX * Scale(), barSizeY * Scale(), null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
+            Draw2dTexture(WhiteTexture(), posX, posY - (progress * barSizeY * Scale()), barSizeX * Scale(), (progress) * barSizeY * Scale(), null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
         }
         //if (test) { d_The3d.Draw2dTexture(d_The3d.WhiteTexture(), 50, 50, 200, 200, null, Color.Red); }
     }
@@ -1666,7 +1670,7 @@
     internal void DrawEnemyHealthUseInfo(string name, float progress, bool useInfo)
     {
         int y = useInfo ? 55 : 35;
-        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300, y, null, 0, Game.ColorFromArgb(255,0,0,0), false);
+        Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300, y, null, 0, Game.ColorFromArgb(255, 0, 0, 0), false);
         Draw2dTexture(WhiteTexture(), xcenter(300), 40, 300 * progress, y, null, 0, Game.ColorFromArgb(255, 255, 0, 0), false);
         FontCi font = new FontCi();
         font.family = "Arial";
@@ -1886,7 +1890,7 @@
         return ret.value;
     }
 
-    public void Draw2dBitmapFile(string filename, int x, int y, int w, int h)
+    public void Draw2dBitmapFile(string filename, float x, float y, float w, float h)
     {
         Draw2dTexture(GetTexture(filename), x, y, w, h, null, 0, ColorFromArgb(255, 255, 255, 255), false);
     }
@@ -3583,7 +3587,7 @@
             if (IronSights)
             {
                 float ironSightsSpeed = DeserializeFloat(blocktypes[item.BlockId].IronSightsMoveSpeedFloat);
-                if(ironSightsSpeed!=0)
+                if (ironSightsSpeed != 0)
                 {
                     movespeednow *= ironSightsSpeed;
                 }
@@ -4364,7 +4368,10 @@
 
     internal void DrawMouseCursor()
     {
-        Draw2dBitmapFile("mousecursor.png", mouseCurrentX, mouseCurrentY, 32, 32);
+        if (!platform.MouseCursorIsVisible())
+        {
+            Draw2dBitmapFile("mousecursor.png", mouseCurrentX, mouseCurrentY, 32, 32);
+        }
     }
 
     internal Speculative[] speculative;
@@ -4694,23 +4701,23 @@
                 {
                     //try
                     //{
-                        if (this.AllowFreemove)
+                    if (this.AllowFreemove)
+                    {
+                        if (platform.FloatParse(arguments) <= 500)
                         {
-                            if (platform.FloatParse(arguments) <= 500)
-                            {
-                                movespeed = basemovespeed * platform.FloatParse(arguments);
-                                AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
-                            }
-                            else
-                            {
-                                AddChatline("Entered movespeed to high! max. 500x");
-                            }
+                            movespeed = basemovespeed * platform.FloatParse(arguments);
+                            AddChatline(platform.StringFormat("Movespeed: {0}x", arguments));
                         }
                         else
                         {
-                            Log(strFreemoveNotAllowed);
-                            return;
+                            AddChatline("Entered movespeed to high! max. 500x");
                         }
+                    }
+                    else
+                    {
+                        Log(strFreemoveNotAllowed);
+                        return;
+                    }
                     //}
                     //catch
                     //{
@@ -5488,7 +5495,7 @@
     internal int atlas1dheight() { return maxTextureSize; }
     internal int atlas2dtiles() { return GlobalVar.MAX_BLOCKTYPES_SQRT; } // 16x16
     internal TextureAtlasConverter d_TextureAtlasConverter;
-    
+
     internal void UseTerrainTextureAtlas2d(BitmapCi atlas2d, int atlas2dWidth)
     {
         terrainTexture = platform.LoadTextureFromBitmap(atlas2d);
@@ -5798,7 +5805,7 @@
         {
             IntRef linesCount = new IntRef();
             byte[] file = GetFile(key);
-            string[] lines = platform.ReadAllLines(platform.StringFromUtf8ByteArray(file, platform.ByteArrayLength(file)) , linesCount);
+            string[] lines = platform.ReadAllLines(platform.StringFromUtf8ByteArray(file, platform.ByteArrayLength(file)), linesCount);
             CharacterRendererMonsterCode renderer = new CharacterRendererMonsterCode();
             renderer.game = this;
             renderer.Load(lines, linesCount.value);
@@ -6304,9 +6311,7 @@
                         return;
                     }
                 }
-                guistate = GuiState.EscapeMenu;
-                menustate = new MenuState();
-                platform.ExitMousePointerLock();
+                ShowEscapeMenu();
                 return;
             }
             if (eKey == GetKey(GlKeys.Number7) && IsShiftPressed && GuiTyping == TypingState.None) // don't need to hit enter for typing commands starting with slash
@@ -6341,10 +6346,7 @@
                 }
                 else if (GuiTyping == TypingState.None)
                 {
-                    GuiTyping = TypingState.Typing;
-                    d_HudChat.IsTyping = true;
-                    d_HudChat.GuiTypingBuffer = "";
-                    d_HudChat.IsTeamchat = false;
+                    StartTyping();
                 }
                 else if (GuiTyping == TypingState.Ready)
                 {
@@ -6459,30 +6461,7 @@
             }
             if (eKey == GetKey(GlKeys.F5))
             {
-                if (cameratype == CameraType.Fpp)
-                {
-                    cameratype = CameraType.Tpp;
-                    ENABLE_TPP_VIEW = true;
-                }
-                else if (cameratype == CameraType.Tpp)
-                {
-                    cameratype = CameraType.Overhead;
-                    overheadcamera = true;
-                    platform.ExitMousePointerLock();
-                    ENABLE_TPP_VIEW = true;
-                    playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
-                }
-                else if (cameratype == CameraType.Overhead)
-                {
-                    cameratype = CameraType.Fpp;
-                    platform.RequestMousePointerLock();
-                    ENABLE_TPP_VIEW = false;
-                    overheadcamera = false;
-                }
-                else
-                {
-                    platform.ThrowException("");
-                }
+                CameraChange();
             }
             if (eKey == GetKey(GlKeys.Plus) || eKey == GetKey(GlKeys.KeypadPlus))
             {
@@ -6617,9 +6596,7 @@
             }
             if (eKey == GetKey(GlKeys.B))
             {
-                guistate = GuiState.Inventory;
-                menustate = new MenuState();
-                platform.ExitMousePointerLock();
+                ShowInventory();
                 return;
             }
             HandleMaterialKeys(eKey);
@@ -6710,6 +6687,48 @@
             return;
         }
     }
+
+    public void ShowEscapeMenu()
+    {
+        guistate = GuiState.EscapeMenu;
+        menustate = new MenuState();
+        platform.ExitMousePointerLock();
+    }
+
+    public void ShowInventory()
+    {
+        guistate = GuiState.Inventory;
+        menustate = new MenuState();
+        platform.ExitMousePointerLock();
+    }
+
+    public void CameraChange()
+    {
+        if (cameratype == CameraType.Fpp)
+        {
+            cameratype = CameraType.Tpp;
+            ENABLE_TPP_VIEW = true;
+        }
+        else if (cameratype == CameraType.Tpp)
+        {
+            cameratype = CameraType.Overhead;
+            overheadcamera = true;
+            platform.ExitMousePointerLock();
+            ENABLE_TPP_VIEW = true;
+            playerdestination = Vector3Ref.Create(player.playerposition.X, player.playerposition.Y, player.playerposition.Z);
+        }
+        else if (cameratype == CameraType.Overhead)
+        {
+            cameratype = CameraType.Fpp;
+            platform.RequestMousePointerLock();
+            ENABLE_TPP_VIEW = false;
+            overheadcamera = false;
+        }
+        else
+        {
+            platform.ThrowException("");
+        }
+    }
     internal GuiStateEscapeMenu escapeMenu;
     internal bool drawblockinfo;
 
@@ -6732,7 +6751,7 @@
     }
     bool titleset;
 
-    internal void Draw2d()
+    internal void Draw2d(float dt)
     {
         OrthoMode(Width(), Height());
         switch (guistate)
@@ -6757,6 +6776,13 @@
                     DrawPlayerHealth();
                     DrawPlayerOxygen();
                     DrawEnemyHealthBlock();
+                    for (int i = 0; i < screensMax; i++)
+                    {
+                        if (screens[i] != null)
+                        {
+                            screens[i].Render(dt);
+                        }
+                    }
                     DrawCompass();
                     d_HudChat.DrawChatLines(GuiTyping == TypingState.Typing);
                     if (GuiTyping == TypingState.Typing)
@@ -6804,7 +6830,7 @@
                 }
                 break;
         }
-        
+
         //d_The3d.OrthoMode(Width, Height);
         if (ENABLE_DRAWPOSITION)
         {
@@ -6813,7 +6839,7 @@
             string postext = platform.StringFormat("X: {0}", platform.IntToString(MathFloor(player.playerposition.X)));
             postext = StringTools.StringAppend(platform, postext, ",\tY: ");
             postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Z)));
-            postext = StringTools.StringAppend(platform, postext,  ",\tZ: ");
+            postext = StringTools.StringAppend(platform, postext, ",\tZ: ");
             postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(player.playerposition.Y)));
             postext = StringTools.StringAppend(platform, postext, "\nHeading: ");
             postext = StringTools.StringAppend(platform, postext, platform.IntToString(MathFloor(heading)));
@@ -7163,7 +7189,7 @@
         retPick.End[1] = tempRayStartPoint[1] + raydirY * pickDistance1;
         retPick.End[2] = tempRayStartPoint[2] + raydirZ * pickDistance1;
     }
-    
+
 
     public BlockPosSide[] Pick(BlockOctreeSearcher s_, Line3D line, IntRef retCount)
     {
@@ -8057,7 +8083,7 @@
     internal void MainThreadOnRenderFrame(float deltaTime)
     {
         UpdateResize();
-        
+
         if (guistate == GuiState.MapLoading)
         {
             platform.GlClearColorRgbaf(0, 0, 0, 1);
@@ -8222,7 +8248,7 @@
     internal void GotoDraw2d(float dt)
     {
         SetAmbientLight(Game.ColorFromArgb(255, 255, 255, 255));
-        Draw2d();
+        Draw2d(dt);
 
         for (int i = 0; i < clientmodsCount; i++)
         {
@@ -8245,6 +8271,12 @@
         }
     }
 
+    public float Scale()
+    {
+        float scale = one * Width() / 1280;
+        return scale;
+    }
+
     int touchIdMove;
     int touchMoveStartX;
     int touchMoveStartY;
@@ -8255,6 +8287,32 @@
     public void OnTouchStart(TouchEventArgs e)
     {
         InvalidVersionAllow();
+        mouseCurrentX = e.GetX();
+        mouseCurrentY = e.GetY();
+        mouseleftclick = true;
+
+        MouseEventArgs args = new MouseEventArgs();
+        args.SetX(e.GetX());
+        args.SetY(e.GetY());
+
+        if (d_HudInventory.Mouse_ButtonDown(args))
+        {
+            return;
+        }
+
+        for (int i = 0; i < screensMax; i++)
+        {
+            if (screens[i] == null)
+            {
+                continue;
+            }
+            screens[i].OnTouchStart(e);
+            if (e.GetHandled())
+            {
+                return;
+            }
+        }
+
         if (e.GetX() <= Width() / 2)
         {
             if (touchIdMove == -1)
@@ -8263,7 +8321,14 @@
                 touchMoveStartX = e.GetX();
                 touchMoveStartY = e.GetY();
                 touchMoveDx = 0;
-                touchMoveDy = 1;
+                if (e.GetY() < Height() * 50 / 100)
+                {
+                    touchMoveDy = 1;
+                }
+                else
+                {
+                    touchMoveDy = 0;
+                }
             }
         }
         if (((touchIdMove != -1)
@@ -8289,18 +8354,20 @@
         {
             float range = Width() * one / 20;
             touchMoveDx = e.GetX() - touchMoveStartX;
-            touchMoveDy = -((e.GetY()-1) - touchMoveStartY);
-
+            touchMoveDy = -((e.GetY() - 1) - touchMoveStartY);
             float length = Length(touchMoveDx, touchMoveDy, 0);
-            if (length > range)
-            {
-                touchMoveDx /= length;
-                touchMoveDy /= length;
-            }
-            else
+            if (e.GetY() < Height() * 50 / 100)
             {
                 touchMoveDx = 0;
                 touchMoveDy = 1;
+            }
+            else
+            {
+                if (length > 0)
+                {
+                    touchMoveDx /= length;
+                    touchMoveDy /= length;
+                }
             }
         }
         if (e.GetId() == touchIdRotate)
@@ -8314,6 +8381,20 @@
 
     public void OnTouchEnd(TouchEventArgs e)
     {
+        mouseCurrentX = 0;
+        mouseCurrentY = 0;
+        for (int i = 0; i < screensMax; i++)
+        {
+            if (screens[i] == null)
+            {
+                continue;
+            }
+            screens[i].OnTouchEnd(e);
+            if (e.GetHandled())
+            {
+                return;
+            }
+        }
         if (e.GetId() == touchIdMove)
         {
             touchIdMove = -1;
@@ -8382,6 +8463,321 @@
 
     public void Dispose()
     {
+    }
+
+    internal GameScreen[] screens;
+    internal const int screensMax = 8;
+
+    public void StartTyping()
+    {
+        GuiTyping = TypingState.Typing;
+        d_HudChat.IsTyping = true;
+        d_HudChat.GuiTypingBuffer = "";
+        d_HudChat.IsTeamchat = false;
+    }
+}
+
+public class GameScreen
+{
+    public GameScreen()
+    {
+        WidgetCount = 64;
+        widgets = new MenuWidget[WidgetCount];
+    }
+    internal Game game;
+    public virtual void Render(float dt) { }
+    public virtual void OnKeyDown(KeyEventArgs e) { }
+    public virtual void OnKeyPress(KeyPressEventArgs e) { KeyPress(e); }
+    public virtual void OnKeyUp(KeyEventArgs e) { }
+    public virtual void OnTouchStart(TouchEventArgs e) { e.SetHandled(MouseDown(e.GetX(), e.GetY())); }
+    public virtual void OnTouchMove(TouchEventArgs e) { }
+    public virtual void OnTouchEnd(TouchEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
+    public virtual void OnMouseDown(MouseEventArgs e) { MouseDown(e.GetX(), e.GetY()); }
+    public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
+    public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
+    public virtual void OnBackPressed() { }
+
+    void KeyPress(KeyPressEventArgs e)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Textbox)
+                {
+                    if (w.editing)
+                    {
+                        string s = CharToString(e.GetKeyChar());
+                        if (e.GetKeyChar() == 8) // backspace
+                        {
+                            if (StringTools.StringLength(game.platform, w.text) > 0)
+                            {
+                                w.text = StringTools.StringSubstring(game.platform, w.text, 0, StringTools.StringLength(game.platform, w.text) - 1);
+                            }
+                            return;
+                        }
+                        if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
+                        {
+                            return;
+                        }
+                        if (e.GetKeyChar() == 22) //paste
+                        {
+                            if (game.platform.ClipboardContainsText())
+                            {
+                                w.text = StringTools.StringAppend(game.platform, w.text, game.platform.ClipboardGetText());
+                            }
+                            return;
+                        }
+                        if (game.platform.IsValidTypingChar(e.GetKeyChar()))
+                        {
+                            w.text = StringTools.StringAppend(game.platform, w.text, s);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    bool MouseDown(int x, int y)
+    {
+        bool handled = false;
+        bool editingChange = false;
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Button)
+                {
+                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    if (w.pressed) { handled = true; }
+                }
+                if (w.type == WidgetType.Textbox)
+                {
+                    w.pressed = pointInRect(x, y, w.x, w.y, w.sizex, w.sizey);
+                    if (w.pressed) { handled = true; }
+                    bool wasEditing = w.editing;
+                    w.editing = w.pressed;
+                    if (w.editing && (!wasEditing))
+                    {
+                        game.platform.ShowKeyboard(true);
+                        editingChange = true;
+                    }
+                    if ((!w.editing) && wasEditing && (!editingChange))
+                    {
+                        game.platform.ShowKeyboard(false);
+                    }
+                }
+            }
+        }
+        return handled;
+    }
+
+    void MouseUp(int x, int y)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                w.pressed = false;
+            }
+        }
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (w.type == WidgetType.Button)
+                {
+                    if (pointInRect(x, y, w.x, w.y, w.sizex, w.sizey))
+                    {
+                        OnButton(w);
+                    }
+                }
+            }
+        }
+    }
+
+    public virtual void OnButton(MenuWidget w) { }
+
+    void MouseMove(MouseEventArgs e)
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                w.hover = pointInRect(e.GetX(), e.GetY(), w.x, w.y, w.sizex, w.sizey);
+            }
+        }
+    }
+
+    bool pointInRect(float x, float y, float rx, float ry, float rw, float rh)
+    {
+        return x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+    }
+
+    public virtual void OnMouseWheel(MouseWheelEventArgs e) { }
+    internal int WidgetCount;
+    internal MenuWidget[] widgets;
+    public void DrawWidgets()
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                if (!w.visible)
+                {
+                    continue;
+                }
+                string text = w.text;
+                if (w.selected)
+                {
+                    text = StringTools.StringAppend(game.platform, "&2", text);
+                }
+                if (w.type == WidgetType.Button)
+                {
+                    if (w.buttonStyle == ButtonStyle.Text)
+                    {
+                        //game.Draw2dText1(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
+                    }
+                    else
+                    {
+                        if (w.image != null)
+                        {
+                            game.Draw2dBitmapFile(w.image, w.x, w.y, w.sizex, w.sizey);
+                        }
+                        //menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.hover);
+                    }
+                }
+                if (w.type == WidgetType.Textbox)
+                {
+                    if (w.password)
+                    {
+                        text = CharRepeat(42, StringTools.StringLength(game.platform, w.text)); // '*'
+                    }
+                    if (w.editing)
+                    {
+                        text = StringTools.StringAppend(game.platform, text, "_");
+                    }
+                    if (w.buttonStyle == ButtonStyle.Text)
+                    {
+                        //menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
+                    }
+                    else
+                    {
+                        //menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing));
+                    }
+                }
+                if (w.description != null)
+                {
+                    //menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                }
+            }
+        }
+    }
+    public string CharToString(int a)
+    {
+        int[] arr = new int[1];
+        arr[0] = a;
+        return game.platform.CharArrayToString(arr, 1);
+    }
+
+    public string CharRepeat(int c, int length)
+    {
+        int[] charArray = new int[length];
+        for (int i = 0; i < length; i++)
+        {
+            charArray[i] = c;
+        }
+        return game.platform.CharArrayToString(charArray, length);
+    }
+}
+
+public class ScreenTouchButtons : GameScreen
+{
+    public ScreenTouchButtons()
+    {
+        buttonMenu = new MenuWidget();
+        buttonMenu.image = "TouchMenu.png";
+        buttonInventory = new MenuWidget();
+        buttonInventory.image = "TouchInventory.png";
+        buttonTalk = new MenuWidget();
+        buttonTalk.image = "TouchTalk.png";
+        buttonCamera = new MenuWidget();
+        buttonCamera.image = "TouchCamera.png";
+        widgets[0] = buttonMenu;
+        widgets[1] = buttonInventory;
+        widgets[2] = buttonTalk;
+        widgets[3] = buttonCamera;
+    }
+    MenuWidget buttonMenu;
+    MenuWidget buttonInventory;
+    MenuWidget buttonTalk;
+    MenuWidget buttonCamera;
+    public override void Render(float dt)
+    {
+        int buttonSize = 80;
+
+        buttonMenu.x = 16 * Scale();
+        buttonMenu.y = (16 + 96 * 0) * Scale();
+        buttonMenu.sizex = buttonSize * Scale();
+        buttonMenu.sizey = buttonSize * Scale();
+
+        buttonInventory.x = 16 * Scale();
+        buttonInventory.y = (16 + 96 * 1) * Scale();
+        buttonInventory.sizex = buttonSize * Scale();
+        buttonInventory.sizey = buttonSize * Scale();
+
+        buttonTalk.x = 16 * Scale();
+        buttonTalk.y = (16 + 96 * 2) * Scale();
+        buttonTalk.sizex = buttonSize * Scale();
+        buttonTalk.sizey = buttonSize * Scale();
+
+        buttonCamera.x = 16 * Scale();
+        buttonCamera.y = (16 + 96 * 3) * Scale();
+        buttonCamera.sizex = buttonSize * Scale();
+        buttonCamera.sizey = buttonSize * Scale();
+
+
+        if (!game.platform.IsMousePointerLocked())
+        {
+            if (game.cameratype == CameraType.Fpp || game.cameratype == CameraType.Tpp)
+            {
+                game.Draw2dText1("Move", game.Width() * 5 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
+                game.Draw2dText1("Look", game.Width() * 80 / 100, game.Height() * 85 / 100, game.platform.FloatToInt(Scale() * 50), null, false);
+            }
+            DrawWidgets();
+        }
+    }
+
+    float Scale()
+    {
+        return game.Scale();
+    }
+
+    public override void OnButton(MenuWidget w)
+    {
+        if (w == buttonMenu)
+        {
+            game.ShowEscapeMenu();
+        }
+        if (w == buttonInventory)
+        {
+            game.ShowInventory();
+        }
+        if (w == buttonTalk)
+        {
+            game.StartTyping();
+            game.platform.ShowKeyboard(true);
+        }
+        if (w == buttonCamera)
+        {
+            game.CameraChange();
+        }
     }
 }
 
@@ -9886,7 +10282,7 @@ public class Player
     internal bool moves;
     internal int CurrentTexture;
     internal HttpResponseCi SkinDownloadResponse;
-    
+
     public float DefaultEyeHeight()
     {
         float one = 1;
@@ -10334,7 +10730,7 @@ public abstract class AviWriterCi
 
 public class BitmapCi
 {
-    public virtual void Dispose(){}
+    public virtual void Dispose() { }
 }
 
 public class FreemoveLevelEnum

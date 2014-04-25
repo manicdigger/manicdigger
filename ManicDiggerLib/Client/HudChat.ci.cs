@@ -111,18 +111,25 @@
                 chatlines2[chatlines2Count++] = ChatLines[i];
             }
         }
+        font.size = ChatFontSize * game.Scale();
+        float dx = 20;
+        if (!game.platform.IsMousePointerLocked())
+        {
+            dx += 100;
+        }
         for (int i = 0; i < chatlines2Count; i++)
         {
-            game.Draw2dText(chatlines2[i].text, font, 20, 90 + i * 25, null, false);
+            game.Draw2dText(chatlines2[i].text, font, dx * game.Scale(), (90 + i * 25) * game.Scale(), null, false);
         }
         if (ChatPageScroll != 0)
         {
-            game.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, 20, 90 + (-1) * 25, null, false);
+            game.Draw2dText(game.platform.StringFormat("&7Page: {0}", game.platform.IntToString(ChatPageScroll)), font, dx * game.Scale(), (90 + (-1) * 25) * game.Scale(), null, false);
         }
     }
     FontCi font;
     public void DrawTypingBuffer()
     {
+        font.size = ChatFontSize * game.Scale();
         string s = GuiTypingBuffer;
         if (IsTeamchat)
         {

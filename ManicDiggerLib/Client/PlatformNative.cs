@@ -345,14 +345,17 @@ public class GamePlatformNative : GamePlatform
     {
         UpdateMousePositionArgs a = new UpdateMousePositionArgs();
         UpdateMousePosition(a);
-        foreach (MouseEventHandler h in mouseEventHandlers)
+        if (!TouchTest)
         {
-            MouseEventArgs args2 = new MouseEventArgs();
-            args2.SetX(a.mouseCurrentX);
-            args2.SetY(a.mouseCurrentY);
-            args2.SetMovementX((int)a.mouseDeltaX);
-            args2.SetMovementY((int)a.mouseDeltaY);
-            h.OnMouseMove(args2);
+            foreach (MouseEventHandler h in mouseEventHandlers)
+            {
+                MouseEventArgs args2 = new MouseEventArgs();
+                args2.SetX(a.mouseCurrentX);
+                args2.SetY(a.mouseCurrentY);
+                args2.SetMovementX((int)a.mouseDeltaX);
+                args2.SetMovementY((int)a.mouseDeltaY);
+                h.OnMouseMove(args2);
+            }
         }
 
         foreach (NewFrameHandler h in newFrameHandlers)
@@ -1534,8 +1537,13 @@ public class GamePlatformNative : GamePlatform
         GL.ShadeModel(ShadingModel.Smooth);
     }
 
+    bool mouseCursorVisible = true;
     public override void MouseCursorHide()
     {
+        if (TouchTest)
+        {
+            return;
+        }
         if (!IsMac)
         {
             System.Windows.Forms.Cursor.Hide();
@@ -1544,6 +1552,7 @@ public class GamePlatformNative : GamePlatform
         {
             window.CursorVisible = false;
         }
+        mouseCursorVisible = false;
     }
 
     public override void ApplicationDoEvents()
@@ -2009,6 +2018,16 @@ public class GamePlatformNative : GamePlatform
     public override string FloatToString(float value)
     {
         return value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    public override bool MouseCursorIsVisible()
+    {
+        return mouseCursorVisible;
+    }
+
+    public override bool IsSmallScreen()
+    {
+        return TouchTest;
     }
 }
 

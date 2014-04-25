@@ -41,16 +41,16 @@
     public int InventoryStartY() { return game.Height() / 2 - 600 / 2; }
     public int CellsStartX() { return 33 + InventoryStartX(); }
     public int CellsStartY() { return 180 + InventoryStartY(); }
-    int MaterialSelectorStartX() { return MaterialSelectorBackgroundStartX() + 17; }
-    int MaterialSelectorStartY() { return MaterialSelectorBackgroundStartY() + 17; }
-    int MaterialSelectorBackgroundStartX() { return game.Width() / 2 - 512 / 2; }
-    int MaterialSelectorBackgroundStartY() { return game.Height() - 90; }
+    int MaterialSelectorStartX() { return game.platform.FloatToInt(MaterialSelectorBackgroundStartX() + 17 * game.Scale()); }
+    int MaterialSelectorStartY() { return game.platform.FloatToInt(MaterialSelectorBackgroundStartY() + 17 * game.Scale()); }
+    int MaterialSelectorBackgroundStartX() { return game.platform.FloatToInt(game.Width() / 2 - (512 / 2) * game.Scale()); }
+    int MaterialSelectorBackgroundStartY() { return game.platform.FloatToInt(game.Height() - 90 * game.Scale()); }
     int CellCountInPageX;
     int CellCountInPageY;
     int CellCountTotalX;
     int CellCountTotalY;
 
-    public const int ActiveMaterialCellSize = 48;
+    public int ActiveMaterialCellSize() { return game.platform.FloatToInt(48 * game.Scale()); }
 
     public void OnKeyPress(int keyChar)
     {
@@ -73,9 +73,29 @@
     int ScrollDownButtonX() { return CellsStartX() + CellCountInPageX * CellDrawSize; }
     int ScrollDownButtonY() { return CellsStartY() + (CellCountInPageY - 1) * CellDrawSize; }
 
-    public void Mouse_ButtonDown(MouseEventArgs args)
+    public bool Mouse_ButtonDown(MouseEventArgs args)
     {
-        PointRef scaledMouse = PointRef.Create(game.mouseCurrentX, game.mouseCurrentY);
+        PointRef scaledMouse = PointRef.Create(args.GetX(), args.GetY());
+
+        //material selector
+        if (SelectedMaterialSelectorSlot(scaledMouse) != null)
+        {
+            //int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
+            game.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).value;
+            //if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
+            {
+                Packet_InventoryPosition p = new Packet_InventoryPosition();
+                p.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
+                p.MaterialId = game.ActiveMaterial;
+                controller.InventoryClick(p);
+            }
+            return true;
+        }
+
+        if (game.guistate != GuiState.Inventory)
+        {
+            return false;
+        }
 
         //main inventory
         PointRef cellInPage = SelectedCell(scaledMouse);
@@ -89,6 +109,7 @@
                 p.AreaX = cellInPage.X;
                 p.AreaY = cellInPage.Y + ScrollLine;
                 controller.InventoryClick(p);
+                return true;
             }
             else
             {
@@ -114,35 +135,26 @@
                     controller.InventoryClick(p);
                 }
             }
-        }
-        //drop items on ground
-        if (scaledMouse.X < CellsStartX() && scaledMouse.Y < MaterialSelectorStartY())
-        {
-            int posx = game.SelectedBlockPositionX;
-            int posy = game.SelectedBlockPositionY;
-            int posz = game.SelectedBlockPositionZ;
-            Packet_InventoryPosition p = new Packet_InventoryPosition();
+            if (game.guistate == GuiState.Inventory)
             {
-                p.Type = Packet_InventoryPositionTypeEnum.Ground;
-                p.GroundPositionX = posx;
-                p.GroundPositionY = posy;
-                p.GroundPositionZ = posz;
-            }
-            controller.InventoryClick(p);
-        }
-        //material selector
-        if (SelectedMaterialSelectorSlot(scaledMouse) != null)
-        {
-            //int oldActiveMaterial = ActiveMaterial.ActiveMaterial;
-            game.ActiveMaterial = SelectedMaterialSelectorSlot(scaledMouse).value;
-            //if (oldActiveMaterial == ActiveMaterial.ActiveMaterial)
-            {
-                Packet_InventoryPosition p = new Packet_InventoryPosition();
-                p.Type = Packet_InventoryPositionTypeEnum.MaterialSelector;
-                p.MaterialId = game.ActiveMaterial;
-                controller.InventoryClick(p);
+                return true;
             }
         }
+        // //drop items on ground
+        //if (scaledMouse.X < CellsStartX() && scaledMouse.Y < MaterialSelectorStartY())
+        //{
+        //    int posx = game.SelectedBlockPositionX;
+        //    int posy = game.SelectedBlockPositionY;
+        //    int posz = game.SelectedBlockPositionZ;
+        //    Packet_InventoryPosition p = new Packet_InventoryPosition();
+        //    {
+        //        p.Type = Packet_InventoryPositionTypeEnum.Ground;
+        //        p.GroundPositionX = posx;
+        //        p.GroundPositionY = posy;
+        //        p.GroundPositionZ = posz;
+        //    }
+        //    controller.InventoryClick(p);
+        //}
         if (SelectedWearPlace(scaledMouse) != null)
         {
             Packet_InventoryPosition p = new Packet_InventoryPosition();
@@ -150,19 +162,24 @@
             p.WearPlace = (SelectedWearPlace(scaledMouse).value);
             p.ActiveMaterial = game.ActiveMaterial;
             controller.InventoryClick(p);
+            return true;
         }
         if (scaledMouse.X >= ScrollUpButtonX() && scaledMouse.X < ScrollUpButtonX() + ScrollButtonSize()
             && scaledMouse.Y >= ScrollUpButtonY() && scaledMouse.Y < ScrollUpButtonY() + ScrollButtonSize())
         {
             ScrollUp();
             ScrollingUpTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+            return true;
         }
         if (scaledMouse.X >= ScrollDownButtonX() && scaledMouse.X < ScrollDownButtonX() + ScrollButtonSize()
             && scaledMouse.Y >= ScrollDownButtonY() && scaledMouse.Y < ScrollDownButtonY() + ScrollButtonSize())
         {
             ScrollDown();
             ScrollingDownTimeMilliseconds = game.platform.TimeMillisecondsFromStart();
+            return true;
         }
+        game.GuiStateBackToGame();
+        return false;
     }
 
     public bool IsMouseOverCells()
@@ -195,10 +212,10 @@
     IntRef SelectedMaterialSelectorSlot(PointRef scaledMouse)
     {
         if (scaledMouse.X >= MaterialSelectorStartX() && scaledMouse.Y >= MaterialSelectorStartY()
-            && scaledMouse.X < MaterialSelectorStartX() + 10 * ActiveMaterialCellSize
-            && scaledMouse.Y < MaterialSelectorStartY() + 10 * ActiveMaterialCellSize)
+            && scaledMouse.X < MaterialSelectorStartX() + 10 * ActiveMaterialCellSize()
+            && scaledMouse.Y < MaterialSelectorStartY() + 10 * ActiveMaterialCellSize())
         {
-            return IntRef.Create((scaledMouse.X - MaterialSelectorStartX()) / ActiveMaterialCellSize);
+            return IntRef.Create((scaledMouse.X - MaterialSelectorStartX()) / ActiveMaterialCellSize());
         }
         return null;
     }
@@ -382,7 +399,7 @@
 
     public void DrawMaterialSelector()
     {
-        game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStartX(), MaterialSelectorBackgroundStartY(), 1024, 128);
+        game.Draw2dBitmapFile("materials.png", MaterialSelectorBackgroundStartX(), MaterialSelectorBackgroundStartY(), game.platform.FloatToInt(1024 * game.Scale()), game.platform.FloatToInt(128 * game.Scale()));
         int materialSelectorStartX_ = MaterialSelectorStartX();
         int materialSelectorStartY_ = MaterialSelectorStartY();
         for (int i = 0; i < 10; i++)
@@ -390,13 +407,13 @@
             Packet_Item item = game.d_Inventory.RightHand[i];
             if (item != null)
             {
-                DrawItem(materialSelectorStartX_ + i * ActiveMaterialCellSize, materialSelectorStartY_,
-                    item, ActiveMaterialCellSize, ActiveMaterialCellSize);
+                DrawItem(materialSelectorStartX_ + i * ActiveMaterialCellSize(), materialSelectorStartY_,
+                    item, ActiveMaterialCellSize(), ActiveMaterialCellSize());
             }
         }
         game.Draw2dBitmapFile("activematerial2.png",
-            MaterialSelectorStartX() + ActiveMaterialCellSize * game.ActiveMaterial,
-            MaterialSelectorStartY(), ActiveMaterialCellSize, ActiveMaterialCellSize);
+            MaterialSelectorStartX() + ActiveMaterialCellSize() * game.ActiveMaterial,
+            MaterialSelectorStartY(), ActiveMaterialCellSize(), ActiveMaterialCellSize());
     }
 
     IntRef SelectedWearPlace(PointRef scaledMouse)

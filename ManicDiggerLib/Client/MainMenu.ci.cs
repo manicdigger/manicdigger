@@ -142,7 +142,7 @@
     {
         Draw2dQuad(pressed ? GetTexture("button_sel.png") : GetTexture("button.png"), dx, dy, dw, dh);
         
-        if (text != "")
+        if ((text != null) && (text != ""))
         {
             DrawText(text, fontSize, dx + dw / 2, dy + dh / 2, TextAlign.Center, TextBaseline.Middle);
         }
@@ -552,6 +552,7 @@
     public void StartGame(bool singleplayer, string singleplayerSavePath, ConnectData connectData)
     {
         ScreenGame screenGame = new ScreenGame();
+        screenGame.menu = this;
         screenGame.Start(p, singleplayer, singleplayerSavePath, connectData);
         screen = screenGame;
     }
@@ -1989,6 +1990,7 @@ public class MenuWidget
     internal bool password;
     internal bool selected;
     internal ButtonStyle buttonStyle;
+    internal string image;
 }
 
 public enum ButtonStyle

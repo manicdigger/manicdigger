@@ -248,6 +248,15 @@
                     clients[client].glZ = one * packet.PositionAndOrientation.Z / 32;
                 }
                 break;
+            case Packet_ClientIdEnum.InventoryAction:
+                {
+                    switch (packet.InventoryAction.Action)
+                    {
+                        case Packet_InventoryActionTypeEnum.Click:
+                            break;
+                    }
+                }
+                break;
         }
     }
 

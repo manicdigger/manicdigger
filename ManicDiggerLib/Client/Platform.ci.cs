@@ -144,6 +144,7 @@
     public abstract void GlColorMaterialFrontAndBackAmbientAndDiffuse();
     public abstract void GlShadeModelSmooth();
     public abstract void MouseCursorHide();
+    public abstract bool MouseCursorIsVisible();
     public abstract void ApplicationDoEvents();
     public abstract void ThreadSpinWait(int iterations);
     public abstract void GlDisableFog();
@@ -177,6 +178,7 @@
         return false;
 #endif
     }
+    public abstract bool IsSmallScreen();
 }
 
 public class Asset
@@ -615,9 +617,11 @@ public class TouchEventArgs
     int x;
     int y;
     int id;
+    bool handled;
     public int GetX() { return x; } public void SetX(int value) { x = value; }
     public int GetY() { return y; } public void SetY(int value) { y = value; }
     public int GetId() { return id; } public void SetId(int value) { id = value; }
+    public bool GetHandled() { return handled; } public void SetHandled(bool value) { handled = value; }
 }
 
 public abstract class TouchEventHandler
