@@ -526,12 +526,14 @@ namespace ManicDigger.Mods
                             break;
                         }
                     }
+                    //Check if one of the players is spectator
                     if (players[sourceID].team == Team.Spectator || players[player].team == Team.Spectator)
                     {
                     	//Just here for safety. Spectators shouldn't have weapons...
                         break;
                     }
-                    if (players[player].isdead)
+                    //Check if one of the players is dead
+                    if (players[player].isdead || players[sourceID].isdead)
                     {
                         break;
                     }
@@ -623,8 +625,13 @@ namespace ManicDigger.Mods
                     return;
                 }
             }
-            if (players[sourceplayer].team == Team.Spectator
-                || players[targetplayer].team == Team.Spectator)
+            //Check if one of the players is a spectator
+            if (players[sourceplayer].team == Team.Spectator || players[targetplayer].team == Team.Spectator)
+            {
+                return;
+            }
+            //Check if one of the players is dead
+            if (players[targetplayer].isdead || players[sourceplayer].isdead)
             {
                 return;
             }
@@ -643,10 +650,6 @@ namespace ManicDigger.Mods
                 dy = (dy / dist) * 0.1f;
                 dz = (dz / dist) * 0.1f;
                 m.SendExplosion(targetplayer, dx, dy, dz, true, m.GetBlockType(block).ExplosionRange, m.GetBlockType(block).ExplosionTime);
-            }
-            if (players[targetplayer].isdead)
-            {
-                return;
             }
             int health = m.GetPlayerHealth(targetplayer);
             int dmghead = 50;
