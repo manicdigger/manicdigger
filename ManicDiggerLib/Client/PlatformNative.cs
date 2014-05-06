@@ -887,6 +887,11 @@ public class GamePlatformNative : GamePlatform
         Bitmap bmp= textrenderer.MakeTextTexture(t);
         return new BitmapCiCs() { bmp = bmp };
     }
+    
+    public override void SetTextRendererFont(int fontID)
+    {
+        textrenderer.SetFont(fontID);
+    }
 
     public override float BitmapGetWidth(BitmapCi bmp)
     {
@@ -1900,7 +1905,7 @@ public class GamePlatformNative : GamePlatform
                 string[] lines = File.ReadAllLines(GetPreferencesFilePath());
                 foreach (string l in lines)
                 {
-                    int a = l.IndexOf("=");
+                    int a = l.IndexOf("=", StringComparison.InvariantCultureIgnoreCase);
                     string name = l.Substring(0, a);
                     string value = l.Substring(a + 1);
                     p.SetString(name, value);

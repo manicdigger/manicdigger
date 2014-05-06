@@ -1129,6 +1129,11 @@
         }
         return null;
     }
+    
+    public void UpdateTextRendererFont()
+    {
+        platform.SetTextRendererFont(Font);
+    }
 
     public void Draw2dText(string text, FontCi font, float x, float y, IntRef color, bool enabledepthtest)
     {

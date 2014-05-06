@@ -15,6 +15,11 @@ namespace ManicDigger.Renderers
     public class TextRenderer
     {
         public FontType Font = FontType.Nice;
+        
+        public void SetFont(int fontID)
+        {
+            Font = (FontType)fontID;
+        }
 
         public virtual Bitmap MakeTextTexture(Text_ t, FontCi font)
         {
