@@ -802,17 +802,22 @@ namespace ManicDiggerServer
             d_Heartbeat.Port = config.Port;
             d_Heartbeat.Version = GameVersion.Version;
             d_Heartbeat.Key = config.Key;
-            d_Heartbeat.UsersCount = clients.Count;
             d_Heartbeat.Motd = config.Motd;
             List<string> playernames = new List<string>();
             lock (clients)
             {
                 foreach (var k in clients)
                 {
+                    if (k.Value.IsBot)
+                    {
+                        //Exclude bot players from appearing on server list
+                        continue;
+                    }
                     playernames.Add(k.Value.playername);
                 }
             }
             d_Heartbeat.Players = playernames;
+            d_Heartbeat.UsersCount = playernames.Count;
             try
             {
                 d_Heartbeat.SendHeartbeat();
@@ -1166,7 +1171,16 @@ namespace ManicDiggerServer
                     {
                         INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
                     };
-                    if (clients.Count > config.MaxClients)
+                    int realPlayers = 0;
+                    foreach (var cl in clients)
+                    {
+                        if (cl.Value.IsBot)
+                        {
+                            continue;
+                        }
+                        realPlayers++;
+                    }
+                    if (realPlayers > config.MaxClients)
                     {
                         SendDisconnectPlayer(this.lastClientId, language.ServerTooManyPlayers());
                         KillPlayer(this.lastClientId);

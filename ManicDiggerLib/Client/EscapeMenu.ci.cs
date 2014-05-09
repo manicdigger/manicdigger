@@ -477,6 +477,7 @@
             options.Font = 0;
         }
         game.Font = fontValues[options.Font];
+        game.UpdateTextRendererFont();
         for (int i = 0; i < game.cachedTextTexturesMax; i++)
         {
             game.cachedTextTextures[i] = null;
@@ -611,6 +612,7 @@
         OptionsCi options = o;
 
         game.Font = fontValues[options.Font];
+        game.UpdateTextRendererFont();
         //game.d_CurrentShadows.ShadowsFull = options.Shadows;
         game.d_Config3d.viewdistance = options.DrawDistance;
         game.AudioEnabled = options.EnableSound;

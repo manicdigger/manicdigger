@@ -63,6 +63,7 @@
     public abstract void GLEnableAlphaTest();
     public abstract void GLDeleteTexture(int id);
     public abstract BitmapCi CreateTextTexture(Text_ t);
+    public abstract void SetTextRendererFont(int fontID);
     public abstract float BitmapGetWidth(BitmapCi bmp);
     public abstract float BitmapGetHeight(BitmapCi bmp);
     public abstract void BitmapDelete(BitmapCi bmp);
