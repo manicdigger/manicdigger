@@ -760,7 +760,7 @@
         return ret;
     }
 
-    public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid, float angle)
+    public void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureid)
     {
         ModelData[] modelDatas = new ModelData[512];
         int modelDatasCount = 0;
@@ -2029,17 +2029,16 @@
         compassvertex *= (one * 9 / 10);
         compassangle += compassvertex;
 
-        Draw2dData[] todraw = new Draw2dData[1];
-        todraw[0] = new Draw2dData();
-        todraw[0].x1 = posX - size / 2;
-        todraw[0].y1 = posY - size / 2;
-        todraw[0].width = size;
-        todraw[0].height = size;
-        todraw[0].inAtlasId = null;
-        todraw[0].color = Game.ColorFromArgb(255, 255, 255, 255);
-
+        // compass
         Draw2dTexture(compassid, posX - size / 2, posY - size / 2, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
-        Draw2dTextures(todraw, 1, needleid, compassangle);
+
+        // compass needle
+        GLPushMatrix();
+        GLTranslate(posX, posY, 0);
+        GLRotate(compassangle, 0, 0, 90);
+        GLTranslate(-size / 2, -size / 2, 0);
+        Draw2dTexture(needleid, 0, 0, size, size, null, 0, Game.ColorFromArgb(255, 255, 255, 255), false);
+        GLPopMatrix();
     }
 
     internal bool IsTileEmptyForPhysics(int x, int y, int z)
@@ -10698,7 +10697,7 @@ public class ClientModManager1 : ClientModManager
 
     public override void Draw2dTextures(Draw2dData[] todraw, int todrawLength, int textureId)
     {
-        game.Draw2dTextures(todraw, todrawLength, textureId, 0);
+        game.Draw2dTextures(todraw, todrawLength, textureId);
     }
 
 
