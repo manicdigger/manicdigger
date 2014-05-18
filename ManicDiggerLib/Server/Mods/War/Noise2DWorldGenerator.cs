@@ -20,12 +20,12 @@ namespace ManicDigger.Mods
         // settings
         private int waterlevel = 10;
         private int seed;
-
+        
         public void PreStart (ModManager m)
         {
             m.RequireMod ("DefaultWar");
         }
-
+        
         public void Start (ModManager manager)
         {
             m = manager;
@@ -44,14 +44,14 @@ namespace ManicDigger.Mods
             _rnd = new Random ();
             this.seed = m.GetSeed ();
         }
-
+        
         void GetChunk (int x, int y, int z, ushort[] chunk)
         {
             _heightcache = new byte[this.chunksize, this.chunksize];
             x *= this.chunksize;
             y *= this.chunksize;
             z *= this.chunksize;
-
+            
             for (int xx = 0; xx < this.chunksize; xx++)
             {
                 for (int yy = 0; yy < this.chunksize; yy++)
@@ -61,7 +61,7 @@ namespace ManicDigger.Mods
             }
             // chance of get hay fields
             bool IsHay = _rnd.NextDouble () < 0.005 ? false : true;
-
+            
             for (int xx = 0; xx < this.chunksize; xx++)
             {
                 for (int yy = 0; yy < this.chunksize; yy++)
@@ -71,8 +71,8 @@ namespace ManicDigger.Mods
                         int pos = m.Index3d (xx, yy, zz, chunksize, chunksize);
                      
                         chunk [pos] = IsHay
-                        ? (ushort)GetBlock (x + xx, y + yy, z + zz, _heightcache [xx, yy], 0)
-                        : (ushort)GetBlock (x + xx, y + yy, z + zz, _heightcache [xx, yy], 1);
+                            ? (ushort)GetBlock (x + xx, y + yy, z + zz, _heightcache [xx, yy], 0)
+                            : (ushort)GetBlock (x + xx, y + yy, z + zz, _heightcache [xx, yy], 1);
                     }
                 }
             }
@@ -92,7 +92,7 @@ namespace ManicDigger.Mods
         private int GetBlock (int x, int y, int z, int height, int special)
         {
             int spec = special;
-
+            
             if (z > this.waterlevel)
             {
                 if (spec == 0)
@@ -168,7 +168,7 @@ namespace ManicDigger.Mods
             }
             return (byte)height;
         }
-
+        
         private double noise (double x, double y, int seed)
         {
             double floorx = (double)((int)x);//This is kinda a cheap way to floor a double integer.
@@ -182,13 +182,13 @@ namespace ManicDigger.Mods
             double int2 = interpolate (u, v, x - floorx);//Here we use x-floorx, to get 1st dimension. Don't mind the x-floorx thingie, it's part of the cosine formula.
             return interpolate (int1, int2, y - floory);//Here we use y-floory, to get the 2nd dimension.
         }
-
+        
         private double findNoise2 (double x, double y, int seed)
         {
             int n = (int)x + (int)y * 57;
             return findNoise1 (n, seed);
         }
-
+        
         private double findNoise1 (int n, int seed)
         {
             n += seed;
@@ -196,7 +196,7 @@ namespace ManicDigger.Mods
             int nn = (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
             return 1.0 - ((double)nn / 1073741824.0);
         }
-
+        
         private double interpolate (double a, double b, double x)
         {
             double ft = x * 3.1415927;

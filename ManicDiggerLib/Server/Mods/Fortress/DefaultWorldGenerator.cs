@@ -16,7 +16,7 @@ namespace ManicDigger.Mods
             m.RegisterWorldGenerator(GetChunk);
             m.RegisterOptionBool("DefaultGenCaves", false);
             m.RegisterOptionBool("DefaultGenLavaCaves", false);
-
+            
             BLOCK_STONE = m.GetBlockId ("Stone");
             BLOCK_DIRT = m.GetBlockId ("Dirt");
             BLOCK_SAND = m.GetBlockId ("Sand");
@@ -33,9 +33,9 @@ namespace ManicDigger.Mods
             BLOCK_YELLOW_FLOWER = m.GetBlockId ("YellowFlowerDecorations");
             BLOCK_LAVA = m.GetBlockId ("Lava");
         }
-
+        
         ModManager m;
-
+        
         bool started = false;
         public void GetChunk(int x, int y, int z, ushort[] chunk)
         {
@@ -53,28 +53,14 @@ namespace ManicDigger.Mods
             int chunksize = ChunkSize;
             var noise = new LibNoise.FastNoise();
             noise.Frequency = 0.01;
-
+            
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
-                    /*
-                    var v = noise.GetValue(x + xx, y + yy, 0);
-                    //if (v < min) { min = v; }
-                    int height = (int)(((v + 1) * 0.5) * 64) + 5;
-                    //if (height < 0)
-                    {
-                        //    Console.Beep();
-                    }
-                    */
-
                     int currentHeight = (byte)((finalTerrain.GetValue((xx + x) / 100.0, 0, (yy + y) / 100.0) * 60) + 64);
                     int ymax = currentHeight;
-                    /*for (int zz = 0; zz < chunksize; zz++)
-                    {
-                        if (z + zz <= currentHeight) { chunk[xx, yy, zz] = 1; }
-                    }*/
-
+                    
                     int biome = (int)(BiomeSelect.GetValue((x + xx) / 100.0, 0, (y + yy) / 100.0) * 2); //MD * 2
                     int toplayer = BLOCK_DIRT;
                     if (biome == 0)
@@ -101,34 +87,29 @@ namespace ManicDigger.Mods
                     {
                         toplayer = BLOCK_CLAY;
                     }
-
-                    //biomecoun[biome]++;
-
+                    
                     int stoneHeight = (int)currentHeight - ((64 - (currentHeight % 64)) / 8) + 1;
-                    //int bYbX = ((y << 7) + (x << 11));
-
+                    
                     if (ymax < seaLevel)
                     {
                         ymax = seaLevel;
                     }
                     ymax++;
-                    if (ymax > z + chunksize - 1) //md
+                    if (ymax > z + chunksize - 1)
                     {
                         ymax = z + chunksize - 1;
                     }
-                    //for (int bY = 0; bY <= ymax; bY++)
                     for (int bY = z; bY <= ymax; bY++)
                     {
-                        //curBlock = &(chunk->blocks[bYbX++]);
                         int curBlock = 0;
-
+                        
                         // Place bedrock
                         if (bY == 0)
                         {
                             curBlock = BLOCK_BEDROCK;
                             continue;
                         }
-
+                        
                         if (bY < currentHeight)
                         {
                             if (bY < stoneHeight)
@@ -137,8 +118,6 @@ namespace ManicDigger.Mods
                                 // Add caves
                                 if (addCaves)
                                 {
-                                    //cave.AddCaves(curBlock, x + xx, bY, y + yy);
-
                                     if (caveNoise.GetValue((x + xx) / 4.0, (bY) / 1.5, (y + yy) / 4.0) > cavestreshold)
                                     {
                                         if (bY < 10 && addCaveLava)
@@ -221,7 +200,6 @@ namespace ManicDigger.Mods
                 }
             }
         }
-        //int[] biomecoun = new int[10];
         int seaLevel = 62;
         int BLOCK_STONE;
         int BLOCK_DIRT;
@@ -238,50 +216,32 @@ namespace ManicDigger.Mods
         int BLOCK_RED_ROSE;
         int BLOCK_YELLOW_FLOWER;
         int BLOCK_LAVA;
-
+        
         public void Init()
         {
             int Seed = m.GetSeed();
-            /*
-              cave.init(seed + 7);
-  seaLevel = Mineserver::get()->config()->iData("mapgen.sea.level");
-  addTrees = Mineserver::get()->config()->bData("mapgen.trees.enabled");
-  expandBeaches = Mineserver::get()->config()->bData("mapgen.beaches.expand");
-  beachExtent = Mineserver::get()->config()->iData("mapgen.beaches.extent");
-  beachHeight = Mineserver::get()->config()->iData("mapgen.beaches.height");
-
-  addOre = Mineserver::get()->config()->bData("mapgen.addore");
-  addCaves = Mineserver::get()->config()->bData("mapgen.caves.enabled");
-            */
-
+            
             BiomeBase.Frequency = (0.2);
             BiomeBase.Seed = (Seed - 1);
             BiomeSelect = new ScaleBiasOutput(BiomeBase);
-            //BiomeSelect.SourceModule = (BiomeBase);
             BiomeSelect.Scale = (2.5);
             BiomeSelect.Bias = (2.5);
             mountainTerrainBase.Seed = (Seed + 1);
             mountainTerrain = new ScaleBiasOutput(mountainTerrainBase);
-            //mountainTerrain.SourceModule = (mountainTerrainBase);
             mountainTerrain.Scale = (0.5);
             mountainTerrain.Bias = (0.5);
             jaggieEdges = new Select(jaggieControl, terrainType, plain);
-            //jaggieEdges.SourceModule1 = (terrainType);
-            //jaggieEdges.SourceModule2 = (plain);
             plain.Value = (0.5);
-            //jaggieEdges.ControlModule = (jaggieControl);
             jaggieEdges.SetBounds(0.5, 1.0);
             jaggieEdges.EdgeFalloff = (0.11);
             jaggieControl.Seed = (Seed + 20);
             baseFlatTerrain.Seed = (Seed);
             baseFlatTerrain.Frequency = (0.2);
             flatTerrain = new ScaleBiasOutput(baseFlatTerrain);
-            //flatTerrain.SourceModule = (baseFlatTerrain);
             flatTerrain.Scale = (0.125);
             flatTerrain.Bias = (0.07);
             baseWater.Seed = (Seed - 1);
             water = new ScaleBiasOutput(baseWater);
-            //water.SourceModule = (baseWater);
             water.Scale = (0.3);
             water.Bias = (-0.5);
             terrainType.Seed = (Seed + 2);
@@ -291,28 +251,17 @@ namespace ManicDigger.Mods
             terrainType2.Frequency = (0.5);
             terrainType2.Persistence = (0.25);
             waterTerrain = new Select(terrainType2, water, flatTerrain);
-            //waterTerrain.SourceModule1 = (water);
-            //waterTerrain.SourceModule2 = (flatTerrain);
-            //waterTerrain.ControlModule = (terrainType2);
             waterTerrain.EdgeFalloff = (0.1);
             waterTerrain.SetBounds(-0.5, 1.0);
             secondTerrain = new Select(terrainType, mountainTerrain, waterTerrain);
-            //secondTerrain.SourceModule2 = (waterTerrain);
-            //secondTerrain.SourceModule1 = (mountainTerrain);
-            //secondTerrain.ControlModule = (terrainType);
             secondTerrain.EdgeFalloff = (0.3);
             secondTerrain.SetBounds(-0.5, 1.0);
             finalTerrain = new Select(jaggieEdges, secondTerrain, waterTerrain);
-            //finalTerrain.SourceModule1 = (secondTerrain);
-            //finalTerrain.SourceModule2 = (waterTerrain);
-            //finalTerrain.ControlModule = (jaggieEdges);
             finalTerrain.EdgeFalloff = (0.2);
             finalTerrain.SetBounds(-0.3, 1.0);
             flowers.Seed = (Seed + 10);
             flowers.Frequency = (3);
-            //winterEnabled = false;
-
-
+            
             // Set up us the Perlin-noise module.
             caveNoise.Seed = (Seed + 22);
             caveNoise.Frequency = (1.0 / cavessize);
@@ -336,12 +285,9 @@ namespace ManicDigger.Mods
         Select secondTerrain;
         Constant plain = new Constant(0);
         Billow jaggieControl = new Billow();
-        //bool winterEnabled;
-
-        //Random _rnd = new Random();
-
+        
         RidgedMultifractal caveNoise = new RidgedMultifractal();
-
+        
         float cavessize = 15;
         float cavestreshold = 0.6f;
     }

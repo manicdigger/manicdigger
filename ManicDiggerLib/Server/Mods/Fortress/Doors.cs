@@ -11,16 +11,16 @@ namespace ManicDigger.Mods
         public void Start(ModManager manager)
         {
             m = manager;
-
+            
             m.RegisterOnBlockBuild(OnBuild);
             m.RegisterOnBlockDelete(OnDelete);
             m.RegisterOnBlockUse(OnUse);
-
+            
             m.SetString("en", "DoorBottomClosed", "Closed Door");
             m.SetString("en", "DoorTopClosed", "Closed Door");
             m.SetString("en", "DoorBottomOpen", "Open Door");
             m.SetString("en", "DoorTopOpen", "Open Door");
-
+            
             SoundSet sounds = new SoundSet()
             {
                 Walk = new string[] { "walk1", "walk2", "walk3", "walk4" },
@@ -28,55 +28,55 @@ namespace ManicDigger.Mods
                 Build = new string[] { "build" },
                 Clone = new string[] { "clone" },
             };
-
+            
             m.SetBlockType(126, "DoorBottomClosed", new BlockType()
-            {
-                AllTextures = "DoorBottom",
-                DrawType = DrawType.ClosedDoor,
-                WalkableType = WalkableType.Solid,
-                Sounds = sounds,
-                IsUsable = true,
-            });
+                {
+                    AllTextures = "DoorBottom",
+                    DrawType = DrawType.ClosedDoor,
+                    WalkableType = WalkableType.Solid,
+                    Sounds = sounds,
+                    IsUsable = true,
+                });
             m.SetBlockType(127, "DoorTopClosed", new BlockType()
-            {
-                AllTextures = "DoorTop",
-                DrawType = DrawType.ClosedDoor,
-                WalkableType = WalkableType.Solid,
-                Sounds = sounds,
-                IsUsable = true,
-            });
+                {
+                    AllTextures = "DoorTop",
+                    DrawType = DrawType.ClosedDoor,
+                    WalkableType = WalkableType.Solid,
+                    Sounds = sounds,
+                    IsUsable = true,
+                });
             m.SetBlockType(128, "DoorBottomOpen", new BlockType()
-            {
-                AllTextures = "DoorBottom",
-                DrawType = DrawType.OpenDoorLeft,
-                WalkableType = WalkableType.Empty,
-                Sounds = sounds,
-                IsUsable = true,
-            });
+                {
+                    AllTextures = "DoorBottom",
+                    DrawType = DrawType.OpenDoorLeft,
+                    WalkableType = WalkableType.Empty,
+                    Sounds = sounds,
+                    IsUsable = true,
+                });
             m.SetBlockType(129, "DoorTopOpen", new BlockType()
-            {
-                AllTextures = "DoorTop",
-                DrawType = DrawType.OpenDoorLeft,
-                WalkableType = WalkableType.Empty,
-                Sounds = sounds,
-                IsUsable = true,
-            });
-
+                {
+                    AllTextures = "DoorTop",
+                    DrawType = DrawType.OpenDoorLeft,
+                    WalkableType = WalkableType.Empty,
+                    Sounds = sounds,
+                    IsUsable = true,
+                });
+            
             m.AddToCreativeInventory("DoorBottomClosed");
             m.AddCraftingRecipe("DoorBottomClosed", 1, "Wood", 2);
-
+            
             DoorBottomClosed = m.GetBlockId("DoorBottomClosed");
             DoorTopClosed = m.GetBlockId("DoorTopClosed");
             DoorBottomOpen = m.GetBlockId("DoorBottomOpen");
             DoorTopOpen = m.GetBlockId("DoorTopOpen");
         }
-
+        
         ModManager m;
         int DoorBottomClosed;
         int DoorTopClosed;
         int DoorBottomOpen;
         int DoorTopOpen;
-
+        
         void OnBuild(int player, int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == DoorBottomClosed)
@@ -96,7 +96,7 @@ namespace ManicDigger.Mods
                 }
             }
         }
-
+        
         void OnDelete(int player, int x, int y, int z, int block)
         {
             if (m.IsValidPos(x, y, z + 1)
@@ -110,7 +110,7 @@ namespace ManicDigger.Mods
                 m.SetBlock(x, y, z - 1, 0);
             }
         }
-
+        
         void OnUse(int player, int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == DoorBottomClosed)

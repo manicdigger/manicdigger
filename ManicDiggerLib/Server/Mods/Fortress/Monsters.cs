@@ -12,6 +12,7 @@ namespace ManicDigger.Mods
         }
         public void Start(ModManager m)
         {
+            
         }
     }
 }

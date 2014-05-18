@@ -38,15 +38,15 @@ namespace ManicDigger.Mods
             m.RegisterOnBlockBuild(OnBuild);
             m.RegisterOnPlayerDeath(OnPlayerDeath);
         }
-
+        
         public enum WarMode
         {
             Edit,
             TeamDeathmatch,
         }
-
+        
         WarMode warmode = WarMode.TeamDeathmatch;
-
+        
         public enum PlayerClass
         {
             Soldier,
@@ -59,15 +59,15 @@ namespace ManicDigger.Mods
             Shotgun,
             Rifle,
         }
-
+        
         TimeSpan RespawnTime = TimeSpan.FromSeconds(30);
         //TimeSpan RoundTime = TimeSpan.FromMinutes(30);
         DateTime CurrentRespawnTime;
-
+        
         public bool EnableTeamkill = true;
-
+        
         Dictionary<int, Player> players = new Dictionary<int, Player>();
-
+        
         public class Player
         {
             public Team team = Team.Spectator;
@@ -79,9 +79,9 @@ namespace ManicDigger.Mods
             public SoldierSubclass soldierSubclass;
             public Dictionary<int, int> totalAmmo = new Dictionary<int, int>();
         }
-
+        
         ModManager m;
-
+        
         void PlayerJoin(int playerid)
         {
             m.SetPlayerHealth(playerid, 100, 100);
@@ -106,9 +106,9 @@ namespace ManicDigger.Mods
                     ShowTeamSelectionDialog(playerid);
                     m.SetGlobalDataNotSaved("enablewater", true);
                     break;
-            }
         }
-
+        }
+        
         void GiveAllBlocks(int playerid)
         {
             for (int i = 1; i < m.GetMaxBlockTypes(); i++)
@@ -121,7 +121,7 @@ namespace ManicDigger.Mods
             }
             m.NotifyInventory(playerid);
         }
-
+        
         void ClearInventory(int playerid)
         {
             Inventory inv = m.GetInventory(playerid);
@@ -134,7 +134,7 @@ namespace ManicDigger.Mods
             Array.Clear(inv.RightHand, 0, inv.RightHand.Length);
             m.NotifyInventory(playerid);
         }
-
+        
         void ShowTeamSelectionDialog(int playerid)
         {
             Dialog d = new Dialog();
@@ -172,7 +172,7 @@ namespace ManicDigger.Mods
             d.Widgets = widgets.ToArray();
             m.SendDialog(playerid, "SelectTeam" + playerid, d);
         }
-
+        
         void ShowClassSelectionDialog(int playerid)
         {
             Dialog d = new Dialog();
@@ -200,7 +200,7 @@ namespace ManicDigger.Mods
             d.Widgets = widgets.ToArray();
             m.SendDialog(playerid, "SelectClass" + playerid, d);
         }
-
+        
         void ShowSubclassSelectionDialog(int playerid)
         {
             Dialog d = new Dialog();
@@ -240,14 +240,14 @@ namespace ManicDigger.Mods
             d.Widgets = widgets.ToArray();
             m.SendDialog(playerid, "SelectSubclass" + playerid, d);
         }
-
+        
         public enum Team
         {
             Blue,
             Green,
             Spectator,
         }
-
+        
         string BlueColor = "&1";
         string GreenColor = "&2";
         string SpectatorColor = "&7";
@@ -261,10 +261,10 @@ namespace ManicDigger.Mods
                     return GreenColor;
                 case Team.Spectator:
                     return SpectatorColor;
-            }
+        }
             throw new Exception();
         }
-
+        
         void DialogClickSelectTeam(int playerid, string widget)
         {
             if (widget == "Team1")
@@ -364,7 +364,7 @@ namespace ManicDigger.Mods
             {
                 return;
             }
-
+            
             if (players[playerid].firstteam)
             {
                 Respawn(playerid);
@@ -374,9 +374,9 @@ namespace ManicDigger.Mods
                 Die(playerid);
             }
             players[playerid].firstteam = false;
-
+            
             m.SendDialog(playerid, "SelectSubclass" + playerid, null);
-
+            
             PlayerClass pclass = players[playerid].playerclass;
             if (pclass == PlayerClass.Soldier)
             {
@@ -409,14 +409,14 @@ namespace ManicDigger.Mods
             }
             ResetInventoryOnRespawn(playerid);
         }
-
+        
         void ResetInventoryOnRespawn(int playerid)
         {
             ClearInventory(playerid);
             if (players[playerid].team == Team.Spectator)
             {
-            	//Don't give spectators weapons when they die.
-            	return;
+                //Don't give spectators weapons when they die.
+                return;
             }
             
             PlayerClass pclass = players[playerid].playerclass;
@@ -474,7 +474,7 @@ namespace ManicDigger.Mods
             }
             m.NotifyAmmo(playerid, players[playerid].totalAmmo);
         }
-
+        
         void OnSelectTeamKey(int player, SpecialKey key)
         {
             if (key != SpecialKey.SelectTeam)
@@ -487,39 +487,39 @@ namespace ManicDigger.Mods
             }
             ShowTeamSelectionDialog(player);
         }
-
+        
         void OnPlayerDeath(int player, DeathReason reason, int sourceID)
         {
-        	string deathMessage = "";
-        	switch (reason)
-        	{
-        		case DeathReason.FallDamage:
-        			Die(player);
-        	        deathMessage = string.Format("{0} was doomed to fall.", m.GetPlayerName(player));
-        			break;
-        		case DeathReason.BlockDamage:
-        			if (sourceID == m.GetBlockId("Lava"))
-        			{
-        				Die(player);
-        				deathMessage = string.Format("{0} thought they could swim in Lava.", m.GetPlayerName(player));
-        			}
-        			else if (sourceID == m.GetBlockId("Fire"))
-        			{
-        				Die(player);
-        				deathMessage = string.Format("{0} was burned alive.", m.GetPlayerName(player));
-        			}
-        			else
-        			{
-        				Die(player);
-        				deathMessage = string.Format("{0} was killed by {1}.", m.GetPlayerName(player), m.GetBlockName(sourceID));
-        			}
-        			break;
-        		case DeathReason.Drowning:
-        			Die(player);
-        			deathMessage = string.Format("{0} tried to breathe under water.", m.GetPlayerName(player));
-        			break;
-        		case DeathReason.Explosion:
-        			if (!EnableTeamkill)
+            string deathMessage = "";
+            switch (reason)
+            {
+                case DeathReason.FallDamage:
+                    Die(player);
+                    deathMessage = string.Format("{0}{1} &7was doomed to fall.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                    break;
+                case DeathReason.BlockDamage:
+                    if (sourceID == m.GetBlockId("Lava"))
+                    {
+                        Die(player);
+                        deathMessage = string.Format("{0}{1} &7thought they could swim in Lava.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                    }
+                    else if (sourceID == m.GetBlockId("Fire"))
+                    {
+                        Die(player);
+                        deathMessage = string.Format("{0}{1} &7was burned alive.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                    }
+                    else
+                    {
+                        Die(player);
+                        deathMessage = string.Format("{0}{1} &7was killed by {2}.", GetTeamColorString(players[player].team), m.GetPlayerName(player), m.GetBlockName(sourceID));
+                    }
+                    break;
+                case DeathReason.Drowning:
+                    Die(player);
+                    deathMessage = string.Format("{0}{1} &7tried to breathe under water.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                    break;
+                case DeathReason.Explosion:
+                    if (!EnableTeamkill)
                     {
                         if (players[sourceID].team == players[player].team)
                         {
@@ -529,7 +529,7 @@ namespace ManicDigger.Mods
                     //Check if one of the players is spectator
                     if (players[sourceID].team == Team.Spectator || players[player].team == Team.Spectator)
                     {
-                    	//Just here for safety. Spectators shouldn't have weapons...
+                        //Just here for safety. Spectators shouldn't have weapons...
                         break;
                     }
                     //Check if one of the players is dead
@@ -540,8 +540,8 @@ namespace ManicDigger.Mods
                     Die(player);
                     if (sourceID == player)
                     {
-                    	deathMessage = string.Format("{0} blew himself up.", m.GetPlayerName(player));
-                    	break;
+                        deathMessage = string.Format("{0}{1} &7blew himself up.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                        break;
                     }
                     if (players[sourceID].team != players[player].team)
                     {
@@ -553,22 +553,22 @@ namespace ManicDigger.Mods
                     }
                     if (players[sourceID].team == players[player].team)
                     {
-                    	deathMessage = string.Format("{0} was blown into pieces by {1}. - {2}TEAMKILL", m.GetPlayerName(player), m.GetPlayerName(sourceID), m.colorError());
+                        deathMessage = string.Format("{0}{1} &7was blown into pieces by {2}{3}. - {4}TEAMKILL", GetTeamColorString(players[player].team), m.GetPlayerName(player), GetTeamColorString(players[sourceID].team), m.GetPlayerName(sourceID), m.colorError());
                     }
                     else
                     {
-                        deathMessage = string.Format("{0} was blown into pieces by {1}.", m.GetPlayerName(player), m.GetPlayerName(sourceID));
+                        deathMessage = string.Format("{0}{1} &7was blown into pieces by {2}{3}&7.", GetTeamColorString(players[player].team), m.GetPlayerName(player), GetTeamColorString(players[sourceID].team), m.GetPlayerName(sourceID));
                     }
-        			break;
-        		default:
-        			Die(player);
-        			deathMessage = string.Format("{0} died.", m.GetPlayerName(player));
-        			break;
-        	}
-        	if (!string.IsNullOrEmpty(deathMessage))
-        	{
-        		m.SendMessageToAll(deathMessage);
-        	}
+                    break;
+                default:
+                    Die(player);
+                    deathMessage = string.Format("{0}{1} &7died.", GetTeamColorString(players[player].team), m.GetPlayerName(player));
+                    break;
+            }
+            if (!string.IsNullOrEmpty(deathMessage))
+            {
+                m.SendMessageToAll(deathMessage);
+            }
         }
         
         void Respawn(int playerid)
@@ -595,7 +595,7 @@ namespace ManicDigger.Mods
             m.SetPlayerPosition(playerid, posx, posy, posz);
             ResetInventoryOnRespawn(playerid);
         }
-
+        
         public int BlockHeight(int x, int y)
         {
             for (int z = m.GetMapSizeZ() - 1; z >= 0; z--)
@@ -671,7 +671,7 @@ namespace ManicDigger.Mods
                 if (players[sourceplayer].team == players[targetplayer].team)
                 {
                     m.SendMessageToAll(string.Format("{0} kills {1} - " + m.colorError() + "TEAMKILL", m.GetPlayerName(sourceplayer), m.GetPlayerName(targetplayer)));
-
+                    
                 }
                 else
                 {
@@ -686,7 +686,7 @@ namespace ManicDigger.Mods
                     (int)m.GetPlayerPositionZ(targetplayer), "grunt1.ogg");
             }
         }
-
+        
         void Die(int player)
         {
             m.PlaySoundAt((int)m.GetPlayerPositionX(player),
@@ -698,7 +698,7 @@ namespace ManicDigger.Mods
             m.FollowPlayer(player, player, true);
             UpdatePlayerModel(player);
         }
-
+        
         void RespawnKey(int player, SpecialKey key)
         {
             if (key != SpecialKey.Respawn)
@@ -716,7 +716,7 @@ namespace ManicDigger.Mods
             m.SendMessage(player, "Respawn.");
             Die(player);
         }
-
+        
         void OnTabKey(int player, SpecialKey key)
         {
             if (key != SpecialKey.TabPlayerList)
@@ -727,28 +727,28 @@ namespace ManicDigger.Mods
             Dialog d = new Dialog();
             d.IsModal = true;
             List<Widget> widgets = new List<Widget>();
-
+            
             // table alignment
             float tableX = xcenter(m.GetScreenResolution(player)[0], tableWidth);
             float tableY = tableMarginTop;
-
+            
             // text to draw
             string row1 = m.GetServerName();
             row1 = cutText(row1, HeadingFont, tableWidth - 2 * tablePadding);
-
+            
             string row2 = m.GetServerMotd();
             row2 = cutText(row2, SmallFontBold, tableWidth - 2 * tablePadding);
-
+            
             string row3_1 = "IP: " + m.GetServerIp() + ":" + m.GetServerPort();
             string row3_2 = (int)(m.GetPlayerPing(player) * 1000) + "ms";
-
+            
             string row4_1 = "Players: " + m.AllPlayers().Length;
             string row4_2 = "Page: " + (page + 1) + "/" + (pageCount + 1);
-
+            
             string row5_1 = "ID";
             //string row5_2 = "Player";
             //string row5_3 = "Ping";
-
+            
             // row heights
             float row1Height = textHeight(row1, HeadingFont) + 2 * tablePadding;
             float row2Height = textHeight(row2, SmallFontBold) + 2 * tablePadding;
@@ -756,30 +756,30 @@ namespace ManicDigger.Mods
             float row4Height = textHeight(row4_1, SmallFont) + 2 * tablePadding;
             float row5Height = textHeight(row5_1, NormalFontBold) + 2 * tablePadding;
             float listEntryHeight = textHeight("Player", NormalFont) + 2 * listEntryPaddingTopBottom;
-
+            
             float heightOffset = 0;
-
+            
             // determine how many entries can be displayed
             tableHeight = m.GetScreenResolution(player)[1] - tableMarginTop - tableMarginBottom;
             float availableEntrySpace = tableHeight - row1Height - row2Height - row3Height - row4Height - (row5Height + tableLineWidth);
-
+            
             int entriesPerPage = (int)(availableEntrySpace / listEntryHeight);
             pageCount = (int)Math.Ceiling((float)(m.AllPlayers().Length / entriesPerPage));
             if (page > pageCount)
             {
                 page = 0;
             }
-
+            
             // 1 - heading: Servername
             widgets.Add(Widget.MakeSolid(tableX, tableY, tableWidth, row1Height, Color.DarkGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row1, HeadingFont, tableX + xcenter(tableWidth, textWidth(row1, HeadingFont)), tableY + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row1Height;
-
+            
             // 2 - MOTD
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row2Height, Color.ForestGreen.ToArgb()));
             widgets.Add(Widget.MakeText(row2, SmallFontBold, tableX + xcenter(tableWidth, textWidth(row2, SmallFontBold)), tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row2Height;
-
+            
             // 3 - server info: IP Motd Serverping
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row3Height, Color.DarkSeaGreen.ToArgb()));
             // row3_1 - IP align left
@@ -787,7 +787,7 @@ namespace ManicDigger.Mods
             // row3_2 - Serverping align right
             widgets.Add(Widget.MakeText(row3_2, SmallFont, tableX + tableWidth - textWidth(row3_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row3Height;
-
+            
             // 4 - infoline: Playercount, Page
             widgets.Add(Widget.MakeSolid(tableX, tableY + heightOffset, tableWidth, row4Height, Color.DimGray.ToArgb()));
             // row4_1 PlayerCount
@@ -795,7 +795,7 @@ namespace ManicDigger.Mods
             // row4_2 PlayerCount
             widgets.Add(Widget.MakeText(row4_2, SmallFont, tableX + tableWidth - textWidth(row4_2, SmallFont) - tablePadding, tableY + heightOffset + tablePadding, TEXT_COLOR.ToArgb()));
             heightOffset += row4Height;
-
+            
             Dictionary<Team, List<int>> playersByTeam = new Dictionary<Team, List<int>>();
             playersByTeam[Team.Blue] = new List<int>();
             playersByTeam[Team.Spectator] = new List<int>();
@@ -816,8 +816,8 @@ namespace ManicDigger.Mods
                     widgets.Add(Widget.MakeText(s, NormalFont, tableX + 200 * t, tableY + heightOffset + listEntryHeight * i, Color.White.ToArgb()));
                 }
             }
-
-
+            
+            
             var wtab = Widget.MakeSolid(0, 0, 0, 0, 0);
             wtab.ClickKey = '\t';
             wtab.Id = "Tab";
@@ -826,17 +826,17 @@ namespace ManicDigger.Mods
             wesc.ClickKey = (char)27;
             wesc.Id = "Esc";
             widgets.Add(wesc);
-
+            
             d.Width = m.GetScreenResolution(player)[0];
             d.Height = m.GetScreenResolution(player)[1];
             d.Widgets = widgets.ToArray();
             m.SendDialog(player, "PlayerList", d);
         }
-
-
+        
+        
         private int pageCount = 0; //number of pages for player table entries
         private int page = 0; // current displayed page
-
+        
         // fonts
         public readonly Color TEXT_COLOR = Color.Black;
         public DialogFont HeadingFont = new DialogFont("Verdana", 11f, DialogFontStyle.Bold);
@@ -844,7 +844,7 @@ namespace ManicDigger.Mods
         public DialogFont NormalFontBold = new DialogFont("Verdana", 10f, DialogFontStyle.Bold);
         public DialogFont SmallFont = new DialogFont("Verdana", 8f, DialogFontStyle.Regular);
         public DialogFont SmallFontBold = new DialogFont("Verdana", 8f, DialogFontStyle.Bold);
-
+        
         private float tableMarginTop = 10;
         private float tableMarginBottom = 10;
         private float tableWidth = 500;
@@ -855,7 +855,7 @@ namespace ManicDigger.Mods
         //private float tablePlayerColumnWidth = 400;
         //private float tablePingColumnWidth = 50;
         private float tableLineWidth = 2;
-
+        
         public bool NextPage()
         {
             if (this.page < this.pageCount)
@@ -865,7 +865,7 @@ namespace ManicDigger.Mods
             }
             return false;
         }
-
+        
         public bool PreviousPage()
         {
             if (this.page > 0)
@@ -875,7 +875,7 @@ namespace ManicDigger.Mods
             }
             return false;
         }
-
+        
         private float xcenter(float outerWidth, float innerWidth)
         {
             return (outerWidth / 2 - innerWidth / 2);
@@ -900,7 +900,7 @@ namespace ManicDigger.Mods
             }
             return text;
         }
-
+        
         void OnTabResponse(int player, string widgetid)
         {
             if (widgetid == "Tab" || widgetid == "Esc")
@@ -909,9 +909,9 @@ namespace ManicDigger.Mods
                 tabOpen.Remove(m.GetPlayerName(player));
             }
         }
-
+        
         Dictionary<string, bool> tabOpen = new Dictionary<string, bool>();
-
+        
         void UpdateTab()
         {
             foreach (var k in new Dictionary<string, bool>(tabOpen))
@@ -926,11 +926,11 @@ namespace ManicDigger.Mods
                 }
                 //player disconnected
                 tabOpen.Remove(k.Key);
-            nexttab:
+                nexttab:
                 ;
             }
         }
-
+        
         void UpdatePlayerModel(int player)
         {
             Inventory inv = m.GetInventory(player);
@@ -956,9 +956,9 @@ namespace ManicDigger.Mods
                 case Team.Spectator:
                     m.SetPlayerModel(player, model, "mineplayer.png");
                     break;
-            }
         }
-
+        }
+        
         void UpdateRespawnTimer()
         {
             int[] allplayers = m.AllPlayers();
@@ -995,7 +995,7 @@ namespace ManicDigger.Mods
                 }
             }
         }
-
+        
         void UpdateMedicalKitAmmoPack()
         {
             if (warmode == WarMode.Edit)
@@ -1054,7 +1054,7 @@ namespace ManicDigger.Mods
                 }
             }
         }
-
+        
         string OnChat(int player, string message, bool toteam)
         {
             if (warmode == WarMode.Edit)
@@ -1103,7 +1103,7 @@ namespace ManicDigger.Mods
             m.LogChat(senderColorString + sender + "&f: " + s);
             return null;
         }
-
+        
         bool OnCommand(int player, string command, string arguments)
         {
             if (command == "mode")
@@ -1135,7 +1135,7 @@ namespace ManicDigger.Mods
             }
             return false;
         }
-
+        
         void Restart()
         {
             int[] allplayers = m.AllPlayers();
@@ -1144,7 +1144,7 @@ namespace ManicDigger.Mods
                 PlayerJoin(p);
             }
         }
-
+        
         void OnBuild(int player, int x, int y, int z)
         {
             if (m.GetBlockNameAt(x, y, z) == "Water")

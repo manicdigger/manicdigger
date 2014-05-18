@@ -26,7 +26,7 @@ namespace ManicDigger.Mods
             Leaves = m.GetBlockId("Leaves");
             Apples = m.GetBlockId("Apples");
             TreeTrunk = m.GetBlockId("TreeTrunk");
-
+            
             m.RegisterOnBlockUpdate(BlockTickGrowCropsCycle);
             m.RegisterOnBlockUpdate(BlockTickGrowSapling);
             m.RegisterOnBlockUpdate(BlockTickMushroomDeath);
@@ -50,7 +50,7 @@ namespace ManicDigger.Mods
         int Leaves;
         int Apples;
         int TreeTrunk;
-
+        
         void BlockTickGrowCropsCycle(int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == DirtForFarming)
@@ -92,22 +92,22 @@ namespace ManicDigger.Mods
             Place(x, y, z + 1, TreeTrunk);
             Place(x, y, z + 2, TreeTrunk);
             Place(x, y, z + 3, TreeTrunk);
-
+            
             Place(x + 1, y, z + 3, Leaves);
             Place(x - 1, y, z + 3, Leaves);
             Place(x, y + 1, z + 3, Leaves);
             Place(x, y - 1, z + 3, Leaves);
-
+            
             Place(x + 1, y + 1, z + 3, Leaves);
             Place(x + 1, y - 1, z + 3, Leaves);
             Place(x - 1, y + 1, z + 3, Leaves);
             Place(x - 1, y - 1, z + 3, Leaves);
-
+            
             Place(x + 1, y, z + 4, Leaves);
             Place(x - 1, y, z + 4, Leaves);
             Place(x, y + 1, z + 4, Leaves);
             Place(x, y - 1, z + 4, Leaves);
-
+            
             Place(x, y, z + 4, Leaves);
         }
         void Place(int x, int y, int z, int blocktype)
@@ -166,7 +166,7 @@ namespace ManicDigger.Mods
             int xx = 0;
             int yy = 0;
             int dir = 0;
-
+            
             for (int i = 0; i < treeHeight; i++)
             {
                 Place(x, y, z + i, TileIdTreeTrunk);
@@ -180,7 +180,7 @@ namespace ManicDigger.Mods
                             int length = dir % 90 == 0 ? k : (int)(k / 2);
                             xx = length * (int)Math.Round(Math.Cos(dir * Math.PI / 180));
                             yy = length * (int)Math.Round(Math.Sin(dir * Math.PI / 180));
-
+                            
                             Place(x + xx, y + yy, z + i, TileIdTreeTrunk);
                             float appleChance = 0.45f;
                             int tile;
@@ -235,7 +235,7 @@ namespace ManicDigger.Mods
                 {
                     int under = m.GetBlock(x, y, z - 1);
                     if ((under == Dirt
-                          || under == Grass)) return;
+                        || under == Grass)) return;
                     m.SetBlock(x, y, z, 0);
                 }
             }

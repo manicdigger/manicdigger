@@ -7,7 +7,7 @@ namespace ManicDigger.Mods
     public class Ghost : IMod
     {
         public void PreStart(ModManager m) { }
-
+        
         public void Start(ModManager manager)
         {
             m = manager;
@@ -17,12 +17,12 @@ namespace ManicDigger.Mods
                 ghost = m.AddBot("Ghost");
             }
         }
-
+        
         bool enabled = false;
-
+        
         ModManager m;
         int ghost;
-
+        
         class Pos
         {
             public float x;
@@ -31,7 +31,7 @@ namespace ManicDigger.Mods
             public int heading;
             public int pitch;
         }
-
+        
         List<Pos> history = new List<Pos>();
         void f()
         {
@@ -46,7 +46,7 @@ namespace ManicDigger.Mods
                 pos.x = m.GetPlayerPositionX(p);
                 pos.y = m.GetPlayerPositionY(p);
                 pos.z = m.GetPlayerPositionZ(p);
-
+                
                 pos.heading = m.GetPlayerHeading(p);
                 pos.pitch = m.GetPlayerPitch(p);
                 history.Add(pos);

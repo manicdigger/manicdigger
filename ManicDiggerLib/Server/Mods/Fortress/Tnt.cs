@@ -20,19 +20,19 @@ namespace ManicDigger.Mods
                 Clone = new string[] { "clone" },
             };
             m.SetBlockType(46, "TNT", new BlockType()
-            {
-                TextureIdTop = "TNTTop",
-                TextureIdBottom = "TNTBottom",
-                TextureIdBack = "TNT",
-                TextureIdFront = "TNT",
-                TextureIdLeft = "TNT",
-                TextureIdRight = "TNT",
-                TextureIdForInventory = "TNT",
-                DrawType = DrawType.Solid,
-                WalkableType = WalkableType.Solid,
-                Sounds = solidSounds,
-                IsUsable = true,
-            });
+                {
+                    TextureIdTop = "TNTTop",
+                    TextureIdBottom = "TNTBottom",
+                    TextureIdBack = "TNT",
+                    TextureIdFront = "TNT",
+                    TextureIdLeft = "TNT",
+                    TextureIdRight = "TNT",
+                    TextureIdForInventory = "TNT",
+                    DrawType = DrawType.Solid,
+                    WalkableType = WalkableType.Solid,
+                    Sounds = solidSounds,
+                    IsUsable = true,
+                });
             tnt = m.GetBlockId("TNT");
             adminium = m.GetBlockId("Adminium");
             m.AddToCreativeInventory("TNT");
@@ -45,7 +45,7 @@ namespace ManicDigger.Mods
         int tnt;
         int adminium;
         Random rnd = new Random();
-
+        
         struct Vector3i
         {
             public Vector3i(int x, int y, int z)
@@ -58,7 +58,7 @@ namespace ManicDigger.Mods
             public int y;
             public int z;
         }
-
+        
         private void UseTnt(int player, int x, int y, int z)
         {
             if (m.GetBlock(x, y, z) == tnt)
@@ -74,10 +74,9 @@ namespace ManicDigger.Mods
                 }
             }
         }
-
+        
         private void UpdateTnt()
         {
-            //int startQueueCount = tntStack.Count;
             int now = 0;
             while (now++ < 3)
             {
@@ -88,7 +87,7 @@ namespace ManicDigger.Mods
                 Vector3i pos = tntStack.Pop();
                 int nearestplayer = m.NearestPlayer(pos.x, pos.y, pos.z);
                 m.PlaySoundAt(pos.x, pos.y, pos.z, "tnt.wav");
-
+                
                 for (int xx = 0; xx < tntRange; xx++)
                 {
                     for (int yy = 0; yy < tntRange; yy++)
@@ -98,8 +97,8 @@ namespace ManicDigger.Mods
                             if (sphereEq(xx - (tntRange - 1) / 2, yy - (tntRange - 1) / 2, zz - (tntRange - 1) / 2, tntRange / 2) <= 0)
                             {
                                 Vector3i pos2 = new Vector3i(pos.x + xx - tntRange / 2,
-                                pos.y + yy - tntRange / 2,
-                                pos.z + zz - tntRange / 2);
+                                    pos.y + yy - tntRange / 2,
+                                    pos.z + zz - tntRange / 2);
                                 if (!m.IsValidPos(pos2.x, pos2.y, pos2.z))
                                 {
                                     continue;
@@ -110,7 +109,6 @@ namespace ManicDigger.Mods
                                     && block == tnt)
                                 {
                                     tntStack.Push(pos2);
-                                    //tntTimer.accumulator = tntTimer.INTERVAL;
                                 }
                                 else
                                 {
@@ -143,7 +141,7 @@ namespace ManicDigger.Mods
         {
             return x * x + y * y + z * z - r * r;
         }
-
+        
         public int tntRange = 10; // sphere diameter
         Stack<Vector3i> tntStack = new Stack<Vector3i>();
         public int tntMax = 10;

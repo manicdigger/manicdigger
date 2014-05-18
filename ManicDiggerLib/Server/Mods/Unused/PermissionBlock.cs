@@ -8,35 +8,35 @@ namespace ManicDigger.Mods
         {
             m.RequireMod("Default");
         }
-
+        
         public int PermissionLevelsCount = 4;
         public int AreaSize = 64;
-
+        
         public void Start(ModManager manager)
         {
             m = manager;
-
+            
             for (int i = 0; i < PermissionLevelsCount; i++)
             {
                 m.SetBlockType(241 + i, "BuildPermission" + i, new BlockType()
-                {
-                    AllTextures = "BuildPermission" + i,
-                    DrawType = DrawType.Solid,
-                    WalkableType = WalkableType.Solid,
-                    IsBuildable = true,
-                });
+                    {
+                        AllTextures = "BuildPermission" + i,
+                        DrawType = DrawType.Solid,
+                        WalkableType = WalkableType.Solid,
+                        IsBuildable = true,
+                    });
                 m.AddToCreativeInventory("BuildPermission" + i);
             }
-
+            
             m.RegisterOnBlockBuild(OnBuild);
             m.RegisterOnBlockDelete(OnDelete);
         }
         ModManager m;
-
+        
         void OnBuild(int playerid, int x, int y, int z)
         {
             int permissionblock = m.GetBlockId("BuildPermission0");
-
+            
             //can't build any block in column
             for (int zz = 0; zz < m.GetMapSizeZ(); zz++)
             {
@@ -54,7 +54,7 @@ namespace ManicDigger.Mods
                     }
                 }
             }
-
+            
             //add area
             for (int i = 0; i < PermissionLevelsCount; i++)
             {
@@ -70,11 +70,11 @@ namespace ManicDigger.Mods
                 }
             }
         }
-
+        
         void OnDelete(int playerid, int x, int y, int z, int oldblock)
         {
             int permissionblock = m.GetBlockId("BuildPermission0");
-
+            
             //remove area
             for (int i = 0; i < PermissionLevelsCount; i++)
             {
