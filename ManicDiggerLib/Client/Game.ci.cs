@@ -11485,6 +11485,7 @@ public class OptionsCi
         UseServerTextures = true;
         EnableSound = true;
         EnableAutoJump = false;
+        ClientLanguage = "";
         Framerate = 0;
         Resolution = 0;
         Fullscreen = false;
@@ -11498,6 +11499,7 @@ public class OptionsCi
     internal bool UseServerTextures;
     internal bool EnableSound;
     internal bool EnableAutoJump;
+    internal string ClientLanguage;
     internal int Framerate;
     internal int Resolution;
     internal bool Fullscreen;

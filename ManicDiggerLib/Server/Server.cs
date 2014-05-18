@@ -594,7 +594,7 @@ namespace ManicDiggerServer
             	    SaveConfig();
                 }
             }
-            language.ServerLanguage = config.ServerLanguage;  //Switch to user-defined language.
+            language.OverrideLanguage = config.ServerLanguage;  //Switch to user-defined language.
             Console.WriteLine(language.ServerConfigLoaded());
         }
 
