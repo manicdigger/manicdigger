@@ -191,6 +191,7 @@
     Button otherSoundOption;
     Button otherReturnToOptionsMenu;
     Button otherAutoJumpOption;
+    Button otherLanguageSetting;
     void OtherSet()
     {
         Language language = game.language;
@@ -199,12 +200,15 @@
         otherSoundOption.Text = game.platform.StringFormat(language.SoundOption(), (game.AudioEnabled ? language.On() : language.Off()));
         otherAutoJumpOption = new Button();
         otherAutoJumpOption.Text = game.platform.StringFormat(language.AutoJumpOption(), (game.AutoJumpEnabled ? language.On() : language.Off()));
+        otherLanguageSetting = new Button();
+        otherLanguageSetting.Text = game.platform.StringFormat(language.ClientLanguageOption(), language.GetUsedLanguage());
         otherReturnToOptionsMenu = new Button();
         otherReturnToOptionsMenu.Text = language.ReturnToOptionsMenu();
 
         WidgetsClear();
         AddWidget(otherSoundOption);
         AddWidget(otherAutoJumpOption);
+        AddWidget(otherLanguageSetting);
         AddWidget(otherReturnToOptionsMenu);
     }
 
@@ -217,6 +221,11 @@
         if (b == otherAutoJumpOption)
         {
             game.AutoJumpEnabled = !game.AutoJumpEnabled;
+        }
+        if (b == otherLanguageSetting)
+        {
+            //Switch language based on available languages
+            game.language.NextLanguage();
         }
         if (b == otherReturnToOptionsMenu)
         {
@@ -617,6 +626,10 @@
         game.d_Config3d.viewdistance = options.DrawDistance;
         game.AudioEnabled = options.EnableSound;
         game.AutoJumpEnabled = options.EnableAutoJump;
+        if (options.ClientLanguage != "")
+        {
+            game.language.OverrideLanguage = options.ClientLanguage;
+        }
         game.d_TerrainChunkTesselator.EnableSmoothLight = options.Smoothshadows;
         game.d_TerrainChunkTesselator.BlockShadow = options.BlockShadowSave;
         game.ENABLE_LAG = options.Framerate;
@@ -636,6 +649,7 @@
         options.UseServerTextures = preferences.GetBool("UseServerTextures", true);
         options.EnableSound = preferences.GetBool("EnableSound", true);
         options.EnableAutoJump = preferences.GetBool("EnableAutoJump", false);
+        options.ClientLanguage = preferences.GetString("ClientLanguage", "");
         options.Framerate = preferences.GetInt("Framerate", 0);
         options.Resolution = preferences.GetInt("Resolution", 0);
         options.Fullscreen = preferences.GetBool("Fullscreen", false);
@@ -664,6 +678,10 @@
         options.DrawDistance = game.platform.FloatToInt(game.d_Config3d.viewdistance);
         options.EnableSound = game.AudioEnabled;
         options.EnableAutoJump = game.AutoJumpEnabled;
+        if (game.language.OverrideLanguage != null)
+        {
+            options.ClientLanguage = game.language.OverrideLanguage;
+        }
         options.Framerate = game.ENABLE_LAG;
         options.Fullscreen = game.platform.GetWindowState() == WindowState.Fullscreen;
         options.Smoothshadows = game.d_TerrainChunkTesselator.EnableSmoothLight;
@@ -681,6 +699,10 @@
         preferences.SetBool("UseServerTextures", options.UseServerTextures);
         preferences.SetBool("EnableSound", options.EnableSound);
         preferences.SetBool("EnableAutoJump", options.EnableAutoJump);
+        if (options.ClientLanguage != "")
+        {
+            preferences.SetString("ClientLanguage", options.ClientLanguage);
+        }
         preferences.SetInt("Framerate", options.Framerate);
         preferences.SetInt("Resolution", options.Resolution);
         preferences.SetBool("Fullscreen", options.Fullscreen);

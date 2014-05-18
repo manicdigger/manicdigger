@@ -5,10 +5,16 @@
         stringsMax = 1024 * 32;
         stringsCount = 0;
         strings = new TranslatedString[stringsMax];
+        loadedLanguagesCount = 0;
+        loadedLanguagesMax = 64;
+        loadedLanguages = new string[loadedLanguagesMax];
     }
 
     internal GamePlatform platform;
-    internal string ServerLanguage;
+    internal string OverrideLanguage;
+    internal string[] loadedLanguages;
+    internal int loadedLanguagesMax;
+    internal int loadedLanguagesCount;
 
     public string CannotWriteChatLog() { return Get("CannotWriteChatLog"); }
     public string ChunkUpdates() { return Get("ChunkUpdates"); }
@@ -68,6 +74,7 @@
     public string ShadowsOption() { return Get("ShadowsOption"); }
     public string SoundOption() { return Get("SoundOption"); }
     public string AutoJumpOption() { return Get("AutoJumpOption"); }
+    public string ClientLanguageOption() { return Get("ClientLanguageOption"); }
     public string SpawnPositionSet() { return Get("SpawnPositionSet"); }
     public string SpawnPositionSetTo() { return Get("SpawnPositionSetTo"); }
     public string Triangles() { return Get("Triangles"); }
@@ -230,6 +237,7 @@
         Add("en", "ShadowsOption", "Shadows: {0}");
         Add("en", "SoundOption", "Sound: {0}");
         Add("en", "AutoJumpOption", "Auto Jump: {0}");
+        Add("en", "ClientLanguageOption", "Language: {0}");
         Add("en", "SpawnPositionSet", "Spawn position set.");
         Add("en", "SpawnPositionSetTo", "Spawn position set to: {0}");
         Add("en", "Triangles", "Triangles: {0}");
@@ -378,6 +386,14 @@
 
     void Add(string language, string id, string translated)
     {
+        if (IsNewLanguage(language))
+        {
+            if (loadedLanguagesCount < loadedLanguagesMax)
+            {
+                loadedLanguages[loadedLanguagesCount] = language;
+                loadedLanguagesCount++;
+            }
+        }
         if (stringsCount > stringsMax)
         {
             return;
@@ -395,6 +411,14 @@
     
     public void Override(string language, string id, string translated)
     {
+        if (IsNewLanguage(language))
+        {
+            if (loadedLanguagesCount < loadedLanguagesMax)
+            {
+                loadedLanguages[loadedLanguagesCount] = language;
+                loadedLanguagesCount++;
+            }
+        }
         //Just add the new string if it doesn't exist
         if (!ContainsTranslation(language, id))
         {
@@ -456,13 +480,13 @@
     public string Get(string id)
     {
         string currentLanguage = "en";
-        if (ServerLanguage != null)
+        if (OverrideLanguage != null)
         {
-        	currentLanguage = ServerLanguage;  //Use server language if defined
+            currentLanguage = OverrideLanguage;  //Use specific language if defined
         }
         else if (platform != null)
         {
-            currentLanguage = platform.GetLanguageIso6391();  //Else use local language if defined
+            currentLanguage = platform.GetLanguageIso6391();  //Else use system language if defined
         }
         for (int i = 0; i < stringsMax; i++)
         {
@@ -489,6 +513,70 @@
         }
         // not found
         return id;
+    }
+    
+    public string GetUsedLanguage()
+    {
+        string currentLanguage = "en";
+        if (OverrideLanguage != null)
+        {
+            currentLanguage = OverrideLanguage;  //Use specific language if defined
+        }
+        else if (platform != null)
+        {
+            currentLanguage = platform.GetLanguageIso6391();  //Else use system language if defined
+        }
+        return currentLanguage;
+    }
+    
+    public void NextLanguage()
+    {
+        if (OverrideLanguage == null)
+        {
+            OverrideLanguage = "en";
+        }
+        //Get index of currently selected language
+        int languageIndex = -1;
+        for (int i = 0; i < loadedLanguagesMax; i++)
+        {
+            //Skip empty elements
+            if (loadedLanguages[i] == null)
+            {
+                continue;
+            }
+            if (loadedLanguages[i] == OverrideLanguage)
+            {
+                languageIndex = i;
+            }
+        }
+        if (languageIndex < 0)
+        {
+            languageIndex = 0;
+        }
+        languageIndex++;
+        if (languageIndex >= loadedLanguagesMax || languageIndex >= loadedLanguagesCount)
+        {
+            languageIndex = 0;
+        }
+        OverrideLanguage = loadedLanguages[languageIndex];
+    }
+    
+    public bool IsNewLanguage(string language)
+    {
+        //Scan whole array of loaded languages if given already exists
+        for (int i = 0; i < loadedLanguagesMax; i++)
+        {
+            //Skip empty elements
+            if (loadedLanguages[i] == null)
+            {
+                continue;
+            }
+            if (loadedLanguages[i] == language)
+            {
+                return false;
+            }
+        }
+        return true;
     }
     
     public TranslatedString[] AllStrings()

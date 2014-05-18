@@ -2,7 +2,7 @@
 {
     public AnimationState()
     {
-        bodyrotation = 270;
+        bodyrotation = -1;
         light = 1;
     }
     internal float interp;
@@ -121,6 +121,11 @@ public class CharacterRendererMonsterCode : ICharacterRenderer
         Variables variables = animstate.data;
         float headingdeg = ((one * heading) / 256) * 360;
         characterlight = 127 + (heading / 2);
+        //Reset player orientation when not yet loaded (prevents wrong-way-heads)
+        if (animstate.bodyrotation == -1)
+        {
+            animstate.bodyrotation = headingdeg;
+        }
         //keep track of how far neck is turned
         if (!moves)
         {
