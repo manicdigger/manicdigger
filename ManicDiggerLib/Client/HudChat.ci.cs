@@ -12,10 +12,10 @@
         ChatLinesMax = 1;
         ChatLines = new Chatline[ChatLinesMax];
         chatlines2 = new Chatline[1024];
+        ChatLineLength = 64;
     }
-
+    
     internal Game game;
-
     internal bool IsTyping;
     internal string GuiTypingBuffer;
     internal float ChatFontSize;
@@ -26,9 +26,9 @@
     internal int ChatLinesCount;
     internal int ChatPageScroll;
     internal bool IsTeamchat;
-
+    internal int ChatLineLength;
     internal float one;
-
+    
     public void Render()
     {
         DrawChatLines(IsTyping);
@@ -39,31 +39,56 @@
     }
     public void AddChatline(string s)
     {
+        //Check for links in chatline
+        bool containsLink = false;
+        int linkIndex = -1;
+        string linkTarget = "";
+        if (game.platform.StringContains(s, "http://"))
+        {
+            containsLink = true;
+            linkIndex = game.platform.StringIndexOf(s, "http://");
+            IntRef r = new IntRef();
+            string[] temp = game.platform.StringSplit(s, " ", r);
+            for (int i = 0; i < r.value; i++)
+            {
+                if (game.platform.StringIndexOf(temp[i], "http://") != -1)
+                {
+                    linkTarget = temp[i];
+                    break;
+                }
+            }
+        }
         int now = game.platform.TimeMillisecondsFromStart();
-        if (s.Length > 192)
+        //Display message in multiple lines if it's longer than one line
+        if (s.Length > ChatLineLength)
         {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 64, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 128, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 192), now));
-        }
-        else if (s.Length > 128)
-        {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 64, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 128), now));
-        }
-        else if (s.Length > 64)
-        {
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, 0, 64), now));
-            ChatLinesAdd(Chatline.Create(StringTools.StringSubstringToEnd(game.platform, s, 64), now));
+            for (int i = 0; i <= s.Length / ChatLineLength; i++)
+            {
+                int displayLength = ChatLineLength;
+                if (s.Length - (i * ChatLineLength) < ChatLineLength)
+                {
+                    displayLength = s.Length - (i * ChatLineLength);
+                }
+                if (containsLink)
+                    ChatLinesAdd(Chatline.CreateClickable(StringTools.StringSubstring(game.platform, s, i * ChatLineLength, displayLength), now, linkTarget));
+                else
+                    ChatLinesAdd(Chatline.Create(StringTools.StringSubstring(game.platform, s, i * ChatLineLength, displayLength), now));
+            }
         }
         else
         {
-            ChatLinesAdd(Chatline.Create(s, now));
+            if (containsLink)
+                ChatLinesAdd(Chatline.CreateClickable(s, now, linkTarget));
+            else
+                ChatLinesAdd(Chatline.Create(s, now));
         }
     }
-
+    
+    public void OnMouseDown(MouseEventArgs args)
+    {
+        //TODO: Clickable links
+    }
+    
     void ChatLinesAdd(Chatline chatline)
     {
         if (ChatLinesCount >= ChatLinesMax)
@@ -78,7 +103,7 @@
         }
         ChatLines[ChatLinesCount++] = chatline;
     }
-
+    
     Chatline[] chatlines2;
     public void DrawChatLines(bool all)
     {
@@ -143,12 +168,25 @@ public class Chatline
 {
     internal string text;
     internal int timeMilliseconds;
-
+    internal bool clickable;
+    internal string linkTarget;
+    
     internal static Chatline Create(string text_, int timeMilliseconds_)
     {
         Chatline c = new Chatline();
         c.text = text_;
         c.timeMilliseconds = timeMilliseconds_;
+        c.clickable = false;
+        return c;
+    }
+    
+    internal static Chatline CreateClickable(string text_, int timeMilliseconds_, string linkTarget_)
+    {
+        Chatline c = new Chatline();
+        c.text = text_;
+        c.timeMilliseconds = timeMilliseconds_;
+        c.clickable = true;
+        c.linkTarget = linkTarget_;
         return c;
     }
 }

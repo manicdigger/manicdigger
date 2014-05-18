@@ -2034,6 +2034,11 @@ public class GamePlatformNative : GamePlatform
     {
         return TouchTest;
     }
+    
+    public override void OpenLinkInBrowser(string url)
+    {
+        Process.Start(url);
+    }
 }
 
 public class AssetLoader

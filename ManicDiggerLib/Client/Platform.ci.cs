@@ -180,6 +180,7 @@
 #endif
     }
     public abstract bool IsSmallScreen();
+    public abstract void OpenLinkInBrowser(string url);
 }
 
 public class Asset

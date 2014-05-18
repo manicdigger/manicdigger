@@ -7859,6 +7859,10 @@
         {
             d_HudInventory.Mouse_ButtonDown(args);
         }
+        if (guistate == GuiState.EscapeMenu)
+        {
+            d_HudChat.OnMouseDown(args);
+        }
         InvalidVersionAllow();
     }
 
