@@ -802,6 +802,7 @@ namespace ManicDigger.Mods
             m.SetBlockType(151, "Compass", new BlockType()
                 {
                     AllTextures = "Compass",
+                    TextureIdForInventory = "CompassInventory",
                     DrawType = DrawType.Plant,
                     WalkableType = WalkableType.Solid,
                     Sounds = solidSounds,
