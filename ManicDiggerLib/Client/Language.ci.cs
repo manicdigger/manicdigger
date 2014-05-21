@@ -373,6 +373,7 @@
         Add("en", "Server_CommandPrivilegeRemoveNoPriv", "{0}Player {1} doesn't have privilege {2}.");
         Add("en", "Server_CommandPrivilegeRemoveSuccess", "{0} {1} lost privilege: {2}");
         Add("en", "Server_CommandRestartSuccess", "{0}{1} restarted server.");
+        Add("en", "Server_CommandShutdownSuccess", "{0}{1} shut down the server.");
         Add("en", "Server_CommandRestartModsSuccess", "{0}{1} restarted mods.");
         Add("en", "Server_CommandTeleportInvalidCoordinates", "{0}Invalid coordinates.");
         Add("en", "Server_CommandTeleportSuccess", "{0}New Position ({1},{2},{3}).");

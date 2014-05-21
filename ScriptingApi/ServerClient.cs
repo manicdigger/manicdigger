@@ -260,6 +260,7 @@ namespace ManicDigger
                     privilege_add,
                     privilege_remove,
                     restart,
+                    shutdown,
                     tp,
                     tp_pos,
                     teleport_player,
@@ -307,6 +308,7 @@ namespace ManicDigger
             public static string privilege_add = "privilege_add";
             public static string privilege_remove = "privilege_remove";
             public static string restart = "restart";
+            public static string shutdown = "shutdown";
             public static string tp = "tp";
             public static string tp_pos = "tp_pos";
             public static string teleport_player = "teleport_player";

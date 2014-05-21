@@ -351,6 +351,7 @@ Server_CommandPrivilegeAddSuccess={0}New privilege for {1}: {2}
 Server_CommandPrivilegeRemoveNoPriv={0}Player {1} doesn't have privilege {2}.
 Server_CommandPrivilegeRemoveSuccess={0} {1} lost privilege: {2}
 Server_CommandRestartSuccess={0}{1} restarted server.
+Server_CommandShutdownSuccess={0}{1} shut down the server.
 Server_CommandRestartModsSuccess={0}{1} restarted mods.
 Server_CommandTeleportInvalidCoordinates={0}Invalid coordinates.
 Server_CommandTeleportSuccess={0}New Position ({1},{2},{3}).

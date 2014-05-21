@@ -351,6 +351,7 @@ Server_CommandPrivilegeAddSuccess={0}Neues Privileg für {1}: {2}
 Server_CommandPrivilegeRemoveNoPriv={0}{1} besitzt das Privileg {2} nicht.
 Server_CommandPrivilegeRemoveSuccess={0}{1} hat Privileg verloren: {2}
 Server_CommandRestartSuccess={0}{1} hat den Server neu gestartet.
+Server_CommandShutdownSuccess={0}{1} hat den Server heruntergefahren.
 Server_CommandRestartModsSuccess={0}{1} die Mods neu gestartet.
 Server_CommandTeleportInvalidCoordinates={0}Ungültige Koordinaten.
 Server_CommandTeleportSuccess={0}Neue Position ({1},{2},{3}).

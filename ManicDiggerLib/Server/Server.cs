@@ -73,12 +73,6 @@ namespace ManicDiggerServer
         public int SpawnPositionRandomizationRange = 96;
         public bool IsMono = Type.GetType("Mono.Runtime") != null;
 
-        public void Exit()
-        {
-            exit.exit = true;
-            System.Diagnostics.Process.GetCurrentProcess().Kill(); //stops Console.ReadLine() in ServerConsole thread.
-        }
-
         public string serverpathlogs = Path.Combine(GameStorePath.GetStorePath(), "Logs");
         private void BuildLog(string p)
         {
@@ -145,59 +139,265 @@ namespace ManicDiggerServer
         public bool enableshadows = true;
         public Language language = new Language();
 
+        public void Process()
+        {
+            try
+            {
+                //Save data
+                ProcessSave();
+                //Do server stuff
+                ProcessMain();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+        public void ProcessSave()
+        {
+            if ((DateTime.Now - lastsave).TotalMinutes > 2)
+            {
+                DateTime start = DateTime.UtcNow;
+                SaveGlobalData();
+                Console.WriteLine(language.ServerGameSaved(), (DateTime.UtcNow - start));
+                lastsave = DateTime.Now;
+            }
+        }
+        public void ProcessMain()
+        {
+            if (mainSocket0 == null)
+            {
+                return;
+            }
+            {
+                double currenttime = gettime() - starttime;
+                double deltaTime = currenttime - oldtime;
+                accumulator += deltaTime;
+                double dt = SIMULATION_STEP_LENGTH;
+                while (accumulator > dt)
+                {
+                    simulationcurrentframe++;
+                    if (//(GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
+                        //||
+                        GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
+                    {
+                        foreach (var c in clients)
+                        {
+                            NotifySeason(c.Key);
+                        }
+                    }
+                    accumulator -= dt;
+                }
+                oldtime = currenttime;
+            }
+            
+            INetIncomingMessage msg;
+            Stopwatch s = new Stopwatch();
+            s.Start();
+            
+            //Process client packets
+            while ((msg = mainSocket0.ReadMessage()) != null)
+            {
+                ProcessNetMessage(msg, mainSocket0, s);
+            }
+            if (mainSocket1 != null)
+            {
+                while ((msg = mainSocket1.ReadMessage()) != null)
+                {
+                    ProcessNetMessage(msg, mainSocket1, s);
+                }
+            }
+            foreach (var k in clients)
+            {
+                k.Value.socket.Update();
+            }
+            
+            //Updates the map
+            NotifyMap();
+            
+            //Send updates to player
+            foreach (var k in clients)
+            {
+                //k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
+                NotifyInventory(k.Key);
+                NotifyPlayerStats(k.Key);
+                if (config.Monsters)
+                {
+                    k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
+                }
+            }
+            
+            //Sends ping to all clients and disconnects timed-out players
+            pingtimer.Update(
+            delegate
+            {
+                if (exit.GetExit())
+                {
+                    //Instantly return if server wants to exit
+                    return;
+                }
+                List<int> keysToDelete = new List<int>();
+                foreach (var k in clients)
+                {
+                    // Check if client is alive. Detect half-dropped connections.
+                    if (!k.Value.Ping.Send(platform)/*&& k.Value.state == ClientStateOnServer.Playing*/)
+                    {
+                        if (k.Value.Ping.Timeout(platform))
+                        {
+                            Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
+                            keysToDelete.Add(k.Key);
+                        }
+                    }
+                    else
+                    {
+                        SendPing(k.Key);
+                    }
+                }
+
+                foreach (int key in keysToDelete)
+                {
+                    KillPlayer(key);
+                }
+            }
+            );
+            
+            //Unload chunks currently not seen by players
+            UnloadUnusedChunks();
+            
+            //Update all loaded chunks
+            for (int i = 0; i < ChunksSimulated; i++)
+            {
+                ChunkSimulation();
+            }
+            
+            //Process Mod timers
+            foreach (var k in timers)
+            {
+                k.Key.Update(k.Value);
+            }
+            
+            //Reset data displayed in /stat
+            if ((DateTime.UtcNow - statsupdate).TotalSeconds >= 2)
+            {
+                statsupdate = DateTime.UtcNow;
+                StatTotalPackets = 0;
+                StatTotalPacketsLength = 0;
+            }
+            
+            //Send player position updates to every other player
+            if ((DateTime.UtcNow - botpositionupdate).TotalSeconds >= 0.1)
+            {
+                foreach (var a in clients)
+                {
+                    if (!a.Value.IsBot)
+                    {
+                        //continue;	//Excludes bots positions from being sent
+                    }
+                    foreach (var b in clients)
+                    {
+                        if (b.Key != a.Key)
+                        {
+                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= PlayerDrawDistance * PlayerDrawDistance)
+                            {
+                                SendPlayerTeleport(b.Key, a.Key,
+                                    a.Value.PositionMul32GlX,
+                                    a.Value.PositionMul32GlY,
+                                    a.Value.PositionMul32GlZ,
+                                    (byte)a.Value.positionheading,
+                                    (byte)a.Value.positionpitch,
+                                    a.Value.stance);
+                            }
+                        }
+                    }
+                }
+                botpositionupdate = DateTime.UtcNow;
+            }
+            
+            //Determine how long it took all operations to finish
+            lastServerTick = s.ElapsedMilliseconds;
+            if (lastServerTick > 500)
+            {
+                //Print an error if the value gets too big - TODO: Adjust
+                Console.WriteLine("Server process takes too long! Overloaded? ({0}ms)", lastServerTick);
+            }
+        }
+
         public void Start()
         {
-            Server server = this;
-            language.platform = new GamePlatformNative();
+            //Load translations
+            GamePlatform p = new GamePlatformNative();
+            language.platform = p;
             language.LoadTranslations();
-            server.LoadConfig();
-            server.LoadBanlist();
-            var map = new ManicDiggerServer.ServerMap();
+            
+            //Load config files
+            LoadConfig();
+            LoadBanlist();
+            
+            //Initialize server map
+            var map = new ServerMap();
             map.server = this;
-            map.d_CurrentTime = server;
+            map.d_CurrentTime = this;
             map.chunksize = 32;
             for (int i = 0; i < BlockTypes.Length; i++)
             {
                 BlockTypes[i] = new BlockType() { };
             }
-
             map.d_Heightmap = new InfiniteMapChunked2dServer() { chunksize = Server.chunksize, d_Map = map };
-            map.Reset(server.config.MapSizeX, server.config.MapSizeY, server.config.MapSizeZ);
-            server.d_Map = map;
+            map.Reset(config.MapSizeX, config.MapSizeY, config.MapSizeZ);
+            d_Map = map;
+            
+            //Load assets (textures, sounds, etc.)
             string[] datapaths = new[] { Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "data"), "data" };
             string[] datapathspublic = new[] { Path.Combine(datapaths[0], "public"), Path.Combine(datapaths[1], "public") };
-            server.PublicDataPaths = datapathspublic;
+            PublicDataPaths = datapathspublic;
             assetLoader = new AssetLoader(datapathspublic);
             LoadAssets();
             var getfile = new GetFileStream(datapaths);
+            d_GetFile = getfile;
+            
+            //Initialize game components
             var data = new GameData();
             data.Start();
-            server.d_Data = data;
-            server.d_CraftingTableTool = new CraftingTableTool() { d_Map = map, d_Data = data };
-            server.LocalConnectionsOnly = !Public;
-            server.d_GetFile = getfile;
+            d_Data = data;
+            d_CraftingTableTool = new CraftingTableTool() { d_Map = map, d_Data = data };
+            LocalConnectionsOnly = !Public;
             var networkcompression = new CompressionGzip();
             var diskcompression = new CompressionGzip();
             var chunkdb = new ChunkDbCompressed() { d_ChunkDb = new ChunkDbSqlite(), d_Compression = diskcompression };
-            server.d_ChunkDb = chunkdb;
+            d_ChunkDb = chunkdb;
             map.d_ChunkDb = chunkdb;
-            server.d_NetworkCompression = networkcompression;
-            map.d_Data = server.d_Data;
-            server.d_DataItems = new GameDataItemsBlocks() { d_Data = data };
-            server.SaveFilenameWithoutExtension = SaveFilenameWithoutExtension;
+            d_NetworkCompression = networkcompression;
+            map.d_Data = d_Data;
+            d_DataItems = new GameDataItemsBlocks() { d_Data = data };
             if (mainSocket0 == null)
             {
-                server.mainSocket0 = new EnetNetServer() { platform = new GamePlatformNative() };
+                mainSocket0 = new EnetNetServer() { platform = p };
                 if (mainSocket1 == null)
                 {
-                    server.mainSocket1 = new TcpNetServer();
+                    mainSocket1 = new TcpNetServer();
                 }
             }
-
-            server.d_Heartbeat = new ServerHeartbeat();
-            if ((Public) && (server.config.Public))
+            
+            //Start heartbeat thread
+            d_Heartbeat = new ServerHeartbeat();
+            if ((Public) && (config.Public))
             {
-                new Thread((a) => { for (; ; ) { server.SendHeartbeat(); Thread.Sleep(TimeSpan.FromMinutes(1)); } }).Start();
+                new Thread((a) =>
+                    {
+                        //Keep doing this as long as server doesn't want to exit
+                        int elapsed = 60;
+                        while (!exit.exit)
+                        {
+                            if (elapsed >= 60)
+                            {
+                                SendHeartbeat();
+                                elapsed = 0;
+                            }
+                            elapsed++;
+                            //Only sleep for 1 second to allow thread to exit fast
+                            Thread.Sleep(TimeSpan.FromSeconds(1));
+                        }
+                    }).Start();
             }
 
             all_privileges.AddRange(ServerClientMisc.Privilege.All());
@@ -234,7 +434,7 @@ namespace ManicDiggerServer
             // set up server console interpreter
             this.serverConsoleClient = new Client()
             {
-                Id = this.serverConsoleId,
+                Id = serverConsoleId,
                 playername = "Server"
             };
             ManicDigger.Group serverGroup = new ManicDigger.Group();
@@ -243,8 +443,62 @@ namespace ManicDiggerServer
             serverGroup.GroupPrivileges = new List<string>();
             serverGroup.GroupPrivileges = all_privileges;
             serverGroup.GroupColor = ServerClientMisc.ClientColor.Red;
-            this.serverConsoleClient.AssignGroup(serverGroup);
-            this.serverConsole = new ServerConsole(this, exit);
+            serverConsoleClient.AssignGroup(serverGroup);
+            serverConsole = new ServerConsole(this, exit);
+        }
+        void Start(int port)
+        {
+            mainSocket0.Configuration().SetPort(port);
+            mainSocket0.Start();
+            if (mainSocket1 != null)
+            {
+                mainSocket1.Configuration().SetPort(port);
+                mainSocket1.Start();
+            }
+            int httpPort = port + 1;
+            if (config.EnableHTTPServer && (!IsSinglePlayer))
+            {
+                try
+                {
+                    httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, httpPort));
+                    var m = new MainHttpModule();
+                    m.server = this;
+                    httpServer.Install(m);
+                    foreach (var module in httpModules)
+                    {
+                        httpServer.Install(module.module);
+                    }
+                    httpServer.Start();
+                    Console.WriteLine(language.ServerHTTPServerStarted(), httpPort);
+                }
+                catch
+                {
+                    Console.WriteLine(language.ServerHTTPServerError(), httpPort);
+                }
+            }
+        }
+        public void Stop()
+        {
+            Console.WriteLine("[SERVER] Doing last tick...");
+            ProcessMain();
+            //Maybe inform mods about shutdown?
+            Console.WriteLine("[SERVER] Saving data...");
+            DateTime start = DateTime.UtcNow;
+            SaveGlobalData();
+            Console.WriteLine(language.ServerGameSaved(), (DateTime.UtcNow - start));
+            Console.WriteLine("[SERVER] Stopped the server!");
+        }
+        public void Restart()
+        {
+            //Server shall exit and be restarted
+            exit.SetRestart(true);
+            exit.SetExit(true);
+        }
+        public void Exit()
+        {
+            //Server shall be shutdown
+            exit.SetRestart(false);
+            exit.SetExit(true);
         }
 
         public List<string> all_privileges = new List<string>();
@@ -257,16 +511,6 @@ namespace ManicDiggerServer
             modManager = new ModManager1();
             var m = modManager;
             m.Start(this);
-            /*
-            {
-                //debug war mod
-                new ManicDigger.Mods.DefaultWar().Start(m);
-                new ManicDigger.Mods.Noise2DWorldGeneratorWar().Start(m);
-                new ManicDigger.Mods.TreeGeneratorWar().Start(m);
-                new ManicDigger.Mods.War().Start(m);
-                return;
-            }
-            */
             var scritps = GetScriptSources();
             modloader.CompileScripts(scritps, restart);
             modloader.Start(m, m.required);
@@ -496,16 +740,6 @@ namespace ManicDiggerServer
                 return SaveFilenameOverride;
             }
             return Path.Combine(GameStorePath.gamepathsaves, SaveFilenameWithoutExtension + MapManipulator.BinSaveExtension);
-        }
-        public void Process11()
-        {
-            if ((DateTime.Now - lastsave).TotalMinutes > 2)
-            {
-                DateTime start = DateTime.UtcNow;
-                SaveGlobalData();
-                Console.WriteLine(language.ServerGameSaved(), (DateTime.UtcNow - start));
-                lastsave = DateTime.Now;
-            }
         }
 
         private void SaveGlobalData()
@@ -835,7 +1069,6 @@ namespace ManicDiggerServer
             }
         }
 
-        IPEndPoint iep;
         bool writtenServerKey = false;
         public string hashPrefix = "server=";
         string GetHash(string hash)
@@ -853,48 +1086,6 @@ namespace ManicDiggerServer
             }
             return hash;
         }
-        void Start(int port)
-        {
-            /*
-            if (LocalConnectionsOnly)
-            {
-                iep = new IPEndPoint(IPAddress.Loopback, port);
-            }
-            else
-            {
-                iep = new IPEndPoint(IPAddress.Any, port);
-            }
-            */
-            mainSocket0.Configuration().SetPort(port);
-            mainSocket0.Start();
-            if (mainSocket1 != null)
-            {
-                mainSocket1.Configuration().SetPort(port);
-                mainSocket1.Start();
-            }
-            int httpPort = port + 1;
-            if (config.EnableHTTPServer && (!IsSinglePlayer))
-            {
-            	try
-            	{
-                    httpServer = new FragLabs.HTTP.HttpServer(new IPEndPoint(IPAddress.Any, httpPort));
-                	var m = new MainHttpModule();
-                	m.server = this;
-                	httpServer.Install(m);
-                	foreach (var module in httpModules)
-                	{
-                    	httpServer.Install(module.module);
-                	}
-                	httpServer.Start();
-                    Console.WriteLine(language.ServerHTTPServerStarted(), httpPort);
-            	}
-            	catch
-            	{
-                    Console.WriteLine(language.ServerHTTPServerError(), httpPort);
-            	}
-            }
-        }
-
         class MainHttpModule : FragLabs.HTTP.IHttpModule
         {
             public Server server;
@@ -942,18 +1133,6 @@ namespace ManicDiggerServer
 
         internal FragLabs.HTTP.HttpServer httpServer;
 
-        public void Process()
-        {
-            try
-            {
-                Process11();
-                Process1();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-        }
         public void Dispose()
         {
             if (!disposed)
@@ -972,6 +1151,7 @@ namespace ManicDiggerServer
         public int SimulationCurrentFrame { get { return (int)simulationcurrentframe; } }
         double oldtime;
         double accumulator;
+        float lastServerTick;
 
         private int lastClientId;
         public int GenerateClientId()
@@ -985,145 +1165,6 @@ namespace ManicDiggerServer
         }
 
         public GamePlatformNative platform = new GamePlatformNative();
-
-        public void Process1()
-        {
-            if (mainSocket0 == null)
-            {
-                return;
-            }
-            {
-                double currenttime = gettime() - starttime;
-                double deltaTime = currenttime - oldtime;
-                accumulator += deltaTime;
-                double dt = SIMULATION_STEP_LENGTH;
-                while (accumulator > dt)
-                {
-                    simulationcurrentframe++;
-                    /*
-                    gameworld.Tick();
-                    if (simulationcurrentframe % SIMULATION_KEYFRAME_EVERY == 0)
-                    {
-                        foreach (var k in clients)
-                        {
-                            SendTick(k.Key);
-                        }
-                    }
-                    */
-                    if (//(GetSeason(simulationcurrentframe) != GetSeason(simulationcurrentframe - 1))
-                        //||
-                        GetHour(simulationcurrentframe) != GetHour(simulationcurrentframe - 1))
-                    {
-                        foreach (var c in clients)
-                        {
-                            NotifySeason(c.Key);
-                        }
-                    }
-                    accumulator -= dt;
-                }
-                oldtime = currenttime;
-            }
-
-            INetIncomingMessage msg;
-            Stopwatch s = new Stopwatch();
-            s.Start();
-            while ((msg = mainSocket0.ReadMessage()) != null)
-            {
-                ProcessNetMessage(msg, mainSocket0, s);
-            }
-            if (mainSocket1 != null)
-            {
-                while ((msg = mainSocket1.ReadMessage()) != null)
-                {
-                    ProcessNetMessage(msg, mainSocket1, s);
-                }
-            }
-            foreach (var k in clients)
-            {
-                k.Value.socket.Update();
-            }
-            NotifyMap();
-            foreach (var k in clients)
-            {
-                //k.Value.notifyMapTimer.Update(delegate { NotifyMapChunks(k.Key, 1); });
-                NotifyInventory(k.Key);
-                NotifyPlayerStats(k.Key);
-                if (config.Monsters)
-                {
-                    k.Value.notifyMonstersTimer.Update(delegate { NotifyMonsters(k.Key); });
-                }
-            }
-            pingtimer.Update(
-            delegate
-            {
-                List<int> keysToDelete = new List<int>();
-                foreach (var k in clients)
-                {
-                    // Check if client is alive. Detect half-dropped connections.
-                    if (!k.Value.Ping.Send(platform)/*&& k.Value.state == ClientStateOnServer.Playing*/)
-                    {
-                        if (k.Value.Ping.Timeout(platform))
-                        {
-                            Console.WriteLine(k.Key + ": ping timeout. Disconnecting...");
-                            keysToDelete.Add(k.Key);
-                        }
-                    }
-                    else
-                    {
-                        SendPing(k.Key);
-                    }
-                }
-
-                foreach (int key in keysToDelete)
-                {
-                    KillPlayer(key);
-                }
-            }
-            );
-            UnloadUnusedChunks();
-            for (int i = 0; i < ChunksSimulated; i++)
-            {
-                ChunkSimulation();
-            }
-            foreach (var k in timers)
-            {
-                k.Key.Update(k.Value);
-            }
-            if ((DateTime.UtcNow - statsupdate).TotalSeconds >= 2)
-            {
-                statsupdate = DateTime.UtcNow;
-                StatTotalPackets = 0;
-                StatTotalPacketsLength = 0;
-            }
-            if ((DateTime.UtcNow - botpositionupdate).TotalSeconds >= 0.1)
-            {
-            	//Send player position updates to every other player
-                foreach (var a in clients)
-                {
-                    if (!a.Value.IsBot)
-                    {
-                        //continue;	//Excludes bots positions from being sent
-                    }
-                    foreach (var b in clients)
-                    {
-                        if (b.Key != a.Key)
-                        {
-                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= PlayerDrawDistance * PlayerDrawDistance)
-                            {
-                                SendPlayerTeleport(b.Key, a.Key,
-                                    a.Value.PositionMul32GlX,
-                                    a.Value.PositionMul32GlY,
-                                    a.Value.PositionMul32GlZ,
-                                    (byte)a.Value.positionheading,
-                                    (byte)a.Value.positionpitch,
-                                    a.Value.stance);
-                            }
-                        }
-                    }
-                }
-                botpositionupdate = DateTime.UtcNow;
-            }
-        }
 
         private void ProcessNetMessage(INetIncomingMessage msg, INetServer mainSocket, Stopwatch s)
         {

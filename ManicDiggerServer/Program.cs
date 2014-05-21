@@ -47,6 +47,7 @@ namespace ManicDiggerServer
         int parentid;
         bool IsAutoRestarter = true;
         int autoRestartCycle = 6;
+        const string lockFileName = "ManicDiggerServer.lck";
 
         void Main2()
         {
@@ -71,21 +72,55 @@ namespace ManicDiggerServer
             {
                 ChildServer();
             }
+            //End program (kills Input/Output Redirects)
+            Environment.Exit(0);
         }
 
         void ChildServer()
         {
+            try
+            {
+                //Try to create the lockfile at startup
+                File.Create(lockFileName);
+            }
+            catch
+            {
+                Console.WriteLine("[SERVER] Lockfile could not be created! Shutdown will not work!");
+            }
             Server server = new Server();
             server.exit = new GameExit();
             server.Public = true;
             server.Start();
             autoRestartCycle = server.config.AutoRestartCycle;
+            port = server.config.Port;
             for (; ; )
             {
-                port = server.config.Port;
                 server.Process();
                 Thread.Sleep(1);
-                if (server.exit != null && server.exit.GetExit()) { return; }
+                
+                //Check if server wants to exit
+                if (server.exit != null && server.exit.GetExit())
+                {
+                    //If so, save data
+                    server.Stop();
+                    
+                    //Check if server wants to be restarted
+                    if (!server.exit.GetRestart())
+                    {
+                        //Delete the lockfile if server wants to be shutdown
+                        try
+                        {
+                            File.Delete(lockFileName);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("[SERVER] Lockfile could not be deleted! Server will be restarted!");
+                        }
+                    }
+                    
+                    //Finally kill the server process
+                    Process.GetCurrentProcess().Kill();
+                }
 
                 if (!ENABLE_AUTORESTARTER)
                 {
@@ -151,6 +186,15 @@ namespace ManicDiggerServer
                 //a) server process not found
                 if (ServerProcess.HasExited)
                 {
+                    // I) Server wants to be shutdown (lockfile has been deleted by child server)
+                    if (!File.Exists(lockFileName))
+                    {
+                        Console.WriteLine("[SERVER] Successful shutdown");
+                        return;
+                    }
+                    
+                    // II) Server wants to be restarted or has crashed (lockfile not deleted)
+                    Console.WriteLine("[SERVER] Will restart");
                     Restart();
                 }
 

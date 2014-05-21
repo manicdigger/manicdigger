@@ -527,6 +527,9 @@ namespace ManicDiggerServer
                 case "restart":
                     this.RestartServer(sourceClientId);
                     break;
+                case "shutdown":
+                    this.ShutdownServer(sourceClientId);
+                    break;
                 case "mods":
                     this.RestartMods(sourceClientId);
                     break;
@@ -2324,6 +2327,19 @@ namespace ManicDiggerServer
             }
             SendMessageToAll(string.Format(language.Get("Server_CommandRestartSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
             ServerEventLog(string.Format("{0} restarts server.", GetClient(sourceClientId).playername));
+            Restart();
+            return true;
+        }
+
+        public bool ShutdownServer(int sourceClientId)
+        {
+            if (!PlayerHasPrivilege(sourceClientId, ServerClientMisc.Privilege.shutdown))
+            {
+                SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
+                return false;
+            }
+            SendMessageToAll(string.Format(language.Get("Server_CommandShutdownSuccess"), colorImportant, GetClient(sourceClientId).ColoredPlayername(colorImportant)));
+            ServerEventLog(string.Format("{0} shuts down server.", GetClient(sourceClientId).playername));
             Exit();
             return true;
         }
