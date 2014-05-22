@@ -140,6 +140,7 @@
     <Compile Include="Server\Mods\Fortress\Monsters.cs" />
     <Compile Include="Server\Mods\Fortress\OreGenerator.cs" />
     <Compile Include="Server\Mods\Fortress\HttpStats.cs" />
+    <Compile Include="Server\Mods\Fortress\RememberPosition.cs" />
     <Compile Include="Server\Mods\Unused\PermissionBlock.cs" />
     <Compile Include="Server\Mods\Fortress\PlayerList.cs" />
     <Compile Include="Server\Mods\Fortress\Revert.cs" />
