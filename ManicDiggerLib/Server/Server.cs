@@ -2225,10 +2225,6 @@ if (sent >= unknown.Count) { break; }
                         }
                         this.SetFillAreaLimit(clientid);
                         this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
-                        for (int i = 0; i < modEventHandlers.onplayerjoin.Count; i++)
-                        {
-                            modEventHandlers.onplayerjoin[i](clientid);
-                        }
                     }
                     break;
                 case Packet_ClientIdEnum.RequestBlob:
@@ -2250,6 +2246,11 @@ if (sent >= unknown.Count) { break; }
                         SendSunLevels(clientid);
                         SendLightLevels(clientid);
                         SendCraftingRecipes(clientid);
+
+                        for (int i = 0; i < modEventHandlers.onplayerjoin.Count; i++)
+                        {
+                            modEventHandlers.onplayerjoin[i](clientid);
+                        }
 
                         //notify all players about new player spawn
                         SendPlayerSpawnToAll(clientid);
