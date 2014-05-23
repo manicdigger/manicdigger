@@ -2475,6 +2475,11 @@ if (sent >= unknown.Count) { break; }
                         v *= BlockTypes[packet.Shot.WeaponBlock].ProjectileSpeed;
                         SendProjectile(clientid, DeserializeFloat(packet.Shot.FromX), DeserializeFloat(packet.Shot.FromY), DeserializeFloat(packet.Shot.FromZ),
                             v.X, v.Y, v.Z, packet.Shot.WeaponBlock, DeserializeFloat(packet.Shot.ExplodesAfter));
+                        //Handle OnWeaponShot so grenade ammo is correct
+                        for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
+                        {
+                            modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                        }
                         return;
                     }
                     for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
