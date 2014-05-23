@@ -4802,7 +4802,6 @@
                 packet.Identification.MapSizeZ);
             d_Heightmap.Restart();
         }
-        //serverterraintexture = ByteArrayToString(packet.Identification.TerrainTextureMd5);
         terrainRenderer.shadowssimple = packet.Identification.DisableShadows == 1 ? true : false;
         maxdrawdistance = packet.Identification.PlayerAreaSize / 2;
         if (maxdrawdistance == 0)
@@ -5181,17 +5180,6 @@
                 {
                     byte[] downloaded = blobdownload.ToArray();
 
-                    //if (ENABLE_PER_SERVER_TEXTURES || Options.UseServerTextures)
-                    //{
-                    //    if (blobdownloadhash == serverterraintexture)
-                    //    {
-                    //        using (Bitmap bmp = new Bitmap(new MemoryStream(downloaded)))
-                    //        {
-                    //            d_TerrainTextures.UseTerrainTextureAtlas2d(bmp);
-                    //        }
-                    //    }
-                    //}
-
                     if (blobdownloadname != null) // old servers
                     {
                         SetFile(blobdownloadname, blobdownloadmd5, downloaded, blobdownload.Length());
@@ -5441,7 +5429,6 @@
     internal Packet_CraftingRecipe[] d_CraftingRecipes;
     internal int d_CraftingRecipesCount;
     internal Packet_BlockType[] NewBlockTypes;
-    internal bool ENABLE_PER_SERVER_TEXTURES;
     internal string blobdownloadname;
     internal string blobdownloadmd5;
     internal CitoMemoryStream blobdownload;
