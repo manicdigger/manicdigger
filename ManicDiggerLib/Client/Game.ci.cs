@@ -6695,6 +6695,11 @@
 
     public void CameraChange()
     {
+        if (Follow != null)
+        {
+            //Prevents switching camera mode when following
+            return;
+        }
         if (cameratype == CameraType.Fpp)
         {
             cameratype = CameraType.Tpp;
@@ -7323,7 +7328,11 @@
         if (overheadcamera && pick2count.value > 0 && left)
         {
             //if not picked any object, and mouse button is pressed, then walk to destination.
-            playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
+            if (Follow == null)
+            {
+                //Only walk to destination when not following someone
+                playerdestination = Vector3Ref.Create(pick2[0].blockPos[0], pick2[0].blockPos[1] + 1, pick2[0].blockPos[2]);
+            }
         }
         bool pickdistanceok = (pick2count.value > 0) && (!ispistol);
         bool playertileempty = IsTileEmptyForPhysics(
