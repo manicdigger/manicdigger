@@ -1649,7 +1649,7 @@ if (sent >= unknown.Count) { break; }
         public void NotifyInventory(int clientid)
         {
             Client c = clients[clientid];
-            if (c.IsInventoryDirty && c.playername != invalidplayername)
+            if (c.IsInventoryDirty && c.playername != invalidplayername && !c.usingFill)
             {
                 Packet_ServerInventory p;
                 /*
@@ -2974,6 +2974,8 @@ if (sent >= unknown.Count) { break; }
             {
                 return false;
             }
+            //This prevents the player's inventory from getting sent to them while using fill (causes excessive bandwith usage)
+            clients[player_id].usingFill = true;
             for (int x = startx; x <= endx; ++x)
             {
                 for (int y = starty; y <= endy; ++y)
@@ -2998,6 +3000,7 @@ if (sent >= unknown.Count) { break; }
                     }
                 }
             }
+            clients[player_id].usingFill = false;
             return true;
         }
         bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
@@ -3853,6 +3856,7 @@ if (sent >= unknown.Count) { break; }
             public float generatingworldprogress;
             public int ActiveMaterialSlot;
             public bool IsSpectator;
+            public bool usingFill = false;
         }
         public Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
