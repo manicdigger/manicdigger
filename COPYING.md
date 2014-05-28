@@ -169,3 +169,30 @@ http://bcrypt.codeplex.com/license
 ANTLR 3 Runtime (BSD)
 ---------------------
 http://www.antlr3.org/license.html
+
+libHTTP (MIT)
+-------------
+https://github.com/JohnACarruthers/libHTTP
+
+ProtoBuf (Apache 2.0)
+---------------------
+https://silentorbit.com/protobuf/
+
+Modified: https://github.com/manicdigger/CitoProtobuf
+
+GlMatrix (zlib)
+---------------
+http://glmatrix.net/
+
+Modified: https://github.com/manicdigger/CitoGlMatrix
+
+
+Copyleft
+========
+Used only as compile-time tools. Not linked with output binary.
+
+cito (GPL)
+----------
+http://cito.sourceforge.net/
+
+Modified: https://github.com/manicdigger/cito
