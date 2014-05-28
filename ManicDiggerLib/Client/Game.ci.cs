@@ -1957,6 +1957,11 @@
         {
             return;
         }
+        if (GetFileLength(file) != 0)
+        {
+            platform.AudioPlayByteArray(GetFile(file), EyesPosX(), EyesPosY(), EyesPosZ());
+            return;
+        }
         BoolRef found = new BoolRef();
         string fullpath = platform.GetFullFilePath(file, found);
         if (!found.value)

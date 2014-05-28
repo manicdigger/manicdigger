@@ -72,6 +72,7 @@
     public abstract float MathCos(float a);
     public abstract float MathSin(float a);
     public abstract void AudioPlay(string path, float x, float y, float z);
+    public abstract void AudioPlayByteArray(byte[] data, float x, float y, float z);
     public abstract void AudioPlayLoop(string path, bool play, bool restart);
     public abstract void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ);
     public abstract void ConsoleWriteLine(string p);

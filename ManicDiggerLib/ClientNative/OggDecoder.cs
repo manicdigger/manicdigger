@@ -51,7 +51,7 @@ public class OggDecoder
 
         oy.init(); // Now we can read pages
 
-        while (true)
+        while (true) //This causes an OutOfMemory exception at line 173
         { // we repeat if the bitstream is chained
             int eos = 0;
 
@@ -323,6 +323,7 @@ public class OggDecoder
             vb.clear();
             vd.clear();
             vi.clear();  // must be called last
+            break; //Necessary for this not to crash
         }
 
         // OK, clean up the framer

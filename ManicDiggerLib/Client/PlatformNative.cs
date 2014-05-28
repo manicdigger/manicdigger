@@ -955,6 +955,12 @@ public class GamePlatformNative : GamePlatform
         audio.Play(path, new Vector3(x, y, z));
     }
     
+    public override void AudioPlayByteArray(byte[] data, float x, float y, float z)
+    {
+        StartAudio();
+        audio.PlayByteArray(data, new Vector3(x, y, z));
+    }
+    
     public override void AudioPlayLoop(string path, bool play, bool restart)
     {
         StartAudio();

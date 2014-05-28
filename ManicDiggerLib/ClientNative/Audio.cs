@@ -126,9 +126,17 @@ namespace ManicDigger
                 this.audio = audio;
                 this.position = position;
             }
+            public AudioTask(GameExit gameexit, byte[] data, AudioOpenAl audio, Vector3 position)
+            {
+                this.gameexit = gameexit;
+                this.sound = data;
+                this.audio = audio;
+                this.position = position;
+            }
             AudioOpenAl audio;
             GameExit gameexit;
             public string filename;
+            public byte[] sound;
             public Vector3 position;
             public void Play()
             {
@@ -184,13 +192,44 @@ namespace ManicDigger
                 }
                 return audio.cache[filename];
             }
+            AudioSample GetSampleFromArray(byte[] data)
+            {
+                Stream stream = new MemoryStream(data);
+                if (stream.ReadByte() == 'R'
+                    && stream.ReadByte() == 'I'
+                    && stream.ReadByte() == 'F'
+                    && stream.ReadByte() == 'F')
+                {
+                    stream.Position = 0;
+                    int channels, bits_per_sample, sample_rate;
+                    byte[] sound_data = LoadWave(stream, out channels, out bits_per_sample, out sample_rate);
+                    AudioSample sample = new AudioSample()
+                    {
+                        Pcm = sound_data,
+                        BitsPerSample = bits_per_sample,
+                        Channels = channels,
+                        Rate = sample_rate,
+                    };
+                    return sample;
+                }
+                else
+                {
+                    stream.Position = 0;
+                    AudioSample sample = new OggDecoder().OggToWav(stream);
+                    return sample;
+                }
+            }
 
             private void DoPlay()
             {
-                AudioSample sample = GetSample(filename);
-                //if(!audiofiles.ContainsKey(filename))
+                AudioSample sample;
+                if (sound != null)
                 {
-
+                    sample = GetSampleFromArray(sound);
+                }
+                else
+                {
+                    sample = GetSample(filename);
                 }
                 int source = OpenTK.Audio.OpenAL.AL.GenSource();
                 int state;
@@ -275,6 +314,10 @@ namespace ManicDigger
         {
             Play(filename, lastlistener);
         }
+        public void PlayByteArray(byte[] data)
+        {
+            PlayByteArray(data, lastlistener);
+        }
         Vector3 lastlistener;
         Vector3 lastorientation;
         public void Play(string filename, Vector3 position)
@@ -288,6 +331,18 @@ namespace ManicDigger
                 return;
             }
             new AudioTask(d_GameExit, filename, this, position).Play();
+        }
+        public void PlayByteArray(byte[] data, Vector3 position)
+        {
+            if (data == null)
+            {
+                return;
+            }
+            if (context == null)
+            {
+                return;
+            }
+            new AudioTask(d_GameExit, data, this, position).Play();
         }
         Dictionary<string, AudioTask> soundsplaying = new Dictionary<string, AudioTask>();
         public void PlayAudioLoop(string filename, bool play)
