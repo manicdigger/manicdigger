@@ -139,6 +139,7 @@
         ScreenTouchButtons screenTouchButtons = new ScreenTouchButtons();
         screenTouchButtons.game = this;
         screens[0] = screenTouchButtons;
+        audiosamples = new DictionaryStringAudioSample();
     }
 
     AssetList assets;
@@ -1947,6 +1948,20 @@
         AudioPlayAt(file, EyesPosX(), EyesPosY(), EyesPosZ());
     }
 
+    DictionaryStringAudioSample audiosamples;
+    AudioSampleCi GetAudioSample(string file)
+    {
+        if (!audiosamples.Contains(file))
+        {
+            byte[] data = GetFile(file);
+            AudioSampleCi sample = platform.AudioLoad(data);
+            audiosamples.Set(file, sample);
+        }
+
+        AudioSampleCi ret = audiosamples.Get(file);
+        return ret;
+    }
+
     public void AudioPlayAt(string file, float x, float y, float z)
     {
         if (file == null)
@@ -1957,19 +1972,16 @@
         {
             return;
         }
-        if (GetFileLength(file) != 0)
-        {
-            platform.AudioPlayByteArray(GetFile(file), EyesPosX(), EyesPosY(), EyesPosZ());
-            return;
-        }
-        BoolRef found = new BoolRef();
-        string fullpath = platform.GetFullFilePath(file, found);
-        if (!found.value)
+        string file_ = platform.StringReplace(file, ".wav", ".ogg");
+
+        if (GetFileLength(file_) == 0)
         {
             platform.ConsoleWriteLine(platform.StringFormat("File not found: {0}", file));
             return;
         }
-        platform.AudioPlay(fullpath, EyesPosX(), EyesPosY(), EyesPosZ());
+
+        AudioSampleCi sample = GetAudioSample(file_);
+        platform.AudioPlay(sample, EyesPosX(), EyesPosY(), EyesPosZ());
     }
 
     public void AudioPlayLoop(string file, bool play, bool restart)
@@ -1978,14 +1990,18 @@
         {
             return;
         }
-        BoolRef found = new BoolRef();
-        string fullpath = platform.GetFullFilePath(file, found);
-        if (!found.value)
+
+        string file_ = platform.StringReplace(file, ".wav", ".ogg");
+
+        if (GetFileLength(file_) == 0)
         {
             platform.ConsoleWriteLine(platform.StringFormat("File not found: {0}", file));
             return;
         }
-        platform.AudioPlayLoop(fullpath, play, restart);
+
+        AudioSampleCi sample = GetAudioSample(file_);
+
+        platform.AudioPlayLoop(sample, play, restart);
     }
 
     public int MaterialSlots(int i)
@@ -8483,6 +8499,59 @@
         d_HudChat.IsTyping = true;
         d_HudChat.GuiTypingBuffer = "";
         d_HudChat.IsTeamchat = false;
+    }
+}
+
+public class DictionaryStringAudioSample
+{
+    public DictionaryStringAudioSample()
+    {
+        max = 1024;
+        count = 0;
+        keys = new string[max];
+        values = new AudioSampleCi[max];
+    }
+
+    string[] keys;
+    AudioSampleCi[] values;
+    int max;
+    int count;
+
+    public void Set(string key, AudioSampleCi value)
+    {
+        int index = GetIndex(key);
+        if (index != -1)
+        {
+            values[index] = value;
+            return;
+        }
+        keys[count] = key;
+        values[count] = value;
+        count++;
+    }
+
+    public bool Contains(string key)
+    {
+        int index = GetIndex(key);
+        return index != -1;
+    }
+
+    public AudioSampleCi Get(string key)
+    {
+        int index = GetIndex(key);
+        return values[index];
+    }
+
+    public int GetIndex(string key)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (keys[i] == key)
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 }
 

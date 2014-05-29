@@ -3,7 +3,7 @@ using System.IO;
 using System;
 using csvorbis;
 
-public class AudioSample
+public class AudioSample : AudioSampleCi
 {
     public byte[] Pcm;
     public int Channels;

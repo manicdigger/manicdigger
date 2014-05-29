@@ -227,7 +227,7 @@ public class GamePlatformNative : GamePlatform
 
     public override string PathCombine(string part1, string part2)
     {
-    	return Path.Combine(part1, part2);
+        return Path.Combine(part1, part2);
     }
 
     public override string[] DirectoryGetFiles(string path, IntRef length)
@@ -241,11 +241,11 @@ public class GamePlatformNative : GamePlatform
         length.value = files.Length;
         return files;
     }
-    
+
     public override string[] FileReadAllLines(string path, IntRef length)
     {
-    	string[] lines = File.ReadAllLines(path);
-    	length.value = lines.Length;
+        string[] lines = File.ReadAllLines(path);
+        length.value = lines.Length;
         return lines;
     }
 
@@ -887,10 +887,10 @@ public class GamePlatformNative : GamePlatform
 
     public override BitmapCi CreateTextTexture(Text_ t)
     {
-        Bitmap bmp= textrenderer.MakeTextTexture(t);
+        Bitmap bmp = textrenderer.MakeTextTexture(t);
         return new BitmapCiCs() { bmp = bmp };
     }
-    
+
     public override void SetTextRendererFont(int fontID)
     {
         textrenderer.SetFont(fontID);
@@ -949,28 +949,28 @@ public class GamePlatformNative : GamePlatform
         }
     }
 
-    public override void AudioPlay(string path, float x, float y, float z)
+    public override AudioSampleCi AudioLoad(byte[] data)
     {
         StartAudio();
-        audio.Play(path, new Vector3(x, y, z));
+        return audio.GetSampleFromArray(data);
     }
-    
-    public override void AudioPlayByteArray(byte[] data, float x, float y, float z)
+
+    public override void AudioPlay(AudioSampleCi sample, float x, float y, float z)
     {
         StartAudio();
-        audio.PlayByteArray(data, new Vector3(x, y, z));
+        audio.Play(sample, x, y, z);
     }
-    
-    public override void AudioPlayLoop(string path, bool play, bool restart)
+
+    public override void AudioPlayLoop(AudioSampleCi sample, bool play, bool restart)
     {
         StartAudio();
-        audio.PlayAudioLoop(path, play, restart);
+        audio.PlayAudioLoop((AudioSample)sample, play, restart);
     }
 
     public override void AudioUpdateListener(float posX, float posY, float posZ, float orientX, float orientY, float orientZ)
     {
         StartAudio();
-        audio.UpdateListener(new Vector3(posX,posY,posZ), new Vector3(orientX, orientY, orientZ));
+        audio.UpdateListener(new Vector3(posX, posY, posZ), new Vector3(orientX, orientY, orientZ));
     }
 
     public override void ConsoleWriteLine(string s)
@@ -1069,7 +1069,7 @@ public class GamePlatformNative : GamePlatform
 
     public override void EnetHostInitialize(EnetHost host, IPEndPointCi address, int peerLimit, int channelLimit, int incomingBandwidth, int outgoingBandwidth)
     {
-        if(address!=null)
+        if (address != null)
         {
             throw new Exception();
         }
@@ -1428,9 +1428,9 @@ public class GamePlatformNative : GamePlatform
 
     public override void WebClientUploadDataAsync(string url, byte[] data, int dataLength, HttpResponseCi response)
     {
-        UploadData d=new UploadData();
-        d.url=url;
-        d.data=data;
+        UploadData d = new UploadData();
+        d.url = url;
+        d.data = data;
         d.dataLength = dataLength;
         d.response = response;
         System.Threading.ThreadPool.QueueUserWorkItem(DoUploadData, d);
@@ -1822,7 +1822,7 @@ public class GamePlatformNative : GamePlatform
                 }
                 if (Disconnected != null)
                 {
-                    Disconnected(null, new ConnectionEventArgs() {  });
+                    Disconnected(null, new ConnectionEventArgs() { });
                 }
                 return;
             }
@@ -2040,7 +2040,7 @@ public class GamePlatformNative : GamePlatform
     {
         return TouchTest;
     }
-    
+
     public override void OpenLinkInBrowser(string url)
     {
         Process.Start(url);
