@@ -9,10 +9,17 @@ http://sourceforge.net/projects/manicdigger/files/
 
 Features
 --------
-- Multiplayer
-- Server modding API
-- Large world: 9984x9984x128
+- Singleplayer and Multiplayer
+- Full support for custom textures
+- Server side modding API
+- Large world: 9984x9984x128 by default
 - War game mode - first person shooter
+
+Links
+-----
+- Serverlist: http://manicdigger.sourceforge.net/play/
+- Forum: http://manicdigger.sourceforge.net/forum/
+- Wiki: http://manicdigger.sourceforge.net/wiki/
 
 Screenshots
 -----------
