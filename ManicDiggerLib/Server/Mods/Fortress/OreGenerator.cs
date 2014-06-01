@@ -173,6 +173,11 @@ namespace ManicDigger.Mods
                     {
                         if (m.IsValidPos(x + xx, y + yy, z + zz))
                         {
+                            if ((z + zz) == 0)
+                            {
+                                //Skip bottom layer of map to prevent holes
+                                continue;
+                            }
                             int t = m.GetBlock(x + xx, y + yy, z + zz);
                             if (allowin == null) { goto ok; }
                             foreach (int tt in allowin)

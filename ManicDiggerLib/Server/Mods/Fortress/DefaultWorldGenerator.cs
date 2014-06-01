@@ -107,10 +107,8 @@ namespace ManicDigger.Mods
                         if (bY == 0)
                         {
                             curBlock = BLOCK_BEDROCK;
-                            continue;
                         }
-                        
-                        if (bY < currentHeight)
+                        else if (bY < currentHeight)
                         {
                             if (bY < stoneHeight)
                             {
