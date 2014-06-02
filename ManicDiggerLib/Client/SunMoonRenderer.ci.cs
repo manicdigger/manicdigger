@@ -33,9 +33,8 @@
         game.GLMatrixModeModelView();
         if (suntexture == -1)
         {
-            BoolRef found = new BoolRef();
-            suntexture = platform.LoadTextureFromFile(game.platform.GetFullFilePath("sun.png", found));
-            moontexture = platform.LoadTextureFromFile(game.platform.GetFullFilePath("moon.png", found));
+            suntexture = game.GetTexture("sun.png");
+            moontexture = game.GetTexture("moon.png");
         }
         t += dt * 2 * Game.GetPi() / day_length_in_seconds;
         bool night = (t + 2 * Game.GetPi()) % (2 * Game.GetPi()) > Game.GetPi();

@@ -121,8 +121,6 @@
         identityMatrix = Mat4.Identity_(Mat4.Create());
         Set3dProjectionTempMat4 = Mat4.Create();
         upVec3 = Vec3.FromValues(0, 1, 0);
-        assets = new AssetList();
-        assetsLoadProgress = new FloatRef();
         getAsset = new string[1024 * 2];
         unproject = new Unproject();
         tempViewport = new float[4];
@@ -142,13 +140,11 @@
         audiosamples = new DictionaryStringAudioSample();
     }
 
-    AssetList assets;
-    FloatRef assetsLoadProgress;
-    bool AssetsLoaded() { return assetsLoadProgress.value == 1; }
+    internal AssetList assets;
+    internal FloatRef assetsLoadProgress;
 
     public void Start()
     {
-        platform.LoadAssetsAsyc(assets, assetsLoadProgress);
         if (!issingleplayer)
         {
             skinserverResponse = new HttpResponseCi();
@@ -2037,9 +2033,8 @@
         if (!CompassInActiveMaterials()) return;
         if (compassid == -1)
         {
-            BoolRef found = new BoolRef();
-            compassid = platform.LoadTextureFromFile(platform.GetFullFilePath("compass.png", found));
-            needleid = platform.LoadTextureFromFile(platform.GetFullFilePath("compassneedle.png", found));
+            compassid = GetTexture("compass.png");
+            needleid = GetTexture("compassneedle.png");
         }
         float size = 175;
         float posX = Width() - 100;

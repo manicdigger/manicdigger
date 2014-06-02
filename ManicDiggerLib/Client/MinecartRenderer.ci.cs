@@ -37,8 +37,7 @@ public class MinecartRenderer
         float one = 1;
         if (minecarttexture == -1)
         {
-            BoolRef found = new BoolRef();
-            minecarttexture = game.platform.LoadTextureFromFile(game.platform.GetFullFilePath("minecart.png", found));
+            minecarttexture = game.GetTexture("minecart.png");
         }
         game.GLPushMatrix();
         float pX = positionX;

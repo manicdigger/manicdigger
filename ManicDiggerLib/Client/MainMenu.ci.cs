@@ -3,22 +3,28 @@
     public MainMenu()
     {
         one = 1;
-        textures = new LoadedTexture[256];
-        texturesCount = 0;
+        textures = new DictionaryStringInt1024();
         textTextures = new TextTexture[256];
         textTexturesCount = 0;
         screen = new ScreenMain();
         screen.menu = this;
         loginClient = new LoginClientCi();
+        assets = new AssetList();
+        assetsLoadProgress = new FloatRef();
     }
 
     internal GamePlatform p;
 
     internal float one;
 
+    internal AssetList assets;
+    internal FloatRef assetsLoadProgress;
+
     public void Start(GamePlatform p_)
     {
         this.p = p_;
+
+        p_.LoadAssetsAsyc(assets, assetsLoadProgress);
 
         xRot = 0;
         xInv = false;
@@ -215,30 +221,44 @@
         return textTexture;
     }
 
+    DictionaryStringInt1024 textures;
     internal int GetTexture(string name)
     {
-        for (int i = 0; i < texturesCount; i++)
+        if (!textures.Contains(name))
         {
-            if (textures[i].name == name)
+            BoolRef found = new BoolRef();
+            BitmapCi bmp = p.BitmapCreateFromPng(GetFile(name), GetFileLength(name));
+            int texture = p.LoadTextureFromBitmap(bmp);
+            textures.Set(name, texture);
+            p.BitmapDelete(bmp);
+        }
+        return textures.Get(name);
+    }
+
+    internal byte[] GetFile(string name)
+    {
+        string pLowercase = p.StringToLower(name);
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i].name == pLowercase)
             {
-                return textures[i].texture;
+                return assets.items[i].data;
             }
         }
-        LoadedTexture t = new LoadedTexture();
-        t.name = name;
-        BoolRef found = new BoolRef();
-        string path = p.GetFullFilePath(name, found);
-        if (found.value)
+        return null;
+    }
+
+    internal int GetFileLength(string name)
+    {
+        string pLowercase = p.StringToLower(name);
+        for (int i = 0; i < assets.count; i++)
         {
-            t.texture = p.LoadTextureFromFile(path);
+            if (assets.items[i].name == pLowercase)
+            {
+                return assets.items[i].dataLength;
+            }
         }
-        else
-        {
-            p.ConsoleWriteLine(p.StringFormat("File not found: {0}", name));
-            t.texture = 0;
-        }
-        textures[texturesCount++] = t;
-        return t.texture;
+        return 0;
     }
 
     Model cubeModel;
@@ -420,8 +440,6 @@
         screen.OnTouchEnd(e);
     }
 
-    LoadedTexture[] textures;
-    int texturesCount;
     TextTexture[] textTextures;
     int textTexturesCount;
 
@@ -583,12 +601,6 @@ public class TextTexture
     internal int textureheight;
     internal int textwidth;
     internal int textheight;
-}
-
-public class LoadedTexture
-{
-    internal string name;
-    internal int texture;
 }
 
 public class Screen
@@ -785,7 +797,6 @@ public class Screen
             }
         }
     }
-
 }
 
 
@@ -805,11 +816,19 @@ public class ScreenMain : Screen
         //KeyEventArgs args = new KeyEventArgs();
         //args.SetKeyCode(GlKeys.F5);
         //OnKeyDown(args);
-
+        
         GamePlatform p = menu.p;
-
+        
         float scale = menu.one * p.GetCanvasWidth() / 1280;
         float size = menu.one * 80 / 100;
+
+        if (menu.assetsLoadProgress.value != 1)
+        {
+            string s = p.StringFormat("Loading... {0}%", p.FloatToString(p.FloatToInt(menu.assetsLoadProgress.value * 100)));
+            menu.DrawText(s, 20 * scale, p.GetCanvasWidth() / 2, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+            return;
+        }
+
         menu.DrawBackground();
         menu.Draw2dQuad(menu.GetTexture("logo.png"), p.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
 
@@ -1340,6 +1359,8 @@ public class ScreenGame : Screen
 
         game.platform = platform;
         game.issingleplayer = singleplayer;
+        game.assets = menu.assets;
+        game.assetsLoadProgress = menu.assetsLoadProgress;
 
         game.Start();
         Connect(platform);

@@ -1,10 +1,5 @@
 ﻿public abstract class GamePlatform
 {
-    // 1) find files no matter if they are in Data\Local\ or Data\Public\
-    // 2) find files no matter if game is in debugger, or installed
-    // 3) find files no matter if they end in .png or .jpg
-    // Returns URL in JavaScript
-    public abstract string GetFullFilePath(string filename, BoolRef found);
     public abstract int FloatToInt(float value);
     public abstract string[] StringSplit(string value, string separator, IntRef returnLength);
     public abstract int IntParse(string value);
@@ -46,7 +41,6 @@
     public abstract void SetMatrixUniformModelView(float[] mvMatrix);
     public abstract void GlClearColorRgbaf(float r, float g, float b, float a);
     public abstract void GlEnableDepthTest();
-    public abstract int LoadTextureFromFile(string fullPath);
     public abstract string GetLanguageIso6391();
     public abstract int TimeMillisecondsFromStart();
     public abstract void DrawModels(Model[] model, int count);
