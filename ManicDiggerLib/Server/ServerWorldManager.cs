@@ -85,14 +85,14 @@ namespace ManicDiggerServer
             if (endy >= mapsizeychunks()) { endy = mapsizeychunks() - 1; }
             if (endz >= mapsizezchunks()) { endz = mapsizezchunks() - 1; }
 
-            Client client = clients[clientid];
+            ClientOnServer client = clients[clientid];
             for (int x = startx; x <= endx; x++)
             {
                 for (int y = starty; y <= endy; y++)
                 {
                     for (int z = startz; z <= endz; z++)
                     {
-                        int pos = MapUtil.Index3d(x, y, z, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+                        int pos = MapUtilCi.Index3d(x, y, z, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
                         if (client.chunksseen[pos])
                         {
                             continue;
@@ -115,12 +115,12 @@ namespace ManicDiggerServer
             }
         }
         
-        void LoadAndSendChunk(Client c, int kKey, int vx, int vy, int vz, Stopwatch s)
+        void LoadAndSendChunk(ClientOnServer c, int kKey, int vx, int vy, int vz, Stopwatch s)
         {
             //load
             LoadChunk(vx, vy, vz);
             //send
-            int pos = MapUtil.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            int pos = MapUtilCi.Index3d(vx, vy, vz, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
             if (!c.chunksseen[pos])
             {
                 SendChunk(kKey, new Vector3i(vx * chunksize, vy * chunksize, vz * chunksize));
@@ -179,19 +179,19 @@ namespace ManicDiggerServer
 
         void SendChunk(int clientid, Vector3i v)
         {
-            Client c = clients[clientid];
-            ushort[] chunk = d_Map.GetChunk(v.x, v.y, v.z);
+            ClientOnServer c = clients[clientid];
+            Chunk chunk = d_Map.GetChunk(v.x, v.y, v.z);
             ClientSeenChunkSet(clientid, v.x, v.y, v.z, (int)simulationcurrentframe);
             //sent++;
             byte[] compressedchunk;
-            if (MapUtil.IsSolidChunk(chunk) && chunk[0] == 0)
+            if (MapUtil.IsSolidChunk(chunk.data) && chunk.data[0] == 0)
             {
                 //don't send empty chunk.
                 compressedchunk = null;
             }
             else
             {
-                compressedchunk = CompressChunkNetwork(chunk);
+                compressedchunk = CompressChunkNetwork(chunk.data);
                 //todo!
                 //commented because it was being sent too early, before full column was generated.
                 //if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
@@ -286,14 +286,14 @@ namespace ManicDiggerServer
                 x = x / chunksize;
                 y = y / chunksize;
                 z = z / chunksize;
-                Chunk c = d_Map.chunks[x,y,z];
+                Chunk c = d_Map.GetChunkValid(x,y,z);
                 if (c == null)
                 {
                     c = new Chunk();
                 }
                 c.data = data;
                 c.DirtyForSaving = true;
-                d_Map.chunks[x,y,z] = c;
+                d_Map.SetChunkValid(x, y, z, c);
                 // update related chunk at clients
                 foreach (var k in clients)
                 {
@@ -319,14 +319,14 @@ namespace ManicDiggerServer
                 }
 
                 // TODO: check bounds.
-                Chunk c = d_Map.chunks[k.Key.X, k.Key.Y, k.Key.Z];
+                Chunk c = d_Map.GetChunkValid(k.Key.X, k.Key.Y, k.Key.Z);
                 if (c == null)
                 {
                     c = new Chunk();
                 }
                 c.data = k.Value;
                 c.DirtyForSaving = true;
-                d_Map.chunks[k.Key.X,k.Key.Y,k.Key.Z] = c;
+                d_Map.SetChunkValid(k.Key.X, k.Key.Y, k.Key.Z, c);
             }
 
             // update related chunk at clients
@@ -353,14 +353,14 @@ namespace ManicDiggerServer
                 }
 
                 // TODO: check bounds.
-                Chunk c = d_Map.chunks[k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ];
+                Chunk c = d_Map.GetChunkValid(k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ);
                 if (c == null)
                 {
                     c = new Chunk();
                 }
                 c.data = k.Value;
                 c.DirtyForSaving = true;
-                d_Map.chunks[k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ] = c;
+                d_Map.SetChunkValid(k.Key.X + offsetX, k.Key.Y + offsetY, k.Key.Z + offsetZ, c);
             }
 
             // update related chunk at clients
@@ -379,7 +379,7 @@ namespace ManicDiggerServer
                 x = x / chunksize;
                 y = y / chunksize;
                 z = z / chunksize;
-                return d_Map.chunks[x,y,z].data;
+                return d_Map.GetChunkValid(x, y, z).data;
             }
             return null;
         }
@@ -391,7 +391,7 @@ namespace ManicDiggerServer
                 y = y / chunksize;
                 z = z / chunksize;
                 ChunkDb.DeleteChunk(d_ChunkDb, x, y, z);
-                d_Map.chunks[x,y,z] = null;
+                d_Map.SetChunkValid(x, y, z, null);
                 // update related chunk at clients
                 foreach (var k in clients)
                 {
@@ -411,7 +411,7 @@ namespace ManicDiggerServer
                     int x = pos.x / chunksize;
                     int y = pos.y / chunksize;
                     int z = pos.z / chunksize;
-                    d_Map.chunks[x,y,z] = null;
+                    d_Map.SetChunkValid(x, y, z, null);
                     chunks.Add(new Xyz(){X = x, Y = y, Z = z});
                 }
             }

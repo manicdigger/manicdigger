@@ -47,7 +47,7 @@ namespace GameModeFortress
             return !string.IsNullOrEmpty(this.Password);
         }
 
-        public bool CanUserBuild(ManicDiggerServer.Server.Client client, int x, int y, int z)
+        public bool CanUserBuild(ManicDiggerServer.ClientOnServer client, int x, int y, int z)
         {
             bool canBuild = false;
             // TODO: fast tree datastructure
@@ -149,7 +149,7 @@ namespace GameModeFortress
                 return false;
             }
         }
-        public bool CanUserBuild(ManicDiggerServer.Server.Client client)
+        public bool CanUserBuild(ManicDiggerServer.ClientOnServer client)
         {
             if (this.Level != null)
             {

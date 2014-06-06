@@ -11718,11 +11718,20 @@ public class ServerPackets
         return p;
     }
 
-    internal static Packet_Server Ping(Packet_Inventory packet_Inventory)
+    internal static Packet_Server Ping()
     {
         Packet_Server p = new Packet_Server();
         p.Id = Packet_ServerIdEnum.Ping;
         p.Ping = new Packet_ServerPing();
+        return p;
+    }
+
+    internal static Packet_Server DisconnectPlayer(string disconnectReason)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.DisconnectPlayer;
+        p.DisconnectPlayer = new Packet_ServerDisconnectPlayer();
+        p.DisconnectPlayer.DisconnectReason = disconnectReason;
         return p;
     }
 }

@@ -394,20 +394,20 @@ namespace ManicDigger
 
         public long GetCurrentTick()
         {
-            return server.SimulationCurrentFrame;
+            return server.GetSimulationCurrentFrame();
         }
 
         GameTime t = new GameTime();
 
         public double GetCurrentYearTotal()
         {
-            t.Ticks = server.SimulationCurrentFrame;
+            t.Ticks = server.GetSimulationCurrentFrame();
             return t.YearTotal;
         }
 
         public double GetCurrentHourTotal()
         {
-            t.Ticks = server.SimulationCurrentFrame;
+            t.Ticks = server.GetSimulationCurrentFrame();
             return t.HourTotal;
         }
 
@@ -758,12 +758,12 @@ namespace ManicDigger
         public int AddBot(string name)
         {
             int id = server.GenerateClientId();
-            Server.Client c = new Server.Client();
+            ClientOnServer c = new ClientOnServer();
             c.Id = id;
             c.IsBot = true;
             c.playername = name;
             server.clients[id] = c;
-            c.state = Server.ClientStateOnServer.Playing;
+            c.state = ClientStateOnServer.Playing;
             DummyNetwork network = new DummyNetwork() { ClientReceiveBufferLock = new MonitorObject(), ServerReceiveBufferLock = new MonitorObject() };
             c.socket = new DummyNetConnection() { network = network , platform = new GamePlatformNative() };
             c.Ping.SetTimeoutValue(int.MaxValue);
@@ -860,7 +860,7 @@ namespace ManicDigger
 
         public void SetWorldDatabaseReadOnly(bool readOnly)
         {
-            server.d_ChunkDb.ReadOnly = readOnly;
+            server.d_ChunkDb.SetReadOnly(readOnly);
         }
 
         public string CurrentWorld()
@@ -890,7 +890,7 @@ namespace ManicDigger
         
         public void DisconnectPlayer(int player, string message)
         {
-            server.SendDisconnectPlayer(player, message);
+            server.SendPacket(player, ServerPackets.DisconnectPlayer(message));
             server.KillPlayer(player);
         }
 

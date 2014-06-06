@@ -867,8 +867,8 @@ namespace ManicDiggerServer
                 return false;
             }
 
-            Client targetClient = GetClient(recipient);
-            Client sourceClient = GetClient(sourceClientId);
+            ClientOnServer targetClient = GetClient(recipient);
+            ClientOnServer sourceClient = GetClient(sourceClientId);
             if (targetClient != null)
             {
                 SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
@@ -893,14 +893,14 @@ namespace ManicDiggerServer
                 return false;
             }
             
-            Client sourceClient = GetClient(sourceClientId);
+            ClientOnServer sourceClient = GetClient(sourceClientId);
             if (!lastSender.ContainsKey(sourceClient.playername))
             {
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandPMNoAnswer"), colorError));
                 return false;
             }
 
-            Client targetClient = GetClient(lastSender[sourceClient.playername]);
+            ClientOnServer targetClient = GetClient(lastSender[sourceClient.playername]);
             if (targetClient != null)
             {
                 SendMessage(targetClient.Id, string.Format("PM {0}: {1}", sourceClient.ColoredPlayername(colorNormal), message));
@@ -954,7 +954,7 @@ namespace ManicDiggerServer
             );
 
             // Get related client.
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
 
             if (targetClient != null)
             {
@@ -1028,7 +1028,7 @@ namespace ManicDiggerServer
             );
 
             // Get related client.
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
 
             if (targetClient != null)
             {
@@ -1261,7 +1261,7 @@ namespace ManicDiggerServer
 
         public bool Kick(int sourceClientId, string target, string reason)
         {
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if (targetClient != null)
             {
                 return this.Kick(sourceClientId, targetClient.Id, reason);
@@ -1286,7 +1286,7 @@ namespace ManicDiggerServer
             {
                 reason = language.Get("Server_CommandKickBanReason") + reason + ".";
             }
-            Client targetClient = GetClient(targetClientId);
+            ClientOnServer targetClient = GetClient(targetClientId);
             if (targetClient != null)
             {
                 if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
@@ -1300,7 +1300,7 @@ namespace ManicDiggerServer
                 string sourceNameColored = GetClient(sourceClientId).ColoredPlayername(colorImportant);
                 SendMessageToAll(string.Format(language.Get("Server_CommandKickMessage"), colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} kicks {1}.{2}", sourceName, targetName, reason));
-                SendDisconnectPlayer(targetClientId, string.Format(language.Get("Server_CommandKickNotification"), reason));
+                SendPacket(targetClientId, ServerPackets.DisconnectPlayer(string.Format(language.Get("Server_CommandKickNotification"), reason)));
                 KillPlayer(targetClientId);
                 return true;
             }
@@ -1315,7 +1315,7 @@ namespace ManicDiggerServer
 
         public bool Ban(int sourceClientId, string target, string reason)
         {
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if (targetClient != null)
             {
                 return this.Ban(sourceClientId, targetClient.Id, reason);
@@ -1340,7 +1340,7 @@ namespace ManicDiggerServer
             {
                 reason = language.Get("Server_CommandKickBanReason") + reason + ".";
             }
-            Client targetClient = GetClient(targetClientId);
+            ClientOnServer targetClient = GetClient(targetClientId);
             if (targetClient != null)
             {
                 if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
@@ -1356,7 +1356,7 @@ namespace ManicDiggerServer
                 SaveBanlist();
                 SendMessageToAll(string.Format(language.Get("Server_CommandBanMessage"), colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} bans {1}.{2}", sourceName, targetName, reason));
-                SendDisconnectPlayer(targetClientId, string.Format(language.Get("Server_CommandBanNotification"), reason));
+                SendPacket(targetClientId, ServerPackets.DisconnectPlayer(string.Format(language.Get("Server_CommandBanNotification"), reason)));
                 KillPlayer(targetClientId);
                 return true;
             }
@@ -1371,7 +1371,7 @@ namespace ManicDiggerServer
 
         public bool BanIP(int sourceClientId, string target, string reason)
         {
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 return this.BanIP(sourceClientId, targetClient.Id, reason);
@@ -1396,7 +1396,7 @@ namespace ManicDiggerServer
             {
                 reason = language.Get("Server_CommandKickBanReason") + reason + ".";
             }
-            Client targetClient = GetClient(targetClientId);
+            ClientOnServer targetClient = GetClient(targetClientId);
             if(targetClient != null)
             {
                 if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
@@ -1412,7 +1412,7 @@ namespace ManicDiggerServer
                 SaveBanlist();
                 SendMessageToAll(string.Format(language.Get("Server_CommandIPBanMessage"), colorImportant, targetNameColored, sourceNameColored, reason));
                 ServerEventLog(string.Format("{0} IP bans {1}.{2}", sourceName, targetName, reason));
-                SendDisconnectPlayer(targetClientId, string.Format(language.Get("Server_CommandIPBanNotification"), reason));
+                SendPacket(targetClientId, ServerPackets.DisconnectPlayer(string.Format(language.Get("Server_CommandIPBanNotification"), reason)));
                 KillPlayer(targetClientId);
                 return true;
             }
@@ -1427,7 +1427,7 @@ namespace ManicDiggerServer
 
         public bool TimeBan(int sourceClientId, string target, string reason, int duration)
         {
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if (targetClient != null)
             {
                 return this.TimeBan(sourceClientId, targetClient.Id, reason, duration);
@@ -1452,7 +1452,7 @@ namespace ManicDiggerServer
             {
                 reason = language.Get("Server_CommandKickBanReason") + reason + ".";
             }
-            Client targetClient = GetClient(targetClientId);
+            ClientOnServer targetClient = GetClient(targetClientId);
             if (targetClient != null)
             {
                 if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
@@ -1468,7 +1468,7 @@ namespace ManicDiggerServer
                 SaveBanlist();
                 SendMessageToAll(string.Format(language.Get("Server_CommandTimeBanMessage"), colorImportant, targetNameColored, sourceNameColored, duration, reason));
                 ServerEventLog(string.Format("{0} bans {1} for {2} minutes.{3}", sourceName, targetName, duration, reason));
-                SendDisconnectPlayer(targetClientId, string.Format(language.Get("Server_CommandTimeBanNotification"), duration, reason));
+                SendPacket(targetClientId, ServerPackets.DisconnectPlayer(string.Format(language.Get("Server_CommandTimeBanNotification"), duration, reason)));
                 KillPlayer(targetClientId);
                 return true;
             }
@@ -1483,7 +1483,7 @@ namespace ManicDiggerServer
 
         public bool TimeBanIP(int sourceClientId, string target, string reason, int duration)
         {
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 return this.TimeBanIP(sourceClientId, targetClient.Id, reason, duration);
@@ -1508,7 +1508,7 @@ namespace ManicDiggerServer
             {
                 reason = language.Get("Server_CommandKickBanReason") + reason + ".";
             }
-            Client targetClient = GetClient(targetClientId);
+            ClientOnServer targetClient = GetClient(targetClientId);
             if(targetClient != null)
             {
                 if (targetClient.clientGroup.IsSuperior(GetClient(sourceClientId).clientGroup) || targetClient.clientGroup.EqualLevel(GetClient(sourceClientId).clientGroup))
@@ -1524,7 +1524,7 @@ namespace ManicDiggerServer
                 SaveBanlist();
                 SendMessageToAll(string.Format(language.Get("Server_CommandTimeIPBanMessage"), colorImportant, targetNameColored, sourceNameColored, duration, reason));
                 ServerEventLog(string.Format("{0} IP bans {1} for {2} minutes.{3}", sourceName, targetName, duration, reason));
-                SendDisconnectPlayer(targetClientId, string.Format(language.Get("Server_CommandTimeIPBanNotification"), duration, reason));
+                SendPacket(targetClientId, ServerPackets.DisconnectPlayer(string.Format(language.Get("Server_CommandTimeIPBanNotification"), duration, reason)));
                 KillPlayer(targetClientId);
                 return true;
             }
@@ -1763,7 +1763,7 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
                 return false;
             }
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 string targetName = targetClient.playername;
@@ -1830,7 +1830,7 @@ namespace ManicDiggerServer
                 return false;
             }
 
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 string targetName = targetClient.playername;
@@ -1916,7 +1916,7 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
                 return false;
             }
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 ResetPlayerInventory(targetClient.playername);
@@ -2162,7 +2162,7 @@ namespace ManicDiggerServer
                 case "-player":
                 case "-p":
                     // Get related client.
-                    Client targetClient = this.GetClient(target);
+                    ClientOnServer targetClient = this.GetClient(target);
                     int? targetClientId = null;
                     if(targetClient != null)
                     {
@@ -2269,7 +2269,7 @@ namespace ManicDiggerServer
                 return false;
             }
 
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 if(targetClient.privileges.Contains(privilege))
@@ -2298,7 +2298,7 @@ namespace ManicDiggerServer
                 return false;
             }
 
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 if(!targetClient.privileges.Remove(privilege))
@@ -2372,7 +2372,7 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandInsufficientPrivileges"), colorError));
                 return false;
             }
-            Client t = clients[clientTo];
+            ClientOnServer t = clients[clientTo];
             SendPlayerTeleport(sourceClientId, sourceClientId, t.PositionMul32GlX,
                 t.PositionMul32GlY, t.PositionMul32GlZ, (byte)t.positionheading, (byte)t.positionpitch, t.stance);
             return true;
@@ -2407,7 +2407,7 @@ namespace ManicDiggerServer
                 return false;
             }
 
-            Client client = GetClient(sourceClientId);
+            ClientOnServer client = GetClient(sourceClientId);
             SendPlayerTeleport(client.Id, client.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)client.positionheading, (byte)client.positionpitch, client.stance);
             SendMessage(client.Id, string.Format(language.Get("Server_CommandTeleportSuccess"), colorSuccess, x, y, rZ));
             return true;
@@ -2441,7 +2441,7 @@ namespace ManicDiggerServer
                 SendMessage(sourceClientId, string.Format(language.Get("Server_CommandTeleportInvalidCoordinates"), colorError));
                 return false;
             }
-            Client targetClient = GetClient(target);
+            ClientOnServer targetClient = GetClient(target);
             if(targetClient != null)
             {
                 SendPlayerTeleport(targetClient.Id, targetClient.Id, x * chunksize, rZ * chunksize, y * chunksize , (byte)targetClient.positionheading, (byte)targetClient.positionpitch, targetClient.stance);
@@ -2545,7 +2545,7 @@ namespace ManicDiggerServer
                 case "-player":
                 case "-p":
                     // Get related client.
-                    Client targetClient = this.GetClient(target);
+                    ClientOnServer targetClient = this.GetClient(target);
                     int? targetClientId = null;
                     if(targetClient != null)
                     {

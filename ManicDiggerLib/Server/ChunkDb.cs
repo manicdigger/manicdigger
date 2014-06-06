@@ -98,7 +98,8 @@ namespace GameModeFortress
         void SetGlobalData(byte[] data);
         Dictionary<Xyz, byte[]> GetChunksFromFile(IEnumerable<Xyz> chunkpositions, string filename);
         void SetChunksToFile(IEnumerable<DbChunk> chunks, string filename);
-        bool ReadOnly { get; set; }
+        bool GetReadOnly();
+        void SetReadOnly(bool value);
     }
     public class ChunkDbCompressed : IChunkDb
     {
@@ -213,7 +214,9 @@ namespace GameModeFortress
         }
 
         #endregion
-        public bool ReadOnly { get { return d_ChunkDb.ReadOnly; } set { d_ChunkDb.ReadOnly = value; } }
+        
+        public bool GetReadOnly() { return d_ChunkDb.GetReadOnly(); }
+        public void SetReadOnly(bool value) { d_ChunkDb.SetReadOnly(value); }
     }
     public class ChunkDbDummy : IChunkDb
     {
@@ -278,7 +281,9 @@ namespace GameModeFortress
         {
             globaldata = data;
         }
-        public bool ReadOnly { get;set; }
+        bool ReadOnly;
+        public bool GetReadOnly() { return ReadOnly; }
+        public void SetReadOnly(bool value) { ReadOnly = value; }
     }
     public class ChunkDbSqlite : IChunkDb
     {
@@ -596,6 +601,8 @@ namespace GameModeFortress
             InsertChunk(ulong.MaxValue / 2, data);
         }
 
-        public bool ReadOnly { get; set; }
+        bool ReadOnly;
+        public bool GetReadOnly() { return ReadOnly; }
+        public void SetReadOnly(bool value) { ReadOnly = value; }
     }
 }

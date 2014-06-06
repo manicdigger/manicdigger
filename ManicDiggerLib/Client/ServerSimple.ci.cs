@@ -76,7 +76,7 @@
             int now = platform.TimeMillisecondsFromStart();
             if ((now - clients[i].pingLastMilliseconds) > 1000)
             {
-                SendPacket(i, ServerPackets.Ping(clients[i].inventory));
+                SendPacket(i, ServerPackets.Ping());
                 clients[i].pingLastMilliseconds = now;
             }
         }

@@ -55,6 +55,11 @@ namespace ManicDiggerServer
     }
     public partial class Server : ICurrentTime, IDropItem
     {
+        public Server()
+        {
+            server = new ServerCi();
+        }
+        internal ServerCi server;
         public GameExit exit;
         public ServerMap d_Map;
         public GameData d_Data;
@@ -62,8 +67,8 @@ namespace ManicDiggerServer
         public IGetFileStream d_GetFile;
         public IChunkDb d_ChunkDb;
         public ICompression d_NetworkCompression;
-        public INetServer mainSocket0;
-        public INetServer mainSocket1;
+        public INetServer mainSocket0 { get { return server.mainSocket0; } set { server.mainSocket0 = value; } }
+        public INetServer mainSocket1 { get { return server.mainSocket1; } set { server.mainSocket1 = value; } }
         public IServerHeartbeat d_Heartbeat;
 
         public bool LocalConnectionsOnly { get; set; }
@@ -250,7 +255,7 @@ namespace ManicDiggerServer
                     }
                     else
                     {
-                        SendPing(k.Key);
+                        SendPacket(k.Key, ServerPackets.Ping());
                     }
                 }
 
@@ -367,7 +372,6 @@ namespace ManicDiggerServer
             d_ChunkDb = chunkdb;
             map.d_ChunkDb = chunkdb;
             d_NetworkCompression = networkcompression;
-            map.d_Data = d_Data;
             d_DataItems = new GameDataItemsBlocks() { d_Data = data };
             if (mainSocket0 == null)
             {
@@ -432,7 +436,7 @@ namespace ManicDiggerServer
             }
 
             // set up server console interpreter
-            this.serverConsoleClient = new Client()
+            this.serverConsoleClient = new ClientOnServer()
             {
                 Id = serverConsoleId,
                 playername = "Server"
@@ -572,7 +576,7 @@ namespace ManicDiggerServer
         private ServerConsole serverConsole;
         private int serverConsoleId = -1; // make sure that not a regular client is assigned this ID
         public int ServerConsoleId { get { return serverConsoleId; } }
-        private Client serverConsoleClient;
+        private ClientOnServer serverConsoleClient;
         public void ReceiveServerConsole(string message)
         {
             if (message == null)
@@ -628,7 +632,7 @@ namespace ManicDiggerServer
             if (config.IsCreative) this.Inventory = Inventory = new Dictionary<string, PacketServerInventory>(StringComparer.InvariantCultureIgnoreCase);
             else this.Inventory = save.Inventory;
             this.PlayerStats = save.PlayerStats;
-            this.simulationcurrentframe = save.SimulationCurrentFrame;
+            this.simulationcurrentframe = (int)save.SimulationCurrentFrame;
             this.LastMonsterId = save.LastMonsterId;
             this.moddata = save.moddata;
             if (moddata == null) { moddata = new Dictionary<string, byte[]>(); }
@@ -688,7 +692,7 @@ namespace ManicDiggerServer
             var dbcompressed = (ChunkDbCompressed)d_Map.d_ChunkDb;
             var db = (ChunkDbSqlite)dbcompressed.d_ChunkDb;
             db.temporaryChunks = new Dictionary<ulong, byte[]>();
-            Array.Clear(d_Map.chunks, 0, d_Map.chunks.Length);
+            d_Map.Clear();
             LoadGame(filename);
             foreach (var k in clients)
             {
@@ -707,7 +711,7 @@ namespace ManicDiggerServer
                 {
                     for (int cz = 0; cz < d_Map.MapSizeZ / chunksize; cz++)
                     {
-                        Chunk c = d_Map.chunks[cx, cy, cz];
+                        Chunk c = d_Map.GetChunkValid(cx, cy, cz);
                         if (c == null)
                         {
                             continue;
@@ -1147,8 +1151,7 @@ namespace ManicDiggerServer
         {
             return (double)DateTime.Now.Ticks / (10 * 1000 * 1000);
         }
-        long simulationcurrentframe;
-        public int SimulationCurrentFrame { get { return (int)simulationcurrentframe; } }
+        int simulationcurrentframe;
         double oldtime;
         double accumulator;
         float lastServerTick;
@@ -1192,7 +1195,7 @@ namespace ManicDiggerServer
                     INetConnection client1 = msg.SenderConnection();
                     IPEndPointCi iep1 = client1.RemoteEndPoint();
 
-                    Client c = new Client();
+                    ClientOnServer c = new ClientOnServer();
                     c.mainSocket = mainSocket;
                     c.socket = client1;
                     c.Ping.SetTimeoutValue(config.ClientConnectionTimeout);
@@ -1223,7 +1226,7 @@ namespace ManicDiggerServer
                     }
                     if (realPlayers > config.MaxClients)
                     {
-                        SendDisconnectPlayer(this.lastClientId, language.ServerTooManyPlayers());
+                        SendPacket(this.lastClientId, ServerPackets.DisconnectPlayer(language.ServerTooManyPlayers()));
                         KillPlayer(this.lastClientId);
                     }
                     else if (banlist.IsIPBanned(iep1.AddressToString()))
@@ -1232,7 +1235,7 @@ namespace ManicDiggerServer
                         string reason = entry.Reason;
                         if (string.IsNullOrEmpty(reason))
                             reason = "";
-                        SendDisconnectPlayer(this.lastClientId, string.Format(language.ServerIPBanned(), reason));
+                        SendPacket(this.lastClientId, ServerPackets.DisconnectPlayer(string.Format(language.ServerIPBanned(), reason)));
                         Console.WriteLine(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                         ServerEventLog(string.Format("Banned IP {0} tries to connect.", iep1.AddressToString()));
                         KillPlayer(this.lastClientId);
@@ -1256,7 +1259,7 @@ namespace ManicDiggerServer
                     {
                         //client problem. disconnect client.
                         Console.WriteLine("Exception at client " + clientid + ". Disconnecting client.");
-                        SendDisconnectPlayer(clientid, language.ServerClientException());
+                        SendPacket(clientid, ServerPackets.DisconnectPlayer(language.ServerClientException()));
                         KillPlayer(clientid);
                         Console.WriteLine(e.ToString());
                     }
@@ -1277,13 +1280,6 @@ namespace ManicDiggerServer
 
         public Dictionary<Timer, Timer.Tick> timers = new Dictionary<Timer, Timer.Tick>();
 
-        private void SendPing(int clientid)
-        {
-            Packet_ServerPing p = new Packet_ServerPing()
-            {
-            };
-            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Ping, Ping = p }));
-        }
         private void NotifyPing(int targetClientId, int ping)
         {
             foreach (var k in clients)
@@ -1328,13 +1324,7 @@ namespace ManicDiggerServer
             long startframe = (everyframes * HourDetail * GameStartHour);
             return (int)(((frame + startframe) / everyframes) % (24 * HourDetail));
         }
-        /*
-        int GetMoon(long frame)
-        {
-            long everyframes = (int)(1 / SIMULATION_STEP_LENGTH) * DAY_EVERY_SECONDS * 4;
-            return (int)((frame / everyframes) % 2);
-        }
-        */
+
         int ChunksSimulated = 1;
         int chunksimulation_every { get { return (int)(1 / SIMULATION_STEP_LENGTH) * 60 * 10; } }//10 minutes
 
@@ -1350,7 +1340,7 @@ namespace ManicDiggerServer
                 foreach (var p in ChunksAroundPlayer(pos))
                 {
                     if (!MapUtil.IsValidPos(d_Map, p.x, p.y, p.z)) { continue; }
-                    Chunk c = d_Map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
+                    Chunk c = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
                     if (c == null) { continue; }
                     if (c.data == null) { continue; }
                     if (c.LastUpdate > simulationcurrentframe) { c.LastUpdate = simulationcurrentframe; }
@@ -1368,7 +1358,7 @@ namespace ManicDiggerServer
                 if (simulationcurrentframe - oldesttime > chunksimulation_every)
                 {
                     ChunkUpdate(oldestpos, oldesttime);
-                    Chunk c = d_Map.chunks[oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize];
+                    Chunk c = d_Map.GetChunkValid(oldestpos.x / chunksize, oldestpos.y / chunksize, oldestpos.z / chunksize);
                     c.LastUpdate = (int)simulationcurrentframe;
                     return;
                 }
@@ -1390,14 +1380,14 @@ namespace ManicDiggerServer
             {
                 AddMonsters(p);
             }
-            ushort[] chunk = d_Map.GetChunk(p.x, p.y, p.z);
+            Chunk chunk = d_Map.GetChunk(p.x, p.y, p.z);
             for (int xx = 0; xx < chunksize; xx++)
             {
                 for (int yy = 0; yy < chunksize; yy++)
                 {
                     for (int zz = 0; zz < chunksize; zz++)
                     {
-                        int block = chunk[MapUtil.Index3d(xx, yy, zz, chunksize, chunksize)];
+                        int block = chunk.data[MapUtilCi.Index3d(xx, yy, zz, chunksize, chunksize)];
 
                         for (int i = 0; i < modEventHandlers.blockticks.Count; i++)
                         {
@@ -1413,7 +1403,7 @@ namespace ManicDiggerServer
 
         private void AddMonsters(Vector3i p)
         {
-            Chunk chunk = d_Map.chunks[p.x / chunksize, p.y / chunksize, p.z / chunksize];
+            Chunk chunk = d_Map.GetChunkValid(p.x / chunksize, p.y / chunksize, p.z / chunksize);
             int tries = 0;
             while (chunk.Monsters.Count < 1)
             {
@@ -1460,14 +1450,14 @@ namespace ManicDiggerServer
         int CompressUnusedIteration = 0;
         private void UnloadUnusedChunks()
         {
-            int sizex = d_Map.chunks.GetUpperBound(0) + 1;
-            int sizey = d_Map.chunks.GetUpperBound(1) + 1;
-            int sizez = d_Map.chunks.GetUpperBound(2) + 1;
+            int sizex = mapsizexchunks();
+            int sizey = mapsizeychunks();
+            int sizez = mapsizezchunks();
 
             for (int i = 0; i < 100; i++)
             {
                 var v = MapUtil.Pos(CompressUnusedIteration, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
-                Chunk c = d_Map.chunks[v.x, v.y, v.z];
+                Chunk c = d_Map.GetChunkValid(v.x, v.y, v.z);
                 var vg = new Vector3i(v.x * chunksize, v.y * chunksize, v.z * chunksize);
                 bool stop = false;
                 if (c != null)
@@ -1487,7 +1477,7 @@ namespace ManicDiggerServer
                         {
                             DoSaveChunk(v.x, v.y, v.z, c);
                         }
-                        d_Map.chunks[v.x, v.y, v.z] = null;
+                        d_Map.SetChunkValid(v.x, v.y, v.z, null);
                         stop = true;
                     }
                 }
@@ -1512,9 +1502,9 @@ namespace ManicDiggerServer
                 {
                     for (int z = 0; z < d_Map.MapSizeZ / chunksize; z++)
                     {
-                        if (d_Map.chunks[x, y, z] != null)
+                        if (d_Map.GetChunkValid(x, y, z) != null)
                         {
-                            DoSaveChunk(x, y, z, d_Map.chunks[x, y, z]);
+                            DoSaveChunk(x, y, z, d_Map.GetChunkValid(x, y, z));
                         }
                     }
                 }
@@ -1530,125 +1520,16 @@ namespace ManicDiggerServer
         }
         int SEND_CHUNKS_PER_SECOND = 10;
         int SEND_MONSTER_UDAPTES_PER_SECOND = 3;
-        /*
-        private List<Vector3i> UnknownChunksAroundPlayer(int clientid)
-        {
-            Client c = clients[clientid];
-            List<Vector3i> tosend = new List<Vector3i>();
-            Vector3i playerpos = PlayerBlockPosition(c);
-            foreach (var v in ChunksAroundPlayer(playerpos))
-            {
-                Chunk chunk = d_Map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize];
-                if (chunk == null)
-                {
-                    LoadChunk(v);
-                    chunk = d_Map.chunks[v.x / chunksize, v.y / chunksize, v.z / chunksize];
-                }
-                int chunkupdatetime = chunk.LastChange;
-                if (!c.chunksseen.ContainsKey(v) || c.chunksseen[v] < chunkupdatetime)
-                {
-                    if (MapUtil.IsValidPos(d_Map, v.x, v.y, v.z))
-                    {
-                        tosend.Add(v);
-                    }
-                }
-            }
-            return tosend;
-        }
-        */
+
         private void LoadChunk(int cx, int cy, int cz)
         {
             d_Map.LoadChunk(cx, cy, cz);
         }
 
-        /*
-        private int NotifyMapChunks(int clientid, int limit)
-        {
-            Client c = clients[clientid];
-            Vector3i playerpos = PlayerBlockPosition(c);
-            if (playerpos == new Vector3i())
-            {
-                return 0;
-            }
-            List<Vector3i> tosend = UnknownChunksAroundPlayer(clientid);
-            tosend.Sort((a, b) => DistanceSquared(a, playerpos).CompareTo(DistanceSquared(b, playerpos)));
-            int sent = 0;
-            foreach (var v in tosend)
-            {
-                if (sent >= limit)
-                {
-                    break;
-                }
-                byte[] chunk = d_Map.GetChunk(v.x, v.y, v.z);
-                c.chunksseen[v] = (int)simulationcurrentframe;
-                sent++;
-                if (MapUtil.IsSolidChunk(chunk) && chunk[0] == 0)
-                {
-                    //don't send empty chunk.
-                    continue;
-                }
-                byte[] compressedchunk = CompressChunkNetwork(chunk);
-                if (!c.heightmapchunksseen.ContainsKey(new Vector2i(v.x, v.y)))
-                {
-                    byte[] heightmapchunk = d_Map.GetHeightmapChunk(v.x, v.y);
-                    byte[] compressedHeightmapChunk = d_NetworkCompression.Compress(heightmapchunk);
-                    PacketServerHeightmapChunk p1 = new PacketServerHeightmapChunk()
-                    {
-                        X = v.x,
-                        Y = v.y,
-                        SizeX = chunksize,
-                        SizeY = chunksize,
-                        CompressedHeightmap = compressedHeightmapChunk,
-                    };
-                    SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.HeightmapChunk, HeightmapChunk = p1 }));
-                    c.heightmapchunksseen.Add(new Vector2i(v.x, v.y), (int)simulationcurrentframe);
-                }
-                PacketServerChunk p = new PacketServerChunk()
-                {
-                    X = v.x,
-                    Y = v.y,
-                    Z = v.z,
-                    SizeX = chunksize,
-                    SizeY = chunksize,
-                    SizeZ = chunksize,
-                    CompressedChunk = compressedchunk,
-                };
-                SendPacket(clientid, Serialize(new PacketServer() { PacketId = ServerPacketId.Chunk, Chunk = p }));
-            }
-        }
-         
-        /*
-Vector3i playerpos = PlayerBlockPosition(clients[clientid]);
-var around = new List<Vector3i>(ChunksAroundPlayer(playerpos));
-for (int i = 0; i < around.Count; i++)
-{
-var v = around[i];
-d_Map.GetBlock(v.x, v.y, v.z); //force load
-if (i % 10 == 0)
-{
-    SendLevelProgress(clientid, (int)(((float)i / around.Count) * 100), "Generating world...");
-}
-}
-ChunkSimulation();
-
-List<Vector3i> unknown = UnknownChunksAroundPlayer(clientid);
-int sent = 0;
-for (int i = 0; i < unknown.Count; i++)
-{
-sent += NotifyMapChunks(clientid, 5);
-SendLevelProgress(clientid, (int)(((float)sent / unknown.Count) * 100), "Downloading map...");
-if (sent >= unknown.Count) { break; }
-}
-*/
-        /*
-            SendLevelFinalize(clientid);
-            return sent;
-        }
-        */
-        const string invalidplayername = "invalid";
+        public const string invalidplayername = "invalid";
         public void NotifyInventory(int clientid)
         {
-            Client c = clients[clientid];
+            ClientOnServer c = clients[clientid];
             if (c.IsInventoryDirty && c.playername != invalidplayername && !c.usingFill)
             {
                 Packet_ServerInventory p;
@@ -1742,7 +1623,7 @@ if (sent >= unknown.Count) { break; }
 
         public void NotifyPlayerStats(int clientid)
         {
-            Client c = clients[clientid];
+            ClientOnServer c = clients[clientid];
             if (c.IsPlayerStatsDirty && c.playername != invalidplayername)
             {
                 Packet_ServerPlayerStats p = ConvertPlayerStats(GetPlayerStats(c.playername));
@@ -1767,7 +1648,7 @@ if (sent >= unknown.Count) { break; }
 
         private void HitMonsters(int clientid, int health)
         {
-            Client c = clients[clientid];
+            ClientOnServer c = clients[clientid];
             int mapx = c.PositionMul32GlX / 32;
             int mapy = c.PositionMul32GlZ / 32;
             int mapz = c.PositionMul32GlY / 32;
@@ -1785,7 +1666,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             continue;
                         }
-                        Chunk chunk = d_Map.chunks[cx, cy, cz];
+                        Chunk chunk = d_Map.GetChunkValid(cx, cy, cz);
                         if (chunk == null || chunk.Monsters == null)
                         {
                             continue;
@@ -1819,7 +1700,7 @@ if (sent >= unknown.Count) { break; }
         }
         private void NotifyMonsters(int clientid)
         {
-            Client c = clients[clientid];
+            ClientOnServer c = clients[clientid];
             int mapx = c.PositionMul32GlX / 32;
             int mapy = c.PositionMul32GlZ / 32;
             int mapz = c.PositionMul32GlY / 32;
@@ -1838,7 +1719,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             continue;
                         }
-                        Chunk chunk = d_Map.chunks[cx, cy, cz];
+                        Chunk chunk = d_Map.GetChunkValid(cx, cy, cz);
                         if (chunk == null || chunk.Monsters == null)
                         {
                             continue;
@@ -1883,7 +1764,7 @@ if (sent >= unknown.Count) { break; }
             {
                 Vector3i posA = new Vector3i(a.PositionAndOrientation.X, a.PositionAndOrientation.Y, a.PositionAndOrientation.Z);
                 Vector3i posB = new Vector3i(b.PositionAndOrientation.X, b.PositionAndOrientation.Y, b.PositionAndOrientation.Z);
-                Client client = clients[clientid];
+                ClientOnServer client = clients[clientid];
                 Vector3i posPlayer = new Vector3i(client.PositionMul32GlX, client.PositionMul32GlY, client.PositionMul32GlZ);
                 return DistanceSquared(posA, posPlayer).CompareTo(DistanceSquared(posB, posPlayer));
             }
@@ -1909,18 +1790,18 @@ if (sent >= unknown.Count) { break; }
             int oldcx = m.X / chunksize;
             int oldcy = m.Y / chunksize;
             int oldcz = m.Z / chunksize;
-            d_Map.chunks[oldcx, oldcy, oldcz].Monsters.Remove(m);
+            d_Map.GetChunkValid(oldcx, oldcy, oldcz).Monsters.Remove(m);
             m.X += m.WalkDirection.x;
             m.Y += m.WalkDirection.y;
             m.Z += m.WalkDirection.z;
             int newcx = m.X / chunksize;
             int newcy = m.Y / chunksize;
             int newcz = m.Z / chunksize;
-            if (d_Map.chunks[newcx, newcy, newcz].Monsters == null)
+            if (d_Map.GetChunkValid(newcx, newcy, newcz).Monsters == null)
             {
-                d_Map.chunks[newcx, newcy, newcz].Monsters = new List<Monster>();
+                d_Map.GetChunkValid(newcx, newcy, newcz).Monsters = new List<Monster>();
             }
-            d_Map.chunks[newcx, newcy, newcz].Monsters.Add(m);
+            d_Map.GetChunkValid(newcx, newcy, newcz).Monsters.Add(m);
             /*
             if (rnd.Next(3) == 0)
             {
@@ -2053,7 +1934,7 @@ if (sent >= unknown.Count) { break; }
             p.MaxOxygen = 10;
             return p;
         }
-        public Vector3i PlayerBlockPosition(Client c)
+        public Vector3i PlayerBlockPosition(ClientOnServer c)
         {
             return new Vector3i(c.PositionMul32GlX / 32, c.PositionMul32GlZ / 32, c.PositionMul32GlY / 32);
         }
@@ -2098,7 +1979,7 @@ if (sent >= unknown.Count) { break; }
 
         private void TryReadPacket(int clientid, byte[] data)
         {
-            Client c = clients[clientid];
+            ClientOnServer c = clients[clientid];
             //PacketClient packet = Serializer.Deserialize<PacketClient>(new MemoryStream(data));
             Packet_Client packet = new Packet_Client();
             Packet_ClientSerializer.DeserializeBuffer(data, data.Length, packet);
@@ -2119,7 +2000,7 @@ if (sent >= unknown.Count) { break; }
                         {
                             Console.WriteLine(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
                             ServerEventLog(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
-                            SendDisconnectPlayer(clientid, language.ServerPasswordInvalid());
+                            SendPacket(clientid, ServerPackets.DisconnectPlayer(language.ServerPasswordInvalid()));
                             KillPlayer(clientid);
                             break;
                         }
@@ -2131,7 +2012,7 @@ if (sent >= unknown.Count) { break; }
 
                         if (string.IsNullOrEmpty(username) || !allowedUsername.IsMatch(username))
                         {
-                        	SendDisconnectPlayer(clientid, language.ServerUsernameInvalid());
+                        	SendPacket(clientid, ServerPackets.DisconnectPlayer(language.ServerUsernameInvalid()));
                             ServerEventLog(string.Format("{0} can't join (invalid username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
                             break;
@@ -2150,7 +2031,7 @@ if (sent >= unknown.Count) { break; }
 
                         if (!config.AllowGuests && verificationFailed)
                         {
-                        	SendDisconnectPlayer(clientid, language.ServerNoGuests());
+                        	SendPacket(clientid, ServerPackets.DisconnectPlayer(language.ServerNoGuests()));
                             KillPlayer(clientid);
                             break;
                         }
@@ -2161,7 +2042,7 @@ if (sent >= unknown.Count) { break; }
                             string reason = entry.Reason;
                             if (string.IsNullOrEmpty(reason))
                                 reason = "";
-                            SendDisconnectPlayer(clientid, string.Format(language.ServerUsernameBanned(), reason));
+                            SendPacket(clientid, ServerPackets.DisconnectPlayer(string.Format(language.ServerUsernameBanned(), reason)));
                             Console.WriteLine(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             ServerEventLog(string.Format("{0} fails to join (banned username: {1}).", (c.socket.RemoteEndPoint()).AddressToString(), username));
                             KillPlayer(clientid);
@@ -2263,7 +2144,7 @@ if (sent >= unknown.Count) { break; }
                                 SendPlayerSpawn(clientid, k.Key);
                             }
                         }
-                        SendLevelFinalize(clientid);
+                        SendPacket(clientid, ServerPackets.LevelFinalize());
                         clients[clientid].state = ClientStateOnServer.Playing;
                         NotifySeason(clientid);
                     }
@@ -2677,7 +2558,7 @@ if (sent >= unknown.Count) { break; }
         {
         	if (!clients[clientid].IsBot)	//Bots don't need to be sent packets with other player's positions
         	{
-                Client c = clients[spawnedplayer];
+                ClientOnServer c = clients[spawnedplayer];
                 Packet_ServerSpawnPlayer p = new Packet_ServerSpawnPlayer()
                 {
                 	PlayerId = spawnedplayer,
@@ -2924,7 +2805,7 @@ if (sent >= unknown.Count) { break; }
             NotifyInventory(player_id);
         }
 
-        private bool IsFillAreaValid(Client client, Vector3i a, Vector3i b)
+        private bool IsFillAreaValid(ClientOnServer client, Vector3i a, Vector3i b)
         {
             if (!MapUtil.IsValidPos(this.d_Map, a.x, a.y, a.z) || !MapUtil.IsValidPos(this.d_Map, b.x, b.y, b.z))
             {
@@ -3005,12 +2886,12 @@ if (sent >= unknown.Count) { break; }
         }
         bool ClientSeenChunk(int clientid, int vx, int vy, int vz)
         {
-            int pos = MapUtil.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
             return clients[clientid].chunksseen[pos];
         }
         void ClientSeenChunkSet(int clientid, int vx, int vy, int vz, int time)
         {
-            int pos = MapUtil.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
+            int pos = MapUtilCi.Index3d(vx / chunksize, vy / chunksize, vz / chunksize, d_Map.MapSizeX / chunksize, d_Map.MapSizeY / chunksize);
             clients[clientid].chunksseen[pos] = true;
             clients[clientid].chunksseenTime[pos] = time;
         }
@@ -3044,7 +2925,7 @@ if (sent >= unknown.Count) { break; }
         }
         private void SetFillAreaLimit(int clientid)
         {
-            Client client = GetClient(clientid);
+            ClientOnServer client = GetClient(clientid);
             if (client == null)
             {
                 return;
@@ -3439,15 +3320,17 @@ if (sent >= unknown.Count) { break; }
             p.Message = truncated;
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.Message, Message = p }));
         }
-        public void SendDisconnectPlayer(int clientid, string disconnectReason)
-        {
-            Packet_ServerDisconnectPlayer p = new Packet_ServerDisconnectPlayer() { DisconnectReason = disconnectReason };
-            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.DisconnectPlayer, DisconnectPlayer = p }));
-        }
+
         int StatTotalPackets = 0;
         int StatTotalPacketsLength = 0;
         public long TotalSentBytes;
         public long TotalReceivedBytes;
+
+        public void SendPacket(int clientid, Packet_Server packet)
+        {
+            SendPacket(clientid, Serialize(packet));
+        }
+
         public void SendPacket(int clientid, byte[] packet)
         {
             if (clients[clientid].IsBot)
@@ -3536,7 +3419,7 @@ if (sent >= unknown.Count) { break; }
         int BlobPartLength = 1024 * 1;
         private void SendBlobs(int clientid, Packet_StringList list)
         {
-            SendLevelInitialize(clientid);
+            SendPacket(clientid, ServerPackets.LevelInitialize());
             LoadAssets();
 
             List<Asset> tosend = new List<Asset>();
@@ -3713,20 +3596,10 @@ if (sent >= unknown.Count) { break; }
             return p;
         }
 
-        private void SendLevelInitialize(int clientid)
-        {
-            Packet_ServerLevelInitialize p = new Packet_ServerLevelInitialize() { };
-            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelInitialize, LevelInitialize = p }));
-        }
         private void SendLevelProgress(int clientid, int percentcomplete, string status)
         {
             Packet_ServerLevelProgress p = new Packet_ServerLevelProgress() { PercentComplete = percentcomplete, Status = status };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelDataChunk, LevelDataChunk = p }));
-        }
-        private void SendLevelFinalize(int clientid)
-        {
-            Packet_ServerLevelFinalize p = new Packet_ServerLevelFinalize() { };
-            SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.LevelFinalize, LevelFinalize = p }));
         }
         public RenderHint RenderHint = RenderHint.Fast;
         private void SendServerIdentification(int clientid)
@@ -3786,82 +3659,10 @@ if (sent >= unknown.Count) { break; }
             public string Name;
             public byte[] Data;
         }
-        public enum ClientStateOnServer
-        {
-            Connecting,
-            LoadingGenerating,
-            LoadingSending,
-            Playing,
-        }
-        public class Client
-        {
-            public int Id = -1;
-            public ClientStateOnServer state = ClientStateOnServer.Connecting;
-            public int maploadingsentchunks = 0;
-            public INetServer mainSocket;
-            public INetConnection socket;
-            public List<byte> received = new List<byte>();
-            public Ping_ Ping = new Ping_();
-            public float LastPing;
-            public string playername = invalidplayername;
-            public int PositionMul32GlX;
-            public int PositionMul32GlY;
-            public int PositionMul32GlZ;
-            public int positionheading;
-            public int positionpitch;
-            public byte stance = 0;
-            public string Model = "player.txt";
-            public string Texture;
-            public Dictionary<int, int> chunksseenTime = new Dictionary<int, int>();
-            public bool[] chunksseen;
-            public Dictionary<Vector2i, int> heightmapchunksseen = new Dictionary<Vector2i, int>();
-            public Timer notifyMapTimer;
-            public bool IsInventoryDirty = true;
-            public bool IsPlayerStatsDirty = true;
-            public int FillLimit = 500;
-            //public List<byte[]> blobstosend = new List<byte[]>();
-            public ManicDigger.Group clientGroup;
-            public bool IsBot;
-            public void AssignGroup(ManicDigger.Group newGroup)
-            {
-                this.clientGroup = newGroup;
-                this.privileges.Clear();
-                this.privileges.AddRange(newGroup.GroupPrivileges);
-                this.color = newGroup.GroupColorString();
-            }
-            public List<string> privileges = new List<string>();
-            public string color;
-            public string displayColor = "&f";
-            public string ColoredPlayername(string subsequentColor)
-            {
-                return this.color + this.playername + subsequentColor;
-            }
-            public Timer notifyMonstersTimer;
-            public IScriptInterpreter Interpreter;
-            public ScriptConsole Console;
-
-            public override string ToString()
-            {
-                string ip = "";
-                if (this.socket != null)
-                {
-                    ip = (this.socket.RemoteEndPoint()).AddressToString();
-                }
-                // Format: Playername:Group:Privileges IP
-                return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
-                    ServerClientMisc.PrivilegesString(this.privileges), ip);
-            }
-            public float EyeHeight = 1.5f;
-            public float ModelHeight = 1.7f;
-            public float generatingworldprogress;
-            public int ActiveMaterialSlot;
-            public bool IsSpectator;
-            public bool usingFill = false;
-        }
-        public Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public Dictionary<int, ClientOnServer> clients = new Dictionary<int, ClientOnServer>();
         public Dictionary<string, bool> disabledprivileges = new Dictionary<string, bool>();
         public Dictionary<string, bool> extraPrivileges = new Dictionary<string, bool>();
-        public Client GetClient(int id)
+        public ClientOnServer GetClient(int id)
         {
             if (id == this.serverConsoleId)
             {
@@ -3871,7 +3672,7 @@ if (sent >= unknown.Count) { break; }
                 return null;
             return clients[id];
         }
-        public Client GetClient(string name)
+        public ClientOnServer GetClient(string name)
         {
             if (serverConsoleClient.playername.Equals(name, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -4340,6 +4141,95 @@ if (sent >= unknown.Count) { break; }
         {
             return b.DrawType != DrawType.Solid && b.DrawType != DrawType.ClosedDoor;
         }
+
+        public int GetSimulationCurrentFrame()
+        {
+            return simulationcurrentframe;
+        }
+    }
+
+    public class ClientOnServer
+    {
+        public ClientOnServer()
+        {
+            float one = 1;
+            Id = -1;
+            state = ClientStateOnServer.Connecting;
+            received = new List<byte>();
+            Ping = new Ping_();
+            playername = Server.invalidplayername;
+            Model = "player.txt";
+            chunksseenTime = new Dictionary<int, int>();
+            heightmapchunksseen = new Dictionary<Vector2i, int>();
+            IsInventoryDirty = true;
+            IsPlayerStatsDirty = true;
+            FillLimit = 500;
+            privileges = new List<string>();
+            displayColor = "&f";
+
+            EyeHeight = one * 15 / 10;
+            ModelHeight = one * 17 / 10;
+        }
+        internal int Id;
+        internal int state; // ClientStateOnServer
+        internal INetServer mainSocket;
+        internal INetConnection socket;
+        internal List<byte> received;
+        internal Ping_ Ping;
+        internal float LastPing;
+        internal string playername;
+        internal int PositionMul32GlX;
+        internal int PositionMul32GlY;
+        internal int PositionMul32GlZ;
+        internal int positionheading;
+        internal int positionpitch;
+        internal byte stance = 0;
+        internal string Model;
+        internal string Texture;
+        internal Dictionary<int, int> chunksseenTime;
+        internal bool[] chunksseen;
+        internal Dictionary<Vector2i, int> heightmapchunksseen;
+        internal Timer notifyMapTimer;
+        internal bool IsInventoryDirty;
+        internal bool IsPlayerStatsDirty;
+        internal int FillLimit;
+        //internal List<byte[]> blobstosend = new List<byte[]>();
+        internal ManicDigger.Group clientGroup;
+        internal bool IsBot;
+        public void AssignGroup(ManicDigger.Group newGroup)
+        {
+            this.clientGroup = newGroup;
+            this.privileges.Clear();
+            this.privileges.AddRange(newGroup.GroupPrivileges);
+            this.color = newGroup.GroupColorString();
+        }
+        internal List<string> privileges;
+        internal string color;
+        internal string displayColor;
+        public string ColoredPlayername(string subsequentColor)
+        {
+            return this.color + this.playername + subsequentColor;
+        }
+        internal Timer notifyMonstersTimer;
+        internal IScriptInterpreter Interpreter;
+        internal ScriptConsole Console;
+
+        public override string ToString()
+        {
+            string ip = "";
+            if (this.socket != null)
+            {
+                ip = (this.socket.RemoteEndPoint()).AddressToString();
+            }
+            // Format: Playername:Group:Privileges IP
+            return string.Format("{0}:{1}:{2} {3}", this.playername, this.clientGroup.Name,
+                ServerClientMisc.PrivilegesString(this.privileges), ip);
+        }
+        internal float EyeHeight;
+        internal float ModelHeight;
+        internal int ActiveMaterialSlot;
+        internal bool IsSpectator;
+        internal bool usingFill;
     }
 
     public class ModEventHandlers
@@ -4503,13 +4393,11 @@ if (sent >= unknown.Count) { break; }
     }
     public interface ICurrentTime
     {
-        int SimulationCurrentFrame { get; }
+        int GetSimulationCurrentFrame();
     }
     public class CurrentTimeDummy : ICurrentTime
     {
-        #region ICurrentTime Members
-        public int SimulationCurrentFrame { get { return 0; } }
-        #endregion
+        public int GetSimulationCurrentFrame() { return 0; }
     }
     public static class MapUtil
     {
@@ -4531,50 +4419,50 @@ if (sent >= unknown.Count) { break; }
             return new Vector3i(x, y, h);
         }
 
-        public static bool IsValidPos(IMapStorage map, int x, int y, int z)
+        public static bool IsValidPos(IMapStorage2 map, int x, int y, int z)
         {
             if (x < 0 || y < 0 || z < 0)
             {
                 return false;
             }
-            if (x >= map.MapSizeX || y >= map.MapSizeY || z >= map.MapSizeZ)
+            if (x >= map.GetMapSizeX() || y >= map.GetMapSizeY() || z >= map.GetMapSizeZ())
             {
                 return false;
             }
             return true;
         }
 
-        public static bool IsValidPos(IMapStorage map, int x, int y)
+        public static bool IsValidPos(IMapStorage2 map, int x, int y)
         {
             if (x < 0 || y < 0)
             {
                 return false;
             }
-            if (x >= map.MapSizeX || y >= map.MapSizeY)
+            if (x >= map.GetMapSizeX() || y >= map.GetMapSizeY())
             {
                 return false;
             }
             return true;
         }
 
-        public static bool IsValidChunkPos(IMapStorage map, int cx, int cy, int cz, int chunksize)
+        public static bool IsValidChunkPos(IMapStorage2 map, int cx, int cy, int cz, int chunksize)
         {
             return cx >= 0 && cy >= 0 && cz >= 0
-                && cx < map.MapSizeX / chunksize
-                && cy < map.MapSizeY / chunksize
-                && cz < map.MapSizeZ / chunksize;
+                && cx < map.GetMapSizeX() / chunksize
+                && cy < map.GetMapSizeY() / chunksize
+                && cz < map.GetMapSizeZ() / chunksize;
         }
 
-        public static int blockheight(IMapStorage map, int tileidempty, int x, int y)
+        public static int blockheight(IMapStorage2 map, int tileidempty, int x, int y)
         {
-            for (int z = map.MapSizeZ - 1; z >= 0; z--)
+            for (int z = map.GetMapSizeZ() - 1; z >= 0; z--)
             {
                 if (map.GetBlock(x, y, z) != tileidempty)
                 {
                     return z + 1;
                 }
             }
-            return map.MapSizeZ / 2;
+            return map.GetMapSizeZ() / 2;
         }
 
         static ulong pow20minus1 = 1048576 - 1;
@@ -4597,7 +4485,7 @@ if (sent >= unknown.Count) { break; }
             return v;
         }
 
-        public static int SearchColumn(IMapStorage map, int x, int y, int id, int startH)
+        public static int SearchColumn(IMapStorage2 map, int x, int y, int id, int startH)
         {
             for (int h = startH; h > 0; h--)
             {
@@ -4609,9 +4497,9 @@ if (sent >= unknown.Count) { break; }
             return -1; // -1 means 'not found'
         }
 
-        public static int SearchColumn(IMapStorage map, int x, int y, int id)
+        public static int SearchColumn(IMapStorage2 map, int x, int y, int id)
         {
-            return SearchColumn(map, x, y, id, map.MapSizeZ - 1);
+            return SearchColumn(map, x, y, id, map.GetMapSizeZ() - 1);
         }
 
         public static bool IsSolidChunk(ushort[] chunk)
@@ -4775,14 +4663,7 @@ if (sent >= unknown.Count) { break; }
             return string.Format("[{0}, {1}, {2}]", x, y, z);
         }
     }
-    public interface IMapStorage
-    {
-        int MapSizeX { get; set; }
-        int MapSizeY { get; set; }
-        int MapSizeZ { get; set; }
-        int GetBlock(int x, int y, int z);
-        void SetBlock(int x, int y, int z, int tileType);
-    }
+
     [ProtoContract()]
     public class Ingredient
     {
