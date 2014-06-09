@@ -1269,9 +1269,19 @@ public class GamePlatformNative : GamePlatform
 
     public CrashReporter crashreporter;
 
+    OnCrashHandler onCrashHandler;
     public override void AddOnCrash(OnCrashHandler handler)
     {
-        crashreporter.OnCrash += (a, b) => { handler.OnCrash(); };
+        crashreporter.OnCrash = OnCrash;
+        onCrashHandler = handler;
+    }
+
+    void OnCrash()
+    {
+        if (onCrashHandler != null)
+        {
+            onCrashHandler.OnCrash();
+        }
     }
 
     public override string KeyName(int key)

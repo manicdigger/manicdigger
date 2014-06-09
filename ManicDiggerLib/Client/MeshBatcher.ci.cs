@@ -246,6 +246,22 @@
         }
         return false;
     }
+
+    internal void Clear()
+    {
+        for (int i = 0; i < modelsCount; i++)
+        {
+            if (!EmptyContains(i))
+            {
+                ListInfo li = models[i];
+                if (li == null)
+                {
+                    continue;
+                }
+                Remove(i);
+            }
+        }
+    }
 }
 
 public class ToCall

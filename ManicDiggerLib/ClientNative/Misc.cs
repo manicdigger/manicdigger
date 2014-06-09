@@ -112,7 +112,7 @@ namespace ManicDigger.ClientNative
             Console.WriteLine(e);
             if (OnCrash != null)
             {
-                OnCrash(this, new EventArgs());
+                OnCrash();
             }
             try
             {
@@ -130,7 +130,7 @@ namespace ManicDigger.ClientNative
             }
             Environment.Exit(1);
         }
-        public event EventHandler OnCrash;
+        public Action OnCrash;
     }
 
     public static class GameStorePath

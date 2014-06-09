@@ -597,6 +597,11 @@
 
     internal bool shadowssimple;
     int minlight;
+
+    internal void Clear()
+    {
+        game.d_Batcher.Clear();
+    }
 }
 
 public class TerrainRendererCommit : Task

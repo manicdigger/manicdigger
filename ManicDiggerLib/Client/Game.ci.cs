@@ -8483,6 +8483,7 @@
 
     public void Dispose()
     {
+        terrainRenderer.Clear();
     }
 
     internal GameScreen[] screens;

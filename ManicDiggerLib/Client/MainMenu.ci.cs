@@ -1437,12 +1437,8 @@ public class ScreenGame : Screen
         if (game.reconnect)
         {
             game.Dispose();
-            game = new Game();
-            game.platform = platform;
-            game.issingleplayer = singleplayer;
-            Connect(platform);
-            game.Start();
-            game.OnLoad();
+            menu.StartGame(singleplayer, singleplayerSavePath, connectData);
+            return;
         }
         game.OnRenderFrame(dt);
     }
