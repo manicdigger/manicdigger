@@ -1492,21 +1492,36 @@ public class GamePlatformNative : GamePlatform
     }
 
     bool mouseCursorVisible = true;
-    public override void MouseCursorHide()
+    public override void MouseCursorSetVisible(bool value)
     {
-        if (TouchTest)
+        if (!value)
         {
-            return;
-        }
-        if (!IsMac)
-        {
-            System.Windows.Forms.Cursor.Hide();
+            if (TouchTest)
+            {
+                return;
+            }
+            if (!IsMac)
+            {
+                System.Windows.Forms.Cursor.Hide();
+            }
+            else
+            {
+                window.CursorVisible = false;
+            }
+            mouseCursorVisible = false;
         }
         else
         {
-            window.CursorVisible = false;
+            if (!IsMac)
+            {
+                System.Windows.Forms.Cursor.Show();
+            }
+            else
+            {
+                window.CursorVisible = true;
+            }
+            mouseCursorVisible = true;
         }
-        mouseCursorVisible = false;
     }
 
     public override void ApplicationDoEvents()

@@ -1523,12 +1523,12 @@
         Draw2dText(screenshottext, font, xcenter(textWidth.value), ycenter(textHeight.value), null, false);
     }
 
-    internal int Width()
+    public int Width()
     {
         return platform.GetCanvasWidth();
     }
 
-    internal int Height()
+    public int Height()
     {
         return platform.GetCanvasHeight();
     }
@@ -2513,6 +2513,7 @@
     internal bool issingleplayer;
     internal bool IsShiftPressed;
     internal bool reconnect;
+    internal bool exitToMainMenu;
     internal float rotation_speed;
     internal void SendLeave(int reason)
     {
@@ -4614,6 +4615,12 @@
     internal void Reconnect()
     {
         reconnect = true;
+    }
+
+    internal void ExitToMainMenu()
+    {
+        exitToMainMenu = true;
+        platform.MouseCursorSetVisible(true);
     }
 
     internal void ClientCommand(string s_)
@@ -8076,7 +8083,7 @@
         platform.GlEnableColorMaterial();
         platform.GlColorMaterialFrontAndBackAmbientAndDiffuse();
         platform.GlShadeModelSmooth();
-        platform.MouseCursorHide();
+        platform.MouseCursorSetVisible(false);
     }
 
     internal void Connect__()

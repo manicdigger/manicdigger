@@ -51,9 +51,8 @@
         }
         if (b == buttonMainExit)
         {
-            RestoreResolution();
             game.SendLeave(Packet_LeaveReasonEnum.Leave);
-            game.platform.WindowExit();
+            game.ExitToMainMenu();
         }
     }
 

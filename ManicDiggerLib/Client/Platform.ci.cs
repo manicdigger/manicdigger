@@ -139,7 +139,7 @@
     public abstract void GlEnableColorMaterial();
     public abstract void GlColorMaterialFrontAndBackAmbientAndDiffuse();
     public abstract void GlShadeModelSmooth();
-    public abstract void MouseCursorHide();
+    public abstract void MouseCursorSetVisible(bool value);
     public abstract bool MouseCursorIsVisible();
     public abstract void ApplicationDoEvents();
     public abstract void ThreadSpinWait(int iterations);

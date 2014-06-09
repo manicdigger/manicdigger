@@ -129,6 +129,7 @@
         p.GlViewport(0, 0, viewportWidth, viewportHeight);
         p.GlClearColorBufferAndDepthBuffer();
         p.GlDisableDepthTest();
+        p.GlDisableCullFace();
         {
             //Mat4.Perspective(pMatrix, 45, one * viewportWidth / viewportHeight, one / 100, one * 1000);
             //Mat4.Identity_(mvMatrix);
@@ -1438,6 +1439,12 @@ public class ScreenGame : Screen
         {
             game.Dispose();
             menu.StartGame(singleplayer, singleplayerSavePath, connectData);
+            return;
+        }
+        if (game.exitToMainMenu)
+        {
+            game.Dispose();
+            menu.StartMainMenu();
             return;
         }
         game.OnRenderFrame(dt);
