@@ -8484,6 +8484,26 @@
     public void Dispose()
     {
         terrainRenderer.Clear();
+        for (int i = 0; i < textures.count; i++)
+        {
+            if (textures.items[i] == null)
+            {
+                continue;
+            }
+            platform.GLDeleteTexture(textures.items[i].value);
+        }
+        for (int i = 0; i < cachedTextTexturesMax; i++)
+        {
+            if (cachedTextTextures[i] == null)
+            {
+                continue;
+            }
+            if (cachedTextTextures[i].texture == null)
+            {
+                continue;
+            }
+            platform.GLDeleteTexture(cachedTextTextures[i].texture.textureId);
+        }
     }
 
     internal GameScreen[] screens;
