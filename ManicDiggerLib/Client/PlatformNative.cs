@@ -2001,6 +2001,11 @@ public class GamePlatformNative : GamePlatform
 
     public override void OpenLinkInBrowser(string url)
     {
+        if (!url.StartsWith("http://"))
+        {
+            //Check if string is an URL - if not, abort
+            return;
+        }
         Process.Start(url);
     }
 }
