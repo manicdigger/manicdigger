@@ -6884,7 +6884,7 @@
         }
         float lagSeconds = one * (platform.TimeMillisecondsFromStart() - LastReceivedMilliseconds) / 1000;
         if ((lagSeconds >= Game.DISCONNECTED_ICON_AFTER_SECONDS && lagSeconds < 60 * 60 * 24)
-            && invalidVersionDrawMessage == null)
+            && invalidVersionDrawMessage == null && !(issingleplayer && (!platform.SinglePlayerServerLoaded())))
         {
             Draw2dBitmapFile("disconnected.png", Width() - 100, 50, 50, 50);
             FontCi font = new FontCi();
