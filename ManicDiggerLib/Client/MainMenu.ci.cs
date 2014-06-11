@@ -631,6 +631,25 @@ public class Screen
             MenuWidget w = widgets[i];
             if (w != null)
             {
+                if (w.hasKeyboardFocus)
+                {
+                    if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
+                    {
+                        if (w.type == WidgetType.Button && e.GetKeyChar() == 13)
+                        {
+                            //Call OnButton when enter is pressed and widget is a button
+                            OnButton(w);
+                            return;
+                        }
+                        else if (w.nextWidget != -1)
+                        {
+                            //Just switch focus otherwise
+                            w.LoseFocus();
+                            widgets[w.nextWidget].GetFocus();
+                            return;
+                        }
+                    }
+                }
                 if (w.type == WidgetType.Textbox)
                 {
                     if (w.editing)
@@ -642,10 +661,6 @@ public class Screen
                             {
                                 w.text = StringTools.StringSubstring(menu.p, w.text, 0, menu.StringLength(w.text) - 1);
                             }
-                            return;
-                        }
-                        if (e.GetKeyChar() == 9 || e.GetKeyChar() == 13) // tab, enter
-                        {
                             return;
                         }
                         if (e.GetKeyChar() == 22) //paste
@@ -693,6 +708,24 @@ public class Screen
                         menu.p.ShowKeyboard(false);
                     }
                 }
+                if (w.pressed)
+                {
+                    //Set focus to new element when clicked on
+                    AllLoseFocus();
+                    w.GetFocus();
+                }
+            }
+        }
+    }
+    
+    void AllLoseFocus()
+    {
+        for (int i = 0; i < WidgetCount; i++)
+        {
+            MenuWidget w = widgets[i];
+            if (w != null)
+            {
+                w.LoseFocus();
             }
         }
     }
@@ -769,7 +802,7 @@ public class Screen
                     }
                     else
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, w.hover);
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -788,7 +821,7 @@ public class Screen
                     }
                     else
                     {
-                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing));
+                        menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
                     }
                 }
                 if (w.description != null)
@@ -1107,19 +1140,23 @@ public class ScreenLogin : Screen
         login = new MenuWidget();
         login.text = "Login";
         login.type = WidgetType.Button;
+        login.nextWidget = 9;
         loginUsername = new MenuWidget();
         loginUsername.type = WidgetType.Textbox;
         loginUsername.text = "";
         loginUsername.description = "Username";
+        loginUsername.nextWidget = 2;
         loginPassword = new MenuWidget();
         loginPassword.type = WidgetType.Textbox;
         loginPassword.text = "";
         loginPassword.description = "Password";
         loginPassword.password = true;
+        loginPassword.nextWidget = 3;
         loginRememberMe = new MenuWidget();
         loginRememberMe.text = "Yes";
         loginRememberMe.type = WidgetType.Button;
         loginRememberMe.description = "Remember me";
+        loginRememberMe.nextWidget = 0;
 
         createAccount = new MenuWidget();
         createAccount.text = "Create account";
@@ -1140,6 +1177,7 @@ public class ScreenLogin : Screen
         back = new MenuWidget();
         back.text = "Back";
         back.type = WidgetType.Button;
+        back.nextWidget = 1;
 
         widgets[0] = login;
         widgets[1] = loginUsername;
@@ -1150,6 +1188,8 @@ public class ScreenLogin : Screen
         widgets[6] = createAccountPassword;
         widgets[7] = createAccountRememberMe;
         widgets[9] = back;
+        
+        loginUsername.GetFocus();
 
         loginResult = new LoginResultRef();
     }
@@ -1540,15 +1580,19 @@ public class ScreenMultiplayer : Screen
         back = new MenuWidget();
         back.text = "Back";
         back.type = WidgetType.Button;
+        back.nextWidget = 1;
         connect = new MenuWidget();
         connect.text = "Connect";
         connect.type = WidgetType.Button;
+        connect.nextWidget = 3;
         connectToIp = new MenuWidget();
         connectToIp.text = "Connect to IP";
         connectToIp.type = WidgetType.Button;
+        connectToIp.nextWidget = 2;
         refresh = new MenuWidget();
         refresh.text = "Refresh";
         refresh.type = WidgetType.Button;
+        refresh.nextWidget = 0;
 
         page = 0;
         pageUp = new MenuWidget();
@@ -1833,23 +1877,29 @@ public class ScreenConnectToIp : Screen
         buttonConnect = new MenuWidget();
         buttonConnect.text = "Connect";
         buttonConnect.type = WidgetType.Button;
+        buttonConnect.nextWidget = 3;
         textboxIp = new MenuWidget();
         textboxIp.type = WidgetType.Textbox;
         textboxIp.text = "";
         textboxIp.description = "Ip";
+        textboxIp.nextWidget = 2;
         textboxPort = new MenuWidget();
         textboxPort.type = WidgetType.Textbox;
         textboxPort.text = "";
-        textboxPort.description = "Port"; 
+        textboxPort.description = "Port";
+        textboxPort.nextWidget = 0;
 
         back = new MenuWidget();
         back.text = "Back";
         back.type = WidgetType.Button;
+        back.nextWidget = 1;
 
         widgets[0] = buttonConnect;
         widgets[1] = textboxIp;
         widgets[2] = textboxPort;
         widgets[3] = back;
+        
+        textboxIp.GetFocus();
     }
 
     MenuWidget buttonConnect;
@@ -1998,6 +2048,24 @@ public class MenuWidget
     {
         visible = true;
         fontSize = 14;
+        nextWidget = -1;
+        hasKeyboardFocus = false;
+    }
+    public void GetFocus()
+    {
+        hasKeyboardFocus = true;
+        if (type == WidgetType.Textbox)
+        {
+            editing = true;
+        }
+    }
+    public void LoseFocus()
+    {
+        hasKeyboardFocus = false;
+        if (type == WidgetType.Textbox)
+        {
+            editing = false;
+        }
     }
     internal string text;
     internal float x;
@@ -2015,6 +2083,8 @@ public class MenuWidget
     internal bool selected;
     internal ButtonStyle buttonStyle;
     internal string image;
+    internal int nextWidget;
+    internal bool hasKeyboardFocus;
 }
 
 public enum ButtonStyle
