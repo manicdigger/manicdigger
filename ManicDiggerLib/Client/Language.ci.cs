@@ -185,7 +185,7 @@
         Add("en", "ConnectingProgressKilobytes", "{0} KB");
         Add("en", "ConnectingProgressPercent", "{0}%");
         Add("en", "DefaultKeys", "Default keys");
-        Add("en", "Exit", "Exit");
+        Add("en", "Exit", "Return to main menu");
         Add("en", "FogDistance", "Fog distance: {0}");
         Add("en", "FontOption", "Font: {0}");
         Add("en", "FrameRateLagSimulation", "Frame rate: lag simulation.");
@@ -232,7 +232,7 @@
         Add("en", "PressToUse", "(press {0} to use)");
         Add("en", "Respawn", "Respawn");
         Add("en", "ReturnToGame", "Return to game");
-        Add("en", "ReturnToMainMenu", "Return to main menu");
+        Add("en", "ReturnToMainMenu", "Back");
         Add("en", "ReturnToOptionsMenu", "Return to options menu");
         Add("en", "ShadowsOption", "Shadows: {0}");
         Add("en", "SoundOption", "Sound: {0}");
