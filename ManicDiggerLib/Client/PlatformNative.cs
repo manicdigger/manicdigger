@@ -1635,7 +1635,14 @@ public class GamePlatformNative : GamePlatform
 
     public override void SinglePlayerServerStart(string saveFilename)
     {
+        singlepLayerServerExit = false;
         StartSinglePlayerServer(saveFilename);
+    }
+    
+    public bool singlepLayerServerExit;
+    public override void SinglePlayerServerExit()
+    {
+        singlepLayerServerExit = true;
     }
 
     public System.Action<string> StartSinglePlayerServer;

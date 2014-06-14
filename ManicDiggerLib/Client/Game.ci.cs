@@ -4619,6 +4619,10 @@
 
     internal void ExitToMainMenu()
     {
+        if (issingleplayer)
+        {
+            platform.SinglePlayerServerExit();
+        }
         exitToMainMenu = true;
         platform.MouseCursorSetVisible(true);
     }
