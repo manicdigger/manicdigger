@@ -3267,19 +3267,28 @@ namespace ManicDiggerServer
         }
         public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch, byte stance)
         {
+            int[] sentpos = new int[3]
+            {
+                x,
+                y,
+                z,
+            };
             //spectators invisible to players
             if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
             {
-                return;
+                //Set spectator position to some fake value
+                sentpos[0] = -1000 * 32;
+                sentpos[1] = -1000 * 32;
+                sentpos[2] = 0;
             }
             Packet_ServerPositionAndOrientation p = new Packet_ServerPositionAndOrientation()
             {
                 PlayerId = playerid,
                 PositionAndOrientation = new Packet_PositionAndOrientation()
                 {
-                    X = x,
-                    Y = y,
-                    Z = z,
+                    X = sentpos[0],
+                    Y = sentpos[1],
+                    Z = sentpos[2],
                     Heading = heading,
                     Pitch = pitch,
                     Stance = stance,
