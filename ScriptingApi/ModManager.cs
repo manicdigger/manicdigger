@@ -128,6 +128,7 @@ namespace ManicDigger
         int GetActiveMaterialSlot(int player);
         void FollowPlayer(int player, int target, bool tpp);
         void SetPlayerSpectator(int playerid, bool isSpectator);
+        bool IsPlayerSpectator(int playerid);
         BlockType GetBlockType(int block);
         void NotifyAmmo(int playerid, Dictionary<int, int> dictionary);
         void RegisterOnWeaponShot(ModDelegates.WeaponShot a);

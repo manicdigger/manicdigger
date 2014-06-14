@@ -816,6 +816,11 @@ namespace ManicDigger
             server.clients[playerid].IsSpectator = isSpectator;
         }
 
+        public bool IsPlayerSpectator(int playerid)
+        {
+            return server.clients[playerid].IsSpectator;
+        }
+
         public BlockType GetBlockType(int block)
         {
             return server.BlockTypes[block];
