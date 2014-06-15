@@ -396,6 +396,7 @@ package Packet;
         Explosion = 58;
         Projectile = 59;
         Translation = 60;
+        ChunkEntity = 63;
         ExtendedPacketCommand = 100;
         ExtendedPacketTick = 101;
 	}
@@ -625,6 +626,25 @@ package Packet;
         optional int32 timeFloat = 6;
     }
     
+    message ServerChunkEntity
+    {
+		optional int32 chunkX = 1;
+		optional int32 chunkY = 2;
+		optional int32 chunkZ = 3;
+		optional int32 id = 4;
+		optional ServerChunkEntityEntity chunkEntity_ = 5;
+    }
+    
+    message ServerChunkEntityEntity
+    {
+		optional ServerChunkEntityScript script_ = 1;
+    }
+    
+    message ServerChunkEntityScript
+    {
+		optional string text = 1;
+    }
+    
     message Server
     {
         optional ServerId id = 90 [default = ServerIdentification];
@@ -667,6 +687,7 @@ package Packet;
         optional ServerExplosion explosion = 33;
         optional ServerProjectile projectile = 34;
         optional ServerTranslatedString translation = 35;
+        optional ServerChunkEntity chunkEntity_ = 36;
     }
     
     message IntInt
@@ -847,4 +868,3 @@ package Packet;
         Underline = 4;
         Strikeout = 8;
     }
-

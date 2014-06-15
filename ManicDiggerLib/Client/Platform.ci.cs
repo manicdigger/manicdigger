@@ -398,6 +398,9 @@ public class KeyEventArgs
     int keyCode;
     public int GetKeyCode() { return keyCode; }
     public void SetKeyCode(int value) { keyCode = value; }
+    bool handled;
+    public bool GetHandled() { return handled; }
+    public void SetHandled(bool value) { handled = value; }
 }
 
 public class KeyPressEventArgs
@@ -405,6 +408,9 @@ public class KeyPressEventArgs
     int keyChar;
     public int GetKeyChar() { return keyChar; }
     public void SetKeyChar(int value) { keyChar = value; }
+    bool handled;
+    public bool GetHandled() { return handled; }
+    public void SetHandled(bool value) { handled = value; }
 }
 
 public class GlKeys
@@ -584,6 +590,9 @@ public class MouseEventArgs
     public int GetMovementX() { return movementX; } public void SetMovementX(int value) { movementX = value; }
     public int GetMovementY() { return movementY; } public void SetMovementY(int value) { movementY = value; }
     public int GetButton() { return button; } public void SetButton(int value) { button = value; }
+    bool handled;
+    public bool GetHandled() { return handled; }
+    public void SetHandled(bool value) { handled = value; }
 }
 
 public class MouseWheelEventArgs

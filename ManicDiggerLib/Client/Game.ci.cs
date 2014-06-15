@@ -137,8 +137,12 @@
         ScreenTouchButtons screenTouchButtons = new ScreenTouchButtons();
         screenTouchButtons.game = this;
         screens[0] = screenTouchButtons;
+        screenTextEditor = new ScreenTextEditor();
+        screenTextEditor.game = this;
+        screens[1] = screenTextEditor;
         audiosamples = new DictionaryStringAudioSample();
     }
+    ScreenTextEditor screenTextEditor;
 
     internal AssetList assets;
     internal FloatRef assetsLoadProgress;
@@ -4197,13 +4201,26 @@
 
     internal void KeyUp(int eKey)
     {
-        keyboardState[eKey] = false;
         for (int i = 0; i < clientmodsCount; i++)
         {
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
             clientmods[i].OnKeyUp(args_);
         }
+        for (int i = 0; i < screensMax; i++)
+        {
+            if (screens[i] != null)
+            {
+                KeyEventArgs args_ = new KeyEventArgs();
+                args_.SetKeyCode(eKey);
+                screens[i].OnKeyUp(args_);
+                if (args_.GetHandled())
+                {
+                    return;
+                }
+            }
+        }
+        keyboardState[eKey] = false;
         if (eKey == GetKey(GlKeys.ShiftLeft) || eKey == GetKey(GlKeys.ShiftRight))
         {
             IsShiftPressed = false;
@@ -4297,6 +4314,19 @@
 
     internal void KeyPress(int eKeyChar)
     {
+        for (int i = 0; i < screensMax; i++)
+        {
+            if (screens[i] != null)
+            {
+                KeyPressEventArgs args_ = new KeyPressEventArgs();
+                args_.SetKeyChar(eKeyChar);
+                screens[i].OnKeyPress(args_);
+                if (args_.GetHandled())
+                {
+                    return;
+                }
+            }
+        }
         int chart = 116;
         int charT = 84;
         int chary = 121;
@@ -5416,6 +5446,15 @@
                 d_Weapon.redraw = true;
                 RedrawAllBlocks();
                 break;
+            case Packet_ServerIdEnum.ChunkEntity:
+                {
+                    int chunkX = packet.ChunkEntity_.ChunkX;
+                    int chunkY = packet.ChunkEntity_.ChunkY;
+                    int chunkZ = packet.ChunkEntity_.ChunkZ;
+                    int id = packet.ChunkEntity_.Id;
+                    Packet_ServerChunkEntityEntity entity = packet.ChunkEntity_.ChunkEntity_;
+                }
+                break;
         }
     }
 
@@ -6294,13 +6333,26 @@
     public const int DISCONNECTED_ICON_AFTER_SECONDS = 10;
     internal void KeyDown(int eKey)
     {
-        keyboardState[eKey] = true;
         for (int i = 0; i < clientmodsCount; i++)
         {
             KeyEventArgs args_ = new KeyEventArgs();
             args_.SetKeyCode(eKey);
             clientmods[i].OnKeyDown(args_);
         }
+        for (int i = 0; i < screensMax; i++)
+        {
+            if (screens[i] != null)
+            {
+                KeyEventArgs args_ = new KeyEventArgs();
+                args_.SetKeyCode(eKey);
+                screens[i].OnKeyDown(args_);
+                if (args_.GetHandled())
+                {
+                    return;
+                }
+            }
+        }
+        keyboardState[eKey] = true;
         InvalidVersionAllow();
         if (eKey == GetKey(GlKeys.F6))
         {
@@ -10483,6 +10535,11 @@ public class Chunk
     internal bool IsPopulated;
     internal int LastChange;
     internal RenderedChunk rendered;
+}
+
+public class ChunkEntityClient
+{
+    
 }
 
 public class RenderedChunk

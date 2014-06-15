@@ -254,7 +254,7 @@ namespace ManicDigger.Renderers
             fontsize *= 1.1f;
             try
             {
-               font = new Font ("Arial", fontsize, FontStyle.Bold);
+               font = new Font (t.GetFontFamily(), fontsize, FontStyle.Bold);
             }
             catch
             {

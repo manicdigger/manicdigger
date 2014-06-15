@@ -101,6 +101,7 @@
     <Compile Include="Client\NetworkTcp.ci.cs" />
     <Compile Include="Client\Server.ci.cs" />
     <Compile Include="Client\ServerSimple.ci.cs" />
+    <Compile Include="Client\TextEditor.ci.cs" />
     <Compile Include="Client\WeaponRenderer.ci.cs" />
     <Compile Include="Client\BlockRendererTorch.ci.cs" />
     <Compile Include="Client\CharacterRenderer.ci.cs" />

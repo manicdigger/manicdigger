@@ -43,7 +43,26 @@ namespace ManicDiggerServer
         public bool DirtyForSaving;
         [ProtoMember(5, IsRequired = false)]
         public List<Monster> Monsters = new List<Monster>();
+        [ProtoMember(7, IsRequired = false)]
+        public int EntitiesCount;
+        [ProtoMember(8, IsRequired = false)]
+        public ServerChunkEntity[] Entities;
     }
+
+    [ProtoContract()]
+    public class ServerChunkEntity
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public ServerChunkEntityScript script;
+    }
+
+    [ProtoContract()]
+    public class ServerChunkEntityScript
+    {
+        [ProtoMember(1, IsRequired = false)]
+        public string Text;
+    }
+
     public class ServerMap : IMapStorage2
     {
         internal Server server;

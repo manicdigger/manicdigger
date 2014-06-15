@@ -16,3 +16,14 @@ public class ClientStateOnServer
     public const int LoadingSending = 2;
     public const int Playing = 3;
 }
+
+public class Script
+{
+    public virtual void OnCreate(ScriptManager manager) { }
+    public virtual void OnUse() { }
+}
+
+public abstract class ScriptManager
+{
+    public abstract void SendMessage(int player, string p);
+}
