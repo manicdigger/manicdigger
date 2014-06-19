@@ -302,7 +302,7 @@ namespace ManicDiggerServer
                     {
                         if (b.Key != a.Key)
                         {
-                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= PlayerDrawDistance * PlayerDrawDistance)
+                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
                             {
                                 SendPlayerTeleport(b.Key, a.Key,
                                     a.Value.PositionMul32GlX,
@@ -2246,7 +2246,7 @@ namespace ManicDiggerServer
                         {
                             if (k.Key != clientid)
                             {
-                                if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
+                                if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
                                 {
                                 	SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch, (byte)p.Stance);
                                 }
@@ -2587,9 +2587,6 @@ namespace ManicDiggerServer
                 SendPacket(clientid, Serialize(pp));
             }
         }
-
-
-        public int PlayerDrawDistance = 128;
 
         private void RunInClientSandbox(string script, int clientid)
         {
