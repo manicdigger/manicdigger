@@ -21,6 +21,7 @@ package Packet;
         Reload = 58;
         Oxygen = 59;
         Death = 60;
+        ServerQuery = 64;
         ExtendedPacketCommand = 100;
 	}
 	
@@ -223,6 +224,10 @@ package Packet;
         optional int32 sourcePlayer = 2;
     }
     
+    message ClientServerQuery
+    {
+    }
+    
     message Client
     {
     
@@ -245,6 +250,7 @@ package Packet;
         optional ClientReload reload = 16;
         optional ClientOxygen oxygen = 17;
         optional ClientDeath death = 18;
+        optional ClientServerQuery query = 19;
 	}
     
     
@@ -396,6 +402,8 @@ package Packet;
         Explosion = 58;
         Projectile = 59;
         Translation = 60;
+        QueryAnswer = 64;
+        ServerRedirect = 65;
         ExtendedPacketCommand = 100;
         ExtendedPacketTick = 101;
 	}
@@ -625,6 +633,29 @@ package Packet;
         optional int32 timeFloat = 6;
     }
     
+    message ServerQueryAnswer
+    {
+        optional string Name = 1;
+        optional string MOTD = 2;
+        optional int32 PlayerCount = 3;
+        optional int32 MaxPlayers = 4;
+        optional string PlayerList = 5;
+        optional int32 Port = 6;
+        optional string GameMode = 7;
+        optional bool Password = 8;
+        optional string PublicHash = 9;
+        optional string ServerVersion = 10;
+        optional int32 MapSizeX = 11;
+        optional int32 MapSizeY = 12;
+        optional int32 MapSizeZ = 13;
+    }
+    
+    message ServerRedirect
+    {
+        optional string IP = 1;
+        optional int32 Port = 2;
+    }
+    
     message Server
     {
         optional ServerId id = 90 [default = ServerIdentification];
@@ -667,6 +698,8 @@ package Packet;
         optional ServerExplosion explosion = 33;
         optional ServerProjectile projectile = 34;
         optional ServerTranslatedString translation = 35;
+        optional ServerQueryAnswer queryAnswer = 36;
+        optional ServerRedirect redirect = 37;
     }
     
     message IntInt

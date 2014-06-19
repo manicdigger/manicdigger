@@ -1484,7 +1484,18 @@ public class ScreenGame : Screen
         if (game.exitToMainMenu)
         {
             game.Dispose();
-            menu.StartMainMenu();
+            if (game.GetRedirect() != null)
+            {
+                ConnectData newConn = new ConnectData();
+                newConn.SetIp(game.GetRedirect().IP);
+                newConn.SetPort(game.GetRedirect().Port);
+                newConn.SetUsername(connectData.Username);
+                menu.StartGame(false, null, newConn);
+            }
+            else
+            {
+                menu.StartMainMenu();
+            }
             return;
         }
         game.OnRenderFrame(dt);

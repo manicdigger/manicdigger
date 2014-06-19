@@ -4617,12 +4617,30 @@
         reconnect = true;
     }
 
+    internal Packet_ServerRedirect redirectTo;
+    internal void ExitAndSwitchServer(Packet_ServerRedirect newServer)
+    {
+        if (issingleplayer)
+        {
+            platform.SinglePlayerServerExit();
+        }
+        redirectTo = newServer;
+        exitToMainMenu = true;
+        platform.MouseCursorSetVisible(true);
+    }
+    
+    internal Packet_ServerRedirect GetRedirect()
+    {
+        return redirectTo;
+    }
+
     internal void ExitToMainMenu()
     {
         if (issingleplayer)
         {
             platform.SinglePlayerServerExit();
         }
+        redirectTo = null;
         exitToMainMenu = true;
         platform.MouseCursorSetVisible(true);
     }
@@ -4767,6 +4785,37 @@
                 else if (cmd == "reconnect")
                 {
                     Reconnect();
+                }
+                else if (cmd == "serverinfo")
+                {
+                    //Fetches server info from given adress
+                    IntRef splitCount = new IntRef();
+                    string[] split = platform.StringSplit(arguments, ":", splitCount);
+                    if (splitCount.value == 2)
+                    {
+                        QueryClient qClient = new QueryClient();
+                        qClient.SetPlatform(platform);
+                        qClient.PerformQuery(split[0], platform.IntParse(split[1]));
+                        QueryResult r = qClient.GetResult();
+                        if (!platform.StringEmpty(r.Name))
+                        {
+                            //Received result
+                            AddChatline(r.GameMode);
+                            AddChatline(platform.IntToString(r.MapSizeX));
+                            AddChatline(platform.IntToString(r.MapSizeY));
+                            AddChatline(platform.IntToString(r.MapSizeZ));
+                            AddChatline(platform.IntToString(r.MaxPlayers));
+                            AddChatline(r.MOTD);
+                            AddChatline(r.Name);
+                            //AddChatline(r.Password.ToString());
+                            AddChatline(platform.IntToString(r.PlayerCount));
+                            AddChatline(r.PlayerList);
+                            AddChatline(platform.IntToString(r.Port));
+                            AddChatline(r.PublicHash);
+                            AddChatline(r.ServerVersion);
+                        }
+                        AddChatline(qClient.GetServerMessage());
+                    }
                 }
                 else
                 {
@@ -5419,6 +5468,12 @@
                 UseTerrainTextures(textureInAtlasIds, textureInAtlasIdsCount);
                 d_Weapon.redraw = true;
                 RedrawAllBlocks();
+                break;
+            case Packet_ServerIdEnum.ServerRedirect:
+                //Leave current server
+                SendLeave(Packet_LeaveReasonEnum.Leave);
+                //Exit game screen and create new game instance
+                ExitAndSwitchServer(packet.Redirect);
                 break;
         }
     }
@@ -11770,6 +11825,14 @@ public class ServerPackets
         p.Id = Packet_ServerIdEnum.DisconnectPlayer;
         p.DisconnectPlayer = new Packet_ServerDisconnectPlayer();
         p.DisconnectPlayer.DisconnectReason = disconnectReason;
+        return p;
+    }
+    
+    internal static Packet_Server AnswerQuery(Packet_ServerQueryAnswer answer)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.QueryAnswer;
+        p.QueryAnswer = answer;
         return p;
     }
 }

@@ -39,6 +39,10 @@
     }
     public void AddChatline(string s)
     {
+        if (game.platform.StringEmpty(s))
+        {
+            return;
+        }
         //Check for links in chatline
         bool containsLink = false;
         int linkIndex = -1;
