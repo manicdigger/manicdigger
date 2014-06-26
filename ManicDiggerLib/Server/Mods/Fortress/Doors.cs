@@ -72,7 +72,6 @@ namespace ManicDigger.Mods
             DoorTopClosed = m.GetBlockId("DoorTopClosed");
             DoorBottomOpen = m.GetBlockId("DoorBottomOpen");
             DoorTopOpen = m.GetBlockId("DoorTopOpen");
-            Empty = m.GetBlockId("Empty");
         }
         
         ModManager m;
@@ -80,7 +79,6 @@ namespace ManicDigger.Mods
         int DoorTopClosed;
         int DoorBottomOpen;
         int DoorTopOpen;
-        int Empty;
         
         void OnBuild(int player, int x, int y, int z)
         {
