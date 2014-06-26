@@ -1486,11 +1486,28 @@ public class ScreenGame : Screen
             game.Dispose();
             if (game.GetRedirect() != null)
             {
-                ConnectData newConn = new ConnectData();
-                newConn.SetIp(game.GetRedirect().IP);
-                newConn.SetPort(game.GetRedirect().Port);
-                newConn.SetUsername(connectData.Username);
-                menu.StartGame(false, null, newConn);
+                //Query new server for public key
+                QueryClient qclient = new QueryClient();
+                qclient.SetPlatform(platform);
+                qclient.PerformQuery(game.GetRedirect().GetIP(), game.GetRedirect().GetPort());
+                QueryResult qresult = qclient.GetResult();
+                if (qresult == null)
+                {
+                    //If query fails show error message and go back to main menu
+                    platform.MessageBoxShowError(qclient.GetServerMessage(), "Redirection error!");
+                    menu.StartMainMenu();
+                    return;
+                }
+                //Get auth hash for new server
+                LoginClientCi lic = new LoginClientCi();
+                LoginData lidata = new LoginData();
+                lic.Login(platform, connectData.Username, "", platform.StringSplit(qresult.PublicHash, "=", new IntRef())[1], platform.GetPreferences().GetString("Password", ""), new LoginResultRef(), lidata);
+                while (lic.loginResult.value == LoginResult.Connecting)
+                {
+                    lic.Update(platform);
+                }
+                //Finally switch to the new server
+                menu.ConnectToGame(lidata, connectData.Username);
             }
             else
             {
