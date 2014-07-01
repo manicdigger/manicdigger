@@ -106,7 +106,7 @@ namespace ManicDigger
         void RegisterOnPlayerDeath(ModDelegates.PlayerDeath a);
         
         /// <summary>
-        /// Returns the dimensions of the game window. Not yet implemented! --> always returns 800x600
+        /// Returns the dimensions of the game window.
         /// </summary>
         /// <param name="player"></param>
         /// <returns>Array containing window size</returns>

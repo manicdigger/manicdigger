@@ -4606,10 +4606,27 @@
         Set3dProjection1(zfar());
     }
 
+    internal void SendGameResolution()
+    {
+        Packet_ClientGameResolution p = new Packet_ClientGameResolution();
+        p.Width = Width();
+        p.Height = Height();
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.GameResolution;
+        pp.GameResolution = p;
+        SendPacketClient(pp);
+    }
+
+    bool sendResize;
     internal void OnResize()
     {
         platform.GlViewport(0, 0, Width(), Height());
         this.Set3dProjection2();
+        //Notify server of size change
+        if (sendResize)
+        {
+            SendGameResolution();
+        }
     }
 
     internal void Reconnect()
@@ -4868,6 +4885,8 @@
                 }
             }
         }
+        SendGameResolution();
+        sendResize = true;
         SendRequestBlob(getAsset, getCount);
         if (packet.Identification.MapSizeX != MapSizeX
             || packet.Identification.MapSizeY != MapSizeY

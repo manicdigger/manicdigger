@@ -587,7 +587,7 @@ namespace ManicDigger
 
         public int[] GetScreenResolution(int player)
         {
-            return new int[] { 800, 600 };
+            return server.clients[player].WindowSize;
         }
 
         public void SendDialog(int player, string id, Dialog dialog)

@@ -22,6 +22,7 @@ package Packet;
         Oxygen = 59;
         Death = 60;
         ServerQuery = 64;
+        GameResolution = 10;
         ExtendedPacketCommand = 100;
 	}
 	
@@ -228,9 +229,14 @@ package Packet;
     {
     }
     
+    message ClientGameResolution
+    {
+        optional int32 width = 1;
+        optional int32 height = 2;
+    }
+    
     message Client
     {
-    
 		optional ClientId id = 1 [default = PlayerIdentification];
         optional ClientIdentification identification = 2;
         optional ClientSetBlock setBlock = 3;        
@@ -251,6 +257,7 @@ package Packet;
         optional ClientOxygen oxygen = 17;
         optional ClientDeath death = 18;
         optional ClientServerQuery query = 19;
+        optional ClientGameResolution gameResolution = 20;
 	}
     
     

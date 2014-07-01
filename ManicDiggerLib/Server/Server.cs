@@ -2524,6 +2524,11 @@ namespace ManicDiggerServer
                     SendPacket(clientid, ServerPackets.DisconnectPlayer("Query success."));
                     KillPlayer(clientid);
                     break;
+                case Packet_ClientIdEnum.GameResolution:
+                    //Update client information
+                    clients[clientid].WindowSize = new int[] {packet.GameResolution.Width, packet.GameResolution.Height};
+                    //Console.WriteLine("client:{0} --> {1}x{2}", clientid, clients[clientid].WindowSize[0], clients[clientid].WindowSize[1]);
+                    break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
                     break;
@@ -4257,9 +4262,9 @@ namespace ManicDiggerServer
             FillLimit = 500;
             privileges = new List<string>();
             displayColor = "&f";
-
             EyeHeight = one * 15 / 10;
             ModelHeight = one * 17 / 10;
+            WindowSize = new int[]{ 800, 600 };
         }
         internal int Id;
         internal int state; // ClientStateOnServer
@@ -4322,6 +4327,7 @@ namespace ManicDiggerServer
         internal int ActiveMaterialSlot;
         internal bool IsSpectator;
         internal bool usingFill;
+        internal int[] WindowSize;
     }
 
     public class ModEventHandlers
