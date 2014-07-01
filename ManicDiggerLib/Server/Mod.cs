@@ -950,5 +950,10 @@ namespace ManicDigger
         {
         	return server.config.AutoRestartCycle;
         }
+        
+        public void SendPlayerRedirect(int player, string ip, int port)
+        {
+            server.SendServerRedirect(player, ip, port);
+        }
     }
 }

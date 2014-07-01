@@ -152,6 +152,7 @@ namespace ManicDigger
         long TotalSentBytes();
         void SetPlayerNameColor(int player, string color);
         int GetAutoRestartInterval();
+        void SendPlayerRedirect(int player, string ip, int port);
     }
 
     public enum SpecialKey

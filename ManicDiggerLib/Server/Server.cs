@@ -2530,14 +2530,14 @@ namespace ManicDiggerServer
             }
         }
         
-        private void SendServerRedirect(int clientid, string ip_, int port_)
+        public void SendServerRedirect(int clientid, string ip_, int port_)
         {
             Packet_Server p = new Packet_Server();
             p.Id = Packet_ServerIdEnum.ServerRedirect;
             p.Redirect = new Packet_ServerRedirect()
             {
                 IP = ip_,
-                Port = port_
+                Port = port_,
             };
             SendPacket(clientid, p);
         }
