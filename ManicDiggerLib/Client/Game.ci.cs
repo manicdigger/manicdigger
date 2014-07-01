@@ -4881,7 +4881,18 @@
                 string md5 = required.Items[i];
                 if (!HasAsset(md5))
                 {
-                    getAsset[getCount++] = md5;
+                    //file not loaded, check if in cache
+                    if (platform.IsCached(md5))
+                    {
+                        //File has been cached. load cached version.
+                        Asset cachedAsset = platform.LoadAssetFromCache(md5);
+                        SetFile(cachedAsset.name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
+                    }
+                    else
+                    {
+                        //File not present in cache. request from server.
+                        getAsset[getCount++] = md5;
+                    }
                 }
             }
         }
@@ -5516,12 +5527,15 @@
                 return;
             }
         }
+        //Add new asset to asset list
         Asset asset = new Asset();
         asset.data = downloaded;
         asset.dataLength = downloadedLength;
         asset.name = nameLowercase;
         asset.md5 = md5;
         assets.items[assets.count++] = asset;
+        //Store downloaded file in cache
+        platform.SaveAssetToCache(asset);
     }
 
     internal int handTexture;

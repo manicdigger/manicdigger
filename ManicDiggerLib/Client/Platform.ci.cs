@@ -177,6 +177,9 @@
     }
     public abstract bool IsSmallScreen();
     public abstract void OpenLinkInBrowser(string url);
+    public abstract void SaveAssetToCache(Asset tosave);
+    public abstract Asset LoadAssetFromCache(string md5);
+    public abstract bool IsCached(string md5);
 }
 
 public class Asset

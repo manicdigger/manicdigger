@@ -2015,6 +2015,50 @@ public class GamePlatformNative : GamePlatform
         }
         Process.Start(url);
     }
+
+    public string cachepath() { return Path.Combine(PathStorage(), "Cache"); }
+    public void checkcachedir()
+    {
+        if (!Directory.Exists(cachepath()))
+        {
+            Directory.CreateDirectory(cachepath());
+        }
+    }
+
+    public override void SaveAssetToCache(Asset tosave)
+    {
+        //Check if cache directory exists
+        checkcachedir();
+        BinaryWriter bw = new BinaryWriter(File.Create(Path.Combine(cachepath(), tosave.md5)));
+        bw.Write(tosave.name);
+        bw.Write(tosave.dataLength);
+        bw.Write(tosave.data);
+        bw.Close();
+    }
+
+    public override Asset LoadAssetFromCache(string md5)
+    {
+        //Check if cache directory exists
+        checkcachedir();
+        BinaryReader br = new BinaryReader(File.OpenRead(Path.Combine(cachepath(), md5)));
+        string contentName = br.ReadString();
+        int contentLength = br.ReadInt32();
+        byte[] content = br.ReadBytes(contentLength);
+        br.Close();
+        Asset a = new Asset();
+        a.data = content;
+        a.dataLength = contentLength;
+        a.md5 = md5;
+        a.name = contentName;
+        return a;
+    }
+
+    public override bool IsCached(string md5)
+    {
+        if (!Directory.Exists(cachepath()))
+            return false;
+        return File.Exists(Path.Combine(cachepath(), md5));
+    }
 }
 
 public class AssetLoader
