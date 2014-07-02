@@ -5508,6 +5508,15 @@
         }
     }
 
+    void CacheAsset(Asset asset)
+    {
+        //Only cache a file if it's not already cached
+        if (!platform.IsCached(asset.md5))
+        {
+            platform.SaveAssetToCache(asset);
+        }
+    }
+
     void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
     {
         string nameLowercase = platform.StringToLower(name);
@@ -5521,8 +5530,22 @@
             {
                 if (options.UseServerTextures)
                 {
+                    //If server textures are allowed, replace content of current asset
+                    assets.items[i].md5 = md5;
                     assets.items[i].data = downloaded;
                     assets.items[i].dataLength = downloadedLength;
+                    //Save modified file to cache
+                    CacheAsset(assets.items[i]);
+                }
+                else
+                {
+                    //Else just save the unused asset to cache for later use
+                    Asset tempAsset = new Asset();
+                    tempAsset.data = downloaded;
+                    tempAsset.dataLength = downloadedLength;
+                    tempAsset.name = nameLowercase;
+                    tempAsset.md5 = md5;
+                    CacheAsset(tempAsset);
                 }
                 return;
             }
@@ -5535,7 +5558,7 @@
         asset.md5 = md5;
         assets.items[assets.count++] = asset;
         //Store downloaded file in cache
-        platform.SaveAssetToCache(asset);
+        CacheAsset(asset);
     }
 
     internal int handTexture;
