@@ -1484,7 +1484,51 @@ public class ScreenGame : Screen
         if (game.exitToMainMenu)
         {
             game.Dispose();
-            menu.StartMainMenu();
+            if (game.GetRedirect() != null)
+            {
+                //Query new server for public key
+                QueryClient qclient = new QueryClient();
+                qclient.SetPlatform(platform);
+                qclient.PerformQuery(game.GetRedirect().GetIP(), game.GetRedirect().GetPort());
+                QueryResult qresult = qclient.GetResult();
+                if (qresult == null)
+                {
+                    //If query fails show error message and go back to main menu
+                    platform.MessageBoxShowError(qclient.GetServerMessage(), "Redirection error");
+                    menu.StartMainMenu();
+                    return;
+                }
+                //Get auth hash for new server
+                LoginClientCi lic = new LoginClientCi();
+                LoginData lidata = new LoginData();
+                string token = platform.StringSplit(qresult.PublicHash, "=", new IntRef())[1];
+                lic.Login(platform, connectData.Username, "", token, platform.GetPreferences().GetString("Password", ""), new LoginResultRef(), lidata);
+                while (lic.loginResult.value == LoginResult.Connecting)
+                {
+                    lic.Update(platform);
+                }
+                //Check if login was successful
+                if (!lidata.ServerCorrect)
+                {
+                    //Invalid server adress
+                    platform.MessageBoxShowError("Invalid server adress!", "Redirection error");
+                    menu.StartMainMenu();
+                }
+                else if (!lidata.PasswordCorrect)
+                {
+                    //Authentication failed
+                    menu.StartLogin(token, null, 0);
+                }
+                else if (lidata.ServerAddress != null && lidata.ServerAddress != "")
+                {
+                    //Finally switch to the new server
+                    menu.ConnectToGame(lidata, connectData.Username);
+                }
+            }
+            else
+            {
+                menu.StartMainMenu();
+            }
             return;
         }
         game.OnRenderFrame(dt);

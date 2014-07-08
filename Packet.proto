@@ -21,6 +21,8 @@ package Packet;
         Reload = 58;
         Oxygen = 59;
         Death = 60;
+        ServerQuery = 64;
+        GameResolution = 10;
         ExtendedPacketCommand = 100;
 	}
 	
@@ -223,9 +225,18 @@ package Packet;
         optional int32 sourcePlayer = 2;
     }
     
+    message ClientServerQuery
+    {
+    }
+    
+    message ClientGameResolution
+    {
+        optional int32 width = 1;
+        optional int32 height = 2;
+    }
+    
     message Client
     {
-    
 		optional ClientId id = 1 [default = PlayerIdentification];
         optional ClientIdentification identification = 2;
         optional ClientSetBlock setBlock = 3;        
@@ -245,6 +256,8 @@ package Packet;
         optional ClientReload reload = 16;
         optional ClientOxygen oxygen = 17;
         optional ClientDeath death = 18;
+        optional ClientServerQuery query = 19;
+        optional ClientGameResolution gameResolution = 20;
 	}
     
     
@@ -397,6 +410,8 @@ package Packet;
         Projectile = 59;
         Translation = 60;
         ChunkEntity = 63;
+        QueryAnswer = 64;
+        ServerRedirect = 65;
         ExtendedPacketCommand = 100;
         ExtendedPacketTick = 101;
 	}
@@ -645,6 +660,29 @@ package Packet;
 		optional string text = 1;
     }
     
+    message ServerQueryAnswer
+    {
+        optional string Name = 1;
+        optional string MOTD = 2;
+        optional int32 PlayerCount = 3;
+        optional int32 MaxPlayers = 4;
+        optional string PlayerList = 5;
+        optional int32 Port = 6;
+        optional string GameMode = 7;
+        optional bool Password = 8;
+        optional string PublicHash = 9;
+        optional string ServerVersion = 10;
+        optional int32 MapSizeX = 11;
+        optional int32 MapSizeY = 12;
+        optional int32 MapSizeZ = 13;
+    }
+    
+    message ServerRedirect
+    {
+        optional string IP = 1;
+        optional int32 Port = 2;
+    }
+    
     message Server
     {
         optional ServerId id = 90 [default = ServerIdentification];
@@ -687,7 +725,9 @@ package Packet;
         optional ServerExplosion explosion = 33;
         optional ServerProjectile projectile = 34;
         optional ServerTranslatedString translation = 35;
-        optional ServerChunkEntity chunkEntity_ = 36;
+        optional ServerQueryAnswer queryAnswer = 36;
+        optional ServerRedirect redirect = 37;
+        optional ServerChunkEntity chunkEntity_ = 38;
     }
     
     message IntInt

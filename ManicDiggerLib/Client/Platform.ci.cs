@@ -146,6 +146,7 @@
     public abstract void GlDisableFog();
     public abstract bool SinglePlayerServerAvailable();
     public abstract void SinglePlayerServerStart(string saveFilename);
+    public abstract void SinglePlayerServerExit();
     public abstract bool SinglePlayerServerLoaded();
     public abstract DummyNetwork SinglePlayerServerGetNetwork();
     public abstract bool TcpAvailable();
@@ -176,6 +177,9 @@
     }
     public abstract bool IsSmallScreen();
     public abstract void OpenLinkInBrowser(string url);
+    public abstract void SaveAssetToCache(Asset tosave);
+    public abstract Asset LoadAssetFromCache(string md5);
+    public abstract bool IsCached(string md5);
 }
 
 public class Asset

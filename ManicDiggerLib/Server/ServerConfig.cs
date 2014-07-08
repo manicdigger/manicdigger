@@ -41,6 +41,7 @@ namespace GameModeFortress
         public bool AllowSpectatorUse { get; set; }
         public bool AllowSpectatorBuild { get; set; }
         public string ServerLanguage { get; set; }
+        public int PlayerDrawDistance { get; set; }
 
         public bool IsPasswordProtected()
         {
@@ -96,6 +97,7 @@ namespace GameModeFortress
             this.AllowSpectatorUse = false;
             this.AllowSpectatorBuild = false;
             this.ServerLanguage = "en";
+            this.PlayerDrawDistance = 128;
         }
     }
 

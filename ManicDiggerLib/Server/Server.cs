@@ -302,7 +302,7 @@ namespace ManicDiggerServer
                     {
                         if (b.Key != a.Key)
                         {
-                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= PlayerDrawDistance * PlayerDrawDistance)
+                            if (DistanceSquared(PlayerBlockPosition(clients[b.Key]), PlayerBlockPosition(clients[a.Key])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
                             {
                                 SendPlayerTeleport(b.Key, a.Key,
                                     a.Value.PositionMul32GlX,
@@ -439,7 +439,8 @@ namespace ManicDiggerServer
             this.serverConsoleClient = new ClientOnServer()
             {
                 Id = serverConsoleId,
-                playername = "Server"
+                playername = "Server",
+                queryClient = false
             };
             ManicDigger.Group serverGroup = new ManicDigger.Group();
             serverGroup.Name = "Server";
@@ -520,29 +521,29 @@ namespace ManicDiggerServer
             modloader.Start(m, m.required);
         }
 
+        string gameMode = "Fortress";
         Dictionary<string, string> GetScriptSources()
         {
             string[] modpaths = new[] { Path.Combine(Path.Combine(Path.Combine(Path.Combine(Path.Combine("..", ".."), ".."), "ManicDiggerLib"), "Server"), "Mods"), "Mods" };
 
             for (int i = 0; i < modpaths.Length; i++)
             {
-                string game = "Fortress";
                 if (File.Exists(Path.Combine(modpaths[i], "current.txt")))
                 {
-                    game = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
+                    gameMode = File.ReadAllText(Path.Combine(modpaths[i], "current.txt")).Trim();
                 }
                 else if (Directory.Exists(modpaths[i]))
                 {
                     try
                     {
-                        File.WriteAllText(Path.Combine(modpaths[i], "current.txt"), game);
+                        File.WriteAllText(Path.Combine(modpaths[i], "current.txt"), gameMode);
                     }
                     catch
                     {
                     }
                 }
-                modpaths[i] = Path.Combine(modpaths[i], game);
-                d_Heartbeat.GameMode = System.Web.HttpUtility.UrlEncode(game);
+                modpaths[i] = Path.Combine(modpaths[i], gameMode);
+                d_Heartbeat.GameMode = System.Web.HttpUtility.UrlEncode(gameMode);
             }
             Dictionary<string, string> scripts = new Dictionary<string, string>();
             foreach (string modpath in modpaths)
@@ -1215,21 +1216,7 @@ namespace ManicDiggerServer
                     {
                         INTERVAL = 1.0 / SEND_MONSTER_UDAPTES_PER_SECOND,
                     };
-                    int realPlayers = 0;
-                    foreach (var cl in clients)
-                    {
-                        if (cl.Value.IsBot)
-                        {
-                            continue;
-                        }
-                        realPlayers++;
-                    }
-                    if (realPlayers > config.MaxClients)
-                    {
-                        SendPacket(this.lastClientId, ServerPackets.DisconnectPlayer(language.ServerTooManyPlayers()));
-                        KillPlayer(this.lastClientId);
-                    }
-                    else if (banlist.IsIPBanned(iep1.AddressToString()))
+                    if (banlist.IsIPBanned(iep1.AddressToString()))
                     {
                         IPEntry entry = banlist.GetIPEntry(iep1.AddressToString());
                         string reason = entry.Reason;
@@ -1951,6 +1938,12 @@ namespace ManicDiggerServer
             {
                 return;
             }
+            if (clients[clientid].queryClient)
+            {
+                clients.Remove(clientid);
+                this.serverMonitor.RemoveMonitorClient(clientid);
+                return;
+            }
             for (int i = 0; i < modEventHandlers.onplayerleave.Count; i++)
             {
                 modEventHandlers.onplayerleave[i](clientid);
@@ -1977,16 +1970,30 @@ namespace ManicDiggerServer
             }
         }
 
+        private DateTime lastQuery = DateTime.UtcNow;
         private void TryReadPacket(int clientid, byte[] data)
         {
             ClientOnServer c = clients[clientid];
             //PacketClient packet = Serializer.Deserialize<PacketClient>(new MemoryStream(data));
             Packet_Client packet = new Packet_Client();
             Packet_ClientSerializer.DeserializeBuffer(data, data.Length, packet);
+            if (c.queryClient)
+            {
+                if (!(packet.Id == Packet_ClientIdEnum.ServerQuery || packet.Id == Packet_ClientIdEnum.PlayerIdentification))
+                {
+                    //Reject all packets other than ServerQuery or PlayerIdentification
+                    Console.WriteLine("Rejected packet from not authenticated client");
+                    SendPacket(clientid, ServerPackets.DisconnectPlayer("Either send PlayerIdentification or ServerQuery!"));
+                    KillPlayer(clientid);
+                    return;
+                }
+            }
             if (config.ServerMonitor && !this.serverMonitor.CheckPacket(clientid, packet))
             {
+                //Console.WriteLine("Server monitor rejected packet");
                 return;
             }
+            int realPlayers = 0;
             switch (packet.Id)
             {
                 case Packet_ClientIdEnum.PingReply:
@@ -1996,6 +2003,20 @@ namespace ManicDiggerServer
                     break;
                 case Packet_ClientIdEnum.PlayerIdentification:
                     {
+                        foreach (var cl in clients)
+                        {
+                            if (cl.Value.IsBot)
+                            {
+                                continue;
+                            }
+                            realPlayers++;
+                        }
+                        if (realPlayers > config.MaxClients)
+                        {
+                            SendPacket(clientid, ServerPackets.DisconnectPlayer(language.ServerTooManyPlayers()));
+                            KillPlayer(clientid);
+                            break;
+                        }
                         if (config.IsPasswordProtected() && packet.Identification.ServerPassword != config.Password)
                         {
                             Console.WriteLine(string.Format("{0} fails to join (invalid server password).", packet.Identification.Username));
@@ -2106,6 +2127,7 @@ namespace ManicDiggerServer
                         }
                         this.SetFillAreaLimit(clientid);
                         this.SendFreemoveState(clientid, clients[clientid].privileges.Contains(ServerClientMisc.Privilege.freemove));
+                        c.queryClient = false;
                     }
                     break;
                 case Packet_ClientIdEnum.RequestBlob:
@@ -2246,7 +2268,7 @@ namespace ManicDiggerServer
                         {
                             if (k.Key != clientid)
                             {
-                                if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= PlayerDrawDistance * PlayerDrawDistance)
+                                if (DistanceSquared(PlayerBlockPosition(clients[k.Key]), PlayerBlockPosition(clients[clientid])) <= config.PlayerDrawDistance * config.PlayerDrawDistance)
                                 {
                                 	SendPlayerTeleport(k.Key, clientid, p.X, p.Y, p.Z, (byte)p.Heading, (byte)p.Pitch, (byte)p.Stance);
                                 }
@@ -2448,14 +2470,81 @@ namespace ManicDiggerServer
                     }
                     break;
                 case Packet_ClientIdEnum.Leave:
+                    //0: Leave - 1: Crash
+                    Console.WriteLine("Disconnect reason: {0}", packet.Leave.Reason);
                     KillPlayer(clientid);
                     break;
                 case Packet_ClientIdEnum.Reload:
+                    break;
+                case Packet_ClientIdEnum.ServerQuery:
+                    //Flood/DDoS-abuse protection
+                    if ((DateTime.UtcNow - lastQuery) < TimeSpan.FromSeconds(1))
+                    {
+                        Console.WriteLine("ServerQuery rejected (too many requests)");
+                        SendPacket(clientid, ServerPackets.DisconnectPlayer("Too many requests!"));
+                        KillPlayer(clientid);
+                        return;
+                    }
+                    Console.WriteLine("ServerQuery processed.");
+                    lastQuery = DateTime.UtcNow;
+                    //Client only wants server information. No real client.
+                    List<string> playernames = new List<string>();
+                    lock (clients)
+                    {
+                        foreach (var k in clients)
+                        {
+                            if (k.Value.queryClient || k.Value.IsBot)
+                            {
+                                //Exclude bot players and query clients
+                                continue;
+                            }
+                            playernames.Add(k.Value.playername);
+                        }
+                    }
+                    //Create query answer
+                    Packet_ServerQueryAnswer answer = new Packet_ServerQueryAnswer()
+                    {
+                        Name = config.Name,
+                        MOTD = config.Motd,
+                        PlayerCount = playernames.Count,
+                        MaxPlayers = config.MaxClients,
+                        PlayerList = string.Join(",", playernames.ToArray()),
+                        Port = config.Port,
+                        GameMode = gameMode,
+                        Password = config.IsPasswordProtected(),
+                        PublicHash = d_Heartbeat.ReceivedKey,
+                        ServerVersion = GameVersion.Version,
+                        MapSizeX = d_Map.MapSizeX,
+                        MapSizeY = d_Map.MapSizeY,
+                        MapSizeZ = d_Map.MapSizeZ,
+                    };
+                    //Send answer
+                    SendPacket(clientid, ServerPackets.AnswerQuery(answer));
+                    //Directly disconnect client after request.
+                    SendPacket(clientid, ServerPackets.DisconnectPlayer("Query success."));
+                    KillPlayer(clientid);
+                    break;
+                case Packet_ClientIdEnum.GameResolution:
+                    //Update client information
+                    clients[clientid].WindowSize = new int[] {packet.GameResolution.Width, packet.GameResolution.Height};
+                    //Console.WriteLine("client:{0} --> {1}x{2}", clientid, clients[clientid].WindowSize[0], clients[clientid].WindowSize[1]);
                     break;
                 default:
                     Console.WriteLine("Invalid packet: {0}, clientid:{1}", packet.Id, clientid);
                     break;
             }
+        }
+        
+        public void SendServerRedirect(int clientid, string ip_, int port_)
+        {
+            Packet_Server p = new Packet_Server();
+            p.Id = Packet_ServerIdEnum.ServerRedirect;
+            p.Redirect = new Packet_ServerRedirect()
+            {
+                IP = ip_,
+                Port = port_,
+            };
+            SendPacket(clientid, p);
         }
 
         private float DeserializeFloat(int p)
@@ -2587,9 +2676,6 @@ namespace ManicDiggerServer
                 SendPacket(clientid, Serialize(pp));
             }
         }
-
-
-        public int PlayerDrawDistance = 128;
 
         private void RunInClientSandbox(string script, int clientid)
         {
@@ -3267,19 +3353,28 @@ namespace ManicDiggerServer
         }
         public void SendPlayerTeleport(int clientid, int playerid, int x, int y, int z, byte heading, byte pitch, byte stance)
         {
+            int[] sentpos = new int[3]
+            {
+                x,
+                y,
+                z,
+            };
             //spectators invisible to players
             if (clients[playerid].IsSpectator && (!clients[clientid].IsSpectator))
             {
-                return;
+                //Set spectator position to some fake value
+                sentpos[0] = -1000 * 32;
+                sentpos[1] = -1000 * 32;
+                sentpos[2] = 0;
             }
             Packet_ServerPositionAndOrientation p = new Packet_ServerPositionAndOrientation()
             {
                 PlayerId = playerid,
                 PositionAndOrientation = new Packet_PositionAndOrientation()
                 {
-                    X = x,
-                    Y = y,
-                    Z = z,
+                    X = sentpos[0],
+                    Y = sentpos[1],
+                    Z = sentpos[2],
                     Heading = heading,
                     Pitch = pitch,
                     Stance = stance,
@@ -4155,6 +4250,7 @@ namespace ManicDiggerServer
             float one = 1;
             Id = -1;
             state = ClientStateOnServer.Connecting;
+            queryClient = true;
             received = new List<byte>();
             Ping = new Ping_();
             playername = Server.invalidplayername;
@@ -4166,12 +4262,13 @@ namespace ManicDiggerServer
             FillLimit = 500;
             privileges = new List<string>();
             displayColor = "&f";
-
             EyeHeight = one * 15 / 10;
             ModelHeight = one * 17 / 10;
+            WindowSize = new int[]{ 800, 600 };
         }
         internal int Id;
         internal int state; // ClientStateOnServer
+        internal bool queryClient;
         internal INetServer mainSocket;
         internal INetConnection socket;
         internal List<byte> received;
@@ -4230,6 +4327,7 @@ namespace ManicDiggerServer
         internal int ActiveMaterialSlot;
         internal bool IsSpectator;
         internal bool usingFill;
+        internal int[] WindowSize;
     }
 
     public class ModEventHandlers

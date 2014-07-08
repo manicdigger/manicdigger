@@ -85,12 +85,18 @@ namespace ManicDigger
         int GetPlayerPitch(int player);
         int GetPlayerStance(int player);
         void SetPlayerOrientation(int player, int heading, int pitch, int stance);
+        
+        /// <summary>
+        /// Gets a list of all online players
+        /// </summary>
+        /// <returns>Array containing the IDs of online players</returns>
         int[] AllPlayers();
+        
         void SetPlayerAreaSize(int size);
         bool IsSinglePlayer();
         void AddPermissionArea(int x1, int y1, int z1, int x2, int y2, int z2, int permissionLevel);
         void RemovePermissionArea(int x1, int y1, int z1, int x2, int y2, int z2);
-        int GetPlayerPermissionLevel(int playerid);
+        int GetPlayerPermissionLevel(int player);
         void SetCreative(bool creative);
         void SetWorldSize(int x, int y, int z);
         void RegisterOnPlayerJoin(ModDelegates.PlayerJoin a);
@@ -98,20 +104,53 @@ namespace ManicDigger
         void RegisterOnPlayerDisconnect(ModDelegates.PlayerDisconnect a);
         void RegisterOnPlayerChat(ModDelegates.PlayerChat a);
         void RegisterOnPlayerDeath(ModDelegates.PlayerDeath a);
-        int[] GetScreenResolution(int playerid);
+        
+        /// <summary>
+        /// Returns the dimensions of the game window.
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns>Array containing window size</returns>
+        int[] GetScreenResolution(int player);
+        
         void SendDialog(int player, string id, Dialog dialog);
         void RegisterOnDialogClick(ModDelegates.DialogClick a);
+        
+        /// <summary>
+        /// Changes the model and/or skin of the given player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="model">Name of the model file (e.g. player.txt)</param>
+        /// <param name="texture">Name of a texture file (should be present in data/public). If this is empty, default player skin will be used</param>
         void SetPlayerModel(int player, string model, string texture);
+        
         void RenderHint(RenderHint hint);
-        void EnableFreemove(int playerid, bool enable);
-        int GetPlayerHealth(int playerid);
-        int GetPlayerMaxHealth(int playerid);
-        void SetPlayerHealth(int playerid, int health, int maxhealth);
-        int GetPlayerOxygen(int playerid);
-        int GetPlayerMaxOxygen(int playerid);
-        void SetPlayerOxygen(int playerid, int oxygen, int maxoxygen);
+        
+        /// <summary>
+        /// Changes freemove state of given player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="enable">Enable (true) or disable (false) freemove and noclip for given player</param>
+        void EnableFreemove(int player, bool enable);
+        
+        int GetPlayerHealth(int player);
+        int GetPlayerMaxHealth(int player);
+        void SetPlayerHealth(int player, int health, int maxhealth);
+        int GetPlayerOxygen(int player);
+        int GetPlayerMaxOxygen(int player);
+        void SetPlayerOxygen(int player, int oxygen, int maxoxygen);
+        
+        /// <summary>
+        /// Registers the given method to be called each time a player is hit using a weapon
+        /// </summary>
+        /// <param name="a">Method to execute. Must have certain format: void Name(int sourcePlayer, int targetPlayer, int block, bool headshot);</param>
         void RegisterOnWeaponHit(ModDelegates.WeaponHit a);
+        
+        /// <summary>
+        /// Registers the given method to be called every time a player presses a "SpecialKey"
+        /// </summary>
+        /// <param name="a">Method to execute. Must have certain format: void Name(int player, SpecialKey key);</param>
         void RegisterOnSpecialKey(ModDelegates.SpecialKey1 a);
+        
         float[] GetDefaultSpawnPosition(int player);
         string GetServerName();
         string GetServerMotd();
@@ -119,38 +158,169 @@ namespace ManicDigger
         string GetServerIp();
         string GetServerPort();
         float GetPlayerPing(int player);
+        
+        /// <summary>
+        /// Adds a new bot player to the game.
+        /// </summary>
+        /// <param name="name">Name for the new player</param>
+        /// <returns>The ID of the newly added bot</returns>
         int AddBot(string name);
         bool IsBot(int player);
-        void SetPlayerHeight(int playerid, float eyeheight, float modelheight);
+        void SetPlayerHeight(int player, float eyeheight, float modelheight);
+        
+        /// <summary>
+        /// Disables use of given privilege for all players
+        /// </summary>
+        /// <param name="privilege">Privilege to be disabled</param>
         void DisablePrivilege(string privilege); //todo privileges
+        
+        /// <summary>
+        /// Registers the given method to be called each time the player changes their selected material
+        /// </summary>
+        /// <param name="a">Method to execute. Must have certain format: void Name(int player)</param>
         void RegisterChangedActiveMaterialSlot(ModDelegates.ChangedActiveMaterialSlot a);
+        
+        /// <summary>
+        /// Get the inventory data of the player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns>Inventory object</returns>
         Inventory GetInventory(int player);
         int GetActiveMaterialSlot(int player);
+        
+        /// <summary>
+        /// This method is extremely buggy when (player != target)
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="target">ID of target player</param>
+        /// <param name="tpp">Set camera mode to Third-Person-Camera (true/false)</param>
         void FollowPlayer(int player, int target, bool tpp);
-        void SetPlayerSpectator(int playerid, bool isSpectator);
+        
+        /// <summary>
+        /// Set spectator status of the player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="isSpectator">Player invisible to non-spectators (true) or visible for all (false)</param>
+        void SetPlayerSpectator(int player, bool isSpectator);
+        bool IsPlayerSpectator(int player);
+        
+        /// <summary>
+        /// Get the BlockType object of a certain block ID. This method causes an exception when the ID is not found
+        /// </summary>
+        /// <param name="block">The block ID to search for</param>
+        /// <returns>BlockType object</returns>
         BlockType GetBlockType(int block);
-        void NotifyAmmo(int playerid, Dictionary<int, int> dictionary);
+        
+        /// <summary>
+        /// Updates ammunition for given player
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="dictionary">Dictionary containing block ids and ammunition count</param>
+        void NotifyAmmo(int player, Dictionary<int, int> dictionary);
+        
+        /// <summary>
+        /// Registers the given method to be called everytime a shot is fired from a weapon
+        /// </summary>
+        /// <param name="a">Method to execute. Must have certain format: void Name(int sourceplayer, int block);</param>
         void RegisterOnWeaponShot(ModDelegates.WeaponShot a);
+        
+        /// <summary>
+        /// Writes the given string into server chat log
+        /// </summary>
+        /// <param name="s">log message</param>
         void LogChat(string s);
+        
+        /// <summary>
+        /// This allows all players to use the given privilege, no matter the normal configuration
+        /// </summary>
+        /// <param name="privilege">The privilege to grant</param>
+        /// <param name="enable">Specifies if privilege shall be granted to all (true) or default behaviour should be used (false)</param>
         void EnableExtraPrivilegeToAll(string privilege, bool enable);
+        
+        /// <summary>
+        /// Writes the given string into server event log
+        /// </summary>
+        /// <param name="serverEvent">log message</param>
         void LogServerEvent(string serverEvent);
+        
         void RegisterOnLoadWorld(ModDelegates.LoadWorld a);
         void SetWorldDatabaseReadOnly(bool readOnly);
         string CurrentWorld();
         void LoadWorld(string filename);
         string[] GetModPaths();
+        
+        /// <summary>
+        /// Sends an explosion to the player. This does not inflict damage. It just pushes the player.
+        /// </summary>
+        /// <param name="targetplayer">ID of target player</param>
+        /// <param name="dx">X coordinate of explosion source</param>
+        /// <param name="dy">Y coordinate of explosion source</param>
+        /// <param name="dz">Z coordinate of explosion source</param>
+        /// <param name="relativeposition">Specifies if the coordinates given are relative to the player</param>
+        /// <param name="range">How far from center should the effect stop</param>
+        /// <param name="time">How long the effect lasts</param>
         void SendExplosion(int targetplayer, float dx, float dy, float dz, bool relativeposition, float range, float time);
+        
+        /// <summary>
+        /// Disconnects (kicks) a player from the server
+        /// </summary>
+        /// <param name="player"></param>
         void DisconnectPlayer(int player);
+        
+        /// <summary>
+        /// Disconnects (kicks) a player from the server
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="message">Message displayed to the player</param>
         void DisconnectPlayer(int player, string message);
+        
+        /// <summary>
+        /// Returns the color of the player group
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns>A color string in format: &0</returns>
         string GetGroupColor(int player);
+        
+        /// <summary>
+        /// Returns the name of the player group
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns>A string containing the group name</returns>
         string GetGroupName(int player);
+        
+        /// <summary>
+        /// Registers a new HTTP handler with the integrated HTTP server
+        /// </summary>
+        /// <param name="name">Internal name of the module. Displayed on module overview page.</param>
+        /// <param name="description">Description of the module</param>
+        /// <param name="module">The actual module</param>
         void InstallHttpModule(string name, Func<string> description, FragLabs.HTTP.IHttpModule module);
+        
         int GetMaxPlayers();
         ServerClient GetServerClient();
         long TotalReceivedBytes();
         long TotalSentBytes();
+        
+        /// <summary>
+        /// Changes the color of the player name.
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="color">Color code given in format: &0</param>
         void SetPlayerNameColor(int player, string color);
+        
+        /// <summary>
+        /// Returns the restart interval of the server.
+        /// </summary>
+        /// <returns>Value of AutoRestartCycle</returns>
         int GetAutoRestartInterval();
+        
+        /// <summary>
+        /// Sends a redirection request to the specified client. The target server has to be public!
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="ip">The IP of the target server</param>
+        /// <param name="port">The Port of the target server</param>
+        void SendPlayerRedirect(int player, string ip, int port);
     }
 
     public enum SpecialKey

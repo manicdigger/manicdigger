@@ -545,9 +545,9 @@ namespace ManicDigger
             }
         }
 
-        public int GetPlayerPermissionLevel(int playerid)
+        public int GetPlayerPermissionLevel(int player)
         {
-            return server.clients[playerid].clientGroup.Level;
+            return server.clients[player].clientGroup.Level;
         }
 
         public void SetCreative(bool value)
@@ -585,9 +585,9 @@ namespace ManicDigger
             server.modEventHandlers.onplayerdeath.Add(a);
         }
 
-        public int[] GetScreenResolution(int playerid)
+        public int[] GetScreenResolution(int player)
         {
-            return new int[] { 800, 600 };
+            return server.clients[player].WindowSize;
         }
 
         public void SendDialog(int player, string id, Dialog dialog)
@@ -610,51 +610,51 @@ namespace ManicDigger
         {
             server.RenderHint = hint;
         }
-        public void EnableFreemove(int playerid, bool enable)
+        public void EnableFreemove(int player, bool enable)
         {
-            server.SendFreemoveState(playerid, enable);
+            server.SendFreemoveState(player, enable);
         }
 
-        public int GetPlayerHealth(int playerid)
+        public int GetPlayerHealth(int player)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             return server.GetPlayerStats(name).CurrentHealth;
         }
 
-        public int GetPlayerMaxHealth(int playerid)
+        public int GetPlayerMaxHealth(int player)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             return server.GetPlayerStats(name).MaxHealth;
         }
 
-        public void SetPlayerHealth(int playerid, int health, int maxhealth)
+        public void SetPlayerHealth(int player, int health, int maxhealth)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             server.GetPlayerStats(name).CurrentHealth = health;
             server.GetPlayerStats(name).MaxHealth = maxhealth;
-            server.clients[playerid].IsPlayerStatsDirty = true;
-            server.NotifyPlayerStats(playerid);
+            server.clients[player].IsPlayerStatsDirty = true;
+            server.NotifyPlayerStats(player);
         }
 
-        public int GetPlayerOxygen(int playerid)
+        public int GetPlayerOxygen(int player)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             return server.GetPlayerStats(name).CurrentOxygen;
         }
 
-        public int GetPlayerMaxOxygen(int playerid)
+        public int GetPlayerMaxOxygen(int player)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             return server.GetPlayerStats(name).MaxOxygen;
         }
 
-        public void SetPlayerOxygen(int playerid, int oxygen, int maxoxygen)
+        public void SetPlayerOxygen(int player, int oxygen, int maxoxygen)
         {
-            string name = GetPlayerName(playerid);
+            string name = GetPlayerName(player);
             server.GetPlayerStats(name).CurrentOxygen = oxygen;
             server.GetPlayerStats(name).MaxOxygen = maxoxygen;
-            server.clients[playerid].IsPlayerStatsDirty = true;
-            server.NotifyPlayerStats(playerid);
+            server.clients[player].IsPlayerStatsDirty = true;
+            server.NotifyPlayerStats(player);
         }
 
         public void RegisterOnWeaponHit(ModDelegates.WeaponHit a)
@@ -779,11 +779,11 @@ namespace ManicDigger
         	return server.clients[player].IsBot;
         }
         
-        public void SetPlayerHeight(int playerid, float eyeheight, float modelheight)
+        public void SetPlayerHeight(int player, float eyeheight, float modelheight)
         {
-            server.clients[playerid].EyeHeight = eyeheight;
-            server.clients[playerid].ModelHeight = modelheight;
-            server.SendPlayerSpawnToAll(playerid);
+            server.clients[player].EyeHeight = eyeheight;
+            server.clients[player].ModelHeight = modelheight;
+            server.SendPlayerSpawnToAll(player);
         }
 
         public void DisablePrivilege(string privilege)
@@ -811,9 +811,14 @@ namespace ManicDigger
             server.SendPacketFollow(player, target, tpp);
         }
 
-        public void SetPlayerSpectator(int playerid, bool isSpectator)
+        public void SetPlayerSpectator(int player, bool isSpectator)
         {
-            server.clients[playerid].IsSpectator = isSpectator;
+            server.clients[player].IsSpectator = isSpectator;
+        }
+
+        public bool IsPlayerSpectator(int player)
+        {
+            return server.clients[player].IsSpectator;
         }
 
         public BlockType GetBlockType(int block)
@@ -821,9 +826,9 @@ namespace ManicDigger
             return server.BlockTypes[block];
         }
 
-        public void NotifyAmmo(int playerid, Dictionary<int, int> totalAmmo)
+        public void NotifyAmmo(int player, Dictionary<int, int> totalAmmo)
         {
-            server.SendAmmo(playerid, totalAmmo);
+            server.SendAmmo(player, totalAmmo);
         }
 
         public void RegisterOnWeaponShot(ModDelegates.WeaponShot a)
@@ -944,6 +949,11 @@ namespace ManicDigger
         public int GetAutoRestartInterval()
         {
         	return server.config.AutoRestartCycle;
+        }
+        
+        public void SendPlayerRedirect(int player, string ip, int port)
+        {
+            server.SendServerRedirect(player, ip, port);
         }
     }
 }

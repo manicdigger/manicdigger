@@ -95,8 +95,10 @@ namespace GameModeFortress
                     server.Process();
                     Thread.Sleep(1);
                     platform.singlePlayerServerLoaded = true;
-                    if (exit != null && exit.GetExit()) { server.SaveAll(); return; }
+                    if (exit != null && exit.GetExit()) { server.Stop(); break; }
+                    if (platform.singlepLayerServerExit) { server.Exit(); }
                 }
+                exit.SetExit(false);
             }
             catch (Exception e)
             {

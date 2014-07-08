@@ -4636,10 +4636,27 @@
         Set3dProjection1(zfar());
     }
 
+    internal void SendGameResolution()
+    {
+        Packet_ClientGameResolution p = new Packet_ClientGameResolution();
+        p.Width = Width();
+        p.Height = Height();
+        Packet_Client pp = new Packet_Client();
+        pp.Id = Packet_ClientIdEnum.GameResolution;
+        pp.GameResolution = p;
+        SendPacketClient(pp);
+    }
+
+    bool sendResize;
     internal void OnResize()
     {
         platform.GlViewport(0, 0, Width(), Height());
         this.Set3dProjection2();
+        //Notify server of size change
+        if (sendResize)
+        {
+            SendGameResolution();
+        }
     }
 
     internal void Reconnect()
@@ -4647,8 +4664,30 @@
         reconnect = true;
     }
 
+    internal Packet_ServerRedirect redirectTo;
+    internal void ExitAndSwitchServer(Packet_ServerRedirect newServer)
+    {
+        if (issingleplayer)
+        {
+            platform.SinglePlayerServerExit();
+        }
+        redirectTo = newServer;
+        exitToMainMenu = true;
+        platform.MouseCursorSetVisible(true);
+    }
+    
+    internal Packet_ServerRedirect GetRedirect()
+    {
+        return redirectTo;
+    }
+
     internal void ExitToMainMenu()
     {
+        if (issingleplayer)
+        {
+            platform.SinglePlayerServerExit();
+        }
+        redirectTo = null;
         exitToMainMenu = true;
         platform.MouseCursorSetVisible(true);
     }
@@ -4794,6 +4833,37 @@
                 {
                     Reconnect();
                 }
+                else if (cmd == "serverinfo")
+                {
+                    //Fetches server info from given adress
+                    IntRef splitCount = new IntRef();
+                    string[] split = platform.StringSplit(arguments, ":", splitCount);
+                    if (splitCount.value == 2)
+                    {
+                        QueryClient qClient = new QueryClient();
+                        qClient.SetPlatform(platform);
+                        qClient.PerformQuery(split[0], platform.IntParse(split[1]));
+                        QueryResult r = qClient.GetResult();
+                        if (!platform.StringEmpty(r.Name))
+                        {
+                            //Received result
+                            AddChatline(r.GameMode);
+                            AddChatline(platform.IntToString(r.MapSizeX));
+                            AddChatline(platform.IntToString(r.MapSizeY));
+                            AddChatline(platform.IntToString(r.MapSizeZ));
+                            AddChatline(platform.IntToString(r.MaxPlayers));
+                            AddChatline(r.MOTD);
+                            AddChatline(r.Name);
+                            //AddChatline(r.Password.ToString());
+                            AddChatline(platform.IntToString(r.PlayerCount));
+                            AddChatline(r.PlayerList);
+                            AddChatline(platform.IntToString(r.Port));
+                            AddChatline(r.PublicHash);
+                            AddChatline(r.ServerVersion);
+                        }
+                        AddChatline(qClient.GetServerMessage());
+                    }
+                }
                 else
                 {
                     for (int i = 0; i < clientmodsCount; i++)
@@ -4841,10 +4911,23 @@
                 string md5 = required.Items[i];
                 if (!HasAsset(md5))
                 {
-                    getAsset[getCount++] = md5;
+                    //file not loaded, check if in cache
+                    if (platform.IsCached(md5))
+                    {
+                        //File has been cached. load cached version.
+                        Asset cachedAsset = platform.LoadAssetFromCache(md5);
+                        SetFile(cachedAsset.name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
+                    }
+                    else
+                    {
+                        //File not present in cache. request from server.
+                        getAsset[getCount++] = md5;
+                    }
                 }
             }
         }
+        SendGameResolution();
+        sendResize = true;
         SendRequestBlob(getAsset, getCount);
         if (packet.Identification.MapSizeX != MapSizeX
             || packet.Identification.MapSizeY != MapSizeY
@@ -5455,6 +5538,21 @@
                     Packet_ServerChunkEntityEntity entity = packet.ChunkEntity_.ChunkEntity_;
                 }
                 break;
+            case Packet_ServerIdEnum.ServerRedirect:
+                //Leave current server
+                SendLeave(Packet_LeaveReasonEnum.Leave);
+                //Exit game screen and create new game instance
+                ExitAndSwitchServer(packet.Redirect);
+                break;
+        }
+    }
+
+    void CacheAsset(Asset asset)
+    {
+        //Only cache a file if it's not already cached
+        if (!platform.IsCached(asset.md5))
+        {
+            platform.SaveAssetToCache(asset);
         }
     }
 
@@ -5471,18 +5569,35 @@
             {
                 if (options.UseServerTextures)
                 {
+                    //If server textures are allowed, replace content of current asset
+                    assets.items[i].md5 = md5;
                     assets.items[i].data = downloaded;
                     assets.items[i].dataLength = downloadedLength;
+                    //Save modified file to cache
+                    CacheAsset(assets.items[i]);
+                }
+                else
+                {
+                    //Else just save the unused asset to cache for later use
+                    Asset tempAsset = new Asset();
+                    tempAsset.data = downloaded;
+                    tempAsset.dataLength = downloadedLength;
+                    tempAsset.name = nameLowercase;
+                    tempAsset.md5 = md5;
+                    CacheAsset(tempAsset);
                 }
                 return;
             }
         }
+        //Add new asset to asset list
         Asset asset = new Asset();
         asset.data = downloaded;
         asset.dataLength = downloadedLength;
         asset.name = nameLowercase;
         asset.md5 = md5;
         assets.items[assets.count++] = asset;
+        //Store downloaded file in cache
+        CacheAsset(asset);
     }
 
     internal int handTexture;
@@ -11823,6 +11938,14 @@ public class ServerPackets
         p.Id = Packet_ServerIdEnum.DisconnectPlayer;
         p.DisconnectPlayer = new Packet_ServerDisconnectPlayer();
         p.DisconnectPlayer.DisconnectReason = disconnectReason;
+        return p;
+    }
+    
+    internal static Packet_Server AnswerQuery(Packet_ServerQueryAnswer answer)
+    {
+        Packet_Server p = new Packet_Server();
+        p.Id = Packet_ServerIdEnum.QueryAnswer;
+        p.QueryAnswer = answer;
         return p;
     }
 }

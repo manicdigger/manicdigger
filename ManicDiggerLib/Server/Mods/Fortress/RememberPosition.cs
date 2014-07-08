@@ -91,6 +91,11 @@ namespace ManicDigger.Mods
         
         public void OnLeave(int player)
         {
+            if (m.IsBot(player))
+            {
+                //Don't store bot positions
+                return;
+            }
             positions.Store(m.GetPlayerName(player), (int)m.GetPlayerPositionX(player), (int)m.GetPlayerPositionY(player), (int)m.GetPlayerPositionZ(player));
         }
     }
