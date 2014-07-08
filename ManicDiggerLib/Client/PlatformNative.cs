@@ -2059,6 +2059,28 @@ public class GamePlatformNative : GamePlatform
             return false;
         return File.Exists(Path.Combine(cachepath(), md5));
     }
+
+    public override bool IsChecksum(string checksum)
+    {
+        //Check if checksum string has correct length
+        if (checksum.Length != 32)
+        {
+            return false;
+        }
+        //Convert checksum string to lowercase letters
+        checksum = checksum.ToLower();
+        char[] chars = checksum.ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+        {
+            if ((chars[i] < '0' || chars[i] > '9') && (chars[i] < 'a' || chars[i] > 'f'))
+            {
+                //Return false if any character inside the checksum is not hexadecimal
+                return false;
+            }
+        }
+        //Return true if all checks have been passed
+        return true;
+    }
 }
 
 public class AssetLoader

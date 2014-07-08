@@ -180,6 +180,7 @@
     public abstract void SaveAssetToCache(Asset tosave);
     public abstract Asset LoadAssetFromCache(string md5);
     public abstract bool IsCached(string md5);
+    public abstract bool IsChecksum(string checksum);
 }
 
 public class Asset

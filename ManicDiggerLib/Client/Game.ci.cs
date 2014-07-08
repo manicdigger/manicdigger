@@ -5549,6 +5549,12 @@
 
     void CacheAsset(Asset asset)
     {
+        //Check if given checksum is valid
+        if (!platform.IsChecksum(asset.md5))
+        {
+            //Skip saving
+            return;
+        }
         //Only cache a file if it's not already cached
         if (!platform.IsCached(asset.md5))
         {
