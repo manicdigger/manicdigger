@@ -3111,6 +3111,8 @@
             Entity entity = entities[i];
             if (entity == null) { continue; }
             if (entity.push == null) { continue; }
+            //Prevent players that aren't displayed from pushing
+            if (entity.player != null && !entity.player.PositionLoaded) { continue; }
             float kposX = DeserializeFloat(entity.push.XFloat);
             float kposY = DeserializeFloat(entity.push.ZFloat);
             float kposZ = DeserializeFloat(entity.push.YFloat);
