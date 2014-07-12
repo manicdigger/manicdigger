@@ -80,7 +80,7 @@ namespace ManicDigger.Renderers
             t.fontsize *= 1.65f;
             try
             {
-                font = new Font ("Arial", t.fontsize, FontStyle.Bold);
+                font = new Font ("Arial", t.fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
@@ -147,7 +147,7 @@ namespace ManicDigger.Renderers
 
 		private Bitmap blackBackgroundFont(Text_ t)
         {
-            Font font = new Font("Verdana", t.fontsize);
+            Font font = new Font("Verdana", t.fontsize, (FontStyle)t.GetFontStyle());
             var parts = DecodeColors(t.text, Color.FromArgb(t.color));
             float totalwidth = 0;
             float totalheight = 0;
@@ -197,7 +197,7 @@ namespace ManicDigger.Renderers
             fontsize *= 1.1f;
             try
             {
-               font = new Font ("Arial", fontsize, FontStyle.Bold);
+               font = new Font ("Arial", fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
@@ -254,7 +254,7 @@ namespace ManicDigger.Renderers
             fontsize *= 1.1f;
             try
             {
-               font = new Font (t.GetFontFamily(), fontsize, FontStyle.Bold);
+                font = new Font (t.GetFontFamily(), fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
@@ -369,43 +369,54 @@ namespace ManicDigger.Renderers
         public List<TextPart> DecodeColors(string s, Color defaultcolor)
         {
             List<TextPart> parts = new List<TextPart>();
-            int i = 0;
             Color currentcolor = defaultcolor;
             string currenttext = "";
-            for (; ; )
+            for (int i = 0; i < s.Length; i++)
             {
-                if (i >= s.Length)
-                {
-                    if (currenttext != "")
-                    {
-                        parts.Add(new TextPart() { text = currenttext, color = currentcolor });
-                    }
-                    break;
-                }
+                //If a & is found, try to parse a color code
                 if (s[i] == '&')
                 {
+                    //check if there's a character after it
                     if (i + 1 < s.Length)
                     {
+                        //try to parse the color code
                         int? color = HexToInt(s[i + 1]);
                         if (color != null)
                         {
+                            //Color has been parsed successfully
                             if (currenttext != "")
                             {
+                                //Add content so far to return value
                                 parts.Add(new TextPart() { text = currenttext, color = currentcolor });
                             }
+                            //Update current color and reset stored text
                             currenttext = "";
                             currentcolor = GetColor(color.Value);
+                            //Increment i to prevent the code from being read again
                             i++;
-                            goto next;
+                        }
+                        else
+                        {
+                            //no valid color code found. display as normal character
+                            currenttext += s[i];
                         }
                     }
                     else
                     {
+                        //if not, just display it as normal character
+                        currenttext += s[i];
                     }
                 }
-                currenttext += s[i];
-            next:
-                i++;
+                else
+                {
+                    //Nothing special. Just add the current character
+                    currenttext += s[i];
+                }
+            }
+            //Add any leftover text parts in current color
+            if (currenttext != "")
+            {
+                parts.Add(new TextPart() { text = currenttext, color = currentcolor });
             }
             return parts;
         }
