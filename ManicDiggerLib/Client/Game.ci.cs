@@ -5551,6 +5551,11 @@
 
     void CacheAsset(Asset asset)
     {
+        //Check if checksum is given (prevents crash on old servers)
+        if (asset.md5 == null)
+        {
+            return;
+        }
         //Check if given checksum is valid
         if (!platform.IsChecksum(asset.md5))
         {
