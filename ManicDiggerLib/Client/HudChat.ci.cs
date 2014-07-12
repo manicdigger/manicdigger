@@ -45,12 +45,10 @@
         }
         //Check for links in chatline
         bool containsLink = false;
-        int linkIndex = -1;
         string linkTarget = "";
         if (game.platform.StringContains(s, "http://"))
         {
             containsLink = true;
-            linkIndex = game.platform.StringIndexOf(s, "http://");
             IntRef r = new IntRef();
             string[] temp = game.platform.StringSplit(s, " ", r);
             for (int i = 0; i < r.value; i++)
@@ -90,7 +88,29 @@
     
     public void OnMouseDown(MouseEventArgs args)
     {
-        //TODO: Clickable links
+        for (int i = 0; i < chatlines2Count; i++)
+        {
+            float dx = 20;
+            if (!game.platform.IsMousePointerLocked())
+            {
+                dx += 100;
+            }
+            float chatlineStartX = dx * game.Scale();
+            float chatlineStartY = (90 + i * 25) * game.Scale();
+            float chatlineSizeX = 500 * game.Scale();
+            float chatlineSizeY = 20 * game.Scale();
+            if (args.GetX() > chatlineStartX && args.GetX() < chatlineStartX + chatlineSizeX)
+            {
+                if (args.GetY() > chatlineStartY && args.GetY() < chatlineStartY + chatlineSizeY)
+                {
+                    //Mouse over chatline at position i
+                    if (chatlines2[i].clickable)
+                    {
+                        game.platform.OpenLinkInBrowser(chatlines2[i].linkTarget);
+                    }
+                }
+            }
+        }
     }
     
     void ChatLinesAdd(Chatline chatline)
@@ -109,9 +129,10 @@
     }
     
     Chatline[] chatlines2;
+    int chatlines2Count;
     public void DrawChatLines(bool all)
     {
-        int chatlines2Count = 0;
+        chatlines2Count = 0;
         if (!all)
         {
             for (int i = 0; i < ChatLinesCount; i++)
@@ -148,6 +169,17 @@
         }
         for (int i = 0; i < chatlines2Count; i++)
         {
+            if (chatlines2[i].clickable)
+            {
+                //Different display of links in chat
+                //2 = italic
+                //3 = bold italic
+                font.style = 2;
+            }
+            else
+            {
+                font.style = 0;
+            }
             game.Draw2dText(chatlines2[i].text, font, dx * game.Scale(), (90 + i * 25) * game.Scale(), null, false);
         }
         if (ChatPageScroll != 0)
