@@ -4912,29 +4912,27 @@
             for (int i = 0; i < requiredMd5.ItemsCount; i++)
             {
                 string md5 = requiredMd5.Items[i];
-                if (!HasAsset(md5))
+                
+                //check if file with that content is already in cache
+                if (platform.IsCached(md5))
                 {
-                    //file not loaded, check if in cache
-                    if (platform.IsCached(md5))
+                    //File has been cached. load cached version.
+                    Asset cachedAsset = platform.LoadAssetFromCache(md5);
+                    string name;
+                    if (requiredName != null)
                     {
-                        //File has been cached. load cached version.
-                        Asset cachedAsset = platform.LoadAssetFromCache(md5);
-                        string name;
-                        if (requiredName != null)
-                        {
-                            name = requiredName.Items[i];
-                        }
-                        else // server older than 2014-07-13.
-                        {
-                            name = cachedAsset.name;
-                        }
-                        SetFile(name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
+                        name = requiredName.Items[i];
                     }
-                    else
+                    else // server older than 2014-07-13.
                     {
-                        //File not present in cache. request from server.
-                        getAsset[getCount++] = md5;
+                        name = cachedAsset.name;
                     }
+                    SetFile(name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
+                }
+                else
+                {
+                    //File not present in cache. request from server.
+                    getAsset[getCount++] = md5;
                 }
             }
         }
@@ -4956,18 +4954,6 @@
         {
             maxdrawdistance = 128;
         }
-    }
-
-    bool HasAsset(string md5)
-    {
-        for (int i = 0; i < assets.count; i++)
-        {
-            if (assets.items[i].md5 == md5)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     string serverGameVersion;
@@ -5582,6 +5568,14 @@
     void SetFile(string name, string md5, byte[] downloaded, int downloadedLength)
     {
         string nameLowercase = platform.StringToLower(name);
+        
+        //Create new asset from given data
+        Asset newAsset = new Asset();
+        newAsset.data = downloaded;
+        newAsset.dataLength = downloadedLength;
+        newAsset.name = nameLowercase;
+        newAsset.md5 = md5;
+        
         for (int i = 0; i < assets.count; i++)
         {
             if (assets.items[i] == null)
@@ -5593,34 +5587,18 @@
                 if (options.UseServerTextures)
                 {
                     //If server textures are allowed, replace content of current asset
-                    assets.items[i].md5 = md5;
-                    assets.items[i].data = downloaded;
-                    assets.items[i].dataLength = downloadedLength;
-                    //Save modified file to cache
-                    CacheAsset(assets.items[i]);
+                    assets.items[i] = newAsset;
                 }
-                else
-                {
-                    //Else just save the unused asset to cache for later use
-                    Asset tempAsset = new Asset();
-                    tempAsset.data = downloaded;
-                    tempAsset.dataLength = downloadedLength;
-                    tempAsset.name = nameLowercase;
-                    tempAsset.md5 = md5;
-                    CacheAsset(tempAsset);
-                }
+                //Cache asset for later use
+                CacheAsset(newAsset);
                 return;
             }
         }
         //Add new asset to asset list
-        Asset asset = new Asset();
-        asset.data = downloaded;
-        asset.dataLength = downloadedLength;
-        asset.name = nameLowercase;
-        asset.md5 = md5;
-        assets.items[assets.count++] = asset;
-        //Store downloaded file in cache
-        CacheAsset(asset);
+        assets.items[assets.count++] = newAsset;
+        
+        //Store new asset in cache
+        CacheAsset(newAsset);
     }
 
     internal int handTexture;
