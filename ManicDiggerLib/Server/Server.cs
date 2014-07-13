@@ -3508,6 +3508,20 @@ namespace ManicDiggerServer
             return p;
         }
 
+        Packet_StringList GetRequiredBlobName()
+        {
+            Packet_StringList p = new Packet_StringList();
+            List<string> list = new List<string>();
+
+            for (int i = 0; i < assets.count; i++)
+            {
+                list.Add(assets.items[i].name);
+            }
+
+            p.SetItems(list.ToArray(), list.Count, list.Count);
+            return p;
+        }
+
         AssetLoader assetLoader;
         AssetList assets = new AssetList();
 
@@ -3714,6 +3728,7 @@ namespace ManicDiggerServer
                 PlayerAreaSize = playerareasize,
                 RenderHint_ = (int)RenderHint,
                 RequiredBlobMd5 = GetRequiredBlobMd5(),
+                RequiredBlobName = GetRequiredBlobName(),
             };
             SendPacket(clientid, Serialize(new Packet_Server() { Id = Packet_ServerIdEnum.ServerIdentification, Identification = p }));
         }

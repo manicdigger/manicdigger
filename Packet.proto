@@ -429,6 +429,7 @@ package Packet;
         optional int32 playerAreaSize = 12;
         optional int32 renderHint_ = 13;
         optional StringList requiredBlobMd5 = 14;
+        optional StringList requiredBlobName = 15;
     }
     
     message StringList

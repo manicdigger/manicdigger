@@ -4904,13 +4904,14 @@
         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
         this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint_ == RenderHintEnum.Fast;
         ChatLog("---Connected---");
-        Packet_StringList required = packet.Identification.RequiredBlobMd5;
+        Packet_StringList requiredMd5 = packet.Identification.RequiredBlobMd5;
+        Packet_StringList requiredName = packet.Identification.RequiredBlobName;
         int getCount = 0;
-        if (required != null)
+        if (requiredMd5 != null)
         {
-            for (int i = 0; i < required.ItemsCount; i++)
+            for (int i = 0; i < requiredMd5.ItemsCount; i++)
             {
-                string md5 = required.Items[i];
+                string md5 = requiredMd5.Items[i];
                 if (!HasAsset(md5))
                 {
                     //file not loaded, check if in cache
@@ -4918,7 +4919,16 @@
                     {
                         //File has been cached. load cached version.
                         Asset cachedAsset = platform.LoadAssetFromCache(md5);
-                        SetFile(cachedAsset.name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
+                        string name;
+                        if (requiredName != null)
+                        {
+                            name = requiredName.Items[i];
+                        }
+                        else // server older than 2014-07-13.
+                        {
+                            name = cachedAsset.name;
+                        }
+                        SetFile(name, cachedAsset.md5, cachedAsset.data, cachedAsset.dataLength);
                     }
                     else
                     {
