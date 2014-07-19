@@ -4931,8 +4931,21 @@
                 }
                 else
                 {
-                    //File not present in cache. request from server.
-                    getAsset[getCount++] = md5;
+                    //Asset not present in cache
+                    if (requiredName != null)
+                    {
+                        //If list of names is given (server > 2014-07-13) lookup if asset is already loaded
+                        if (!HasAsset(md5, requiredName.Items[i]))
+                        {
+                            //Request asset from server if not already loaded
+                            getAsset[getCount++] = md5;
+                        }
+                    }
+                    else
+                    {
+                        //Server didn't send list of required asset names
+                        getAsset[getCount++] = md5;
+                    }
                 }
             }
         }
@@ -4954,6 +4967,22 @@
         {
             maxdrawdistance = 128;
         }
+    }
+
+    bool HasAsset(string md5, string name)
+    {
+        for (int i = 0; i < assets.count; i++)
+        {
+            if (assets.items[i].md5 == md5)
+            {
+                if (assets.items[i].name == name)
+                {
+                    //Check both MD5 and name as there might be files with same content
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     string serverGameVersion;
