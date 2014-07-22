@@ -14,7 +14,7 @@
         chatlines2 = new Chatline[1024];
         ChatLineLength = 64;
     }
-    
+
     internal Game game;
     internal bool IsTyping;
     internal string GuiTypingBuffer;
@@ -28,7 +28,7 @@
     internal bool IsTeamchat;
     internal int ChatLineLength;
     internal float one;
-    
+
     public void Render()
     {
         DrawChatLines(IsTyping);
@@ -85,7 +85,7 @@
                 ChatLinesAdd(Chatline.Create(s, now));
         }
     }
-    
+
     public void OnMouseDown(MouseEventArgs args)
     {
         for (int i = 0; i < chatlines2Count; i++)
@@ -112,7 +112,7 @@
             }
         }
     }
-    
+
     void ChatLinesAdd(Chatline chatline)
     {
         if (ChatLinesCount >= ChatLinesMax)
@@ -127,7 +127,7 @@
         }
         ChatLines[ChatLinesCount++] = chatline;
     }
-    
+
     Chatline[] chatlines2;
     int chatlines2Count;
     public void DrawChatLines(bool all)
@@ -196,7 +196,14 @@
         {
             s = game.platform.StringFormat("To team: {0}", s);
         }
-        game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50, game.platform.GetCanvasHeight() - 100, null, true);
+        if (game.platform.IsSmallScreen())
+        {
+            game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50 * game.Scale(), (game.platform.GetCanvasHeight() / 2) - 100 * game.Scale(), null, true);
+        }
+        else
+        {
+            game.Draw2dText(game.platform.StringFormat("{0}_", s), font, 50 * game.Scale(), game.platform.GetCanvasHeight() - 100 * game.Scale(), null, true);
+        }
     }
 }
 
@@ -206,7 +213,7 @@ public class Chatline
     internal int timeMilliseconds;
     internal bool clickable;
     internal string linkTarget;
-    
+
     internal static Chatline Create(string text_, int timeMilliseconds_)
     {
         Chatline c = new Chatline();
@@ -215,7 +222,7 @@ public class Chatline
         c.clickable = false;
         return c;
     }
-    
+
     internal static Chatline CreateClickable(string text_, int timeMilliseconds_, string linkTarget_)
     {
         Chatline c = new Chatline();

@@ -6560,6 +6560,7 @@
                     d_HudChat.IsTyping = false;
 
                     GuiTyping = TypingState.None;
+                    platform.ShowKeyboard(false);
                 }
                 else if (GuiTyping == TypingState.None)
                 {
@@ -8726,6 +8727,11 @@
         d_HudChat.GuiTypingBuffer = "";
         d_HudChat.IsTeamchat = false;
     }
+
+    public void StopTyping()
+    {
+        GuiTyping = TypingState.None;
+    }
 }
 
 public class DictionaryStringAudioSample
@@ -9075,8 +9081,16 @@ public class ScreenTouchButtons : GameScreen
         }
         if (w == buttonTalk)
         {
-            game.StartTyping();
-            game.platform.ShowKeyboard(true);
+            if (game.GuiTyping == TypingState.None)
+            {
+                game.StartTyping();
+                game.platform.ShowKeyboard(true);
+            }
+            else
+            {
+                game.StopTyping();
+                game.platform.ShowKeyboard(false);
+            }
         }
         if (w == buttonCamera)
         {
