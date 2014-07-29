@@ -4845,10 +4845,10 @@
                         QueryClient qClient = new QueryClient();
                         qClient.SetPlatform(platform);
                         qClient.PerformQuery(split[0], platform.IntParse(split[1]));
-                        QueryResult r = qClient.GetResult();
-                        if (!platform.StringEmpty(r.Name))
+                        if (qClient.querySuccess)
                         {
                             //Received result
+                            QueryResult r = qClient.GetResult();
                             AddChatline(r.GameMode);
                             AddChatline(platform.IntToString(r.MapSizeX));
                             AddChatline(platform.IntToString(r.MapSizeY));
@@ -4856,7 +4856,6 @@
                             AddChatline(platform.IntToString(r.MaxPlayers));
                             AddChatline(r.MOTD);
                             AddChatline(r.Name);
-                            //AddChatline(r.Password.ToString());
                             AddChatline(platform.IntToString(r.PlayerCount));
                             AddChatline(r.PlayerList);
                             AddChatline(platform.IntToString(r.Port));

@@ -2,12 +2,14 @@
 {
     internal QueryResult result;
     internal bool queryPerformed;
+    internal bool querySuccess;
     internal GamePlatform p;
     internal string serverMessage;
     
     public QueryClient()
     {
         result = new QueryResult();
+        querySuccess = false;
         queryPerformed = false;
         //p = new GamePlatformNative();
     }
@@ -58,20 +60,21 @@
     void ReadPacket(EnetNetClient client)
     {
         bool success = false;
-        int tries = 0;
-        while (tries < 1000000)
+        int started = p.TimeMillisecondsFromStart();
+        int timeout = 1000;
+        while (p.TimeMillisecondsFromStart() < started + timeout)
         {
-            tries++;
+            if (success)
+            {
+                //Return if already received answer from server
+                querySuccess = true;
+                return;
+            }
             INetIncomingMessage msg;
             msg = client.ReadMessage();
             if (msg == null)
             {
                 //Message empty - skip processing.
-                if (success)
-                {
-                    //Return if already received answer from server
-                    return;
-                }
                 continue;
             }
             
@@ -97,7 +100,7 @@
                     result.MapSizeZ = packet.QueryAnswer.MapSizeZ;
                     result.ServerThumbnail = packet.QueryAnswer.ServerThumbnail;
                     success = true;
-                    break;
+                    continue;
                     
                 case Packet_ServerIdEnum.DisconnectPlayer:
                     serverMessage = packet.DisconnectPlayer.DisconnectReason;
@@ -106,7 +109,7 @@
                     
                 default:
                     //Drop all other packets sent by server (not relevant)
-                    break;
+                    continue;
             }
         }
         serverMessage = "&4No message received from server!";

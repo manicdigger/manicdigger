@@ -237,21 +237,14 @@ public class GamePlatformNative : GamePlatform
         QueryClient qClient = new QueryClient();
         qClient.SetPlatform(this);
         qClient.PerformQuery(args.ip, args.port);
-        QueryResult r = qClient.GetResult();
-        if (!StringEmpty(r.Name))
+        if (qClient.querySuccess)
         {
             //Received a result
+            QueryResult r = qClient.GetResult();
             args.response.data = r.ServerThumbnail;
             args.response.dataLength = r.ServerThumbnail.Length;
             args.response.serverMessage = qClient.GetServerMessage();
             args.response.done = true;
-//            BitmapCi bmp = BitmapCreateFromPng(r.ServerThumbnail, ByteArrayLength(r.ServerThumbnail));
-//            if (bmp != null)
-//            {
-//                int texture = LoadTextureFromBitmap(bmp);
-//                textures.Set(string.Format("serverlist_entry_noimage.png"), texture);
-//                BitmapDelete(bmp);
-//            }
         }
         else
         {
