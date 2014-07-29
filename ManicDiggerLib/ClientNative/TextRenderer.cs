@@ -465,16 +465,36 @@ namespace ManicDigger.Renderers
         }
         public bool NewFont = true;
 
-       public virtual SizeF MeasureTextSize(string text, float fontsize)
-       {
-           fontsize = Math.Max(fontsize, 9);
+        public virtual SizeF MeasureTextSize(string text, float fontsize)
+        {
+            string text2 = "";
+            fontsize = Math.Max(fontsize, 9);
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '&')
+                {
+                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != null)
+                    {
+                        //Skip color codes when calculating text length
+                        i++;
+                    }
+                    else
+                    {
+                        text2 += text[i];
+                    }
+                }
+                else
+                {
+                    text2 += text[i];
+                }
+            }
             using(Font font = new Font("Verdana", fontsize))
             {
                 using(Bitmap bmp = new Bitmap(1, 1))
                 {
                     using(Graphics g = Graphics.FromImage(bmp))
                     {
-                        return g.MeasureString(text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        return g.MeasureString(text2, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                     }
                 }
             }
@@ -482,11 +502,31 @@ namespace ManicDigger.Renderers
 
         public virtual SizeF MeasureTextSize(string text, Font font)
         {
+            string text2 = "";
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '&')
+                {
+                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != null)
+                    {
+                        //Skip color codes when calculating text length
+                        i++;
+                    }
+                    else
+                    {
+                        text2 += text[i];
+                    }
+                }
+                else
+                {
+                    text2 += text[i];
+                }
+            }
             using(Bitmap bmp = new Bitmap(1, 1))
             {
                 using(Graphics g = Graphics.FromImage(bmp))
                 {
-                    return g.MeasureString(text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                    return g.MeasureString(text2, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
         }
