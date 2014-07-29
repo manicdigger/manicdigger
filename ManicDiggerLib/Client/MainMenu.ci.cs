@@ -179,6 +179,19 @@
         Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
     }
 
+    internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height)
+    {
+        //Server buttons default to: (screen width - 200) x 64
+        Draw2dQuad(GetTexture("serverlist_entry_background.png"), x, y, width, height);
+        Draw2dQuad(GetTexture("serverlist_entry_noimage.png"), x, y, height, height);
+
+        //       value          size    x position              y position              text alignment      text baseline
+        DrawText(name,          14,     x + 70,                 y + 5,                  TextAlign.Left,     TextBaseline.Top);
+        DrawText(gamemode,      12,     x + width - 10,         y + height - 5,         TextAlign.Right,    TextBaseline.Bottom);
+        DrawText(playercount,   12,     x + width - 10,         y + 5,                  TextAlign.Right,    TextBaseline.Top);
+        DrawText(motd,          12,     x + 70,                 y + height - 5,         TextAlign.Left,     TextBaseline.Bottom);
+    }
+
     TextTexture GetTextTexture(string text, float fontSize)
     {
         for (int i = 0; i < textTexturesCount; i++)
@@ -832,15 +845,32 @@ public class Screen
                 {
                     text = StringTools.StringAppend(menu.p, "&2", text);
                 }
+                if (w.image != null)
+                {
+                    menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                }
                 if (w.type == WidgetType.Button)
                 {
                     if (w.buttonStyle == ButtonStyle.Text)
                     {
                         menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
                     }
-                    else
+                    else if (w.buttonStyle == ButtonStyle.Button)
                     {
                         menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.hasKeyboardFocus));
+                    }
+                    else
+                    {
+                        string[] strings = menu.p.StringSplit(w.text, "\n", new IntRef());
+                        if (w.selected)
+                        {
+                            //Highlight text if selected
+                            strings[0] = StringTools.StringAppend(menu.p, "&2", strings[0]);
+                            strings[1] = StringTools.StringAppend(menu.p, "&2", strings[1]);
+                            strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
+                            strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
+                        }
+                        menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -998,7 +1028,7 @@ public class ScreenSingleplayer : Screen
         float scale = menu.GetScale();
 
         menu.DrawBackground();
-        menu.DrawText("Singleplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText("Singleplayer", 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
 
         float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
         float y = p.GetCanvasHeight() / 2 + 0 * scale;
@@ -1678,11 +1708,11 @@ public class ScreenMultiplayer : Screen
 
         page = 0;
         pageUp = new MenuWidget();
-        pageUp.text = "Up";
+        pageUp.text = "";
         pageUp.type = WidgetType.Button;
         pageUp.buttonStyle = ButtonStyle.Text;
         pageDown = new MenuWidget();
-        pageDown.text = "Down";
+        pageDown.text = "";
         pageDown.type = WidgetType.Button;
         pageDown.buttonStyle = ButtonStyle.Text;
 
@@ -1694,6 +1724,7 @@ public class ScreenMultiplayer : Screen
         logout = new MenuWidget();
         logout.text = "";
         logout.type = WidgetType.Button;
+        //logout.image = "serverlist_entry_background.png";
         logout.buttonStyle = ButtonStyle.Button;
 
         widgets[0] = back;
@@ -1729,6 +1760,7 @@ public class ScreenMultiplayer : Screen
     ServerOnList[] serversOnList;
     const int serversOnListCount = 1024;
     int page;
+    int serversPerPage;
 
     bool loading;
     public override void Render(float dt)
@@ -1804,23 +1836,23 @@ public class ScreenMultiplayer : Screen
         refresh.sizey = 64 * scale;
         refresh.fontSize = 14 * scale;
 
-        pageUp.x = p.GetCanvasWidth() - 100 * scale;
-        pageUp.y = p.GetCanvasHeight() - 160 * scale;
-        pageUp.sizex = 100 * scale;
-        pageUp.sizey = 50 * scale;
-        pageUp.fontSize = 14 * scale;
+        pageUp.x = p.GetCanvasWidth() - 94 * scale;
+        pageUp.y = 100 * scale + (serversPerPage - 1) * 70 * scale;
+        pageUp.sizex = 64 * scale;
+        pageUp.sizey = 64 * scale;
+        pageUp.image = "serverlist_nav_down.png";
 
-        pageDown.x = p.GetCanvasWidth() - 100 * scale;
-        pageDown.y = 120;
-        pageDown.sizex = 100 * scale;
-        pageDown.sizey = 50 * scale;
-        pageDown.fontSize = 14 * scale;
+        pageDown.x = p.GetCanvasWidth() - 94 * scale;
+        pageDown.y = 100 * scale;
+        pageDown.sizex = 64 * scale;
+        pageDown.sizey = 64 * scale;
+        pageDown.image = "serverlist_nav_up.png";
 
-        loggedInName.x = p.GetCanvasWidth() - 200 * scale;
-        loggedInName.y = 20 * scale;
-        loggedInName.sizex = 100 * scale;
-        loggedInName.sizey = 50 * scale;
-        loggedInName.fontSize = 14 * scale;
+        loggedInName.x = p.GetCanvasWidth() - 228 * scale;
+        loggedInName.y = 32 * scale;
+        loggedInName.sizex = 128 * scale;
+        loggedInName.sizey = 32 * scale;
+        loggedInName.fontSize = 12 * scale;
         if (loggedInName.text == "")
         {
             if (p.GetPreferences().GetString("Password", "") != "")
@@ -1830,15 +1862,16 @@ public class ScreenMultiplayer : Screen
         }
         logout.visible = loggedInName.text != "";
 
-        logout.x = p.GetCanvasWidth() - 200 * scale;
-        logout.y = 50 * scale;
-        logout.sizex = 100 * scale;
-        logout.sizey = 50 * scale;
-        logout.fontSize = 14 * scale;
+        logout.x = p.GetCanvasWidth() - 228 * scale;
+        logout.y = 62 * scale;
+        logout.sizex = 128 * scale;
+        logout.sizey = 32 * scale;
+        logout.fontSize = 12 * scale;
         logout.text = "Logout";
 
         menu.DrawBackground();
-        menu.DrawText("Multiplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText("Multiplayer", 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText(p.IntToString(page + 1), 14 * scale, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
 
         if (loading)
         {
@@ -1850,27 +1883,34 @@ public class ScreenMultiplayer : Screen
             serverButtons[i].visible = false;
         }
 
-        for (int i = 0; i < 10; i++)
+        serversPerPage = menu.p.FloatToInt((menu.p.GetCanvasHeight() - (2 * 100 * scale)) / 70 * scale);
+        for (int i = 0; i < serversPerPage; i++)
         {
-            int index = i + (10 * page);
+            int index = i + (serversPerPage * page);
+            if (index > serversOnListCount)
+            {
+                //Reset to first page
+                page = 0;
+                index = i + (serversPerPage * page);
+            }
             ServerOnList s = serversOnList[index];
             if (s == null)
             {
                 continue;
             }
-            string t = menu.p.StringFormat2("{0}. {1}", menu.p.IntToString(index), s.name);
-            t = menu.p.StringFormat2("{0} {1}", t, menu.p.IntToString(s.users));
+            string t = menu.p.StringFormat2("{1}", menu.p.IntToString(index), s.name);
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.motd);
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.gamemode);
+            t = menu.p.StringFormat2("{0}\n{1}", t, menu.p.IntToString(s.users));
             t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
-            t = menu.p.StringFormat2("{0} {1}", t, s.gamemode);
 
             serverButtons[i].text = t;
             serverButtons[i].x = 100 * scale;
-            serverButtons[i].y = 100 * scale + i * 50 * scale;
-            serverButtons[i].sizex = 4 * 256 * scale;
+            serverButtons[i].y = 100 * scale + i * 70 * scale;
+            serverButtons[i].sizex = p.GetCanvasWidth() - 200 * scale;
             serverButtons[i].sizey = 64 * scale;
-            serverButtons[i].fontSize = 14 * scale;
             serverButtons[i].visible = true;
-            serverButtons[i].buttonStyle = ButtonStyle.Text;
+            serverButtons[i].buttonStyle = ButtonStyle.ServerEntry;
         }
 
         DrawWidgets();
@@ -1900,15 +1940,15 @@ public class ScreenMultiplayer : Screen
             if (serverButtons[i] == w)
             {
                 serverButtons[i].selected = true;
-                if (serversOnList[i + 10 * page] != null)
+                if (serversOnList[i + serversPerPage * page] != null)
                 {
-                    selectedServerHash = serversOnList[i + 10 * page].hash;
+                    selectedServerHash = serversOnList[i + serversPerPage * page].hash;
                 }
             }
         }
         if (w == pageUp)
         {
-            if (page < serverButtonsCount / 10 - 1)
+            if (page < serverButtonsCount / serversPerPage - 1)
             {
                 page++;
             }
@@ -1939,7 +1979,6 @@ public class ScreenMultiplayer : Screen
         {
             loaded = false;
             loading = true;
-            page = 0;
         }
         if (w == logout)
         {
@@ -2172,7 +2211,8 @@ public class MenuWidget
 public enum ButtonStyle
 {
     Button,
-    Text
+    Text,
+    ServerEntry
 }
 
 public class Model
