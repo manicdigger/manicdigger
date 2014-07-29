@@ -871,6 +871,10 @@ public class Screen
                             strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
                         }
                         menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
+                        if (w.description != null)
+                        {
+                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_warning.png"), w.x - 70 * menu.GetScale(), w.y, w.sizey, w.sizey);
+                        }
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -895,10 +899,10 @@ public class Screen
                     {
                         menu.DrawButton(text, w.fontSize, w.x, w.y, w.sizex, w.sizey, (w.hover || w.editing || w.hasKeyboardFocus));
                     }
-                }
-                if (w.description != null)
-                {
-                    menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                    if (w.description != null)
+                    {
+                        menu.DrawText(w.description, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Right, TextBaseline.Middle);
+                    }
                 }
             }
         }
@@ -1919,6 +1923,15 @@ public class ScreenMultiplayer : Screen
             serverButtons[i].sizey = 64 * scale;
             serverButtons[i].visible = true;
             serverButtons[i].buttonStyle = ButtonStyle.ServerEntry;
+            if (s.thumbnailError)
+            {
+                //Server did not respond to ServerQuery. Maybe not reachable?
+                serverButtons[i].description = "Server did not respond to query!";
+            }
+            else
+            {
+                serverButtons[i].description = null;
+            }
             if (s.thumbnailFetched && !s.thumbnailError)
             {
                 serverButtons[i].image = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
