@@ -8504,8 +8504,16 @@
 
     public float Scale()
     {
-        float scale = one * Width() / 1280;
-        return scale;
+        //Only scale things on mobile devices
+        if (platform.IsSmallScreen())
+        {
+            float scale = one * Width() / 1280;
+            return scale;
+        }
+        else
+        {
+            return one;
+        }
     }
 
     int touchIdMove;
