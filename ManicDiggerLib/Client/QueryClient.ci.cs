@@ -95,6 +95,7 @@
                     result.MapSizeX = packet.QueryAnswer.MapSizeX;
                     result.MapSizeY = packet.QueryAnswer.MapSizeY;
                     result.MapSizeZ = packet.QueryAnswer.MapSizeZ;
+                    result.ServerThumbnail = packet.QueryAnswer.ServerThumbnail;
                     success = true;
                     break;
                     
@@ -142,4 +143,5 @@ public class QueryResult
     internal int MapSizeX;
     internal int MapSizeY;
     internal int MapSizeZ;
+    internal byte[] ServerThumbnail;
 }

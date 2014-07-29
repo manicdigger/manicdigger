@@ -2517,6 +2517,7 @@ namespace ManicDiggerServer
                         MapSizeX = d_Map.MapSizeX,
                         MapSizeY = d_Map.MapSizeY,
                         MapSizeZ = d_Map.MapSizeZ,
+                        ServerThumbnail = GenerateServerThumbnail(),
                     };
                     //Send answer
                     SendPacket(clientid, ServerPackets.AnswerQuery(answer));
@@ -2545,6 +2546,40 @@ namespace ManicDiggerServer
                 Port = port_,
             };
             SendPacket(clientid, p);
+        }
+
+        public static byte[] GenerateServerThumbnail()
+        {
+            string filename = Path.Combine(Path.Combine("data", "public"), "thumbnail.png");
+            Bitmap bmp;
+            if (File.Exists(filename))
+            {
+                try
+                {
+                    bmp = new Bitmap(filename);
+                }
+                catch
+                {
+                    //Create empty bitmap in case of failure
+                    bmp = new Bitmap(64, 64);
+                }
+            }
+            else
+            {
+                bmp = new Bitmap(64, 64);
+            }
+            Bitmap bmp2 = bmp;
+            if (bmp.Width != 64 || bmp.Height != 64)
+            {
+                //Resize the image if it does not have the proper size
+                bmp2 = new Bitmap(bmp, 64, 64);
+            }
+            using(MemoryStream ms = new MemoryStream())
+            {
+                //Convert image to a byte[] for transfer
+                bmp2.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                return ms.ToArray();
+            }
         }
 
         private float DeserializeFloat(int p)

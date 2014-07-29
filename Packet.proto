@@ -676,6 +676,7 @@ package Packet;
         optional int32 MapSizeX = 11;
         optional int32 MapSizeY = 12;
         optional int32 MapSizeZ = 13;
+        optional bytes ServerThumbnail = 14;
     }
     
     message ServerRedirect

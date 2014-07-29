@@ -179,11 +179,11 @@
         Draw2dQuad(t.texture, x + dx, y + dy, t.texturewidth, t.textureheight);
     }
 
-    internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height)
+    internal void DrawServerButton(string name, string motd, string gamemode, string playercount, float x, float y, float width, float height, string image)
     {
         //Server buttons default to: (screen width - 200) x 64
         Draw2dQuad(GetTexture("serverlist_entry_background.png"), x, y, width, height);
-        Draw2dQuad(GetTexture("serverlist_entry_noimage.png"), x, y, height, height);
+        Draw2dQuad(GetTexture(image), x, y, height, height);
 
         //       value          size    x position              y position              text alignment      text baseline
         DrawText(name,          14,     x + 70,                 y + 5,                  TextAlign.Left,     TextBaseline.Top);
@@ -235,7 +235,7 @@
         return textTexture;
     }
 
-    DictionaryStringInt1024 textures;
+    internal DictionaryStringInt1024 textures;
     internal int GetTexture(string name)
     {
         if (!textures.Contains(name))
@@ -409,8 +409,8 @@
         previousMouseY = e.GetY();
         if (mousePressed)
         {
-//            ySpeed += dx / 10;
-//            xSpeed += dy / 10;
+            //            ySpeed += dx / 10;
+            //            xSpeed += dy / 10;
         }
         screen.OnMouseMove(e);
     }
@@ -674,7 +674,7 @@ public class Screen
     public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
     public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
     public virtual void OnBackPressed() { }
-   
+
     void KeyPress(KeyPressEventArgs e)
     {
         for (int i = 0; i < WidgetCount; i++)
@@ -845,14 +845,14 @@ public class Screen
                 {
                     text = StringTools.StringAppend(menu.p, "&2", text);
                 }
-                if (w.image != null)
-                {
-                    menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
-                }
                 if (w.type == WidgetType.Button)
                 {
                     if (w.buttonStyle == ButtonStyle.Text)
                     {
+                        if (w.image != null)
+                        {
+                            menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                        }
                         menu.DrawText(text, w.fontSize, w.x, w.y + w.sizey / 2, TextAlign.Left, TextBaseline.Middle);
                     }
                     else if (w.buttonStyle == ButtonStyle.Button)
@@ -870,7 +870,7 @@ public class Screen
                             strings[2] = StringTools.StringAppend(menu.p, "&2", strings[2]);
                             strings[3] = StringTools.StringAppend(menu.p, "&2", strings[3]);
                         }
-                        menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey);
+                        menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
                     }
                 }
                 if (w.type == WidgetType.Textbox)
@@ -885,6 +885,10 @@ public class Screen
                     }
                     if (w.buttonStyle == ButtonStyle.Text)
                     {
+                        if (w.image != null)
+                        {
+                            menu.Draw2dQuad(menu.GetTexture(w.image), w.x, w.y, w.sizex, w.sizey);
+                        }
                         menu.DrawText(text, w.fontSize, w.x, w.y, TextAlign.Left, TextBaseline.Top);
                     }
                     else
@@ -1739,6 +1743,7 @@ public class ScreenMultiplayer : Screen
         serverListAddress = new HttpResponseCi();
         serverListCsv = new HttpResponseCi();
         serversOnList = new ServerOnList[serversOnListCount];
+        thumbResponses = new ThumbnailResponseCi[serversOnListCount];
 
         serverButtons = new MenuWidget[serverButtonsCount];
         for (int i = 0; i < serverButtonsCount; i++)
@@ -1748,6 +1753,7 @@ public class ScreenMultiplayer : Screen
             b.text = "Invalid";
             b.type = WidgetType.Button;
             b.visible = false;
+            b.image = "serverlist_entry_noimage.png";
             serverButtons[i] = b;
             widgets[8 + i] = b;
         }
@@ -1782,6 +1788,7 @@ public class ScreenMultiplayer : Screen
             for (int i = 0; i < serversOnListCount; i++)
             {
                 serversOnList[i] = null;
+                thumbResponses[i] = null;
             }
             IntRef serversCount = new IntRef();
             string[] servers = menu.p.StringSplit(serverListCsv.GetString(menu.p) , "\n", serversCount);
@@ -1878,6 +1885,7 @@ public class ScreenMultiplayer : Screen
             menu.DrawText("Loading...", 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
+        UpdateThumbnails();
         for (int i = 0; i < serverButtonsCount; i++)
         {
             serverButtons[i].visible = false;
@@ -1911,9 +1919,76 @@ public class ScreenMultiplayer : Screen
             serverButtons[i].sizey = 64 * scale;
             serverButtons[i].visible = true;
             serverButtons[i].buttonStyle = ButtonStyle.ServerEntry;
+            if (s.thumbnailFetched && !s.thumbnailError)
+            {
+                serverButtons[i].image = menu.p.StringFormat("serverlist_entry_{0}.png", s.hash);
+            }
+            else
+            {
+                serverButtons[i].image = "serverlist_entry_noimage.png";
+            }
         }
 
         DrawWidgets();
+    }
+
+    ThumbnailResponseCi[] thumbResponses;
+    public void UpdateThumbnails()
+    {
+        for (int i = 0; i < serversOnListCount; i++)
+        {
+            ServerOnList server = serversOnList[i];
+            if (server == null)
+            {
+                continue;
+            }
+            if (server.thumbnailFetched)
+            {
+                //Thumbnail already loaded
+                continue;
+            }
+            if (!server.thumbnailDownloading)
+            {
+                //Not started downloading yet
+                thumbResponses[i] = new ThumbnailResponseCi();
+                menu.p.ThumbnailDownloadAsync(server.ip, server.port, thumbResponses[i]);
+                server.thumbnailDownloading = true;
+            }
+            else
+            {
+                //Download in progress
+                if (thumbResponses[i] != null)
+                {
+                    if (thumbResponses[i].done)
+                    {
+                        //Request completed. load received bitmap
+                        BitmapCi bmp = menu.p.BitmapCreateFromPng(thumbResponses[i].data, thumbResponses[i].dataLength);
+                        if (bmp != null)
+                        {
+                            int texture = menu.p.LoadTextureFromBitmap(bmp);
+                            menu.textures.Set(menu.p.StringFormat("serverlist_entry_{0}.png", server.hash), texture);
+                            menu.p.BitmapDelete(bmp);
+                        }
+                        server.thumbnailDownloading = false;
+                        server.thumbnailFetched = true;
+                    }
+                    if (thumbResponses[i].error)
+                    {
+                        //Error while trying to download thumbnail
+                        server.thumbnailDownloading = false;
+                        server.thumbnailError = true;
+                        server.thumbnailFetched = true;
+                    }
+                }
+                else
+                {
+                    //An error occured. stop trying
+                    server.thumbnailDownloading = false;
+                    server.thumbnailError = true;
+                    server.thumbnailFetched = true;
+                }
+            }
+        }
     }
 
     MenuWidget back;
@@ -2142,6 +2217,15 @@ public class HttpResponseCi
     public bool GetError() { return error; } public void SetError(bool value_) { error = value_; }
 }
 
+public class ThumbnailResponseCi
+{
+    internal bool done;
+    internal bool error;
+    internal string serverMessage;
+    internal byte[] data;
+    internal int dataLength;
+}
+
 public class ServerOnList
 {
     internal string hash;
@@ -2154,6 +2238,9 @@ public class ServerOnList
     internal int max;
     internal string gamemode;
     internal string players;
+    internal bool thumbnailDownloading;
+    internal bool thumbnailError;
+    internal bool thumbnailFetched;
 }
 
 public enum WidgetType

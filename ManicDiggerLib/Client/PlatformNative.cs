@@ -221,6 +221,52 @@ public class GamePlatformNative : GamePlatform
         }
     }
 
+    public override void ThumbnailDownloadAsync(string ip, int port, ThumbnailResponseCi response)
+    {
+        ThumbnailDownloadArgs args = new ThumbnailDownloadArgs();
+        args.ip = ip;
+        args.port = port;
+        args.response = response;
+        ThreadPool.QueueUserWorkItem(DownloadServerThumbnail, args);
+    }
+
+    void DownloadServerThumbnail(object o)
+    {
+        ThumbnailDownloadArgs args = (ThumbnailDownloadArgs)o;
+        //Fetch server info from given adress
+        QueryClient qClient = new QueryClient();
+        qClient.SetPlatform(this);
+        qClient.PerformQuery(args.ip, args.port);
+        QueryResult r = qClient.GetResult();
+        if (!StringEmpty(r.Name))
+        {
+            //Received a result
+            args.response.data = r.ServerThumbnail;
+            args.response.dataLength = r.ServerThumbnail.Length;
+            args.response.serverMessage = qClient.GetServerMessage();
+            args.response.done = true;
+//            BitmapCi bmp = BitmapCreateFromPng(r.ServerThumbnail, ByteArrayLength(r.ServerThumbnail));
+//            if (bmp != null)
+//            {
+//                int texture = LoadTextureFromBitmap(bmp);
+//                textures.Set(string.Format("serverlist_entry_noimage.png"), texture);
+//                BitmapDelete(bmp);
+//            }
+        }
+        else
+        {
+            //Did not receive a response
+            args.response.error = true;
+        }
+    }
+
+    class ThumbnailDownloadArgs
+    {
+        public string ip;
+        public int port;
+        public ThumbnailResponseCi response;
+    }
+
     public override string FileName(string fullpath)
     {
         FileInfo info = new FileInfo(fullpath);

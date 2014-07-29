@@ -23,6 +23,7 @@
     public abstract string[] DirectoryGetFiles(string path, IntRef length);
     public abstract string[] FileReadAllLines(string path, IntRef length);
     public abstract void WebClientDownloadDataAsync(string url, HttpResponseCi response);
+    public abstract void ThumbnailDownloadAsync(string ip, int port, ThumbnailResponseCi response);
     public abstract string FileName(string fullpath);
     public abstract void AddOnNewFrame(NewFrameHandler handler);
     public abstract void AddOnKeyEvent(KeyEventHandler handler);
