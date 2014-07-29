@@ -174,11 +174,13 @@
                 //Different display of links in chat
                 //2 = italic
                 //3 = bold italic
-                font.style = 2;
+                font.style = 3;
             }
             else
             {
-                font.style = 0;
+                //0 = normal
+                //1 = bold
+                font.style = 1;
             }
             game.Draw2dText(chatlines2[i].text, font, dx * game.Scale(), (90 + i * 25) * game.Scale(), null, false);
         }
