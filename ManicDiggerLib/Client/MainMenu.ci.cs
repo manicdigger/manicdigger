@@ -26,17 +26,17 @@
 
         p_.LoadAssetsAsyc(assets, assetsLoadProgress);
 
+        overlap = 200;
+        minspeed = 20;
+        rnd = p.RandomCreate();
+
         xRot = 0;
         xInv = false;
-        xSpeed = 10;
+        xSpeed = minspeed + rnd.MaxNext(5);
 
         yRot = 0;
         yInv = false;
-        ySpeed = 10;
-
-        overlap = 200;
-        minspeed = 5;
-        rnd = p.RandomCreate();
+        ySpeed = minspeed + rnd.MaxNext(5);
 
         z = -5;
 
@@ -478,10 +478,34 @@
         screen.menu = this;
     }
 
+    internal int backgroundW;
+    internal int backgroundH;
+    internal float windowX;
+    internal float windowY;
     internal void DrawBackground()
     {
-        float scale = one * p.GetCanvasWidth() / 1280;
-        Draw2dQuad(GetTexture("background.png"), 0, 0, 1280 * scale, 1280 * scale);
+        backgroundW = 1024;
+        backgroundH = 1024;
+        windowX = p.GetCanvasWidth();
+        windowY = p.GetCanvasHeight();
+        int countX = p.FloatToInt(windowX / backgroundW) + 1;
+        int countY = p.FloatToInt(windowY / backgroundH) + 1;
+        //Prevent black gaps at the borders of the screen (background tiling)
+        if (countX * backgroundW < windowX + (2 * overlap))
+        {
+            countX++;
+        }
+        if (countY * backgroundH < windowY + (2 * overlap))
+        {
+            countY++;
+        }
+        for (int x = 0; x < countX; x++)
+        {
+            for (int y = 0; y < countY; y++)
+            {
+                Draw2dQuad(GetTexture("background.png"), x * backgroundW + xRot - overlap, y * backgroundH + yRot - overlap, backgroundW, backgroundH);
+            }
+        }
     }
 
     internal void StartMultiplayer()
@@ -590,6 +614,20 @@
     public void ConnectToSingleplayer(string filename)
     {
         StartGame(true, filename, null);
+    }
+
+    public float GetScale()
+    {
+        float scale;
+        if (p.IsSmallScreen())
+        {
+            scale = one * p.GetCanvasWidth() / 1280;
+        }
+        else
+        {
+            scale = one;
+        }
+        return scale;
     }
 }
 
@@ -845,36 +883,34 @@ public class ScreenMain : Screen
     }
     MenuWidget singleplayer;
     MenuWidget multiplayer;
+    internal float windowX;
+    internal float windowY;
     public override void Render(float dt)
     {
-        //KeyEventArgs args = new KeyEventArgs();
-        //args.SetKeyCode(GlKeys.F5);
-        //OnKeyDown(args);
+        windowX = menu.p.GetCanvasWidth();
+        windowY = menu.p.GetCanvasHeight();
         
-        GamePlatform p = menu.p;
-        
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
-        float size = menu.one * 80 / 100;
+        float scale = menu.GetScale();
 
         if (menu.assetsLoadProgress.value != 1)
         {
-            string s = p.StringFormat("Loading... {0}%", p.FloatToString(p.FloatToInt(menu.assetsLoadProgress.value * 100)));
-            menu.DrawText(s, 20 * scale, p.GetCanvasWidth() / 2, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
+            string s = menu.p.StringFormat("Loading... {0}%", menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
+            menu.DrawText(s, 20 * scale, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
             return;
         }
 
         menu.DrawBackground();
-        menu.Draw2dQuad(menu.GetTexture("logo.png"), p.GetCanvasWidth() / 2 - 1280 * scale / 2 * size, 0, 1280 * scale * size, 460 * scale * size);
+        menu.Draw2dQuad(menu.GetTexture("logo.png"), windowX / 2 - 1024 * scale / 2, 0, 1024 * scale, 512 * scale);
 
         singleplayer.text = "Singleplayer";
-        singleplayer.x = p.GetCanvasWidth() / 2 - (256 + 100) * scale;
-        singleplayer.y = p.GetCanvasHeight() * 7 / 10;
+        singleplayer.x = windowX / 2 - (256 + 100) * scale;
+        singleplayer.y = windowY * 7 / 10;
         singleplayer.sizex = 256 * scale;
         singleplayer.sizey = 64 * scale;
 
         multiplayer.text = "Multiplayer";
-        multiplayer.x = p.GetCanvasWidth() / 2 + (100) * scale;
-        multiplayer.y = p.GetCanvasHeight() * 7 / 10;
+        multiplayer.x = windowX / 2 + (100) * scale;
+        multiplayer.y = windowY * 7 / 10;
         multiplayer.sizex = 256 * scale;
         multiplayer.sizey = 64 * scale;
         DrawWidgets();
@@ -959,7 +995,8 @@ public class ScreenSingleplayer : Screen
     {
         GamePlatform p = menu.p;
 
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        float scale = menu.GetScale();
+
         menu.DrawBackground();
         menu.DrawText("Singleplayer", 14 * scale, p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
@@ -1105,7 +1142,8 @@ public class ScreenModifyWorld : Screen
     {
         GamePlatform p = menu.p;
 
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        float scale = menu.GetScale();
+
         menu.DrawBackground();
         menu.DrawText("Modify World", 14 * scale, menu.p.GetCanvasWidth() / 2, 0, TextAlign.Center, TextBaseline.Top);
 
@@ -1243,9 +1281,9 @@ public class ScreenLogin : Screen
         }
 
         GamePlatform p = menu.p;
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
-        menu.DrawBackground();
+        float scale = menu.GetScale();
 
+        menu.DrawBackground();
 
         float leftx = p.GetCanvasWidth() / 2 - 400 * scale;
         float y = p.GetCanvasHeight() / 2 - 250 * scale;
@@ -1740,7 +1778,7 @@ public class ScreenMultiplayer : Screen
 
         GamePlatform p = menu.p;
 
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        float scale = menu.GetScale();
 
         back.x = 40 * scale;
         back.y = p.GetCanvasHeight() - 104 * scale;
@@ -1979,7 +2017,7 @@ public class ScreenConnectToIp : Screen
         }
 
         GamePlatform p = menu.p;
-        float scale = menu.one * p.GetCanvasWidth() / 1280;
+        float scale = menu.GetScale();
         menu.DrawBackground();
 
 
