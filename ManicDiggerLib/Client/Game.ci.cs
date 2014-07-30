@@ -4692,6 +4692,7 @@
         redirectTo = null;
         exitToMainMenu = true;
         platform.MouseCursorSetVisible(true);
+        platform.ExitMousePointerLock();
     }
 
     internal void ClientCommand(string s_)
@@ -5272,10 +5273,9 @@
                 break;
             case Packet_ServerIdEnum.DisconnectPlayer:
                 {
+                    //When server disconnects player, return to main menu
                     platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
-                    platform.Exit();
-                    //Not needed anymore - avoids "cryptic" error messages on being kicked/banned
-                    //throw new Exception(packet.DisconnectPlayer.DisconnectReason);
+                    ExitToMainMenu();
                     break;
                 }
             case Packet_ServerIdEnum.PlayerStats:
