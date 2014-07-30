@@ -1946,11 +1946,29 @@ namespace ManicDiggerServer
             }
             for (int i = 0; i < modEventHandlers.onplayerleave.Count; i++)
             {
-                modEventHandlers.onplayerleave[i](clientid);
+                try
+                {
+                    modEventHandlers.onplayerleave[i](clientid);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnPlayerLeave");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
             for (int i = 0; i < modEventHandlers.onplayerdisconnect.Count; i++)
             {
-                modEventHandlers.onplayerdisconnect[i](clientid);
+                try
+                {
+                    modEventHandlers.onplayerdisconnect[i](clientid);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnPlayerDisconnect");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
             string coloredName = clients[clientid].ColoredPlayername(colorNormal);
             string name = clients[clientid].playername;
@@ -2152,7 +2170,16 @@ namespace ManicDiggerServer
 
                         for (int i = 0; i < modEventHandlers.onplayerjoin.Count; i++)
                         {
-                            modEventHandlers.onplayerjoin[i](clientid);
+                            try
+                            {
+                                modEventHandlers.onplayerjoin[i](clientid);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Mod exception: OnPlayerJoin");
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
 
                         //notify all players about new player spawn
@@ -2314,7 +2341,16 @@ namespace ManicDiggerServer
                             string message = packet.Message.Message;
                             for (int i = 0; i < modEventHandlers.onplayerchat.Count; i++)
                             {
-                                message = modEventHandlers.onplayerchat[i](clientid, message, packet.Message.IsTeamchat != 0);
+                                try
+                                {
+                                    message = modEventHandlers.onplayerchat[i](clientid, message, packet.Message.IsTeamchat != 0);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Mod exception: OnPlayerChat");
+                                    Console.WriteLine(ex.Message);
+                                    Console.WriteLine(ex.StackTrace);
+                                }
                             }
                             if (clients[clientid].privileges.Contains(ServerClientMisc.Privilege.chat))
                             {
@@ -2356,7 +2392,16 @@ namespace ManicDiggerServer
                         //Console.WriteLine("Death Packet Received. Client: {0}, Reason: {1}, Source: {2}", clientid, packet.Death.Reason, packet.Death.SourcePlayer);
                         for (int i = 0; i < modEventHandlers.onplayerdeath.Count; i++)
                         {
-                            modEventHandlers.onplayerdeath[i](clientid, (DeathReason)packet.Death.Reason, packet.Death.SourcePlayer);
+                            try
+                            {
+                                modEventHandlers.onplayerdeath[i](clientid, (DeathReason)packet.Death.Reason, packet.Death.SourcePlayer);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Mod exception: OnPlayerDeath");
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
                     }
                     break;
@@ -2374,7 +2419,16 @@ namespace ManicDiggerServer
                 case Packet_ClientIdEnum.DialogClick:
                     for (int i = 0; i < modEventHandlers.ondialogclick.Count; i++)
                     {
-                        modEventHandlers.ondialogclick[i](clientid, packet.DialogClick_.WidgetId);
+                        try
+                        {
+                            modEventHandlers.ondialogclick[i](clientid, packet.DialogClick_.WidgetId);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Mod exception: OnDialogClick");
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     break;
                 case Packet_ClientIdEnum.Shot:
@@ -2397,13 +2451,31 @@ namespace ManicDiggerServer
                         //Handle OnWeaponShot so grenade ammo is correct
                         for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
                         {
-                            modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                            try
+                            {
+                                modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Mod exception: OnWeaponShot");
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
                         return;
                     }
                     for (int i = 0; i < modEventHandlers.onweaponshot.Count; i++)
                     {
-                        modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                        try
+                        {
+                            modEventHandlers.onweaponshot[i](clientid, packet.Shot.WeaponBlock);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Mod exception: OnWeaponShot");
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     if (clients[clientid].LastPing < 0.3)
                     {
@@ -2412,7 +2484,16 @@ namespace ManicDiggerServer
                             //client-side shooting
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                modEventHandlers.onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.IsHitHead != 0);
+                                try
+                                {
+                                    modEventHandlers.onweaponhit[i](clientid, packet.Shot.HitPlayer, packet.Shot.WeaponBlock, packet.Shot.IsHitHead != 0);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Mod exception: OnWeaponHit");
+                                    Console.WriteLine(ex.Message);
+                                    Console.WriteLine(ex.StackTrace);
+                                }
                             }
                         }
                         return;
@@ -2460,14 +2541,32 @@ namespace ManicDiggerServer
                         {
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
+                                try
+                                {
+                                    modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, true);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Mod exception: OnWeaponHit");
+                                    Console.WriteLine(ex.Message);
+                                    Console.WriteLine(ex.StackTrace);
+                                }
                             }
                         }
                         else if (Intersection.CheckLineBoxExact(pick, bodybox) != null)
                         {
                             for (int i = 0; i < modEventHandlers.onweaponhit.Count; i++)
                             {
-                                modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, false);
+                                try
+                                {
+                                    modEventHandlers.onweaponhit[i](clientid, k.Key, packet.Shot.WeaponBlock, false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("Mod exception: OnWeaponHit");
+                                    Console.WriteLine(ex.Message);
+                                    Console.WriteLine(ex.StackTrace);
+                                }
                             }
                         }
                     }
@@ -2475,14 +2574,32 @@ namespace ManicDiggerServer
                 case Packet_ClientIdEnum.SpecialKey:
                     for (int i = 0; i < modEventHandlers.onspecialkey.Count; i++)
                     {
-                        modEventHandlers.onspecialkey[i](clientid, (SpecialKey)packet.SpecialKey_.Key_);
+                        try
+                        {
+                            modEventHandlers.onspecialkey[i](clientid, (SpecialKey)packet.SpecialKey_.Key_);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Mod exception: OnSpecialKey");
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     break;
                 case Packet_ClientIdEnum.ActiveMaterialSlot:
                     clients[clientid].ActiveMaterialSlot = packet.ActiveMaterialSlot.ActiveMaterialSlot;
                     for (int i = 0; i < modEventHandlers.changedactivematerialslot.Count; i++)
                     {
-                        modEventHandlers.changedactivematerialslot[i](clientid);
+                        try
+                        {
+                            modEventHandlers.changedactivematerialslot[i](clientid);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Mod exception: ChangedActiveMaterialSlot");
+                            Console.WriteLine(ex.Message);
+                            Console.WriteLine(ex.StackTrace);
+                        }
                     }
                     break;
                 case Packet_ClientIdEnum.Leave:
@@ -3115,7 +3232,16 @@ namespace ManicDiggerServer
             {
                 for (int i = 0; i < modEventHandlers.onuse.Count; i++)
                 {
-                    modEventHandlers.onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                    try
+                    {
+                        modEventHandlers.onuse[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Mod exception: OnUse");
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
+                    }
                 }
                 return true;
             }
@@ -3123,7 +3249,16 @@ namespace ManicDiggerServer
             {
                 for (int i = 0; i < modEventHandlers.onusewithtool.Count; i++)
                 {
-                    modEventHandlers.onusewithtool[i](player_id, cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
+                    try
+                    {
+                        modEventHandlers.onusewithtool[i](player_id, cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Mod exception: OnUseWithTool");
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
+                    }
                 }
                 return true;
             }
@@ -3163,7 +3298,16 @@ namespace ManicDiggerServer
                         SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, item.BlockId);
                         for (int i = 0; i < modEventHandlers.onbuild.Count; i++)
                         {
-                            modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                            try
+                            {
+                                modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Mod exception: OnBuild");
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
                         break;
                     default:
@@ -3184,7 +3328,16 @@ namespace ManicDiggerServer
                 SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
                 for (int i = 0; i < modEventHandlers.ondelete.Count; i++)
                 {
-                    modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+                    try
+                    {
+                        modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Mod exception: OnDelete");
+                        Console.WriteLine(ex.Message);
+                        Console.WriteLine(ex.StackTrace);
+                    }
                 }
             }
             clients[player_id].IsInventoryDirty = true;
@@ -3226,7 +3379,16 @@ namespace ManicDiggerServer
             SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, cmd.BlockType);
             for (int i = 0; i < modEventHandlers.onbuild.Count; i++)
             {
-                modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                try
+                {
+                    modEventHandlers.onbuild[i](player_id, cmd.X, cmd.Y, cmd.Z);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnBuild");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
 
             clients[player_id].IsInventoryDirty = true;
@@ -3263,7 +3425,16 @@ namespace ManicDiggerServer
             SetBlockAndNotify(cmd.X, cmd.Y, cmd.Z, SpecialBlockId.Empty);
             for (int i = 0; i < modEventHandlers.ondelete.Count; i++)
             {
-                modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+                try
+                {
+                    modEventHandlers.ondelete[i](player_id, cmd.X, cmd.Y, cmd.Z, blockid);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnDelete");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
             }
 
             clients[player_id].IsInventoryDirty = true;
