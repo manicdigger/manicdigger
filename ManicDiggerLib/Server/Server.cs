@@ -2285,11 +2285,27 @@ namespace ManicDiggerServer
                             string[] ss = packet.Message.Message.Split(new[] { ' ' });
                             string command = ss[0].Replace("/", "");
                             string argument = packet.Message.Message.IndexOf(" ") < 0 ? "" : packet.Message.Message.Substring(packet.Message.Message.IndexOf(" ") + 1);
-                            this.CommandInterpreter(clientid, command, argument);
+                            try
+                            {
+                                //Try to execute the given command
+                                this.CommandInterpreter(clientid, command, argument);
+                            }
+                            catch (Exception ex)
+                            {
+                                //This will notify client of error instead of kicking him in case of an error
+                                SendMessage(clientid, "Server error while executing command!", MessageType.Error);
+                                SendMessage(clientid, "Details on server console!", MessageType.Error);
+                                Console.WriteLine("Client {0} caused a command error.", clientid);
+                                Console.WriteLine("Command: /{0}", command);
+                                Console.WriteLine("Arguments: {0}", argument);
+                                Console.WriteLine(ex.Message);
+                                Console.WriteLine(ex.StackTrace);
+                            }
                         }
                         // client command
                         else if (packet.Message.Message.StartsWith("."))
                         {
+                            //Ignore clientside commands
                             break;
                         }
                         // chat message
