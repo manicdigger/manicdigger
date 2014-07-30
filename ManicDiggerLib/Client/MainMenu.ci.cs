@@ -873,7 +873,13 @@ public class Screen
                         menu.DrawServerButton(strings[0], strings[1], strings[2], strings[3], w.x, w.y, w.sizex, w.sizey, w.image);
                         if (w.description != null)
                         {
-                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_warning.png"), w.x - 70 * menu.GetScale(), w.y, w.sizey, w.sizey);
+                            //Display a warning sign, when server does not respond to queries
+                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_noresponse.png"), w.x - 38 * menu.GetScale(), w.y, w.sizey / 2, w.sizey / 2);
+                        }
+                        if (strings[4] != menu.p.GetGameVersion())
+                        {
+                            //Display an icon if server version differs from client version
+                            menu.Draw2dQuad(menu.GetTexture("serverlist_entry_differentversion.png"), w.x - 38 * menu.GetScale(), w.y + w.sizey / 2, w.sizey / 2, w.sizey / 2);
                         }
                     }
                 }
@@ -1915,6 +1921,7 @@ public class ScreenMultiplayer : Screen
             t = menu.p.StringFormat2("{0}\n{1}", t, s.gamemode);
             t = menu.p.StringFormat2("{0}\n{1}", t, menu.p.IntToString(s.users));
             t = menu.p.StringFormat2("{0}/{1}", t, menu.p.IntToString(s.max));
+            t = menu.p.StringFormat2("{0}\n{1}", t, s.version);
 
             serverButtons[i].text = t;
             serverButtons[i].x = 100 * scale;
