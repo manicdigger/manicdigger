@@ -6,68 +6,13 @@ using System.Drawing.Drawing2D;
 
 namespace ManicDigger.Renderers
 {
-    public class TextPart
-    {
-        public Color color;
-        public string text;
-    }
-
     public class TextRenderer
     {
         public FontType Font = FontType.Nice;
-        
+
         public void SetFont(int fontID)
         {
             Font = (FontType)fontID;
-        }
-
-        public virtual Bitmap MakeTextTexture(Text_ t, FontCi font)
-        {
-            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
-            float totalwidth = 0;
-            float totalheight = 0;
-            List<SizeF> sizes = new List<SizeF>();
-            using(Bitmap bmp = new Bitmap(1, 1))
-            {
-                using (Font f = new Font(font.family, font.size, (FontStyle)font.style))
-                {
-                    using (Graphics g = Graphics.FromImage(bmp))
-                    {
-                        for (int i = 0; i < parts.Count; i++)
-                        {
-                            SizeF size = g.MeasureString(parts[i].text, f, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                            if (size.Width == 0 || size.Height == 0)
-                            {
-                                continue;
-                            }
-                            totalwidth += size.Width;
-                            totalheight = Math.Max(totalheight, size.Height);
-                            sizes.Add(size);
-                        }
-                    }
-                }
-            }
-            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
-            Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
-            using(Graphics g2 = Graphics.FromImage(bmp2))
-            {
-                using (Font f = new Font(font.family, font.size, (FontStyle)font.style))
-                {
-                    g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                    float currentwidth = 0;
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF sizei = sizes[i];
-                        if (sizei.Width == 0 || sizei.Height == 0)
-                        {
-                            continue;
-                        }
-                        g2.DrawString(parts[i].text, f, new SolidBrush(parts[i].color), currentwidth, 0);
-                        currentwidth += sizei.Width;
-                    }
-                }
-            }
-            return bmp2;
         }
 
         // TODO: Currently broken in mono (Graphics Path).
@@ -76,114 +21,85 @@ namespace ManicDigger.Renderers
             Font font;
             //outlined font looks smaller
             float oldfontsize = t.fontsize;
-            t.fontsize = Math.Max (t.fontsize, 9);
+            t.fontsize = Math.Max(t.fontsize, 9);
             t.fontsize *= 1.65f;
             try
             {
-                font = new Font ("Arial", t.fontsize, (FontStyle)t.GetFontStyle());
+                font = new Font("Arial", t.fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
                 throw new Exception();
             }
-            var parts = DecodeColors (t.text, Color.FromArgb(t.color));
-            float totalwidth = 0;
-            float totalheight = 0;
-            List<SizeF> sizes = new List<SizeF> ();
+
+            SizeF size;
             using (Bitmap bmp = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF size = g.MeasureString (parts [i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                        if (size.Width == 0 || size.Height == 0)
-                        {
-                            continue;
-                        }
-                        size.Width *= 0.7f;
-                        totalwidth += size.Width;
-                        totalheight = Math.Max (totalheight, size.Height);
-                        sizes.Add (size);
-                    }
+                    size = g.MeasureString(t.text, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
-            SizeF size2 = new SizeF (NextPowerOfTwo ((uint)totalwidth), NextPowerOfTwo ((uint)totalheight));
-            Bitmap bmp2 = new Bitmap ((int)size2.Width, (int)size2.Height);
+            size.Width *= 0.7f;
+
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
+            if (size2.Width == 0 || size2.Height == 0)
+            {
+                return new Bitmap(1, 1);
+            }
+            Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using (Graphics g2 = Graphics.FromImage(bmp2))
             {
-                float currentwidth = 0;
-                for (int i = 0; i < parts.Count; i++)
+                if (size.Width != 0 && size.Height != 0)
                 {
-                    SizeF sizei = sizes [i];
-                    if (sizei.Width == 0 || sizei.Height == 0)
-                    {
-                        continue;
-                    }
                     StringFormat format = StringFormat.GenericTypographic;
 
-                    g2.FillRectangle (new SolidBrush (Color.FromArgb (textalpha, 0, 0, 0)), currentwidth, 0, sizei.Width, sizei.Height);
+                    g2.FillRectangle(new SolidBrush(Color.FromArgb(textalpha, 0, 0, 0)), 0, 0, size.Width, size.Height);
                     g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-                    Rectangle rect = new Rectangle () { X = (int)currentwidth, Y = 0 };
-                    using (GraphicsPath path = GetStringPath(parts[i].text, t.fontsize, rect, font, format))
+                    Rectangle rect = new Rectangle() { X = 0, Y = 0 };
+                    using (GraphicsPath path = GetStringPath(t.text, t.fontsize, rect, font, format))
                     {
                         g2.SmoothingMode = SmoothingMode.AntiAlias;
                         RectangleF off = rect;
-                        off.Offset (2, 2);
-                        using (GraphicsPath offPath = GetStringPath(parts[i].text, t.fontsize, off, font, format))
+                        off.Offset(2, 2);
+                        using (GraphicsPath offPath = GetStringPath(t.text, t.fontsize, off, font, format))
                         {
-                            Brush b = new SolidBrush (Color.FromArgb (100, 0, 0, 0));
-                            g2.FillPath (b, offPath);
-                            b.Dispose ();
+                            Brush b = new SolidBrush(Color.FromArgb(100, 0, 0, 0));
+                            g2.FillPath(b, offPath);
+                            b.Dispose();
                         }
-                        g2.FillPath (new SolidBrush (parts [i].color), path);
-                        g2.DrawPath (Pens.Black, path);
+                        g2.FillPath(new SolidBrush(Color.FromArgb(t.color)), path);
+                        g2.DrawPath(Pens.Black, path);
                     }
-                    currentwidth += sizei.Width;
                 }
             }
             return bmp2;
         }
 
-		private Bitmap blackBackgroundFont(Text_ t)
+        private Bitmap blackBackgroundFont(Text_ t)
         {
             Font font = new Font("Verdana", t.fontsize, (FontStyle)t.GetFontStyle());
-            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
-            float totalwidth = 0;
-            float totalheight = 0;
-            List<SizeF> sizes = new List<SizeF>();
+            SizeF size;
             using (Bitmap bmp = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                        if (size.Width == 0 || size.Height == 0)
-                        {
-                            continue;
-                        }
-                        totalwidth += size.Width;
-                        totalheight = Math.Max(totalheight, size.Height);
-                        sizes.Add(size);
-                    }
+                    size = g.MeasureString(t.text, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
-            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
+            if (size2.Width == 0 || size2.Height == 0)
+            {
+                return new Bitmap(1, 1);
+            }
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using (Graphics g2 = Graphics.FromImage(bmp2))
             {
-                float currentwidth = 0;
-                for (int i = 0; i < parts.Count; i++)
+                if (size.Width != 0 && size.Height != 0)
                 {
-                    SizeF sizei = sizes[i];
-                    if (sizei.Width == 0 || sizei.Height == 0)
-                    {
-                        continue;
-                    }
-                    g2.FillRectangle(new SolidBrush(Color.Black), currentwidth, 0, sizei.Width, sizei.Height);
-                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                    currentwidth += sizei.Width;
+                    g2.FillRectangle(new SolidBrush(Color.Black), 0, 0, size.Width, size.Height);
+                    g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
                 }
             }
             return bmp2;
@@ -197,50 +113,36 @@ namespace ManicDigger.Renderers
             fontsize *= 1.1f;
             try
             {
-               font = new Font ("Arial", fontsize, (FontStyle)t.GetFontStyle());
+                font = new Font("Arial", fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
                 throw new Exception();
             }
 
-            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
-            float totalwidth = 0;
-            float totalheight = 0;
-            List<SizeF> sizes = new List<SizeF>();
+            SizeF size;
             using (Bitmap bmp = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                        if (size.Width == 0 || size.Height == 0)
-                        {
-                            continue;
-                        }
-                        totalwidth += size.Width;
-                        totalheight = Math.Max(totalheight, size.Height);
-                        sizes.Add(size);
-                    }
+                    size = g.MeasureString(t.text, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
-            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
+            if (size2.Width == 0 || size2.Height == 0)
+            {
+                return new Bitmap(1, 1);
+            }
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
+
             using (Graphics g2 = Graphics.FromImage(bmp2))
             {
-                float currentwidth = 0;
-                for (int i = 0; i < parts.Count; i++)
+                if (size.Width != 0 && size.Height != 0)
                 {
-                    SizeF sizei = sizes[i];
-                    if (sizei.Width == 0 || sizei.Height == 0)
-                    {
-                        continue;
-                    }
                     g2.SmoothingMode = SmoothingMode.AntiAlias;
                     g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                    currentwidth += sizei.Width;
+                    g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
                 }
             }
             return bmp2;
@@ -250,41 +152,27 @@ namespace ManicDigger.Renderers
         {
             float fontsize = t.fontsize;
             Font font;
-            fontsize = Math.Max (fontsize, 9);
+            fontsize = Math.Max(fontsize, 9);
             fontsize *= 1.1f;
             try
             {
-                font = new Font (t.GetFontFamily(), fontsize, (FontStyle)t.GetFontStyle());
+                font = new Font(t.GetFontFamily(), fontsize, (FontStyle)t.GetFontStyle());
             }
             catch
             {
                 throw new Exception();
             }
 
-            var parts = DecodeColors(t.text, Color.FromArgb(t.color));
-            float totalwidth = 0;
-            float totalheight = 0;
-            List<SizeF> sizes = new List<SizeF>();
+            SizeF size;
             using (Bitmap bmp = new Bitmap(1, 1))
             {
                 using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    for (int i = 0; i < parts.Count; i++)
-                    {
-                        SizeF size = g.MeasureString(parts[i].text, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
-                        if (size.Width == 0 || size.Height == 0)
-                        {
-                            continue;
-                        }
-                        totalwidth += size.Width;
-                        totalheight = Math.Max(totalheight, size.Height);
-                        sizes.Add(size);
-                    }
+                    size = g.MeasureString(t.text, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
-          
 
-            SizeF size2 = new SizeF(NextPowerOfTwo((uint)totalwidth), NextPowerOfTwo((uint)totalheight));
+            SizeF size2 = new SizeF(NextPowerOfTwo((uint)size.Width), NextPowerOfTwo((uint)size.Height));
             if (size2.Width == 0 || size2.Height == 0)
             {
                 return new Bitmap(1, 1);
@@ -292,40 +180,17 @@ namespace ManicDigger.Renderers
             Bitmap bmp2 = new Bitmap((int)size2.Width, (int)size2.Height);
             using (Graphics g2 = Graphics.FromImage(bmp2))
             {
-                float currentwidth = 0;
-                for (int i = 0; i < parts.Count; i++)
+                if (size.Width != 0 && size.Height != 0)
                 {
-                    SizeF sizei = sizes[i];
-                    if (sizei.Width == 0 || sizei.Height == 0)
-                    {
-                        continue;
-                    }
-
-                    /*
-                    RectangleF rect = new RectangleF(currentwidth, 0, sizei.Width, sizei.Height);
-                    StringFormat format = StringFormat.GenericTypographic;
-                    float emSize = g2.DpiY * font.SizeInPoints / 72;
-
-                    using (GraphicsPath path = GetStringPath(parts[i].text, emSize, rect, font, format))
-                    {   
-                        g2.SmoothingMode = SmoothingMode.AntiAlias;
-                        g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-                        g2.FillPath(new SolidBrush(parts[i].color), path);
-                        g2.DrawPath(new Pen(Color.Black, 1), path);
-                    }
-                    */
-
                     g2.SmoothingMode = SmoothingMode.AntiAlias;
                     g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-                    Matrix mx = new Matrix(1f,0,0,1f,1,1);
+                    Matrix mx = new Matrix(1f, 0, 0, 1f, 1, 1);
                     g2.Transform = mx;
-                    g2.DrawString(parts[i].text, font, new SolidBrush( Color.FromArgb(128, Color.Black)), currentwidth, 0);
+                    g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(128, Color.Black)), 0, 0);
                     g2.ResetTransform();
 
-                    g2.DrawString(parts[i].text, font, new SolidBrush(parts[i].color), currentwidth, 0);
-                    currentwidth += sizei.Width;
+                    g2.DrawString(t.text, font, new SolidBrush(Color.FromArgb(t.color)), 0, 0);
                 }
             }
             return bmp2;
@@ -333,7 +198,15 @@ namespace ManicDigger.Renderers
 
         public virtual Bitmap MakeTextTexture(Text_ t)
         {
-            switch(this.Font)
+
+
+
+
+
+
+
+
+            switch (this.Font)
             {
                 case FontType.Default:
                     return this.defaultFont(t);
@@ -348,7 +221,7 @@ namespace ManicDigger.Renderers
             }
         }
         GraphicsPath GetStringPath(string s, float emSize, RectangleF rect, Font font, StringFormat format)
-        { 
+        {
             GraphicsPath path = new GraphicsPath();
             // TODO: Bug in Mono. Returns incomplete list of points / cuts string.
             path.AddString(s, font.FontFamily, (int)font.Style, emSize, rect, format);
@@ -366,84 +239,9 @@ namespace ManicDigger.Renderers
             x++;
             return x;
         }
-        public List<TextPart> DecodeColors(string s, Color defaultcolor)
-        {
-            List<TextPart> parts = new List<TextPart>();
-            Color currentcolor = defaultcolor;
-            string currenttext = "";
-            for (int i = 0; i < s.Length; i++)
-            {
-                //If a & is found, try to parse a color code
-                if (s[i] == '&')
-                {
-                    //check if there's a character after it
-                    if (i + 1 < s.Length)
-                    {
-                        //try to parse the color code
-                        int? color = HexToInt(s[i + 1]);
-                        if (color != null)
-                        {
-                            //Color has been parsed successfully
-                            if (currenttext != "")
-                            {
-                                //Add content so far to return value
-                                parts.Add(new TextPart() { text = currenttext, color = currentcolor });
-                            }
-                            //Update current color and reset stored text
-                            currenttext = "";
-                            currentcolor = GetColor(color.Value);
-                            //Increment i to prevent the code from being read again
-                            i++;
-                        }
-                        else
-                        {
-                            //no valid color code found. display as normal character
-                            currenttext += s[i];
-                        }
-                    }
-                    else
-                    {
-                        //if not, just display it as normal character
-                        currenttext += s[i];
-                    }
-                }
-                else
-                {
-                    //Nothing special. Just add the current character
-                    currenttext += s[i];
-                }
-            }
-            //Add any leftover text parts in current color
-            if (currenttext != "")
-            {
-                parts.Add(new TextPart() { text = currenttext, color = currentcolor });
-            }
-            return parts;
-        }
-        protected Color GetColor(int currentcolor)
-        {
-            switch (currentcolor)
-            {
-                case 0: { return Color.FromArgb(0, 0, 0); }
-                case 1: { return Color.FromArgb(0, 0, 191); }
-                case 2: { return Color.FromArgb(0, 191, 0); }
-                case 3: { return Color.FromArgb(0, 191, 191); }
-                case 4: { return Color.FromArgb(191, 0, 0); }
-                case 5: { return Color.FromArgb(191, 0, 191); }
-                case 6: { return Color.FromArgb(191, 191, 0); }
-                case 7: { return Color.FromArgb(191, 191, 191); }
-                case 8: { return Color.FromArgb(40, 40, 40); }
-                case 9: { return Color.FromArgb(64, 64, 255); }
-                case 10: { return Color.FromArgb(64, 255, 64); }
-                case 11: { return Color.FromArgb(64, 255, 255); }
-                case 12: { return Color.FromArgb(255, 64, 64); }
-                case 13: { return Color.FromArgb(255, 64, 255); }
-                case 14: { return Color.FromArgb(255, 255, 64); }
-                case 15: { return Color.FromArgb(255, 255, 255); }
-                default: throw new Exception();
-            }
-        }
-        protected int? HexToInt(char c)
+
+
+        protected int HexToInt(char c)
         {
             if (c == '0') { return 0; }
             if (c == '1') { return 1; }
@@ -461,7 +259,7 @@ namespace ManicDigger.Renderers
             if (c == 'd') { return 13; }
             if (c == 'e') { return 14; }
             if (c == 'f') { return 15; }
-            return null;
+            return -1;
         }
         public bool NewFont = true;
 
@@ -473,7 +271,7 @@ namespace ManicDigger.Renderers
             {
                 if (text[i] == '&')
                 {
-                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != null)
+                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != -1)
                     {
                         //Skip color codes when calculating text length
                         i++;
@@ -488,13 +286,13 @@ namespace ManicDigger.Renderers
                     text2 += text[i];
                 }
             }
-            using(Font font = new Font("Verdana", fontsize))
+            using (Font font = new Font("Verdana", fontsize))
             {
-                using(Bitmap bmp = new Bitmap(1, 1))
+                using (Bitmap bmp = new Bitmap(1, 1))
                 {
-                    using(Graphics g = Graphics.FromImage(bmp))
+                    using (Graphics g = Graphics.FromImage(bmp))
                     {
-                        return g.MeasureString(text2, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                        return g.MeasureString(text2, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                     }
                 }
             }
@@ -507,7 +305,7 @@ namespace ManicDigger.Renderers
             {
                 if (text[i] == '&')
                 {
-                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != null)
+                    if (i + 1 < text.Length && HexToInt(text[i + 1]) != -1)
                     {
                         //Skip color codes when calculating text length
                         i++;
@@ -522,11 +320,11 @@ namespace ManicDigger.Renderers
                     text2 += text[i];
                 }
             }
-            using(Bitmap bmp = new Bitmap(1, 1))
+            using (Bitmap bmp = new Bitmap(1, 1))
             {
-                using(Graphics g = Graphics.FromImage(bmp))
+                using (Graphics g = Graphics.FromImage(bmp))
                 {
-                    return g.MeasureString(text2, font, new PointF(0,0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
+                    return g.MeasureString(text2, font, new PointF(0, 0), new StringFormat(StringFormatFlags.MeasureTrailingSpaces));
                 }
             }
         }

@@ -19,11 +19,14 @@
 
     internal AssetList assets;
     internal FloatRef assetsLoadProgress;
+    internal TextColorRenderer textColorRenderer;
 
     public void Start(GamePlatform p_)
     {
         this.p = p_;
 
+        textColorRenderer = new TextColorRenderer();
+        textColorRenderer.platform = p_;
         p_.LoadAssetsAsyc(assets, assetsLoadProgress);
 
         overlap = 200;
@@ -213,7 +216,7 @@
         text_.fontsize = fontSize;
         text_.fontfamily = "Arial";
         text_.color = Game.ColorFromArgb(255, 255, 255, 255);
-        BitmapCi textBitmap = p.CreateTextTexture(text_);
+        BitmapCi textBitmap = textColorRenderer.CreateTextTexture(text_);
 
         int texture = p.LoadTextureFromBitmap(textBitmap);
         
