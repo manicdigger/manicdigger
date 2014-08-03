@@ -46,6 +46,7 @@
         //Check for links in chatline
         bool containsLink = false;
         string linkTarget = "";
+        //Normal HTTP links
         if (game.platform.StringContains(s, "http://"))
         {
             containsLink = true;
@@ -54,6 +55,21 @@
             for (int i = 0; i < r.value; i++)
             {
                 if (game.platform.StringIndexOf(temp[i], "http://") != -1)
+                {
+                    linkTarget = temp[i];
+                    break;
+                }
+            }
+        }
+        //Secure HTTPS links
+        if (game.platform.StringContains(s, "https://"))
+        {
+            containsLink = true;
+            IntRef r = new IntRef();
+            string[] temp = game.platform.StringSplit(s, " ", r);
+            for (int i = 0; i < r.value; i++)
+            {
+                if (game.platform.StringIndexOf(temp[i], "https://") != -1)
                 {
                     linkTarget = temp[i];
                     break;

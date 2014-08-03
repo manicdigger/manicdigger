@@ -2047,7 +2047,7 @@ public class GamePlatformNative : GamePlatform
 
     public override void OpenLinkInBrowser(string url)
     {
-        if (!url.StartsWith("http://"))
+        if (!(url.StartsWith("http://") || url.StartsWith("https://")))
         {
             //Check if string is an URL - if not, abort
             return;
