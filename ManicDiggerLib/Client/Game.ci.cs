@@ -4909,12 +4909,13 @@
         this.ServerInfo.ServerName = packet.Identification.ServerName;
         this.ServerInfo.ServerMotd = packet.Identification.ServerMotd;
         this.d_TerrainChunkTesselator.ENABLE_TEXTURE_TILING = packet.Identification.RenderHint_ == RenderHintEnum.Fast;
-        ChatLog("---Connected---");
         Packet_StringList requiredMd5 = packet.Identification.RequiredBlobMd5;
         Packet_StringList requiredName = packet.Identification.RequiredBlobName;
+        ChatLog("[GAME] Processed server identification");
         int getCount = 0;
         if (requiredMd5 != null)
         {
+            ChatLog(platform.StringFormat("[GAME] Server has {0} assets", platform.IntToString(requiredMd5.ItemsCount)));
             for (int i = 0; i < requiredMd5.ItemsCount; i++)
             {
                 string md5 = requiredMd5.Items[i];
@@ -4954,10 +4955,13 @@
                     }
                 }
             }
+            ChatLog(platform.StringFormat("[GAME] Will download {0} missing assets", platform.IntToString(getCount)));
         }
         SendGameResolution();
+        ChatLog("[GAME] Sent window resolution to server");
         sendResize = true;
         SendRequestBlob(getAsset, getCount);
+        ChatLog("[GAME] Sent BLOB request");
         if (packet.Identification.MapSizeX != MapSizeX
             || packet.Identification.MapSizeY != MapSizeY
             || packet.Identification.MapSizeZ != MapSizeZ)
@@ -4973,6 +4977,7 @@
         {
             maxdrawdistance = 128;
         }
+        ChatLog("[GAME] Map initialized");
     }
 
     bool HasAsset(string md5, string name)
@@ -5003,6 +5008,7 @@
                     serverGameVersion = packet.Identification.MdProtocolVersion;
                     if (serverGameVersion != platform.GetGameVersion())
                     {
+                        ChatLog("[GAME] Different game versions");
                         string q = platform.StringFormat2(invalidversionstr, platform.GetGameVersion(), serverGameVersion);
                         invalidVersionDrawMessage = q;
                         invalidVersionPacketIdentification = packet;
@@ -5043,6 +5049,7 @@
                 break;
             case Packet_ServerIdEnum.LevelInitialize:
                 {
+                    ChatLog("[GAME] Initialized map loading");
                     ReceivedMapLength = 0;
                     InvokeMapLoadingProgress(0, 0, language.Connecting());
                 }
@@ -5056,6 +5063,7 @@
                 break;
             case Packet_ServerIdEnum.LevelFinalize:
                 {
+                    ChatLog("[GAME] Finished map loading");
                     //d_Data.Load(MyStream.ReadAllLines(d_GetFile.GetFile("blocks.csv")),
                     //    MyStream.ReadAllLines(d_GetFile.GetFile("defaultmaterialslots.csv")),
                     //    MyStream.ReadAllLines(d_GetFile.GetFile("lightlevels.csv")));
@@ -5279,6 +5287,7 @@
                 break;
             case Packet_ServerIdEnum.DisconnectPlayer:
                 {
+                    ChatLog(platform.StringFormat("[GAME] Disconnected by the server ({0})", packet.DisconnectPlayer.DisconnectReason));
                     //When server disconnects player, return to main menu
                     platform.MessageBoxShowError(packet.DisconnectPlayer.DisconnectReason, "Disconnected from server");
                     ExitToMainMenu();
@@ -5571,6 +5580,7 @@
                 }
                 break;
             case Packet_ServerIdEnum.ServerRedirect:
+                ChatLog("[GAME] Received server redirect");
                 //Leave current server
                 SendLeave(Packet_LeaveReasonEnum.Leave);
                 //Exit game screen and create new game instance
