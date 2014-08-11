@@ -5,14 +5,14 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ScriptingApi")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ScriptingApi")]
-[assembly: AssemblyCopyright("Copyright ©  2012")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+[assembly: AssemblyTitle("Scripting API")]
+//[assembly: AssemblyDescription("")]
+//[assembly: AssemblyConfiguration("")]
+//[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Manic Digger")]
+//[assembly: AssemblyCopyright("Copyright ©  2012")]
+//[assembly: AssemblyTrademark("")]
+//[assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
