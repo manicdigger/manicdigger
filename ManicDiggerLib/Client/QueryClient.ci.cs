@@ -11,57 +11,61 @@
         result = new QueryResult();
         querySuccess = false;
         queryPerformed = false;
-        //p = new GamePlatformNative();
     }
     
     public void PerformQuery(string ip, int port)
     {
         serverMessage = "";
+        INetClient client;
         if (p.EnetAvailable())
         {
             //Create enet client
-            EnetNetClient client = new EnetNetClient();
-            client.SetPlatform(p);
-            
-            //Initialize client
-            client.Start();
-            client.Connect(ip, port);
-            
-            //Do network stuff
-            SendRequest(client);
-            ReadPacket(client);
+            EnetNetClient c = new EnetNetClient();
+            c.SetPlatform(p);
+            client = c;
         }
         else
         {
-            p.ThrowException("Network not implemented");
+            //Create TCP client
+            TcpNetClient c = new TcpNetClient();
+            c.SetPlatform(p);
+            client = c;
         }
+        //Initialize client
+        client.Start();
+        client.Connect(ip, port);
+        
+        //Do network stuff
+        SendRequest(client);
+        ReadPacket(client);
+        
         queryPerformed = true;
     }
     
-    void SendRequest(EnetNetClient client)
+    void SendRequest(INetClient client)
     {
         //Create request packet
         Packet_ClientServerQuery p1 = new Packet_ClientServerQuery();
         Packet_Client pp = new Packet_Client();
         pp.Id = Packet_ClientIdEnum.ServerQuery;
         pp.Query = p1;
-            
+        
         //Serialize packet
         CitoMemoryStream ms = new CitoMemoryStream();
         Packet_ClientSerializer.Serialize(ms, pp);
         byte[] data = ms.ToArray();
-            
+        
         //Send packet to server
         INetOutgoingMessage msg = client.CreateMessage();
         msg.Write(data, ms.Length());
         client.SendMessage(msg, MyNetDeliveryMethod.ReliableOrdered);
     }
     
-    void ReadPacket(EnetNetClient client)
+    void ReadPacket(INetClient client)
     {
         bool success = false;
         int started = p.TimeMillisecondsFromStart();
-        int timeout = 1000;
+        int timeout = 2000;
         while (p.TimeMillisecondsFromStart() < started + timeout)
         {
             if (success)
