@@ -925,11 +925,14 @@ public class ScreenMain : Screen
     {
         singleplayer = new MenuWidget();
         multiplayer = new MenuWidget();
+        exit = new MenuWidget();
         widgets[0] = singleplayer;
         widgets[1] = multiplayer;
+        widgets[2] = exit;
     }
     MenuWidget singleplayer;
     MenuWidget multiplayer;
+    MenuWidget exit;
     internal float windowX;
     internal float windowY;
     public override void Render(float dt)
@@ -949,17 +952,28 @@ public class ScreenMain : Screen
         menu.DrawBackground();
         menu.Draw2dQuad(menu.GetTexture("logo.png"), windowX / 2 - 1024 * scale / 2, 0, 1024 * scale, 512 * scale);
 
+        int buttonheight = 64;
+        int buttonwidth = 256;
+        int spacebetween = 5;
+        int offsetfromborder = 50;
+
         singleplayer.text = "Singleplayer";
-        singleplayer.x = windowX / 2 - (256 + 100) * scale;
-        singleplayer.y = windowY * 7 / 10;
-        singleplayer.sizex = 256 * scale;
-        singleplayer.sizey = 64 * scale;
+        singleplayer.x = windowX / 2 - (buttonwidth / 2) * scale;
+        singleplayer.y = windowY - (3 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+        singleplayer.sizex = buttonwidth * scale;
+        singleplayer.sizey = buttonheight * scale;
 
         multiplayer.text = "Multiplayer";
-        multiplayer.x = windowX / 2 + (100) * scale;
-        multiplayer.y = windowY * 7 / 10;
-        multiplayer.sizex = 256 * scale;
-        multiplayer.sizey = 64 * scale;
+        multiplayer.x = windowX / 2 - (buttonwidth / 2) * scale;
+        multiplayer.y = windowY - (2 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+        multiplayer.sizex = buttonwidth * scale;
+        multiplayer.sizey = buttonheight * scale;
+
+        exit.text = "&cQuit";
+        exit.x = windowX / 2 - (buttonwidth / 2) * scale;
+        exit.y = windowY - (1 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
+        exit.sizex = buttonwidth * scale;
+        exit.sizey = buttonheight * scale;
         DrawWidgets();
     }
 
@@ -972,6 +986,10 @@ public class ScreenMain : Screen
         if (w == multiplayer)
         {
             menu.StartMultiplayer();
+        }
+        if (w == exit)
+        {
+            menu.Exit();
         }
     }
 
