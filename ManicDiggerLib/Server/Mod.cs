@@ -861,6 +861,7 @@ namespace ManicDigger
 
         public void RegisterOnLoadWorld(ModDelegates.LoadWorld a)
         {
+            server.modEventHandlers.onloadworld.Add(a);
         }
 
         public void SetWorldDatabaseReadOnly(bool readOnly)

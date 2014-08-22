@@ -405,8 +405,10 @@ namespace ManicDiggerServer
             }
 
             all_privileges.AddRange(ServerClientMisc.Privilege.All());
+            //Load all installed mods
             LoadMods(false);
 
+            //Load the savegame file
             {
                 if (!Directory.Exists(GameStorePath.gamepathsaves))
                 {
@@ -426,7 +428,22 @@ namespace ManicDiggerServer
             }
             Start(config.Port);
 
+            //Load server groups and spawnpoints
             LoadServerClient();
+
+            for (int i = 0; i < modEventHandlers.onloadworld.Count; i++)
+            {
+                try
+                {
+                    modEventHandlers.onloadworld[i]();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Mod exception: OnLoadWorld");
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
+                }
+            }
 
             // server monitor
             if (config.ServerMonitor)
@@ -4587,6 +4604,7 @@ namespace ManicDiggerServer
         public List<ModDelegates.PlayerChat> onplayerchat = new List<ModDelegates.PlayerChat>();
         public List<ModDelegates.PlayerDeath> onplayerdeath = new List<ModDelegates.PlayerDeath>();
         public List<ModDelegates.DialogClick> ondialogclick = new List<ModDelegates.DialogClick>();
+        public List<ModDelegates.LoadWorld> onloadworld = new List<ModDelegates.LoadWorld>();
     }
     public class GameTime
     {
