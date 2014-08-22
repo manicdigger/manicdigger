@@ -1014,6 +1014,7 @@ namespace ManicDigger.Mods
                             DrawType = DrawType.Solid,
                             WalkableType = WalkableType.Solid,
                             Sounds = solidSounds,
+                            WhenPlayerPlacesGetsConvertedTo = 3,
                         });
                     m.SetBlockType(18, "Leaves", new BlockType()
                         {
@@ -1051,6 +1052,7 @@ namespace ManicDigger.Mods
                             DrawType = DrawType.Solid,
                             WalkableType = WalkableType.Solid,
                             Sounds = snowSounds,
+                            WhenPlayerPlacesGetsConvertedTo = 3,
                         });
                     m.SetBlockType(18, "Leaves", new BlockType()
                         {
@@ -1081,6 +1083,7 @@ namespace ManicDigger.Mods
                             DrawType = DrawType.Solid,
                             WalkableType = WalkableType.Solid,
                             Sounds = snowSounds,
+                            WhenPlayerPlacesGetsConvertedTo = 3,
                         });
                     m.SetBlockType(18, "Leaves", new BlockType()
                         {
