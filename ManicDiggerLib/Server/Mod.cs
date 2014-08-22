@@ -769,7 +769,7 @@ namespace ManicDigger
             c.Ping.SetTimeoutValue(int.MaxValue);
             c.chunksseen = new bool[server.d_Map.MapSizeX / Server.chunksize
                 * server.d_Map.MapSizeY / Server.chunksize * server.d_Map.MapSizeZ / Server.chunksize];
-            c.clientGroup = server.defaultGroupRegistered;
+            c.AssignGroup(server.defaultGroupRegistered);
             server.SendPlayerSpawnToAll(id);
             return id;
         }
