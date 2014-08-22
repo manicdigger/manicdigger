@@ -405,6 +405,7 @@ namespace ManicDiggerServer
             }
 
             all_privileges.AddRange(ServerClientMisc.Privilege.All());
+            LoadMods(false);
 
             {
                 if (!Directory.Exists(GameStorePath.gamepathsaves))
@@ -426,7 +427,6 @@ namespace ManicDiggerServer
             Start(config.Port);
 
             LoadServerClient();
-            LoadMods(false);
 
             // server monitor
             if (config.ServerMonitor)
