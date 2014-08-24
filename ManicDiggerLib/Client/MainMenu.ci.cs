@@ -501,6 +501,7 @@
     {
         screen = new ScreenMain();
         screen.menu = this;
+        p.MouseCursorSetVisible(true);
     }
 
     internal int backgroundW;
