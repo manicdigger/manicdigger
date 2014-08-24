@@ -1341,6 +1341,7 @@ public class ScreenLogin : Screen
         login.text = menu.lang.Get("MainMenu_Login");
         loginUsername.description = menu.lang.Get("MainMenu_LoginUsername");
         loginPassword.description = menu.lang.Get("MainMenu_LoginPassword");
+        loginRememberMe.text = menu.lang.Get("MainMenu_ChoiceYes");
         loginRememberMe.description = menu.lang.Get("MainMenu_LoginRemember");
         back.text = menu.lang.Get("MainMenu_ButtonBack");
         title = menu.lang.Get("MainMenu_Login");
