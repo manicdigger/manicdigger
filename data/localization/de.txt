@@ -1,4 +1,25 @@
 ﻿de
+MainMenu_AssetsLoadProgress=Laden... {0}%
+MainMenu_Singleplayer=Einzelspieler
+MainMenu_Multiplayer=Mehrspieler
+MainMenu_Quit=&cBeenden
+MainMenu_ButtonBack=Zurück
+MainMenu_SingleplayerButtonCreate=Erstellen oder öffnen...
+MainMenu_Login=Anmelden
+MainMenu_LoginUsername=Benutzername
+MainMenu_LoginPassword=Passwort
+MainMenu_LoginRemember=Speichern?
+MainMenu_ChoiceYes=Ja
+MainMenu_ChoiceNo=Nein
+MainMenu_LoginInvalid=&4Falscher Benutzername oder falsches Passwort
+MainMenu_LoginConnecting=Verbinde...
+MainMenu_MultiplayerConnect=Verbinden
+MainMenu_MultiplayerConnectIP=Verbinden zu IP
+MainMenu_MultiplayerRefresh=Neu laden
+MainMenu_MultiplayerLoading=Lade...
+MainMenu_ConnectToIpConnect=Verbinden
+MainMenu_ConnectToIpIp=IP
+MainMenu_ConnectToIpPort=Port
 CannotWriteChatLog=Kann die Chatlogdatei {0} nicht beschreiben.
 ChunkUpdates=Chunkaktualisierungen: {0}
 Connecting=Verbinden...

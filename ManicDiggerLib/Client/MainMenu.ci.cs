@@ -14,6 +14,7 @@
     }
 
     internal GamePlatform p;
+    internal Language lang;
 
     internal float one;
 
@@ -24,6 +25,11 @@
     public void Start(GamePlatform p_)
     {
         this.p = p_;
+
+        //Initialize translations
+        lang = new Language();
+        lang.platform = p;
+        lang.LoadTranslations();
 
         textColorRenderer = new TextColorRenderer();
         textColorRenderer.platform = p_;
@@ -464,6 +470,7 @@
     {
         screen = new ScreenSingleplayer();
         screen.menu = this;
+        screen.LoadTranslations();
     }
 
     internal void StartLogin(string serverHash, string ip, int port)
@@ -474,6 +481,7 @@
         screenLogin.serverPort = port;
         screen = screenLogin;
         screen.menu = this;
+        screen.LoadTranslations();
     }
 
     internal void StartConnectToIp()
@@ -481,6 +489,7 @@
         ScreenConnectToIp screenConnectToIp = new ScreenConnectToIp();
         screen = screenConnectToIp;
         screen.menu = this;
+        screen.LoadTranslations();
     }
 
     internal void Exit()
@@ -528,6 +537,7 @@
     {
         screen = new ScreenMultiplayer();
         screen.menu = this;
+        screen.LoadTranslations();
     }
 
     internal void Login(string user, string password, string serverHash, string token, LoginResultRef loginResult, LoginData loginResultData)
@@ -677,6 +687,7 @@ public class Screen
     public virtual void OnMouseUp(MouseEventArgs e) { MouseUp(e.GetX(), e.GetY()); }
     public virtual void OnMouseMove(MouseEventArgs e) { MouseMove(e); }
     public virtual void OnBackPressed() { }
+    public virtual void LoadTranslations() { }
 
     void KeyPress(KeyPressEventArgs e)
     {
@@ -944,7 +955,7 @@ public class ScreenMain : Screen
 
         if (menu.assetsLoadProgress.value != 1)
         {
-            string s = menu.p.StringFormat("Loading... {0}%", menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
+            string s = menu.p.StringFormat(menu.lang.Get("MainMenu_AssetsLoadProgress"), menu.p.FloatToString(menu.p.FloatToInt(menu.assetsLoadProgress.value * 100)));
             menu.DrawText(s, 20 * scale, windowX / 2, windowY / 2, TextAlign.Center, TextBaseline.Middle);
             return;
         }
@@ -957,19 +968,19 @@ public class ScreenMain : Screen
         int spacebetween = 5;
         int offsetfromborder = 50;
 
-        singleplayer.text = "Singleplayer";
+        singleplayer.text = menu.lang.Get("MainMenu_Singleplayer");
         singleplayer.x = windowX / 2 - (buttonwidth / 2) * scale;
         singleplayer.y = windowY - (3 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
         singleplayer.sizex = buttonwidth * scale;
         singleplayer.sizey = buttonheight * scale;
 
-        multiplayer.text = "Multiplayer";
+        multiplayer.text = menu.lang.Get("MainMenu_Multiplayer");
         multiplayer.x = windowX / 2 - (buttonwidth / 2) * scale;
         multiplayer.y = windowY - (2 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
         multiplayer.sizex = buttonwidth * scale;
         multiplayer.sizey = buttonheight * scale;
 
-        exit.text = "&cQuit";
+        exit.text = menu.lang.Get("MainMenu_Quit");
         exit.x = windowX / 2 - (buttonwidth / 2) * scale;
         exit.y = windowY - (1 * (buttonheight * scale + spacebetween)) - offsetfromborder * scale;
         exit.sizex = buttonwidth * scale;
@@ -1030,6 +1041,8 @@ public class ScreenSingleplayer : Screen
         open.text = "Create or open...";
         open.type = WidgetType.Button;
 
+        title = "Singleplayer";
+
         widgets[0] = play;
         widgets[1] = newWorld;
         widgets[2] = modify;
@@ -1055,6 +1068,14 @@ public class ScreenSingleplayer : Screen
 
     string[] savegames;
     int savegamesCount;
+    string title;
+
+    public override void LoadTranslations()
+    {
+        back.text = menu.lang.Get("MainMenu_ButtonBack");
+        open.text = menu.lang.Get("MainMenu_SingleplayerButtonCreate");
+        title = menu.lang.Get("MainMenu_Singleplayer");
+    }
 
     public override void Render(float dt)
     {
@@ -1063,7 +1084,7 @@ public class ScreenSingleplayer : Screen
         float scale = menu.GetScale();
 
         menu.DrawBackground();
-        menu.DrawText("Singleplayer", 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
 
         float leftx = p.GetCanvasWidth() / 2 - 128 * scale;
         float y = p.GetCanvasHeight() / 2 + 0 * scale;
@@ -1282,6 +1303,8 @@ public class ScreenLogin : Screen
         back.type = WidgetType.Button;
         back.nextWidget = 1;
 
+        title = "Login";
+
         widgets[0] = login;
         widgets[1] = loginUsername;
         widgets[2] = loginPassword;
@@ -1310,6 +1333,17 @@ public class ScreenLogin : Screen
     MenuWidget back;
 
     bool triedSavedLogin;
+    string title;
+
+    public override void LoadTranslations()
+    {
+        login.text = menu.lang.Get("MainMenu_Login");
+        loginUsername.description = menu.lang.Get("MainMenu_LoginUsername");
+        loginPassword.description = menu.lang.Get("MainMenu_LoginPassword");
+        loginRememberMe.description = menu.lang.Get("MainMenu_LoginRemember");
+        back.text = menu.lang.Get("MainMenu_ButtonBack");
+        title = menu.lang.Get("MainMenu_Login");
+    }
 
     public override void Render(float dt)
     {
@@ -1332,7 +1366,7 @@ public class ScreenLogin : Screen
             && loginResultData.ServerCorrect
             && loginResultData.PasswordCorrect)
         {
-            if (loginRememberMe.text == "Yes")
+            if (loginRememberMe.text == menu.lang.Get("MainMenu_ChoiceYes"))
             {
                 Preferences preferences = menu.p.GetPreferences();
                 preferences.SetString("Username", loginUsername.text);
@@ -1356,18 +1390,18 @@ public class ScreenLogin : Screen
         string loginResultText = null;
         if (loginResult.value == LoginResult.Failed)
         {
-            loginResultText = "&4Invalid username or password";
+            loginResultText = menu.lang.Get("MainMenu_LoginInvalid");
         }
         if (loginResult.value == LoginResult.Connecting)
         {
-            loginResultText = "Connecting...";
+            loginResultText = menu.lang.Get("MainMenu_LoginConnecting");
         }
         if (loginResultText != null)
         {
             menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
-        menu.DrawText("Login", 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
         loginUsername.x = leftx;
         loginUsername.y = y + 100 * scale;
@@ -1467,13 +1501,13 @@ public class ScreenLogin : Screen
         }
         if (w == loginRememberMe || w == createAccountRememberMe)
         {
-            if (w.text == "Yes")
+            if (w.text == menu.lang.Get("MainMenu_ChoiceYes"))
             {
-                w.text = "No";
+                w.text = menu.lang.Get("MainMenu_ChoiceNo");
             }
             else
             {
-                w.text = "Yes";
+                w.text = menu.lang.Get("MainMenu_ChoiceYes");
             }
         }
         if (w == back)
@@ -1762,6 +1796,8 @@ public class ScreenMultiplayer : Screen
         //logout.image = "serverlist_entry_background.png";
         logout.buttonStyle = ButtonStyle.Button;
 
+        title = "Multiplayer";
+
         widgets[0] = back;
         widgets[1] = connect;
         widgets[2] = refresh;
@@ -1798,8 +1834,18 @@ public class ScreenMultiplayer : Screen
     const int serversOnListCount = 1024;
     int page;
     int serversPerPage;
-
+    string title;
     bool loading;
+
+    public override void LoadTranslations()
+    {
+        back.text = menu.lang.Get("MainMenu_ButtonBack");
+        connect.text = menu.lang.Get("MainMenu_MultiplayerConnect");
+        connectToIp.text = menu.lang.Get("MainMenu_MultiplayerConnectIP");
+        refresh.text = menu.lang.Get("MainMenu_MultiplayerRefresh");
+        title = menu.lang.Get("MainMenu_Multiplayer");
+    }
+
     public override void Render(float dt)
     {
         if (!loaded)
@@ -1908,12 +1954,12 @@ public class ScreenMultiplayer : Screen
         logout.text = "Logout";
 
         menu.DrawBackground();
-        menu.DrawText("Multiplayer", 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
+        menu.DrawText(title, 20 * scale, p.GetCanvasWidth() / 2, 10, TextAlign.Center, TextBaseline.Top);
         menu.DrawText(p.IntToString(page + 1), 14 * scale, p.GetCanvasWidth() - 68 * scale, p.GetCanvasHeight() / 2, TextAlign.Center, TextBaseline.Middle);
 
         if (loading)
         {
-            menu.DrawText("Loading...", 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
+            menu.DrawText(menu.lang.Get("MainMenu_MultiplayerLoading"), 14 * scale, 100 * scale, 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
         UpdateThumbnails();
@@ -2131,6 +2177,8 @@ public class ScreenConnectToIp : Screen
         back.type = WidgetType.Button;
         back.nextWidget = 1;
 
+        title = "Connect to IP";
+
         widgets[0] = buttonConnect;
         widgets[1] = textboxIp;
         widgets[2] = textboxPort;
@@ -2146,6 +2194,15 @@ public class ScreenConnectToIp : Screen
     MenuWidget back;
 
     bool loaded;
+    string title;
+
+    public override void LoadTranslations()
+    {
+        buttonConnect.text = menu.lang.Get("MainMenu_ConnectToIpConnect");
+        textboxIp.description = menu.lang.Get("MainMenu_ConnectToIpIp");
+        textboxPort.description = menu.lang.Get("MainMenu_ConnectToIpPort");
+        title = menu.lang.Get("MainMenu_MultiplayerConnectIP");
+    }
 
     string preferences_ip;
     string preferences_port;
@@ -2185,7 +2242,7 @@ public class ScreenConnectToIp : Screen
             menu.DrawText(loginResultText, 14 * scale, leftx, y - 50 * scale, TextAlign.Left, TextBaseline.Top);
         }
 
-        menu.DrawText("Connect to IP", 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
+        menu.DrawText(title, 14 * scale, leftx, y + 50 * scale, TextAlign.Left, TextBaseline.Top);
 
         textboxIp.x = leftx;
         textboxIp.y = y + 100 * scale;
